@@ -40,10 +40,49 @@ project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${PROFIT_LANGS})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
 
-# We use HDF5 here
-find_package(HDF5 REQUIRED COMPONENTS CXX)
-set(SHARK_LIBS ${HDF5_CXX_LIBRARIES})
-include_directories(${HDF5_INCLUDE_DIRS})
+#
+# This is how we look for GSL
+# Some cmake installations don't have a FindGSL, so if that fails
+# we then try via pkg-config
+#
+macro(find_gsl)
+
+	# Try with FindGSL.cmake first, if found
+	# Otherwise try with pkg-config
+	find_package(GSL)
+	if( NOT GSL_FOUND )
+		find_package(PkgConfig)
+		if( PKG_CONFIG_FOUND )
+			pkg_check_modules(GSL gsl)
+		endif()
+	endif()
+
+	if( GSL_FOUND )
+		include_directories(${GSL_INCLUDE_DIRS})
+		set(SHARK_LIBS ${SHARK_LIBS} ${GSL_LIBRARIES})
+	else()
+		message(FATAL_ERROR
+				  "\nNo GSL found in the system. Please install the GSL "
+				  "development files and try again\n")
+	endif()
+endmacro()
+
+#
+# This is how we look for HDF5
+# We are currently interested in the CXX library,
+# which is a hard requirement -- if it's not there we fail misserably
+#
+macro(find_hdf5)
+	find_package(HDF5 REQUIRED COMPONENTS CXX)
+	set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
+	include_directories(${HDF5_INCLUDE_DIRS})
+endmacro()
+
+#
+# Go out there and find stuff
+#
+find_gsl()
+find_hdf5()
 
 # Common definitions for the shared lib and the binary
 add_definitions(-DSHARK_VERSION="${SHARK_VERSION}")
