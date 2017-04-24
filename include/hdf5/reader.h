@@ -34,12 +34,13 @@
 #include <H5Cpp.h>
 
 #include "utils.h"
+#include "hdf5/iobase.h"
 
 namespace shark {
 
 namespace hdf5 {
 
-class Reader {
+class Reader : public IOBase {
 
 public:
 
@@ -48,12 +49,8 @@ public:
 	 *
 	 * @param filename The name of the HDF5 file to read
 	 */
-	Reader(const std::string &filename);
-
-	/**
-	 * Destructor. It closes the underlying file.
-	 */
-	~Reader();
+	Reader(const std::string &filename) :
+		IOBase(filename, H5F_ACC_RDONLY) {}
 
 	/**
 	 * Returns the name of the file being read
@@ -63,76 +60,8 @@ public:
 
 	template<typename T>
 	const T read_attribute(const std::string &name) const {
-
-		// The name might contains slashes, so we can navigate through
-		// a hierarchy of groups/datasets
-		std::vector<std::string> parts = tokenize(name, "/");
-
-		// only the attribute name, read directly and come back
-		if( parts.size() == 1 ) {
-			return _read_attribute<T>(hdf5_file.get(), name);
-		}
-
-		// else there's a path to follow, go for it!
-		H5::CommonFG *location = hdf5_file.get();
-		std::vector<std::string> path_parts(parts.begin(), parts.end()-1);
-		for(auto const &path: path_parts) {
-			// not implemented yet
-		}
-
-		throw std::runtime_error("read_attribute still not implemented for attributes in groups/datasets");
-	}
-
-	template<typename T>
-	T read_dataset(const std::string &name) const {
-
-		// The name might contains slashes, so we can navigate through
-		// a hierarchy of groups/datasets
-		std::vector<std::string> parts = tokenize(name, "/");
-
-		// only the attribute name, read directly and come back
-		if( parts.size() == 1 ) {
-			return _read_dataset<T>(hdf5_file->openDataSet(name));
-		}
-
-		// else there's a path to follow, go for it!
-		H5::CommonFG *location = hdf5_file.get();
-		std::vector<std::string> path_parts(parts.begin(), parts.end()-1);
-		for(auto const &path: path_parts) {
-			// not implemented yet
-		}
-
-		throw std::runtime_error("read_attribute still not implemented for attributes in groups/datasets");
-	}
-
-	template<typename T>
-	std::vector<T> read_dataset_v(const std::string &name) const {
-
-		// The name might contains slashes, so we can navigate through
-		// a hierarchy of groups/datasets
-		std::vector<std::string> parts = tokenize(name, "/");
-
-		// only the attribute name, read directly and come back
-		if( parts.size() == 1 ) {
-			return _read_dataset_v<T>(hdf5_file->openDataSet(name));
-		}
-
-		// else there's a path to follow, go for it!
-		H5::CommonFG *location = static_cast<H5::CommonFG *>(hdf5_file.get());
-		std::vector<std::string> path_parts(parts.begin(), parts.end()-1);
-		for(auto const &path: path_parts) {
-			// not implemented yet
-		}
-
-		throw std::runtime_error("read_attribute still not implemented for attributes in groups/datasets");
-	}
-
-private:
-	std::unique_ptr<H5::H5File> hdf5_file;
-
-	template <typename T>
-	const T _read_attribute(H5::H5Location *location, const std::string &name) const {
-		H5::Attribute attr = location->openAttribute(name);
+		std::string attr_name;
+		H5::Attribute attr = get_attribute(name);
 		H5::DataType type = attr.getDataType();
 		T val;
 		attr.read(type, &val);
@@ -141,11 +70,26 @@ private:
 	}
 
 	template<typename T>
+	T read_dataset(const std::string &name) const {
+		return _read_dataset<T>(get_dataset(name));
+	}
+
+	template<typename T>
+	std::vector<T> read_dataset_v(const std::string &name) const {
+		return _read_dataset_v<T>(get_dataset(name));
+	}
+
+private:
+
+	H5::Attribute get_attribute(const std::string &name) const;
+	H5::DataSet get_dataset(const std::string &name) const;
+
+	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, T>::type
 	_read_dataset(const H5::DataSet &dataset) const {
 
-		H5::DataSpace space = _get_1d_dataspace(dataset);
-		hsize_t dim_size = _get_1d_dimsize(space);
+		H5::DataSpace space = get_1d_dataspace(dataset);
+		hsize_t dim_size = get_1d_dimsize(space);
 		if ( dim_size != 1 ) {
 			std::ostringstream os;
 			os << "More than 1 element found in dataset " << dataset.getObjName();
@@ -161,30 +105,14 @@ private:
 	typename std::enable_if<std::is_arithmetic<T>::value, std::vector<T>>::type
 	_read_dataset_v(const H5::DataSet &dataset) const {
 
-		H5::DataSpace space = _get_1d_dataspace(dataset);
-		hsize_t dim_size = _get_1d_dimsize(space);
+		H5::DataSpace space = get_1d_dataspace(dataset);
+		hsize_t dim_size = get_1d_dimsize(space);
 
 		std::vector<T> data(dim_size);
 		dataset.read(data.data(), dataset.getDataType(), space, space);
 		return data;
 	}
 
-	H5::DataSpace _get_1d_dataspace(const H5::DataSet &dataset) const {
-		H5::DataSpace space = dataset.getSpace();
-		int ndims = space.getSimpleExtentNdims();
-		if ( ndims != 1 ) {
-			std::ostringstream os;
-			os << "More than one dimension found in dataset " << dataset.getObjName();
-			throw std::runtime_error(os.str());
-		}
-		return space;
-	}
-
-	hsize_t _get_1d_dimsize(const H5::DataSpace &space) const {
-		hsize_t dim_size;
-		space.getSimpleExtentDims(&dim_size, NULL);
-		return dim_size;
-	}
 };
 
 }  // namespace hdf5

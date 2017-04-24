@@ -92,6 +92,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(SHARKLIB_SRCS
    src/options.cpp
    src/utils.cpp
+   src/hdf5/iobase.cpp
    src/hdf5/reader.cpp
 )
 add_library(sharklib SHARED ${SHARKLIB_SRCS})

@@ -1,5 +1,5 @@
 //
-// h5reader class implementation bits
+// Implementation of Reader class methods
 //
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
@@ -22,29 +22,57 @@
 // MA 02111-1307  USA
 //
 
-#include <hdf5/reader.h>
+#include <string>
+#include <vector>
+
+#include "hdf5/reader.h"
 
 using namespace std;
-using namespace H5;
 
 namespace shark {
 
 namespace hdf5 {
 
-Reader::Reader(const string &filename) :
-	hdf5_file(new H5File(filename, H5F_ACC_RDONLY))
-{
-	// no-op
+H5::DataSet Reader::get_dataset(const string &name) const {
+
+	// The name might contains slashes, so we can navigate through
+	// a hierarchy of groups/datasets
+	vector<string> parts = tokenize(name, "/");
+
+	// only the attribute name, read directly and come back
+	if( parts.size() == 1 ) {
+		return hdf5_file.openDataSet(name);
+	}
+
+	// else there's a path to follow, go for it!
+	H5::Group group = hdf5_file.openGroup(*parts.begin());
+	vector<string> group_paths(parts.begin() + 1, parts.end() - 1);
+	for(auto const &path: group_paths) {
+		group = group.openGroup(path);
+	}
+
+	return group.openDataSet(*(parts.end() - 1));
 }
 
-Reader::~Reader()
-{
-	hdf5_file->close();
-}
+H5::Attribute Reader::get_attribute(const string &name) const {
 
-const string Reader::get_filename() const
-{
-	return hdf5_file->getFileName();
+	// The name might contains slashes, so we can navigate through
+	// a hierarchy of groups/datasets
+	std::vector<std::string> parts = tokenize(name, "/");
+
+	// only the attribute name, read directly and come back
+	if( parts.size() == 1 ) {
+		return hdf5_file.openAttribute(name);
+	}
+
+	// else there's a path to follow, go for it!
+	const H5::CommonFG &location = hdf5_file;
+	std::vector<std::string> path_parts(parts.begin(), parts.end()-1);
+	for(auto const &path: path_parts) {
+		// not implemented yet
+	}
+
+	throw std::runtime_error("read_attribute still not implemented for attributes in groups/datasets");
 }
 
 }  // namespace hdf5
