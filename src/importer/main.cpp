@@ -22,11 +22,11 @@
 // MA 02111-1307  USA
 //
 
-#include <chrono>
 #include <iostream>
 #include <vector>
 #include <memory>
 
+#include "timer.h"
 #include "importer/options.h"
 #include "importer/descendants.h"
 #include "importer/velociraptor.h"
@@ -37,7 +37,6 @@ using namespace shark::importer;
 
 int main(int argc, char **argv)
 {
-	using chrono::steady_clock;
 	using importer::Options;
 
 	if ( argc < 2 ) {
@@ -47,9 +46,10 @@ int main(int argc, char **argv)
 
 	Options opts(argv[1]);
 
-	unique_ptr<Reader> reader;
+	//
+	// The reader for the descendants file
+	//
 	shared_ptr<DescendantReader> descendants_reader;
-
 	if ( opts.descendants_format == Options::HDF5 ) {
 		descendants_reader = make_shared<HDF5DescendantReader>(opts.descendants_file);
 	}
@@ -57,21 +57,21 @@ int main(int argc, char **argv)
 		descendants_reader = make_shared<AsciiDescendantReader>(opts.descendants_file);
 	}
 
-	if ( opts.tree_format == Options::TREES_VELOCIRAPTOR ) {
-		reader.reset(new VELOCIraptorReader(descendants_reader, opts.tree_dir));
+	//
+	// The tree reader
+	//
+	if ( opts.tree_format != Options::TREES_VELOCIRAPTOR ) {
+		throw invalid_option("Only tree format currently supported is VELOCIraptor");
 	}
-	else if ( opts.tree_format == Options::TREES_NIFTY ) {
-		// something else
-	}
-	else {
-		// something else
-	}
+	unique_ptr<Reader> reader(new VELOCIraptorReader(descendants_reader, opts.tree_dir));
 
+	//
+	// Go ahead and read all required snapshots
+	//
 	for(int snapshot=opts.last_snapshot; snapshot >= opts.first_snapshot; snapshot--) {
-		steady_clock::time_point t0 = steady_clock::now();
+		Timer timer;
 		auto subhalos = reader->read_subhalos(snapshot);
-		long duration = chrono::duration_cast<chrono::milliseconds>(steady_clock::now() - t0).count();
-		cout << "Snapshot " << snapshot << " read and processed in " << duration << " [ms]" << endl;
+		cout << "Snapshot " << snapshot << " read and processed in " << timer.get() << " [ms]" << endl;
 	}
 
 }
