@@ -61,7 +61,7 @@ importer::Options::tree_format_t Helper<importer::Options::tree_format_t>::get(c
 		return importer::Options::TREES_NIFTY;
 	}
 	std::ostringstream os;
-	os << "tree_format option value invalid: " << value;
+	os << name << " option value invalid: " << value;
 	throw invalid_option(os.str());
 }
 
