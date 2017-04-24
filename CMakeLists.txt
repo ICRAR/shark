@@ -102,6 +102,7 @@ set_target_properties(sharklib PROPERTIES LIBRARY_OUTPUT_NAME shark)
 set(SHARK_IMPORTER_SRCS
 	src/importer/descendants.cpp
 	src/importer/main.cpp
+	src/importer/options.cpp
 	src/importer/reader.cpp
 	src/importer/velociraptor.cpp
 )

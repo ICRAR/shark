@@ -27,7 +27,7 @@
 #include <vector>
 #include <memory>
 
-#include "options.h"
+#include "importer/options.h"
 #include "importer/descendants.h"
 #include "importer/velociraptor.h"
 
@@ -38,21 +38,22 @@ using namespace shark::importer;
 int main(int argc, char **argv)
 {
 	using chrono::steady_clock;
+	using importer::Options;
 
 	if ( argc < 2 ) {
 		cerr << "Usage: " << argv[0] << " <options-file>" << endl;
 		return 1;
 	}
 
-	Options opts = Options::from_file(argv[1]);
+	Options opts(argv[1]);
 
 	unique_ptr<Reader> reader;
 	shared_ptr<DescendantReader> descendants_reader;
 
-	if ( opts.descendants_format == Options::DESCENDANTS_HDF5 ) {
+	if ( opts.descendants_format == Options::HDF5 ) {
 		descendants_reader = make_shared<HDF5DescendantReader>(opts.descendants_file);
 	}
-	else if ( opts.descendants_format == Options::DESCENDANTS_ASCII ) {
+	else if ( opts.descendants_format == Options::ASCII ) {
 		descendants_reader = make_shared<AsciiDescendantReader>(opts.descendants_file);
 	}
 

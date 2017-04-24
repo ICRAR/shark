@@ -22,11 +22,14 @@
 // MA 02111-1307  USA
 //
 
-#ifndef SHARK_OPTIONS
-#define SHARK_OPTIONS
+#ifndef SHARK_OPTIONS_H_
+#define SHARK_OPTIONS_H_
 
+#include <map>
 #include <string>
 #include <stdexcept>
+
+#include "utils.h"
 
 class invalid_option : public std::runtime_error {
 public:
@@ -35,44 +38,77 @@ public:
 
 namespace shark {
 
+namespace detail {
+
+template <typename T>
+class Helper {
+public:
+	static
+	T get(const std::string &name, const std::string &value);
+};
+
+}  // namespace detail
+
+/**
+ * Base class to load user-provided options.
+ */
 class Options {
 
 public:
 
-	enum tree_format_t {
-		TREES_VELOCIRAPTOR,
-		TREES_NIFTY
-	};
+	typedef std::map<std::string, std::string> options_t;
 
-	enum descendants_format_t {
-		DESCENDANTS_HDF5,
-		DESCENDANTS_ASCII
+	enum file_format_t {
+		HDF5,
+		ASCII
 	};
 
 	/**
-	 * Constructor that provides default values for the options.
-	 */
-	Options();
-
-	/**
-	 * Reads the given file and parses out the options contained in it.
+	 * A ctor that reads options from a file
 	 *
-	 * @param name The name of the options file
-	 * @return An Options object populated with the options contained in the file
+	 * @param filename The name of the options file
 	 */
-	static const Options from_file(const std::string &name);
+	Options(const std::string &filename);
 
-	descendants_format_t descendants_format;
-	std::string descendants_file;
-	tree_format_t tree_format;
-	std::string tree_dir;
-	int first_snapshot;
-	int last_snapshot;
+protected:
 
-private:
-	static int read_int(const std::string &name, const std::string &value);
+	/**
+	 * Read the value of option `name`, if present, and set it in `value_holder`
+	 * of type `T`.
+	 *
+	 * @param name The full option name (e.g., "group.name")
+	 * @param value_holder The variable where the value will be stored
+	 * @param optional Whether the option is mandatory or not. Defaults to `false`
+	 * @tparam T The type of the object returned by this methods
+	 */
+	template <typename T>
+	void load(const std::string &name, T &value_holder, bool mandatory = false) {
+		if ( mandatory or options.find(name) != options.end() ) {
+			value_holder = get<T>(name);
+		}
+	}
+
+	/**
+	 * Read the value of option `name` and return it as an object of type `T`
+	 * @param name The full option name (e.g., "group.name")
+	 * @tparam T The type of the object returned by this method.
+	 * @return
+	 */
+	template <typename T>
+	T get(const std::string &name) {
+		options_t::const_iterator it = options.find(name);
+		if ( it == options.end() ) {
+			std::ostringstream os;
+			os << "Missing option: " << name;
+			throw invalid_option(os.str());
+		}
+		return detail::Helper<T>::get(name, it->second);
+	}
+
+	options_t options;
+
 };
 
 }  // namespace shark
 
-#endif // SHARK_OPTIONS
+#endif // SHARK_OPTIONS_H_

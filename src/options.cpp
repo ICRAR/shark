@@ -36,23 +36,13 @@ using namespace std;
 
 namespace shark {
 
-Options::Options() :
-	descendants_file("descendants.txt"),
-	descendants_format(DESCENDANTS_HDF5),
-	tree_dir("."),
-	tree_format(TREES_VELOCIRAPTOR),
-	first_snapshot(0),
-	last_snapshot(1)
+Options::Options(const string &name)
 {
-	// no-op
-}
-
-const Options Options::from_file(const string &name)
-{
-	Options opts;
 
 	ifstream f = open_file(name);
 	string line;
+	string option_group;
+
 	while ( getline(f, line) ) {
 
 		trim(line);
@@ -65,68 +55,87 @@ const Options Options::from_file(const string &name)
 			continue;
 		}
 
+		if ( line[0] == '[' ) {
+			if ( line[line.size() - 1] != ']' ) {
+				ostringstream os;
+				os << "Invalid group definition: " << line;
+				throw invalid_option(os.str());
+			}
+			option_group = line.substr(1, line.size() - 2);
+			continue;
+		}
+
 		string name, value, equals;
 		istringstream iss(line);
 		iss >> name >> equals >> value;
 
-		if ( name == "tree_dir" ) {
-			opts.tree_dir = value;
+		if ( option_group.size() == 0 ) {
+			cerr << "WARNING: No option group defined for option " << name << endl;
 		}
-		else if ( name == "tree_format" ) {
-			lower(value);
-			if ( value == "velociraptor" ) {
-				opts.tree_format = Options::TREES_VELOCIRAPTOR;
-			}
-			else if ( value == "nifty" ) {
-				opts.tree_format = Options::TREES_NIFTY;
-			}
-			else {
-				ostringstream os;
-				os << "tree_format option value invalid: " << value;
-				throw invalid_option(os.str());
-			}
-		}
-		else if ( name == "descendants_format" ) {
-			lower(value);
-			if ( value == "hdf5" ) {
-				opts.descendants_format = Options::DESCENDANTS_HDF5;
-			}
-			else if ( value == "ascii" ) {
-				opts.descendants_format = Options::DESCENDANTS_ASCII;
-			}
-			else {
-				ostringstream os;
-				os << "descendants_format option value invalid: " << value;
-				throw invalid_option(os.str());
-			}
-		}
-		else if ( name == "descendants") {
-			opts.descendants_file = value;
-		}
-		else if ( name == "first_snapshot" ) {
-			opts.first_snapshot = read_int(name, value);
-		}
-		else if ( name == "last_snapshot" ) {
-			opts.last_snapshot = read_int(name, value);
-		}
-		else {
-			cout << "Ignoring unknown option: " << name << endl;
-		}
-	}
 
-	return opts;
+		name = option_group + '.' + name;
+		options[name] = value;
+	}
 
 }
 
-int Options::read_int(const std::string &name, const std::string &value)
-{
+
+namespace detail {
+
+template <>
+std::string Helper<std::string>::get(const std::string &name, const std::string &value) {
+	return value;
+}
+
+template <>
+Options::file_format_t Helper<Options::file_format_t>::get(const std::string &name, const std::string &value) {
+	std::string lowered(value);
+	lower(lowered);
+	if ( lowered == "hdf5" ) {
+		return Options::HDF5;
+	}
+	else if ( lowered == "ascii" ) {
+		return Options::ASCII;
+	}
+
+	std::ostringstream os;
+	os << name << " option value invalid: " << value << ". Either hdf5 or ascii was expected";
+	throw invalid_option(os.str());
+}
+
+template<>
+int Helper<int>::get(const std::string &name, const std::string &value) {
 	try {
-		return stoi(value);
-	} catch (const invalid_argument &e) {
-		ostringstream os;
+		return std::stoi(value);
+	} catch (const std::invalid_argument &e) {
+		std::ostringstream os;
 		os << "Invalid value for option " << name << ": " << value << ". An integer was expected";
 		throw invalid_option(os.str());
 	}
 }
+
+template<>
+float Helper<float>::get(const std::string &name, const std::string &value) {
+	try {
+		return std::stof(value);
+	} catch (const std::invalid_argument &e) {
+		std::ostringstream os;
+		os << "Invalid value for option " << name << ": " << value << ". A float was expected";
+		throw invalid_option(os.str());
+	}
+}
+
+template<>
+double Helper<double>::get(const std::string &name, const std::string &value) {
+	try {
+		return std::stod(value);
+	} catch (const std::invalid_argument &e) {
+		std::ostringstream os;
+		os << "Invalid value for option " << name << ": " << value << ". A double was expected";
+		throw invalid_option(os.str());
+	}
+}
+
+}  // namespace detail
 
 }  // namespace shark
