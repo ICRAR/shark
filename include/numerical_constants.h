@@ -8,18 +8,6 @@
 
 #include <cmath>
 
-namespace shark {
-
-	constexpr float SQRT2 = std::sqrt(2);
-	constexpr float LN2 = std::log(2);
-	constexpr float LN4 = std::log(4);
-	constexpr float LN10 = std::log(10);
-	constexpr float ISO_FAC = 2.5 / LN10;
-
-	constexpr double Eulers_Constant=0.5772156649015328606;
-
-}  // namespace shark
-
 class Numerical_Parameters {
 
 public:
