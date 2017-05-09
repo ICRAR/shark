@@ -49,7 +49,7 @@ ODESolver::~ODESolver() {
 	gsl_odeiv2_driver_free(driver);
 }
 
-std::vector<double> ODESolver::next() {
+std::vector<double> ODESolver::evolve() {
 
 	step++;
 	double t_i = t0 + step*delta_t;

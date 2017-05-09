@@ -74,12 +74,11 @@ public:
 	~ODESolver();
 
 	/**
-	 * Steps the time axis in `delta_t`, and evaluates the underlying ODE system
-	 * in `t`.
+	 * Evolves the ODE system by evaluating it in the new `t = t + delta_t`
 	 *
 	 * @return The `y` values for the evaluation of the system at `t`.
 	 */
-	std::vector<double> next();
+	std::vector<double> evolve();
 
 	/**
 	 * Returns the current time `t` at which the system is sitting
