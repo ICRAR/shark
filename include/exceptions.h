@@ -38,6 +38,15 @@ public:
 	invalid_data(const std::string &what) : std::runtime_error(what) {};
 };
 
+
+/**
+ * An exception indicating that invalid data has been encountered
+ */
+class math_error: public std::runtime_error {
+public:
+	math_error(const std::string &what) : std::runtime_error(what) {};
+};
+
 }  // namespace shark
 
 #endif // SHARK_EXCEPTIONS_H

@@ -91,6 +91,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # The shark shared library
 set(SHARKLIB_SRCS
    src/options.cpp
+   src/ode_solver.cpp
    src/utils.cpp
    src/hdf5/iobase.cpp
    src/hdf5/reader.cpp
