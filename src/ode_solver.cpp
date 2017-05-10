@@ -22,8 +22,8 @@
 // MA 02111-1307  USA
 //
 
-#include <vector>
 #include <sstream>
+#include <vector>
 
 #include "exceptions.h"
 #include "ode_solver.h"
@@ -34,19 +34,44 @@ using namespace std;
 
 namespace shark {
 
-ODESolver::ODESolver(std::vector<double> y0, double t0, double delta_t, ode_evaluator evaluator, double precision) :
+ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, double precision, ode_evaluator evaluator) :
 	y(y0),
 	t0(t0),
 	t(t0),
 	delta_t(delta_t),
 	step(0)
 {
-	system = {evaluator, NULL, y0.size(), NULL};
-	driver = gsl_odeiv2_driver_alloc_y_new(&system, gsl_odeiv2_step_rk8pd, precision, precision, 0.0);
+	ode_system = std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, NULL, y0.size(), NULL});
+	driver = gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rk8pd, precision, precision, 0.0);
+}
+
+ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, double precision, const std::shared_ptr<gsl_odeiv2_system> &ode_system) :
+	y(y0),
+	t0(t0),
+	t(t0),
+	delta_t(delta_t),
+	step(0),
+	ode_system(ode_system)
+{
+	driver = gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rk8pd, precision, precision, 0.0);
+}
+
+ODESolver::ODESolver(ODESolver &&odeSolver) :
+	y(odeSolver.y),
+	t0(odeSolver.t0),
+	t(odeSolver.t),
+	delta_t(odeSolver.delta_t),
+	step(odeSolver.step),
+	ode_system(odeSolver.ode_system),
+	driver(odeSolver.driver)
+{
+	odeSolver.driver = nullptr;
 }
 
 ODESolver::~ODESolver() {
-	gsl_odeiv2_driver_free(driver);
+	if (driver) {
+		gsl_odeiv2_driver_free(driver);
+	}
 }
 
 std::vector<double> ODESolver::evolve() {
@@ -76,9 +101,27 @@ std::vector<double> ODESolver::evolve() {
 		os << "maximum number of steps reached";
 	}
 	else {
-		os << "unknown error " << status;
+		os << "unexpected GSL error: " << gsl_strerror(status);
 	}
 	throw math_error(os.str());
+}
+
+ODESolver &ODESolver::operator=(ODESolver &&other) {
+
+	// Normal moving of values
+	y = other.y;
+	t0 = other.t0;
+	t = other.t;
+	delta_t = other.delta_t;
+	step = other.step;
+	ode_system = other.ode_system;
+	driver = other.driver;
+
+	// The important bit: let the other object that it doesn't own
+	// the driver anymore, so it doesn't free it up
+	other.driver = nullptr;
+
+	return *this;
 }
 
 }  // namespace shark

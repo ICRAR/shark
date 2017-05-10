@@ -25,6 +25,7 @@
 #ifndef SHARK_ODE_SOLVER_H_
 #define SHARK_ODE_SOLVER_H_
 
+#include <memory>
 #include <vector>
 
 #include <gsl/gsl_odeiv2.h>
@@ -62,11 +63,30 @@ public:
 	 * @param t0 The time associated with the initial values `y0`.
 	 * @param delta_t The time difference used to evolve the system on each
 	 * evaluation
+	 * @param precision The precision to use for the adaptive step sizes.
 	 * @param evaluator The function evaluating the system at time `t`
+	 */
+	ODESolver(const std::vector<double> &y0, double t0, double delta_t,
+	          double precision, ode_evaluator evaluator);
+
+	/**
+	 * Creates a new ODESolver
+	 *
+	 * @param y0 The initial values for the ODE system. It should contain as
+	 * many values as those produced by `evaluator`
+	 * @param t0 The time associated with the initial values `y0`.
+	 * @param delta_t The time difference used to evolve the system on each
+	 * evaluation
+	 * @param ode_system The (GSL) ODE system to solve
 	 * @param precision The precision to use for the adaptive step sizes.
 	 */
-	ODESolver(std::vector<double> y0, double t0, double delta_t,
-	          ode_evaluator evaluator, double precision = 1e-6);
+	ODESolver(const std::vector<double> &y0, double t0, double delta_t,
+	          double precision, const std::shared_ptr<gsl_odeiv2_system> &ode_system);
+
+	/**
+	 * Move constructor
+	 */
+	ODESolver(ODESolver &&odeSolver);
 
 	/**
 	 * Destructs this solver and frees up all resources associated with it
@@ -88,13 +108,18 @@ public:
 		return t;
 	}
 
+	/**
+	 * Move assignment operator
+	 */
+	ODESolver& operator=(ODESolver &&other);
+
 private:
 	std::vector<double> y;
 	double t;
 	double t0;
 	double delta_t;
 	unsigned int step;
-	gsl_odeiv2_system system;
+	std::shared_ptr<gsl_odeiv2_system> ode_system;
 	gsl_odeiv2_driver *driver;
 };
 
