@@ -27,12 +27,47 @@
 
 #include <vector>
 
-
 namespace shark {
+
+class StarFormationParameters {
+public:
+	int Molecular_BR_Law;
+	double nu_sf;
+	double Po;
+	double beta_press;
+	double Accuracy_SFeqs;
+};
+
+class StellarFeedbackParameters {
+public:
+	double eta_cc;
+	double SNe_Energy;
+	double epsilon_sn;
+	double beta_sn;
+};
+
+class reionisation_parameters {
+public:
+	double vcut;
+	double zcut;
+};
+
+class RecyclingParameters {
+public:
+	double yield;
+	double recycle;
+	double zsun;
+};
 
 class Parameters {
 public:
 	std::vector<int> writing_outputs;
+	//flags of physical processes that are on.
+	int ReionizationOn;
+	int SupernovaFeedbackOn;
+	int DiskInstabilityOn;
+	int AGNFeedbackOn;
+	int SFprescription;
 };
 
 }  // namespace shark

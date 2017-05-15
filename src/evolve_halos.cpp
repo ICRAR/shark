@@ -12,14 +12,16 @@
 #include "cosmology.h"
 #include "numerical_constants.h"
 #include "simulation.h"
+#include "system.h"
 
 using namespace std;
 
 namespace shark {
 
 static
-void evolve_system(shared_ptr<Subhalo> &subhalo, int snapshot){
+void evolve_system(System &system, shared_ptr<Subhalo> &subhalo, int snapshot){
 
+	//return 0;
 	//
 	// Determine if galaxies in this subhalo merger on the current snapshot.
 	//
@@ -27,12 +29,13 @@ void evolve_system(shared_ptr<Subhalo> &subhalo, int snapshot){
 
 	// Solve ODEs for this system
 	for(shared_ptr<Galaxy> &galaxy: subhalo->galaxies) {
+		system.evolve_galaxy(galax);
 		//Solve_Systems();
 	}
 
 }
 
-void populate_halos(shared_ptr<Halo> halo, int snapshot) {
+void populate_halos(System &system, shared_ptr<Halo> halo, int snapshot) {
 
 	//
 	// Determine if there is any exchange of galaxies between subhalos.
@@ -40,8 +43,9 @@ void populate_halos(shared_ptr<Halo> halo, int snapshot) {
 	//
 	//Calculates_Merger_Subhalos();
 
+
 	for(shared_ptr<Subhalo> &subhalo: halo->subhalos) {
-		evolve_system(subhalo, snapshot);
+		evolve_system(system, subhalo, snapshot);
 	}
 }
 

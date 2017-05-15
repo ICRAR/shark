@@ -34,6 +34,8 @@
 #include "parameters.h"
 #include "simulation.h"
 
+#include "system.h"
+
 using namespace shark;
 using namespace std;
 
@@ -70,6 +72,8 @@ void write_output(int snapshot, const vector<MergerTree> &merger_trees) {
  */
 int main(int argc, char **argv) {
 
+
+
 	if ( argc < 2 ) {
 		cerr << "Usage: " << argv[0] << " <params-file>" << endl;
 		return 1;
@@ -77,6 +81,8 @@ int main(int argc, char **argv) {
 
 	/* We read the parameters that have been given as input by the user.*/
 	Parameters params = read_parameters(argv[1]);
+
+	BasicSystem basic_system(1e-6);
 
 	// We read the simulation parameters next. Note that by using a different
 	// reader allows the user to put all the information in one parameter file.
@@ -105,7 +111,7 @@ int main(int argc, char **argv) {
 			/*here loop over the halos this merger tree has at this time.*/
 			for(shared_ptr<Halo> halo: tree.halos[snapshot]) {
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
-				populate_halos(halo, snapshot);
+				populate_halos(basic_system, halo, snapshot);
 			}
 		}
 

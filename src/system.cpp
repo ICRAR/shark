@@ -23,11 +23,12 @@
 //
 
 #include "system.h"
+#include "parameters.h"
 
 namespace shark {
 
 static
-int basic_system_evaluator(double t, const double y[], double f[], void *) {
+int basic_system_evaluator(double t, const double y[], double f[], void *data) {
 
 	/*
 	 * f[0]: stellar mass of galaxy.
@@ -38,12 +39,14 @@ int basic_system_evaluator(double t, const double y[], double f[], void *) {
 	 * f[5]: metals locked in the hot gas mass.
 	 */
 
+	BasicSystem *system = dynamic_cast<BasicSystem *>(data);
+
 	double tau = 2.0; /*star formation timescale assumed to be 2Gyr*/
-	double R = 0.5; /*recycling fraction of newly formed stars*/
-	double yield = 0.029; /*yield of newly formed stars*/
+	double R = system->recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
+	double yield = system->recycling_parameters.yield; /*yield of newly formed stars*/
 	double mcoolrate = 5e8; /*cooling rate in units of Msun/Gyr*/
-	double beta = 2; /*mass loading parameter*/
-	double SFR = y[1] / tau; /*star formation rate assumed to be cold gas mass divided by time*/
+	double beta = system->stellar_feedback_outflow_rate(y); /*mass loading parameter*/
+	double SFR = y[1] * starformation_parameters.nu_sf; /*star formation rate assumed to be cold gas mass divided by time*/
 	double zcold = y[4] / y[1]; /*cold gas metallicity*/
 	double zhot = y[5] / y[2]; /*hot gas metallicity*/
 
