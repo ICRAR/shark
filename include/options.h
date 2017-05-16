@@ -27,6 +27,7 @@
 
 #include <map>
 #include <string>
+#include <sstream>
 #include <stdexcept>
 
 #include "utils.h"

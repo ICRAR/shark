@@ -92,6 +92,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(SHARKLIB_SRCS
    src/options.cpp
    src/ode_solver.cpp
+   src/stellar_feedback.cpp
    src/system.cpp
    src/utils.cpp
    src/hdf5/iobase.cpp
