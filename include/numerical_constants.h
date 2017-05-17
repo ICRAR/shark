@@ -1,5 +1,5 @@
 /*
- * NumericalConstans.h
+ * numerical_constants.h
  *
  *  Created on: 10Apr.,2017
  *      Author: clagos
@@ -8,9 +8,7 @@
 
 #include <cmath>
 
-class Numerical_Parameters {
-
-public:
+class Numerical_Constants {
 
 	float SQRT2=1.4142135624,LN2=0.6931471806,LN10=2.3025850930,ISO_FAC=2.5/LN10,log4=0.602059991;
 	/* Euler's constant.*/
@@ -139,6 +137,5 @@ public:
 	float corr_factor_He=1.35; /*correction factor to account for helium when only hydrogen is given: H=Mcold/corr_factor_He.*/
 	float PressureConst=4.33e-12; /*Constant converting the gravity and Boltzmann constants from the MKS system to the units necessary to obtain the pressure in units of K*cm^-3 (cgs).*/
 	double Eddngtn_Lmnsty_Scale_Factor=4.0*PI*c_light*G_SI*MSOLAR*1.0e-20*M_Atomic*Atomic_Mass_Hydrogen/(sigma_Thomson*1.0e20), Eddngtn_Mdot_Constant = 0.1;
-
 
 };

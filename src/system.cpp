@@ -28,7 +28,7 @@
 namespace shark {
 
 static
-int basic_system_evaluator(double t, const double y[], double f[], void *data) {
+int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *data) {
 
 	/*
 	 * f[0]: stellar mass of galaxy.
@@ -39,13 +39,13 @@ int basic_system_evaluator(double t, const double y[], double f[], void *data) {
 	 * f[5]: metals locked in the hot gas mass.
 	 */
 
-	BasicSystem *system = dynamic_cast<BasicSystem *>(data);
+	BasicPhysicalModel *physicalmodel= dynamic_cast<BasicPhysicalModel *>(data);
 
 	double tau = 2.0; /*star formation timescale assumed to be 2Gyr*/
-	double R = system->recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
-	double yield = system->recycling_parameters.yield; /*yield of newly formed stars*/
+	double R = physicalmodel->recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
+	double yield = physicalmodel->recycling_parameters.yield; /*yield of newly formed stars*/
 	double mcoolrate = 5e8; /*cooling rate in units of Msun/Gyr*/
-	double beta = system->stellar_feedback_outflow_rate(y); /*mass loading parameter*/
+	double beta = physicalmodel->stellar_feedback_outflow_rate(y); /*mass loading parameter*/
 	double SFR = y[1] * starformation_parameters.nu_sf; /*star formation rate assumed to be cold gas mass divided by time*/
 	double zcold = y[4] / y[1]; /*cold gas metallicity*/
 	double zhot = y[5] / y[2]; /*hot gas metallicity*/
@@ -60,14 +60,14 @@ int basic_system_evaluator(double t, const double y[], double f[], void *data) {
 	return 0;
 }
 
-BasicSystem::BasicSystem(double t0, double delta_t, double ode_solver_precision) :
-	System(t0, delta_t, ode_solver_precision, basic_system_evaluator)
+BasicPhysicalModel::BasicPhysicalModel(double t0, double delta_t, double ode_solver_precision) :
+		PhysicalModel(t0, delta_t, ode_solver_precision, basic_physicalmodel_evaluator)
 {
 	// no-op
 }
 
 static
-int basic_system_with_satellites_evaluator(double t, const double y[], double f[], void *) {
+int basic_physicalmodel_for_satellites_evaluator(double t, const double y[], double f[], void *) {
 
 	/*
 	 * f[0]: stellar mass of galaxy.
@@ -98,8 +98,8 @@ int basic_system_with_satellites_evaluator(double t, const double y[], double f[
 	return 0;
 }
 
-BasicSystemWithSatellites::BasicSystemWithSatellites(double t0, double delta_t, double ode_solver_precision) :
-	System(t0, delta_t, ode_solver_precision, basic_system_with_satellites_evaluator)
+BasicPhysicalModelForSatellites::BasicPhysicalModelForSatellites(double t0, double delta_t, double ode_solver_precision) :
+	PhysicalModel(t0, delta_t, ode_solver_precision, basic_physicalmodel_for_satellites_evaluator)
 {
 	// no-op
 }

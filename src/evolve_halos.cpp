@@ -19,7 +19,7 @@ using namespace std;
 namespace shark {
 
 static
-void evolve_system(System &system, shared_ptr<Subhalo> &subhalo, int snapshot){
+void evolve_system(BasicPhysicalModel &physicalmodel, shared_ptr<Subhalo> &subhalo, int snapshot){
 
 	//return 0;
 	//
@@ -29,13 +29,13 @@ void evolve_system(System &system, shared_ptr<Subhalo> &subhalo, int snapshot){
 
 	// Solve ODEs for this system
 	for(shared_ptr<Galaxy> &galaxy: subhalo->galaxies) {
-		system.evolve_galaxy(galax);
+		physicalmodel.evolve_galaxy(subhalo,galaxy);
 		//Solve_Systems();
 	}
 
 }
 
-void populate_halos(System &system, shared_ptr<Halo> halo, int snapshot) {
+void populate_halos(BasicPhysicalModel &physicalmodel, shared_ptr<Halo> halo, int snapshot) {
 
 	//
 	// Determine if there is any exchange of galaxies between subhalos.
@@ -45,7 +45,7 @@ void populate_halos(System &system, shared_ptr<Halo> halo, int snapshot) {
 
 
 	for(shared_ptr<Subhalo> &subhalo: halo->subhalos) {
-		evolve_system(system, subhalo, snapshot);
+		evolve_system(physicalmodel, subhalo, snapshot);
 	}
 }
 

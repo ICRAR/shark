@@ -38,13 +38,6 @@ public:
 	double Accuracy_SFeqs;
 };
 
-class StellarFeedbackParameters {
-public:
-	double eta_cc;
-	double SNe_Energy;
-	double epsilon_sn;
-	double beta_sn;
-};
 
 class reionisation_parameters {
 public:

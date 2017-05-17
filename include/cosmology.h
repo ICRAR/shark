@@ -51,9 +51,10 @@ typedef std::vector<PowerSpectrumElement> PowerSpectrum;
 /**
  * A set of cosmological parameters
  */
-class CosmologicalParameters {
+class CosmologicalParameters : public Options{
 
 public:
+	CosmologicalParameters(const std::string &filename);
 	float OmegaM;
 	float OmegaB;
 	float OmegaL;

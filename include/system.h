@@ -38,17 +38,17 @@
 namespace shark {
 
 template <int NC>
-class System {
+class PhysicalModel {
 
 public:
-	System(double ode_solver_precision, ODESolver::ode_evaluator evaluator) :
+	PhysicalModel(double ode_solver_precision, ODESolver::ode_evaluator evaluator) :
 		ode_system(std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, NULL, NC, this})),
 		ode_solver_precision(ode_solver_precision)
 	{
 		// no-opsrc/utils.cpp
 	}
 
-	virtual ~System()
+	virtual ~PhysicalModel()
 	{
 		// no-op
 	}
@@ -78,9 +78,9 @@ private:
 	double ode_solver_precision;
 };
 
-class BasicSystem : public System<6> {
+class BasicPhysicalModel : public PhysicalModel<6> {
 public:
-	BasicSystem(double t0, double delta_t, double ode_solver_precision);
+	BasicPhysicalModel(double t0, double delta_t, double ode_solver_precision);
 
 	virtual std::vector<double> from_galaxy(Subhalo &subhalo, Galaxy &galaxy) = 0;
 	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
@@ -91,9 +91,9 @@ public:
 	double (*stellar_formation_law)(double []);
 };
 
-class BasicSystemWithSatellites : public System<7> {
+class BasicPhysicalModelForSatellites : public PhysicalModel<7> {
 public:
-	BasicSystemWithSatellites(double t0, double delta_t, double ode_solver_precision);
+	BasicPhysicalModelForSatellites(double t0, double delta_t, double ode_solver_precision);
 
 	virtual std::vector<double> from_galaxy(Subhalo &subhalo, Galaxy &galaxy) = 0;
 	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;

@@ -8,16 +8,22 @@
 
 #include <cmath>
 #include <memory>
+#include <string>
 
 #include "components.h"
 #include "cosmology.h"
 #include "numerical_constants.h"
 #include "simulation.h"
+#include "parameters.h"
 
 using namespace std;
 
-void starformation_parameters(){
+void read_parameters(char *fname){
+	FILE *fd
 
+	if((fd = fopen(fname, "r"))){
+		//here find the name of parameters and read them.
 
+	}
 }
 
