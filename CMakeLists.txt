@@ -90,8 +90,10 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS
+   src/gas_cooling.cpp
    src/options.cpp
    src/ode_solver.cpp
+   src/star_formation.cpp
    src/stellar_feedback.cpp
    src/system.cpp
    src/utils.cpp

@@ -1,5 +1,12 @@
+/*
+ * star_formation.h
+ *
+ *  Created on: 17May,2017
+ *      Author: clagos
+ */
+
 //
-// Parameters used as input for shark
+// star formation classes
 //
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
@@ -22,37 +29,39 @@
 // MA 02111-1307  USA
 //
 
-#ifndef SHARK_PARAMETERS_H_
-#define SHARK_PARAMETERS_H_
 
-#include <vector>
+#ifndef INCLUDE_STAR_FORMATION_H_
+#define INCLUDE_STAR_FORMATION_H_
+
+#include "options.h"
 
 namespace shark {
 
-class reionisation_parameters {
+class StarFormationParameters : public Options {
+
 public:
-	double vcut;
-	double zcut;
+	StarFormationParameters(const std::string &filename);
+
+	int Molecular_BR_Law;
+	double nu_sf;
+	double Po;
+	double beta_press;
+	double Accuracy_SFeqs;
 };
 
-class RecyclingParameters {
-public:
-	double yield;
-	double recycle;
-	double zsun;
-};
 
-class Parameters {
+class StarFormation {
+
 public:
-	std::vector<int> writing_outputs;
-	//flags of physical processes that are on.
-	int ReionizationOn;
-	int SupernovaFeedbackOn;
-	int DiskInstabilityOn;
-	int AGNFeedbackOn;
-	int SFprescription;
+	StarFormation(StarFormationParameters parameters);
+
+	double star_formation_rate(double mcold, double mstars, double rgas, double rstars);
+
+private:
+	StarFormationParameters parameters;
 };
 
 }  // namespace shark
 
-#endif // SHARK_PARAMETERS_H_
+#endif /* INCLUDE_STAR_FORMATION_H_ */
+

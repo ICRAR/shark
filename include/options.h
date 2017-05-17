@@ -106,6 +106,10 @@ protected:
 		return detail::Helper<T>::get(name, it->second);
 	}
 
+	bool is_skipable(const std::string &s) {
+		return s.size() == 0 or s[0] == '#';
+	}
+
 	options_t options;
 
 };

@@ -1,4 +1,3 @@
-
 //
 // A collection of numerical constants used throughout shark
 //
@@ -27,7 +26,6 @@
 #define SHARK_NUMERICAL_CONSTANTS_H_
 
 #include <cmath>
-
 
 namespace shark {
 
@@ -92,7 +90,7 @@ public:
 	constexpr static float Right_Angle_Degrees=90.0; /*Number of degrees in a right angle.*/
 	constexpr static float Semi_Circle_Degrees=180.0; /*Number of degrees in a semi-circle.*/
 	constexpr static float MPC2ASat10pc=(MEGA/DECA)*RAD2AS, logMPC2ASat10pc=logMEGA-logDECA+logRAD2AS; /*Converts Mpc to arcseconds for
-	                                                                                    bjects placed at a distance of 10pc.*/
+	                                                                                    objects placed at a distance of 10pc.*/
 
 	/*Properties of the Sun.*/
 	/*The mass of the Sun in kg (Allen's Astrophysical Quantities, page 12).*/
@@ -166,7 +164,6 @@ public:
 	constexpr static float corr_factor_He=1.35; /*correction factor to account for helium when only hydrogen is given: H=Mcold/corr_factor_He.*/
 	constexpr static float PressureConst=4.33e-12; /*Constant converting the gravity and Boltzmann constants from the MKS system to the units necessary to obtain the pressure in units of K*cm^-3 (cgs).*/
 	constexpr static double Eddngtn_Lmnsty_Scale_Factor=4.0*PI*c_light*G_SI*MSOLAR*1.0e-20*M_Atomic*Atomic_Mass_Hydrogen/(sigma_Thomson*1.0e20), Eddngtn_Mdot_Constant = 0.1;
-
 
 };
 

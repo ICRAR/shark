@@ -41,7 +41,7 @@ StellarFeedbackParameters::StellarFeedbackParameters(const std::string &filename
 	load("stellar_feedback.epsilon_cc", epsilon_cc);
 	load("stellar_feedback.beta", beta);
 	//converte energy of SNe into to code units.
-	eta_cc = eta_cc *std::pow(NumericalParameters::MSOLAR_g,-1.0)*std::pow(NumericalParameters::MPC2CM,-2.0)*std::pow(NumericalParameters::GYR2S,-3.0);
+	eta_cc = eta_cc *std::pow(NumericalConstants::MSOLAR_g,-1.0)*std::pow(NumericalConstants::MPC2CM,-2.0)*std::pow(NumericalConstants::GYR2S,-3.0);
 }
 
 

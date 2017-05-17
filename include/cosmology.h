@@ -33,6 +33,8 @@
 
 #include <vector>
 
+#include "options.h"
+
 namespace shark {
 
 /**
@@ -51,7 +53,7 @@ typedef std::vector<PowerSpectrumElement> PowerSpectrum;
 /**
  * A set of cosmological parameters
  */
-class CosmologicalParameters : public Options{
+class CosmologicalParameters : public Options {
 
 public:
 	CosmologicalParameters(const std::string &filename);

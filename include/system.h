@@ -34,6 +34,9 @@
 #include "components.h"
 #include "ode_solver.h"
 #include "parameters.h"
+#include "stellar_feedback.h"
+#include "star_formation.h"
+#include "gas_cooling.h"
 
 namespace shark {
 
@@ -41,9 +44,11 @@ template <int NC>
 class PhysicalModel {
 
 public:
-	PhysicalModel(double ode_solver_precision, ODESolver::ode_evaluator evaluator) :
+	PhysicalModel(double ode_solver_precision, ODESolver::ode_evaluator evaluator,
+			GasCooling gas_cooling) :
 		ode_system(std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, NULL, NC, this})),
-		ode_solver_precision(ode_solver_precision)
+		ode_solver_precision(ode_solver_precision),
+		gas_cooling(gas_cooling)
 	{
 		// no-opsrc/utils.cpp
 	}
@@ -64,7 +69,7 @@ public:
 
 	void evolve_galaxy(Subhalo &subhalo, Galaxy &galaxy)
 	{
-		double mcool = Cooling_Subhalo(subhalo,galaxy);
+		double mcool = gas_cooling.cooling_rate(subhalo.halo_gas.mass, subhalo.Mvir, subhalo.Vvir, subhalo.halo_gas.mass_metals);
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
 		std::vector<double> y1 = get_solver(t0, delta_t, y0).evolve();
 		to_galaxy(y1, subhalo, galaxy);
@@ -76,28 +81,23 @@ public:
 private:
 	std::shared_ptr<gsl_odeiv2_system> ode_system;
 	double ode_solver_precision;
+	GasCooling gas_cooling;
 };
 
 class BasicPhysicalModel : public PhysicalModel<6> {
 public:
-	BasicPhysicalModel(double t0, double delta_t, double ode_solver_precision);
+	BasicPhysicalModel(double ode_solver_precision,
+			GasCooling gas_cooling,
+			StellarFeedback stellar_feedback,
+			StarFormation star_formation,
+			RecyclingParameters recycling_parameters);
 
 	virtual std::vector<double> from_galaxy(Subhalo &subhalo, Galaxy &galaxy) = 0;
 	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
 
-	StellarFeedbackParameters stellar_feedback_parameters;
+	StellarFeedback stellar_feedback;
+	StarFormation star_formation;
 	RecyclingParameters recycling_parameters;
-	double (*stellar_feedback_outflow_rate)(double []);
-	double (*stellar_formation_law)(double []);
-};
-
-class BasicPhysicalModelForSatellites : public PhysicalModel<7> {
-public:
-	BasicPhysicalModelForSatellites(double t0, double delta_t, double ode_solver_precision);
-
-	virtual std::vector<double> from_galaxy(Subhalo &subhalo, Galaxy &galaxy) = 0;
-	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
-
 };
 
 }  // namespace shark

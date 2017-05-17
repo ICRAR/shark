@@ -184,10 +184,23 @@ public:
 	/** TODO: Properly document these */
 	int haloID; /*Which halos does this subhalo belong to*/
 	float Vvir;
-	float Rvir;
+	float Mvir;
 	float L[3];
 	float mass;
 	float Concentration;
+
+	/**
+	 * Hot gas component of the halo and outside the galaxies that is
+	 * allowed to cool down and/or fall onto the galaxy.
+	 */
+	Baryon halo_gas;
+
+	/**
+	 * Hot gas component of the halo and outside galaxies that tracks
+	 * the ejected outflowing gas from the galaxy and that is not
+	 * available for cooling yet.
+	 */
+	Baryon ejected_galaxy_gas;
 
 	/**
 	 * A list of pointers to the ascendants of this subhalo, sorted by mass in
@@ -209,7 +222,6 @@ class SuperSubhalo : public Subhalo {
 public:
 	float rscale;
 	float sAM;
-	Baryon halo_gas; /*Total gas mass of the halo, and outside the galaxies that is allowed to cool down and/or fall onto the galaxy.*/
 	Baryon ejected_galaxy_gas; /*Gas that has been ejected by the galaxy but lives inside the halo.*/
 	Baryon ejected_halo_gas; /*Gas that has been ejected outside the halo.*/
 	Baryon halo_stars; /*Stars that live in the halo and outside the galaxy.*/
