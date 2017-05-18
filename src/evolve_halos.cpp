@@ -8,11 +8,7 @@
 #include <cmath>
 #include <memory>
 
-#include "components.h"
-#include "cosmology.h"
-#include "numerical_constants.h"
-#include "simulation.h"
-#include "system.h"
+#include "evolve_halos.h"
 
 using namespace std;
 

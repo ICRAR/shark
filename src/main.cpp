@@ -27,14 +27,14 @@
 #include <memory>
 #include <vector>
 
+#include "components.h"
 #include "cosmology.h"
 #include "evolve_halos.h"
-#include "components.h"
 #include "numerical_constants.h"
 #include "parameters.h"
+#include "physical_model.h"
 #include "simulation.h"
 
-#include "system.h"
 
 using namespace shark;
 using namespace std;

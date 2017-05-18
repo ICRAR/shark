@@ -93,9 +93,9 @@ set(SHARKLIB_SRCS
    src/gas_cooling.cpp
    src/options.cpp
    src/ode_solver.cpp
+   src/physical_model.cpp
    src/star_formation.cpp
    src/stellar_feedback.cpp
-   src/system.cpp
    src/utils.cpp
    src/hdf5/iobase.cpp
    src/hdf5/reader.cpp

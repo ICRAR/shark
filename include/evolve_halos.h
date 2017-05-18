@@ -26,7 +26,7 @@
 #define SHARK_EVOLVE_HALOS_H_
 
 #include "components.h"
-#include "system.h"
+#include "physical_model.h"
 
 namespace shark {
 
