@@ -25,21 +25,27 @@ namespace shark {
 struct CoolingTable {
 	std::vector<double> log10lam;
 	std::vector<double> log10temp;
-	std::vector<double> log10zmetal;
+	std::vector<double> zmetal;
 };
 
 class GasCoolingParameters : public Options {
 
 public:
 
-	enum CoolingModel {
+	enum LambdaCoolingModel {
 		CLOUDY = 0,
 		SUTHERLAND
+	};
+
+	enum CoolingModel {
+		CROTON06 = 0,
+		GALFORM
 	};
 
 	GasCoolingParameters(const std::string &filename);
 
 	double rcore;
+	LambdaCoolingModel lambdamodel;
 	CoolingModel model;
 	//cooling tables
     CoolingTable cooling_table; //these should be an array of parameters.

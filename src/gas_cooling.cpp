@@ -24,21 +24,23 @@ namespace shark {
 GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 	Options(filename),
 	rcore(0),
-	model(CLOUDY),
+	model(CROTON06),
+	lambdamodel(CLOUDY),
 	cooling_table()
 
 {
 	string cooling_tables_dir;
+	load("gas_cooling.model", model)
 	load("gas_cooling.rcore", rcore);
-	load("gas_cooling.model", model);
+	load("gas_cooling.lambdamodel", lambdamodel);
 	load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
 
     //read cooling tables and load values in
 	string prefix;
-	if (model == CLOUDY) {
+	if (lambdamodel == CLOUDY) {
 		prefix = "C08.00_";
 	}
-	else if (model == SUTHERLAND) {
+	else if (lambdamodel == SUTHERLAND) {
 		prefix = "S93_";
 	}
 
@@ -86,7 +88,7 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 
 			cooling_table.log10lam.push_back(logl);
 			cooling_table.log10temp.push_back(t);
-			cooling_table.log10zmetal.push_back(metallicity);
+			cooling_table.zmetal.push_back(metallicity);
 
 		}
 		f.close();
@@ -96,12 +98,26 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 namespace detail {
 
 template <>
-GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::get(const std::string &name, const std::string &value) {
+GasCoolingParameters::LambdaCoolingModel Helper<GasCoolingParameters::LambdaCoolingModel>::get(const std::string &name, const std::string &value) {
 	if ( value == "cloudy" ) {
 		return GasCoolingParameters::CLOUDY;
 	}
 	else if ( value == "sutherland" ) {
 		return GasCoolingParameters::SUTHERLAND;
+	}
+	std::ostringstream os;
+	os << name << " option value invalid: " << value;
+	throw invalid_option(os.str());
+}
+
+
+template <>
+GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::get(const std::string &name, const std::string &value) {
+	if ( value == "Croton06" ) {
+		return GasCoolingParameters::CROTON06;
+	}
+	else if ( value == "Galform" ) {
+		return GasCoolingParameters::GALFORM;
 	}
 	std::ostringstream os;
 	os << name << " option value invalid: " << value;
@@ -124,32 +140,35 @@ double GasCooling::cooling_rate(double mhot, double mvir, double vvir, double mz
     gsl_interp_accel *xacc = gsl_interp_accel_alloc();
     gsl_interp_accel *yacc = gsl_interp_accel_alloc();
 
-    double lgzhot = log10(mzhot/mhot);
+    double zhot = (mzhot/mhot);
 
     double Tvir = 35.9*std::pow(vvir,2); //in K.
     double lgTvir = log10(Tvir); //in K.
 
     double Rvir = NumericalConstants::G*mvir/std::pow(vvir,2); //in Mpc.
 
-    double tcoolGyr = Rvir/vvir*NumericalConstants::KMS2MPCGYR; //in Gyr.
+    if(parameters.model == CROTON06)
+    {
+    	double tcoolGyr = Rvir/vvir*NumericalConstants::KMS2MPCGYR; //in Gyr.
 
-    double tcool = tcoolGyr*NumericalConstants::GYR2S; //in seconds.
+    	double tcool = tcoolGyr*NumericalConstants::GYR2S; //in seconds.
 
-    double rho_shell = mhot*NumericalConstants::MSOLAR_g/NumericalConstants::PI4/(Rvir*NumericalConstants::MPC2CM); //in cgs.
+    	double rho_shell = mhot*NumericalConstants::MSOLAR_g/NumericalConstants::PI4/(Rvir*NumericalConstants::MPC2CM); //in cgs.
 
-    double logl = gsl_interp2d_eval_extrap(interp.get(), parameters.cooling_table.log10temp.data(), parameters.cooling_table.log10zmetal.data(), parameters.cooling_table.log10lam.data(), lgTvir, lgzhot, xacc, yacc); //in cgs
+    	double logl = gsl_interp2d_eval_extrap(interp.get(), parameters.cooling_table.log10temp.data(), parameters.cooling_table.zmetal.data(), parameters.cooling_table.log10lam.data(), lgTvir, zhot, xacc, yacc); //in cgs
 
-    double denominator_temp = 1.5*NumericalConstants::M_Atomic_g*NumericalConstants::mu_Primordial*NumericalConstants::k_Boltzmann_erg*Tvir; //in cgs
+    	double denominator_temp = 1.5*NumericalConstants::M_Atomic_g*NumericalConstants::mu_Primordial*NumericalConstants::k_Boltzmann_erg*Tvir; //in cgs
 
-    double r_cool = pow(rho_shell*tcool*pow(logl,10)/denominator_temp,0.5)/NumericalConstants::MPC2CM; //in Mpc.
+    	double r_cool = pow(rho_shell*tcool*pow(logl,10)/denominator_temp,0.5)/NumericalConstants::MPC2CM; //in Mpc.
 
-    if(r_cool < Rvir){
-    	//cooling radius smaller than virial radius
-    	coolingrate = 0.5*(r_cool/Rvir)*(mhot/tcoolGyr); //in Msun/Gyr.
-    }
-    else {
-    	//cooling radius larger than virial radius
-    	coolingrate = mhot/tcoolGyr;
+    	if(r_cool < Rvir){
+    		//cooling radius smaller than virial radius
+    		coolingrate = 0.5*(r_cool/Rvir)*(mhot/tcoolGyr); //in Msun/Gyr.
+    	}
+    	else {
+    		//cooling radius larger than virial radius
+    		coolingrate = mhot/tcoolGyr;
+    	}
     }
 
 	return coolingrate;
