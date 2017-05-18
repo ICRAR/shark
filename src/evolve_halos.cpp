@@ -8,11 +8,7 @@
 #include <cmath>
 #include <memory>
 
-#include "components.h"
-#include "cosmology.h"
-#include "numerical_constants.h"
-#include "simulation.h"
-#include "system.h"
+#include "evolve_halos.h"
 
 using namespace std;
 
@@ -29,7 +25,7 @@ void evolve_system(BasicPhysicalModel &physicalmodel, shared_ptr<Subhalo> &subha
 
 	// Solve ODEs for this system
 	for(shared_ptr<Galaxy> &galaxy: subhalo->galaxies) {
-		physicalmodel.evolve_galaxy(subhalo,galaxy);
+		physicalmodel.evolve_galaxy(subhalo, galaxy, (double)snapshot, (double)snapshot+1);
 		//Solve_Systems();
 	}
 

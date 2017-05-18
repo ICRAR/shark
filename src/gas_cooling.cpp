@@ -145,21 +145,22 @@ double GasCooling::cooling_rate(double mhot, double mvir, double vvir, double mz
     double Tvir = 35.9*std::pow(vvir,2); //in K.
     double lgTvir = log10(Tvir); //in K.
 
-    double Rvir = NumericalConstants::G*mvir/std::pow(vvir,2); //in Mpc.
+    double Rvir = constants::G*mvir/std::pow(vvir,2); //in Mpc.
 
     if(parameters.model == CROTON06)
     {
-    	double tcoolGyr = Rvir/vvir*NumericalConstants::KMS2MPCGYR; //in Gyr.
 
-    	double tcool = tcoolGyr*NumericalConstants::GYR2S; //in seconds.
+    	double tcoolGyr = Rvir/vvir*constants::KMS2MPCGYR; //in Gyr.
 
-    	double rho_shell = mhot*NumericalConstants::MSOLAR_g/NumericalConstants::PI4/(Rvir*NumericalConstants::MPC2CM); //in cgs.
+    	double tcool = tcoolGyr*constants::GYR2S; //in seconds.
+
+    	double rho_shell = mhot*constants::MSOLAR_g/constants::PI4/(Rvir*constants::MPC2CM); //in cgs.
 
     	double logl = gsl_interp2d_eval_extrap(interp.get(), parameters.cooling_table.log10temp.data(), parameters.cooling_table.zmetal.data(), parameters.cooling_table.log10lam.data(), lgTvir, zhot, xacc, yacc); //in cgs
 
-    	double denominator_temp = 1.5*NumericalConstants::M_Atomic_g*NumericalConstants::mu_Primordial*NumericalConstants::k_Boltzmann_erg*Tvir; //in cgs
+    	double denominator_temp = 1.5*constants::M_Atomic_g*constants::mu_Primordial*constants::k_Boltzmann_erg*Tvir; //in cgs
 
-    	double r_cool = pow(rho_shell*tcool*pow(logl,10)/denominator_temp,0.5)/NumericalConstants::MPC2CM; //in Mpc.
+    	double r_cool = pow(rho_shell*tcool*pow(logl,10)/denominator_temp,0.5)/constants::MPC2CM; //in Mpc.
 
     	if(r_cool < Rvir){
     		//cooling radius smaller than virial radius

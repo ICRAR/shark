@@ -26,10 +26,11 @@
 #define SHARK_EVOLVE_HALOS_H_
 
 #include "components.h"
+#include "physical_model.h"
 
 namespace shark {
 
-void populate_halos(std::shared_ptr<Halo> halo, int snapshot);
+void populate_halos(BasicPhysicalModel &phisical_model, std::shared_ptr<Halo> halo, int snapshot);
 
 }  // namespace shark
 

@@ -3,7 +3,7 @@
 SHArk (Semi-analytic Halo Ark)
 is a new, flexible semi-analytic model of galaxy formation.
 
-## Compiling
+## Requirements
 
 SHArk is written in C++11,
 and therefore an up-to-date compiler supporting this standard is required.
@@ -21,6 +21,8 @@ For example:
 * In Fedora/CentOS/RedHat (as root): `yum install gsl-devel hdf5-devel`
 * In MacOS + Homebrew: `brew install gsl homebrew/science/hdf5`
 * In MacOS + MacPorts: `port install gsl-devel && port install hdf5`
+
+## Compiling
 
 SHArk uses [CMake](https://cmake.org/) as its build tool.
 `cmake` is used to perform system-level checks,

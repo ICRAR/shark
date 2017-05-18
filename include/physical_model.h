@@ -44,7 +44,9 @@ template <int NC>
 class PhysicalModel {
 
 public:
-	PhysicalModel(double ode_solver_precision, ODESolver::ode_evaluator evaluator,
+	PhysicalModel(
+			double ode_solver_precision,
+			ODESolver::ode_evaluator evaluator,
 			GasCooling gas_cooling) :
 		ode_system(std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, NULL, NC, this})),
 		ode_solver_precision(ode_solver_precision),
@@ -67,16 +69,16 @@ public:
 		return ODESolver(y0, t0, delta_t, ode_solver_precision, ode_system);
 	}
 
-	void evolve_galaxy(Subhalo &subhalo, Galaxy &galaxy)
+	void evolve_galaxy(std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy, double t0, double t1)
 	{
-		double mcool = gas_cooling.cooling_rate(subhalo.halo_gas.mass, subhalo.Mvir, subhalo.Vvir, subhalo.halo_gas.mass_metals);
+		double mcool = gas_cooling.cooling_rate(subhalo->halo_gas.mass, subhalo->Mvir, subhalo->Vvir, subhalo->halo_gas.mass_metals);
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
-		std::vector<double> y1 = get_solver(t0, delta_t, y0).evolve();
+		std::vector<double> y1 = get_solver(t0, t1 - t0, y0).evolve();
 		to_galaxy(y1, subhalo, galaxy);
 	}
 
-	virtual std::vector<double> from_galaxy(Subhalo &subhalo, Galaxy &galaxy) = 0;
-	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
+	virtual std::vector<double> from_galaxy(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Galaxy> &galaxy) = 0;
+	virtual void to_galaxy(const std::vector<double> &y, std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy) = 0;
 
 private:
 	std::shared_ptr<gsl_odeiv2_system> ode_system;
@@ -92,8 +94,8 @@ public:
 			StarFormation star_formation,
 			RecyclingParameters recycling_parameters);
 
-	virtual std::vector<double> from_galaxy(Subhalo &subhalo, Galaxy &galaxy) = 0;
-	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
+	std::vector<double> from_galaxy(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Galaxy> &galaxy);
+	void to_galaxy(const std::vector<double> &y, std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy);
 
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;

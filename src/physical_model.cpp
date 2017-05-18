@@ -22,8 +22,7 @@
 // MA 02111-1307  USA
 //
 
-#include "system.h"
-#include "parameters.h"
+#include "physical_model.h"
 
 namespace shark {
 
@@ -45,8 +44,8 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	double R = physicalmodel->recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
 	double yield = physicalmodel->recycling_parameters.yield; /*yield of newly formed stars*/
 	double mcoolrate = 5e8; /*cooling rate in units of Msun/Gyr*/
-	double beta = physicalmodel->stellar_feedback.outflow_rate(y); /*mass loading parameter*/
-	double SFR = y[1] * starformation_parameters.nu_sf; /*star formation rate assumed to be cold gas mass divided by time*/
+	double beta = physicalmodel->stellar_feedback.outflow_rate(y[0], y[1]); /*mass loading parameter*/
+	double SFR = y[1] * physicalmodel->star_formation.star_formation_rate(y[0], y[1], y[2], y[3]); /*star formation rate assumed to be cold gas mass divided by time*/
 	double zcold = y[4] / y[1]; /*cold gas metallicity*/
 	double zhot = y[5] / y[2]; /*hot gas metallicity*/
 
@@ -60,7 +59,8 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	return 0;
 }
 
-BasicPhysicalModel::BasicPhysicalModel(double ode_solver_precision,
+BasicPhysicalModel::BasicPhysicalModel(
+		double ode_solver_precision,
 		GasCooling gas_cooling,
 		StellarFeedback stellar_feedback,
 		StarFormation star_formation,
@@ -71,6 +71,23 @@ BasicPhysicalModel::BasicPhysicalModel(double ode_solver_precision,
 	recycling_parameters(recycling_parameters)
 {
 	// no-op
+}
+
+std::vector<double> BasicPhysicalModel::from_galaxy(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Galaxy> &galaxy)
+{
+
+	std::vector<double> y(6);
+
+	y[0] = galaxy->bulge_stars.mass;
+	// etc...
+
+	return y;
+}
+
+void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy)
+{
+	galaxy->bulge_gas.mass = y[0];
+	// etc...
 }
 
 
