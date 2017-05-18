@@ -72,8 +72,6 @@ void write_output(int snapshot, const vector<MergerTree> &merger_trees) {
  */
 int main(int argc, char **argv) {
 
-
-
 	if ( argc < 2 ) {
 		cerr << "Usage: " << argv[0] << " <params-file>" << endl;
 		return 1;
@@ -82,7 +80,12 @@ int main(int argc, char **argv) {
 	/* We read the parameters that have been given as input by the user.*/
 	Parameters params = read_parameters(argv[1]);
 
-	BasicPhysicalModel basic_physicalmodel(1e-6);
+	//GasCoolingParameters gas_cooling_params(argv[1]);
+	GasCooling gas_cooling = GasCooling(GasCoolingParameters(argv[1]));
+	StellarFeedback stellar_feedback = StellarFeedback(StellarFeedbackParameters(argv[1]));
+	StarFormation star_formation = StarFormation(StarFormationParameters(argv[1]));
+	RecyclingParameters recycling_parameters;
+	BasicPhysicalModel basic_physicalmodel(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
 
 	// We read the simulation parameters next. Note that by using a different
 	// reader allows the user to put all the information in one parameter file.

@@ -29,7 +29,7 @@ void evolve_system(BasicPhysicalModel &physicalmodel, shared_ptr<Subhalo> &subha
 
 	// Solve ODEs for this system
 	for(shared_ptr<Galaxy> &galaxy: subhalo->galaxies) {
-		physicalmodel.evolve_galaxy(subhalo,galaxy);
+		physicalmodel.evolve_galaxy(subhalo, galaxy, (double)snapshot, (double)snapshot+1);
 		//Solve_Systems();
 	}
 
