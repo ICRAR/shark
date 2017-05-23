@@ -8,6 +8,7 @@
 #ifndef INCLUDE_GAS_COOLING_H_
 #define INCLUDE_GAS_COOLING_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,6 +34,8 @@ class GasCoolingParameters : public Options {
 
 public:
 
+	typedef std::map<double, std::string> tables_idx;
+
 	enum LambdaCoolingModel {
 		CLOUDY = 0,
 		SUTHERLAND
@@ -49,7 +52,11 @@ public:
 	LambdaCoolingModel lambdamodel;
 	CoolingModel model;
 	//cooling tables
-    CoolingTable cooling_table; //these should be an array of parameters.
+	CoolingTable cooling_table; //these should be an array of parameters.
+
+private:
+	tables_idx find_tables(const std::string &cooling_tables_dir);
+	void load_tables(const std::string &cooling_tables_dir, const tables_idx &metallicity_tables);
 };
 
 

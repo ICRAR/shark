@@ -29,7 +29,6 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 	model(CROTON06),
 	lambdamodel(CLOUDY),
 	cooling_table()
-
 {
 	string cooling_tables_dir;
 	load("gas_cooling.model", model);
@@ -37,7 +36,14 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 	load("gas_cooling.lambdamodel", lambdamodel);
 	load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
 
-    //read cooling tables and load values in
+	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
+	load_tables(cooling_tables_dir, metallicity_tables);
+}
+
+GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
+	const string &cooling_tables_dir)
+{
+	//read cooling tables and load values in
 	string prefix;
 	if (lambdamodel == CLOUDY) {
 		prefix = "C08.00_";
@@ -70,6 +76,14 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 	}
 	f.close();
 
+	return metallicity_tables;
+}
+
+void GasCoolingParameters::load_tables(
+	const string &cooling_tables_dir,
+	const tables_idx &metallicity_tables)
+{
+
 	// Populate cooling_table
 	for(auto &kv: metallicity_tables) {
 
@@ -80,6 +94,7 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 		LOG(debug) << "Reading table " << fname << " for metallicity " << metallicity;
 
 		ifstream f = open_file(fname);
+		string line;
 		while ( getline(f, line) ) {
 
 			trim(line);
@@ -111,7 +126,7 @@ GasCoolingParameters::LambdaCoolingModel Helper<GasCoolingParameters::LambdaCool
 		return GasCoolingParameters::SUTHERLAND;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value;
+	os << name << " option value invalid: " << value << ". Supported values are cloudy and sutherland";
 	throw invalid_option(os.str());
 }
 
@@ -125,7 +140,7 @@ GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::g
 		return GasCoolingParameters::GALFORM;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value;
+	os << name << " option value invalid: " << value << ". Supported values are Croton06 and Galform";
 	throw invalid_option(os.str());
 }
 
