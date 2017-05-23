@@ -15,6 +15,7 @@
 
 #include "cosmology.h"
 #include "gas_cooling.h"
+#include "logging.h"
 #include "numerical_constants.h"
 #include "components.h"
 
@@ -48,6 +49,7 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 	string tables = cooling_tables_dir + "/" + prefix + "tables.txt";
 
 	// Collect metallicity tables information
+	LOG(debug) << "Reading metallicity table index" << tables;
 	string line;
 	map<double, string> metallicity_tables;
 	ifstream f = open_file(tables);
@@ -73,8 +75,10 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 
 		double metallicity = std::get<0>(kv);
 		string fname = std::get<1>(kv);
-
 		fname = cooling_tables_dir + "/" + fname;
+
+		LOG(debug) << "Reading table " << fname << " for metallicity " << metallicity;
+
 		ifstream f = open_file(fname);
 		while ( getline(f, line) ) {
 

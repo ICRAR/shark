@@ -79,10 +79,22 @@ macro(find_hdf5)
 endmacro()
 
 #
+# This is how we look for Boost
+# We are currently interested in the log library
+# which is a hard requirement -- if it's not there we fail misserably
+#
+macro(find_boost)
+	find_package(Boost REQUIRED COMPONENTS log)
+	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LOG_LIBRARY})
+	include_directories(${Boost_INCLUDE_DIRS})
+endmacro()
+
+#
 # Go out there and find stuff
 #
 find_gsl()
 find_hdf5()
+find_boost()
 
 # Common definitions for the shared lib and the binary
 add_definitions(-DSHARK_VERSION="${SHARK_VERSION}")
