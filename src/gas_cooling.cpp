@@ -88,8 +88,7 @@ void GasCoolingParameters::load_tables(
 	for(auto &kv: metallicity_tables) {
 
 		double metallicity = std::get<0>(kv);
-		string fname = std::get<1>(kv);
-		fname = cooling_tables_dir + "/" + fname;
+		const string fname = cooling_tables_dir + "/" + std::get<1>(kv);
 
 		LOG(debug) << "Reading table " << fname << " for metallicity " << metallicity;
 
