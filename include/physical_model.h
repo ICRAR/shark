@@ -71,7 +71,7 @@ public:
 
 	void evolve_galaxy(std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy, double t0, double t1)
 	{
-		double mcool = gas_cooling.cooling_rate(subhalo->halo_gas.mass, subhalo->Mvir, subhalo->Vvir, subhalo->halo_gas.mass_metals);
+		double mcoolrate = gas_cooling.cooling_rate(subhalo, t1-t0);
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
 		std::vector<double> y1 = get_solver(t0, t1 - t0, y0).evolve();
 		to_galaxy(y1, subhalo, galaxy);

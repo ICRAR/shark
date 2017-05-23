@@ -17,6 +17,7 @@
 #include <gsl/gsl_interp2d.h>
 
 #include "options.h"
+#include "components.h"
 
 namespace shark {
 /**
@@ -57,7 +58,7 @@ class GasCooling {
 public:
 	GasCooling(GasCoolingParameters parameters);
 
-	double cooling_rate(double mhot, double vvir, double mvir, double zhot);
+	double cooling_rate(std::shared_ptr<Subhalo> &subhalo, double deltat);
 
 private:
 	GasCoolingParameters parameters;

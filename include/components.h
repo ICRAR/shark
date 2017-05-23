@@ -132,6 +132,18 @@ public:
 class SpatialSatelliteGalaxy : public SatelliteGalaxy, public Spatial<float> {
 };
 
+
+/**
+ * This structure keeps track of the properties of the halo gas, which are necessary to implement a more sophisticated cooling model.
+ */
+struct CoolingSubhaloTracking {
+	std::vector<double> time;
+	std::vector<double> temp;
+	std::vector<double> mass;
+	std::vector<double> tcooling;
+};
+
+
 /** This class defines what a subhalo is. In an abstract sense, a subhalo is the quantum units of how dark matter clusters. Subhalos can
  * coexist with other subhalos in the same halo. A subhalo con also host 0, 1 or more galaxies depending on how we allow galaxies to populate
  * subhalos.
@@ -193,7 +205,19 @@ public:
 	 * Hot gas component of the halo and outside the galaxies that is
 	 * allowed to cool down and/or fall onto the galaxy.
 	 */
-	Baryon halo_gas;
+	Baryon hot_halo_gas;
+
+
+	/**
+	 * This component saves que information of the virial temperature, total halo gas and cooling time history.
+	 */
+	CoolingSubhaloTracking cooling_subhalo_tracking;
+
+	/**
+	 * Cold gas component of the halo and outside the galaxies that has
+	 * cooled down.
+	 */
+	Baryon cold_halo_gas;
 
 	/**
 	 * Hot gas component of the halo and outside galaxies that tracks

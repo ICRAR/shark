@@ -16,6 +16,7 @@
 #include "cosmology.h"
 #include "gas_cooling.h"
 #include "numerical_constants.h"
+#include "components.h"
 
 using namespace std;
 
@@ -30,7 +31,7 @@ GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
 
 {
 	string cooling_tables_dir;
-	load("gas_cooling.model", model)
+	load("gas_cooling.model", model);
 	load("gas_cooling.rcore", rcore);
 	load("gas_cooling.lambdamodel", lambdamodel);
 	load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
@@ -130,15 +131,22 @@ GasCooling::GasCooling(GasCoolingParameters parameters) :
 	parameters(parameters),
 	interp(nullptr)
 {
-	interp.reset(gsl_interp2d_alloc(gsl_interp2d_bilinear, parameters.cooling_table.log10temp.size(), parameters.cooling_table.log10zmetal.size()));
+	interp.reset(gsl_interp2d_alloc(gsl_interp2d_bilinear, parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size()));
 }
 
-double GasCooling::cooling_rate(double mhot, double mvir, double vvir, double mzhot) {
+double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double deltat) {
 
-    double coolingrate;
 
     gsl_interp_accel *xacc = gsl_interp_accel_alloc();
     gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+
+    double coolingrate;
+
+    //TODO: see if here it should be
+    double mhot = subhalo->hot_halo_gas.mass;
+    double mzhot = subhalo->hot_halo_gas.mass_metals;
+    double vvir = subhalo->Mvir;
+    double mvir = subhalo->Vvir;
 
     double zhot = (mzhot/mhot);
 
@@ -147,7 +155,12 @@ double GasCooling::cooling_rate(double mhot, double mvir, double vvir, double mz
 
     double Rvir = constants::G*mvir/std::pow(vvir,2); //in Mpc.
 
-    if(parameters.model == CROTON06)
+    /**
+     * This corresponds to the very simple model of Croton06, in which the cooling time is assumed to be equal to the
+     * dynamical timescale of the halo. With that assumption, and using an isothermal halo, the calculation of rcool and mcool
+     * is trivial.
+     */
+    if(parameters.model == GasCoolingParameters::CROTON06)
     {
 
     	double tcoolGyr = Rvir/vvir*constants::KMS2MPCGYR; //in Gyr.
@@ -171,6 +184,20 @@ double GasCooling::cooling_rate(double mhot, double mvir, double vvir, double mz
     		coolingrate = mhot/tcoolGyr;
     	}
     }
+
+
+    /**
+     * This corresponds to the GALFORM-like model. Specifically here we are implementing the Benson & Bower (2010) model
+     * for cooling, which calculated a time available for cooling depending on the integral of the the temperature
+     * mass and cooling time history.
+     */
+
+    if(parameters.model == GasCoolingParameters::GALFORM){
+
+    }
+
+    subhalo->cold_halo_gas.mass = coolingrate*deltat;
+    subhalo->cold_halo_gas.mass_metals = subhalo->cold_halo_gas.mass/mhot;
 
 	return coolingrate;
 }
