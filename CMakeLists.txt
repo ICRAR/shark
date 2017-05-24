@@ -57,14 +57,17 @@ macro(find_gsl)
 		endif()
 	endif()
 
-	if( GSL_FOUND )
-		include_directories(${GSL_INCLUDE_DIRS})
-		set(SHARK_LIBS ${SHARK_LIBS} ${GSL_LIBRARIES})
-	else()
+	if( NOT GSL_FOUND )
 		message(FATAL_ERROR
 				  "\nNo GSL found in the system. Please install the GSL "
 				  "development files and try again\n")
+	elseif( GSL_VERSION LESS "2.0" )
+		message(FATAL_ERROR
+				  "\nGSL version ${GSL_VERSION} found, but we need at least 2.0\n")
 	endif()
+
+	include_directories(${GSL_INCLUDE_DIRS})
+	set(SHARK_LIBS ${SHARK_LIBS} ${GSL_LIBRARIES})
 endmacro()
 
 #
