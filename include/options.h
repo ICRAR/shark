@@ -30,6 +30,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "logging.h"
 #include "utils.h"
 
 namespace shark {
@@ -83,7 +84,7 @@ protected:
 	 * @tparam T The type of the object returned by this methods
 	 */
 	template <typename T>
-	void load(const std::string &name, T &value_holder, bool mandatory = false) {
+	void load(const std::string &name, T &value_holder, bool mandatory = false) const {
 		if ( mandatory or options.find(name) != options.end() ) {
 			value_holder = get<T>(name);
 		}
@@ -96,17 +97,19 @@ protected:
 	 * @return
 	 */
 	template <typename T>
-	T get(const std::string &name) {
+	T get(const std::string &name) const {
 		options_t::const_iterator it = options.find(name);
 		if ( it == options.end() ) {
 			std::ostringstream os;
 			os << "Missing option: " << name;
 			throw invalid_option(os.str());
 		}
+
+		LOG(debug) << "Loading option " << name << " = " << it->second;
 		return detail::Helper<T>::get(name, it->second);
 	}
 
-	bool is_skipable(const std::string &s) {
+	bool is_skipable(const std::string &s) const {
 		return s.size() == 0 or s[0] == '#';
 	}
 
