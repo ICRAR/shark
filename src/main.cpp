@@ -30,6 +30,7 @@
 #include "components.h"
 #include "cosmology.h"
 #include "evolve_halos.h"
+#include "logging.h"
 #include "numerical_constants.h"
 #include "parameters.h"
 #include "physical_model.h"
@@ -65,6 +66,14 @@ void write_output(int snapshot, const vector<MergerTree> &merger_trees) {
 	return;
 }
 
+void setup_logging() {
+	namespace log = ::boost::log;
+	namespace trivial = ::boost::log::trivial;
+	log::core::get()->set_filter([](log::attribute_value_set const &s) {
+		return s["Priority"].extract<trivial::severity_level>() >= trivial::info;
+	});
+}
+
 /**
  * Main SHArk routine.
  *
@@ -76,6 +85,8 @@ int main(int argc, char **argv) {
 		cerr << "Usage: " << argv[0] << " <params-file>" << endl;
 		return 1;
 	}
+
+	setup_logging();
 
 	/* We read the parameters that have been given as input by the user.*/
 	Parameters params = read_parameters(argv[1]);
