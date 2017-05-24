@@ -32,12 +32,12 @@
 
 #include "utils.h"
 
+namespace shark {
+
 class invalid_option : public std::runtime_error {
 public:
 	invalid_option(const std::string &what) : std::runtime_error(what) {}
 };
-
-namespace shark {
 
 namespace detail {
 
