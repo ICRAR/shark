@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 # We have the version here
-file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION PROFIT_VERSION)
+file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
 
 # We have only C++ sources, but until cmake 3.4 the check_symbol_exists
 # macro didn't work properly if only defining C++ as the project language
@@ -99,9 +99,14 @@ find_gsl()
 find_hdf5()
 find_boost()
 
-# Common definitions for the shared lib and the binary
-add_definitions(-DSHARK_VERSION="${SHARK_VERSION}")
+#
+# Save all compile-time options here
+#
+configure_file(include/config.h.in include/config.h @ONLY)
+
+# Our own include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_BINARY_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS

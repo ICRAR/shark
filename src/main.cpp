@@ -29,6 +29,7 @@
 
 #include <boost/program_options.hpp>
 
+#include "config.h"
 #include "components.h"
 #include "cosmology.h"
 #include "evolve_halos.h"
@@ -116,7 +117,7 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 	if (vm.count("version")) {
-		cout << "SHArk version " << 0.1 << endl;
+		cout << "SHArk version " << SHARK_VERSION << endl;
 		return 0;
 	}
 	if (vm.count("config-file") == 0 ) {
