@@ -87,7 +87,7 @@ endmacro()
 # which is a hard requirement -- if it's not there we fail misserably
 #
 macro(find_boost)
-	find_package(Boost REQUIRED COMPONENTS log program_options system)
+	find_package(Boost 1.54 REQUIRED COMPONENTS log program_options system)
 	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LOG_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 	include_directories(${Boost_INCLUDE_DIRS})
 endmacro()
