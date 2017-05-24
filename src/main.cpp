@@ -27,6 +27,8 @@
 #include <memory>
 #include <vector>
 
+#include <boost/program_options.hpp>
+
 #include "components.h"
 #include "cosmology.h"
 #include "evolve_halos.h"
@@ -66,11 +68,15 @@ void write_output(int snapshot, const vector<MergerTree> &merger_trees) {
 	return;
 }
 
-void setup_logging() {
+void setup_logging(int lvl) {
+
 	namespace log = ::boost::log;
 	namespace trivial = ::boost::log::trivial;
-	log::core::get()->set_filter([](log::attribute_value_set const &s) {
-		return s["Priority"].extract<trivial::severity_level>() >= trivial::info;
+
+	trivial::severity_level sev_lvl = trivial::severity_level(lvl);
+	cout << "Setting logging filter to " << sev_lvl << endl;
+	log::core::get()->set_filter([sev_lvl](log::attribute_value_set const &s) {
+		return s["Severity"].extract<trivial::severity_level>() >= sev_lvl;
 	});
 }
 
@@ -81,20 +87,55 @@ void setup_logging() {
  */
 int main(int argc, char **argv) {
 
-	if ( argc < 2 ) {
-		cerr << "Usage: " << argv[0] << " <params-file>" << endl;
+	namespace po = boost::program_options;
+
+	po::options_description desc("SHArk options");
+	desc.add_options()
+		("help,h",      "Show this help message")
+		("version,V",   "Show version and exit")
+		("verbose,v",   po::value<int>()->default_value(2), "Verbosity level")
+		("config-file", po::value<string>(), "SHArk config file");
+
+	po::positional_options_description pdesc;
+	pdesc.add("config-file", 1);
+
+	// Read command-line options
+	po::variables_map vm;
+	try {
+		po::command_line_parser parser(argc, argv);
+		parser.options(desc).positional(pdesc);
+		po::store(parser.run(), vm);
+	} catch (const boost::program_options::error &e) {
+		cerr << "Error while parsing command-line: " << e.what() << endl;
+		return 1;
+	}
+	notify(vm);
+
+	if (vm.count("help")) {
+		cout << desc << endl;
+		return 0;
+	}
+	if (vm.count("version")) {
+		cout << "SHArk version " << 0.1 << endl;
+		return 0;
+	}
+	if (vm.count("config-file") == 0 ) {
+		cerr << "Missing mandatory <config-file> option" << endl;
 		return 1;
 	}
 
-	setup_logging();
+	// Set up logging with indicated log level
+	int verbosity = vm["verbose"].as<int>();
+	verbosity = min(max(verbosity, 0), 5);
+	setup_logging(verbosity);
 
 	/* We read the parameters that have been given as input by the user.*/
-	Parameters params = read_parameters(argv[1]);
+	string config_file = vm["config-file"].as<string>();
+	Parameters params = read_parameters(config_file);
 
-	//GasCoolingParameters gas_cooling_params(argv[1]);
-	GasCooling gas_cooling = GasCooling(GasCoolingParameters(argv[1]));
-	StellarFeedback stellar_feedback = StellarFeedback(StellarFeedbackParameters(argv[1]));
-	StarFormation star_formation = StarFormation(StarFormationParameters(argv[1]));
+	GasCooling gas_cooling{GasCoolingParameters(config_file)};
+	StellarFeedback stellar_feedback{StellarFeedbackParameters(config_file)};
+	StarFormation star_formation{StarFormationParameters(config_file)};
 	RecyclingParameters recycling_parameters;
 	BasicPhysicalModel basic_physicalmodel(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
 
