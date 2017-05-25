@@ -69,13 +69,21 @@ void write_output(int snapshot, const vector<MergerTree> &merger_trees) {
 	return;
 }
 
+void show_help(const char *prog, const boost::program_options::options_description &desc) {
+	cout << endl;
+	cout << "SHArk: Semianalytic Halos Ark" << endl;
+	cout << endl;
+	cout << "Usage: " << prog << " [options] config-file" << endl;
+	cout << endl;
+	cout << desc << endl;
+}
+
 void setup_logging(int lvl) {
 
 	namespace log = ::boost::log;
 	namespace trivial = ::boost::log::trivial;
 
 	trivial::severity_level sev_lvl = trivial::severity_level(lvl);
-	cout << "Setting logging filter to " << sev_lvl << endl;
 	log::core::get()->set_filter([sev_lvl](log::attribute_value_set const &s) {
 		return s["Severity"].extract<trivial::severity_level>() >= sev_lvl;
 	});
@@ -90,21 +98,25 @@ int main(int argc, char **argv) {
 
 	namespace po = boost::program_options;
 
-	po::options_description desc("SHArk options");
-	desc.add_options()
+	po::options_description visible_opts("SHArk options");
+	visible_opts.add_options()
 		("help,h",      "Show this help message")
 		("version,V",   "Show version and exit")
-		("verbose,v",   po::value<int>()->default_value(2), "Verbosity level")
-		("config-file", po::value<string>(), "SHArk config file");
+		("verbose,v",   po::value<int>()->default_value(3), "Verbosity level. Higher is more verbose");
 
 	po::positional_options_description pdesc;
 	pdesc.add("config-file", 1);
+
+	po::options_description all_opts;
+	all_opts.add(visible_opts);
+	all_opts.add_options()
+		("config-file", po::value<string>(), "SHArk config file");
 
 	// Read command-line options
 	po::variables_map vm;
 	try {
 		po::command_line_parser parser(argc, argv);
-		parser.options(desc).positional(pdesc);
+		parser.options(all_opts).positional(pdesc);
 		po::store(parser.run(), vm);
 	} catch (const boost::program_options::error &e) {
 		cerr << "Error while parsing command-line: " << e.what() << endl;
@@ -113,7 +125,7 @@ int main(int argc, char **argv) {
 	notify(vm);
 
 	if (vm.count("help")) {
-		cout << desc << endl;
+		show_help(argv[0], visible_opts);
 		return 0;
 	}
 	if (vm.count("version")) {
@@ -128,6 +140,7 @@ int main(int argc, char **argv) {
 	// Set up logging with indicated log level
 	int verbosity = vm["verbose"].as<int>();
 	verbosity = min(max(verbosity, 0), 5);
+	verbosity = 5 - verbosity;
 	setup_logging(verbosity);
 
 	/* We read the parameters that have been given as input by the user.*/
