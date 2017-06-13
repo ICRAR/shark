@@ -45,7 +45,8 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	double yield = physicalmodel->recycling_parameters.yield; /*yield of newly formed stars*/
 	double mcoolrate = 5e8; /*cooling rate in units of Msun/Gyr*/
 	double beta = physicalmodel->stellar_feedback.outflow_rate(y[0], y[1]); /*mass loading parameter*/
-	double SFR = y[1] * physicalmodel->star_formation.star_formation_rate(y[0], y[1], y[2], y[3]); /*star formation rate assumed to be cold gas mass divided by time*/
+	double z = 1;
+	double SFR = y[1] * physicalmodel->star_formation.star_formation_rate(y[0], y[1], y[2], y[3], z); /*star formation rate assumed to be cold gas mass divided by time*/
 	double zcold = y[4] / y[1]; /*cold gas metallicity*/
 	double zhot = y[5] / y[2]; /*hot gas metallicity*/
 

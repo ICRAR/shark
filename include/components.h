@@ -137,7 +137,7 @@ class SpatialSatelliteGalaxy : public SatelliteGalaxy, public Spatial<float> {
  * This structure keeps track of the properties of the halo gas, which are necessary to implement a more sophisticated cooling model.
  */
 struct CoolingSubhaloTracking {
-	std::vector<double> time;
+	std::vector<double> deltat;
 	std::vector<double> temp;
 	std::vector<double> mass;
 	std::vector<double> tcooling;

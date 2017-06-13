@@ -43,7 +43,7 @@ public:
 
 	enum CoolingModel {
 		CROTON06 = 0,
-		GALFORM
+		BENSON10
 	};
 
 	GasCoolingParameters(const std::string &filename);

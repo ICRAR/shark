@@ -53,6 +53,9 @@ StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters) :
 }
 
 double StellarFeedback::outflow_rate(double sfr, double v) {
+	/*
+	 * TODO: add here other models for the outflow rate (e.g. GALFORM models and momentum driven models).
+	 */
 	return parameters.epsilon_cc * parameters.e_sn /
 	       std::pow(v, parameters.beta) * parameters.eta_cc * sfr;
 }

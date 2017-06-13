@@ -45,6 +45,7 @@ namespace constants {
 	constexpr float PISQ=PI*PI, SQRTPI=1.7724538509, SQRT2PI=2.5066282746, SQRT2OPI=0.7978845608;
 	constexpr double DSQRTPI=1.77245385090551602729816748334114518279754945612239;
 	constexpr double DPI=3.14159265358979323846264338327950288419716939937510;
+	constexpr double SPI=DPI*4.0/3.0;
 
 	/*Standard multipliers.*/
 	constexpr float MILLI=1.0e-3, logMILLI=-3.0;
@@ -127,6 +128,8 @@ namespace constants {
 	constexpr float a_Radiation=8.0*std::pow(PI,5)*k_Boltzmann*std::pow(k_Boltzmann/c_light/h_Planck,3)/15.0; /*Radiation constant (J m^-3 K^-4).*/
 	constexpr float Atomic_Mass_Hydrogen=1.00794, sqrtAtomic_Mass_Hydrogen=1.00396215; /*Mass of hydrogen in units of M_Atomic (Particle Data Book 2002, page 283).*/
 	constexpr float Atomic_Mass_Helium=4.002602; /*Mass of helium in units of M_Atomic (Particle Data Book 2002, page 283).*/
+
+	constexpr double Pressure_SimUnits_cgs = std::pow(MSOLAR_g,-1)*MPC2CM*std::pow(GYR2S,2); /*constant to convert pressure from Msun*Mpc^-2*Gyr^-2, to gr*cm^-1*s^-2.
 
 	/*Electromagnetism.*/
 	constexpr float Permeability_of_Free_Space=4.0e-7*PI; /*Permeability of free space in units of N A^-2 (definition).*/

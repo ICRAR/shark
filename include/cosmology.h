@@ -32,23 +32,21 @@
 #define SHARK_COSMOLOGY_H_
 
 #include <vector>
+#include <string>
 
 #include "options.h"
 
 namespace shark {
 
 /**
- * An element of the power spectrum
+ * structure to save power spectrum
  */
-struct PowerSpectrumElement {
-	float k;
-	float p;
+
+struct PowerSpectrumTable {
+	std::vector<double> k;
+	std::vector<double> p;
 };
 
-/**
- * A power spectrum is simply a vector of power spectrum elements
- */
-typedef std::vector<PowerSpectrumElement> PowerSpectrum;
 
 /**
  * A set of cosmological parameters
@@ -57,13 +55,38 @@ class CosmologicalParameters : public Options {
 
 public:
 	CosmologicalParameters(const std::string &filename);
+
+	typedef std::map<double, std::string> tables_idx;
+
 	float OmegaM;
 	float OmegaB;
 	float OmegaL;
 	float n_s;
 	float sigma8;
 	float Hubble_h;
-	PowerSpectrum power_spectrum;
+	PowerSpectrumTable power_spectrum;
+
+private:
+	void load_tables(const std::string &power_spec_file);
+};
+
+
+/**
+ * Cosmology class that will contain all cosmological parameters.
+ */
+class Cosmology {
+
+public:
+	Cosmology(CosmologicalParameters parameters);
+
+	double comoving_to_physical_size(double r, double z);
+	double comoving_to_physical_velocity(double v, double z);
+	double comoving_to_physical_mass(double m);
+	double physical_to_comoving_mass(double m);
+
+private:
+	CosmologicalParameters parameters;
+
 };
 
 }  // namespace shark

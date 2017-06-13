@@ -33,6 +33,9 @@
 #ifndef INCLUDE_STAR_FORMATION_H_
 #define INCLUDE_STAR_FORMATION_H_
 
+#include <memory>
+
+#include "cosmology.h"
 #include "options.h"
 
 namespace shark {
@@ -47,18 +50,29 @@ public:
 	double Po;
 	double beta_press;
 	double Accuracy_SFeqs;
+	double gas_velocity_dispersion;
 };
 
 
 class StarFormation {
 
 public:
-	StarFormation(StarFormationParameters parameters);
+	StarFormation(StarFormationParameters parameters, std::shared_ptr<Cosmology> cosmology);
 
-	double star_formation_rate(double mcold, double mstars, double rgas, double rstars);
+	/**
+	 * All input quantities should be in comoving units.
+	 */
+	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double z);
+
+	double star_formation_rate_surface_density(double r, void * params);
+
+	double fmol(double Sigma_gas, double Sigma_stars, double r);
+
+	double midplane_pressure(double Sigma_gas, double Sigma_stars, double r);
 
 private:
 	StarFormationParameters parameters;
+	std::shared_ptr<Cosmology> cosmology;
 };
 
 }  // namespace shark

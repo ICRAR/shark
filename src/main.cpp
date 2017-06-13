@@ -147,9 +147,10 @@ int main(int argc, char **argv) {
 	string config_file = vm["config-file"].as<string>();
 	Parameters params = read_parameters(config_file);
 
+	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(CosmologicalParameters(config_file));
 	GasCooling gas_cooling{GasCoolingParameters(config_file)};
 	StellarFeedback stellar_feedback{StellarFeedbackParameters(config_file)};
-	StarFormation star_formation{StarFormationParameters(config_file)};
+	StarFormation star_formation{StarFormationParameters(config_file), cosmology};
 	RecyclingParameters recycling_parameters;
 	BasicPhysicalModel basic_physicalmodel(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
 

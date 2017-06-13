@@ -135,8 +135,8 @@ GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::g
 	if ( value == "Croton06" ) {
 		return GasCoolingParameters::CROTON06;
 	}
-	else if ( value == "Galform" ) {
-		return GasCoolingParameters::GALFORM;
+	else if ( value == "Benson10" ) {
+		return GasCoolingParameters::BENSON10;
 	}
 	std::ostringstream os;
 	os << name << " option value invalid: " << value << ". Supported values are Croton06 and Galform";
@@ -154,15 +154,17 @@ GasCooling::GasCooling(GasCoolingParameters parameters) :
 
 double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double deltat) {
 
+	using namespace constants;
 
     gsl_interp_accel *xacc = gsl_interp_accel_alloc();
     gsl_interp_accel *yacc = gsl_interp_accel_alloc();
 
     double coolingrate;
 
-    //TODO: see if here it should be
-    double mhot = subhalo->hot_halo_gas.mass;
-    double mzhot = subhalo->hot_halo_gas.mass_metals;
+    //TODO: see if here it should be total mass for both Croton and Benson models.
+    double mhot = subhalo->hot_halo_gas.mass+subhalo->cold_halo_gas.mass+subhalo->ejected_galaxy_gas.mass;
+    double mzhot = subhalo->hot_halo_gas.mass_metals+subhalo->cold_halo_gas.mass_metals+subhalo->ejected_galaxy_gas.mass_metals;
+
     double vvir = subhalo->Mvir;
     double mvir = subhalo->Vvir;
 
@@ -173,6 +175,23 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double deltat
 
     double Rvir = constants::G*mvir/std::pow(vvir,2); //in Mpc.
 
+	/**
+	 * Calculates the cooling Lambda function for the metallicity and temperature of this halo.
+	 */
+    double logl = gsl_interp2d_eval_extrap(interp.get(), parameters.cooling_table.log10temp.data(), parameters.cooling_table.zmetal.data(), parameters.cooling_table.log10lam.data(), lgTvir, zhot, xacc, yacc); //in cgs
+
+    /**
+     * rho_shell as defined by an isothermal profile.
+     * Any other hot gas profile should modify rho_shell.
+     */
+	double rho_shell = mhot*constants::MSOLAR_g/constants::PI4/(Rvir*constants::MPC2CM); //in cgs.
+
+	double denominator_temp = 1.5*constants::M_Atomic_g*constants::mu_Primordial*constants::k_Boltzmann_erg*Tvir; //in cgs
+
+
+	double tcool;
+	double tcharac;
+
     /**
      * This corresponds to the very simple model of Croton06, in which the cooling time is assumed to be equal to the
      * dynamical timescale of the halo. With that assumption, and using an isothermal halo, the calculation of rcool and mcool
@@ -181,26 +200,10 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double deltat
     if(parameters.model == GasCoolingParameters::CROTON06)
     {
 
-    	double tcoolGyr = Rvir/vvir*constants::KMS2MPCGYR; //in Gyr.
+    	tcool = Rvir/vvir*constants::KMS2MPCGYR; //in Gyr.
 
-    	double tcool = tcoolGyr*constants::GYR2S; //in seconds.
+    	tcharac = tcool*constants::GYR2S; //in seconds.
 
-    	double rho_shell = mhot*constants::MSOLAR_g/constants::PI4/(Rvir*constants::MPC2CM); //in cgs.
-
-    	double logl = gsl_interp2d_eval_extrap(interp.get(), parameters.cooling_table.log10temp.data(), parameters.cooling_table.zmetal.data(), parameters.cooling_table.log10lam.data(), lgTvir, zhot, xacc, yacc); //in cgs
-
-    	double denominator_temp = 1.5*constants::M_Atomic_g*constants::mu_Primordial*constants::k_Boltzmann_erg*Tvir; //in cgs
-
-    	double r_cool = pow(rho_shell*tcool*pow(logl,10)/denominator_temp,0.5)/constants::MPC2CM; //in Mpc.
-
-    	if(r_cool < Rvir){
-    		//cooling radius smaller than virial radius
-    		coolingrate = 0.5*(r_cool/Rvir)*(mhot/tcoolGyr); //in Msun/Gyr.
-    	}
-    	else {
-    		//cooling radius larger than virial radius
-    		coolingrate = mhot/tcoolGyr;
-    	}
     }
 
 
@@ -210,12 +213,57 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double deltat
      * mass and cooling time history.
      */
 
-    if(parameters.model == GasCoolingParameters::GALFORM){
+    if(parameters.model == GasCoolingParameters::BENSON10){
+
+    	/**
+    	 * Calculate mean density for notional cooling profile.
+    	 */
+    	double nh_density  = mhot*constants::MSOLAR_g/(constants::SPI*std::pow(Rvir*MPC2CM,3.0))/constants::M_Atomic_g; //in units of cm^-3.
+
+        tcool = 3.0*constants::k_Boltzmann_erg*Tvir/(2.0*std::pow(10,logl)*nh_density)/GYR2S; //cooling time at notional density in Gyr.
+
+		/**
+		 * Push back the cooling properties at this timestep.
+		 */
+        subhalo->cooling_subhalo_tracking.tcooling.push_back(tcool);
+		subhalo->cooling_subhalo_tracking.temp.push_back(Tvir);
+		subhalo->cooling_subhalo_tracking.mass.push_back(mhot);
+		subhalo->cooling_subhalo_tracking.deltat.push_back(deltat);
+
+		double integral = 0.0;//will save integral(T*M/tcool)
+
+    	for(unsigned i=0;i<subhalo->cooling_subhalo_tracking.deltat.size();++i){
+    	  integral += subhalo->cooling_subhalo_tracking.temp[i]*subhalo->cooling_subhalo_tracking.mass[i]/subhalo->cooling_subhalo_tracking.tcooling[i]*subhalo->cooling_subhalo_tracking.deltat[i];
+    	}
+    	tcharac = integral/(Tvir*mhot/tcool); //available time for cooling in Gyr.
 
     }
 
-    subhalo->cold_halo_gas.mass = coolingrate*deltat;
-    subhalo->cold_halo_gas.mass_metals = subhalo->cold_halo_gas.mass/mhot;
+    /**
+     * So fas r_cool assumes an isothermal profile. Any other profile changes rho_shell.
+     */
+	double r_cool = pow(rho_shell*tcharac*pow(10,logl)/denominator_temp,0.5)/constants::MPC2CM; //in Mpc.
+
+	if(r_cool < Rvir){
+		//cooling radius smaller than virial radius
+		coolingrate = 0.5*(r_cool/Rvir)*(mhot/tcool); //in Msun/Gyr.
+	}
+	else {
+		//cooling radius larger than virial radius
+		coolingrate = mhot/tcool;
+	}
+
+	/**
+	 * Save properties of cooling gas in the halo gas component that tracks the cold gas.
+	 */
+    subhalo->cold_halo_gas.mass += coolingrate*deltat;
+    subhalo->cold_halo_gas.mass_metals += subhalo->cold_halo_gas.mass/mhot*mzhot; //fraction of mass in the cold gas is the same as in metals.
+
+    /**
+     * Update hot halo gas properties as a response of how much cooling there is in this timestep;
+     */
+    subhalo->hot_halo_gas.mass -=subhalo->cold_halo_gas.mass;
+    subhalo->hot_halo_gas.mass_metals -= subhalo->cold_halo_gas.mass_metals;
 
 	return coolingrate;
 }
