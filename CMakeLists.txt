@@ -110,6 +110,7 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS
+   src/execution.cpp
    src/cosmology.cpp
    src/simulation.cpp
    src/gas_cooling.cpp

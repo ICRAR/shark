@@ -38,7 +38,7 @@
 #include "parameters.h"
 #include "physical_model.h"
 #include "simulation.h"
-
+#include "execution.h"
 
 using namespace shark;
 using namespace std;
@@ -138,6 +138,7 @@ int main(int argc, char **argv) {
 	/* We read the parameters that have been given as input by the user.*/
 	string config_file = vm["config-file"].as<string>();
 
+	ExecutionParameters exec_params(config_file);
 	SimulationParameters sim_params(config_file);
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(CosmologicalParameters(config_file));
 	Simulation simulation{sim_params, cosmology};
@@ -181,8 +182,8 @@ int main(int argc, char **argv) {
 		do_stuff_at_halo_level(all_halos_for_this_snapshot);
 
 //		/*write snapshots only if the user wants outputs at this time.*/
-//		if( std::find(params.writing_outputs.begin(), params.writing_outputs.end(), snapshot) != params.writing_outputs.end() ){
-//			write_output(snapshot, merger_trees);
+		if( std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() ){
+			write_output(snapshot, merger_trees);
 //		}
 	}
 
