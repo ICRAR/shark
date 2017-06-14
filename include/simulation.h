@@ -26,24 +26,44 @@
 #define SHARK_SIMULATION_H_
 
 #include <vector>
+#include <memory>
+#include <string>
+
+#include "cosmology.h"
+#include "options.h"
 
 namespace shark {
 
-class SimulationParameters {
+class SimulationParameters : public Options {
+
+public:
+	SimulationParameters(const std::string &filename);
+
+	float volume;
+	float particle_mass;
+
+	int min_snapshot;
+	int max_snapshot;
+
+	std::map<int,double> redshifts;
+
+	void load_simulation_tables(const std::string &redshift_file);
+};
+
+
+class Simulation {
 
 public:
 
-	float volume;
+	Simulation(SimulationParameters parameters, std::shared_ptr<Cosmology> cosmology);
 
-	float particle_mass;
+	double convert_snapshot_to_age(int s);
 
-	float halo_particle_threshold;
+private:
+	SimulationParameters parameters;
+	std::shared_ptr<Cosmology> cosmology;
 
-	int min_snapshots;
 
-	int max_snapshots;
-
-	std::vector<float> redshifts;
 };
 
 }  // namespace shark

@@ -8,13 +8,17 @@
 
 #include <cmath>
 #include <fstream>
+#include <sstream>
 #include <map>
 #include <tuple>
+#include <errno.h>
+#include <stdexcept>
 
 #include "cosmology.h"
 #include "logging.h"
 #include "numerical_constants.h"
 #include "components.h"
+#include "utils.h"
 
 namespace shark {
 
@@ -90,6 +94,64 @@ double Cosmology::comoving_to_physical_mass(double m){
 
 double Cosmology::physical_to_comoving_mass(double m){
 	return m*parameters.Hubble_h;
+}
+
+
+double Cosmology::convert_redshift_to_age(double z){
+
+	using namespace constants;
+
+	double Hubble_Time=1.0/H0100PGYR; //The Hubble time for H_0=100km/s/Mpc.
+
+	double err = std::pow(10,-5);
+	double t;
+
+	double a = 1/(1+z);
+
+	if(std::abs(1-parameters.OmegaM)< err && parameters.OmegaL == 0 ){//Einstein-de Sitter universe.
+		t = Hubble_Time*2*a*std::sqrt(a)/(3*parameters.Hubble_h);
+	}
+	else if (parameters.OmegaM < 1 && parameters.OmegaL == 0){// Open universe with no cosmological constant.
+		double zplus1 = 1/a;
+		t = Hubble_Time*(parameters.OmegaM/(2.0*parameters.Hubble_h* std::pow((1-parameters.OmegaM),1.5)))*(2.0*std::sqrt(1.0-parameters.OmegaM)*
+				std::sqrt(parameters.OmegaM*(zplus1-1.0)+1.0)/(parameters.OmegaM
+	            *zplus1)-std::acosh((parameters.OmegaM*(zplus1-1.0)-parameters.OmegaM+2.0)/(parameters.OmegaM*zplus1)));
+	}
+	else if(std::abs(1-parameters.OmegaM+parameters.OmegaL) < err){//Flat with non-zero lambda.
+		t = Hubble_Time*(2/(3*parameters.Hubble_h*std::sqrt(1-parameters.OmegaM)))*std::asinh(std::sqrt((1.0/parameters.OmegaM-1.0)*a)*a);
+	}
+	else{
+		std::ostringstream os;
+		os << "Error in age of the universe calculation -- not coded for this cosmology" << std::strerror(errno);
+		throw std::runtime_error(os.str());
+	}
+
+	return t;
+}
+
+double Cosmology::expansion_factor(double t){
+
+	using namespace constants;
+
+	double err = std::pow(10,-5);
+	double Hubble_Time=1.0/H0100PGYR; //The Hubble time for H_0=100km/s/Mpc.
+
+	double a;
+
+	if(std::abs(1-parameters.OmegaM)< err && parameters.OmegaL == 0){//Einstein-de Sitter universe.
+		a = std::pow((1.5*t*parameters.Hubble_h/Hubble_Time),2/3);
+	}
+	else if(std::abs(1-parameters.OmegaM+parameters.OmegaL) < err){//Flat with non-zero lambda.
+		double y = 1.5*t*parameters.Hubble_h*std::sqrt(1.0-parameters.OmegaM)/Hubble_Time;
+		double sinhy = 0.5*(std::exp(y)-std::exp(-y));
+		a = std::pow((sinhy*(1.0-parameters.OmegaM)*std::pow(parameters.OmegaM,2)),(2.0/3.0))/(parameters.OmegaM*(1.0-parameters.OmegaM));
+	}
+	else{
+		std::ostringstream os;
+		os << "Error in expansion factor calculation -- not coded for this cosmology" << std::strerror(errno);
+		throw std::runtime_error(os.str());
+	}
+
 }
 
 }

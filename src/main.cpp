@@ -45,14 +45,6 @@ using namespace std;
 
 // TODO: All these are stub, dummy methods that will go away one by one
 //       into their specific parts of the code
-Parameters read_parameters(const string &name) {
-	return Parameters();
-}
-
-SimulationParameters read_simulation_parameters(const string &name) {
-	return SimulationParameters();
-}
-
 vector<MergerTree> load_merger_trees() {
 	return vector<MergerTree>();
 }
@@ -145,18 +137,15 @@ int main(int argc, char **argv) {
 
 	/* We read the parameters that have been given as input by the user.*/
 	string config_file = vm["config-file"].as<string>();
-	Parameters params = read_parameters(config_file);
 
+	SimulationParameters sim_params(config_file);
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(CosmologicalParameters(config_file));
+	Simulation simulation{sim_params, cosmology};
 	GasCooling gas_cooling{GasCoolingParameters(config_file)};
 	StellarFeedback stellar_feedback{StellarFeedbackParameters(config_file)};
 	StarFormation star_formation{StarFormationParameters(config_file), cosmology};
 	RecyclingParameters recycling_parameters;
 	BasicPhysicalModel basic_physicalmodel(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
-
-	// We read the simulation parameters next. Note that by using a different
-	// reader allows the user to put all the information in one parameter file.
-	SimulationParameters sim_params = read_simulation_parameters(argv[1]);
 
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
@@ -175,7 +164,9 @@ int main(int argc, char **argv) {
 	// we loop over merger trees.
 	// Each merger trees has a set of halos at a given snapshot,
 	// which in turn contain galaxies.
-	for(int snapshot=sim_params.min_snapshots; snapshot <= sim_params.max_snapshots; snapshot++) {
+	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot; snapshot++) {
+		//CALCULATE TIME INITIAL AND FINAL TIME OF SNAPSHOT GIVEN THE REDSHIFT.
+		double t = simulation.convert_snapshot_to_age(snapshot);
 
 		for(MergerTree &tree: merger_trees) {
 			/*here loop over the halos this merger tree has at this time.*/
@@ -189,10 +180,10 @@ int main(int argc, char **argv) {
 		vector<shared_ptr<Halo>> all_halos_for_this_snapshot;
 		do_stuff_at_halo_level(all_halos_for_this_snapshot);
 
-		/*write snapshots only if the user wants outputs at this time.*/
-		if( std::find(params.writing_outputs.begin(), params.writing_outputs.end(), snapshot) != params.writing_outputs.end() ){
-			write_output(snapshot, merger_trees);
-		}
+//		/*write snapshots only if the user wants outputs at this time.*/
+//		if( std::find(params.writing_outputs.begin(), params.writing_outputs.end(), snapshot) != params.writing_outputs.end() ){
+//			write_output(snapshot, merger_trees);
+//		}
 	}
 
 	return 0;

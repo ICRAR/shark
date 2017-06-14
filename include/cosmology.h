@@ -56,8 +56,6 @@ class CosmologicalParameters : public Options {
 public:
 	CosmologicalParameters(const std::string &filename);
 
-	typedef std::map<double, std::string> tables_idx;
-
 	float OmegaM;
 	float OmegaB;
 	float OmegaL;
@@ -83,6 +81,8 @@ public:
 	double comoving_to_physical_velocity(double v, double z);
 	double comoving_to_physical_mass(double m);
 	double physical_to_comoving_mass(double m);
+	double convert_redshift_to_age(double z);
+	double expansion_factor(double a);
 
 private:
 	CosmologicalParameters parameters;
