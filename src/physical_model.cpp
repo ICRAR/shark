@@ -74,20 +74,20 @@ BasicPhysicalModel::BasicPhysicalModel(
 	// no-op
 }
 
-std::vector<double> BasicPhysicalModel::from_galaxy(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Galaxy> &galaxy)
+std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy)
 {
 
 	std::vector<double> y(6);
 
-	y[0] = galaxy->bulge_stars.mass;
+	y[0] = galaxy.bulge_stars.mass;
 	// etc...
 
 	return y;
 }
 
-void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy)
+void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy)
 {
-	galaxy->bulge_gas.mass = y[0];
+	galaxy.bulge_gas.mass = y[0];
 	// etc...
 }
 

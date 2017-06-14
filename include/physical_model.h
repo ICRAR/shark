@@ -68,7 +68,7 @@ public:
 		return ODESolver(y0, t0, delta_t, ode_solver_precision, ode_system);
 	}
 
-	void evolve_galaxy(std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy, double z, double delta_t)
+	void evolve_galaxy(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
 	{
 		double mcoolrate = gas_cooling.cooling_rate(subhalo, z, delta_t);
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
@@ -76,8 +76,8 @@ public:
 		to_galaxy(y1, subhalo, galaxy);
 	}
 
-	virtual std::vector<double> from_galaxy(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Galaxy> &galaxy) = 0;
-	virtual void to_galaxy(const std::vector<double> &y, std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy) = 0;
+	virtual std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy) = 0;
+	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
 
 private:
 	std::shared_ptr<gsl_odeiv2_system> ode_system;
@@ -93,8 +93,8 @@ public:
 			StarFormation star_formation,
 			RecyclingParameters recycling_parameters);
 
-	std::vector<double> from_galaxy(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Galaxy> &galaxy);
-	void to_galaxy(const std::vector<double> &y, std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy);
+	std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy);
+	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy);
 
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;

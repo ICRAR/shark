@@ -66,7 +66,7 @@ class GasCooling {
 public:
 	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters);
 
-	double cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, double deltat);
+	double cooling_rate(Subhalo &subhalo, double z, double deltat);
 
 private:
 	ReionisationParameters reio_parameters;

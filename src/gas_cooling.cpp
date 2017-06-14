@@ -153,7 +153,7 @@ GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters r
 	interp.reset(gsl_interp2d_alloc(gsl_interp2d_bilinear, parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size()));
 }
 
-double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, double deltat) {
+double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
 	using namespace constants;
 
@@ -165,16 +165,16 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, dou
     /**
      * Test first for sources that are affected by reionisation
      */
-    if(subhalo->Vvir < reio_parameters.vcut && z < reio_parameters.zcut){
+    if(subhalo.Vvir < reio_parameters.vcut && z < reio_parameters.zcut){
     	return 0;
     }
     else {
     	//TODO: see if here it should be total mass for both Croton and Benson models.
-    	double mhot = subhalo->hot_halo_gas.mass+subhalo->cold_halo_gas.mass+subhalo->ejected_galaxy_gas.mass;
-    	double mzhot = subhalo->hot_halo_gas.mass_metals+subhalo->cold_halo_gas.mass_metals+subhalo->ejected_galaxy_gas.mass_metals;
+    	double mhot = subhalo.hot_halo_gas.mass+subhalo.cold_halo_gas.mass+subhalo.ejected_galaxy_gas.mass;
+    	double mzhot = subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals+subhalo.ejected_galaxy_gas.mass_metals;
 
-    	double vvir = subhalo->Mvir;
-    	double mvir = subhalo->Vvir;
+    	double vvir = subhalo.Mvir;
+    	double mvir = subhalo.Vvir;
 
     	double zhot = (mzhot/mhot);
 
@@ -233,15 +233,15 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, dou
     		/**
     		 * Push back the cooling properties at this timestep.
     		 */
-    		subhalo->cooling_subhalo_tracking.tcooling.push_back(tcool);
-    		subhalo->cooling_subhalo_tracking.temp.push_back(Tvir);
-    		subhalo->cooling_subhalo_tracking.mass.push_back(mhot);
-    		subhalo->cooling_subhalo_tracking.deltat.push_back(deltat);
+    		subhalo.cooling_subhalo_tracking.tcooling.push_back(tcool);
+    		subhalo.cooling_subhalo_tracking.temp.push_back(Tvir);
+    		subhalo.cooling_subhalo_tracking.mass.push_back(mhot);
+    		subhalo.cooling_subhalo_tracking.deltat.push_back(deltat);
 
     		double integral = 0.0;//will save integral(T*M/tcool)
 
-    		for(unsigned i=0;i<subhalo->cooling_subhalo_tracking.deltat.size();++i){
-    			integral += subhalo->cooling_subhalo_tracking.temp[i]*subhalo->cooling_subhalo_tracking.mass[i]/subhalo->cooling_subhalo_tracking.tcooling[i]*subhalo->cooling_subhalo_tracking.deltat[i];
+    		for(unsigned i=0;i<subhalo.cooling_subhalo_tracking.deltat.size();++i){
+    			integral += subhalo.cooling_subhalo_tracking.temp[i]*subhalo.cooling_subhalo_tracking.mass[i]/subhalo.cooling_subhalo_tracking.tcooling[i]*subhalo.cooling_subhalo_tracking.deltat[i];
     		}
     		tcharac = integral/(Tvir*mhot/tcool); //available time for cooling in Gyr.
 
@@ -264,14 +264,14 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, dou
     	/**
     	 * Save properties of cooling gas in the halo gas component that tracks the cold gas.
     	 */
-    	subhalo->cold_halo_gas.mass += coolingrate*deltat;
-    	subhalo->cold_halo_gas.mass_metals += subhalo->cold_halo_gas.mass/mhot*mzhot; //fraction of mass in the cold gas is the same as in metals.
+    	subhalo.cold_halo_gas.mass += coolingrate*deltat;
+    	subhalo.cold_halo_gas.mass_metals += subhalo.cold_halo_gas.mass/mhot*mzhot; //fraction of mass in the cold gas is the same as in metals.
 
     	/**
     	 * Update hot halo gas properties as a response of how much cooling there is in this timestep;
     	 */
-    	subhalo->hot_halo_gas.mass -=subhalo->cold_halo_gas.mass;
-    	subhalo->hot_halo_gas.mass_metals -= subhalo->cold_halo_gas.mass_metals;
+    	subhalo.hot_halo_gas.mass -=subhalo.cold_halo_gas.mass;
+    	subhalo.hot_halo_gas.mass_metals -= subhalo.cold_halo_gas.mass_metals;
 
     	return coolingrate;
     }
