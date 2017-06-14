@@ -28,17 +28,17 @@
 #include <vector>
 
 #include <boost/program_options.hpp>
-
+#include "recycling.h"
 #include "config.h"
 #include "components.h"
 #include "cosmology.h"
 #include "evolve_halos.h"
 #include "logging.h"
 #include "numerical_constants.h"
-#include "parameters.h"
 #include "physical_model.h"
 #include "simulation.h"
 #include "execution.h"
+#include "reionisation.h"
 
 using namespace shark;
 using namespace std;
@@ -141,8 +141,9 @@ int main(int argc, char **argv) {
 	ExecutionParameters exec_params(config_file);
 	SimulationParameters sim_params(config_file);
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(CosmologicalParameters(config_file));
+	ReionisationParameters reio_params(config_file);
 	Simulation simulation{sim_params, cosmology};
-	GasCooling gas_cooling{GasCoolingParameters(config_file)};
+	GasCooling gas_cooling{GasCoolingParameters(config_file), reio_params};
 	StellarFeedback stellar_feedback{StellarFeedbackParameters(config_file)};
 	StarFormation star_formation{StarFormationParameters(config_file), cosmology};
 	RecyclingParameters recycling_parameters;
@@ -160,20 +161,22 @@ int main(int argc, char **argv) {
 	// satellites or have an AGN.
 	physical_processes();
 
-	// The way we solve for galaxy formation is snapshot by snapshot.
-	// We first loop over those, and for a fixed snapshot,
+	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
+	// calculate evolution in the time from the current to the next snapshot.
+	// We first loop over snapshots, and for a fixed snapshot,
 	// we loop over merger trees.
 	// Each merger trees has a set of halos at a given snapshot,
 	// which in turn contain galaxies.
-	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot; snapshot++) {
-		//CALCULATE TIME INITIAL AND FINAL TIME OF SNAPSHOT GIVEN THE REDSHIFT.
-		double t = simulation.convert_snapshot_to_age(snapshot);
+	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot-1; snapshot++) {
+		//Calculate the initial and final time of this snapshot.
+		double ti = simulation.convert_snapshot_to_age(snapshot);
+		double tf = simulation.convert_snapshot_to_age(snapshot+1);
 
 		for(MergerTree &tree: merger_trees) {
 			/*here loop over the halos this merger tree has at this time.*/
 			for(shared_ptr<Halo> halo: tree.halos[snapshot]) {
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
-				populate_halos(basic_physicalmodel, halo, snapshot);
+				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
 			}
 		}
 
@@ -182,9 +185,11 @@ int main(int argc, char **argv) {
 		do_stuff_at_halo_level(all_halos_for_this_snapshot);
 
 //		/*write snapshots only if the user wants outputs at this time.*/
-		if( std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() ){
+		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
+		{
 			write_output(snapshot, merger_trees);
-//		}
+		}
+
 	}
 
 	return 0;

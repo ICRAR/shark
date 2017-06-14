@@ -6,6 +6,7 @@
  */
 
 
+#include <recycling.h>
 #include <cmath>
 #include <memory>
 #include <string>
@@ -14,7 +15,6 @@
 #include "cosmology.h"
 #include "numerical_constants.h"
 #include "simulation.h"
-#include "parameters.h"
 
 using namespace std;
 

@@ -19,6 +19,7 @@
 
 #include "options.h"
 #include "components.h"
+#include "reionisation.h"
 
 namespace shark {
 /**
@@ -63,11 +64,12 @@ private:
 class GasCooling {
 
 public:
-	GasCooling(GasCoolingParameters parameters);
+	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters);
 
-	double cooling_rate(std::shared_ptr<Subhalo> &subhalo, double deltat);
+	double cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, double deltat);
 
 private:
+	ReionisationParameters reio_parameters;
 	GasCoolingParameters parameters;
 	std::shared_ptr<gsl_interp2d> interp;
 

@@ -30,7 +30,7 @@
 
 namespace shark {
 
-void populate_halos(BasicPhysicalModel &phisical_model, std::shared_ptr<Halo> halo, int snapshot);
+void populate_halos(BasicPhysicalModel &physical_model, std::shared_ptr<Halo> halo, int snapshot, double z, double delta_t);
 
 }  // namespace shark
 

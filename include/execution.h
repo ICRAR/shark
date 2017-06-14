@@ -6,6 +6,13 @@
  */
 
 
+/*
+ * execution.h
+ *
+ *  Created on: 14Jun.,2017
+ *      Author: clagos
+ */
+
 
 
 #include <vector>
@@ -21,8 +28,10 @@ public:
 	ExecutionParameters(const std::string &filename);
 
 	std::vector<double> output_snapshots;
-	char output_format;
-	char output_directory;
+	std::string output_format;
+	std::string output_directory;
 
 };
 }
+
+

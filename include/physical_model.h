@@ -30,10 +30,9 @@
 #include <stdexcept>
 
 #include <gsl/gsl_odeiv2.h>
-
+#include <recycling.h>
 #include "components.h"
 #include "ode_solver.h"
-#include "parameters.h"
 #include "stellar_feedback.h"
 #include "star_formation.h"
 #include "gas_cooling.h"
@@ -69,11 +68,11 @@ public:
 		return ODESolver(y0, t0, delta_t, ode_solver_precision, ode_system);
 	}
 
-	void evolve_galaxy(std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy, double t0, double t1)
+	void evolve_galaxy(std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy, double z, double delta_t)
 	{
-		double mcoolrate = gas_cooling.cooling_rate(subhalo, t1-t0);
+		double mcoolrate = gas_cooling.cooling_rate(subhalo, z, delta_t);
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
-		std::vector<double> y1 = get_solver(0, t1 - t0, y0).evolve();
+		std::vector<double> y1 = get_solver(0, delta_t, y0).evolve();
 		to_galaxy(y1, subhalo, galaxy);
 	}
 

@@ -15,7 +15,7 @@ using namespace std;
 namespace shark {
 
 static
-void evolve_system(BasicPhysicalModel &physicalmodel, shared_ptr<Subhalo> &subhalo, int snapshot){
+void evolve_system(BasicPhysicalModel &physicalmodel, shared_ptr<Subhalo> &subhalo, int snapshot, double z, double delta_t){
 
 	//return 0;
 	//
@@ -25,13 +25,13 @@ void evolve_system(BasicPhysicalModel &physicalmodel, shared_ptr<Subhalo> &subha
 
 	// Solve ODEs for this system
 	for(shared_ptr<Galaxy> &galaxy: subhalo->galaxies) {
-		physicalmodel.evolve_galaxy(subhalo, galaxy, (double)snapshot, (double)snapshot+1);
+		physicalmodel.evolve_galaxy(subhalo, galaxy, z, delta_t);
 		//Solve_Systems();
 	}
 
 }
 
-void populate_halos(BasicPhysicalModel &physicalmodel, shared_ptr<Halo> halo, int snapshot) {
+void populate_halos(BasicPhysicalModel &physicalmodel, shared_ptr<Halo> halo, int snapshot, double z, double delta_t) {
 
 	//
 	// Determine if there is any exchange of galaxies between subhalos.
@@ -41,7 +41,7 @@ void populate_halos(BasicPhysicalModel &physicalmodel, shared_ptr<Halo> halo, in
 
 
 	for(shared_ptr<Subhalo> &subhalo: halo->subhalos) {
-		evolve_system(physicalmodel, subhalo, snapshot);
+		evolve_system(physicalmodel, subhalo, snapshot, z, delta_t);
 	}
 }
 

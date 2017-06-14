@@ -1,5 +1,5 @@
 //
-// Parameters used as input for shark
+// Recycling used as input for shark
 //
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
@@ -22,18 +22,12 @@
 // MA 02111-1307  USA
 //
 
-#ifndef SHARK_PARAMETERS_H_
-#define SHARK_PARAMETERS_H_
+#ifndef SHARK_RECYCLING_H_
+#define SHARK_RECYCLING_H_
 
 #include <vector>
 
 namespace shark {
-
-class reionisation_parameters {
-public:
-	double vcut;
-	double zcut;
-};
 
 class RecyclingParameters {
 public:
@@ -42,17 +36,6 @@ public:
 	double zsun;
 };
 
-class Parameters {
-public:
-	std::vector<int> writing_outputs;
-	//flags of physical processes that are on.
-	int ReionizationOn;
-	int SupernovaFeedbackOn;
-	int DiskInstabilityOn;
-	int AGNFeedbackOn;
-	int SFprescription;
-};
-
 }  // namespace shark
 
-#endif // SHARK_PARAMETERS_H_
+#endif // SHARK_RECYCLING_H_
