@@ -43,11 +43,26 @@ template <int NC>
 class PhysicalModel {
 
 public:
+
+	/**
+	 * The set of parameters passed down to the ODESolver. It includes the
+	 * physical model itself, the galaxy and subhalo being evolved on each call,
+	 * and other various values.
+	 */
+	struct solver_params {
+		PhysicalModel<NC> &model;
+		Galaxy &galaxy;
+		Subhalo &subhalo;
+		double mcoolrate;
+		double delta_t;
+		double redshift;
+	};
+
 	PhysicalModel(
 			double ode_solver_precision,
 			ODESolver::ode_evaluator evaluator,
 			GasCooling gas_cooling) :
-		ode_system(std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, NULL, NC, this})),
+		evaluator(evaluator),
 		ode_solver_precision(ode_solver_precision),
 		gas_cooling(gas_cooling)
 	{
@@ -59,20 +74,23 @@ public:
 		// no-op
 	}
 
-	ODESolver get_solver(double t0, double delta_t, const std::vector<double> &y0) {
+	ODESolver get_solver(double delta_t, const std::vector<double> &y0, solver_params &params) {
 		if (y0.size() != NC) {
 			std::ostringstream os;
 			os << "# initial values != ODE components: " << y0.size() << " != " << NC;
 			throw std::invalid_argument(os.str());
 		}
-		return ODESolver(y0, t0, delta_t, ode_solver_precision, ode_system);
+
+		auto system_ptr = std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, nullptr, NC, &params});
+		return ODESolver(y0, 0, delta_t, ode_solver_precision, system_ptr);
 	}
 
 	void evolve_galaxy(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
 	{
 		double mcoolrate = gas_cooling.cooling_rate(subhalo, z, delta_t);
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
-		std::vector<double> y1 = get_solver(0, delta_t, y0).evolve();
+		solver_params params{*this, galaxy, subhalo, mcoolrate, delta_t, z};
+		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
 		to_galaxy(y1, subhalo, galaxy);
 	}
 
@@ -80,7 +98,7 @@ public:
 	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
 
 private:
-	std::shared_ptr<gsl_odeiv2_system> ode_system;
+	ODESolver::ode_evaluator evaluator;
 	double ode_solver_precision;
 	GasCooling gas_cooling;
 };
