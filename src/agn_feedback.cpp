@@ -41,10 +41,10 @@ AGNFeedback::AGNFeedback(AGNFeedbackParameters parameters, std::shared_ptr<Cosmo
 	// no-op
 }
 
-void AGNFeedback::plant_seed_smbh(std::shared_ptr<Subhalo> &subhalo){
+void AGNFeedback::plant_seed_smbh(Subhalo &subhalo){
 
-	if(subhalo->Mvir > parameters.mhalo_seed){
-		for(shared_ptr<Galaxy> &galaxies: subhalo->galaxies) {
+	if(subhalo.Mvir > parameters.mhalo_seed){
+		for(shared_ptr<Galaxy> &galaxies: subhalo.galaxies) {
 			if(galaxies->galaxy_type == Galaxy::CENTRAL && galaxies->smbh.mass == 0){
 				galaxies->smbh.mass = 0;
 			}

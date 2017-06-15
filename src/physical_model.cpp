@@ -38,15 +38,15 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	 * f[5]: metals locked in the hot gas mass.
 	 */
 
-	BasicPhysicalModel *physicalmodel= reinterpret_cast<BasicPhysicalModel *>(data);
+	auto params= reinterpret_cast<BasicPhysicalModel::solver_params *>(data);
+	BasicPhysicalModel &model = dynamic_cast<BasicPhysicalModel &>(params->model);
 
 	double tau = 2.0; /*star formation timescale assumed to be 2Gyr*/
-	double R = physicalmodel->recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
-	double yield = physicalmodel->recycling_parameters.yield; /*yield of newly formed stars*/
-	double mcoolrate = 5e8; /*cooling rate in units of Msun/Gyr*/
-	double beta = physicalmodel->stellar_feedback.outflow_rate(y[0], y[1]); /*mass loading parameter*/
-	double z = 1;
-	double SFR = y[1] * physicalmodel->star_formation.star_formation_rate(y[0], y[1], y[2], y[3], z); /*star formation rate assumed to be cold gas mass divided by time*/
+	double R = model.recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
+	double yield = model.recycling_parameters.yield; /*yield of newly formed stars*/
+	double mcoolrate = params->mcoolrate; /*cooling rate in units of Msun/Gyr*/
+	double beta = model.stellar_feedback.outflow_rate(y[0], y[1]); /*mass loading parameter*/
+	double SFR = y[1] * model.star_formation.star_formation_rate(y[0], y[1], y[2], y[3], params->redshift); /*star formation rate assumed to be cold gas mass divided by time*/
 	double zcold = y[4] / y[1]; /*cold gas metallicity*/
 	double zhot = y[5] / y[2]; /*hot gas metallicity*/
 
@@ -74,20 +74,20 @@ BasicPhysicalModel::BasicPhysicalModel(
 	// no-op
 }
 
-std::vector<double> BasicPhysicalModel::from_galaxy(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Galaxy> &galaxy)
+std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy)
 {
 
 	std::vector<double> y(6);
 
-	y[0] = galaxy->bulge_stars.mass;
+	y[0] = galaxy.bulge_stars.mass;
 	// etc...
 
 	return y;
 }
 
-void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, std::shared_ptr<Subhalo> &subhalo, std::shared_ptr<Galaxy> &galaxy)
+void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy)
 {
-	galaxy->bulge_gas.mass = y[0];
+	galaxy.bulge_gas.mass = y[0];
 	// etc...
 }
 

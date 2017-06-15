@@ -42,7 +42,7 @@ public:
 	 * All input quantities should be in comoving units.
 	 */
 
-	void plant_seed_smbh(std::shared_ptr<Subhalo> &subhalo);
+	void plant_seed_smbh(Subhalo &subhalo);
 	double eddington_luminosity(double mbh);
 
 private:
