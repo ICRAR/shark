@@ -138,12 +138,15 @@ int main(int argc, char **argv) {
 	/* We read the parameters that have been given as input by the user.*/
 	string config_file = vm["config-file"].as<string>();
 
+	/**
+	 * We load all relevant parameters and implement all relevant physical processes needed by the physical model.
+	 */
 	ExecutionParameters exec_params(config_file);
 	SimulationParameters sim_params(config_file);
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(CosmologicalParameters(config_file));
 	ReionisationParameters reio_params(config_file);
 	Simulation simulation{sim_params, cosmology};
-	GasCooling gas_cooling{GasCoolingParameters(config_file), reio_params};
+	GasCooling gas_cooling{GasCoolingParameters(config_file), reio_params, cosmology};
 	StellarFeedback stellar_feedback{StellarFeedbackParameters(config_file)};
 	StarFormation star_formation{StarFormationParameters(config_file), cosmology};
 	RecyclingParameters recycling_parameters;

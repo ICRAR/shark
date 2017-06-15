@@ -145,9 +145,10 @@ GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::g
 
 } // namespace detail
 
-GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters) :
+GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology) :
 	parameters(parameters),
 	reio_parameters(reio_parameters),
+	cosmology(cosmology),
 	interp(nullptr)
 {
 	interp.reset(gsl_interp2d_alloc(gsl_interp2d_bilinear, parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size()));
@@ -170,11 +171,14 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, dou
     }
     else {
     	//TODO: see if here it should be total mass for both Croton and Benson models.
-    	double mhot = subhalo->hot_halo_gas.mass+subhalo->cold_halo_gas.mass+subhalo->ejected_galaxy_gas.mass;
-    	double mzhot = subhalo->hot_halo_gas.mass_metals+subhalo->cold_halo_gas.mass_metals+subhalo->ejected_galaxy_gas.mass_metals;
+    	/**
+    	 * We need to convert masses and velocities to physical units before proceeding with calculation.
+    	 */
+    	double mhot = cosmology->comoving_to_physical_mass(subhalo->hot_halo_gas.mass+subhalo->cold_halo_gas.mass+subhalo->ejected_galaxy_gas.mass);
+    	double mzhot = cosmology->comoving_to_physical_mass(subhalo->hot_halo_gas.mass_metals+subhalo->cold_halo_gas.mass_metals+subhalo->ejected_galaxy_gas.mass_metals);
 
-    	double vvir = subhalo->Mvir;
-    	double mvir = subhalo->Vvir;
+    	double vvir = cosmology->comoving_to_physical_velocity(subhalo->Vvir, z);
+    	double mvir = cosmology->comoving_to_physical_mass(subhalo->Mvir);
 
     	double zhot = (mzhot/mhot);
 
@@ -195,7 +199,6 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, dou
     	double rho_shell = mhot*constants::MSOLAR_g/constants::PI4/(Rvir*constants::MPC2CM); //in cgs.
 
     	double denominator_temp = 1.5*constants::M_Atomic_g*constants::mu_Primordial*constants::k_Boltzmann_erg*Tvir; //in cgs
-
 
     	double tcool;
     	double tcharac;
@@ -235,8 +238,10 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, dou
     		 */
     		subhalo->cooling_subhalo_tracking.tcooling.push_back(tcool);
     		subhalo->cooling_subhalo_tracking.temp.push_back(Tvir);
-    		subhalo->cooling_subhalo_tracking.mass.push_back(mhot);
     		subhalo->cooling_subhalo_tracking.deltat.push_back(deltat);
+    		//In the case of mass we convert back to comoving units.
+    		subhalo->cooling_subhalo_tracking.mass.push_back(cosmology->physical_to_comoving_mass(mhot));
+
 
     		double integral = 0.0;//will save integral(T*M/tcool)
 
@@ -262,10 +267,15 @@ double GasCooling::cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, dou
     	}
 
     	/**
+    	 * Convert cooling rate back to comoving units. This conversion is only necessary because mass was previously converted to physical.
+    	 */
+    	coolingrate = cosmology->physical_to_comoving_mass(coolingrate);
+
+    	/**
     	 * Save properties of cooling gas in the halo gas component that tracks the cold gas.
     	 */
     	subhalo->cold_halo_gas.mass += coolingrate*deltat;
-    	subhalo->cold_halo_gas.mass_metals += subhalo->cold_halo_gas.mass/mhot*mzhot; //fraction of mass in the cold gas is the same as in metals.
+    	subhalo->cold_halo_gas.mass_metals += coolingrate*deltat/mhot*mzhot;//fraction of mass in the cold gas is the same as in metals.
 
     	/**
     	 * Update hot halo gas properties as a response of how much cooling there is in this timestep;

@@ -64,13 +64,14 @@ private:
 class GasCooling {
 
 public:
-	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters);
+	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology);
 
 	double cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, double deltat);
 
 private:
 	ReionisationParameters reio_parameters;
 	GasCoolingParameters parameters;
+	std::shared_ptr<Cosmology> cosmology;
 	std::shared_ptr<gsl_interp2d> interp;
 
 };
