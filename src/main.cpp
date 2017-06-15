@@ -39,6 +39,7 @@
 #include "simulation.h"
 #include "execution.h"
 #include "reionisation.h"
+#include "agn_feedback.h"
 
 using namespace shark;
 using namespace std;
@@ -142,14 +143,25 @@ int main(int argc, char **argv) {
 	 * We load all relevant parameters and implement all relevant physical processes needed by the physical model.
 	 */
 	ExecutionParameters exec_params(config_file);
+
 	SimulationParameters sim_params(config_file);
+
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(CosmologicalParameters(config_file));
+
 	ReionisationParameters reio_params(config_file);
+
+	std::shared_ptr<AGNFeedback> agnfeedback = std::make_shared<AGNFeedback>(AGNFeedbackParameters(config_file), cosmology);
+
 	Simulation simulation{sim_params, cosmology};
-	GasCooling gas_cooling{GasCoolingParameters(config_file), reio_params, cosmology};
+
+	GasCooling gas_cooling{GasCoolingParameters(config_file), reio_params, cosmology, agnfeedback};
+
 	StellarFeedback stellar_feedback{StellarFeedbackParameters(config_file)};
+
 	StarFormation star_formation{StarFormationParameters(config_file), cosmology};
+
 	RecyclingParameters recycling_parameters;
+
 	BasicPhysicalModel basic_physicalmodel(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
 
 	// Read the merger tree files.

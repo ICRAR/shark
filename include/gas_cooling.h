@@ -20,6 +20,7 @@
 #include "options.h"
 #include "components.h"
 #include "reionisation.h"
+#include "agn_feedback.h"
 
 namespace shark {
 /**
@@ -64,14 +65,19 @@ private:
 class GasCooling {
 
 public:
-	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology);
+	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback);
 
 	double cooling_rate(std::shared_ptr<Subhalo> &subhalo, double z, double deltat);
+	double cooling_time(double Tvir, double logl, double nh_density);
+	double mean_density(double mhot, double rvir);
+	double cooling_radius(double rho_shell, double tcharac, double logl, double Tvir);
+	double density_shell(double mhot, double rvir);
 
 private:
 	ReionisationParameters reio_parameters;
 	GasCoolingParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
+	std::shared_ptr<AGNFeedback> agnfeedback;
 	std::shared_ptr<gsl_interp2d> interp;
 
 };

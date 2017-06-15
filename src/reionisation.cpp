@@ -23,6 +23,6 @@ ReionisationParameters::ReionisationParameters(const std::string &filename) :
 	{
 	load("reionisation.vcut",vcut);
 	load("reionisation.zcut",zcut);
-}
+	}
 
 }
