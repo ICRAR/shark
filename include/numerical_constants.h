@@ -77,6 +77,7 @@ namespace constants {
 	constexpr float BARN2M2=1.0e-28; /* Convert barns to m^2.*/
 	constexpr float KMS2MPCGYR=KM2M*GYR2S/MPC2M; /*Convert velocity in km/s to Mpc/Gyr.*/
 	constexpr float M2CM=100.0, logM2CM=2.0; /*Number of cm in a m.*/
+	constexpr float KM2CM = M2CM*KM2M; /*Number of cm in a km.*/
 	constexpr float M32CM3=std::pow(M2CM,3); /*Number of cm^3 in a m^3.*/
 	constexpr float CM32M3=1.0/M32CM3; /*Number of m^3 in a cm^3.*/
 	constexpr float eV2ERG=1.60217733e-12, logeV2ERG=-11.7952894176; /*Convert electron volts to ergs.*/
@@ -102,10 +103,12 @@ namespace constants {
 	constexpr float X_Hydrogen_Solar=0.707; /*Mass fraction of hydrogen in Solar plasma (Allen's Atrophysical Quantities, page 28).*/
 	constexpr float Y_Helium_Solar=0.274; /*Mass fraction of helium in Solar plasma (Allen's Atrophysical Quantities, page 28).*/
 	constexpr float Z_Metals_Solar=0.0189; /*Mass fraction of metals in Solar plasma (Allen's Atrophysical Quantities, page 28).*/
+	constexpr float MACCRETION_cgs_simu = 1/MSOLAR_g*GYR2S; /*Conversion of accretion rate from gr/s to Msun/Gyr.*/
 
 	/* Physical constants.*/
 	constexpr float G_SI=6.67259e-11, sqrtG_SI=8.16859228998e-6; /*The gravitational constant in units of m^3/kg/s^2 (Allen's Astrophysical Quantities, page 8).*/
 	constexpr float G=G_SI*MSOLAR/MPC2M/std::pow(KM2M,2), sqrtG=sqrtG_SI*sqrtMSOLAR/sqrtMPC2M/KM2M; /*The gravitational constant in units of (km/s)^2 Mpc/Msun.*/
+	constexpr float G_cgs = 6.67259e-8; /*Gravitational constant in units of cm/gr/s^2.*/
 	constexpr float G_MPCGYR=G_SI*MSOLAR*(GYR2S/MPC2M)/KM2M/MPC2M; /*The gravitational constant in units of km/s Mpc^2 Msun^-1 Gyr^-1*/
 	constexpr float G_MPCGYR2=G_SI*MSOLAR*std::pow(GYR2S/MPC2M,2)/MPC2M; /*The gravitational constant in units of Mpc^3 Msun^-1 Gyr^-2*/
 	constexpr float G_GYRKMS3=G_SI*MSOLAR/GYR2S/std::pow(KM2M,3); /*The gravitational constant in units of Gyr Msol^-1 km^3 s^-3*/
@@ -165,6 +168,9 @@ namespace constants {
 	constexpr float corr_factor_He=1.35; /*correction factor to account for helium when only hydrogen is given: H=Mcold/corr_factor_He.*/
 	constexpr float PressureConst=4.33e-12; /*Constant converting the gravity and Boltzmann constants from the MKS system to the units necessary to obtain the pressure in units of K*cm^-3 (cgs).*/
 	constexpr double Eddngtn_Lmnsty_Scale_Factor=4.0*PI*c_light*G_SI*MSOLAR*1.0e-20*M_Atomic*Atomic_Mass_Hydrogen/(sigma_Thomson*1.0e20), Eddngtn_Mdot_Constant = 0.1;
+
+	/*define a tolerance for evaluating negative mass*/
+	constexpr float tolerance = 1e-10;
 
 };
 

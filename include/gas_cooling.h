@@ -71,7 +71,8 @@ public:
 	double cooling_time(double Tvir, double logl, double nh_density);
 	double mean_density(double mhot, double rvir);
 	double cooling_radius(double rho_shell, double tcharac, double logl, double Tvir);
-	double density_shell(double mhot, double rvir);
+	double density_shell(double mhot, double rvir, double r);
+	double cooling_luminosity(double logl, double rcool, double rvir, double mhot);
 
 private:
 	ReionisationParameters reio_parameters;

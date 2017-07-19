@@ -25,11 +25,20 @@ public:
 	AGNFeedbackParameters(const std::string &filename);
 
 	double mseed;
+	double mhalo_seed;
 	double alpha_cool;
-	double epsilon_smbh;
+	double f_edd;
 	double accretion_eff_cooling;
 	double accretion_eff_bursts;
-	double mhalo_seed;
+	double kappa_agn;
+	double nu_smbh;
+
+	enum AGNFeedbackModel {
+		LGALAXIES = 0,
+		GALFORM
+	};
+
+	AGNFeedbackModel model;
 };
 
 
@@ -44,9 +53,13 @@ public:
 
 	void plant_seed_smbh(Subhalo &subhalo);
 	double eddington_luminosity(double mbh);
+	double accretion_rate_hothalo_smbh(double Lcool, double mbh);
+	double agn_bolometric_luminosity(double macc);
+
+	// TODO: move this to private when possible
+	AGNFeedbackParameters parameters;
 
 private:
-	AGNFeedbackParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
 };
 

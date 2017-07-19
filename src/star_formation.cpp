@@ -83,7 +83,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	/**
 	 * Here, we integrate the SFR surface density profile out to rmax.
 	 */
-	gsl_integration_qags (&F, rmin, rmax, 0, 1e-7, smax,
+	gsl_integration_qags (&F, rmin, rmax, 0, 1e-4, smax,
 	                        w, &result, &error);
 
 	gsl_integration_workspace_free (w);
@@ -103,7 +103,7 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 	double rse = props->rstar/constants::RDISK_HALF_SCALE;
 	double Sigma_stars = props->mstar/constants::PI2/std::pow(rse,2)*std::exp(-r/rse);
 
-	return parameters.nu_sf*fmol(Sigma_gas,Sigma_stars,r)*Sigma_gas;
+	return constants::PI2 * parameters.nu_sf*fmol(Sigma_gas,Sigma_stars,r)*Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
 }
 
 double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double r){
