@@ -83,6 +83,7 @@ private:
 
 	H5::Attribute get_attribute(const std::string &name) const;
 	H5::DataSet get_dataset(const std::string &name) const;
+	H5::DataSet get_dataset(const std::vector<std::string> &path) const;
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, T>::type

@@ -37,21 +37,26 @@ H5::DataSet Reader::get_dataset(const string &name) const {
 
 	// The name might contains slashes, so we can navigate through
 	// a hierarchy of groups/datasets
-	vector<string> parts = tokenize(name, "/");
+	const vector<string> parts = tokenize(name, "/");
+
+	return get_dataset(parts);
+}
+
+H5::DataSet Reader::get_dataset(const std::vector<std::string> &path) const {
 
 	// only the attribute name, read directly and come back
-	if( parts.size() == 1 ) {
-		return hdf5_file.openDataSet(name);
+	if( path.size() == 1 ) {
+		return hdf5_file.openDataSet(path[0]);
 	}
 
 	// else there's a path to follow, go for it!
-	H5::Group group = hdf5_file.openGroup(*parts.begin());
-	vector<string> group_paths(parts.begin() + 1, parts.end() - 1);
+	H5::Group group = hdf5_file.openGroup(path.front());
+	vector<string> group_paths(path.begin() + 1, path.end() - 1);
 	for(auto const &path: group_paths) {
 		group = group.openGroup(path);
 	}
 
-	return group.openDataSet(*(parts.end() - 1));
+	return group.openDataSet(path.back());
 }
 
 H5::Attribute Reader::get_attribute(const string &name) const {
@@ -65,14 +70,13 @@ H5::Attribute Reader::get_attribute(const string &name) const {
 		return hdf5_file.openAttribute(name);
 	}
 
-	// else there's a path to follow, go for it!
-	const H5::CommonFG &location = hdf5_file;
-	std::vector<std::string> path_parts(parts.begin(), parts.end()-1);
-	for(auto const &path: path_parts) {
-		// not implemented yet
-	}
+	// otherwise the path looks like
+	//  [group1/.../groupN/]dataset/attribute
+	const auto attr_name = parts.back();
+	parts.pop_back();
 
-	throw std::runtime_error("read_attribute still not implemented for attributes in groups/datasets");
+	auto dataset = get_dataset(parts);
+	return dataset.openAttribute(attr_name);
 }
 
 }  // namespace hdf5
