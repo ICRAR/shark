@@ -40,7 +40,7 @@ void populate_halos(BasicPhysicalModel &physicalmodel, shared_ptr<Halo> halo, in
 	//Calculates_Merger_Subhalos();
 
 
-	for(shared_ptr<Subhalo> &subhalo: halo->subhalos) {
+	for(shared_ptr<Subhalo> &subhalo: halo->all_subhalos()) {
 		evolve_system(physicalmodel, subhalo, snapshot, z, delta_t);
 	}
 }

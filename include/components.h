@@ -33,6 +33,10 @@
 
 namespace shark {
 
+// Forward-defines
+class Halo;
+class MergerTree;
+
 /**
  * The common base for all baryon component types.
  */
@@ -172,6 +176,11 @@ public:
 	id_t descendant_id;
 
 	/**
+	 * The ID of the Halo containing the descendant of this subhalo
+	 */
+	id_t descendant_halo_id;
+
+	/**
 	 * The snapshot at which the descendant of this subhalo can be found
 	 */
 	int descendant_snapshot;
@@ -237,6 +246,10 @@ public:
 	 */
 	std::vector<float> accretion_rate;
 
+	/**
+	 * The halo that holds this subhalo.
+	 */
+	std::shared_ptr<Halo> host_halo;
 };
 
 /**
@@ -262,10 +275,39 @@ class Halo : public Identifiable<long>, public Spatial<float> {
 
 public:
 
+	Halo(long halo_id, int snapshot) :
+		central_subhalo(),
+		satellite_subhalos(),
+		mass_fraction_subhalos(-1),
+		Vvir(0),
+		Mvir(0),
+		snapshot(snapshot)
+	{
+		// no-op
+		id = halo_id;
+	}
+
+	/**
+	 * The central subhalo
+	 */
+	std::shared_ptr<Subhalo> central_subhalo;
+
 	/**
 	 * The subhalos contained in this halo
 	 */
-	std::vector<std::shared_ptr<Subhalo>> subhalos;
+	std::vector<std::shared_ptr<Subhalo>> satellite_subhalos;
+
+	std::vector<std::shared_ptr<Subhalo>> all_subhalos() {
+
+		std::vector<std::shared_ptr<Subhalo>> all;
+
+		if (central_subhalo) {
+			all.push_back(central_subhalo);
+		}
+		all.insert(all.end(), satellite_subhalos.begin(), satellite_subhalos.end());
+
+		return all;
+	}
 
 	/**
 	 * The mass contained in the subhalos.
@@ -278,8 +320,32 @@ public:
 	float Vvir;
 	float Mvir;
 
+	/**
+	 * The snapshot at which this halo is found
+	 */
+	int snapshot;
+
 	std::shared_ptr<Halo> descendant;
 	std::vector<std::shared_ptr<Halo>> ascendants;
+
+	/**
+	 * The merger tree that holds this halo.
+	 */
+	std::shared_ptr<MergerTree> merger_tree;
+
+	void add_subhalo(const std::shared_ptr<Subhalo> &subhalo) {
+
+		// Assign subhalo to proper member
+		if (subhalo->subhalo_type == Subhalo::CENTRAL) {
+			central_subhalo = subhalo;
+		}
+		else {
+			satellite_subhalos.push_back(subhalo);
+		}
+
+		// Add subhalo mass to halo
+		Mvir += subhalo->Mvir;
+	}
 
 };
 
@@ -296,6 +362,10 @@ public:
 	 * All halos contained in this merger tree, indexed by snapshot number
 	 */
 	std::map<int, std::vector<std::shared_ptr<Halo>>> halos;
+
+	void add_halo(const std::shared_ptr<Halo> &halo) {
+		halos[halo->snapshot].push_back(halo);
+	}
 };
 
 }  // namespace shark
