@@ -11,13 +11,11 @@
 #include <map>
 #include <memory>
 
-#include "importer/reader.h"
+#include "components.h"
 
 namespace shark {
 
-namespace importer {
-
-class SURFSReader : public Reader {
+class SURFSReader {
 
 public:
 
@@ -26,23 +24,17 @@ public:
 	 *
 	 * @param trees_dir Directory where all tree files are located
 	 */
-	SURFSReader(const std::string &filename);
+	SURFSReader(const std::string &prefix);
 
-	virtual const std::vector<Subhalo> read_subhalos(int snapshot) override;
+	const std::vector<std::shared_ptr<Halo>> read_halos(std::vector<int> batches);
+	const std::vector<std::shared_ptr<Halo>> read_halos(int batch);
 
 private:
 
-	std::string trees_dir;
-	class MergerTreeReader: public Options{
-
-
-	};
-
-	const std::string get_filename(int snapshot, int batch);
+	std::string prefix;
+	const std::string get_filename(int batch);
 	const std::vector<Subhalo> read_subhalos_batch(int batch);
 };
-
-}  // namespace importer
 
 }  // namespace shark
 
