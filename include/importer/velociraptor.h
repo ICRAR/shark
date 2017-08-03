@@ -55,11 +55,6 @@ private:
 
 	std::string descendants_file;
 	std::string trees_dir;
-	class MergerTreeReader: public Options{
-
-
-	};
-
 
 	const std::string get_filename(int snapshot, int batch);
 	const std::vector<Subhalo> read_subhalos_batch(int snapshot, int batch);

@@ -122,28 +122,6 @@ const vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int 
 		Subhalo subhalo;
 		subhalo.id = inhalo[i];
 		subhalo.snapshot = snapshot;
-		subhalo.Mvir = inbmass;
-
-		//Assign position
-		subhalo.position.x = inx;
-		subhalo.position.y = iny;
-		subhalo.position.z = inz;
-
-		//Assign velocity
-		subhalo.velocity.x = invx;
-		subhalo.velocity.y = invy;
-		subhalo.velocity.z = invz;
-
-		//Assign angular momentum
-		subhalo.L[0] = Lx;
-		subhalo.L[1] = Ly;
-		subhalo.L[2] = Lz;
-
-		subhalo.Vcirc = invmax;
-
-
-
-
 
 		//
 		// TODO: here we assign properties, etc
