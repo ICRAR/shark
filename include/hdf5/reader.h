@@ -79,6 +79,11 @@ public:
 		return _read_dataset_v<T>(get_dataset(name));
 	}
 
+	template<typename T>
+	std::vector<T> read_dataset_v_2(const std::string &name) const {
+		return _read_dataset_v_2<T>(get_dataset(name));
+	}
+
 private:
 
 	H5::Attribute get_attribute(const std::string &name) const;
@@ -110,6 +115,19 @@ private:
 		hsize_t dim_size = get_1d_dimsize(space);
 
 		std::vector<T> data(dim_size);
+		dataset.read(data.data(), dataset.getDataType(), space, space);
+		return data;
+	}
+
+	template<typename T>
+	typename std::enable_if<std::is_arithmetic<T>::value, std::vector<T>>::type
+	_read_dataset_v_2(const H5::DataSet &dataset) const {
+
+		H5::DataSpace space = get_2d_dataspace(dataset);
+		hsize_t dim_sizes[2];
+		space.getSimpleExtentDims(dim_sizes, NULL);
+
+		std::vector<T> data(dim_sizes[0] * dim_sizes[1]);
 		dataset.read(data.data(), dataset.getDataType(), space, space);
 		return data;
 	}

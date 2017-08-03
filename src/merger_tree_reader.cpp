@@ -99,17 +99,14 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 {
 	hdf5::Reader batch_file(get_filename(batch));
 
-	// TODO: be able to read 2-dimensional data from HDF5 files
-	// In this case "position", "velocity" and "L" are 2-dimensional
-
 	//Read position and velocities first.
-	vector<double> position = batch_file.read_dataset_v<double>("haloTrees/position");
-	vector<double> velocity = batch_file.read_dataset_v<double>("haloTrees/velocity");
+	vector<double> position = batch_file.read_dataset_v_2<double>("haloTrees/position");
+	vector<double> velocity = batch_file.read_dataset_v_2<double>("haloTrees/velocity");
 
 	//Read mass, circular velocity and angular momentum.
-	vector<double> Mvir 	= batch_file.read_dataset_v<double>("haloTrees/nodeMass");
-	vector<double> Vcirc 	= batch_file.read_dataset_v<double>("haloTrees/MaximumCircularVelocity");
-	vector<double> L		= batch_file.read_dataset_v<double>("haloTrees/angularMomentum");
+	vector<double> Mvir = batch_file.read_dataset_v<double>("haloTrees/nodeMass");
+	vector<double> Vcirc = batch_file.read_dataset_v<double>("haloTrees/MaximumCircularVelocity");
+	vector<double> L = batch_file.read_dataset_v_2<double>("haloTrees/angularMomentum");
 
 	//Read indices and the snapshot number at which the subhalo lives.
 	vector<Subhalo::id_t> nodeIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/nodeIndex");
@@ -119,7 +116,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 	vector<Subhalo::id_t> descHost	= batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/descendantHost");
 
 	//Read properties that characterise the position of the subhalo inside the halo.
-	vector<int> IsMain   = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
+	vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
 	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
 
 
@@ -154,35 +151,21 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		subhalo->Mvir = Mvir[i];
 
 		//Assign position
-		subhalo->position.x = position[0,i];
-		subhalo->position.y = position[1,i];
-		subhalo->position.z = position[2,i];
+		subhalo->position.x = position[3 * i];
+		subhalo->position.y = position[3 * i + 1];
+		subhalo->position.z = position[3 * i + 2];
 
 		//Assign velocity
-		subhalo->velocity.x = velocity[0,i];
-		subhalo->velocity.y = velocity[1,i];
-		subhalo->velocity.z = velocity[2,i];
+		subhalo->velocity.x = velocity[3 * i];
+		subhalo->velocity.y = velocity[3 * i + 1];
+		subhalo->velocity.z = velocity[3 * i + 2];
 
 		//Assign angular momentum
-		subhalo->L[0] = L[0,i];
-		subhalo->L[1] = L[1,i];
-		subhalo->L[2] = L[2,i];
+		subhalo->L[0] = L[3 * i];
+		subhalo->L[1] = L[3 * i + 1];
+		subhalo->L[2] = L[3 * i + 2];
 
 		subhalo->Vcirc = Vcirc[i];
-
-		//TODO: this needs to be done outside the for, after reading all the subhalos.
-
-		/* Find the corresponding descendant information
-		auto it = descendants_data.find(subhalo.id);
-		if( it == descendants_data.end() ) {
-			ostringstream os;
-			os << "No data could be found in the descendants file for subhalo id=" << subhalo.id;
-			throw invalid_data(os.str());
-		}
-
-		// Fill the missing bits
-		auto desc = it->second;
-		subhalo.descendant_snapshot = desc.descendant_snapshot;*/
 
 		// Done, save it now
 		subhalos.push_back(move(subhalo));

@@ -59,6 +59,7 @@ public:
 
 protected:
 	H5::DataSpace get_1d_dataspace(const H5::DataSet &dataset) const;
+	H5::DataSpace get_2d_dataspace(const H5::DataSet &dataset) const;
 
 	hsize_t get_1d_dimsize(const H5::DataSpace &space) const;
 

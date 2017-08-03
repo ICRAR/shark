@@ -61,6 +61,17 @@ H5::DataSpace IOBase::get_1d_dataspace(const H5::DataSet &dataset) const {
 	return space;
 }
 
+H5::DataSpace IOBase::get_2d_dataspace(const H5::DataSet &dataset) const {
+	H5::DataSpace space = dataset.getSpace();
+	int ndims = space.getSimpleExtentNdims();
+	if ( ndims != 2 ) {
+		ostringstream os;
+		os << "More than two dimensions found in dataset " << dataset.getObjName();
+		throw runtime_error(os.str());
+	}
+	return space;
+}
+
 hsize_t IOBase::get_1d_dimsize(const H5::DataSpace &space) const {
 	hsize_t dim_size;
 	space.getSimpleExtentDims(&dim_size, NULL);
