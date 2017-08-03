@@ -45,7 +45,10 @@ public:
 	int min_snapshot;
 	int max_snapshot;
 
+	std::string tree_prefix;
+
 	std::map<int,double> redshifts;
+
 
 	void load_simulation_tables(const std::string &redshift_file);
 };
