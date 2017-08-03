@@ -105,7 +105,7 @@ const vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int 
 	vector<double> invx = batch_file.read_dataset_v<double>("VXc");
 	vector<double> invy = batch_file.read_dataset_v<double>("VYc");
 	vector<double> invz = batch_file.read_dataset_v<double>("VZc");
-	vector<double> inbmass = batch_file.read_dataset_v<double>("Mvir");
+	vector<double> inbmass = batch_file.read_dataset_v<double>("Mass_tot");
 	vector<Subhalo::id_t> inhalo = batch_file.read_dataset_v<Subhalo::id_t>("ID");
 	vector<Subhalo::id_t> hhalo = batch_file.read_dataset_v<Subhalo::id_t>("hostHaloID");
 	vector<Subhalo::id_t> ID_mbp = batch_file.read_dataset_v<Subhalo::id_t>("ID_mbp");
@@ -122,6 +122,28 @@ const vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int 
 		Subhalo subhalo;
 		subhalo.id = inhalo[i];
 		subhalo.snapshot = snapshot;
+		subhalo.Mvir = inbmass;
+
+		//Assign position
+		subhalo.position.x = inx;
+		subhalo.position.y = iny;
+		subhalo.position.z = inz;
+
+		//Assign velocity
+		subhalo.velocity.x = invx;
+		subhalo.velocity.y = invy;
+		subhalo.velocity.z = invz;
+
+		//Assign angular momentum
+		subhalo.L[0] = Lx;
+		subhalo.L[1] = Ly;
+		subhalo.L[2] = Lz;
+
+		subhalo.Vcirc = invmax;
+
+
+
+
 
 		//
 		// TODO: here we assign properties, etc

@@ -198,7 +198,7 @@ public:
 	float Vvir;
 	float Mvir;
 	float L[3];
-	float mass;
+	float Vcirc;
 	float Concentration;
 
 	/**
@@ -275,7 +275,8 @@ public:
 	float mass_fraction_subhalos;
 
 	/** TODO: document these */
-	float Rvir;
+	float Vvir;
+	float Mvir;
 
 	std::shared_ptr<Halo> descendant;
 	std::vector<std::shared_ptr<Halo>> ascendants;
