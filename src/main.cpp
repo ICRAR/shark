@@ -40,27 +40,11 @@
 #include "execution.h"
 #include "reionisation.h"
 #include "agn_feedback.h"
+#include "merger_tree_reader.h"
+#include "tree_builder.h"
 
 using namespace shark;
 using namespace std;
-
-// TODO: All these are stub, dummy methods that will go away one by one
-//       into their specific parts of the code
-vector<MergerTree> load_merger_trees() {
-	return vector<MergerTree>();
-}
-
-void physical_processes() {
-	return;
-}
-
-void do_stuff_at_halo_level(vector<shared_ptr<Halo>> halos) {
-	return;
-}
-
-void write_output(int snapshot, const vector<MergerTree> &merger_trees) {
-	return;
-}
 
 void show_help(const char *prog, const boost::program_options::options_description &desc) {
 	cout << endl;
@@ -167,14 +151,15 @@ int main(int argc, char **argv) {
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
-	vector<MergerTree> merger_trees = load_merger_trees();
+	auto halos = SURFSReader(sim_params.tree_prefix).read_halos(exec_params.simulation_batches);
+	auto merger_trees = TreeBuilder(exec_params).build_trees(halos);
 
 	// This function should return the system of differential equations
 	// to be solved at each snapshot and in each galaxy.
 	// This set of ODEs apply on the ideal case of a central galaxy, with no
 	// AGN feedback. These equations are modified later if galaxies are
 	// satellites or have an AGN.
-	physical_processes();
+	//physical_processes();
 
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
 	// calculate evolution in the time from the current to the next snapshot.
@@ -187,9 +172,9 @@ int main(int argc, char **argv) {
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
 
-		for(MergerTree &tree: merger_trees) {
+		for(auto &tree: merger_trees) {
 			/*here loop over the halos this merger tree has at this time.*/
-			for(shared_ptr<Halo> halo: tree.halos[snapshot]) {
+			for(shared_ptr<Halo> halo: tree->halos[snapshot]) {
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
 				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
 			}
@@ -197,12 +182,12 @@ int main(int argc, char **argv) {
 
 		/*Here you shoud include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		vector<shared_ptr<Halo>> all_halos_for_this_snapshot;
-		do_stuff_at_halo_level(all_halos_for_this_snapshot);
+		//do_stuff_at_halo_level(all_halos_for_this_snapshot);
 
 //		/*write snapshots only if the user wants outputs at this time.*/
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
 		{
-			write_output(snapshot, merger_trees);
+			//write_output(snapshot, merger_trees);
 		}
 
 	}

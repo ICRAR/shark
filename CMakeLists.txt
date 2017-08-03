@@ -118,7 +118,7 @@ set(SHARKLIB_SRCS
    src/ode_solver.cpp
    src/physical_model.cpp
    src/reionisation.cpp
-   src/simulation.cpp   
+   src/simulation.cpp
    src/star_formation.cpp
    src/stellar_feedback.cpp
    src/utils.cpp
@@ -142,8 +142,10 @@ target_link_libraries(shark-importer sharklib)
 
 # The shark executable
 set(SHARK_SRCS
-	src/main.cpp
 	src/evolve_halos.cpp
+	src/main.cpp
+   src/merger_tree_reader.cpp
+   src/tree_builder.cpp
 )
 add_executable(shark ${SHARK_SRCS})
 target_link_libraries(shark sharklib)
