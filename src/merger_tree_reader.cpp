@@ -87,6 +87,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(std::vector<int
 	// Read halos for each batch, accumulate and return
 	std::vector<std::shared_ptr<Halo>> all_halos;
 	for(auto batch: batches) {
+		LOG(info) << "Reading file for batch " << batch;
 		auto halos_batch = read_halos(batch);
 		all_halos.insert(halos_batch.end(), halos_batch.begin(), halos_batch.end());
 	}
