@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include "logging.h"
 #include "hdf5/reader.h"
 
 using namespace std;
@@ -34,6 +35,8 @@ namespace shark {
 namespace hdf5 {
 
 H5::DataSet Reader::get_dataset(const string &name) const {
+
+	LOG(debug) << "Getting dataset " << name << " on file " << get_filename();
 
 	// The name might contains slashes, so we can navigate through
 	// a hierarchy of groups/datasets
@@ -53,6 +56,7 @@ H5::DataSet Reader::get_dataset(const std::vector<std::string> &path) const {
 	H5::Group group = hdf5_file.openGroup(path.front());
 	vector<string> group_paths(path.begin() + 1, path.end() - 1);
 	for(auto const &path: group_paths) {
+		LOG(debug) << "Getting dataset " << path << " on file " << get_filename();
 		group = group.openGroup(path);
 	}
 
@@ -60,6 +64,8 @@ H5::DataSet Reader::get_dataset(const std::vector<std::string> &path) const {
 }
 
 H5::Attribute Reader::get_attribute(const string &name) const {
+
+	LOG(debug) << "Getting attribute " << name << " on file " << get_filename();
 
 	// The name might contains slashes, so we can navigate through
 	// a hierarchy of groups/datasets
