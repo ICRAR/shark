@@ -52,12 +52,6 @@ public:
 	Reader(const std::string &filename) :
 		IOBase(filename, H5F_ACC_RDONLY) {}
 
-	/**
-	 * Returns the name of the file being read
-	 * @return The name of the file being read
-	 */
-	const std::string get_filename() const;
-
 	template<typename T>
 	const T read_attribute(const std::string &name) const {
 		std::string attr_name;
