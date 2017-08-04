@@ -42,28 +42,6 @@ const string SURFSReader::get_filename(int batch)
 	return os.str();
 }
 
-//const vector<Subhalo> SURFSReader::read_subhalos(int snapshot)
-//{
-//	unsigned int nbatches;
-//	unsigned int total_subhalos;
-//
-//	// Give the hdf5 reader a scope so it gets destroyed quickly after use
-//	{
-//		hdf5::Reader batchfile_0(get_filename(snapshot, 0));
-//		nbatches = batchfile_0.read_attribute<unsigned int>("fileInfo/numberOfFile");
-//		//total_subhalos = batchfile_0.read_dataset<unsigned int>("Total_num_of_groups");
-//	}
-//
-//	// read all batches and add them up to a single vector,
-//	// which we then return
-//	vector<Subhalo> subhalos;
-//	for(unsigned int batch=0; batch != nbatches; batch++) {
-//		auto batch_subhalos = read_subhalos_batch(batch);
-//		subhalos.insert(subhalos.end(), batch_subhalos.begin(), batch_subhalos.end());
-//	}
-//	return subhalos;
-//}
-
 const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(std::vector<int> batches)
 {
 
