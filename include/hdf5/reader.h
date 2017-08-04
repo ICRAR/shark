@@ -80,9 +80,11 @@ public:
 
 private:
 
-	H5::Attribute get_attribute(const std::string &name) const;
 	H5::DataSet get_dataset(const std::string &name) const;
 	H5::DataSet get_dataset(const std::vector<std::string> &path) const;
+	H5::Attribute get_attribute(const std::string &name) const;
+	H5::Attribute _get_attribute(const H5::CommonFG &file_or_group, const std::vector<std::string> &path) const;
+	H5::Attribute _get_attribute(const H5::H5Location &l, const std::string attr_name) const;
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, T>::type

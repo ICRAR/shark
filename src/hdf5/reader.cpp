@@ -22,9 +22,11 @@
 // MA 02111-1307  USA
 //
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "exceptions.h"
 #include "logging.h"
 #include "hdf5/reader.h"
 
@@ -33,6 +35,9 @@ using namespace std;
 namespace shark {
 
 namespace hdf5 {
+
+class attribute_not_found : public std::exception {};
+class name_not_found : public std::exception {};
 
 H5::DataSet Reader::get_dataset(const string &name) const {
 
@@ -64,25 +69,66 @@ H5::DataSet Reader::get_dataset(const std::vector<std::string> &path) const {
 }
 
 H5::Attribute Reader::get_attribute(const string &name) const {
-
-	LOG(debug) << "Getting attribute " << name << " on file " << get_filename();
-
-	// The name might contains slashes, so we can navigate through
-	// a hierarchy of groups/datasets
+	LOG(debug) << "Getting attribute " << name << " from file " << get_filename();
 	std::vector<std::string> parts = tokenize(name, "/");
 
-	// only the attribute name, read directly and come back
-	if( parts.size() == 1 ) {
-		return hdf5_file.openAttribute(name);
+	try {
+		return _get_attribute(hdf5_file, parts);
+	} catch (const attribute_not_found &) {
+		std::ostringstream os;
+		os << "Attribute " << name << " doesn't exist in " << get_filename();
+		throw invalid_data(os.str());
+	} catch (const name_not_found &) {
+		std::ostringstream os;
+		os << "Name " << name << " names no object in file " << get_filename();
+		throw invalid_data(os.str());
+	}
+}
+
+H5::Attribute Reader::_get_attribute(const H5::CommonFG &file_or_group, const std::vector<std::string> &parts) const
+{
+
+	// This is the attribute name
+	if (parts.size() == 1) {
+		// both file and groups derive from H5Location too
+		return _get_attribute(dynamic_cast<const H5::H5Location &>(file_or_group), parts[0]);
 	}
 
-	// otherwise the path looks like
-	//  [group1/.../groupN/]dataset/attribute
-	const auto attr_name = parts.back();
-	parts.pop_back();
+	auto n_groups = file_or_group.getNumObjs();
+	bool found = false;
 
-	auto dataset = get_dataset(parts);
-	return dataset.openAttribute(attr_name);
+	const auto path = parts.front();
+	for(hsize_t i = 0; i < n_groups; i++) {
+
+		auto objname = file_or_group.getObjnameByIdx(i);
+		if (objname != path) {
+			continue;
+		}
+
+		found = true;
+		auto objtype = file_or_group.getObjTypeByIdx(i);
+		if (objtype == H5G_GROUP) {
+			std::vector<std::string> subparts(parts.begin() + 1, parts.end());
+			return _get_attribute(file_or_group.openGroup(objname), subparts);
+		}
+		else if (objtype == H5G_DATASET) {
+			std::vector<std::string> subparts(parts.begin() + 1, parts.end());
+			return _get_attribute(file_or_group.openDataSet(objname), parts.back());
+		}
+	}
+
+	throw name_not_found();
+}
+
+H5::Attribute Reader::_get_attribute(const H5::H5Location &l, const std::string attr_name) const {
+
+	LOG(debug) << "Getting attribute " << attr_name << " from file " << get_filename();
+
+	if (!l.attrExists(attr_name)) {
+		throw attribute_not_found();
+	}
+
+	return l.openAttribute(attr_name);
 }
 
 }  // namespace hdf5
