@@ -38,7 +38,7 @@ SURFSReader::SURFSReader(const std::string &prefix) :
 const string SURFSReader::get_filename(int batch)
 {
 	ostringstream os;
-	os << prefix << "." << batch;
+	os << prefix << "." << batch << ".hdf5";
 	return os.str();
 }
 
@@ -71,8 +71,10 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(std::vector<int
 	// (supposing that the file for batch 0 always exists)
 	unsigned int nbatches;
 	{
-		hdf5::Reader batchfile_0(get_filename(0));
-		nbatches = batchfile_0.read_attribute<unsigned int>("fileInfo/numberOfFile");
+		auto batch0_fname = get_filename(0);
+		LOG(debug) << "Opening " << batch0_fname << " for reading";
+		hdf5::Reader batchfile_0(batch0_fname);
+		nbatches = batchfile_0.read_attribute<unsigned int>("fileInfo/numberOfFiles");
 	}
 
 	for(auto batch: batches) {

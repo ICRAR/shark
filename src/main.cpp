@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
-	auto halos = SURFSReader(sim_params.tree_prefix).read_halos(exec_params.simulation_batches);
+	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches);
 	auto merger_trees = TreeBuilder(exec_params).build_trees(halos);
 
 	// This function should return the system of differential equations
