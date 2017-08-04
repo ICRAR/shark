@@ -85,7 +85,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 
 	//Read mass, circular velocity and angular momentum.
 	vector<double> Mvir = batch_file.read_dataset_v<double>("haloTrees/nodeMass");
-	vector<double> Vcirc = batch_file.read_dataset_v<double>("haloTrees/MaximumCircularVelocity");
+	vector<double> Vcirc = batch_file.read_dataset_v<double>("haloTrees/maximumCircularVelocity");
 	vector<double> L = batch_file.read_dataset_v_2<double>("haloTrees/angularMomentum");
 
 	//Read indices and the snapshot number at which the subhalo lives.
