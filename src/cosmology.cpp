@@ -74,7 +74,7 @@ void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 
 }
 
-Cosmology::Cosmology(CosmologicalParameters) :
+Cosmology::Cosmology(CosmologicalParameters parameters) :
 	parameters(parameters)
 {
 	// no-op
