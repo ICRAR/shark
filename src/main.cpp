@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 		cerr << "Error while parsing command-line: " << e.what() << endl;
 		return 1;
 	}
-	notify(vm);
+	po::notify(vm);
 
 	if (vm.count("help")) {
 		show_help(argv[0], visible_opts);
