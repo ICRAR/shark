@@ -96,7 +96,6 @@ double Cosmology::physical_to_comoving_mass(double m){
 	return m*parameters.Hubble_h;
 }
 
-
 double Cosmology::convert_redshift_to_age(double z){
 
 	using namespace constants;

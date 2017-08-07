@@ -185,6 +185,13 @@ public:
 	 */
 	int descendant_snapshot;
 
+    /**
+     * Integer that shows if this subhalo will disappear from the tree in the next snapshot.
+     * last_snapshot_identified = 1 if disappears in the next snapshot, =0 otherwise.
+     */
+
+    int last_snapshot_identified;
+
 	/**
 	 * A pointer to the descendant of this subhalo.
 	 * If this pointer is set then descendant_id and descendant_subhalo are
@@ -208,7 +215,7 @@ public:
 	float Mvir;
 	float L[3];
 	float Vcirc;
-	float Concentration;
+	float concentration;
 
 	/**
 	 * Hot gas component of the halo and outside the galaxies that is
@@ -281,6 +288,7 @@ public:
 		mass_fraction_subhalos(-1),
 		Vvir(0),
 		Mvir(0),
+		concentration(0),
 		snapshot(snapshot)
 	{
 		// no-op
@@ -319,6 +327,7 @@ public:
 	/** TODO: document these */
 	float Vvir;
 	float Mvir;
+	float concentration;
 
 	/**
 	 * The snapshot at which this halo is found
