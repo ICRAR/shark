@@ -40,11 +40,12 @@ std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vec
 
 	// No halos found at desired snapshot, end now
 	if (trees.empty()) {
+
 		std::ostringstream os;
 		os << "No Halo definitions found at snapshot " << last_snapshot_to_consider;
-		os << ", cannot proceed any further with merger trees creation. ";
-		os << "Halos found at these snapshots (asc order): ";
+		os << ", cannot proceed any further with merger trees creation. " << std::endl;
 
+		os << "Halos found at these snapshots: ";
 		std::set<int> snapshots_found;
 		for (const auto &halo: halos) {
 			snapshots_found.insert(halo->snapshot);
@@ -52,6 +53,13 @@ std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vec
 		for(auto snapshot: snapshots_found) {
 			os << snapshot << " ";
 		}
+		os << std::endl;
+
+		os << "Considering these snapshots during this run: ";
+		for(auto snapshot: exec_params.output_snapshots) {
+			os << snapshot << " ";
+		}
+
 		throw invalid_data(os.str());
 	}
 
@@ -118,14 +126,20 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 	//     and to their tree
 
 	// Get all snapshots in the Halos and sort them in decreasing order
+	// (but skip the first one, those were already processed and MergerTrees
+	// were built for them)
 	std::set<int> halo_snapshots;
 	for(const auto &halo: halos) {
 		halo_snapshots.insert(halo->snapshot);
 	}
-	std::vector<int> sorted_halo_snapshots(halo_snapshots.rbegin(), halo_snapshots.rend());
+	std::vector<int> sorted_halo_snapshots(++(halo_snapshots.rbegin()), halo_snapshots.rend());
 
 	// Loop as per instructions above
 	for(int snapshot: sorted_halo_snapshots) {
+
+		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
+
+		int ignored = 0;
 		for(const auto &halo: halos_by_snapshot[snapshot]) {
 			for(const auto &subhalo: halo->all_subhalos()) {
 
@@ -133,22 +147,38 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 				// halo anymore (and all its progenitors)
 				auto it = halos_by_id.find(subhalo->descendant_halo_id);
 				if (it == halos_by_id.end()) {
-					LOG(info) << subhalo << " points to descendant halo/subhalo "
-					          << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
-					          << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
+					LOG(debug) << subhalo << " points to descendant halo/subhalo "
+					           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
+					           << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
 					halos_by_id.erase(halo->id);
+					ignored++;
 					break;
 				}
 
-				auto &d_halo = halos_by_id[subhalo->descendant_halo_id];
+				// if the descendant subhalo is not found in the descendant halos'
+				// subhalos then we error
+				bool subhalo_descendant_found = false;
+				const auto &d_halo = halos_by_id[subhalo->descendant_halo_id];
 				for(auto &d_subhalo: d_halo->all_subhalos()) {
 					if (d_subhalo->id == subhalo->descendant_id) {
 						link(subhalo, d_subhalo, halo, d_halo);
+						subhalo_descendant_found = true;
+						break;
 					}
+				}
+				if (!subhalo_descendant_found) {
+					std::ostringstream os;
+					os << "Descendant Subhalo for " << subhalo << " not found ";
+					os << "in the Subhalo's descendant Halo " << d_halo;
+					throw invalid_data(os.str());
 				}
 			}
 		}
 
+		LOG(info) << ignored << "/" << halos_by_snapshot[snapshot].size()
+		          << " Halos ignored at snapshot " << snapshot << " due to"
+		          << " missing descendant Halo (i.e., they were the last of"
+		          << " their family line)";
 	}
 }
 }
