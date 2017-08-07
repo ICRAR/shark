@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
 	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches);
-	auto merger_trees = TreeBuilder(exec_params).build_trees(halos);
+	auto merger_trees = HaloBasedTreeBuilder(exec_params).build_trees(halos);
 
 	// This function should return the system of differential equations
 	// to be solved at each snapshot and in each galaxy.
