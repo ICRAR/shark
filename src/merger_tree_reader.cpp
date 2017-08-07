@@ -77,7 +77,8 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(std::vector<int
 
 const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 {
-	hdf5::Reader batch_file(get_filename(batch));
+	const auto fname = get_filename(batch);
+	hdf5::Reader batch_file(fname);
 
 	//Read position and velocities first.
 	vector<double> position = batch_file.read_dataset_v_2<double>("haloTrees/position");
@@ -150,6 +151,8 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		// Done, save it now
 		subhalos.push_back(std::move(subhalo));
 	}
+
+	LOG(info) << "Read " << subhalos.size() << " subhalos from " << fname;
 
 	// Sort subhalos by host index (which intrinsically sorts them by snapshot
 	// since host indices numbers are prefixed with the snapshot number)
