@@ -69,7 +69,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(std::vector<int
 	for(auto batch: batches) {
 		LOG(info) << "Reading file for batch " << batch;
 		auto halos_batch = read_halos(batch);
-		all_halos.insert(halos_batch.end(), halos_batch.begin(), halos_batch.end());
+		all_halos.insert(all_halos.end(), halos_batch.begin(), halos_batch.end());
 	}
 
 	return all_halos;
@@ -148,18 +148,14 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		subhalo->Vcirc = Vcirc[i];
 
 		// Done, save it now
-		subhalos.push_back(move(subhalo));
+		subhalos.push_back(std::move(subhalo));
 	}
 
 	// Sort subhalos by host index (which intrinsically sorts them by snapshot
 	// since host indices numbers are prefixed with the snapshot number)
 	std::sort(subhalos.begin(), subhalos.end(), [](const std::shared_ptr<Subhalo> &lhs, const std::shared_ptr<Subhalo> &rhs) {
-		return lhs->haloID - rhs->haloID;
+		return lhs->haloID < rhs->haloID;
 	});
-
-//	//First count number of groups as the number of unique hostIndex values.
-//	std::set<double>unique_values(hostIndex.begin(),hostIndex.end());
-//	int n_halos = unique_values.size();
 
 	//Assign properties to halos.
 	std::shared_ptr<Halo> current_halo;
