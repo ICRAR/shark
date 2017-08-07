@@ -90,11 +90,11 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 	vector<double> L = batch_file.read_dataset_v_2<double>("haloTrees/angularMomentum");
 
 	//Read indices and the snapshot number at which the subhalo lives.
+	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
 	vector<Subhalo::id_t> nodeIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/nodeIndex");
-	vector<Subhalo::id_t> hostIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/hostIndex");
 	vector<Subhalo::id_t> descIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/descendantIndex");
-	vector<double> snap = batch_file.read_dataset_v<double>("haloTrees/snapshotNumber");
-	vector<Subhalo::id_t> descHost	= batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/descendantHost");
+	vector<Halo::id_t> hostIndex = batch_file.read_dataset_v<Halo::id_t>("haloTrees/hostIndex");
+	vector<Halo::id_t> descHost = batch_file.read_dataset_v<Halo::id_t>("haloTrees/descendantHost");
 
 	//Read properties that characterise the position of the subhalo inside the halo.
 	vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");

@@ -27,6 +27,7 @@
 
 #include <map>
 #include <memory>
+#include <ostream>
 #include <vector>
 
 #include "mixins.h"
@@ -209,8 +210,12 @@ public:
 	 */
 	subhalo_type_t subhalo_type;
 
+	/**
+	 * Which Halo does this Subhalo belong to
+	 */
+	id_t haloID;
+
 	/** TODO: Properly document these */
-	int haloID; /*Which halos does this subhalo belong to*/
 	float Vvir;
 	float Mvir;
 	float L[3];
@@ -259,6 +264,23 @@ public:
 	std::shared_ptr<Halo> host_halo;
 };
 
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Subhalo &subhalo)
+{
+	stream << "Subhalo " << subhalo.id;
+	if (subhalo.host_halo) {
+		stream << "@[" << subhalo.host_halo << "]";
+	}
+	return stream;
+}
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shared_ptr<Subhalo> &subhalo)
+{
+	stream << *subhalo;
+	return stream;
+}
+
 /**
  * Class to extend the properties a subhalo can have, by allowing it to have more baryon components than the basic subhalo.
  */
@@ -282,7 +304,7 @@ class Halo : public Identifiable<long>, public Spatial<float> {
 
 public:
 
-	Halo(long halo_id, int snapshot) :
+	Halo(Halo::id_t halo_id, int snapshot) :
 		central_subhalo(),
 		satellite_subhalos(),
 		mass_fraction_subhalos(-1),
@@ -357,6 +379,20 @@ public:
 	}
 
 };
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Halo &halo)
+{
+	stream << "Halo " << halo.id;
+	return stream;
+}
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shared_ptr<Halo> &halo)
+{
+	stream << *halo;
+	return stream;
+}
 
 /**
  * A merger tree.

@@ -38,13 +38,30 @@ class TreeBuilder {
 
 public:
 	TreeBuilder(ExecutionParameters exec_params);
-	std::vector<std::shared_ptr<MergerTree>> build_trees(std::vector<std::shared_ptr<Halo>> halos);
+	virtual ~TreeBuilder();
+	std::vector<std::shared_ptr<MergerTree>> build_trees(const std::vector<std::shared_ptr<Halo>> &halos);
+
+protected:
+
+	virtual void loop_through_halos(const std::vector<std::shared_ptr<Halo>> &halos) = 0;
+
+	void link(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Subhalo> &d_subhalo,
+	          const std::shared_ptr<Halo> &halo, const std::shared_ptr<Halo> &d_halo);
 
 private:
 	ExecutionParameters exec_params;
 
-	void link(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Subhalo> &d_subhalo,
-	          const std::shared_ptr<Halo> &halo, const std::shared_ptr<Halo> &d_halo);
+};
+
+
+class HaloBasedTreeBuilder : public TreeBuilder {
+
+public:
+	HaloBasedTreeBuilder(ExecutionParameters exec_params);
+
+protected:
+	virtual void loop_through_halos(const std::vector<std::shared_ptr<Halo>> &halos) override;
+
 };
 
 }  // namespace shark
