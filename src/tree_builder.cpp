@@ -22,17 +22,35 @@ TreeBuilder::~TreeBuilder()
 std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vector<std::shared_ptr<Halo>> &halos)
 {
 
-	auto last_snapshot_to_consider = *std::end(exec_params.output_snapshots);
+	auto last_snapshot_to_consider = *std::begin(exec_params.output_snapshots);
 
 	// Find roots and create Trees for each of them
 	std::vector<std::shared_ptr<MergerTree>> trees;
 	for(const auto &halo: halos) {
 		if (halo->snapshot == last_snapshot_to_consider) {
 			std::shared_ptr<MergerTree> tree = std::make_shared<MergerTree>();
-			tree->add_halo(halo);
+			LOG(debug) << "Creating MergerTree at " << halo;
 			halo->merger_tree = tree;
+			halo->merger_tree->add_halo(halo);
 			trees.push_back(tree);
 		}
+	}
+
+	// No halos found at desired snapshot, end now
+	if (trees.empty()) {
+		std::ostringstream os;
+		os << "No Halo definitions found at snapshot " << last_snapshot_to_consider;
+		os << ", cannot proceed any further with merger trees creation. ";
+		os << "Halos found at these snapshots (asc order): ";
+
+		std::set<int> snapshots_found;
+		for (const auto &halo: halos) {
+			snapshots_found.insert(halo->snapshot);
+		}
+		for(auto snapshot: snapshots_found) {
+			os << snapshot << " ";
+		}
+		throw invalid_data(os.str());
 	}
 
 	loop_through_halos(halos);
@@ -58,6 +76,8 @@ void TreeBuilder::link(const std::shared_ptr<Subhalo> &subhalo, const std::share
 	if (halo->descendant and halo->descendant->id != d_halo->id) {
 		throw invalid_data("invalid halo");
 	}
+
+	LOG(debug) << "Linking " << d_halo << " as descendant of " << halo;
 	halo->descendant = d_halo;
 
 	// Link halo to merger tree and back
