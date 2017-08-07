@@ -391,7 +391,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shar
  * A merger tree contains halos, which are indexed by snapshot,
  * and an ID to identify it.
  */
-class MergerTree {
+class MergerTree : public Identifiable<long> {
 public:
 
 	/**
