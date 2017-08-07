@@ -260,10 +260,11 @@ public:
 template <typename T>
 std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Subhalo &subhalo)
 {
-	stream << "Subhalo " << subhalo.id;
+	stream << "<Subhalo " << subhalo.id;
 	if (subhalo.host_halo) {
-		stream << "@[" << subhalo.host_halo << "]";
+		stream << "@" << subhalo.host_halo;
 	}
+	stream << ">";
 	return stream;
 }
 
@@ -374,7 +375,11 @@ public:
 template <typename T>
 std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Halo &halo)
 {
-	stream << "Halo " << halo.id;
+	stream << "<Halo " << halo.id;
+	if (halo.merger_tree) {
+		stream << "@" << halo.merger_tree;
+	}
+	stream << ">";
 	return stream;
 }
 
@@ -403,6 +408,20 @@ public:
 		halos[halo->snapshot].push_back(halo);
 	}
 };
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const MergerTree &merger_tree)
+{
+	stream << "<MergerTree " << merger_tree.id << ">";
+	return stream;
+}
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shared_ptr<MergerTree> &merger_tree)
+{
+	stream << *merger_tree;
+	return stream;
+}
 
 }  // namespace shark
 
