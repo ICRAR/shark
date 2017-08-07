@@ -27,6 +27,7 @@
 
 #include <map>
 #include <memory>
+#include <ostream>
 #include <vector>
 
 #include "mixins.h"
@@ -252,6 +253,23 @@ public:
 	std::shared_ptr<Halo> host_halo;
 };
 
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Subhalo &subhalo)
+{
+	stream << "Subhalo " << subhalo.id;
+	if (subhalo.host_halo) {
+		stream << "@[" << subhalo.host_halo << "]";
+	}
+	return stream;
+}
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shared_ptr<Subhalo> &subhalo)
+{
+	stream << *subhalo;
+	return stream;
+}
+
 /**
  * Class to extend the properties a subhalo can have, by allowing it to have more baryon components than the basic subhalo.
  */
@@ -348,6 +366,20 @@ public:
 	}
 
 };
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Halo &halo)
+{
+	stream << "Halo " << halo.id;
+	return stream;
+}
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shared_ptr<Halo> &halo)
+{
+	stream << *halo;
+	return stream;
+}
 
 /**
  * A merger tree.

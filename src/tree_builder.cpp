@@ -60,9 +60,9 @@ std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(std::vector<st
 				// halo anymore (and all its progenitors)
 				auto it = halos_by_id.find(subhalo->descendant_halo_id);
 				if (it == halos_by_id.end()) {
-					LOG(info) << "Subhalo " << subhalo->id << " points to descendant halo "
-					          << subhalo->descendant_halo_id << ", which doesn't exist. Ignoring "
-					          << "this halo and the rest of its progenitors";
+					LOG(info) << subhalo << " points to descendant halo/subhalo "
+					          << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
+					          << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
 					halos_by_id.erase(halo->id);
 					break;
 				}
