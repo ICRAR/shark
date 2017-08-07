@@ -203,8 +203,12 @@ public:
 	 */
 	subhalo_type_t subhalo_type;
 
+	/**
+	 * Which Halo does this Subhalo belong to
+	 */
+	id_t haloID;
+
 	/** TODO: Properly document these */
-	int haloID; /*Which halos does this subhalo belong to*/
 	float Vvir;
 	float Mvir;
 	float L[3];
@@ -293,7 +297,7 @@ class Halo : public Identifiable<long>, public Spatial<float> {
 
 public:
 
-	Halo(long halo_id, int snapshot) :
+	Halo(Halo::id_t halo_id, int snapshot) :
 		central_subhalo(),
 		satellite_subhalos(),
 		mass_fraction_subhalos(-1),
