@@ -33,6 +33,7 @@
 #include "components.h"
 #include "cosmology.h"
 #include "evolve_halos.h"
+#include "exceptions.h"
 #include "logging.h"
 #include "numerical_constants.h"
 #include "physical_model.h"
@@ -71,7 +72,7 @@ void setup_logging(int lvl) {
  *
  * Here we load the relevant information and do the basic loops to solve galaxy formation
  */
-int main(int argc, char **argv) {
+int run(int argc, char **argv) {
 
 	namespace po = boost::program_options;
 
@@ -193,4 +194,19 @@ int main(int argc, char **argv) {
 	}
 
 	return 0;
+}
+
+int main(int argc, char **argv) {
+	try {
+		run(argc, argv);
+		return 0;
+	} catch (const shark::exception &e) {
+		std::cerr << "Unexpected shark exception found while running:" << std::endl << std::endl;
+		std::cerr << e.what() << std::endl;
+		return 1;
+	} catch (const std::exception &e) {
+		std::cerr << "Unexpected exception while running" << std::endl << std::endl;
+		std::cerr << e.what() << std::endl;
+		return 1;
+	}
 }

@@ -28,23 +28,71 @@
 #include <stdexcept>
 #include <string>
 
+#include "components.h"
+
 namespace shark {
 
 /**
- * An exception indicating that invalid data has been encountered
+ * The mother of all SHArk exceptions
  */
-class invalid_data : public std::runtime_error {
+class exception : public std::runtime_error {
 public:
-	invalid_data(const std::string &what) : std::runtime_error(what) {};
+	exception(const std::string &what) : std::runtime_error(what) {};
 };
-
 
 /**
  * An exception indicating that invalid data has been encountered
  */
-class math_error: public std::runtime_error {
+class invalid_data : public exception {
 public:
-	math_error(const std::string &what) : std::runtime_error(what) {};
+	invalid_data(const std::string &what) : exception(what) {};
+};
+
+/**
+ * An exception indicating that a structural component was expected
+ * but not found in the simulation data.
+ */
+class component_not_found : public invalid_data {
+public:
+	component_not_found(const std::string &what) : invalid_data(what) {};
+};
+
+/**
+ * An exception indicating that a Halo was expected but not found
+ */
+class halo_not_found : public component_not_found {
+public:
+	halo_not_found(const std::string &what, Halo::id_t halo_id) :
+		component_not_found(what),
+		halo_id(halo_id) {}
+
+	/**
+	 * The ID of the Halo that could not be found.
+	 */
+	Halo::id_t halo_id;
+};
+
+/**
+ * An exception indicating that a Halo was expected but not found
+ */
+class subhalo_not_found : public component_not_found {
+public:
+	subhalo_not_found(const std::string &what, Subhalo::id_t subhalo_id) :
+		component_not_found(what),
+		subhalo_id(subhalo_id) {}
+
+	/**
+	 * The ID of the Subhalo that could not be found.
+	 */
+	Subhalo::id_t subhalo_id;
+};
+
+/**
+ * An exception indicating a mathematical error
+ */
+class math_error: public exception {
+public:
+	math_error(const std::string &what) : exception(what) {};
 };
 
 }  // namespace shark
