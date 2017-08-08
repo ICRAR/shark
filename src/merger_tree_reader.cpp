@@ -152,7 +152,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		subhalos.push_back(std::move(subhalo));
 	}
 
-	LOG(info) << "Read " << subhalos.size() << " subhalos from " << fname;
+	LOG(info) << "Read " << subhalos.size() << " Subhalos from " << fname;
 
 	// Sort subhalos by host index (which intrinsically sorts them by snapshot
 	// since host indices numbers are prefixed with the snapshot number)
@@ -163,7 +163,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 	//Assign properties to halos.
 	std::shared_ptr<Halo> current_halo;
 	std::vector<std::shared_ptr<Halo>> halos;
-	int last_halo_id = -1;
+	Halo::id_t last_halo_id = -1;
 	for(const auto &subhalo: subhalos) {
 
 		auto halo_id = subhalo->haloID;
@@ -176,6 +176,8 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		current_halo->add_subhalo(subhalo);
 		subhalo->host_halo = current_halo;
 	}
+
+	LOG(info) << "Created " << halos.size() << " Halos from these Subhalos";
 
 	for(const auto &halo: halos) {
 		// calculate vvir
