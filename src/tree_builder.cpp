@@ -1,3 +1,4 @@
+#include <iterator>
 #include <memory>
 #include <vector>
 
@@ -22,7 +23,8 @@ TreeBuilder::~TreeBuilder()
 std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vector<std::shared_ptr<Halo>> &halos)
 {
 
-	auto last_snapshot_to_consider = *std::begin(exec_params.output_snapshots);
+	const auto &output_snaps = exec_params.output_snapshots;
+	auto last_snapshot_to_consider = *std::begin(output_snaps);
 
 	// Find roots and create Trees for each of them
 	std::vector<std::shared_ptr<MergerTree>> trees;
@@ -50,15 +52,11 @@ std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vec
 		for (const auto &halo: halos) {
 			snapshots_found.insert(halo->snapshot);
 		}
-		for(auto snapshot: snapshots_found) {
-			os << snapshot << " ";
-		}
+		std::copy(snapshots_found.begin(), snapshots_found.end(), std::ostream_iterator<int>(os, " "));
 		os << std::endl;
 
 		os << "Considering these snapshots during this run: ";
-		for(auto snapshot: exec_params.output_snapshots) {
-			os << snapshot << " ";
-		}
+		std::copy(output_snaps.begin(), output_snaps.end(), std::ostream_iterator<int>(os, " "));
 
 		throw invalid_data(os.str());
 	}
