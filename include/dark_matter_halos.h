@@ -43,15 +43,13 @@ public:
 
 	double enclosed_mass(double r, double c);
 
-	double halo_dynamical_time (Halo halo);
+	double halo_dynamical_time (std::shared_ptr<Halo> &halo);
 
-	double halo_virial_radius(Halo halo);
+	double halo_virial_radius(std::shared_ptr<Halo> &halo);
 
 private:
 	DarkMatterHaloParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
-
-};
 
 };
 

@@ -169,7 +169,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     double coolingrate;
 
     //Define host halo
-    Halo halo = subhalo.host_halo;
+    auto halo = subhalo.host_halo;
 
     /**
      * For now assume that gas can cool only in central subhalos.

@@ -34,16 +34,16 @@ class GalaxyMergerParameters: public Options {
 		float minor_merger_burst_ratio;
 		float gas_fraction_minor_merger;
 		int merger_random_seed;
-		vector<double> jiang08;
+		std::vector<double> jiang08;
 
-	};
+};
 
 
 
 class GalaxyMergers{
 
 public:
-	GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::vector<std::shared_ptr<Halo>> halos);
+	GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo);
 
 	void orbital_parameters(double vr, double vt, double f);
 
@@ -53,14 +53,15 @@ public:
 
 	double merging_timescale_orbital(double vr, double vt, double f, double c);
 
-	double merging_timescale(Subhalo primary, Subhalo secondary);
+	double merging_timescale(std::shared_ptr<Subhalo> &primary, std::shared_ptr<Subhalo> &secondary);
 
-	void merging_galaxies(Halo halo);
+	void merging_subhalos(std::shared_ptr<Halo> &halo);
+
+	void merging_galaxies(std::shared_ptr<Halo> &halo);
 
 private:
 	GalaxyMergerParameters parameters;
 	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
-};
 
 };
 

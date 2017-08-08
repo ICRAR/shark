@@ -59,6 +59,8 @@ class HaloBasedTreeBuilder : public TreeBuilder {
 public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params);
 
+	void create_galaxies(const std::vector<std::shared_ptr<Halo>> &halos);
+
 protected:
 	virtual void loop_through_halos(const std::vector<std::shared_ptr<Halo>> &halos) override;
 

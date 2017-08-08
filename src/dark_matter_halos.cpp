@@ -99,17 +99,17 @@ double DarkMatterHalos::enclosed_mass(double r, double c){
 	}
 }
 
-double DarkMatterHalos::halo_dynamical_time (Halo halo){
+double DarkMatterHalos::halo_dynamical_time (std::shared_ptr<Halo> &halo){
 
-	return constants::MPCKM2GYR * halo_virial_radius(halo) / halo.Vvir / cosmology->parameters.Hubble_h;
+	return constants::MPCKM2GYR * halo_virial_radius(halo) / halo->Vvir / cosmology->parameters.Hubble_h;
 }
 
-double DarkMatterHalos::halo_virial_radius(Halo halo){
+double DarkMatterHalos::halo_virial_radius(std::shared_ptr<Halo> &halo){
 
 	/**
 	 * Function to calculate the halo virial radius. Returns virial radius in Mpc/h.
 	 */
-	return constants::G * halo.Mvir / std::pow(halo.Vvir,2);
+	return constants::G * halo->Mvir / std::pow(halo->Vvir,2);
 }
 
 } // namespace shark

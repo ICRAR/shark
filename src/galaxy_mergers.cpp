@@ -39,8 +39,9 @@ GalaxyMergerParameters::GalaxyMergerParameters(const std::string &filename) :
 
 }
 
-GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::vector<std::shared_ptr<Halo>> halos) :
-	parameters(parameters)
+GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo) :
+	parameters(parameters),
+	darkmatterhalo(darkmatterhalo)
 {
 	// no-op
 }
@@ -137,7 +138,7 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return mass_ratio/std::log(1+mass_ratio);
 }
 
-double GalaxyMergers::merging_timescale(Subhalo primary, Subhalo secondary){
+double GalaxyMergers::merging_timescale(std::shared_ptr<Subhalo> &primary, std::shared_ptr<Subhalo> &secondary){
 
 	/**
 	 * Function calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary.
@@ -145,13 +146,13 @@ double GalaxyMergers::merging_timescale(Subhalo primary, Subhalo secondary){
 	 */
 	double vt,vr;
 
-	double ms = secondary.Mvir;
+	double ms = secondary->Mvir;
 
-	double mp = primary.Mvir;
+	double mp = primary->Mvir;
 
-	double c = primary.host_halo->concentration;
+	double c = primary->host_halo->concentration;
 
-	Halo halo = primary.host_halo;
+	auto halo = primary->host_halo;
 
 	double tau_dyn = darkmatterhalo->halo_dynamical_time(halo);
 
@@ -168,7 +169,7 @@ double GalaxyMergers::merging_timescale(Subhalo primary, Subhalo secondary){
 
 }
 
-void GalaxyMergers::merging_galaxies(Halo halo){
+void GalaxyMergers::merging_subhalos(std::shared_ptr<Halo> &halo){
 
 	/**
 	 * This function evaluates whether subhalos in each timestep are disappearing from the merger tree, and if they are
@@ -178,19 +179,48 @@ void GalaxyMergers::merging_galaxies(Halo halo){
 	 * Function receives as input a halo.
 	 */
 
-	Subhalo central_subhalo = halo.central_subhalo;
+	auto central_subhalo = halo->central_subhalo;
 
-	for(shared_ptr<Subhalo> &subhalo: halo.all_subhalos()) {
+	for(std::shared_ptr<Subhalo> &subhalo: halo->satellite_subhalos) {
 		//Identify which subhalos will disappear in the next snapshot
-		if(subhalo->last_snapshot_identified == 1){
-			double tau_fric = merging_timescale(central_subhalo, subhalo);
 
+		if(subhalo->last_snapshot_identified == subhalo->snapshot){
 
+			auto satellite_subhalo = subhalo;
+
+			//Calculate dynamical friction timescale.
+			double tau_fric = merging_timescale(central_subhalo, satellite_subhalo);
+
+			//Assign tau_fric to all satellite galaxies in the subhalo that will disappear.
+			for (std::shared_ptr<Galaxy> &galaxies: satellite_subhalo->galaxies){
+				galaxies->tmerge = tau_fric;
+			}
+
+			//Now transfer the galaxies in this subhalo to the central subhalo.
+			central_subhalo->galaxies.insert(central_subhalo->galaxies.end(), satellite_subhalo->galaxies.begin(), satellite_subhalo->galaxies.end());
+
+			//Delete galaxies from satellite_subhalo
+			satellite_subhalo->galaxies.clear();
 		}
 	}
 
 
 }
+
+void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo){
+
+	/**
+	 * This function determines which galaxies are merging in this snapshot by comparing tmerge with the duration of the snapshot.
+	 */
+
+	//First define central subhalo.
+
+	Subhalo central_subhalo = halo->central_subhalo;
+
+
+}
+
+
 
 
 }  // namespace shark
