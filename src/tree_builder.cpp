@@ -141,6 +141,12 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 		for(const auto &halo: halos_by_snapshot[snapshot]) {
 			for(const auto &subhalo: halo->all_subhalos()) {
 
+				// this subhalo has no descendants, let's not even try
+				if (subhalo->descendant_id == -1) {
+					LOG(debug) << subhalo << " has no descendant, not following";
+					continue;
+				}
+
 				// if the descendant halo is not found, we don't consider this
 				// halo anymore (and all its progenitors)
 				auto it = halos_by_id.find(subhalo->descendant_halo_id);
@@ -166,9 +172,14 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 				}
 				if (!subhalo_descendant_found) {
 					std::ostringstream os;
-					os << "Descendant Subhalo for " << subhalo << " not found ";
-					os << "in the Subhalo's descendant Halo " << d_halo;
-					throw invalid_data(os.str());
+					os << "Descendant Subhalo id=" << subhalo->descendant_id;
+					os << " for " << subhalo << " not found";
+					os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
+					os << "Subhalos in " << d_halo << ": ";
+					auto all_subhalos = d_halo->all_subhalos();
+					std::copy(all_subhalos.begin(), all_subhalos.end(),
+					          std::ostream_iterator<std::shared_ptr<Subhalo>>(os, " "));
+					throw subhalo_not_found(os.str(), subhalo->descendant_id);
 				}
 			}
 		}
