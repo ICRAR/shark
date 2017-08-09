@@ -119,7 +119,6 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		subhalo->haloID = hostIndex[i];
 		subhalo->snapshot = snap[i];
 
-
 		//Determine if subhalo is centre of Dhalo.
 		if(IsCentre[i] == 1) {
 			subhalo->subhalo_type = Subhalo::CENTRAL;

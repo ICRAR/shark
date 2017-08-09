@@ -51,6 +51,9 @@ GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
 	else if (lambdamodel == SUTHERLAND) {
 		prefix = "S93_";
 	}
+	else {
+		throw invalid_argument("Cooling model is not valid");
+	}
 
 	string tables = cooling_tables_dir + "/" + prefix + "tables.txt";
 
@@ -145,11 +148,12 @@ GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::g
 
 } // namespace detail
 
-GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback) :
+GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback, std::shared_ptr<DarkMatterHalos> darkmatterhalos) :
 	parameters(parameters),
 	reio_parameters(reio_parameters),
 	cosmology(cosmology),
 	agnfeedback(agnfeedback),
+	darkmatterhalos(darkmatterhalos),
 	interp(nullptr)
 {
 	interp.reset(gsl_interp2d_alloc(gsl_interp2d_bilinear, parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size()));
@@ -163,6 +167,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     gsl_interp_accel *yacc = gsl_interp_accel_alloc();
 
     double coolingrate;
+
+    //Define host halo
+    auto halo = subhalo.host_halo;
 
     /**
      * For now assume that gas can cool only in central subhalos.
@@ -202,7 +209,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		double Tvir = 35.9*std::pow(vvir,2); //in K.
     		double lgTvir = log10(Tvir); //in K.
 
-    		double Rvir = constants::G*mvir/std::pow(vvir,2); //in Mpc.
+    		double Rvir = darkmatterhalos->halo_virial_radius(halo)/cosmology->parameters.Hubble_h;//Mpc
 
     		/**
     		 * Calculates the cooling Lambda function for the metallicity and temperature of this halo.
@@ -225,7 +232,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		if(parameters.model == GasCoolingParameters::CROTON06)
     		{
 
-    			tcool = Rvir/vvir*constants::KMS2MPCGYR; //in Gyr.
+    			tcool = darkmatterhalos->halo_dynamical_time(halo); //in Gyr.
 
     			tcharac = tcool*constants::GYR2S; //in seconds.
 

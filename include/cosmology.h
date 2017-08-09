@@ -84,7 +84,6 @@ public:
 	double convert_redshift_to_age(double z);
 	double expansion_factor(double a);
 
-private:
 	CosmologicalParameters parameters;
 
 };

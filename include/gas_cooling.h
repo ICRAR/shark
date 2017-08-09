@@ -17,10 +17,11 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_interp2d.h>
 
-#include "options.h"
-#include "components.h"
-#include "reionisation.h"
 #include "agn_feedback.h"
+#include "components.h"
+#include "dark_matter_halos.h"
+#include "options.h"
+#include "reionisation.h"
 
 namespace shark {
 /**
@@ -65,7 +66,7 @@ private:
 class GasCooling {
 
 public:
-	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback);
+	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback, std::shared_ptr<DarkMatterHalos> darkmatterhalos);
 
 	double cooling_rate(Subhalo &subhalo, double z, double deltat);
 	double cooling_time(double Tvir, double logl, double nh_density);
@@ -79,6 +80,7 @@ private:
 	GasCoolingParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
 	std::shared_ptr<AGNFeedback> agnfeedback;
+	std::shared_ptr<DarkMatterHalos> darkmatterhalos;
 	std::shared_ptr<gsl_interp2d> interp;
 
 };

@@ -46,6 +46,15 @@ class BaryonBase {
 public:
 
 	/**
+	 * Initialize values in zero.
+	 */
+	BaryonBase():
+		mass(0),
+		mass_metals(0)
+	{
+		// no-op
+	}
+	/**
 	 * Mass content of the baryon component
 	 */
 	float mass;
@@ -62,7 +71,15 @@ public:
  */
 class Baryon : public BaryonBase {
 public:
-
+	/**
+	 * Initialize values in zero.
+	 */
+	Baryon():
+		rscale(0),
+		sAM(0)
+	{
+		// no-op
+	}
 	/**
 	 * A scale radius
 	 */
@@ -87,7 +104,15 @@ class BlackHole : public BaryonBase {
 public:
 
 	/**
-	 * TODO: add description of this parameter
+	 * Initialize values in zero.
+	 */
+	BlackHole():
+		macc(0)
+	{
+		// no-op
+	}
+	/**
+	 * macc: accretion rate onto the black hole.
 	 */
 	float macc;
 };
@@ -101,6 +126,16 @@ public:
  */
 class Galaxy : public Identifiable<int> {
 public:
+
+	/**
+	 * Initialize values in zero.
+	 */
+	Galaxy():
+		tmerge(0),
+		galaxy_type()
+	{
+		//no-op
+	}
 
 	/**
 	 * An enumeration of types of galaxies
@@ -121,6 +156,11 @@ public:
 	Baryon disk_stars;
 	Baryon disk_gas;
 	BlackHole smbh;
+
+	/**
+	 * dynamical friction timescale, which is defined only is galaxy is satellite.
+	 */
+	float tmerge;
 };
 
 /** This class extends the galaxy to include spatial information.*/
@@ -142,6 +182,17 @@ class SpatialSatelliteGalaxy : public SatelliteGalaxy, public Spatial<float> {
  * This structure keeps track of the properties of the halo gas, which are necessary to implement a more sophisticated cooling model.
  */
 struct CoolingSubhaloTracking {
+	/**
+	 * Initialize values in zero.
+	 */
+	CoolingSubhaloTracking():
+		deltat(),
+		temp(),
+		mass(),
+		tcooling()
+	{
+		//no=op
+	};
 	std::vector<double> deltat;
 	std::vector<double> temp;
 	std::vector<double> mass;
@@ -156,6 +207,31 @@ struct CoolingSubhaloTracking {
 class Subhalo : public Identifiable<long>, public Spatial<float> {
 
 public:
+
+	/**
+	 * Initialize values in zero.
+	 */
+	Subhalo():
+		haloID(0),
+		descendant_id(0),
+		descendant_halo_id(0),
+		snapshot(-1),
+		descendant_snapshot(-1),
+		last_snapshot_identified(-1),
+		subhalo_type(),
+		Vvir(0),
+		Mvir(0),
+		L{0, 0, 0},
+		Vcirc(0),
+		concentration(0),
+		accretion_rate(),
+		descendant(0),
+		galaxies(),
+		ascendants(),
+		host_halo()
+	{
+		//no-op
+	}
 
 	/**
 	 * An enumeration of types of subhalos
@@ -186,6 +262,13 @@ public:
 	 */
 	int descendant_snapshot;
 
+    /**
+     * Integer that shows if this subhalo will disappear from the tree in the next snapshot.
+     * last_snapshot_identified = 1 if disappears in the next snapshot, =0 otherwise.
+     */
+
+    int last_snapshot_identified;
+
 	/**
 	 * A pointer to the descendant of this subhalo.
 	 * If this pointer is set then descendant_id and descendant_subhalo are
@@ -213,7 +296,7 @@ public:
 	float Mvir;
 	float L[3];
 	float Vcirc;
-	float Concentration;
+	float concentration;
 
 	/**
 	 * Hot gas component of the halo and outside the galaxies that is
@@ -304,6 +387,7 @@ public:
 		mass_fraction_subhalos(-1),
 		Vvir(0),
 		Mvir(0),
+		concentration(0),
 		snapshot(snapshot)
 	{
 		// no-op
@@ -342,6 +426,7 @@ public:
 	/** TODO: document these */
 	float Vvir;
 	float Mvir;
+	float concentration;
 
 	/**
 	 * The snapshot at which this halo is found

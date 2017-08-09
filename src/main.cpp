@@ -32,8 +32,10 @@
 #include "config.h"
 #include "components.h"
 #include "cosmology.h"
+#include "dark_matter_halos.h"
 #include "evolve_halos.h"
 #include "exceptions.h"
+#include "galaxy_mergers.h"
 #include "logging.h"
 #include "numerical_constants.h"
 #include "physical_model.h"
@@ -128,25 +130,26 @@ int run(int argc, char **argv) {
 	 * We load all relevant parameters and implement all relevant physical processes needed by the physical model.
 	 */
 	ExecutionParameters exec_params(config_file);
-
 	SimulationParameters sim_params(config_file);
-
-	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(CosmologicalParameters(config_file));
-
+	DarkMatterHaloParameters dark_matter_halo_parameters(config_file);
 	ReionisationParameters reio_params(config_file);
+	GalaxyMergerParameters merger_parameters(config_file);
+	CosmologicalParameters cosmo_parameters(config_file);
+	AGNFeedbackParameters agn_params(config_file);
+	GasCoolingParameters gas_cooling_params(config_file);
+	StellarFeedbackParameters stellar_feedback_params(config_file);
+	StarFormationParameters star_formation_params(config_file);
 
-	std::shared_ptr<AGNFeedback> agnfeedback = std::make_shared<AGNFeedback>(AGNFeedbackParameters(config_file), cosmology);
+	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(cosmo_parameters);
+	std::shared_ptr<DarkMatterHalos> dark_matter_halos = std::make_shared<DarkMatterHalos>(dark_matter_halo_parameters, cosmology);
+	std::shared_ptr<AGNFeedback> agnfeedback = std::make_shared<AGNFeedback>(agn_params, cosmology);
 
+	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos};
 	Simulation simulation{sim_params, cosmology};
-
-	GasCooling gas_cooling{GasCoolingParameters(config_file), reio_params, cosmology, agnfeedback};
-
-	StellarFeedback stellar_feedback{StellarFeedbackParameters(config_file)};
-
-	StarFormation star_formation{StarFormationParameters(config_file), cosmology};
-
+	GasCooling gas_cooling{gas_cooling_params, reio_params, cosmology, agnfeedback, dark_matter_halos};
+	StellarFeedback stellar_feedback{stellar_feedback_params};
+	StarFormation star_formation{star_formation_params, cosmology};
 	RecyclingParameters recycling_parameters;
-
 	BasicPhysicalModel basic_physicalmodel(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
 
 	// Read the merger tree files.
@@ -176,12 +179,19 @@ int run(int argc, char **argv) {
 		for(auto &tree: merger_trees) {
 			/*here loop over the halos this merger tree has at this time.*/
 			for(shared_ptr<Halo> halo: tree->halos[snapshot]) {
+				/*Check if there are any mergers in this snapshot*/
+
+				galaxy_mergers.merging_subhalos(halo);
+
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
 				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
+
+				/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
+
 			}
 		}
 
-		/*Here you shoud include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
+		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		vector<shared_ptr<Halo>> all_halos_for_this_snapshot;
 		//do_stuff_at_halo_level(all_halos_for_this_snapshot);
 
@@ -190,6 +200,7 @@ int run(int argc, char **argv) {
 		{
 			//write_output(snapshot, merger_trees);
 		}
+
 
 	}
 
