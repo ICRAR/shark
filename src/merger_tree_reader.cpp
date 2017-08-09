@@ -160,7 +160,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 	});
 
 	//Assign properties to halos.
-	std::shared_ptr<Halo> current_halo;
+	std::shared_ptr<Halo> halo;
 	std::vector<std::shared_ptr<Halo>> halos;
 	Halo::id_t last_halo_id = -1;
 	for(const auto &subhalo: subhalos) {
@@ -168,12 +168,13 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		auto halo_id = subhalo->haloID;
 		if (halo_id != last_halo_id) {
 			last_halo_id = halo_id;
-			current_halo = std::make_shared<Halo>(halo_id, subhalo->snapshot);
-			halos.push_back(current_halo);
+			halo = std::make_shared<Halo>(halo_id, subhalo->snapshot);
+			halos.push_back(halo);
 		}
 
-		current_halo->add_subhalo(subhalo);
-		subhalo->host_halo = current_halo;
+		LOG(debug) << "Adding " << subhalo << " to " << halo;
+		halo->add_subhalo(subhalo);
+		subhalo->host_halo = halo;
 	}
 
 	LOG(info) << "Created " << halos.size() << " Halos from these Subhalos";
