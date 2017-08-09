@@ -69,26 +69,38 @@ std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vec
 void TreeBuilder::link(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Subhalo> &d_subhalo,
                        const std::shared_ptr<Halo> &halo, const std::shared_ptr<Halo> &d_halo) {
 
-	// Establish parentage link at subhalo level
+	// Establish ascendant and descendant links at subhalo level
 	// Fail if subhalo has more than one descendant
+	LOG(debug) << "Connecting " << subhalo << " as a parent of " << d_subhalo;
 	d_subhalo->ascendants.push_back(subhalo);
+
 	if (subhalo->descendant) {
-		throw invalid_data("invalid subhalo");
+		std::ostringstream os;
+		os << subhalo << " already has a descendant " << subhalo->descendant;
+		os << " but " << d_subhalo << " is claiming to be its descendant as well";
+		throw invalid_data(os.str());
 	}
 	subhalo->descendant = d_subhalo;
 
-	// Establish parentage link at halo level
+	// Establish ascendant and descendant link at halo level
 	// Fail if a halo has more than one descendant
-	// TODO: check that we're not adding "h" twice here
+	LOG(debug) << "Connecting " << halo << " as a parent of " << d_halo;
 	d_halo->ascendants.push_back(halo);
-	if (halo->descendant and halo->descendant->id != d_halo->id) {
-		throw invalid_data("invalid halo");
-	}
 
-	LOG(debug) << "Linking " << d_halo << " as descendant of " << halo;
+	if (halo->descendant and halo->descendant->id != d_halo->id) {
+		std::ostringstream os;
+		os << halo << " already has a descendant " << halo->descendant;
+		os << " but " << d_halo << " is claiming to be its descendant as well";
+		throw invalid_data(os.str());
+	}
 	halo->descendant = d_halo;
 
-	// Link halo to merger tree and back
+	// Link this halo to merger tree and back
+	if (!d_halo->merger_tree) {
+		std::ostringstream os;
+		os << "Descendant " << d_halo << " has no MergerTree associated to it";
+		throw invalid_data(os.str());
+	}
 	halo->merger_tree = d_halo->merger_tree;
 	halo->merger_tree->add_halo(halo);
 
