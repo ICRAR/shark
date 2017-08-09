@@ -141,9 +141,9 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		subhalo->velocity.z = velocity[3 * i + 2];
 
 		//Assign angular momentum
-		subhalo->L[0] = L[3 * i];
-		subhalo->L[1] = L[3 * i + 1];
-		subhalo->L[2] = L[3 * i + 2];
+		subhalo->L.x = L[3 * i];
+		subhalo->L.y = L[3 * i + 1];
+		subhalo->L.z = L[3 * i + 2];
 
 		subhalo->Vcirc = Vcirc[i];
 

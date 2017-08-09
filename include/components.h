@@ -294,7 +294,7 @@ public:
 	/** TODO: Properly document these */
 	float Vvir;
 	float Mvir;
-	float L[3];
+	xyz<float> L;
 	float Vcirc;
 	float concentration;
 
