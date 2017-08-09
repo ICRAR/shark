@@ -8,6 +8,7 @@
 #include <cmath>
 #include <fstream>
 #include <map>
+#include <stdexcept>
 #include <tuple>
 
 #include "cosmology.h"
@@ -21,13 +22,24 @@ namespace shark {
 DarkMatterHaloParameters::DarkMatterHaloParameters(const std::string &filename) :
 	Options(filename),
 	haloprofile(NFW)
-
 {
 	load("dark_matter_halo.halo_profile", haloprofile);
+}
 
-	if(haloprofile != NFW && haloprofile != EINASTO){
-		throw invalid_argument("Dark Matter Profile is not valid");
+namespace detail {
+
+template <>
+DarkMatterHaloParameters::DarkMatterProfile Helper<DarkMatterHaloParameters::DarkMatterProfile>::get(const std::string &name, const std::string &value) {
+	if ( value == "nfw" ) {
+		return DarkMatterHaloParameters::NFW;
 	}
+	else if ( value == "einasto" ) {
+		return DarkMatterHaloParameters::EINASTO;
+	}
+	std::ostringstream os;
+	os << name << " option value invalid: " << value << ". Supported values are nfw and einasto";
+	throw invalid_option(os.str());
+}
 }
 
 DarkMatterHalos::DarkMatterHalos(DarkMatterHaloParameters parameters, std::shared_ptr<Cosmology> cosmology) :
@@ -63,7 +75,7 @@ double DarkMatterHalos::grav_potential_halo (double r, double c){
 			return -1 * constants::PI4 * rhos * std::pow(c,2) * f_x;
 
 		}
-		if(parameters.haloprofile == parameters.EINASTO){
+		else if(parameters.haloprofile == parameters.EINASTO){
 
 			//TODO: implement Einasto profile.
 			return 0;

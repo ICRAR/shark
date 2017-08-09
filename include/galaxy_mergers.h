@@ -45,7 +45,7 @@ class GalaxyMergers{
 public:
 	GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo);
 
-	void orbital_parameters(double vr, double vt, double f);
+	void orbital_parameters(double &vr, double &vt, double f);
 
 	double mass_ratio_function(double mp, double ms);
 

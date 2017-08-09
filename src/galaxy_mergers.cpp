@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <memory>
+#include <random>
 #include <vector>
 
 #include <gsl/gsl_errno.h>
@@ -47,22 +48,16 @@ GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<
 }
 
 
-void GalaxyMergers::orbital_parameters(double vr, double vt, double f){
-
-	//
-	using namespace constants;
+void GalaxyMergers::orbital_parameters(double &vr, double &vt, double f){
 
 	//double f2 = 1+1/std::max(mass_ratio,1+tolerance);
 
 	//Now generate two random numbers between 0 and 3.
 	std::default_random_engine generator;
-	std::uniform_int_distribution<double> distribution(0,3);
+	std::uniform_real_distribution<double> distribution(0, 3);
 
-	auto dice = std::bind ( distribution, generator );
-
-	vr = dice();
-	vt = dice();
-
+	vr = distribution(generator);
+	vt = distribution(generator);
 }
 
 double GalaxyMergers::merging_timescale_orbital(double vr, double vt, double f, double c){
@@ -90,10 +85,19 @@ double GalaxyMergers::merging_timescale_orbital(double vr, double vt, double f, 
 	double r = 0, r_expected = sqrt (5.0);
 	double x_hi = 1, x_lo = E;
 	gsl_function F;
-	struct quadratic_params params = {1.0, 0.0, -5.0};
 
-	F.function = darkmatterhalo->energy_circular;
-	F.params = &params;
+	// Structured passed as void * to GSL
+	struct root_solver_pars {
+		double c;
+		std::shared_ptr<DarkMatterHalos> dark_matter_halo;
+	};
+
+	root_solver_pars pars {c, darkmatterhalo};
+	F.function = [](double x, void * params) -> double {
+		auto pars = static_cast<root_solver_pars *>(params);
+		return pars->dark_matter_halo->energy_circular(x, pars->c);
+	};
+	F.params = &pars;
 
 	T = gsl_root_fsolver_brent;
 	s = gsl_root_fsolver_alloc (T);
@@ -128,7 +132,7 @@ double GalaxyMergers::merging_timescale_orbital(double vr, double vt, double f, 
 
 double GalaxyMergers::mass_ratio_function(double mp, double ms){
 
-	return 1+1/std::max(ms/mp, 1+constants::tolerance);
+	return 1+1/std::max(ms / mp, 1. + constants::tolerance);
 }
 
 double GalaxyMergers::merging_timescale_mass(double mp, double ms){
@@ -215,7 +219,7 @@ void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo){
 
 	//First define central subhalo.
 
-	Subhalo central_subhalo = halo->central_subhalo;
+	auto &central_subhalo = halo->central_subhalo;
 
 
 }
