@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <iterator>
 #include <memory>
 #include <vector>
@@ -151,6 +152,8 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 
 		int ignored = 0;
 		for(const auto &halo: halos_by_snapshot[snapshot]) {
+
+			bool halo_linked = false;
 			for(const auto &subhalo: halo->all_subhalos()) {
 
 				// this subhalo has no descendants, let's not even try
@@ -179,6 +182,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 					if (d_subhalo->id == subhalo->descendant_id) {
 						link(subhalo, d_subhalo, halo, d_halo);
 						subhalo_descendant_found = true;
+						halo_linked = true;
 						break;
 					}
 				}
@@ -187,19 +191,32 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 					os << "Descendant Subhalo id=" << subhalo->descendant_id;
 					os << " for " << subhalo << " not found";
 					os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
-					os << "Subhalos in " << d_halo << ": ";
+					os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
 					auto all_subhalos = d_halo->all_subhalos();
 					std::copy(all_subhalos.begin(), all_subhalos.end(),
-					          std::ostream_iterator<std::shared_ptr<Subhalo>>(os, " "));
+					          std::ostream_iterator<std::shared_ptr<Subhalo>>(os, "\n  "));
 					throw subhalo_not_found(os.str(), subhalo->descendant_id);
 				}
 			}
+
+			// If no subhalos were linked, this Halo will not have been linked,
+			// meaning that it also needs to be ignored
+			if (!halo_linked) {
+				LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
+				           << " descendants, ignoring it (and the rest of its progenitors)";
+				halos_by_id.erase(halo->id);
+				ignored++;
+			}
 		}
 
-		LOG(info) << ignored << "/" << halos_by_snapshot[snapshot].size()
+		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
+		LOG(info) << ignored << "/" << n_snapshot_halos << " ("
+		          << std::setprecision(2) << std::setiosflags(std::ios::fixed)
+		          << ignored * 100. / n_snapshot_halos << "%)"
 		          << " Halos ignored at snapshot " << snapshot << " due to"
-		          << " missing descendant Halo (i.e., they were the last of"
-		          << " their family line)";
+		          << " missing descendants (i.e., they were either the last Halo of"
+		          << " their Halo family line, or they only hosted Subhalos"
+		          << " that were the last Subhalo of their Subhalo families)";
 	}
 }
 
