@@ -46,8 +46,9 @@
 #include "merger_tree_reader.h"
 #include "tree_builder.h"
 
-using namespace shark;
 using namespace std;
+
+namespace shark {
 
 void show_help(const char *prog, const boost::program_options::options_description &desc) {
 	cout << endl;
@@ -206,6 +207,8 @@ int run(int argc, char **argv) {
 
 	return 0;
 }
+
+} // namespace shark
 
 int main(int argc, char **argv) {
 	try {
