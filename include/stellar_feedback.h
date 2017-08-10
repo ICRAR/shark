@@ -30,10 +30,10 @@
 
 namespace shark {
 
-class StellarFeedbackParameters : public Options {
+class StellarFeedbackParameters {
 
 public:
-	StellarFeedbackParameters(const std::string &filename);
+	StellarFeedbackParameters(const Options &options);
 
 	double eta_cc;
 	double e_sn;

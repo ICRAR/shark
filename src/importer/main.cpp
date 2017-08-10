@@ -44,31 +44,32 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	Options opts(argv[1]);
+	shark::Options options(argv[1]);
+	Options importer_opts(options);
 
 	//
 	// The reader for the descendants file
 	//
 	shared_ptr<DescendantReader> descendants_reader;
-	if ( opts.descendants_format == Options::HDF5 ) {
-		descendants_reader = make_shared<HDF5DescendantReader>(opts.descendants_file);
+	if ( importer_opts.descendants_format == shark::Options::HDF5 ) {
+		descendants_reader = make_shared<HDF5DescendantReader>(importer_opts.descendants_file);
 	}
-	else if ( opts.descendants_format == Options::ASCII ) {
-		descendants_reader = make_shared<AsciiDescendantReader>(opts.descendants_file);
+	else if ( importer_opts.descendants_format == shark::Options::ASCII ) {
+		descendants_reader = make_shared<AsciiDescendantReader>(importer_opts.descendants_file);
 	}
 
 	//
 	// The tree reader
 	//
-	if ( opts.tree_format != Options::TREES_VELOCIRAPTOR ) {
+	if ( importer_opts.tree_format != Options::TREES_VELOCIRAPTOR ) {
 		throw invalid_option("Only tree format currently supported is VELOCIraptor");
 	}
-	unique_ptr<Reader> reader(new VELOCIraptorReader(descendants_reader, opts.tree_dir));
+	unique_ptr<Reader> reader(new VELOCIraptorReader(descendants_reader, importer_opts.tree_dir));
 
 	//
 	// Go ahead and read all required snapshots
 	//
-	for(int snapshot=opts.last_snapshot; snapshot >= opts.first_snapshot; snapshot--) {
+	for(int snapshot=importer_opts.last_snapshot; snapshot >= importer_opts.first_snapshot; snapshot--) {
 		Timer timer;
 		auto subhalos = reader->read_subhalos(snapshot);
 		cout << "Snapshot " << snapshot << " read and processed in " << timer.get() << " [ms]" << endl;

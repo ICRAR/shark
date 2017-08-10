@@ -23,18 +23,17 @@ using namespace std;
 
 namespace shark {
 
-GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
-	Options(filename),
+GasCoolingParameters::GasCoolingParameters(const Options &options) :
 	rcore(0),
 	model(CROTON06),
 	lambdamodel(CLOUDY),
 	cooling_table()
 {
 	string cooling_tables_dir;
-	load("gas_cooling.model", model);
-	load("gas_cooling.rcore", rcore);
-	load("gas_cooling.lambdamodel", lambdamodel);
-	load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
+	options.load("gas_cooling.model", model);
+	options.load("gas_cooling.rcore", rcore);
+	options.load("gas_cooling.lambdamodel", lambdamodel);
+	options.load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
 
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
 	load_tables(cooling_tables_dir, metallicity_tables);

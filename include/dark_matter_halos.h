@@ -18,10 +18,10 @@
 
 namespace shark {
 
-class DarkMatterHaloParameters: public Options {
+class DarkMatterHaloParameters {
 
 public:
-	DarkMatterHaloParameters(const std::string &filename);
+	DarkMatterHaloParameters(const Options &options);
 
 	enum DarkMatterProfile {
 		NFW = 0,

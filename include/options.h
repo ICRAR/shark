@@ -72,8 +72,6 @@ public:
 	 */
 	Options(const std::string &filename);
 
-protected:
-
 	/**
 	 * Read the value of option `name`, if present, and set it in `value_holder`
 	 * of type `T`.
@@ -89,6 +87,8 @@ protected:
 			value_holder = get<T>(name);
 		}
 	}
+
+protected:
 
 	/**
 	 * Read the value of option `name` and return it as an object of type `T`
@@ -107,10 +107,6 @@ protected:
 
 		LOG(debug) << "Loading option " << name << " = " << it->second;
 		return detail::Helper<T>::get(name, it->second);
-	}
-
-	bool is_skipable(const std::string &s) const {
-		return s.size() == 0 or s[0] == '#';
 	}
 
 	options_t options;

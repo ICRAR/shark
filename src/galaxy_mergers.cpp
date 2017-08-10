@@ -20,8 +20,7 @@
 
 namespace shark {
 
-GalaxyMergerParameters::GalaxyMergerParameters(const std::string &filename) :
-	Options(filename),
+GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	major_merger_ratio(0),
 	minor_merger_burst_ratio(0),
 	gas_fraction_minor_merger(0),
@@ -29,14 +28,14 @@ GalaxyMergerParameters::GalaxyMergerParameters(const std::string &filename) :
 	jiang08()
 	{
 
-	load("galaxy_mergers.major_merger_ratio", major_merger_ratio);
-	load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio);
-	load("galaxy_mergers.gas_fraction_minorm_merger", gas_fraction_minor_merger);
-	load("galaxy_mergers.merger_random_seed", merger_random_seed);
-	load("galaxy_mergers.jiang08_a", jiang08[0]);
-	load("galaxy_mergers.jiang08_b", jiang08[1]);
-	load("galaxy_mergers.jiang08_c", jiang08[2]);
-	load("galaxy_mergers.jiang08_d", jiang08[3]);
+	options.load("galaxy_mergers.major_merger_ratio", major_merger_ratio);
+	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio);
+	options.load("galaxy_mergers.gas_fraction_minorm_merger", gas_fraction_minor_merger);
+	options.load("galaxy_mergers.merger_random_seed", merger_random_seed);
+	options.load("galaxy_mergers.jiang08_a", jiang08[0]);
+	options.load("galaxy_mergers.jiang08_b", jiang08[1]);
+	options.load("galaxy_mergers.jiang08_c", jiang08[2]);
+	options.load("galaxy_mergers.jiang08_d", jiang08[3]);
 
 }
 

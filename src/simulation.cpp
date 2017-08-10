@@ -18,24 +18,23 @@
 
 namespace shark {
 
-SimulationParameters::SimulationParameters(const std::string &filename) :
-	Options(filename),
+SimulationParameters::SimulationParameters(const Options &options) :
 	volume(0),
 	particle_mass(0),
 	min_snapshot(0),
 	max_snapshot(0),
 	tree_files_prefix("tree."),
 	redshifts()
-	{
+{
 
 	std::string redshift_file;
 
-	load("simulation.volume", volume);
-	load("simulation.particle_mass", particle_mass);
-	load("simulation.min_snapshot", min_snapshot);
-	load("simulation.max_snapshot", max_snapshot);
-	load("simulation.tree_files_prefix", tree_files_prefix);
-	load("simulation.redshift_file",redshift_file);
+	options.load("simulation.volume", volume);
+	options.load("simulation.particle_mass", particle_mass);
+	options.load("simulation.min_snapshot", min_snapshot);
+	options.load("simulation.max_snapshot", max_snapshot);
+	options.load("simulation.tree_files_prefix", tree_files_prefix);
+	options.load("simulation.redshift_file",redshift_file);
 
 	load_simulation_tables(redshift_file);
 

@@ -30,21 +30,20 @@ namespace shark {
 
 namespace importer {
 
-Options::Options(const string &filename) :
-	shark::Options(filename),
-	descendants_format(ASCII),
+Options::Options(const shark::Options &options) :
+	descendants_format(shark::Options::ASCII),
 	descendants_file("descendants.txt"),
 	tree_format(TREES_VELOCIRAPTOR),
 	tree_dir("."),
 	first_snapshot(0),
 	last_snapshot(0)
 {
-	load("input.tree_dir", tree_dir);
-	load("input.tree_format", tree_format);
-	load("input.descendants_format", descendants_format);
-	load("input.descendants", descendants_file);
-	load("input.first_snapshot", first_snapshot);
-	load("input.last_snapshot", last_snapshot);
+	options.load("input.tree_dir", tree_dir);
+	options.load("input.tree_format", tree_format);
+	options.load("input.descendants_format", descendants_format);
+	options.load("input.descendants", descendants_file);
+	options.load("input.first_snapshot", first_snapshot);
+	options.load("input.last_snapshot", last_snapshot);
 }
 
 } // namespace importer

@@ -17,10 +17,10 @@
 
 namespace shark {
 
-class GalaxyMergerParameters: public Options {
+class GalaxyMergerParameters {
 
 	public:
-		GalaxyMergerParameters(const std::string &filename);
+		GalaxyMergerParameters(const Options &options);
 
 		/**
 		 * Merger parameters:

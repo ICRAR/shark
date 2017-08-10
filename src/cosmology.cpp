@@ -22,8 +22,7 @@
 
 namespace shark {
 
-CosmologicalParameters::CosmologicalParameters(const std::string &filename) :
-	Options(filename),
+CosmologicalParameters::CosmologicalParameters(const Options &options) :
 	OmegaM(0),
 	OmegaB(0),
 	OmegaL(0),
@@ -35,13 +34,13 @@ CosmologicalParameters::CosmologicalParameters(const std::string &filename) :
 
 	std::string power_spec_file;
 
-	load("cosmology.OmegaM", OmegaM);
-	load("cosmology.OmegaB", OmegaB);
-	load("cosmology.OmegaL", OmegaL);
-	load("cosmology.n_s", n_s);
-	load("cosmology.sigma8", sigma8);
-	load("cosmology.Hubble_h", Hubble_h);
-	load("cosmology.power_spectrum_file", power_spec_file, true);
+	options.load("cosmology.OmegaM", OmegaM);
+	options.load("cosmology.OmegaB", OmegaB);
+	options.load("cosmology.OmegaL", OmegaL);
+	options.load("cosmology.n_s", n_s);
+	options.load("cosmology.sigma8", sigma8);
+	options.load("cosmology.Hubble_h", Hubble_h);
+	options.load("cosmology.power_spectrum_file", power_spec_file, true);
 
 	load_tables(power_spec_file);
 }

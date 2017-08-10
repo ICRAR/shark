@@ -20,21 +20,20 @@ struct galaxy_properties_for_integration {
 	double rstar;
 };
 
-StarFormationParameters::StarFormationParameters(const std::string &filename) :
-	Options(filename),
+StarFormationParameters::StarFormationParameters(const Options &options) :
 	Molecular_BR_Law(0),
 	nu_sf(0),
 	Po(0),
 	beta_press(0),
 	Accuracy_SFeqs(0),
-    gas_velocity_dispersion(0)
+	gas_velocity_dispersion(0)
 {
-	load("star_formation.Molecular_BR_law", Molecular_BR_Law);
-	load("star_formation.nu_sf", nu_sf);
-	load("star_formation.Po", Po);
-	load("star_formation.beta_press", beta_press);
-	load("star_formation.Accuracy_SFeqs", Accuracy_SFeqs);
-	load("star_formation.gas_velocity_dispersion", gas_velocity_dispersion);
+	options.load("star_formation.Molecular_BR_law", Molecular_BR_Law);
+	options.load("star_formation.nu_sf", nu_sf);
+	options.load("star_formation.Po", Po);
+	options.load("star_formation.beta_press", beta_press);
+	options.load("star_formation.Accuracy_SFeqs", Accuracy_SFeqs);
+	options.load("star_formation.gas_velocity_dispersion", gas_velocity_dispersion);
 }
 
 

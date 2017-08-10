@@ -19,10 +19,10 @@
 
 namespace shark {
 
-class AGNFeedbackParameters : public Options {
+class AGNFeedbackParameters {
 
 public:
-	AGNFeedbackParameters(const std::string &filename);
+	AGNFeedbackParameters(const Options &options);
 
 	double mseed;
 	double mhalo_seed;

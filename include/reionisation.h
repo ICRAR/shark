@@ -15,10 +15,10 @@
 
 namespace shark {
 
-class ReionisationParameters : public Options {
+class ReionisationParameters {
 
 public:
-	ReionisationParameters(const std::string &filename);
+	ReionisationParameters(const Options &options);
 
 	double zcut;
 	double vcut;

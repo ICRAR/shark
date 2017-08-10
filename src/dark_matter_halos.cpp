@@ -19,11 +19,10 @@
 
 namespace shark {
 
-DarkMatterHaloParameters::DarkMatterHaloParameters(const std::string &filename) :
-	Options(filename),
+DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options) :
 	haloprofile(NFW)
 {
-	load("dark_matter_halo.halo_profile", haloprofile);
+	options.load("dark_matter_halo.halo_profile", haloprofile);
 }
 
 namespace detail {

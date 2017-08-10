@@ -36,21 +36,21 @@ namespace importer {
 /**
  * Class holding importer-related options
  */
-class Options : public ::shark::Options {
+class Options {
 
 public:
 
 	/**
 	 * Ctor providing default values
 	 */
-	Options(const std::string &filename);
+	Options(const ::shark::Options &options);
 
 	enum tree_format_t {
 		TREES_VELOCIRAPTOR,
 		TREES_NIFTY
 	};
 
-	file_format_t descendants_format;
+	shark::Options::file_format_t descendants_format;
 	std::string descendants_file;
 	tree_format_t tree_format;
 	std::string tree_dir;

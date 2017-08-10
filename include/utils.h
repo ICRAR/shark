@@ -93,6 +93,16 @@ Iter binary_find(Iter begin, Iter end, T val, Comp comp)
  */
 std::ifstream open_file(const std::string &name);
 
+/**
+ * Returns \code{true} if the string is empty or corresponds to a line of
+ * comment (i.e., starts with the hash (#) character) from a script or
+ * configuration file.
+ *
+ * @param s The string
+ * @return Whether the string is empty or is a comment
+ */
+bool is_skipable(const std::string &s);
+
 }  // namespace shark
 
 #endif // SHARK_UTILS

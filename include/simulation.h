@@ -34,10 +34,10 @@
 
 namespace shark {
 
-class SimulationParameters : public Options {
+class SimulationParameters {
 
 public:
-	SimulationParameters(const std::string &filename);
+	SimulationParameters(const Options &options);
 
 	float volume;
 	float particle_mass;

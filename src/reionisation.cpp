@@ -16,13 +16,12 @@
 
 namespace shark {
 
-ReionisationParameters::ReionisationParameters(const std::string &filename) :
-	Options(filename),
+ReionisationParameters::ReionisationParameters(const Options &options) :
 	zcut(0),
 	vcut(0)
-	{
-	load("reionisation.vcut",vcut);
-	load("reionisation.zcut",zcut);
-	}
+{
+	options.load("reionisation.vcut",vcut);
+	options.load("reionisation.zcut",zcut);
+}
 
 }
