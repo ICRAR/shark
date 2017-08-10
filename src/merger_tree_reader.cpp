@@ -112,12 +112,21 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 
 		std::shared_ptr<Subhalo> subhalo = std::make_shared<Subhalo>();
 
-		//Assign indices.
+		// Subhalo and Halo index, snapshot
 		subhalo->id = nodeIndex[i];
-		subhalo->descendant_id = descIndex[i];
-		subhalo->descendant_halo_id = descHost[i];
 		subhalo->haloID = hostIndex[i];
 		subhalo->snapshot = snap[i];
+
+		// Descendant information. -1 means that the Subhalo has no descendant
+		auto descendant_id = descIndex[i];
+		if (descendant_id == -1) {
+			subhalo->has_descendant = false;
+		}
+		else {
+			subhalo->has_descendant = true;
+			subhalo->descendant_id = descendant_id;
+			subhalo->descendant_halo_id = descHost[i];
+		}
 
 		//Determine if subhalo is centre of Dhalo.
 		if(IsCentre[i] == 1) {
