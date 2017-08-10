@@ -27,52 +27,116 @@
 #include <memory>
 
 #include "timer.h"
-#include "importer/options.h"
+#include "options.h"
 #include "importer/descendants.h"
 #include "importer/velociraptor.h"
 
 using namespace std;
-using namespace shark;
-using namespace shark::importer;
 
-int main(int argc, char **argv)
+namespace shark {
+namespace importer {
+
+class ImporterParameters {
+
+public:
+
+	/**
+	 * Ctor providing default values
+	 */
+	ImporterParameters(const Options &options) :
+		descendants_format(Options::ASCII),
+		descendants_file("descendants.txt"),
+		tree_format(TREES_VELOCIRAPTOR),
+		tree_dir("."),
+		first_snapshot(0),
+		last_snapshot(0)
+	{
+		options.load("input.tree_dir", tree_dir);
+		options.load("input.tree_format", tree_format);
+		options.load("input.descendants_format", descendants_format);
+		options.load("input.descendants", descendants_file);
+		options.load("input.first_snapshot", first_snapshot);
+		options.load("input.last_snapshot", last_snapshot);
+	}
+
+	enum tree_format_t {
+		TREES_VELOCIRAPTOR,
+		TREES_NIFTY
+	};
+
+	Options::file_format_t descendants_format;
+	std::string descendants_file;
+	tree_format_t tree_format;
+	std::string tree_dir;
+	int first_snapshot;
+	int last_snapshot;
+};
+
+} // namespace importer
+
+namespace detail {
+
+template <>
+importer::ImporterParameters::tree_format_t Helper<importer::ImporterParameters::tree_format_t>::get(const std::string &name, const std::string &value) {
+	if ( value == "velociraptor" ) {
+		return importer::ImporterParameters::TREES_VELOCIRAPTOR;
+	}
+	else if ( value == "nifty" ) {
+		return importer::ImporterParameters::TREES_NIFTY;
+	}
+	std::ostringstream os;
+	os << name << " option value invalid: " << value;
+	throw invalid_option(os.str());
+}
+
+} // namespace detail
+
+namespace importer {
+
+int run(int argc, char **argv)
 {
-	using importer::Options;
-
 	if ( argc < 2 ) {
 		cerr << "Usage: " << argv[0] << " <options-file>" << endl;
 		return 1;
 	}
 
-	shark::Options options(argv[1]);
-	Options importer_opts(options);
+	Options options(argv[1]);
+	ImporterParameters importer_params(options);
 
 	//
 	// The reader for the descendants file
 	//
 	shared_ptr<DescendantReader> descendants_reader;
-	if ( importer_opts.descendants_format == shark::Options::HDF5 ) {
-		descendants_reader = make_shared<HDF5DescendantReader>(importer_opts.descendants_file);
+	if ( importer_params.descendants_format == shark::Options::HDF5 ) {
+		descendants_reader = make_shared<HDF5DescendantReader>(importer_params.descendants_file);
 	}
-	else if ( importer_opts.descendants_format == shark::Options::ASCII ) {
-		descendants_reader = make_shared<AsciiDescendantReader>(importer_opts.descendants_file);
+	else if ( importer_params.descendants_format == shark::Options::ASCII ) {
+		descendants_reader = make_shared<AsciiDescendantReader>(importer_params.descendants_file);
 	}
 
 	//
 	// The tree reader
 	//
-	if ( importer_opts.tree_format != Options::TREES_VELOCIRAPTOR ) {
+	if ( importer_params.tree_format != ImporterParameters::TREES_VELOCIRAPTOR ) {
 		throw invalid_option("Only tree format currently supported is VELOCIraptor");
 	}
-	unique_ptr<Reader> reader(new VELOCIraptorReader(descendants_reader, importer_opts.tree_dir));
+	unique_ptr<Reader> reader(new VELOCIraptorReader(descendants_reader, importer_params.tree_dir));
 
 	//
 	// Go ahead and read all required snapshots
 	//
-	for(int snapshot=importer_opts.last_snapshot; snapshot >= importer_opts.first_snapshot; snapshot--) {
+	for(int snapshot=importer_params.last_snapshot; snapshot >= importer_params.first_snapshot; snapshot--) {
 		Timer timer;
 		auto subhalos = reader->read_subhalos(snapshot);
 		cout << "Snapshot " << snapshot << " read and processed in " << timer.get() << " [ms]" << endl;
 	}
 
+	return 0;
+}
+
+} // namespace importer
+} // namespace shark
+
+int main(int argc, char *argv[]) {
+	shark::importer::run(argc, argv);
 }
