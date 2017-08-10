@@ -195,7 +195,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 
 					std::ostringstream os;
 					os << "Descendant Subhalo id=" << subhalo->descendant_id;
-					os << " for " << subhalo << " not found";
+					os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
 					os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
 					os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
 					auto all_subhalos = d_halo->all_subhalos();
