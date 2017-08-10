@@ -35,17 +35,6 @@
 
 namespace shark {
 
-namespace detail {
-
-template <typename T>
-class Helper {
-public:
-	static
-	T get(const std::string &name, const std::string &value);
-};
-
-}  // namespace detail
-
 /**
  * Base class to load user-provided options.
  */
@@ -79,7 +68,16 @@ public:
 	template <typename T>
 	void load(const std::string &name, T &value_holder, bool mandatory = false) const {
 		if ( mandatory or options.find(name) != options.end() ) {
-			value_holder = get<T>(name);
+
+			// Check that it's there and read it using the specialized
+			// get<T> template
+			options_t::const_iterator it = options.find(name);
+			if ( it == options.end() ) {
+				throw missing_option(name);
+			}
+
+			LOG(debug) << "Loading option " << name << " = " << it->second;
+			value_holder = get<T>(name, it->second);
 		}
 	}
 
@@ -92,15 +90,7 @@ protected:
 	 * @return
 	 */
 	template <typename T>
-	T get(const std::string &name) const {
-		options_t::const_iterator it = options.find(name);
-		if ( it == options.end() ) {
-			throw missing_option(name);
-		}
-
-		LOG(debug) << "Loading option " << name << " = " << it->second;
-		return detail::Helper<T>::get(name, it->second);
-	}
+	T get(const std::string &name, const std::string &value) const;
 
 	options_t options;
 

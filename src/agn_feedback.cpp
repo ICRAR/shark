@@ -37,10 +37,9 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	options.load("agn_feedback.nu_smbh", nu_smbh);
 
 }
-namespace detail {
-
 template <>
-AGNFeedbackParameters::AGNFeedbackModel Helper<AGNFeedbackParameters::AGNFeedbackModel>::get(const std::string &name, const std::string &value) {
+AGNFeedbackParameters::AGNFeedbackModel
+Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, const std::string &value) const {
 	if ( value == "galform" ) {
 		return AGNFeedbackParameters::GALFORM;
 	}
@@ -50,7 +49,6 @@ AGNFeedbackParameters::AGNFeedbackModel Helper<AGNFeedbackParameters::AGNFeedbac
 	std::ostringstream os;
 	os << name << " option value invalid: " << value << ". Supported values are galform and l-galaxies";
 	throw invalid_option(os.str());
-}
 }
 
 AGNFeedback::AGNFeedback(AGNFeedbackParameters parameters, std::shared_ptr<Cosmology> cosmology) :

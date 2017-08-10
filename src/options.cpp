@@ -81,15 +81,13 @@ Options::Options(const string &name)
 }
 
 
-namespace detail {
-
 template <>
-std::string Helper<std::string>::get(const std::string &name, const std::string &value) {
+std::string Options::get<std::string>(const std::string &name, const std::string &value) const {
 	return value;
 }
 
 template <>
-Options::file_format_t Helper<Options::file_format_t>::get(const std::string &name, const std::string &value) {
+Options::file_format_t Options::get<Options::file_format_t>(const std::string &name, const std::string &value) const {
 	std::string lowered(value);
 	lower(lowered);
 	if ( lowered == "hdf5" ) {
@@ -105,7 +103,7 @@ Options::file_format_t Helper<Options::file_format_t>::get(const std::string &na
 }
 
 template<>
-int Helper<int>::get(const std::string &name, const std::string &value) {
+int Options::get<int>(const std::string &name, const std::string &value) const {
 	try {
 		return std::stoi(value);
 	} catch (const std::invalid_argument &e) {
@@ -116,7 +114,7 @@ int Helper<int>::get(const std::string &name, const std::string &value) {
 }
 
 template<>
-float Helper<float>::get(const std::string &name, const std::string &value) {
+float Options::get<float>(const std::string &name, const std::string &value) const {
 	try {
 		return std::stof(value);
 	} catch (const std::invalid_argument &e) {
@@ -127,7 +125,7 @@ float Helper<float>::get(const std::string &name, const std::string &value) {
 }
 
 template<>
-double Helper<double>::get(const std::string &name, const std::string &value) {
+double Options::get<double>(const std::string &name, const std::string &value) const {
 	try {
 		return std::stod(value);
 	} catch (const std::invalid_argument &e) {
@@ -138,7 +136,7 @@ double Helper<double>::get(const std::string &name, const std::string &value) {
 }
 
 template<>
-bool Helper<bool>::get(const std::string &name, const std::string &value) {
+bool Options::get<bool>(const std::string &name, const std::string &value) const {
 	try {
 		bool bool_val = true;
 		std::istringstream is(value);
@@ -153,7 +151,7 @@ bool Helper<bool>::get(const std::string &name, const std::string &value) {
 }
 
 template<>
-std::vector<double> Helper<std::vector<double>>::get(const std::string &name, const std::string &value) {
+std::vector<double> Options::get<std::vector<double>>(const std::string &name, const std::string &value) const {
 	try {
 		std::vector<std::string> values_as_str = tokenize(value, " ");
 		std::vector<double> values;
@@ -169,7 +167,7 @@ std::vector<double> Helper<std::vector<double>>::get(const std::string &name, co
 }
 
 template<>
-std::set<int> Helper<std::set<int>>::get(const std::string &name, const std::string &value) {
+std::set<int> Options::get<std::set<int>>(const std::string &name, const std::string &value) const {
 	try {
 		std::vector<std::string> values_as_str = tokenize(value, " ");
 		std::set<int> values;
@@ -185,7 +183,7 @@ std::set<int> Helper<std::set<int>>::get(const std::string &name, const std::str
 }
 
 template<>
-std::vector<int> Helper<std::vector<int>>::get(const std::string &name, const std::string &value) {
+std::vector<int> Options::get<std::vector<int>>(const std::string &name, const std::string &value) const {
 	try {
 		std::vector<std::string> values_as_str = tokenize(value, " ");
 		std::vector<int> values;
@@ -199,7 +197,5 @@ std::vector<int> Helper<std::vector<int>>::get(const std::string &name, const st
 		throw invalid_option(os.str());
 	}
 }
-
-}  // namespace detail
 
 }  // namespace shark

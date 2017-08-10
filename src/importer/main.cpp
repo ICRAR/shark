@@ -74,10 +74,9 @@ public:
 
 } // namespace importer
 
-namespace detail {
-
 template <>
-importer::ImporterParameters::tree_format_t Helper<importer::ImporterParameters::tree_format_t>::get(const std::string &name, const std::string &value) {
+importer::ImporterParameters::tree_format_t
+Options::get<importer::ImporterParameters::tree_format_t>(const std::string &name, const std::string &value) const {
 	if ( value == "velociraptor" ) {
 		return importer::ImporterParameters::TREES_VELOCIRAPTOR;
 	}
@@ -88,8 +87,6 @@ importer::ImporterParameters::tree_format_t Helper<importer::ImporterParameters:
 	os << name << " option value invalid: " << value;
 	throw invalid_option(os.str());
 }
-
-} // namespace detail
 
 namespace importer {
 

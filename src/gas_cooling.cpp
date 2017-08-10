@@ -116,10 +116,9 @@ void GasCoolingParameters::load_tables(
 	}
 }
 
-namespace detail {
-
 template <>
-GasCoolingParameters::LambdaCoolingModel Helper<GasCoolingParameters::LambdaCoolingModel>::get(const std::string &name, const std::string &value) {
+GasCoolingParameters::LambdaCoolingModel
+Options::get<GasCoolingParameters::LambdaCoolingModel>(const std::string &name, const std::string &value) const {
 	if ( value == "cloudy" ) {
 		return GasCoolingParameters::CLOUDY;
 	}
@@ -133,7 +132,8 @@ GasCoolingParameters::LambdaCoolingModel Helper<GasCoolingParameters::LambdaCool
 
 
 template <>
-GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::get(const std::string &name, const std::string &value) {
+GasCoolingParameters::CoolingModel
+Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const std::string &value) const {
 	if ( value == "Croton06" ) {
 		return GasCoolingParameters::CROTON06;
 	}
@@ -144,8 +144,6 @@ GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::g
 	os << name << " option value invalid: " << value << ". Supported values are Croton06 and Galform";
 	throw invalid_option(os.str());
 }
-
-} // namespace detail
 
 GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback, std::shared_ptr<DarkMatterHalos> darkmatterhalos) :
 	parameters(parameters),
