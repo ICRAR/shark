@@ -168,7 +168,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		return lhs->haloID < rhs->haloID;
 	});
 
-	//Assign properties to halos.
+	// Create and assign Halos
 	std::shared_ptr<Halo> halo;
 	std::vector<std::shared_ptr<Halo>> halos;
 	Halo::id_t last_halo_id = -1;
