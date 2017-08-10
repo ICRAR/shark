@@ -21,6 +21,11 @@ TreeBuilder::~TreeBuilder()
 	// no-op
 }
 
+ExecutionParameters &TreeBuilder::get_exec_params()
+{
+	return exec_params;
+}
+
 std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vector<std::shared_ptr<Halo>> &halos)
 {
 
@@ -187,6 +192,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 					}
 				}
 				if (!subhalo_descendant_found) {
+
 					std::ostringstream os;
 					os << "Descendant Subhalo id=" << subhalo->descendant_id;
 					os << " for " << subhalo << " not found";
@@ -195,7 +201,14 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 					auto all_subhalos = d_halo->all_subhalos();
 					std::copy(all_subhalos.begin(), all_subhalos.end(),
 					          std::ostream_iterator<std::shared_ptr<Subhalo>>(os, "\n  "));
-					throw subhalo_not_found(os.str(), subhalo->descendant_id);
+
+					// Users can choose whether to continue in these situations
+					// (with a warning) or if it should be considered an error
+					if (!get_exec_params().skip_missing_descendants) {
+						throw subhalo_not_found(os.str(), subhalo->descendant_id);
+					}
+
+					LOG(warning) << os.str();
 				}
 			}
 
