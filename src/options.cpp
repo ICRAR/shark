@@ -144,7 +144,6 @@ bool Helper<bool>::get(const std::string &name, const std::string &value) {
 		std::istringstream is(value);
 		is >> std::boolalpha;
 		is >> bool_val;
-		printf("%d\n", bool_val);
 		return bool_val;
 	} catch (const std::exception &e) {
 		std::ostringstream os;
