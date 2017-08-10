@@ -172,7 +172,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 			halos.push_back(halo);
 		}
 
-		LOG(debug) << "Adding " << subhalo << " to " << halo;
+		LOG(trace) << "Adding " << subhalo << " to " << halo;
 		halo->add_subhalo(subhalo);
 		subhalo->host_halo = halo;
 	}

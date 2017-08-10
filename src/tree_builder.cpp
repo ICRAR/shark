@@ -77,7 +77,7 @@ void TreeBuilder::link(const std::shared_ptr<Subhalo> &subhalo, const std::share
 
 	// Establish ascendant and descendant links at subhalo level
 	// Fail if subhalo has more than one descendant
-	LOG(debug) << "Connecting " << subhalo << " as a parent of " << d_subhalo;
+	LOG(trace) << "Connecting " << subhalo << " as a parent of " << d_subhalo;
 	d_subhalo->ascendants.push_back(subhalo);
 
 	if (subhalo->descendant) {
@@ -90,7 +90,7 @@ void TreeBuilder::link(const std::shared_ptr<Subhalo> &subhalo, const std::share
 
 	// Establish ascendant and descendant link at halo level
 	// Fail if a halo has more than one descendant
-	LOG(debug) << "Connecting " << halo << " as a parent of " << d_halo;
+	LOG(trace) << "Connecting " << halo << " as a parent of " << d_halo;
 	d_halo->ascendants.push_back(halo);
 
 	if (halo->descendant and halo->descendant->id != d_halo->id) {
@@ -223,7 +223,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 		}
 
 		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
-		LOG(info) << ignored << "/" << n_snapshot_halos << " ("
+		LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
 		          << std::setprecision(2) << std::setiosflags(std::ios::fixed)
 		          << ignored * 100. / n_snapshot_halos << "%)"
 		          << " Halos ignored at snapshot " << snapshot << " due to"
