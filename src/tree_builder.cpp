@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <iterator>
 #include <memory>
 #include <vector>
@@ -18,6 +19,11 @@ TreeBuilder::TreeBuilder(ExecutionParameters exec_params) :
 TreeBuilder::~TreeBuilder()
 {
 	// no-op
+}
+
+ExecutionParameters &TreeBuilder::get_exec_params()
+{
+	return exec_params;
 }
 
 std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vector<std::shared_ptr<Halo>> &halos)
@@ -69,26 +75,38 @@ std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vec
 void TreeBuilder::link(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Subhalo> &d_subhalo,
                        const std::shared_ptr<Halo> &halo, const std::shared_ptr<Halo> &d_halo) {
 
-	// Establish parentage link at subhalo level
+	// Establish ascendant and descendant links at subhalo level
 	// Fail if subhalo has more than one descendant
+	LOG(trace) << "Connecting " << subhalo << " as a parent of " << d_subhalo;
 	d_subhalo->ascendants.push_back(subhalo);
+
 	if (subhalo->descendant) {
-		throw invalid_data("invalid subhalo");
+		std::ostringstream os;
+		os << subhalo << " already has a descendant " << subhalo->descendant;
+		os << " but " << d_subhalo << " is claiming to be its descendant as well";
+		throw invalid_data(os.str());
 	}
 	subhalo->descendant = d_subhalo;
 
-	// Establish parentage link at halo level
+	// Establish ascendant and descendant link at halo level
 	// Fail if a halo has more than one descendant
-	// TODO: check that we're not adding "h" twice here
+	LOG(trace) << "Connecting " << halo << " as a parent of " << d_halo;
 	d_halo->ascendants.push_back(halo);
-	if (halo->descendant and halo->descendant->id != d_halo->id) {
-		throw invalid_data("invalid halo");
-	}
 
-	LOG(debug) << "Linking " << d_halo << " as descendant of " << halo;
+	if (halo->descendant and halo->descendant->id != d_halo->id) {
+		std::ostringstream os;
+		os << halo << " already has a descendant " << halo->descendant;
+		os << " but " << d_halo << " is claiming to be its descendant as well";
+		throw invalid_data(os.str());
+	}
 	halo->descendant = d_halo;
 
-	// Link halo to merger tree and back
+	// Link this halo to merger tree and back
+	if (!d_halo->merger_tree) {
+		std::ostringstream os;
+		os << "Descendant " << d_halo << " has no MergerTree associated to it";
+		throw invalid_data(os.str());
+	}
 	halo->merger_tree = d_halo->merger_tree;
 	halo->merger_tree->add_halo(halo);
 
@@ -139,6 +157,8 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 
 		int ignored = 0;
 		for(const auto &halo: halos_by_snapshot[snapshot]) {
+
+			bool halo_linked = false;
 			for(const auto &subhalo: halo->all_subhalos()) {
 
 				// this subhalo has no descendants, let's not even try
@@ -167,27 +187,49 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 					if (d_subhalo->id == subhalo->descendant_id) {
 						link(subhalo, d_subhalo, halo, d_halo);
 						subhalo_descendant_found = true;
+						halo_linked = true;
 						break;
 					}
 				}
 				if (!subhalo_descendant_found) {
+
 					std::ostringstream os;
 					os << "Descendant Subhalo id=" << subhalo->descendant_id;
-					os << " for " << subhalo << " not found";
+					os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
 					os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
-					os << "Subhalos in " << d_halo << ": ";
+					os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
 					auto all_subhalos = d_halo->all_subhalos();
 					std::copy(all_subhalos.begin(), all_subhalos.end(),
-					          std::ostream_iterator<std::shared_ptr<Subhalo>>(os, " "));
-					throw subhalo_not_found(os.str(), subhalo->descendant_id);
+					          std::ostream_iterator<std::shared_ptr<Subhalo>>(os, "\n  "));
+
+					// Users can choose whether to continue in these situations
+					// (with a warning) or if it should be considered an error
+					if (!get_exec_params().skip_missing_descendants) {
+						throw subhalo_not_found(os.str(), subhalo->descendant_id);
+					}
+
+					LOG(warning) << os.str();
 				}
+			}
+
+			// If no subhalos were linked, this Halo will not have been linked,
+			// meaning that it also needs to be ignored
+			if (!halo_linked) {
+				LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
+				           << " descendants, ignoring it (and the rest of its progenitors)";
+				halos_by_id.erase(halo->id);
+				ignored++;
 			}
 		}
 
-		LOG(info) << ignored << "/" << halos_by_snapshot[snapshot].size()
+		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
+		LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
+		          << std::setprecision(2) << std::setiosflags(std::ios::fixed)
+		          << ignored * 100. / n_snapshot_halos << "%)"
 		          << " Halos ignored at snapshot " << snapshot << " due to"
-		          << " missing descendant Halo (i.e., they were the last of"
-		          << " their family line)";
+		          << " missing descendants (i.e., they were either the last Halo of"
+		          << " their Halo family line, or they only hosted Subhalos"
+		          << " that were the last Subhalo of their Subhalo families)";
 	}
 }
 

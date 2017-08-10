@@ -43,6 +43,8 @@ public:
 
 protected:
 
+	ExecutionParameters &get_exec_params();
+
 	virtual void loop_through_halos(const std::vector<std::shared_ptr<Halo>> &halos) = 0;
 
 	void link(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Subhalo> &d_subhalo,
