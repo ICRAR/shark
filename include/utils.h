@@ -101,7 +101,7 @@ std::ifstream open_file(const std::string &name);
  * @param s The string
  * @return Whether the string is empty or is a comment
  */
-bool is_skipable(const std::string &s);
+bool empty_or_comment(const std::string &s);
 
 }  // namespace shark
 

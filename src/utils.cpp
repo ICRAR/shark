@@ -92,7 +92,7 @@ ifstream open_file(const string &name)
 	return f;
 }
 
-bool is_skipable(const std::string &s) {
+bool empty_or_comment(const std::string &s) {
 	return s.size() == 0 or s[0] == '#';
 }
 

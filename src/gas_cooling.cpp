@@ -64,7 +64,7 @@ GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
 	while ( getline(f, line) ) {
 
 		trim(line);
-		if (is_skipable(line)) {
+		if (empty_or_comment(line)) {
 			continue;
 		}
 
@@ -99,7 +99,7 @@ void GasCoolingParameters::load_tables(
 		while ( getline(f, line) ) {
 
 			trim(line);
-			if (is_skipable(line)) {
+			if (empty_or_comment(line)) {
 				continue;
 			}
 

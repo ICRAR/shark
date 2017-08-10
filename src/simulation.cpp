@@ -52,7 +52,7 @@ void SimulationParameters::load_simulation_tables(const std::string &redshift_fi
 	while ( getline(f, line) ) {
 
 		trim(line);
-		if (is_skipable(line)) {
+		if (empty_or_comment(line)) {
 			continue;
 		}
 

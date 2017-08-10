@@ -57,7 +57,7 @@ void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 	while ( getline(f, line) ) {
 
 		trim(line);
-		if (is_skipable(line)) {
+		if (empty_or_comment(line)) {
 			continue;
 		}
 
