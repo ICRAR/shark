@@ -95,14 +95,9 @@ int run(int argc, char **argv) {
 
 	// Read command-line options
 	po::variables_map vm;
-	try {
-		po::command_line_parser parser(argc, argv);
-		parser.options(all_opts).positional(pdesc);
-		po::store(parser.run(), vm);
-	} catch (const boost::program_options::error &e) {
-		cerr << "Error while parsing command-line: " << e.what() << endl;
-		return 1;
-	}
+	po::command_line_parser parser(argc, argv);
+	parser.options(all_opts).positional(pdesc);
+	po::store(parser.run(), vm);
 	po::notify(vm);
 
 	if (vm.count("help")) {
@@ -212,11 +207,13 @@ int run(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 	try {
-		run(argc, argv);
-		return 0;
+		return shark::run(argc, argv);
 	} catch (const shark::exception &e) {
 		std::cerr << "Unexpected shark exception found while running:" << std::endl << std::endl;
 		std::cerr << e.what() << std::endl;
+		return 1;
+	} catch (const boost::program_options::error &e) {
+		std::cerr << "Error while parsing command-line: " << e.what() << std::endl;
 		return 1;
 	} catch (const std::exception &e) {
 		std::cerr << "Unexpected exception while running" << std::endl << std::endl;
