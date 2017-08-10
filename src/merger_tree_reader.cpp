@@ -81,13 +81,13 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 	hdf5::Reader batch_file(fname);
 
 	//Read position and velocities first.
-	vector<double> position = batch_file.read_dataset_v_2<double>("haloTrees/position");
-	vector<double> velocity = batch_file.read_dataset_v_2<double>("haloTrees/velocity");
+	vector<float> position = batch_file.read_dataset_v_2<float>("haloTrees/position");
+	vector<float> velocity = batch_file.read_dataset_v_2<float>("haloTrees/velocity");
 
 	//Read mass, circular velocity and angular momentum.
-	vector<double> Mvir = batch_file.read_dataset_v<double>("haloTrees/nodeMass");
-	vector<double> Vcirc = batch_file.read_dataset_v<double>("haloTrees/maximumCircularVelocity");
-	vector<double> L = batch_file.read_dataset_v_2<double>("haloTrees/angularMomentum");
+	vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
+	vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
+	vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
 
 	//Read indices and the snapshot number at which the subhalo lives.
 	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
