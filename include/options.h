@@ -28,17 +28,12 @@
 #include <map>
 #include <string>
 #include <sstream>
-#include <stdexcept>
 
+#include "exceptions.h"
 #include "logging.h"
 #include "utils.h"
 
 namespace shark {
-
-class invalid_option : public std::runtime_error {
-public:
-	invalid_option(const std::string &what) : std::runtime_error(what) {}
-};
 
 namespace detail {
 
@@ -100,9 +95,7 @@ protected:
 	T get(const std::string &name) const {
 		options_t::const_iterator it = options.find(name);
 		if ( it == options.end() ) {
-			std::ostringstream os;
-			os << "Missing option: " << name;
-			throw invalid_option(os.str());
+			throw missing_option(name);
 		}
 
 		LOG(debug) << "Loading option " << name << " = " << it->second;
