@@ -119,8 +119,9 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		subhalo->haloID = hostIndex[i];
 		subhalo->snapshot = snap[i];
 
-		//Determine if subhalo is centre of Dhalo.
-		if(IsCentre[i] == 1) {
+		//Determine if subhalo is centre of Dhalo. This is done using IsMainProgenitor, as this is the halo
+		//that is found by dhalos to be the centre (although not necessarily the most massive).
+		if(IsMain[i] == 1) {
 			subhalo->subhalo_type = Subhalo::CENTRAL;
 		}
 		else {
