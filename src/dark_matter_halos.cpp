@@ -19,17 +19,15 @@
 
 namespace shark {
 
-DarkMatterHaloParameters::DarkMatterHaloParameters(const std::string &filename) :
-	Options(filename),
+DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options) :
 	haloprofile(NFW)
 {
-	load("dark_matter_halo.halo_profile", haloprofile);
+	options.load("dark_matter_halo.halo_profile", haloprofile);
 }
 
-namespace detail {
-
 template <>
-DarkMatterHaloParameters::DarkMatterProfile Helper<DarkMatterHaloParameters::DarkMatterProfile>::get(const std::string &name, const std::string &value) {
+DarkMatterHaloParameters::DarkMatterProfile
+Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &name, const std::string &value) const {
 	if ( value == "nfw" ) {
 		return DarkMatterHaloParameters::NFW;
 	}
@@ -39,7 +37,6 @@ DarkMatterHaloParameters::DarkMatterProfile Helper<DarkMatterHaloParameters::Dar
 	std::ostringstream os;
 	os << name << " option value invalid: " << value << ". Supported values are nfw and einasto";
 	throw invalid_option(os.str());
-}
 }
 
 DarkMatterHalos::DarkMatterHalos(DarkMatterHaloParameters parameters, std::shared_ptr<Cosmology> cosmology) :

@@ -24,10 +24,10 @@
 
 namespace shark {
 
-class ExecutionParameters : public Options {
+class ExecutionParameters {
 
 public:
-	ExecutionParameters(const std::string &filename);
+	ExecutionParameters(const Options &options);
 
 	std::set<int> output_snapshots;
 	std::string output_format;

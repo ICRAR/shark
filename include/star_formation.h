@@ -40,10 +40,10 @@
 
 namespace shark {
 
-class StarFormationParameters : public Options {
+class StarFormationParameters {
 
 public:
-	StarFormationParameters(const std::string &filename);
+	StarFormationParameters(const Options &options);
 
 	int Molecular_BR_Law;
 	double nu_sf;

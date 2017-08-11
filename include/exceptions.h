@@ -25,7 +25,7 @@
 #ifndef SHARK_EXCEPTIONS_H
 #define SHARK_EXCEPTIONS_H
 
-#include <stdexcept>
+#include <exception>
 #include <string>
 
 #include "components.h"
@@ -35,9 +35,38 @@ namespace shark {
 /**
  * The mother of all SHArk exceptions
  */
-class exception : public std::runtime_error {
+class exception : public std::exception {
+
 public:
-	exception(const std::string &what) : std::runtime_error(what) {};
+
+	exception(const std::string &what) :
+		std::exception(),
+		_what(what)
+	{}
+
+	virtual const char* what() const noexcept {
+		return _what.c_str();
+	}
+
+private:
+	std::string _what;
+};
+
+/**
+ * An exception indicating that an invalid option value has been given by the
+ * user.
+ */
+class invalid_option : public exception {
+public:
+	invalid_option(const std::string &what) : exception(what) {}
+};
+
+/**
+ * An exception indicating that a required option value is missing
+ */
+class missing_option : public exception {
+public:
+	missing_option(const std::string &what) : exception(what) {}
 };
 
 /**

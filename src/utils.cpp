@@ -92,4 +92,8 @@ ifstream open_file(const string &name)
 	return f;
 }
 
+bool empty_or_comment(const std::string &s) {
+	return s.size() == 0 or s[0] == '#';
+}
+
 }  // namespace shark

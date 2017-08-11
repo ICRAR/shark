@@ -23,18 +23,17 @@ using namespace std;
 
 namespace shark {
 
-GasCoolingParameters::GasCoolingParameters(const std::string &filename) :
-	Options(filename),
+GasCoolingParameters::GasCoolingParameters(const Options &options) :
 	rcore(0),
 	model(CROTON06),
 	lambdamodel(CLOUDY),
 	cooling_table()
 {
 	string cooling_tables_dir;
-	load("gas_cooling.model", model);
-	load("gas_cooling.rcore", rcore);
-	load("gas_cooling.lambdamodel", lambdamodel);
-	load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
+	options.load("gas_cooling.model", model);
+	options.load("gas_cooling.rcore", rcore);
+	options.load("gas_cooling.lambdamodel", lambdamodel);
+	options.load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
 
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
 	load_tables(cooling_tables_dir, metallicity_tables);
@@ -65,7 +64,7 @@ GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
 	while ( getline(f, line) ) {
 
 		trim(line);
-		if (is_skipable(line)) {
+		if (empty_or_comment(line)) {
 			continue;
 		}
 
@@ -100,7 +99,7 @@ void GasCoolingParameters::load_tables(
 		while ( getline(f, line) ) {
 
 			trim(line);
-			if (is_skipable(line)) {
+			if (empty_or_comment(line)) {
 				continue;
 			}
 
@@ -117,10 +116,9 @@ void GasCoolingParameters::load_tables(
 	}
 }
 
-namespace detail {
-
 template <>
-GasCoolingParameters::LambdaCoolingModel Helper<GasCoolingParameters::LambdaCoolingModel>::get(const std::string &name, const std::string &value) {
+GasCoolingParameters::LambdaCoolingModel
+Options::get<GasCoolingParameters::LambdaCoolingModel>(const std::string &name, const std::string &value) const {
 	if ( value == "cloudy" ) {
 		return GasCoolingParameters::CLOUDY;
 	}
@@ -134,7 +132,8 @@ GasCoolingParameters::LambdaCoolingModel Helper<GasCoolingParameters::LambdaCool
 
 
 template <>
-GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::get(const std::string &name, const std::string &value) {
+GasCoolingParameters::CoolingModel
+Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const std::string &value) const {
 	if ( value == "Croton06" ) {
 		return GasCoolingParameters::CROTON06;
 	}
@@ -145,8 +144,6 @@ GasCoolingParameters::CoolingModel Helper<GasCoolingParameters::CoolingModel>::g
 	os << name << " option value invalid: " << value << ". Supported values are Croton06 and Galform";
 	throw invalid_option(os.str());
 }
-
-} // namespace detail
 
 GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback, std::shared_ptr<DarkMatterHalos> darkmatterhalos) :
 	parameters(parameters),

@@ -29,17 +29,16 @@
 
 namespace shark {
 
-StellarFeedbackParameters::StellarFeedbackParameters(const std::string &filename) :
-	Options(filename),
+StellarFeedbackParameters::StellarFeedbackParameters(const Options &options) :
 	eta_cc(0),
 	e_sn(0),
 	epsilon_cc(0),
 	beta(0)
 {
-	load("stellar_feedback.eta_cc", eta_cc);
-	load("stellar_feedback.e_sn", e_sn);
-	load("stellar_feedback.epsilon_cc", epsilon_cc);
-	load("stellar_feedback.beta", beta);
+	options.load("stellar_feedback.eta_cc", eta_cc);
+	options.load("stellar_feedback.e_sn", e_sn);
+	options.load("stellar_feedback.epsilon_cc", epsilon_cc);
+	options.load("stellar_feedback.beta", beta);
 
 	//convert energy of SNe into to code units.
 	eta_cc = eta_cc *std::pow(constants::MSOLAR_g, -1.0) * std::pow(constants::MPC2CM, -2.0) * std::pow(constants::GYR2S, -3.0);

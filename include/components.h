@@ -213,6 +213,7 @@ public:
 	 */
 	Subhalo():
 		haloID(0),
+		has_descendant(false),
 		descendant_id(0),
 		descendant_halo_id(0),
 		snapshot(-1),
@@ -248,7 +249,13 @@ public:
 	int snapshot;
 
 	/**
+	 * Whether this subhalo has a descendant or not
+	 */
+	bool has_descendant;
+
+	/**
 	 * The ID of the descendant of this subhalo.
+	 * Valid only if has_descendant is \code{true}
 	 */
 	id_t descendant_id;
 

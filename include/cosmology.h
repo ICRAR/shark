@@ -51,10 +51,10 @@ struct PowerSpectrumTable {
 /**
  * A set of cosmological parameters
  */
-class CosmologicalParameters : public Options {
+class CosmologicalParameters {
 
 public:
-	CosmologicalParameters(const std::string &filename);
+	CosmologicalParameters(const Options &options);
 
 	float OmegaM;
 	float OmegaB;

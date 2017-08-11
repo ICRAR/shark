@@ -33,7 +33,7 @@ struct CoolingTable {
 	std::vector<double> zmetal;
 };
 
-class GasCoolingParameters : public Options {
+class GasCoolingParameters {
 
 public:
 
@@ -49,7 +49,7 @@ public:
 		BENSON10
 	};
 
-	GasCoolingParameters(const std::string &filename);
+	GasCoolingParameters(const Options &options);
 
 	double rcore;
 	LambdaCoolingModel lambdamodel;

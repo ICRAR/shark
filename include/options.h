@@ -28,28 +28,12 @@
 #include <map>
 #include <string>
 #include <sstream>
-#include <stdexcept>
 
+#include "exceptions.h"
 #include "logging.h"
 #include "utils.h"
 
 namespace shark {
-
-class invalid_option : public std::runtime_error {
-public:
-	invalid_option(const std::string &what) : std::runtime_error(what) {}
-};
-
-namespace detail {
-
-template <typename T>
-class Helper {
-public:
-	static
-	T get(const std::string &name, const std::string &value);
-};
-
-}  // namespace detail
 
 /**
  * Base class to load user-provided options.
@@ -72,8 +56,6 @@ public:
 	 */
 	Options(const std::string &filename);
 
-protected:
-
 	/**
 	 * Read the value of option `name`, if present, and set it in `value_holder`
 	 * of type `T`.
@@ -86,9 +68,20 @@ protected:
 	template <typename T>
 	void load(const std::string &name, T &value_holder, bool mandatory = false) const {
 		if ( mandatory or options.find(name) != options.end() ) {
-			value_holder = get<T>(name);
+
+			// Check that it's there and read it using the specialized
+			// get<T> template
+			options_t::const_iterator it = options.find(name);
+			if ( it == options.end() ) {
+				throw missing_option(name);
+			}
+
+			LOG(debug) << "Loading option " << name << " = " << it->second;
+			value_holder = get<T>(name, it->second);
 		}
 	}
+
+protected:
 
 	/**
 	 * Read the value of option `name` and return it as an object of type `T`
@@ -97,21 +90,7 @@ protected:
 	 * @return
 	 */
 	template <typename T>
-	T get(const std::string &name) const {
-		options_t::const_iterator it = options.find(name);
-		if ( it == options.end() ) {
-			std::ostringstream os;
-			os << "Missing option: " << name;
-			throw invalid_option(os.str());
-		}
-
-		LOG(debug) << "Loading option " << name << " = " << it->second;
-		return detail::Helper<T>::get(name, it->second);
-	}
-
-	bool is_skipable(const std::string &s) const {
-		return s.size() == 0 or s[0] == '#';
-	}
+	T get(const std::string &name, const std::string &value) const;
 
 	options_t options;
 
