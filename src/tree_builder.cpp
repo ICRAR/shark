@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "cosmology.h"
 #include "exceptions.h"
 #include "logging.h"
 #include "tree_builder.h"
@@ -234,10 +235,22 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 	}
 }
 
-void HaloBasedTreeBuilder::create_galaxies(const std::vector<std::shared_ptr<Halo>> &halos)
+void HaloBasedTreeBuilder::create_galaxies(const std::vector<std::shared_ptr<Halo>> &halos, Cosmology &cosmology)
 {
 
+	//This function finds subhalos that have no progenitors (so first time they are identified) and are central, and creates a galaxy there.
 
+	for (const auto &halo: halos){
+		for(const auto &subhalo: halo->all_subhalos()) {
+			if(subhalo->ascendants.empty() and subhalo->subhalo_type == Subhalo::CENTRAL and subhalo->galaxies.empty()){
+				std::shared_ptr<Galaxy> galaxy = std::make_shared<Galaxy>();
+				galaxy->galaxy_type = Galaxy::CENTRAL;
+				subhalo->galaxies.push_back(galaxy);
+
+				subhalo->hot_halo_gas.mass = subhalo->host_halo->Mvir * cosmology.universal_baryon_fraction();
+			}
+		}
+	}
 
 }
 

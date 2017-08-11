@@ -121,6 +121,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		auto descendant_id = descIndex[i];
 		if (descendant_id == -1) {
 			subhalo->has_descendant = false;
+			subhalo->last_snapshot_identified = subhalo->snapshot;
 		}
 		else {
 			subhalo->has_descendant = true;

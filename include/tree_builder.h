@@ -28,8 +28,8 @@
 #include <memory>
 #include <vector>
 
-#include "tree_builder.h"
 #include "components.h"
+#include "cosmology.h"
 #include "execution.h"
 
 namespace shark {
@@ -61,7 +61,7 @@ class HaloBasedTreeBuilder : public TreeBuilder {
 public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params);
 
-	void create_galaxies(const std::vector<std::shared_ptr<Halo>> &halos);
+	void create_galaxies(const std::vector<std::shared_ptr<Halo>> &halos, Cosmology &cosmology);
 
 protected:
 	virtual void loop_through_halos(const std::vector<std::shared_ptr<Halo>> &halos) override;

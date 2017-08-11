@@ -83,6 +83,9 @@ public:
 	double physical_to_comoving_mass(double m);
 	double convert_redshift_to_age(double z);
 	double expansion_factor(double a);
+	double universal_baryon_fraction(){
+		return parameters.OmegaB/parameters.OmegaM;
+	};
 
 	CosmologicalParameters parameters;
 
