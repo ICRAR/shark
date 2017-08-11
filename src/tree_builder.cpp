@@ -220,6 +220,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 				halos_by_id.erase(halo->id);
 				ignored++;
 			}
+
 		}
 
 		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
@@ -235,6 +236,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 
 void HaloBasedTreeBuilder::create_galaxies(const std::vector<std::shared_ptr<Halo>> &halos)
 {
+
 
 
 }
