@@ -51,8 +51,8 @@ public:
 	 */
 	struct solver_params {
 		PhysicalModel<NC> &model;
-		Galaxy &galaxy;
-		Subhalo &subhalo;
+		double rgas;
+		double rstar;
 		double mcoolrate;
 		double delta_t;
 		double redshift;
@@ -88,14 +88,32 @@ public:
 	void evolve_galaxy(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
 	{
 		double mcoolrate = gas_cooling.cooling_rate(subhalo, z, delta_t);
+		double rgas  = galaxy.disk_gas.rscale; //gas scale radius.
+		double rstar = galaxy.disk_stars.rscale; //stellar scale radius.
+
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
-		solver_params params{*this, galaxy, subhalo, mcoolrate, delta_t, z};
+		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z};
 		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
 		to_galaxy(y1, subhalo, galaxy);
 	}
 
+	void evolve_galaxy_starburst(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
+	{
+		double mcoolrate = 0; //During central starbursts, cooling rate =0, as cooling gas always settles in the disk (not the bulge).
+		double rgas  = galaxy.bulge_gas.rscale; //gas scale radius.
+		double rstar = galaxy.bulge_stars.rscale; //stellar scale radius.
+
+		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);
+		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z};
+		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
+		to_galaxy_starburst(y1, subhalo, galaxy);
+	}
+
 	virtual std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy) = 0;
 	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
+
+	virtual std::vector<double> from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy) = 0;
+	virtual void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
 
 private:
 	ODESolver::ode_evaluator evaluator;
@@ -113,6 +131,9 @@ public:
 
 	std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy);
 	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy);
+
+	std::vector<double> from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy);
+	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy);
 
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;

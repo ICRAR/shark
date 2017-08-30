@@ -25,12 +25,20 @@
 #ifndef SHARK_EVOLVE_HALOS_H_
 #define SHARK_EVOLVE_HALOS_H_
 
+#include <cmath>
+#include <memory>
+
 #include "components.h"
 #include "physical_model.h"
 
 namespace shark {
 
-void populate_halos(BasicPhysicalModel &physical_model, std::shared_ptr<Halo> halo, int snapshot, double z, double delta_t);
+void populate_halos(std::shared_ptr<BasicPhysicalModel> physical_model, std::shared_ptr<Halo> halo, int snapshot, double z, double delta_t);
+
+void transfer_galaxies_to_next_snapshot(std::shared_ptr<Halo> halo);
+
+void destroy_galaxies_this_snapshot(std::vector<std::shared_ptr<Halo>> all_halos_this_snapshot);
+
 
 }  // namespace shark
 

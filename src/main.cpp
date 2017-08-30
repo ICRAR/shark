@@ -140,13 +140,16 @@ int run(int argc, char **argv) {
 	std::shared_ptr<DarkMatterHalos> dark_matter_halos = std::make_shared<DarkMatterHalos>(dark_matter_halo_parameters, cosmology);
 	std::shared_ptr<AGNFeedback> agnfeedback = std::make_shared<AGNFeedback>(agn_params, cosmology);
 
-	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos};
 	Simulation simulation{sim_params, cosmology};
 	GasCooling gas_cooling{gas_cooling_params, reio_params, cosmology, agnfeedback, dark_matter_halos};
 	StellarFeedback stellar_feedback{stellar_feedback_params};
 	StarFormation star_formation{star_formation_params, cosmology};
 	RecyclingParameters recycling_parameters;
-	BasicPhysicalModel basic_physicalmodel(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
+
+	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
+
+	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel};
+
 
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
@@ -172,31 +175,42 @@ int run(int argc, char **argv) {
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
 
+		vector<shared_ptr<Halo>> all_halos_this_snapshot;
+
 		for(auto &tree: merger_trees) {
 			/*here loop over the halos this merger tree has at this time.*/
 			for(shared_ptr<Halo> halo: tree->halos[snapshot]) {
+
+				//Append this halo to the list of halos of this snapshot
+
+				all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halo);
+
 				/*Check if there are any mergers in this snapshot*/
 
+				/*First, determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale.*/
 				galaxy_mergers.merging_subhalos(halo);
+
+				/*Second, evaluate which galaxies are merging in this halo.*/
+				galaxy_mergers.merging_galaxies(halo, sim_params.redshifts[snapshot], tf-ti);
 
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
 				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
 
 				/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
-
+				transfer_galaxies_to_next_snapshot(halo);
 			}
 		}
 
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
-		vector<shared_ptr<Halo>> all_halos_for_this_snapshot;
-		//do_stuff_at_halo_level(all_halos_for_this_snapshot);
+		//do_stuff_at_halo_level(all_halos_this_snapshot);
 
 //		/*write snapshots only if the user wants outputs at this time.*/
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
 		{
-			//write_output(snapshot, merger_trees);
+			//write_output(snapshot, all_halos_this_snapshot);
 		}
 
+		destroy_galaxies_this_snapshot(all_halos_this_snapshot);
 
 	}
 

@@ -142,7 +142,8 @@ public:
 	 */
 	enum galaxy_type_t {
 		CENTRAL = 0,
-		SATELLITE,
+		TYPE1,
+		TYPE2,
 		FLYBY
 	};
 
@@ -161,6 +162,56 @@ public:
 	 * dynamical friction timescale, which is defined only is galaxy is satellite.
 	 */
 	float tmerge;
+
+	/**
+	 * Define functions to calculate total mass and metals of various components.
+	 */
+
+	double disk_mass(){
+		return disk_gas.mass + disk_stars.mass;
+	}
+
+	double disk_mass_metals(){
+		return disk_gas.mass_metals + disk_stars.mass_metals;
+	}
+
+	double bulge_mass(){
+		return bulge_gas.mass + bulge_stars.mass;
+	}
+
+	double bulge_mass_metals(){
+		return bulge_gas.mass_metals + bulge_stars.mass_metals;
+	}
+
+	double baryon_mass(){
+		return disk_gas.mass + disk_stars.mass + bulge_gas.mass + bulge_stars.mass;
+	}
+
+	double stellar_mass(){
+		return disk_stars.mass + bulge_stars.mass;
+	}
+
+	double stellar_mass_metals(){
+		return disk_stars.mass_metals + bulge_stars.mass_metals;
+	}
+
+	double gas_mass(){
+		return disk_gas.mass + bulge_gas.mass;
+	}
+
+	double gas_mass_metals(){
+		return disk_gas.mass_metals + bulge_gas.mass_metals;
+	}
+
+
+	double composite_size(){
+
+		double rdisk = (disk_stars.mass * disk_stars.rscale + disk_gas.mass * disk_gas.rscale) / disk_mass();
+
+		double rbulge = (bulge_stars.mass * bulge_stars.rscale + bulge_gas.mass * bulge_gas.rscale) / bulge_mass();
+
+		return disk_mass() * rdisk + bulge_mass() * rbulge / baryon_mass();
+	}
 };
 
 /** This class extends the galaxy to include spatial information.*/

@@ -17,31 +17,36 @@
 #include "components.h"
 #include "galaxy_mergers.h"
 #include "numerical_constants.h"
+#include "physical_model.h"
 
 namespace shark {
 
 GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	major_merger_ratio(0),
 	minor_merger_burst_ratio(0),
-	gas_fraction_minor_merger(0),
 	merger_random_seed(-1),
-	jiang08()
+	jiang08(),
+	f_orbit(1),
+	cgal(0.5)
 	{
 
 	options.load("galaxy_mergers.major_merger_ratio", major_merger_ratio);
 	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio);
-	options.load("galaxy_mergers.gas_fraction_minorm_merger", gas_fraction_minor_merger);
 	options.load("galaxy_mergers.merger_random_seed", merger_random_seed);
 	options.load("galaxy_mergers.jiang08_a", jiang08[0]);
 	options.load("galaxy_mergers.jiang08_b", jiang08[1]);
 	options.load("galaxy_mergers.jiang08_c", jiang08[2]);
 	options.load("galaxy_mergers.jiang08_d", jiang08[3]);
 
+	options.load("galaxy_mergers.f_orbit", f_orbit);
+	options.load("galaxy_mergers.cgal", cgal);
+
 }
 
-GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo) :
+GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel) :
 	parameters(parameters),
-	darkmatterhalo(darkmatterhalo)
+	darkmatterhalo(darkmatterhalo),
+	physicalmodel(physicalmodel)
 {
 	// no-op
 }
@@ -73,7 +78,6 @@ double GalaxyMergers::merging_timescale_orbital(double vr, double vt, double f, 
 	double rVirial = 1; //Virial radius in scaled unit system.
 
 	double E = 0.5 * (std::pow(vr,2)+std::pow(vt,2)) / f + darkmatterhalo->grav_potential_halo(rVirial , c);
-
 
 	//TODO: check that I'm using the right input values for the merging timescale.
 
@@ -194,9 +198,13 @@ void GalaxyMergers::merging_subhalos(std::shared_ptr<Halo> &halo){
 			//Calculate dynamical friction timescale.
 			double tau_fric = merging_timescale(central_subhalo, satellite_subhalo);
 
-			//Assign tau_fric to all satellite galaxies in the subhalo that will disappear.
 			for (std::shared_ptr<Galaxy> &galaxies: satellite_subhalo->galaxies){
+
+				//Assign tau_fric to all satellite galaxies in the subhalo that will disappear.
 				galaxies->tmerge = tau_fric;
+
+				//Redefine galaxy type.
+				galaxies->galaxy_type = Galaxy::TYPE2;
 			}
 
 			//Now transfer the galaxies in this subhalo to the central subhalo.
@@ -210,7 +218,7 @@ void GalaxyMergers::merging_subhalos(std::shared_ptr<Halo> &halo){
 
 }
 
-void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo){
+void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo, double z, double delta_t){
 
 	/**
 	 * This function determines which galaxies are merging in this snapshot by comparing tmerge with the duration of the snapshot.
@@ -220,7 +228,180 @@ void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo){
 
 	auto &central_subhalo = halo->central_subhalo;
 
+	std::shared_ptr<Galaxy> central_galaxy;
 
+	/**
+	 * First find central galaxy of central subhalo.
+	 */
+	for (std::shared_ptr<Galaxy> &galaxy: central_subhalo->galaxies){
+		if(galaxy->galaxy_type == Galaxy::CENTRAL){
+			central_galaxy = galaxy;
+		}
+	}
+
+	if(!central_galaxy){
+		throw exception("No central galaxy found in a subhalo.");
+	}
+
+	for (std::shared_ptr<Galaxy> &galaxy: central_subhalo->galaxies){
+		if(galaxy->galaxy_type == Galaxy::TYPE2){
+			/**
+			 * If merging timescale is less than the duration of this snapshot, then proceed to merge. Otherwise, update merging timescale.
+			 */
+			if(galaxy->tmerge < delta_t){
+				create_merger(central_galaxy, galaxy, halo, z, delta_t);
+
+				//Now destroy and remove satellite galaxy. ASK RODRIGO.
+				auto it = std::find(central_subhalo->galaxies.begin(), central_subhalo->galaxies.end(), galaxy);
+				if (it == central_subhalo->galaxies.end()) {
+					// error
+				}
+				central_subhalo->galaxies.erase(it);
+
+			}
+			else{
+				galaxy->tmerge = galaxy->tmerge - delta_t;
+			}
+		}
+	}
+
+}
+
+void GalaxyMergers::create_merger(std::shared_ptr<Galaxy> &central, std::shared_ptr<Galaxy> &satellite, std::shared_ptr<Halo> &halo, double z, double delta_t){
+
+	/**
+	 * This function classifies the merger and computes the starburst in case it takes place.
+	 */
+
+
+	//First define central subhalo.
+
+	auto &central_subhalo = halo->central_subhalo;
+
+	double mbar_central = central->baryon_mass();
+
+	double mbar_satellite = satellite->baryon_mass();
+
+	double mass_ratio = mbar_satellite/mbar_central;
+
+	//If mass ratio>1 is because satellite galaxy is more massive than central, so redefine mass ratio accordingly.
+	if(mass_ratio > 1){
+		mass_ratio = 1 / mass_ratio;
+	}
+
+	/**
+	 * First, calculate remnant galaxy's bulge size based on merger properties.
+	 */
+	central->bulge_stars.rscale = bulge_size_merger(mass_ratio, central, satellite, halo);
+
+	/**
+	 * Evaluate major mergers
+	 */
+	if(mass_ratio >= parameters.major_merger_ratio){
+
+		/**
+		 * Transfer mass. In the case of major mergers, transfer all stars and gas to the bulge.
+		 */
+
+		central->bulge_stars.mass += central->disk_stars.mass + satellite->stellar_mass();
+
+		central->bulge_stars.mass_metals += central->disk_stars.mass_metals + satellite->stellar_mass_metals();
+
+		central->bulge_gas.mass += central->disk_gas.mass + satellite->gas_mass();
+
+		central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals + satellite->gas_mass_metals();
+
+		//Make all disk values 0.
+
+		central->disk_stars.mass = 0;
+
+		central->disk_stars.mass_metals = 0;
+
+		central->disk_gas.mass = 0;
+
+		central->disk_gas.mass_metals = 0;
+
+		central->bulge_gas.rscale = central->bulge_stars.rscale;
+
+		/**
+		 * Triger starburst with available gas.
+		 */
+		physicalmodel->evolve_galaxy_starburst(*central_subhalo, *central, z, delta_t);
+
+	}
+	else{//minor mergers
+
+		/**
+		 * Transfer mass. In the case of minor mergers, transfer the satellite' stars to the central bulge, and the satellite' gas to the central's disk.
+		 */
+
+		central->bulge_stars.mass += satellite->stellar_mass();
+
+		central->bulge_stars.mass_metals += satellite->stellar_mass_metals();
+
+		central->disk_gas.mass += satellite->gas_mass();
+
+		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
+
+		if(mass_ratio >= parameters.minor_merger_burst_ratio){
+			/**
+			 * Triger starburst with available gas.
+			 */
+			physicalmodel->evolve_galaxy_starburst(*central_subhalo, *central, z, delta_t);
+
+		}
+
+	}
+
+
+}
+
+double GalaxyMergers::bulge_size_merger(double mass_ratio, std::shared_ptr<Galaxy> &central, std::shared_ptr<Galaxy> &satellite, std::shared_ptr<Halo> &halo){
+
+	/**
+	 * This function calculates the bulge sizes resulting from a galaxy mergers following Cole et al. (2000). This assumes
+	 * that the internal energy of the remnant spheroid just after the mergers is equal to the sum of the internal and relative
+	 * orbital energies of the two merging galaxies (neglecting any energy dissipation and mass loss during the merger).
+	 */
+
+	double mtotal_central = 0;
+	double rcentral = 0;
+
+	//Define central properties depending on whether merger is major or minor.
+	if(mass_ratio >= parameters.major_merger_ratio){
+
+		double mbar_central = central->baryon_mass();
+
+		rcentral = central->composite_size();
+
+		//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
+		//the DM mass enclosed by rcentral.
+		mtotal_central = mbar_central + halo->Mvir * darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(halo), halo->concentration);
+	}
+	else{
+		mtotal_central = central->bulge_mass();
+
+		rcentral = central->bulge_stars.rscale;
+	}
+
+	double mbar_satellite = satellite->baryon_mass();
+
+	double rsatellite = satellite->composite_size();
+
+	return r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
+
+}
+
+
+double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
+
+	double factor1  = std::pow(mc,2)/rc;
+
+	double factor2 = std::pow(ms,2)/rs;
+
+	double factor3 = parameters.f_orbit/parameters.cgal *  mc * ms / (rc + rs);
+
+	return std::pow((mc + ms),2)/ (factor1 + factor2 + factor3);
 }
 
 

@@ -14,6 +14,7 @@
 #include "components.h"
 #include "dark_matter_halos.h"
 #include "options.h"
+#include "physical_model.h"
 
 namespace shark {
 
@@ -26,15 +27,22 @@ class GalaxyMergerParameters {
 		 * Merger parameters:
 		 * - major_merger_ratio: threshold M2/M1 to consider major mergers. In this case we convert disks to spheroids.
 		 * - minor_merger_burst_ratio: threshold M2/M1 for triggering bursts in minor mergers.
-		 * - gas_fraction_minor_merger: suppress minor-merger bursts if fgas<gas_fraction_minor_merger in primary disk.
 		 * - merger_random_seed: merger random seed to draw orbital parameters from Benson+05.
 		 */
 
 		float major_merger_ratio;
 		float minor_merger_burst_ratio;
-		float gas_fraction_minor_merger;
 		int merger_random_seed;
 		std::vector<double> jiang08;
+
+		/**
+		 * Sizes parameters:
+		 * - f_orbit: orbital factor defining orbital energy. It should be =1 for two point masses in a circular orbit separation rgal,1+rgal,2. Lacey et al. (2016) Eq. 18.
+		 * - cgal: parameter that defines internal energy of galaxy. It depends weekly on density profile. =0.49 for a pure exponential disk; =0.45 for a De Vacouleurs profile.
+		 */
+
+		float f_orbit;
+		float cgal;
 
 };
 
@@ -43,7 +51,7 @@ class GalaxyMergerParameters {
 class GalaxyMergers{
 
 public:
-	GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo);
+	GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel);
 
 	void orbital_parameters(double &vr, double &vt, double f);
 
@@ -57,11 +65,19 @@ public:
 
 	void merging_subhalos(std::shared_ptr<Halo> &halo);
 
-	void merging_galaxies(std::shared_ptr<Halo> &halo);
+	void merging_galaxies(std::shared_ptr<Halo> &halo, double z, double delta_t);
+
+	void create_merger(std::shared_ptr<Galaxy> &central, std::shared_ptr<Galaxy> &satellite, std::shared_ptr<Halo> &halo, double z, double delta_t);
+
+	double bulge_size_merger(double mass_ratio, std::shared_ptr<Galaxy> &central, std::shared_ptr<Galaxy> &satellite, std::shared_ptr<Halo> &halo);
+
+	double r_remnant(double mc, double ms, double rc, double rs);
+
 
 private:
 	GalaxyMergerParameters parameters;
 	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
+	std::shared_ptr<BasicPhysicalModel> physicalmodel;
 
 };
 

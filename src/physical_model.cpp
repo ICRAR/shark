@@ -49,7 +49,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	double yield = model.recycling_parameters.yield; /*yield of newly formed stars*/
 	double mcoolrate = params->mcoolrate; /*cooling rate in units of Msun/Gyr*/
 	double beta = model.stellar_feedback.outflow_rate(y[0], y[1]); /*mass loading parameter*/
-	double SFR = y[1] * model.star_formation.star_formation_rate(y[0], y[1], y[2], y[3], params->redshift); /*star formation rate assumed to be cold gas mass divided by time*/
+	double SFR = y[1] * model.star_formation.star_formation_rate(y[0], y[1], params->rgas, params->rstar, params->redshift);
 	double zcold = y[4] / y[1]; /*cold gas metallicity*/
 	double zhot = y[5] / y[2]; /*hot gas metallicity*/
 
@@ -150,5 +150,67 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 
 }
 
+
+std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy)
+{
+
+	std::vector<double> y(6);
+
+	y[0] = galaxy.bulge_stars.mass;
+	y[1] = galaxy.bulge_gas.mass;
+	y[2] = 0.0; //This is the component that has the cooling gas.
+	y[3] = subhalo.ejected_galaxy_gas.mass;
+	y[4] = galaxy.bulge_stars.mass_metals;
+	y[5] = galaxy.bulge_gas.mass_metals;
+	y[6] = 0.0; //This is the component that has the cooling gas mass in metals.
+	y[7] = subhalo.ejected_galaxy_gas.mass_metals;
+
+	return y;
+}
+
+void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy)
+{
+	using namespace constants;
+
+	/*In the case of starbursts one should be using the bulge instead of the disk
+	 * properties.*/
+	galaxy.bulge_stars.mass 				= y[0];
+	galaxy.bulge_gas.mass   				= y[1];
+	subhalo.ejected_galaxy_gas.mass 		= y[3];
+	galaxy.bulge_stars.mass_metals 			= y[4];
+	galaxy.bulge_gas.mass_metals 			= y[5];
+	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
+
+	/**
+	 * Check that metallicities are not negative. If they are, mass in metals is set to zero.
+	 */
+	if(galaxy.bulge_stars.mass_metals < tolerance){
+		galaxy.bulge_stars.mass_metals = 0;
+	}
+	if(galaxy.bulge_gas.mass_metals < tolerance){
+		galaxy.bulge_gas.mass_metals = 0;
+	}
+	if(subhalo.ejected_galaxy_gas.mass_metals < tolerance){
+		subhalo.ejected_galaxy_gas.mass_metals = 0;
+	}
+
+	/**
+	 * Check that masses are not negative. If they are, mass and metals are set to zero.
+	 *
+	 */
+	if(galaxy.bulge_stars.mass < tolerance){
+		galaxy.bulge_stars.mass = 0;
+		galaxy.bulge_stars.mass_metals = 0;
+	}
+	if(galaxy.bulge_gas.mass < tolerance){
+		galaxy.bulge_gas.mass = 0;
+		galaxy.bulge_gas.mass_metals = 0;
+	}
+	if(subhalo.ejected_galaxy_gas.mass < tolerance){
+		subhalo.ejected_galaxy_gas.mass = 0;
+		subhalo.ejected_galaxy_gas.mass_metals = 0;
+	}
+
+}
 
 }  // namespace shark

@@ -244,7 +244,9 @@ void HaloBasedTreeBuilder::create_galaxies(const std::vector<std::shared_ptr<Hal
 		for(const auto &subhalo: halo->all_subhalos()) {
 			if(subhalo->ascendants.empty() and subhalo->subhalo_type == Subhalo::CENTRAL and subhalo->galaxies.empty()){
 				std::shared_ptr<Galaxy> galaxy = std::make_shared<Galaxy>();
+
 				galaxy->galaxy_type = Galaxy::CENTRAL;
+
 				subhalo->galaxies.push_back(galaxy);
 
 				subhalo->hot_halo_gas.mass = subhalo->host_halo->Mvir * cosmology.universal_baryon_fraction();
