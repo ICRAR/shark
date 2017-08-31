@@ -175,11 +175,11 @@ int run(int argc, char **argv) {
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
 
-		vector<shared_ptr<Halo>> all_halos_this_snapshot;
+		vector<HaloPtr> all_halos_this_snapshot;
 
 		for(auto &tree: merger_trees) {
 			/*here loop over the halos this merger tree has at this time.*/
-			for(shared_ptr<Halo> halo: tree->halos[snapshot]) {
+			for(auto &halo: tree->halos[snapshot]) {
 
 				//Append this halo to the list of halos of this snapshot
 
