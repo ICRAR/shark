@@ -448,4 +448,5 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 }
 
 
+
 }  // namespace shark

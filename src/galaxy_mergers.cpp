@@ -33,6 +33,7 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	options.load("galaxy_mergers.major_merger_ratio", major_merger_ratio);
 	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio);
 	options.load("galaxy_mergers.merger_random_seed", merger_random_seed);
+
 	options.load("galaxy_mergers.jiang08_a", jiang08[0]);
 	options.load("galaxy_mergers.jiang08_b", jiang08[1]);
 	options.load("galaxy_mergers.jiang08_c", jiang08[2]);
@@ -135,10 +136,22 @@ double GalaxyMergers::merging_timescale_orbital(double vr, double vt, double f, 
 
 double GalaxyMergers::mass_ratio_function(double mp, double ms){
 
+	/**
+	 * Input variables:
+	 * mp: mass  of primary galaxy.
+	 * ms: mass of secondary galaxy.
+	 */
+
 	return 1+1/std::max(ms / mp, 1. + constants::tolerance);
 }
 
 double GalaxyMergers::merging_timescale_mass(double mp, double ms){
+
+	/**
+	 * Input variables:
+	 * mp: mass  of primary galaxy.
+	 * ms: mass of secondary galaxy.
+	 */
 
 	double mass_ratio = mp/ms;
 
@@ -150,7 +163,10 @@ double GalaxyMergers::merging_timescale(std::shared_ptr<Subhalo> &primary, std::
 	/**
 	 * Function calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary.
 	 * This should be calculated only in the snapshot before the secondary mergers onto the primary (i.e. disappears from merger tree).
+	 * Inputs:
+	 * a primary and secondary galaxy. The primary is the central galaxy.
 	 */
+
 	double vt,vr;
 
 	double ms = secondary->Mvir;
@@ -222,6 +238,10 @@ void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo, double z, doub
 
 	/**
 	 * This function determines which galaxies are merging in this snapshot by comparing tmerge with the duration of the snapshot.
+	 * Inputs:
+	 * halo: halo in which the two galaxies merging live.
+	 * z: current redshift.
+	 * delta_t: time interval between the current snapshots.
 	 */
 
 	//First define central subhalo.
@@ -271,6 +291,12 @@ void GalaxyMergers::create_merger(std::shared_ptr<Galaxy> &central, std::shared_
 
 	/**
 	 * This function classifies the merger and computes the starburst in case it takes place.
+	 * Inputs:
+	 * central: central galaxy.
+	 * satellite: satellite galaxy.
+	 * halo: halo in which the two galaxies merging live.
+	 * z: current redshift.
+	 * delta_t: time interval between the current snapshots.
 	 */
 
 
@@ -362,6 +388,10 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, std::shared_ptr<Galax
 	 * This function calculates the bulge sizes resulting from a galaxy mergers following Cole et al. (2000). This assumes
 	 * that the internal energy of the remnant spheroid just after the mergers is equal to the sum of the internal and relative
 	 * orbital energies of the two merging galaxies (neglecting any energy dissipation and mass loss during the merger).
+	 * Inputs:
+	 * central: central galaxy.
+	 * satellite: satellite galaxy.
+	 * halo: halo in which the two galaxies merging live.
 	 */
 
 	double mtotal_central = 0;
@@ -394,6 +424,14 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, std::shared_ptr<Galax
 
 
 double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
+
+	/**
+	 * Input variables:
+	 * mc: mass central.
+	 * ms: mass satellite.
+	 * rc: radius central.
+	 * rs: radius satellite.
+	 */
 
 	double factor1  = std::pow(mc,2)/rc;
 
