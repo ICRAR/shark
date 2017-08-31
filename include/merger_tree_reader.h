@@ -26,8 +26,8 @@ public:
 	 */
 	SURFSReader(const std::string &prefix);
 
-	const std::vector<std::shared_ptr<Halo>> read_halos(std::vector<int> batches);
-	const std::vector<std::shared_ptr<Halo>> read_halos(int batch);
+	const std::vector<HaloPtr> read_halos(std::vector<int> batches);
+	const std::vector<HaloPtr> read_halos(int batch);
 
 private:
 

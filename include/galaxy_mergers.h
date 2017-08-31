@@ -61,15 +61,15 @@ public:
 
 	double merging_timescale_orbital(double vr, double vt, double f, double c);
 
-	double merging_timescale(std::shared_ptr<Subhalo> &primary, std::shared_ptr<Subhalo> &secondary);
+	double merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary);
 
-	void merging_subhalos(std::shared_ptr<Halo> &halo);
+	void merging_subhalos(HaloPtr &halo);
 
-	void merging_galaxies(std::shared_ptr<Halo> &halo, double z, double delta_t);
+	void merging_galaxies(HaloPtr &halo, double z, double delta_t);
 
-	void create_merger(std::shared_ptr<Galaxy> &central, std::shared_ptr<Galaxy> &satellite, std::shared_ptr<Halo> &halo, double z, double delta_t);
+	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, double z, double delta_t);
 
-	double bulge_size_merger(double mass_ratio, std::shared_ptr<Galaxy> &central, std::shared_ptr<Galaxy> &satellite, std::shared_ptr<Halo> &halo);
+	double bulge_size_merger(double mass_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo);
 
 	double r_remnant(double mc, double ms, double rc, double rs);
 

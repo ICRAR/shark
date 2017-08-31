@@ -42,7 +42,7 @@ const string SURFSReader::get_filename(int batch)
 	return os.str();
 }
 
-const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(std::vector<int> batches)
+const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<int> batches)
 {
 
 	// Check that batch numbers are within boundaries
@@ -65,7 +65,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(std::vector<int
 	}
 
 	// Read halos for each batch, accumulate and return
-	std::vector<std::shared_ptr<Halo>> all_halos;
+	std::vector<HaloPtr> all_halos;
 	for(auto batch: batches) {
 		LOG(info) << "Reading file for batch " << batch;
 		auto halos_batch = read_halos(batch);
@@ -75,7 +75,7 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(std::vector<int
 	return all_halos;
 }
 
-const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
+const std::vector<HaloPtr> SURFSReader::read_halos(int batch)
 {
 	const auto fname = get_filename(batch);
 	hdf5::Reader batch_file(fname);
@@ -107,10 +107,10 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 		return {};
 	}
 
-	vector<std::shared_ptr<Subhalo>> subhalos;
+	vector<SubhaloPtr> subhalos;
 	for(unsigned int i=0; i!=n_subhalos; i++) {
 
-		std::shared_ptr<Subhalo> subhalo = std::make_shared<Subhalo>();
+		auto subhalo = std::make_shared<Subhalo>();
 
 		// Subhalo and Halo index, snapshot
 		subhalo->id = nodeIndex[i];
@@ -166,13 +166,13 @@ const std::vector<std::shared_ptr<Halo>> SURFSReader::read_halos(int batch)
 
 	// Sort subhalos by host index (which intrinsically sorts them by snapshot
 	// since host indices numbers are prefixed with the snapshot number)
-	std::sort(subhalos.begin(), subhalos.end(), [](const std::shared_ptr<Subhalo> &lhs, const std::shared_ptr<Subhalo> &rhs) {
+	std::sort(subhalos.begin(), subhalos.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
 		return lhs->haloID < rhs->haloID;
 	});
 
 	// Create and assign Halos
-	std::shared_ptr<Halo> halo;
-	std::vector<std::shared_ptr<Halo>> halos;
+	HaloPtr halo;
+	std::vector<HaloPtr> halos;
 	Halo::id_t last_halo_id = -1;
 	for(const auto &subhalo: subhalos) {
 

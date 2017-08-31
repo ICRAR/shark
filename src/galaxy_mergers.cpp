@@ -6,7 +6,6 @@
  */
 
 #include <cmath>
-#include <memory>
 #include <random>
 #include <vector>
 
@@ -158,7 +157,7 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return mass_ratio/std::log(1+mass_ratio);
 }
 
-double GalaxyMergers::merging_timescale(std::shared_ptr<Subhalo> &primary, std::shared_ptr<Subhalo> &secondary){
+double GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary){
 
 	/**
 	 * Function calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary.
@@ -192,7 +191,7 @@ double GalaxyMergers::merging_timescale(std::shared_ptr<Subhalo> &primary, std::
 
 }
 
-void GalaxyMergers::merging_subhalos(std::shared_ptr<Halo> &halo){
+void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 
 	/**
 	 * This function evaluates whether subhalos in each timestep are disappearing from the merger tree, and if they are
@@ -204,7 +203,7 @@ void GalaxyMergers::merging_subhalos(std::shared_ptr<Halo> &halo){
 
 	auto central_subhalo = halo->central_subhalo;
 
-	for(std::shared_ptr<Subhalo> &subhalo: halo->satellite_subhalos) {
+	for(auto &subhalo: halo->satellite_subhalos) {
 		//Identify which subhalos will disappear in the next snapshot
 
 		if(subhalo->last_snapshot_identified == subhalo->snapshot){
@@ -214,7 +213,7 @@ void GalaxyMergers::merging_subhalos(std::shared_ptr<Halo> &halo){
 			//Calculate dynamical friction timescale.
 			double tau_fric = merging_timescale(central_subhalo, satellite_subhalo);
 
-			for (std::shared_ptr<Galaxy> &galaxies: satellite_subhalo->galaxies){
+			for (auto &galaxies: satellite_subhalo->galaxies){
 
 				//Assign tau_fric to all satellite galaxies in the subhalo that will disappear.
 				galaxies->tmerge = tau_fric;
@@ -234,7 +233,7 @@ void GalaxyMergers::merging_subhalos(std::shared_ptr<Halo> &halo){
 
 }
 
-void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo, double z, double delta_t){
+void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 
 	/**
 	 * This function determines which galaxies are merging in this snapshot by comparing tmerge with the duration of the snapshot.
@@ -248,12 +247,12 @@ void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo, double z, doub
 
 	auto &central_subhalo = halo->central_subhalo;
 
-	std::shared_ptr<Galaxy> central_galaxy;
+	GalaxyPtr central_galaxy;
 
 	/**
 	 * First find central galaxy of central subhalo.
 	 */
-	for (std::shared_ptr<Galaxy> &galaxy: central_subhalo->galaxies){
+	for (auto &galaxy: central_subhalo->galaxies){
 		if(galaxy->galaxy_type == Galaxy::CENTRAL){
 			central_galaxy = galaxy;
 		}
@@ -263,7 +262,7 @@ void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo, double z, doub
 		throw exception("No central galaxy found in a subhalo.");
 	}
 
-	for (std::shared_ptr<Galaxy> &galaxy: central_subhalo->galaxies){
+	for (auto &galaxy: central_subhalo->galaxies){
 		if(galaxy->galaxy_type == Galaxy::TYPE2){
 			/**
 			 * If merging timescale is less than the duration of this snapshot, then proceed to merge. Otherwise, update merging timescale.
@@ -287,7 +286,7 @@ void GalaxyMergers::merging_galaxies(std::shared_ptr<Halo> &halo, double z, doub
 
 }
 
-void GalaxyMergers::create_merger(std::shared_ptr<Galaxy> &central, std::shared_ptr<Galaxy> &satellite, std::shared_ptr<Halo> &halo, double z, double delta_t){
+void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, double z, double delta_t){
 
 	/**
 	 * This function classifies the merger and computes the starburst in case it takes place.
@@ -382,7 +381,7 @@ void GalaxyMergers::create_merger(std::shared_ptr<Galaxy> &central, std::shared_
 
 }
 
-double GalaxyMergers::bulge_size_merger(double mass_ratio, std::shared_ptr<Galaxy> &central, std::shared_ptr<Galaxy> &satellite, std::shared_ptr<Halo> &halo){
+double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo){
 
 	/**
 	 * This function calculates the bulge sizes resulting from a galaxy mergers following Cole et al. (2000). This assumes

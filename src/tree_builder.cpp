@@ -27,18 +27,18 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 	return exec_params;
 }
 
-std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vector<std::shared_ptr<Halo>> &halos)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos)
 {
 
 	const auto &output_snaps = exec_params.output_snapshots;
 	auto last_snapshot_to_consider = *std::begin(output_snaps);
 
 	// Find roots and create Trees for each of them
-	std::vector<std::shared_ptr<MergerTree>> trees;
+	std::vector<MergerTreePtr> trees;
 	int tree_counter = 0;
 	for(const auto &halo: halos) {
 		if (halo->snapshot == last_snapshot_to_consider) {
-			std::shared_ptr<MergerTree> tree = std::make_shared<MergerTree>();
+			auto tree = std::make_shared<MergerTree>();
 			tree->id = tree_counter++;
 			LOG(debug) << "Creating MergerTree at " << halo;
 			halo->merger_tree = tree;
@@ -73,8 +73,8 @@ std::vector<std::shared_ptr<MergerTree>> TreeBuilder::build_trees(const std::vec
 	return trees;
 }
 
-void TreeBuilder::link(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Subhalo> &d_subhalo,
-                       const std::shared_ptr<Halo> &halo, const std::shared_ptr<Halo> &d_halo) {
+void TreeBuilder::link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
+                       const HaloPtr &halo, const HaloPtr &d_halo) {
 
 	// Establish ascendant and descendant links at subhalo level
 	// Fail if subhalo has more than one descendant
@@ -120,12 +120,12 @@ HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params) :
 	// no-op
 }
 
-void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<Halo>> &halos)
+void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 {
 
 	// Index all halos by snapshot and by ID, we'll need them later
-	std::map<int, std::vector<std::shared_ptr<Halo>>> halos_by_snapshot;
-	std::map<Halo::id_t, std::shared_ptr<Halo>> halos_by_id;
+	std::map<int, std::vector<HaloPtr>> halos_by_snapshot;
+	std::map<Halo::id_t, HaloPtr> halos_by_id;
 	for(const auto &halo: halos) {
 		halos_by_snapshot[halo->snapshot].push_back(halo);
 		halos_by_id[halo->id] = halo;
@@ -201,7 +201,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 					os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
 					auto all_subhalos = d_halo->all_subhalos();
 					std::copy(all_subhalos.begin(), all_subhalos.end(),
-					          std::ostream_iterator<std::shared_ptr<Subhalo>>(os, "\n  "));
+					          std::ostream_iterator<SubhaloPtr>(os, "\n  "));
 
 					// Users can choose whether to continue in these situations
 					// (with a warning) or if it should be considered an error
@@ -235,7 +235,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<std::shared_ptr<
 	}
 }
 
-void HaloBasedTreeBuilder::create_galaxies(const std::vector<std::shared_ptr<Halo>> &halos, Cosmology &cosmology)
+void HaloBasedTreeBuilder::create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology)
 {
 
 	//This function finds subhalos that have no progenitors (so first time they are identified) and are central, and creates a galaxy there.
@@ -243,7 +243,7 @@ void HaloBasedTreeBuilder::create_galaxies(const std::vector<std::shared_ptr<Hal
 	for (const auto &halo: halos){
 		for(const auto &subhalo: halo->all_subhalos()) {
 			if(subhalo->ascendants.empty() and subhalo->subhalo_type == Subhalo::CENTRAL and subhalo->galaxies.empty()){
-				std::shared_ptr<Galaxy> galaxy = std::make_shared<Galaxy>();
+				auto galaxy = std::make_shared<Galaxy>();
 
 				galaxy->galaxy_type = Galaxy::CENTRAL;
 

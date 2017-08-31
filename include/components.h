@@ -35,8 +35,16 @@
 namespace shark {
 
 // Forward-defines
+class Galaxy;
+class Subhalo;
 class Halo;
 class MergerTree;
+
+typedef std::shared_ptr<Galaxy> GalaxyPtr;
+typedef std::shared_ptr<Subhalo> SubhaloPtr;
+typedef std::shared_ptr<Halo> HaloPtr;
+typedef std::shared_ptr<MergerTree> MergerTreePtr;
+
 
 /**
  * The common base for all baryon component types.
@@ -332,12 +340,12 @@ public:
 	 * If this pointer is set then descendant_id and descendant_subhalo are
 	 * meaningless.
 	 */
-	std::shared_ptr<Subhalo> descendant;
+	SubhaloPtr descendant;
 
 	/**
 	 * The list of galaxies in this subhalo.
 	 */
-	std::vector<std::shared_ptr<Galaxy>> galaxies;
+	std::vector<GalaxyPtr> galaxies;
 
 	/**
 	 * The subhalo type
@@ -385,7 +393,7 @@ public:
 	 * A list of pointers to the ascendants of this subhalo, sorted by mass in
 	 * descending order
 	 */
-	std::vector<std::shared_ptr<Subhalo>> ascendants;
+	std::vector<SubhaloPtr> ascendants;
 
 	/**
 	 * The accretion rate onto the subhalo. This information comes from the merger tree
@@ -395,7 +403,7 @@ public:
 	/**
 	 * The halo that holds this subhalo.
 	 */
-	std::shared_ptr<Halo> host_halo;
+	HaloPtr host_halo;
 };
 
 template <typename T>
@@ -410,7 +418,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Subhalo &
 }
 
 template <typename T>
-std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shared_ptr<Subhalo> &subhalo)
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const SubhaloPtr &subhalo)
 {
 	stream << *subhalo;
 	return stream;
@@ -455,16 +463,16 @@ public:
 	/**
 	 * The central subhalo
 	 */
-	std::shared_ptr<Subhalo> central_subhalo;
+	SubhaloPtr central_subhalo;
 
 	/**
 	 * The subhalos contained in this halo
 	 */
-	std::vector<std::shared_ptr<Subhalo>> satellite_subhalos;
+	std::vector<SubhaloPtr> satellite_subhalos;
 
-	std::vector<std::shared_ptr<Subhalo>> all_subhalos() {
+	std::vector<SubhaloPtr> all_subhalos() {
 
-		std::vector<std::shared_ptr<Subhalo>> all;
+		std::vector<SubhaloPtr> all;
 
 		if (central_subhalo) {
 			all.push_back(central_subhalo);
@@ -491,15 +499,15 @@ public:
 	 */
 	int snapshot;
 
-	std::shared_ptr<Halo> descendant;
-	std::vector<std::shared_ptr<Halo>> ascendants;
+	HaloPtr descendant;
+	std::vector<HaloPtr> ascendants;
 
 	/**
 	 * The merger tree that holds this halo.
 	 */
-	std::shared_ptr<MergerTree> merger_tree;
+	MergerTreePtr merger_tree;
 
-	void add_subhalo(const std::shared_ptr<Subhalo> &subhalo) {
+	void add_subhalo(const SubhaloPtr &subhalo) {
 
 		// Assign subhalo to proper member
 		if (subhalo->subhalo_type == Subhalo::CENTRAL) {
@@ -527,7 +535,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Halo &hal
 }
 
 template <typename T>
-std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shared_ptr<Halo> &halo)
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const HaloPtr &halo)
 {
 	stream << *halo;
 	return stream;
@@ -545,9 +553,9 @@ public:
 	/**
 	 * All halos contained in this merger tree, indexed by snapshot number
 	 */
-	std::map<int, std::vector<std::shared_ptr<Halo>>> halos;
+	std::map<int, std::vector<HaloPtr>> halos;
 
-	void add_halo(const std::shared_ptr<Halo> &halo) {
+	void add_halo(const HaloPtr &halo) {
 		halos[halo->snapshot].push_back(halo);
 	}
 };
@@ -560,7 +568,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const MergerTre
 }
 
 template <typename T>
-std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const std::shared_ptr<MergerTree> &merger_tree)
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const MergerTreePtr &merger_tree)
 {
 	stream << *merger_tree;
 	return stream;
