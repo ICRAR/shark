@@ -25,7 +25,6 @@
 #ifndef SHARK_TREE_BUILDER_H_
 #define SHARK_TREE_BUILDER_H_
 
-#include <memory>
 #include <vector>
 
 #include "components.h"
@@ -39,16 +38,16 @@ class TreeBuilder {
 public:
 	TreeBuilder(ExecutionParameters exec_params);
 	virtual ~TreeBuilder();
-	std::vector<std::shared_ptr<MergerTree>> build_trees(const std::vector<std::shared_ptr<Halo>> &halos);
+	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos);
 
 protected:
 
 	ExecutionParameters &get_exec_params();
 
-	virtual void loop_through_halos(const std::vector<std::shared_ptr<Halo>> &halos) = 0;
+	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) = 0;
 
-	void link(const std::shared_ptr<Subhalo> &subhalo, const std::shared_ptr<Subhalo> &d_subhalo,
-	          const std::shared_ptr<Halo> &halo, const std::shared_ptr<Halo> &d_halo);
+	void link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
+	          const HaloPtr &halo, const HaloPtr &d_halo);
 
 private:
 	ExecutionParameters exec_params;
@@ -61,10 +60,10 @@ class HaloBasedTreeBuilder : public TreeBuilder {
 public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params);
 
-	void create_galaxies(const std::vector<std::shared_ptr<Halo>> &halos, Cosmology &cosmology);
+	void create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology);
 
 protected:
-	virtual void loop_through_halos(const std::vector<std::shared_ptr<Halo>> &halos) override;
+	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) override;
 
 };
 

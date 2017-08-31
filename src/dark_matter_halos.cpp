@@ -108,12 +108,12 @@ double DarkMatterHalos::enclosed_mass(double r, double c){
 	}
 }
 
-double DarkMatterHalos::halo_dynamical_time (std::shared_ptr<Halo> &halo){
+double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo){
 
 	return constants::MPCKM2GYR * halo_virial_radius(halo) / halo->Vvir / cosmology->parameters.Hubble_h;
 }
 
-double DarkMatterHalos::halo_virial_radius(std::shared_ptr<Halo> &halo){
+double DarkMatterHalos::halo_virial_radius(HaloPtr &halo){
 
 	/**
 	 * Function to calculate the halo virial radius. Returns virial radius in Mpc/h.
