@@ -87,6 +87,8 @@ public:
 		return parameters.OmegaB/parameters.OmegaM;
 	};
 
+	double hubble_parameter (double z);
+
 	CosmologicalParameters parameters;
 
 };

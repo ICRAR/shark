@@ -15,6 +15,7 @@
 
 #include "components.h"
 #include "cosmology.h"
+#include "simulation.h"
 
 namespace shark {
 
@@ -35,7 +36,7 @@ public:
 class DarkMatterHalos{
 
 public:
-	DarkMatterHalos(DarkMatterHaloParameters parameters, std::shared_ptr<Cosmology> cosmology);
+	DarkMatterHalos(DarkMatterHaloParameters parameters, std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params);
 
 	double grav_potential_halo(double r, double c);
 
@@ -47,9 +48,16 @@ public:
 
 	double halo_virial_radius(HaloPtr &halo);
 
+	double halo_virial_velocity (double mvir, double redshift);
+
+	double halo_lambda (xyz<float> L, double mvir, double redshift);
+
+	double disk_size_theory (Subhalo &subhalo);
+
 private:
 	DarkMatterHaloParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
+	SimulationParameters sim_params;
 
 };
 

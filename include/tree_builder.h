@@ -29,6 +29,7 @@
 
 #include "components.h"
 #include "cosmology.h"
+#include "dark_matter_halos.h"
 #include "execution.h"
 
 namespace shark {
@@ -60,7 +61,7 @@ class HaloBasedTreeBuilder : public TreeBuilder {
 public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params);
 
-	void create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology);
+	void create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology, DarkMatterHalos &darkmatterhalos);
 
 protected:
 	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) override;

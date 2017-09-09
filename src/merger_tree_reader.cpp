@@ -16,9 +16,11 @@
 #include <vector>
 #include <tuple>
 
-#include "merger_tree_reader.h"
-#include "logging.h"
+#include "dark_matter_halos.h"
 #include "exceptions.h"
+#include "logging.h"
+#include "merger_tree_reader.h"
+#include "simulation.h"
 #include "utils.h"
 #include "hdf5/reader.h"
 
@@ -42,7 +44,7 @@ const string SURFSReader::get_filename(int batch)
 	return os.str();
 }
 
-const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<int> batches)
+const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<int> batches, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
 {
 
 	// Check that batch numbers are within boundaries
@@ -68,14 +70,14 @@ const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<int> batches)
 	std::vector<HaloPtr> all_halos;
 	for(auto batch: batches) {
 		LOG(info) << "Reading file for batch " << batch;
-		auto halos_batch = read_halos(batch);
+		auto halos_batch = read_halos(batch, darkmatterhalos, sim_params);
 		all_halos.insert(all_halos.end(), halos_batch.begin(), halos_batch.end());
 	}
 
 	return all_halos;
 }
 
-const std::vector<HaloPtr> SURFSReader::read_halos(int batch)
+const std::vector<HaloPtr> SURFSReader::read_halos(int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
 {
 	const auto fname = get_filename(batch);
 	hdf5::Reader batch_file(fname);
@@ -151,12 +153,15 @@ const std::vector<HaloPtr> SURFSReader::read_halos(int batch)
 		subhalo->velocity.y = velocity[3 * i + 1];
 		subhalo->velocity.z = velocity[3 * i + 2];
 
-		//Assign angular momentum
+		//Assign specific angular momentum
 		subhalo->L.x = L[3 * i];
 		subhalo->L.y = L[3 * i + 1];
 		subhalo->L.z = L[3 * i + 2];
 
 		subhalo->Vcirc = Vcirc[i];
+
+		//Calculate virial velocity from the virial mass and redshift.
+		subhalo->Vvir = darkmatterhalos.halo_virial_velocity(subhalo->Mvir, sim_params.redshifts[subhalo->snapshot]);
 
 		// Done, save it now
 		subhalos.push_back(std::move(subhalo));
@@ -192,6 +197,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(int batch)
 
 	for(const auto &halo: halos) {
 		// calculate vvir
+		halo->Vvir = darkmatterhalos.halo_virial_velocity(halo->Mvir, sim_params.redshifts[halo->snapshot]);
 	}
 
 	return halos;
