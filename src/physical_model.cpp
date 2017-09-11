@@ -82,7 +82,7 @@ BasicPhysicalModel::BasicPhysicalModel(
 std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy)
 {
 
-	std::vector<double> y(6);
+	std::vector<double> y(8);
 
 	y[0] = galaxy.disk_stars.mass;
 	y[1] = galaxy.disk_gas.mass;
@@ -154,7 +154,7 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy)
 {
 
-	std::vector<double> y(6);
+	std::vector<double> y(8);
 
 	y[0] = galaxy.bulge_stars.mass;
 	y[1] = galaxy.bulge_gas.mass;
