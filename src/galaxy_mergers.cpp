@@ -226,6 +226,11 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	//First define central subhalo.
 
 	auto &central_subhalo = halo->central_subhalo;
+	if (!central_subhalo) {
+		std::ostringstream os;
+		os << halo << " has no central subhalo";
+		throw exception(os.str());
+	}
 
 	GalaxyPtr central_galaxy;
 
@@ -239,7 +244,9 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	}
 
 	if(!central_galaxy){
-		throw exception("No central galaxy found in a subhalo.");
+		std::ostringstream os;
+		os << central_subhalo << " has no central galaxy";
+		throw exception(os.str());
 	}
 
 	for (auto &galaxy: central_subhalo->galaxies){
