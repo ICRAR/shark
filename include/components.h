@@ -347,6 +347,15 @@ public:
 	 */
 	std::vector<GalaxyPtr> galaxies;
 
+	GalaxyPtr central_galaxy(){
+		for (auto galaxy: galaxies){
+			if(galaxy->galaxy_type == Galaxy::CENTRAL){
+				return galaxy;
+			}
+		}
+		return GalaxyPtr();
+	}
+
 	/**
 	 * The subhalo type
 	 */
@@ -404,6 +413,7 @@ public:
 	 * The halo that holds this subhalo.
 	 */
 	HaloPtr host_halo;
+
 };
 
 template <typename T>

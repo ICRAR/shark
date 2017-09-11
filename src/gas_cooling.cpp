@@ -173,6 +173,17 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
      */
     if(subhalo.subhalo_type == Subhalo::CENTRAL){
 
+    	/**
+    	 * Estimate disk size.
+    	 */
+
+    	auto central_galaxy = subhalo.central_galaxy();
+
+    	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo);
+
+    	//TODO: remove this part and calculate rscale of the stellar disk properly.
+    	central_galaxy->disk_stars.rscale = central_galaxy->disk_gas.rscale;
+
 
     	/**
     	 * Plant black hole seed if necessary
@@ -379,6 +390,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
     		return coolingrate;
     	}
+
     }
     else{
     	//Assume satellite subhalos have 0 cooling rate.
@@ -447,6 +459,11 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 	}
 }
 
+double GasCooling::disk_size_cooling(Subhalo &subhalo){
+
+	//Do the basics first, and then more complicated stuff.
+	return 0;
+}
 
 
 }  // namespace shark

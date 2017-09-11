@@ -12,6 +12,8 @@
 #include <memory>
 
 #include "components.h"
+#include "dark_matter_halos.h"
+#include "simulation.h"
 
 namespace shark {
 
@@ -26,8 +28,9 @@ public:
 	 */
 	SURFSReader(const std::string &prefix);
 
-	const std::vector<HaloPtr> read_halos(std::vector<int> batches);
-	const std::vector<HaloPtr> read_halos(int batch);
+	const std::vector<HaloPtr> read_halos(std::vector<int> batches, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params);
+
+	const std::vector<HaloPtr> read_halos(int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params);
 
 private:
 

@@ -39,9 +39,10 @@ Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &nam
 	throw invalid_option(os.str());
 }
 
-DarkMatterHalos::DarkMatterHalos(DarkMatterHaloParameters parameters, std::shared_ptr<Cosmology> cosmology) :
+DarkMatterHalos::DarkMatterHalos(DarkMatterHaloParameters parameters, std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params) :
 	parameters(parameters),
-	cosmology(cosmology)
+	cosmology(cosmology),
+	sim_params(sim_params)
 	{
 	// no-op
 }
@@ -120,6 +121,38 @@ double DarkMatterHalos::halo_virial_radius(HaloPtr &halo){
 	 */
 	return constants::G * halo->Mvir / std::pow(halo->Vvir,2);
 }
+
+double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
+
+	double V3 = 10*constants::G * mvir * cosmology->hubble_parameter(redshift);
+
+	return std::pow(V3,1/3);
+
+}
+
+double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double redshift){
+
+	//Spin parameter calculated from j=sqrt(2) * lambda *G^2/3 M^2/3 / (10*H)^1/3.
+
+	return L.norm()*std::pow(10*cosmology->hubble_parameter(redshift),1/3)/constants::SQRT2/std::pow(constants::G*mvir,2/3);
+}
+
+double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){
+
+
+	//Calculation comes from assuming rdisk = 2/sqrt(2) *lambda *Rvir;
+	double Rvir = halo_virial_radius(subhalo.host_halo);
+
+	double lambda = halo_lambda(subhalo.L, subhalo.Mvir, sim_params.redshifts[subhalo.snapshot]);
+
+	double rdisk = 3/constants::SQRT2 * lambda *Rvir;
+
+	//Numerical factor comes from 1/3 * 1.67. The 1/3 comes from scaling the size to a scale length, and the 1.67 comes from
+	//assuming an exponential disk and scaling the scale length to a half mass radius.
+
+	return 0.5566 * rdisk;
+}
+
 
 } // namespace shark
 

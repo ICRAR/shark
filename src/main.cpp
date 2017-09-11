@@ -137,7 +137,7 @@ int run(int argc, char **argv) {
 	StarFormationParameters star_formation_params(config_file);
 
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(cosmo_parameters);
-	std::shared_ptr<DarkMatterHalos> dark_matter_halos = std::make_shared<DarkMatterHalos>(dark_matter_halo_parameters, cosmology);
+	std::shared_ptr<DarkMatterHalos> dark_matter_halos = std::make_shared<DarkMatterHalos>(dark_matter_halo_parameters, cosmology, sim_params);
 	std::shared_ptr<AGNFeedback> agnfeedback = std::make_shared<AGNFeedback>(agn_params, cosmology);
 
 	Simulation simulation{sim_params, cosmology};
@@ -150,12 +150,16 @@ int run(int argc, char **argv) {
 
 	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel};
 
+	HaloBasedTreeBuilder tree_builder(exec_params);
 
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
-	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches);
-	auto merger_trees = HaloBasedTreeBuilder(exec_params).build_trees(halos);
+	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
+	auto merger_trees = tree_builder.build_trees(halos);
+
+	// Create the first generation of galaxies in the first halos apprearing.
+	tree_builder.create_galaxies(halos, *cosmology, *dark_matter_halos);
 
 	// This function should return the system of differential equations
 	// to be solved at each snapshot and in each galaxy.

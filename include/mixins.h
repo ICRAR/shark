@@ -25,6 +25,8 @@
 #ifndef SHARK_MIXINS_H_
 #define SHARK_MIXINS_H_
 
+#include "cmath"
+
 namespace shark {
 
 /**
@@ -52,6 +54,11 @@ public:
 	 * The value in the Z coordinate
 	 */
 	T z;
+
+	T norm(){
+		T v2= std::pow(x,2)+std::pow(y,2)+std::pow(z,2);
+		return std::pow(v2,0.5);
+	}
 
 };
 
