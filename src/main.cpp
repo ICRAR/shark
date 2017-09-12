@@ -169,7 +169,7 @@ int run(int argc, char **argv) {
 	// which in turn contain galaxies.
 	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot-1; snapshot++) {
 
-		LOG(info) << "Will evolve galaxies in snapshot" << snapshot;
+		LOG(info) << "Will evolve galaxies in snapshot " << snapshot;
 
 		//Calculate the initial and final time of this snapshot.
 		double ti = simulation.convert_snapshot_to_age(snapshot);
@@ -222,6 +222,9 @@ int run(int argc, char **argv) {
 int main(int argc, char **argv) {
 	try {
 		return shark::run(argc, argv);
+	} catch (const shark::missing_option &e) {
+		std::cerr << "Missing option: " << e.what() << std::endl;
+		return 1;
 	} catch (const shark::exception &e) {
 		std::cerr << "Unexpected shark exception found while running:" << std::endl << std::endl;
 		std::cerr << e.what() << std::endl;
