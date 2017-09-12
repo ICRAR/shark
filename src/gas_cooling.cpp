@@ -202,7 +202,10 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		return 0;
     	}
     	else {
-    		//TODO: see if here it should be total mass for both Croton and Benson models.
+    		//TODO: see if here it should be total mass for both Croton and Benson models. Probably I should do the reincorporation here.
+
+    		subhalo.hot_halo_gas.mass += (subhalo.accreted_mass * cosmology->parameters.OmegaB);
+
     		/**
     		 * We need to convert masses and velocities to physical units before proceeding with calculation.
     		 */
@@ -393,7 +396,28 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
     }
     else{
-    	//Assume satellite subhalos have 0 cooling rate.
+    	//Assume satellite subhalos have 0 cooling rate, and give any hot mass to the central subhalo.
+    	//TODO: add gradual ram pressure stripping.
+
+    	if(subhalo.hot_halo_gas.mass > 0){
+    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass += subhalo.hot_halo_gas.mass;
+    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass_metals += subhalo.hot_halo_gas.mass_metals;
+
+    		subhalo.hot_halo_gas.mass = 0;
+    		subhalo.hot_halo_gas.mass_metals = 0;
+    	}
+
+    	if(subhalo.ejected_galaxy_gas.mass > 0){
+    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas.mass += subhalo.ejected_galaxy_gas.mass;
+    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas.mass_metals += subhalo.ejected_galaxy_gas.mass_metals;
+
+        	subhalo.host_halo->central_subhalo->hot_halo_gas.mass += subhalo.hot_halo_gas.mass;
+        	subhalo.host_halo->central_subhalo->hot_halo_gas.mass_metals += subhalo.hot_halo_gas.mass_metals;
+    	}
+
+    	subhalo.cold_halo_gas.mass = 0;
+    	subhalo.cold_halo_gas.mass_metals = 0;
+
     	return 0;
     }
 }

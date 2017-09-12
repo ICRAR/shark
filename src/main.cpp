@@ -146,7 +146,7 @@ int run(int argc, char **argv) {
 	StarFormation star_formation{star_formation_params, cosmology};
 	RecyclingParameters recycling_parameters;
 
-	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(1e-6, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
+	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
 
 	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel};
 
@@ -156,17 +156,10 @@ int run(int argc, char **argv) {
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
 	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
-	auto merger_trees = tree_builder.build_trees(halos);
+	auto merger_trees = tree_builder.build_trees(halos, sim_params);
 
 	// Create the first generation of galaxies in the first halos apprearing.
 	tree_builder.create_galaxies(halos, *cosmology, *dark_matter_halos);
-
-	// This function should return the system of differential equations
-	// to be solved at each snapshot and in each galaxy.
-	// This set of ODEs apply on the ideal case of a central galaxy, with no
-	// AGN feedback. These equations are modified later if galaxies are
-	// satellites or have an AGN.
-	//physical_processes();
 
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
 	// calculate evolution in the time from the current to the next snapshot.
@@ -175,6 +168,9 @@ int run(int argc, char **argv) {
 	// Each merger trees has a set of halos at a given snapshot,
 	// which in turn contain galaxies.
 	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot-1; snapshot++) {
+
+		LOG(info) << "Will evolve galaxies in snapshot" << snapshot;
+
 		//Calculate the initial and final time of this snapshot.
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);

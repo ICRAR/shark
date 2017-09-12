@@ -36,13 +36,23 @@ void populate_halos(shared_ptr<BasicPhysicalModel> physicalmodel, HaloPtr halo, 
 void transfer_galaxies_to_next_snapshot(HaloPtr halo){
 
 	/**
-	 * This function transfer galaxies of the subhalos of this snapshot into the subhalos of the next snapshot.
+	 * This function transfer galaxies of the subhalos of this snapshot into the subhalos of the next snapshot, and baryon components from subhalo to subhalo.
 	 */
 	for(SubhaloPtr &subhalo: halo->all_subhalos()) {
+
 		auto descendant_subhalo = subhalo->descendant;
-		//ASK RODRIGO IF STARTING POINT OF LIST IS OK. VECTOR SHOULD BE EMPTY.
+
+		//transfer galaxies.
 		descendant_subhalo->galaxies.insert(descendant_subhalo->galaxies.end(),subhalo->galaxies.begin(), subhalo->galaxies.end());
+
+		//transfer subhalo baryon components.
+		descendant_subhalo->cold_halo_gas = subhalo->cold_halo_gas;
+		descendant_subhalo->hot_halo_gas = subhalo->hot_halo_gas;
+		descendant_subhalo->ejected_galaxy_gas = subhalo->ejected_galaxy_gas;
+		descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
+
 	}
+
 
 }
 

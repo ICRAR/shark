@@ -27,7 +27,7 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 	return exec_params;
 }
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params)
 {
 
 	const auto &output_snaps = exec_params.output_snapshots;
@@ -69,6 +69,9 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	}
 
 	loop_through_halos(halos);
+
+	//Now define main branch
+	define_central_subhalos(trees, sim_params);
 
 	return trees;
 }
@@ -113,6 +116,81 @@ void TreeBuilder::link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
 
 }
 
+void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+
+	//This function loops over merger trees and halos to define central galaxies in a self-consistent way. The loop starts at z=0.
+
+	//Loop over trees.
+		for(auto &tree: trees) {
+
+			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
+
+				for(auto &halo: tree->halos[snapshot]){
+
+					//First check in halo has a central subhalo, if yes, then continue with loop.
+					if(halo->central_subhalo){
+						continue;
+					}
+
+					//Only cases with no central subhalos.
+					auto subhalos = halo->all_subhalos();
+
+					// The first subhalo is always the most massive, so it will be the central.
+					auto &subhalo = subhalos[0];
+
+					// point central subhalo to this subhalo.
+					halo->central_subhalo = subhalo;
+
+					//remove subhalo from satellite list.
+					remove_satellite(halo, subhalo);
+
+					//define subhalo as central.
+					subhalo->subhalo_type = Subhalo::CENTRAL;
+
+					//Now look at most massive ascendants to define which one will be the central.
+					auto ascendants = subhalo->ordered_ascendants();
+
+					while(ascendants.size() > 0){
+						//First ascendant is always the most massive.
+						auto ascendant_central = ascendants[0];
+
+						auto host_asc = ascendant_central->host_halo;
+
+						host_asc->central_subhalo = ascendant_central;
+
+						remove_satellite(host_asc, ascendant_central);
+
+						ascendant_central->subhalo_type = Subhalo::CENTRAL;
+
+						//Define accreted mass of dark matter.
+						ascendant_central->descendant->accreted_mass = ascendant_central->descendant->host_halo->Mvir - host_asc->Mvir;
+
+						//Avoid negative numbers
+						if(ascendant_central->descendant->accreted_mass < 0){
+							ascendant_central->descendant->accreted_mass = 0;
+						}
+
+						ascendants = ascendant_central->ordered_ascendants();
+					}
+				}
+			}
+		}
+
+}
+
+void TreeBuilder::remove_satellite(HaloPtr halo, SubhaloPtr subhalo){
+
+	auto it = std::find(halo->satellite_subhalos.begin(), halo->satellite_subhalos.end(), subhalo);
+
+	if (it == halo->satellite_subhalos.end()){
+		std::ostringstream os;
+		os << "Halo " << halo << " does not have satellite subhalos.";
+		throw invalid_data(os.str());
+	}
+
+	halo->satellite_subhalos.erase(it);
+
+}
 
 HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params) :
 	TreeBuilder(exec_params)
@@ -233,7 +311,9 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		          << " their Halo family line, or they only hosted Subhalos"
 		          << " that were the last Subhalo of their Subhalo families)";
 	}
+
 }
+
 
 void HaloBasedTreeBuilder::create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology, DarkMatterHalos &darkmatterhalos)
 {
@@ -243,6 +323,7 @@ void HaloBasedTreeBuilder::create_galaxies(const std::vector<HaloPtr> &halos, Co
 	for (const auto &halo: halos){
 		for(const auto &subhalo: halo->all_subhalos()) {
 			if(subhalo->ascendants.empty() and subhalo->subhalo_type == Subhalo::CENTRAL and subhalo->galaxies.empty()){
+
 				auto galaxy = std::make_shared<Galaxy>();
 
 				galaxy->galaxy_type = Galaxy::CENTRAL;

@@ -73,6 +73,8 @@ public:
 
 	double r_remnant(double mc, double ms, double rc, double rs);
 
+	void transfer_baryon_mass(SubhaloPtr satellite, SubhaloPtr central);
+
 
 private:
 	GalaxyMergerParameters parameters;

@@ -31,6 +31,7 @@
 #include "cosmology.h"
 #include "dark_matter_halos.h"
 #include "execution.h"
+#include "simulation.h"
 
 namespace shark {
 
@@ -39,7 +40,7 @@ class TreeBuilder {
 public:
 	TreeBuilder(ExecutionParameters exec_params);
 	virtual ~TreeBuilder();
-	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos);
+	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params);
 
 protected:
 
@@ -49,6 +50,11 @@ protected:
 
 	void link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
 	          const HaloPtr &halo, const HaloPtr &d_halo);
+
+	void define_central_subhalos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params);
+
+	void remove_satellite(HaloPtr halo, SubhaloPtr subhalo);
+
 
 private:
 	ExecutionParameters exec_params;

@@ -131,14 +131,8 @@ const std::vector<HaloPtr> SURFSReader::read_halos(int batch, DarkMatterHalos &d
 			subhalo->descendant_halo_id = descHost[i];
 		}
 
-		//Determine if subhalo is centre of Dhalo. This is done using IsMainProgenitor, as this is the halo
-		//that is found by dhalos to be the centre (although not necessarily the most massive).
-		if(IsMain[i] == 1) {
-			subhalo->subhalo_type = Subhalo::CENTRAL;
-		}
-		else {
-			subhalo->subhalo_type = Subhalo::SATELLITE;
-		}
+		//Make all subhalos satellite, because once we construct the merger tree we will find the main branch.
+		subhalo->subhalo_type = Subhalo::SATELLITE;
 
 		//Assign mass.
 		subhalo->Mvir = Mvir[i];
@@ -196,8 +190,10 @@ const std::vector<HaloPtr> SURFSReader::read_halos(int batch, DarkMatterHalos &d
 	LOG(info) << "Created " << halos.size() << " Halos from these Subhalos";
 
 	for(const auto &halo: halos) {
-		// calculate vvir
+
+		// calculate vvir of halo.
 		halo->Vvir = darkmatterhalos.halo_virial_velocity(halo->Mvir, sim_params.redshifts[halo->snapshot]);
+
 	}
 
 	return halos;

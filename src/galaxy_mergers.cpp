@@ -24,7 +24,7 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	major_merger_ratio(0),
 	minor_merger_burst_ratio(0),
 	merger_random_seed(-1),
-	jiang08(),
+	jiang08(4),
 	f_orbit(1),
 	cgal(0.5)
 	{
@@ -33,10 +33,10 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio);
 	options.load("galaxy_mergers.merger_random_seed", merger_random_seed);
 
-	options.load("galaxy_mergers.jiang08_a", jiang08[0]);
-	options.load("galaxy_mergers.jiang08_b", jiang08[1]);
-	options.load("galaxy_mergers.jiang08_c", jiang08[2]);
-	options.load("galaxy_mergers.jiang08_d", jiang08[3]);
+	options.load("galaxy_mergers.jiang08_a", jiang08[0], true);
+	options.load("galaxy_mergers.jiang08_b", jiang08[1], true);
+	options.load("galaxy_mergers.jiang08_c", jiang08[2], true);
+	options.load("galaxy_mergers.jiang08_d", jiang08[3], true);
 
 	options.load("galaxy_mergers.f_orbit", f_orbit);
 	options.load("galaxy_mergers.cgal", cgal);
@@ -180,14 +180,17 @@ double GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &seconda
 
 	double f = mass_ratio_function(mp, ms);
 
+	//Calculate well the part of orbital parameters.
 	//Draw orbital parameters from PDF in Benson et al. (2005).
-	orbital_parameters(vr, vt, f);
+	//orbital_parameters(vr, vt, f);
 
-	double tau_orbits = merging_timescale_orbital(vr, vt, f, c);
+	//double tau_orbits = merging_timescale_orbital(vr, vt, f, c);
 
 	double tau_mass = merging_timescale_mass(mp, ms);
 
-	return tau_orbits * tau_mass * tau_dyn;
+	//return tau_orbits * tau_mass * tau_dyn;
+
+	return tau_mass * tau_dyn;
 
 }
 
@@ -210,8 +213,12 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 
 			auto satellite_subhalo = subhalo;
 
+
 			//Calculate dynamical friction timescale.
 			double tau_fric = merging_timescale(central_subhalo, satellite_subhalo);
+
+			//transfer all mass from the satellite_subhalo to the central_subhalo.
+			transfer_baryon_mass(satellite_subhalo, central_subhalo);
 
 			for (auto &galaxies: satellite_subhalo->galaxies){
 
@@ -229,7 +236,6 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 			satellite_subhalo->galaxies.clear();
 		}
 	}
-
 
 }
 
@@ -448,6 +454,18 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	return std::pow((mc + ms),2)/ (factor1 + factor2 + factor3);
 }
 
+void GalaxyMergers::transfer_baryon_mass(SubhaloPtr satellite, SubhaloPtr central){
+
+	central->hot_halo_gas.mass += satellite->hot_halo_gas.mass;
+	central->hot_halo_gas.mass_metals += satellite->hot_halo_gas.mass_metals;
+
+	central->cold_halo_gas.mass += satellite->cold_halo_gas.mass;
+	central->cold_halo_gas.mass_metals += satellite->cold_halo_gas.mass_metals;
+
+	central->ejected_galaxy_gas.mass += satellite->ejected_galaxy_gas.mass;
+	central->ejected_galaxy_gas.mass_metals += satellite->ejected_galaxy_gas.mass_metals;
+
+}
 
 
 

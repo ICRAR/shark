@@ -25,6 +25,7 @@
 #ifndef SHARK_COMPONENTS_H_
 #define SHARK_COMPONENTS_H_
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <ostream>
@@ -284,7 +285,7 @@ public:
 		L{0, 0, 0},
 		Vcirc(0),
 		concentration(0),
-		accretion_rate(),
+		accreted_mass(0),
 		descendant(0),
 		galaxies(),
 		ascendants(),
@@ -373,17 +374,18 @@ public:
 	float Vcirc;
 	float concentration;
 
-	/**
-	 * Hot gas component of the halo and outside the galaxies that is
-	 * allowed to cool down and/or fall onto the galaxy.
-	 */
-	Baryon hot_halo_gas;
-
 
 	/**
 	 * This component saves que information of the virial temperature, total halo gas and cooling time history.
 	 */
 	CoolingSubhaloTracking cooling_subhalo_tracking;
+
+
+	/**
+	 * Hot gas component of the halo and outside the galaxies that is
+	 * allowed to cool down and/or fall onto the galaxy.
+	 */
+	Baryon hot_halo_gas;
 
 	/**
 	 * Cold gas component of the halo and outside the galaxies that has
@@ -405,14 +407,30 @@ public:
 	std::vector<SubhaloPtr> ascendants;
 
 	/**
-	 * The accretion rate onto the subhalo. This information comes from the merger tree
+	 * The accreted mass onto the subhalo. This information comes from the merger tree.
 	 */
-	std::vector<float> accretion_rate;
+	float accreted_mass;
 
 	/**
 	 * The halo that holds this subhalo.
 	 */
 	HaloPtr host_halo;
+
+	// Sort ascendant subhalos by Mvir
+	std::vector<SubhaloPtr> ordered_ascendants(){
+
+		if(ascendants.size()==0){
+			return std::vector<SubhaloPtr>();
+		}
+		else if(ascendants.size()>1){
+			std::sort(ascendants.begin(), ascendants.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
+			return lhs->Mvir > rhs->Mvir;
+			});
+		}
+
+		return ascendants;
+
+	}
 
 };
 
@@ -488,6 +506,13 @@ public:
 			all.push_back(central_subhalo);
 		}
 		all.insert(all.end(), satellite_subhalos.begin(), satellite_subhalos.end());
+
+		// If there are more than one subhalo, then return them ordered by mass in decreasing order.
+		if(all.size() > 1){
+			std::sort(all.begin(), all.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
+				return lhs->Mvir > rhs->Mvir;
+			});
+		}
 
 		return all;
 	}

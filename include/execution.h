@@ -33,7 +33,10 @@ public:
 	std::string output_format;
 	std::string output_directory;
 	std::vector<int> simulation_batches;
+
 	bool skip_missing_descendants;
+
+	float ode_solver_precision;
 };
 
 } // namespace shark
