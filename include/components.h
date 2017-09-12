@@ -439,7 +439,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Subhalo &
 {
 	stream << "<Subhalo " << subhalo.id;
 	if (subhalo.host_halo) {
-		stream << "@" << subhalo.host_halo;
+		stream << " @ " << subhalo.host_halo;
 	}
 	stream << ">";
 	return stream;
@@ -563,7 +563,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Halo &hal
 {
 	stream << "<Halo " << halo.id;
 	if (halo.merger_tree) {
-		stream << "@" << halo.merger_tree;
+		stream << " @ " << halo.merger_tree;
 	}
 	stream << ">";
 	return stream;
