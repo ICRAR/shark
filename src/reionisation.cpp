@@ -20,8 +20,8 @@ ReionisationParameters::ReionisationParameters(const Options &options) :
 	zcut(0),
 	vcut(0)
 {
-	options.load("reionisation.vcut",vcut);
-	options.load("reionisation.zcut",zcut);
+	options.load("reionisation.vcut", vcut, true);
+	options.load("reionisation.zcut", zcut, true);
 }
 
 }
