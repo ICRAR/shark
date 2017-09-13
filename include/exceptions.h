@@ -124,6 +124,47 @@ public:
 	math_error(const std::string &what) : exception(what) {};
 };
 
+/**
+ * An exception indicating that a GSL error occurred
+ */
+class gsl_error : public math_error {
+public:
+	gsl_error(const char *reason, const char *file, int line, int gsl_errno, const char *errmsg) :
+		math_error(std::string("GSL error at ") + file + ":" +
+		           std::to_string(line) + ": " + errmsg +
+		           " (" + std::to_string(gsl_errno) + ")"),
+		reason(reason),
+		file(file),
+		line(line),
+		gsl_errno(gsl_errno),
+		errmsg(errmsg)
+	{
+	}
+
+	std::string get_reason() {
+		return reason;
+	}
+
+	std::string get_file() {
+		return file;
+	}
+
+	int get_line() {
+		return line;
+	}
+
+	int get_gsl_errno() {
+		return gsl_errno;
+	}
+
+private:
+	std::string reason;
+	std::string file;
+	int line;
+	int gsl_errno;
+	std::string errmsg;
+};
+
 }  // namespace shark
 
 #endif // SHARK_EXCEPTIONS_H

@@ -28,6 +28,8 @@
 #include <vector>
 
 #include <boost/program_options.hpp>
+#include <gsl/gsl_errno.h>
+
 #include "recycling.h"
 #include "config.h"
 #include "components.h"
@@ -68,6 +70,15 @@ void setup_logging(int lvl) {
 	log::core::get()->set_filter([sev_lvl](log::attribute_value_set const &s) {
 		return s["Severity"].extract<trivial::severity_level>() >= sev_lvl;
 	});
+}
+
+void throw_exception_gsl_handler(const char *reason, const char *file, int line, int gsl_errno)
+{
+	throw gsl_error(reason, file, line, gsl_errno, gsl_strerror(gsl_errno));
+}
+
+void install_gsl_error_handler() {
+	gsl_set_error_handler(&throw_exception_gsl_handler);
 }
 
 /**
@@ -118,6 +129,8 @@ int run(int argc, char **argv) {
 	verbosity = min(max(verbosity, 0), 5);
 	verbosity = 5 - verbosity;
 	setup_logging(verbosity);
+
+	install_gsl_error_handler();
 
 	/* We read the parameters that have been given as input by the user.*/
 	string config_file = vm["config-file"].as<string>();
