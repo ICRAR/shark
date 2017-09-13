@@ -126,15 +126,14 @@ double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
 
 	double V3 = 10*constants::G * mvir * cosmology->hubble_parameter(redshift);
 
-	return std::pow(V3,1/3);
-
+	return std::cbrt(V3);
 }
 
 double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double redshift){
 
 	//Spin parameter calculated from j=sqrt(2) * lambda *G^2/3 M^2/3 / (10*H)^1/3.
 
-	return L.norm()*std::pow(10*cosmology->hubble_parameter(redshift),1/3)/constants::SQRT2/std::pow(constants::G*mvir,2/3);
+	return L.norm()*std::cbrt(10*cosmology->hubble_parameter(redshift)) / constants::SQRT2 / std::pow(constants::G*mvir, 2/3.);
 }
 
 double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){

@@ -101,7 +101,7 @@ double Cosmology::convert_redshift_to_age(double z){
 
 	double Hubble_Time=1.0/H0100PGYR; //The Hubble time for H_0=100km/s/Mpc.
 
-	double err = std::pow(10,-5);
+	double err = 10e-5;
 	double t;
 
 	double a = 1/(1+z);
