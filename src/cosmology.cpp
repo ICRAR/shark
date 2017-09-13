@@ -115,7 +115,7 @@ double Cosmology::convert_redshift_to_age(double z){
 				std::sqrt(parameters.OmegaM*(zplus1-1.0)+1.0)/(parameters.OmegaM
 	            *zplus1)-std::acosh((parameters.OmegaM*(zplus1-1.0)-parameters.OmegaM+2.0)/(parameters.OmegaM*zplus1)));
 	}
-	else if(std::abs(1-parameters.OmegaM+parameters.OmegaL) < err){//Flat with non-zero lambda.
+	else if(std::abs(1 - (parameters.OmegaM + parameters.OmegaL)) < err){//Flat with non-zero lambda.
 		t = Hubble_Time*(2/(3*parameters.Hubble_h*std::sqrt(1-parameters.OmegaM)))*std::asinh(std::sqrt((1.0/parameters.OmegaM-1.0)*a)*a);
 	}
 	else{
