@@ -46,6 +46,10 @@ StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr
 
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double z) {
 
+	if (mcold == 0) {
+		return 0;
+	}
+
 	int smax = 1000;
 	gsl_integration_workspace * w
 	    = gsl_integration_workspace_alloc (smax);
