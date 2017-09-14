@@ -54,8 +54,6 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	gsl_integration_workspace * w
 	    = gsl_integration_workspace_alloc (smax);
 
-	gsl_function F;
-
 	/**
 	 * All input quantities should be in physical units.
 	 */
@@ -72,10 +70,12 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	};
 
 	StarFormationAndProps sf_and_props = {this, &props};
-	double (*f)(double, void*) = [](double r, void *ctx) -> double {
+	auto f = [](double r, void *ctx) -> double {
 		StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 		return sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
 	};
+
+	gsl_function F;
 	F.function = f;
 	F.params = &sf_and_props;
 
