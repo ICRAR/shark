@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <iterator>
 #include <memory>
+#include <numeric>
 #include <vector>
 
 #include "cosmology.h"
@@ -192,14 +193,9 @@ void TreeBuilder::define_accretion_rate(std::vector<MergerTreePtr> trees, Simula
 
 					halo->central_subhalo->accreted_mass = halo->Mvir;
 
-					double Mvir_asc = 0;
-
-					if(ascendants.size() > 0){
-
-						Mvir_asc = std::accumulate(ascendants.begin(), ascendants.end(), 0., [](double mass, const HaloPtr &halo) {
+					auto Mvir_asc = std::accumulate(ascendants.begin(), ascendants.end(), 0., [](double mass, const HaloPtr &halo) {
 						return mass + halo->Mvir;
-						});
-					}
+					});
 
 					//Define accreted mass of dark matter.
 
