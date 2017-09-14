@@ -26,11 +26,17 @@
 #define SHARK_RECYCLING_H_
 
 #include <vector>
+#include <string>
+
+#include "options.h"
 
 namespace shark {
 
 class RecyclingParameters {
+
 public:
+	RecyclingParameters(const Options &options);
+
 	double yield;
 	double recycle;
 	double zsun;

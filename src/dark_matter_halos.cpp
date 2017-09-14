@@ -109,6 +109,15 @@ double DarkMatterHalos::enclosed_mass(double r, double c){
 	}
 }
 
+double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
+
+	double hparam = cosmology->hubble_parameter(redshift);
+
+	double V3 = 10.0 *constants::G * mvir * hparam;
+
+	return std::cbrt(V3);
+}
+
 double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo){
 
 	return constants::MPCKM2GYR * halo_virial_radius(halo) / halo->Vvir / cosmology->parameters.Hubble_h;
@@ -122,22 +131,24 @@ double DarkMatterHalos::halo_virial_radius(HaloPtr &halo){
 	return constants::G * halo->Mvir / std::pow(halo->Vvir,2);
 }
 
-double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
 
-	double V3 = 10*constants::G * mvir * cosmology->hubble_parameter(redshift);
-
-	return std::cbrt(V3);
-}
 
 double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double redshift){
 
 	//Spin parameter calculated from j=sqrt(2) * lambda *G^2/3 M^2/3 / (10*H)^1/3.
 
-	return L.norm()*std::cbrt(10*cosmology->hubble_parameter(redshift)) / constants::SQRT2 / std::pow(constants::G*mvir, 2/3.);
+	double  j = L.norm()/(mvir/1e10);
+
+	double lambda = j * std::cbrt(10*cosmology->hubble_parameter(redshift)) / constants::SQRT2 / std::pow(constants::G*mvir, 2/3.);
+
+	if(lambda > 1){
+		lambda = 1;
+	}
+
+	return lambda;
 }
 
 double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){
-
 
 	//Calculation comes from assuming rdisk = 2/sqrt(2) *lambda *Rvir;
 	double Rvir = halo_virial_radius(subhalo.host_halo);

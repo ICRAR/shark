@@ -154,9 +154,9 @@ double Cosmology::expansion_factor(double t){
 
 double Cosmology::hubble_parameter (double z){
 
-	double H2 = std::pow(parameters.Hubble_h * 100.0, 2) * (parameters.OmegaM * std::pow(1+z,3) + parameters.OmegaL);
+	double H2 = std::pow(parameters.Hubble_h * 100.0, 2.0) * (parameters.OmegaM * std::pow(1.0+z,3.0) + parameters.OmegaL);
 
-	return std::pow(H2,0.5);
+	return std::sqrt(H2);
 
 }
 

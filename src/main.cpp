@@ -125,14 +125,15 @@ int run(int argc, char **argv) {
 	/**
 	 * We load all relevant parameters and implement all relevant physical processes needed by the physical model.
 	 */
-	ExecutionParameters exec_params(config_file);
-	SimulationParameters sim_params(config_file);
-	DarkMatterHaloParameters dark_matter_halo_parameters(config_file);
-	ReionisationParameters reio_params(config_file);
-	GalaxyMergerParameters merger_parameters(config_file);
-	CosmologicalParameters cosmo_parameters(config_file);
 	AGNFeedbackParameters agn_params(config_file);
+	CosmologicalParameters cosmo_parameters(config_file);
+	DarkMatterHaloParameters dark_matter_halo_parameters(config_file);
+	ExecutionParameters exec_params(config_file);
+	GalaxyMergerParameters merger_parameters(config_file);
 	GasCoolingParameters gas_cooling_params(config_file);
+	RecyclingParameters recycling_parameters(config_file);
+	ReionisationParameters reio_params(config_file);
+	SimulationParameters sim_params(config_file);
 	StellarFeedbackParameters stellar_feedback_params(config_file);
 	StarFormationParameters star_formation_params(config_file);
 
@@ -144,7 +145,6 @@ int run(int argc, char **argv) {
 	GasCooling gas_cooling{gas_cooling_params, reio_params, cosmology, agnfeedback, dark_matter_halos};
 	StellarFeedback stellar_feedback{stellar_feedback_params};
 	StarFormation star_formation{star_formation_params, cosmology};
-	RecyclingParameters recycling_parameters;
 
 	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
 

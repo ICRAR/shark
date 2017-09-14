@@ -56,6 +56,7 @@ public:
 		double mcoolrate;
 		double delta_t;
 		double redshift;
+		double v;
 	};
 
 	PhysicalModel(
@@ -90,9 +91,10 @@ public:
 		double mcoolrate = gas_cooling.cooling_rate(subhalo, z, delta_t);
 		double rgas  = galaxy.disk_gas.rscale; //gas scale radius.
 		double rstar = galaxy.disk_stars.rscale; //stellar scale radius.
+		double v = subhalo.Vcirc;
 
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
-		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z};
+		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v};
 		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
 		to_galaxy(y1, subhalo, galaxy);
 	}
@@ -102,9 +104,10 @@ public:
 		double mcoolrate = 0; //During central starbursts, cooling rate =0, as cooling gas always settles in the disk (not the bulge).
 		double rgas  = galaxy.bulge_gas.rscale; //gas scale radius.
 		double rstar = galaxy.bulge_stars.rscale; //stellar scale radius.
+		double v = subhalo.Vcirc;
 
 		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);
-		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z};
+		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v};
 		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
 		to_galaxy_starburst(y1, subhalo, galaxy);
 	}

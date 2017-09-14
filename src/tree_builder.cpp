@@ -70,8 +70,11 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 
 	loop_through_halos(halos);
 
-	//Now define main branch
+	// Define central galaxies
 	define_central_subhalos(trees, sim_params);
+
+	// Define accretion rate
+	define_accretion_rate(trees, sim_params);
 
 	return trees;
 }
@@ -162,9 +165,6 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 
 						ascendant_central->subhalo_type = Subhalo::CENTRAL;
 
-						//Define accreted mass of dark matter.
-						ascendant_central->descendant->accreted_mass = ascendant_central->descendant->host_halo->Mvir - host_asc->Mvir;
-
 						//Avoid negative numbers
 						if(ascendant_central->descendant->accreted_mass < 0){
 							ascendant_central->descendant->accreted_mass = 0;
@@ -172,6 +172,39 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 
 						ascendants = ascendant_central->ordered_ascendants();
 					}
+				}
+			}
+		}
+
+
+}
+
+void TreeBuilder::define_accretion_rate(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+
+	//Loop over trees.
+		for(auto &tree: trees) {
+
+			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
+
+				for(auto &halo: tree->halos[snapshot]){
+
+					auto ascendants = halo->ascendants;
+
+					halo->central_subhalo->accreted_mass = halo->Mvir;
+
+					double Mvir_asc = 0;
+
+					if(ascendants.size() > 0){
+
+						Mvir_asc = std::accumulate(ascendants.begin(), ascendants.end(), 0., [](double mass, const HaloPtr &halo) {
+						return mass + halo->Mvir;
+						});
+					}
+
+					//Define accreted mass of dark matter.
+
+					halo->central_subhalo->accreted_mass -= Mvir_asc;
+
 				}
 			}
 		}

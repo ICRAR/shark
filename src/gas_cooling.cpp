@@ -30,7 +30,7 @@ GasCoolingParameters::GasCoolingParameters(const Options &options) :
 	cooling_table()
 {
 	string cooling_tables_dir;
-	options.load("gas_cooling.model", model);
+	options.load("gas_cooling.model", model, true);
 	options.load("gas_cooling.rcore", rcore);
 	options.load("gas_cooling.lambdamodel", lambdamodel);
 	options.load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
@@ -278,7 +278,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
     		}
 
-
     		//I STILL NEED TO ADD A LIMIT TO THE TOTAL RADIATED ENERGY TO THE TOTAL THERMAL ENERGY OF THE HALO. SEE EQ. 18 AND 19 IN BENSON ET AL. (2010).
 
     		double r_cool = cooling_radius(nh_density,tcharac, logl, Tvir); //in Mpc.
@@ -367,7 +366,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 	    		subhalo.hot_halo_gas.mass_metals -= subhalo.galaxies[0]->smbh.mass_metals;
     		}
 
-
     		if(coolingrate > 0){//perform calculations below ONLY if cooling rate >0.
     			/**
     			 * Convert cooling rate back to comoving units. This conversion is only necessary because mass was previously converted to physical.
@@ -386,7 +384,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     			subhalo.hot_halo_gas.mass -=subhalo.cold_halo_gas.mass;
     			subhalo.hot_halo_gas.mass_metals -= subhalo.cold_halo_gas.mass_metals;
     		}
-    		else if(coolingrate < 0){
+    		else {
     			//avoid negative numbers.
     			coolingrate = 0;
     		}
