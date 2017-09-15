@@ -46,11 +46,11 @@ StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr
 
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double z) {
 
-	if (mcold <= 0) {
+	if (mcold <= 0 || rgas <= 0) {
 		return 0;
 	}
 
-	int smax = 10000;
+	int smax = 1000;
 	gsl_integration_workspace * w
 	    = gsl_integration_workspace_alloc (smax);
 
@@ -86,10 +86,15 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	/**
 	 * Here, we integrate the SFR surface density profile out to rmax.
 	 */
-	gsl_integration_qags (&F, rmin, rmax, 0, 1e-2, smax,
+	gsl_integration_qags (&F, rmin, rmax, 0, 0.01, smax,
 	                        w, &result, &error);
 
 	gsl_integration_workspace_free (w);
+
+	// Avoid negative values.
+	if(result <0){
+		result = 0.0;
+	}
 
 	return cosmology->physical_to_comoving_mass(result);
 
@@ -131,7 +136,13 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 
 	double veldisp_star = std::sqrt(PI*G*hstar*Sigma_stars); //stellar velocity dispersion in km/s.
 
-	double pressure = PIO2*G_MPCGYR2*Sigma_gas*(Sigma_gas+(parameters.gas_velocity_dispersion/veldisp_star)*Sigma_stars); //in units of Msun/Mpc/Gyr^2.
+	double star_comp = 0;
+
+	if(Sigma_stars > 0 && veldisp_star > 0){
+		star_comp = (parameters.gas_velocity_dispersion/veldisp_star)*Sigma_stars;
+	}
+
+	double pressure = PIO2*G_MPCGYR2*Sigma_gas*(Sigma_gas+star_comp); //in units of Msun/Mpc/Gyr^2.
 
 	return pressure*Pressure_SimUnits_cgs/k_Boltzmann_erg; //pressure in units of K/cm^3.
 }

@@ -29,8 +29,8 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	cgal(0.5)
 	{
 
-	options.load("galaxy_mergers.major_merger_ratio", major_merger_ratio);
-	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio);
+	options.load("galaxy_mergers.major_merger_ratio", major_merger_ratio, true);
+	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio, true);
 	options.load("galaxy_mergers.merger_random_seed", merger_random_seed);
 
 	options.load("galaxy_mergers.jiang08_a", jiang08[0], true);
@@ -206,6 +206,9 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 
 	auto central_subhalo = halo->central_subhalo;
 
+	// Assign halo concentration.
+	halo->concentration = halo->central_subhalo->concentration;
+
 	for(auto &subhalo: halo->satellite_subhalos) {
 		//Identify which subhalos will disappear in the next snapshot
 
@@ -283,7 +286,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 			if(galaxy->tmerge < delta_t){
 				create_merger(central_galaxy, galaxy, halo, z, delta_t);
 
-				//Now destroy and remove satellite galaxy. ASK RODRIGO.
+				// Now destroy and remove satellite galaxy.
 				auto it = std::find(central_subhalo->galaxies.begin(), central_subhalo->galaxies.end(), galaxy);
 				if (it == central_subhalo->galaxies.end()) {
 					// error
@@ -332,6 +335,9 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	 */
 	central->bulge_stars.rscale = bulge_size_merger(mass_ratio, central, satellite, halo);
 
+	central->bulge_gas.rscale = central->bulge_stars.rscale;
+
+
 	/**
 	 * Evaluate major mergers
 	 */
@@ -359,8 +365,6 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 		central->disk_gas.mass_metals = 0;
 
-		central->bulge_gas.rscale = central->bulge_stars.rscale;
-
 		/**
 		 * Triger starburst with available gas.
 		 */
@@ -380,6 +384,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->disk_gas.mass += satellite->gas_mass();
 
 		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
+
 
 		if(mass_ratio >= parameters.minor_merger_burst_ratio){
 			/**
@@ -412,13 +417,15 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 	//Define central properties depending on whether merger is major or minor.
 	if(mass_ratio >= parameters.major_merger_ratio){
 
-		double mbar_central = central->baryon_mass();
+ 		double mbar_central = central->baryon_mass();
 
 		rcentral = central->composite_size();
 
+		double enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(halo), halo->concentration);
+
 		//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
 		//the DM mass enclosed by rcentral.
-		mtotal_central = mbar_central + halo->Mvir * darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(halo), halo->concentration);
+		mtotal_central = mbar_central + halo->Mvir * enc_mass;
 	}
 	else{
 		mtotal_central = central->bulge_mass();

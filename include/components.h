@@ -215,11 +215,25 @@ public:
 
 	double composite_size(){
 
-		double rdisk = (disk_stars.mass * disk_stars.rscale + disk_gas.mass * disk_gas.rscale) / disk_mass();
 
-		double rbulge = (bulge_stars.mass * bulge_stars.rscale + bulge_gas.mass * bulge_gas.rscale) / bulge_mass();
+		double rdisk = 0;
+		double rbulge = 0;
 
-		return disk_mass() * rdisk + bulge_mass() * rbulge / baryon_mass();
+		if(disk_mass() > 0){
+			rdisk = (disk_stars.mass * disk_stars.rscale + disk_gas.mass * disk_gas.rscale) / disk_mass();
+		}
+		if(bulge_mass() > 0){
+			rbulge = (bulge_stars.mass * bulge_stars.rscale + bulge_gas.mass * bulge_gas.rscale) / bulge_mass();
+		}
+
+		double rcomp = 0.0;
+
+		// Define rcomp only if galaxy has mass.
+		if(baryon_mass() > 0){
+			rcomp = (disk_mass() * rdisk + bulge_mass() * rbulge) / baryon_mass();
+		}
+
+		return rcomp;
 	}
 };
 
@@ -274,6 +288,7 @@ public:
 	Subhalo():
 		haloID(0),
 		has_descendant(false),
+		main_progenitor(false),
 		descendant_id(0),
 		descendant_halo_id(0),
 		snapshot(-1),
@@ -284,7 +299,7 @@ public:
 		Mvir(0),
 		L{0, 0, 0},
 		Vcirc(0),
-		concentration(0),
+		concentration(),
 		accreted_mass(0),
 		descendant(0),
 		galaxies(),
@@ -312,6 +327,12 @@ public:
 	 * Whether this subhalo has a descendant or not
 	 */
 	bool has_descendant;
+
+	/**
+	 * Boolean property indicating if subhalo is a main progenitor of its descendant.
+	 */
+	bool main_progenitor;
+
 
 	/**
 	 * The ID of the descendant of this subhalo.
@@ -373,7 +394,6 @@ public:
 	xyz<float> L;
 	float Vcirc;
 	float concentration;
-
 
 	/**
 	 * This component saves que information of the virial temperature, total halo gas and cooling time history.

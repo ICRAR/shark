@@ -54,6 +54,12 @@ public:
 
 	double disk_size_theory (Subhalo &subhalo);
 
+	double halo_concentration (HaloPtr &halo);
+
+	double gao_nfw_concentration(double mvir, double a_form);
+
+	double mmw98_nfw_concentration(double mvir, double vmax, double rvir);
+
 private:
 	DarkMatterHaloParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;

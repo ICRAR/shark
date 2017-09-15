@@ -166,12 +166,15 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 
 						ascendant_central->subhalo_type = Subhalo::CENTRAL;
 
-						//Avoid negative numbers
-						if(ascendant_central->descendant->accreted_mass < 0){
-							ascendant_central->descendant->accreted_mass = 0;
+						for (auto &sub: ascendants){
+							// If subhalo is a satellite, then define this snapshot as the last identified one.
+							if(sub->subhalo_type == Subhalo::SATELLITE){
+								sub-> last_snapshot_identified = sub->snapshot;
+							}
 						}
 
 						ascendants = ascendant_central->ordered_ascendants();
+
 					}
 				}
 			}
@@ -201,11 +204,17 @@ void TreeBuilder::define_accretion_rate(std::vector<MergerTreePtr> trees, Simula
 
 					halo->central_subhalo->accreted_mass -= Mvir_asc;
 
+					//Avoid negative numbers
+					if(halo->central_subhalo->accreted_mass < 0){
+						halo->central_subhalo->accreted_mass = 0;
+					}
+
 				}
 			}
 		}
 
 }
+
 
 void TreeBuilder::remove_satellite(HaloPtr halo, SubhaloPtr subhalo){
 

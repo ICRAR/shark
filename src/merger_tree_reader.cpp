@@ -90,6 +90,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(int batch, DarkMatterHalos &d
 	vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
 	vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
 	vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
+	vector<float> cnfw = batch_file.read_dataset_v<float>("haloTrees/cnfw");
 
 	//Read indices and the snapshot number at which the subhalo lives.
 	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
@@ -101,6 +102,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(int batch, DarkMatterHalos &d
 	//Read properties that characterise the position of the subhalo inside the halo.
 	vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
 	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
+
 
 
 	int n_subhalos = Mvir.size();
@@ -154,7 +156,9 @@ const std::vector<HaloPtr> SURFSReader::read_halos(int batch, DarkMatterHalos &d
 
 		subhalo->Vcirc = Vcirc[i];
 
-		//Calculate virial velocity from the virial mass and redshift.
+		subhalo->concentration = cnfw[i];
+
+		// Calculate virial velocity from the virial mass and redshift.
 		subhalo->Vvir = darkmatterhalos.halo_virial_velocity(subhalo->Mvir, sim_params.redshifts[subhalo->snapshot]);
 
 		// Done, save it now

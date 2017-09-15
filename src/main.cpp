@@ -182,7 +182,7 @@ int run(int argc, char **argv) {
 	// which in turn contain galaxies.
 	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot-1; snapshot++) {
 
-		LOG(info) << "Will evolve galaxies in snapshot " << snapshot;
+		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
 
 		//Calculate the initial and final time of this snapshot.
 		double ti = simulation.convert_snapshot_to_age(snapshot);
@@ -208,6 +208,8 @@ int run(int argc, char **argv) {
 
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
 				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
+
+				LOG(debug) << "Galaxy baryon mass of central galaxy: " << halo->central_subhalo->central_galaxy()->baryon_mass();
 
 				/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 				transfer_galaxies_to_next_snapshot(halo);

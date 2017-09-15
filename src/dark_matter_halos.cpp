@@ -102,7 +102,7 @@ double DarkMatterHalos::enclosed_mass(double r, double c){
 		}
 
 	}
-	if(parameters.haloprofile == parameters.EINASTO){
+	else if(parameters.haloprofile == parameters.EINASTO){
 
 		//TODO: implement Einasto profile.
 		return 0;
@@ -162,6 +162,7 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){
 
 	return 0.5566 * rdisk;
 }
+
 
 
 } // namespace shark
