@@ -29,16 +29,18 @@ namespace shark {
 /**
  * An element of the cooling tables
  */
-struct CoolingTable {
-	std::vector<double> log10lam;
-	std::vector<double> log10temp;
-	std::vector<double> zmetal;
+class CoolingTable {
 
-	/// Sorts the elements of this CoolingTable by ascending log10temp order
-	void sort_by_log10temp();
+public:
+
+	void add_metallicity_measurements(double zmetal, const std::map<double, double> &records);
+
+	std::vector<double> get_temperatures();
+	std::vector<double> get_metallicities();
+	std::vector<double> get_lambda();
 
 private:
-	std::vector<double> reorder_by_index(const std::vector<double> &v, const std::vector<size_t> &idxs);
+	std::map<double, std::map<double, double>> _table;
 };
 
 class GasCoolingParameters {

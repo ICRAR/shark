@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <iterator>
 #include <map>
 #include <numeric>
 #include <tuple>
@@ -21,28 +22,50 @@ using namespace std;
 
 namespace shark {
 
-std::vector<double> CoolingTable::reorder_by_index(const std::vector<double> &v, const std::vector<size_t> &idxs)
+void CoolingTable::add_metallicity_measurements(double zmetal, const std::map<double, double> &records)
 {
-	std::vector<double> res(v.size());
-	for(size_t i = 0; i < v.size(); i++) {
-		res[i] = v[idxs[i]];
+	// Check that the keys (i.e., the list of temperatures) on the incoming map
+	// are the same than those from other measurements.
+	// In other words, make sure that for all metallicities we have measurements
+	// at the same temperatures, which gives us a nicely populated grid
+	// over which we can interpolate later
+	if (!_table.empty()) {
+
+		auto first_metallicity = std::begin(_table)->first;
+		auto &first_measurement = std::begin(_table)->second;
+		vector<double> first_keys = get_keys(first_measurement);
+		vector<double> these_keys = get_keys(first_measurement);
+
+		if (first_keys != these_keys) {
+			std::ostringstream os;
+			os << "Temperature measurements for metallicity " << first_metallicity;
+			os << " are different from those measured for metallicity " << zmetal;
+			throw invalid_data(os.str());
+		}
 	}
-	return res;
+
+	_table[zmetal] = records;
 }
 
-void CoolingTable::sort_by_log10temp()
+std::vector<double> CoolingTable::get_metallicities()
 {
-	// find indexes of sorted elements in log10temp vector
-	std::vector<size_t> pos(log10temp.size());
-	std::iota(pos.begin(), pos.end(), static_cast<size_t>(0));
-	std::sort(pos.begin(), pos.end(), [this](const size_t i1, const size_t i2){
-		return log10temp[i1] < log10temp[i2];
-	});
+	return get_keys(_table);
+}
 
-	// Sort all three vectors using this new order
-	log10temp = reorder_by_index(log10temp, pos);
-	log10lam = reorder_by_index(log10lam, pos);
-	zmetal = reorder_by_index(zmetal, pos);
+std::vector<double> CoolingTable::get_temperatures()
+{
+	return get_keys(std::begin(_table)->second);
+}
+
+std::vector<double> CoolingTable::get_lambda()
+{
+	std::vector<double> lambda_values;
+	for(auto &metallicity_measurement: _table) {
+		for(auto &t_record: metallicity_measurement.second) {
+			lambda_values.push_back(t_record.second);
+		}
+	}
+	return lambda_values;
 }
 
 GasCoolingParameters::GasCoolingParameters(const Options &options) :
@@ -119,6 +142,8 @@ void GasCoolingParameters::load_tables(
 
 		ifstream f = open_file(fname);
 		string line;
+
+		std::map<double, double> measurements;
 		while ( getline(f, line) ) {
 
 			trim(line);
@@ -130,15 +155,13 @@ void GasCoolingParameters::load_tables(
 			istringstream iss(line);
 			iss >> t >> ne >> nh >> nt >> logl;
 
-			cooling_table.log10lam.push_back(logl);
-			cooling_table.log10temp.push_back(t);
-			cooling_table.zmetal.push_back(metallicity);
-
+			measurements[t] = logl;
 		}
 		f.close();
+
+		cooling_table.add_metallicity_measurements(metallicity, measurements);
 	}
 
-	cooling_table.sort_by_log10temp();
 }
 
 template <>
