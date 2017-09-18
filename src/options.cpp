@@ -66,9 +66,17 @@ Options::Options(const string &name)
 			continue;
 		}
 
-		string name, value, equals;
-		istringstream iss(line);
-		iss >> name >> equals >> value;
+		auto tokens = tokenize(line, "=");
+		if (tokens.size() < 2) {
+			ostringstream os;
+			os << "Option " << line << " has no value (should be name = value)";
+			throw invalid_option(os.str());
+		}
+
+		std::string name = tokens[0];
+		std::string value = tokens[1];
+		trim(name);
+		trim(value);
 
 		if ( option_group.size() == 0 ) {
 			cerr << "WARNING: No option group defined for option " << name << endl;
