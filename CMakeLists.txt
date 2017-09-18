@@ -116,6 +116,7 @@ set(SHARKLIB_SRCS
    src/dark_matter_halos.cpp
    src/galaxy_mergers.cpp
    src/gas_cooling.cpp
+   src/interpolator.cpp
    src/options.cpp
    src/ode_solver.cpp
    src/physical_model.cpp
