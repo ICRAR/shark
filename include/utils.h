@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -82,6 +83,16 @@ Iter binary_find(Iter begin, Iter end, T val, Comp comp)
 		return i; // found
 	}
 	return end; // not found
+}
+
+template<typename K, typename V>
+std::vector<K> get_keys(const std::map<K, V> m)
+{
+	std::vector<K> keys;
+	std::transform(m.begin(), m.end(), std::back_inserter(keys), [](const std::pair<K, V> kv) {
+		return kv.first;
+	});
+	return keys;
 }
 
 /**
