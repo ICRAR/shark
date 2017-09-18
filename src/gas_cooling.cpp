@@ -11,10 +11,6 @@
 #include <numeric>
 #include <tuple>
 
-#include <gsl/gsl_interp2d.h>
-#include <gsl/gsl_spline2d.h>
-#include <gsl/gsl_sort_double.h>
-
 #include "cosmology.h"
 #include "gas_cooling.h"
 #include "logging.h"
@@ -180,17 +176,8 @@ GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters r
 	cosmology(cosmology),
 	agnfeedback(agnfeedback),
 	darkmatterhalos(darkmatterhalos),
-	spline(nullptr),
-	xacc(nullptr),
-	yacc(nullptr)
+	cooling_lambda_interpolator(parameters.cooling_table.get_temperatures(), parameters.cooling_table.get_metallicities(), parameters.cooling_table.get_lambda())
 {
-	xacc.reset(gsl_interp_accel_alloc());
-
-	yacc.reset(gsl_interp_accel_alloc());
-
-	spline.reset(gsl_spline2d_alloc(gsl_interp2d_bilinear, parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size()));
-
-	gsl_spline2d_init(spline.get(),parameters.cooling_table.log10temp.data(), parameters.cooling_table.zmetal.data(), parameters.cooling_table.log10lam.data(), parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size());
 
 }
 
@@ -262,7 +249,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		/**
     		 * Calculates the cooling Lambda function for the metallicity and temperature of this halo.
     		 */
-    		double logl = gsl_spline2d_eval(spline.get(), lgTvir, zhot, xacc.get(), yacc.get()); //in cgs
+    		double logl = cooling_lambda_interpolator.get(lgTvir, zhot); //in cgs
 
 			/**
 			 * Calculate mean density for notional cooling profile.

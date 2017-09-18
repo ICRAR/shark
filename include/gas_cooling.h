@@ -21,6 +21,7 @@
 #include "agn_feedback.h"
 #include "components.h"
 #include "dark_matter_halos.h"
+#include "interpolator.h"
 #include "options.h"
 #include "reionisation.h"
 
@@ -94,12 +95,7 @@ private:
 	std::shared_ptr<AGNFeedback> agnfeedback;
 
 	std::shared_ptr<DarkMatterHalos> darkmatterhalos;
-
-	std::shared_ptr<gsl_spline2d> spline;
-
-	std::shared_ptr<gsl_interp_accel> xacc;
-
-	std::shared_ptr<gsl_interp_accel> yacc;
+	Interpolator cooling_lambda_interpolator;
 
 };
 
