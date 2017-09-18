@@ -62,6 +62,15 @@ public:
 };
 
 /**
+ * An exception indicating that an invalid argument value has been given to a
+ * function or a class. Like std::invalid_argument, but inside shark::
+ */
+class invalid_argument : public exception {
+public:
+	invalid_argument(const std::string &what) : exception(what) {}
+};
+
+/**
  * An exception indicating that a required option value is missing
  */
 class missing_option : public exception {
