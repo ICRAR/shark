@@ -102,18 +102,16 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 double StarFormation::star_formation_rate_surface_density(double r, void * params){
 
+	using namespace constants;
+
 	// apply molecular SF law
 	auto props = reinterpret_cast<galaxy_properties_for_integration *>(params);
 
-	double re = props->rgas/constants::RDISK_HALF_SCALE;
-
-	double Sigma_gas = props->mcold/constants::PI2/std::pow(re,2.0)*std::exp(-r/re);
-
-	double rse = props->rstar/constants::RDISK_HALF_SCALE;
-
-	double Sigma_stars = props->mstar/constants::PI2/std::pow(rse,2.0)*std::exp(-r/rse);
-
-	return constants::PI2 * parameters.nu_sf*fmol(Sigma_gas,Sigma_stars,r)*Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
+	double re = props->rgas / RDISK_HALF_SCALE;
+	double Sigma_gas = props->mcold / PI2 / (re * re) * std::exp(-r / re);
+	double rse = props->rstar/RDISK_HALF_SCALE;
+	double Sigma_stars = props->mstar / PI2 / (rse * rse) * std::exp(-r / rse);
+	return PI2 * parameters.nu_sf * fmol(Sigma_gas, Sigma_stars, r) * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
 }
 
 double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double r){
@@ -132,19 +130,17 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 
 	using namespace constants;
 
-	double hstar = 0.14*r; //scaleheight of the stellar disk; from Kregel et al. (2002).
-
-	double veldisp_star = std::sqrt(PI*G*hstar*Sigma_stars); //stellar velocity dispersion in km/s.
+	double hstar = 0.14 * r; //scaleheight of the stellar disk; from Kregel et al. (2002).
+	double veldisp_star = std::sqrt(PI * G * hstar * Sigma_stars); //stellar velocity dispersion in km/s.
 
 	double star_comp = 0;
-
-	if(Sigma_stars > 0 && veldisp_star > 0){
-		star_comp = (parameters.gas_velocity_dispersion/veldisp_star)*Sigma_stars;
+	if (Sigma_stars > 0 and veldisp_star > 0) {
+		star_comp = (parameters.gas_velocity_dispersion / veldisp_star) * Sigma_stars;
 	}
 
-	double pressure = PIO2*G_MPCGYR2*Sigma_gas*(Sigma_gas+star_comp); //in units of Msun/Mpc/Gyr^2.
+	double pressure = PIO2 * G_MPCGYR2 * Sigma_gas * (Sigma_gas + star_comp); //in units of Msun/Mpc/Gyr^2.
 
-	return pressure*Pressure_SimUnits_cgs/k_Boltzmann_erg; //pressure in units of K/cm^3.
+	return pressure * Pressure_SimUnits_cgs / k_Boltzmann_erg; //pressure in units of K/cm^3.
 }
 }  // namespace shark
 
