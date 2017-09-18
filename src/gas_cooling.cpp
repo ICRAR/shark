@@ -8,6 +8,7 @@
 #include <cmath>
 #include <fstream>
 #include <map>
+#include <numeric>
 #include <tuple>
 
 #include <gsl/gsl_interp2d.h>
@@ -23,6 +24,30 @@
 using namespace std;
 
 namespace shark {
+
+std::vector<double> CoolingTable::reorder_by_index(const std::vector<double> &v, const std::vector<size_t> &idxs)
+{
+	std::vector<double> res(v.size());
+	for(size_t i = 0; i < v.size(); i++) {
+		res[i] = v[idxs[i]];
+	}
+	return res;
+}
+
+void CoolingTable::sort_by_log10temp()
+{
+	// find indexes of sorted elements in log10temp vector
+	std::vector<size_t> pos(log10temp.size());
+	std::iota(pos.begin(), pos.end(), static_cast<size_t>(0));
+	std::sort(pos.begin(), pos.end(), [this](const size_t i1, const size_t i2){
+		return log10temp[i1] < log10temp[i2];
+	});
+
+	// Sort all three vectors using this new order
+	log10temp = reorder_by_index(log10temp, pos);
+	log10lam = reorder_by_index(log10lam, pos);
+	zmetal = reorder_by_index(zmetal, pos);
+}
 
 GasCoolingParameters::GasCoolingParameters(const Options &options) :
 	rcore(0),
@@ -116,6 +141,8 @@ void GasCoolingParameters::load_tables(
 		}
 		f.close();
 	}
+
+	cooling_table.sort_by_log10temp();
 }
 
 template <>

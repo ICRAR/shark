@@ -32,6 +32,12 @@ struct CoolingTable {
 	std::vector<double> log10lam;
 	std::vector<double> log10temp;
 	std::vector<double> zmetal;
+
+	/// Sorts the elements of this CoolingTable by ascending log10temp order
+	void sort_by_log10temp();
+
+private:
+	std::vector<double> reorder_by_index(const std::vector<double> &v, const std::vector<size_t> &idxs);
 };
 
 class GasCoolingParameters {
