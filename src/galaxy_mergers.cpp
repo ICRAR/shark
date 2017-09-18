@@ -278,6 +278,8 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 		throw exception(os.str());
 	}
 
+	std::vector<GalaxyPtr> all_sats_to_delete;
+
 	for (auto &galaxy: central_subhalo->galaxies){
 		if(galaxy->galaxy_type == Galaxy::TYPE2){
 			/**
@@ -286,19 +288,17 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 			if(galaxy->tmerge < delta_t){
 				create_merger(central_galaxy, galaxy, halo, z, delta_t);
 
-				// Now destroy and remove satellite galaxy.
-				auto it = std::find(central_subhalo->galaxies.begin(), central_subhalo->galaxies.end(), galaxy);
-				if (it == central_subhalo->galaxies.end()) {
-					// error
-				}
-				central_subhalo->galaxies.erase(it);
-
+				// Accummulate all satellites that we need to delete at the end.
+				all_sats_to_delete.push_back(galaxy);
 			}
 			else{
 				galaxy->tmerge = galaxy->tmerge - delta_t;
 			}
 		}
 	}
+
+	// Now destroy and remove satellite galaxy.
+	central_subhalo->galaxies.erase(all_sats_to_delete.begin(), all_sats_to_delete.end());
 
 }
 

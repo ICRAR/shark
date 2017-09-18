@@ -12,6 +12,7 @@
 
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
+#include <gsl/gsl_sort_double.h>
 
 #include "cosmology.h"
 #include "gas_cooling.h"
@@ -32,11 +33,12 @@ GasCoolingParameters::GasCoolingParameters(const Options &options) :
 	string cooling_tables_dir;
 	options.load("gas_cooling.model", model, true);
 	options.load("gas_cooling.rcore", rcore);
-	options.load("gas_cooling.lambdamodel", lambdamodel);
+	options.load("gas_cooling.lambdamodel", lambdamodel, true);
 	options.load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
 
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
 	load_tables(cooling_tables_dir, metallicity_tables);
+
 }
 
 GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
@@ -151,19 +153,25 @@ GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters r
 	cosmology(cosmology),
 	agnfeedback(agnfeedback),
 	darkmatterhalos(darkmatterhalos),
-	interp(nullptr)
+	spline(nullptr),
+	xacc(nullptr),
+	yacc(nullptr)
 {
-	interp.reset(gsl_interp2d_alloc(gsl_interp2d_bilinear, parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size()));
+	xacc.reset(gsl_interp_accel_alloc());
+
+	yacc.reset(gsl_interp_accel_alloc());
+
+	spline.reset(gsl_spline2d_alloc(gsl_interp2d_bilinear, parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size()));
+
+	gsl_spline2d_init(spline.get(),parameters.cooling_table.log10temp.data(), parameters.cooling_table.zmetal.data(), parameters.cooling_table.log10lam.data(), parameters.cooling_table.log10temp.size(), parameters.cooling_table.zmetal.size());
+
 }
 
 double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
 	using namespace constants;
 
-    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
-    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
-
-    double coolingrate;
+    double coolingrate = 0;
 
     //Define host halo
     auto halo = subhalo.host_halo;
@@ -186,11 +194,11 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
 
     	/**
-    	 * Plant black hole seed if necessary
+    	 * Plant black hole seed if necessary.
     	 */
     	agnfeedback->plant_seed_smbh(subhalo);
 
-    	//Calculate Eddington luminosity of BH in central galaxy.
+    	// Calculate Eddington luminosity of BH in central galaxy.
 
     	double Ledd = agnfeedback->eddington_luminosity(subhalo.galaxies[0]->smbh.mass);
 
@@ -202,6 +210,8 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		return 0;
     	}
     	else {
+
+
     		//TODO: see if here it should be total mass for both Croton and Benson models. Probably I should do the reincorporation here.
 
     		subhalo.hot_halo_gas.mass += (subhalo.accreted_mass * cosmology->parameters.OmegaB);
@@ -225,7 +235,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		/**
     		 * Calculates the cooling Lambda function for the metallicity and temperature of this halo.
     		 */
-    		double logl = gsl_interp2d_eval_extrap(interp.get(), parameters.cooling_table.log10temp.data(), parameters.cooling_table.zmetal.data(), parameters.cooling_table.log10lam.data(), lgTvir, zhot, xacc, yacc); //in cgs
+    		double logl = gsl_spline2d_eval(spline.get(), lgTvir, zhot, xacc.get(), yacc.get()); //in cgs
 
 			/**
 			 * Calculate mean density for notional cooling profile.

@@ -42,7 +42,7 @@ ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, d
 	step(0)
 {
 	ode_system = std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, NULL, y0.size(), NULL});
-	driver = gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rk8pd, precision, precision, 0.0);
+	driver = gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rk4, precision, precision, 0.0);
 }
 
 ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, double precision, const std::shared_ptr<gsl_odeiv2_system> &ode_system) :
@@ -53,7 +53,7 @@ ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, d
 	step(0),
 	ode_system(ode_system)
 {
-	driver = gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rk8pd, precision, precision, 0.0);
+	driver = gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rk4, precision, precision, 0.0);
 }
 
 ODESolver::ODESolver(ODESolver &&odeSolver) :

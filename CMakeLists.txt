@@ -125,6 +125,7 @@ set(SHARKLIB_SRCS
    src/star_formation.cpp
    src/stellar_feedback.cpp
    src/utils.cpp
+   src/write_output.cpp
    src/hdf5/iobase.cpp
    src/hdf5/reader.cpp
 )

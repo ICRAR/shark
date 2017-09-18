@@ -29,7 +29,7 @@ class ExecutionParameters {
 public:
 	ExecutionParameters(const Options &options);
 
-	std::set<int> output_snapshots;
+	std::vector<int> output_snapshots;
 	std::string output_format;
 	std::string output_directory;
 	std::vector<int> simulation_batches;

@@ -16,6 +16,7 @@
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_interp2d.h>
+#include <gsl/gsl_spline2d.h>
 
 #include "agn_feedback.h"
 #include "components.h"
@@ -77,12 +78,22 @@ public:
 	double disk_size_cooling(Subhalo &subhalo);
 
 private:
+
 	ReionisationParameters reio_parameters;
+
 	GasCoolingParameters parameters;
+
 	std::shared_ptr<Cosmology> cosmology;
+
 	std::shared_ptr<AGNFeedback> agnfeedback;
+
 	std::shared_ptr<DarkMatterHalos> darkmatterhalos;
-	std::shared_ptr<gsl_interp2d> interp;
+
+	std::shared_ptr<gsl_spline2d> spline;
+
+	std::shared_ptr<gsl_interp_accel> xacc;
+
+	std::shared_ptr<gsl_interp_accel> yacc;
 
 };
 
