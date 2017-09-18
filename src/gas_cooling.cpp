@@ -327,7 +327,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
     		//I STILL NEED TO ADD A LIMIT TO THE TOTAL RADIATED ENERGY TO THE TOTAL THERMAL ENERGY OF THE HALO. SEE EQ. 18 AND 19 IN BENSON ET AL. (2010).
 
-    		double r_cool = cooling_radius(nh_density,tcharac, logl, Tvir); //in Mpc.
+    		double r_cool = cooling_radius(mhot, Rvir, tcharac, logl, Tvir); //in Mpc.
 
     		if(r_cool < Rvir){
     			//cooling radius smaller than virial radius
@@ -481,12 +481,15 @@ double GasCooling::mean_density(double mhot, double rvir){
 	return mhot*MSOLAR_g/(SPI*std::pow(rvir*MPC2CM,3.0))/M_Atomic_g; //in units of cm^-3.
 }
 
-double GasCooling::cooling_radius(double rho_shell, double tcharac, double logl, double Tvir){
+double GasCooling::cooling_radius(double mhot, double rvir, double tcharac, double logl, double Tvir){
 
 	using namespace constants;
 
-	double denominator_temp = 1.5*M_Atomic_g*mu_Primordial*k_Boltzmann_erg*Tvir; //in cgs
-	return pow(rho_shell*tcharac*pow(10,logl)/denominator_temp,0.5)/MPC2CM; //in Mpc.
+	double pseudo_density = mhot*MSOLAR_g/(PI4*rvir*MPC2CM); //in units of gr/cm.
+
+	double denominator_temp = 1.5*k_Boltzmann_erg*Tvir*(M_Atomic_g*mu_Primordial)/pow(10.0,logl); //in cgs
+
+	return std::pow((pseudo_density/denominator_temp*tcharac),0.5)/MPC2CM; //in Mpc.
 }
 
 double GasCooling::density_shell(double mhot, double rvir, double r) {
@@ -497,7 +500,7 @@ double GasCooling::density_shell(double mhot, double rvir, double r) {
 	 * rho_shell as defined by an isothermal profile.
 	 * Any other hot gas profile should modify rho_shell.
 	 */
-	return mhot*MSOLAR_g /PI4 /(rvir*MPC2CM) / std::pow(r,2); //in cgs.
+	return mhot*MSOLAR_g /PI4 /(rvir*MPC2CM) / std::pow(r,2.0); //in cgs.
 
 }
 

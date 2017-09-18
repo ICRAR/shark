@@ -144,6 +144,8 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 
 					// point central subhalo to this subhalo.
 					halo->central_subhalo = subhalo;
+					halo->position = subhalo->position;
+					halo->velocity = subhalo->velocity;
 
 					//remove subhalo from satellite list.
 					remove_satellite(halo, subhalo);
