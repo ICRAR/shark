@@ -60,14 +60,14 @@ AGNFeedback::AGNFeedback(AGNFeedbackParameters parameters, std::shared_ptr<Cosmo
 
 void AGNFeedback::plant_seed_smbh(Subhalo &subhalo){
 
-	if(subhalo.Mvir > parameters.mhalo_seed){
-		for(auto &galaxies: subhalo.galaxies) {
-			if(galaxies->galaxy_type == Galaxy::CENTRAL && galaxies->smbh.mass == 0){
-				galaxies->smbh.mass = 0;
-				galaxies->smbh.mass_metals = 0;
-			}
+	if (subhalo.Mvir > parameters.mhalo_seed) {
+		auto central = subhalo.central_galaxy();
+		if (central and central->smbh.mass == 0) {
+			central->smbh.mass = 0;
+			central->smbh.mass_metals = 0;
 		}
 	}
+
 }
 
 double AGNFeedback::eddington_luminosity(double mbh){
