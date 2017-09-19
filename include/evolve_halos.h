@@ -37,7 +37,7 @@ void populate_halos(std::shared_ptr<BasicPhysicalModel> physical_model, HaloPtr 
 
 void transfer_galaxies_to_next_snapshot(HaloPtr halo);
 
-void destroy_galaxies_this_snapshot(std::vector<HaloPtr> all_halos_this_snapshot);
+void destroy_galaxies_this_snapshot(const std::vector<HaloPtr> &halos);
 
 
 }  // namespace shark
