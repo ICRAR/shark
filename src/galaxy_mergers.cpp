@@ -216,20 +216,19 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 
 			auto satellite_subhalo = subhalo;
 
-
 			//Calculate dynamical friction timescale.
 			double tau_fric = merging_timescale(central_subhalo, satellite_subhalo);
 
 			//transfer all mass from the satellite_subhalo to the central_subhalo.
 			transfer_baryon_mass(satellite_subhalo, central_subhalo);
 
-			for (auto &galaxies: satellite_subhalo->galaxies){
+			for (auto &galaxy: satellite_subhalo->galaxies){
 
 				//Assign tau_fric to all satellite galaxies in the subhalo that will disappear.
-				galaxies->tmerge = tau_fric;
+				galaxy->tmerge = tau_fric;
 
 				//Redefine galaxy type.
-				galaxies->galaxy_type = Galaxy::TYPE2;
+				galaxy->galaxy_type = Galaxy::TYPE2;
 			}
 
 			//Now transfer the galaxies in this subhalo to the central subhalo.

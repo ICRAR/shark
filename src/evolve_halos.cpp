@@ -56,16 +56,12 @@ void transfer_galaxies_to_next_snapshot(HaloPtr halo){
 
 }
 
-void destroy_galaxies_this_snapshot(vector<HaloPtr> all_halos_this_snapshot){
-
-	for(auto &halo: all_halos_this_snapshot){
-
+void destroy_galaxies_this_snapshot(const std::vector<HaloPtr> &halos){
+	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
 			subhalo->galaxies.clear();
 		}
-
 	}
-
 }
 
 
