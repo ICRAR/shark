@@ -39,6 +39,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	 * f[5]: metals locked in the cold gas mass of galaxies.
 	 * f[6]: metals locked in the hot gas mass.
 	 * f[7]: metals locked in the ejected gas mass.
+	 * f[8]: total stellar mass formed (without recycling included).
 	 */
 
 	auto params= reinterpret_cast<BasicPhysicalModel::solver_params *>(data);
@@ -71,6 +72,9 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	f[6] = - mcoolrate * zhot;
 	f[7] = beta * zcold * SFR;
 
+	// Keeps track of total stellar mass formed.
+	f[8] = SFR;
+
 	return 0;
 }
 
@@ -91,7 +95,7 @@ BasicPhysicalModel::BasicPhysicalModel(
 std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy)
 {
 
-	std::vector<double> y(8);
+	std::vector<double> y(9);
 
 	y[0] = galaxy.disk_stars.mass;
 	y[1] = galaxy.disk_gas.mass;
@@ -102,15 +106,19 @@ std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, cons
 	y[6] = subhalo.cold_halo_gas.mass_metals;
 	y[7] = subhalo.ejected_galaxy_gas.mass_metals;
 
+	// Variable to keep track of total stellar mass formed.
+	y[8] = 0;
 	return y;
 }
 
-void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy)
+void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t)
 {
 	using namespace constants;
 
 	/*In the case of starbursts one should be using the bulge instead of the disk
 	 * properties.*/
+
+
 	galaxy.disk_stars.mass 					= y[0];
 	galaxy.disk_gas.mass   					= y[1];
 	subhalo.cold_halo_gas.mass 				= y[2];
@@ -119,6 +127,8 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	galaxy.disk_gas.mass_metals 			= y[5];
 	subhalo.cold_halo_gas.mass_metals 		= y[6];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
+
+	galaxy.sfr_disk                         = y[8]/delta_t;
 
 	/**
 	 * Check that metallicities are not negative. If they are, mass in metals is set to zero.
@@ -163,7 +173,7 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy)
 {
 
-	std::vector<double> y(8);
+	std::vector<double> y(9);
 
 	y[0] = galaxy.bulge_stars.mass;
 	y[1] = galaxy.bulge_gas.mass;
@@ -174,12 +184,16 @@ std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &sub
 	y[6] = 0.0; //This is the component that has the cooling gas mass in metals.
 	y[7] = subhalo.ejected_galaxy_gas.mass_metals;
 
+	// Variable to keep track of total stellar mass created.
+	y[8] = 0;
+
 	return y;
 }
 
-void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy)
+void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t)
 {
 	using namespace constants;
+
 
 	/*In the case of starbursts one should be using the bulge instead of the disk
 	 * properties.*/
@@ -189,6 +203,7 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	galaxy.bulge_stars.mass_metals 			= y[4];
 	galaxy.bulge_gas.mass_metals 			= y[5];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
+	galaxy.sfr_bulge                        = y[8]/delta_t;
 
 	/**
 	 * Check that metallicities are not negative. If they are, mass in metals is set to zero.

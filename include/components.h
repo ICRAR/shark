@@ -141,7 +141,9 @@ public:
 	 */
 	Galaxy():
 		tmerge(0),
-		galaxy_type()
+		galaxy_type(),
+		sfr_disk(0),
+		sfr_bulge(0)
 	{
 		//no-op
 	}
@@ -166,6 +168,10 @@ public:
 	Baryon disk_stars;
 	Baryon disk_gas;
 	BlackHole smbh;
+
+	//save average star formation rates.
+	float sfr_disk;
+	float sfr_bulge;
 
 	/**
 	 * dynamical friction timescale, which is defined only is galaxy is satellite.
@@ -410,6 +416,7 @@ public:
 	 * available for cooling yet.
 	 */
 	Baryon ejected_galaxy_gas;
+
 
 	/**
 	 * A list of pointers to the ascendants of this subhalo, sorted by mass in

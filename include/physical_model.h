@@ -96,7 +96,7 @@ public:
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
 		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v};
 		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
-		to_galaxy(y1, subhalo, galaxy);
+		to_galaxy(y1, subhalo, galaxy, delta_t);
 	}
 
 	void evolve_galaxy_starburst(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
@@ -109,14 +109,14 @@ public:
 		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);
 		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v};
 		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
-		to_galaxy_starburst(y1, subhalo, galaxy);
+		to_galaxy_starburst(y1, subhalo, galaxy, delta_t);
 	}
 
 	virtual std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy) = 0;
-	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
+	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t) = 0;
 
 	virtual std::vector<double> from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy) = 0;
-	virtual void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy) = 0;
+	virtual void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t) = 0;
 
 private:
 	ODESolver::ode_evaluator evaluator;
@@ -133,10 +133,10 @@ public:
 			RecyclingParameters recycling_parameters);
 
 	std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy);
-	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy);
+	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t);
 
 	std::vector<double> from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy);
-	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy);
+	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t);
 
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;

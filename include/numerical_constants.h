@@ -171,6 +171,8 @@ namespace constants {
 
 	/*define a tolerance for evaluating negative mass*/
 	constexpr float tolerance = 1e-10;
+	constexpr float min_gas_mass_for_sf = 1e3;
+	constexpr float min_rgas_for_sf = 5e-4; //0.5kpc.
 
 };
 

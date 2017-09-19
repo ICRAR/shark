@@ -11,20 +11,26 @@
 #include <map>
 #include <memory>
 
+#include "cosmology.h"
 #include "execution.h"
+#include "simulation.h"
+
 namespace shark {
 
 class WriteOutput{
 
 public:
 
-	WriteOutput(ExecutionParameters exec_params);
+	WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  SimulationParameters sim_params);
 
 private:
 
 	ExecutionParameters exec_params;
+	SimulationParameters sim_params;
+	CosmologicalParameters cosmo_params;
 
 	void write_galaxies(int snapshot, std::vector<HaloPtr> halos);
+	void write_cosmology();
 };
 
 }

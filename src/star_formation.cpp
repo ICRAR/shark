@@ -46,7 +46,7 @@ StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr
 
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double z) {
 
-	if (mcold <= 0 || rgas <= 0) {
+	if (mcold <= constants::min_gas_mass_for_sf || rgas <= constants::min_rgas_for_sf) {
 		return 0;
 	}
 

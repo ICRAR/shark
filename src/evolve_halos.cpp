@@ -8,6 +8,7 @@
 #include <cmath>
 #include <memory>
 
+#include "components.h"
 #include "evolve_halos.h"
 
 using namespace std;
@@ -41,6 +42,22 @@ void transfer_galaxies_to_next_snapshot(HaloPtr halo){
 	for(SubhaloPtr &subhalo: halo->all_subhalos()) {
 
 		auto descendant_subhalo = subhalo->descendant;
+
+		// Check cases where the descendant subhalo will be a satellite, but the current is central. In that case
+		// we modify the type of the central galaxy of this subhalo to type1.
+
+		if(subhalo->subhalo_type == Subhalo::CENTRAL && descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
+			int i = 0;
+			auto galaxy = subhalo->galaxies[i];
+			bool foundcentral = false;
+			while(!foundcentral){
+				if(galaxy->galaxy_type == Galaxy::CENTRAL){
+					galaxy->galaxy_type == Galaxy::TYPE1;
+					foundcentral = true;
+				}
+				i++;
+			}
+		}
 
 		// Transfer galaxies.
 		subhalo->copy_galaxies_to(descendant_subhalo);
