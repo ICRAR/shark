@@ -287,7 +287,14 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	}
 
 	// Now destroy and remove satellite galaxy.
-	central_subhalo->galaxies.erase(all_sats_to_delete.begin(), all_sats_to_delete.end());
+	// TODO: Maybe not most efficiently, but it will do for now
+	for(auto &galaxy: all_sats_to_delete) {
+		// we know "it" will point to something known because all_stas_to_delete
+		// contain galaxies from central_subhalo->galaxies, which hasn't been
+		// modified in the meanwhile. Thus, skip any check on "it" and use it blindly
+		auto it = std::find(central_subhalo->galaxies.begin(), central_subhalo->galaxies.end(), galaxy);
+		central_subhalo->galaxies.erase(it);
+	}
 
 }
 
