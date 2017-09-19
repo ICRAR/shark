@@ -233,10 +233,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 			}
 
 			//Now transfer the galaxies in this subhalo to the central subhalo.
-			central_subhalo->galaxies.insert(central_subhalo->galaxies.end(), satellite_subhalo->galaxies.begin(), satellite_subhalo->galaxies.end());
-
-			//Delete galaxies from satellite_subhalo
-			satellite_subhalo->galaxies.clear();
+			satellite_subhalo->transfer_galaxies_to(central_subhalo);
 		}
 	}
 
@@ -261,17 +258,10 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 		throw exception(os.str());
 	}
 
-	GalaxyPtr central_galaxy;
-
 	/**
 	 * First find central galaxy of central subhalo.
 	 */
-	for (auto &galaxy: central_subhalo->galaxies){
-		if(galaxy->galaxy_type == Galaxy::CENTRAL){
-			central_galaxy = galaxy;
-		}
-	}
-
+	GalaxyPtr central_galaxy = central_subhalo->central_galaxy();
 	if(!central_galaxy){
 		std::ostringstream os;
 		os << central_subhalo << " has no central galaxy";

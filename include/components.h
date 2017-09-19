@@ -369,15 +369,6 @@ public:
 	 */
 	std::vector<GalaxyPtr> galaxies;
 
-	GalaxyPtr central_galaxy(){
-		for (auto galaxy: galaxies){
-			if(galaxy->galaxy_type == Galaxy::CENTRAL){
-				return galaxy;
-			}
-		}
-		return GalaxyPtr();
-	}
-
 	/**
 	 * The subhalo type
 	 */
@@ -450,6 +441,28 @@ public:
 
 		return ascendants;
 
+	}
+
+	/// Returns a pointer to the central galaxy. If no central galaxy is found
+	/// in this Subhalo, then an empty pointer is returned.
+	GalaxyPtr central_galaxy(){
+		for (auto galaxy: galaxies){
+			if(galaxy->galaxy_type == Galaxy::CENTRAL){
+				return galaxy;
+			}
+		}
+		return GalaxyPtr();
+	}
+
+	/// Copies the galaxies from this Subhalo into `target`
+	void copy_galaxies_to(SubhaloPtr &target) {
+		target->galaxies.insert(target->galaxies.end(), galaxies.begin(), galaxies.end());
+	}
+
+	/// Transfers (i.e., moves) the galaxies from this Subhalo into `target`
+	void transfer_galaxies_to(SubhaloPtr &target) {
+		copy_galaxies_to(target);
+		galaxies.clear();
 	}
 
 };

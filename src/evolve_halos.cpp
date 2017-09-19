@@ -43,7 +43,7 @@ void transfer_galaxies_to_next_snapshot(HaloPtr halo){
 		auto descendant_subhalo = subhalo->descendant;
 
 		// Transfer galaxies.
-		descendant_subhalo->galaxies.insert(descendant_subhalo->galaxies.end(),subhalo->galaxies.begin(), subhalo->galaxies.end());
+		subhalo->copy_galaxies_to(descendant_subhalo);
 
 		// Transfer subhalo baryon components.
 		descendant_subhalo->cold_halo_gas = subhalo->cold_halo_gas;
