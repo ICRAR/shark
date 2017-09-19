@@ -54,7 +54,7 @@ public:
 		IOBase(filename, H5F_ACC_RDWR | (overwrite ? H5F_ACC_CREAT|H5F_ACC_TRUNC : H5F_ACC_EXCL)) {}
 
 	template<typename T>
-	void write_attribute(const std::string &name, const T &value) const {
+	void write_attribute(const std::string &name, const T &value) {
 
 		// The name might contains slashes, so we can navigate through
 		// a hierarchy of groups/datasets
@@ -76,7 +76,7 @@ public:
 	}
 
 	template<typename T>
-	void write_dataset(const std::string &name, const T &value) const {
+	void write_dataset(const std::string &name, const T &value) {
 
 		// The name might contains slashes, so we can navigate through
 		// a hierarchy of groups/datasets
@@ -98,7 +98,7 @@ public:
 	}
 
 	template<typename T>
-	void write_dataset_v(const std::string &name, const std::vector<T> &values) const {
+	void write_dataset_v(const std::string &name, const std::vector<T> &values) {
 
 		// The name might contains slashes, so we can navigate through
 		// a hierarchy of groups/datasets
@@ -130,8 +130,7 @@ private:
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-	_write_dataset(const H5::DataSet &dataset, const T &data) {
+	void _write_dataset(const H5::DataSet &dataset, const T &data) {
 
 		H5::DataSpace space = get_1d_dataspace(dataset);
 		hsize_t dim_size = get_1d_dimsize(space);
@@ -145,8 +144,7 @@ private:
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-	_write_dataset_v(const H5::DataSet &dataset, const std::vector<T> &data) const {
+	void _write_dataset_v(const H5::DataSet &dataset, const std::vector<T> &data) {
 		H5::DataSpace space = get_1d_dataspace(dataset);
 		hsize_t dim_size = get_1d_dimsize(space);
 		dataset.write(data.data(), dataset.getDataType(), space, space);
