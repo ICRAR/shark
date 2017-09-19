@@ -14,10 +14,10 @@
 namespace shark {
 
 struct galaxy_properties_for_integration {
-	double mcold;
-	double mstar;
-	double rgas;
-	double rstar;
+	double sigma_gas0;
+	double sigma_star0;
+	double re;
+	double rse;
 };
 
 StarFormationParameters::StarFormationParameters(const Options &options) :
@@ -57,11 +57,22 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	/**
 	 * All input quantities should be in physical units.
 	 */
+	// Define properties that are input for the SFR calculation.
+
+	double re = cosmology->comoving_to_physical_size(rgas / constants::RDISK_HALF_SCALE, z);
+	double rse = cosmology->comoving_to_physical_size(rstar / constants::RDISK_HALF_SCALE, z);
+
+	double Sigma_gas = cosmology->comoving_to_physical_mass(mcold) / constants::PI2 / (re * re);
+	double Sigma_star = 0;
+	if(mstar){
+		Sigma_star = cosmology->comoving_to_physical_mass(mstar) / constants::PI2 / (rse * rse) ;
+	}
+
 	galaxy_properties_for_integration props = {
-		cosmology->comoving_to_physical_mass(mcold),
-		cosmology->comoving_to_physical_mass(mstar),
-		cosmology->comoving_to_physical_size(rgas, z),
-		cosmology->comoving_to_physical_size(rstar, z)
+		Sigma_gas,
+		Sigma_star,
+		re,
+		rse
 	};
 
 	struct StarFormationAndProps {
@@ -81,12 +92,12 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 	double result, error;
 	double rmin = 0;
-	double rmax = 10*rgas;
+	double rmax = 5.0*re;
 
 	/**
 	 * Here, we integrate the SFR surface density profile out to rmax.
 	 */
-	gsl_integration_qags (&F, rmin, rmax, 0, 0.01, smax,
+	gsl_integration_qags (&F, rmin, rmax, 0.0, 0.02, smax,
 	                        w, &result, &error);
 
 	gsl_integration_workspace_free (w);
@@ -107,10 +118,15 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 	// apply molecular SF law
 	auto props = reinterpret_cast<galaxy_properties_for_integration *>(params);
 
-	double re = props->rgas / RDISK_HALF_SCALE;
-	double Sigma_gas = props->mcold / PI2 / (re * re) * std::exp(-r / re);
-	double rse = props->rstar/RDISK_HALF_SCALE;
-	double Sigma_stars = props->mstar / PI2 / (rse * rse) * std::exp(-r / rse);
+	double Sigma_gas = props->sigma_gas0 * std::exp(-r / props->re);
+
+	double Sigma_stars = 0;
+
+	// Define Sigma_stars only if stellar mass and radius are positive.
+	if(props->rse > 0 && props->sigma_star0 > 0){
+		Sigma_stars = props->sigma_star0 * std::exp(-r / props->rse);
+	}
+
 	return PI2 * parameters.nu_sf * fmol(Sigma_gas, Sigma_stars, r) * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
 }
 

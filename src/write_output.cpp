@@ -16,7 +16,7 @@
 #include "logging.h"
 #include "write_output.h"
 #include "utils.h"
-#include "hdf5/reader.h"
+#include "hdf5/writer.h"
 
 using namespace std;
 
@@ -30,20 +30,21 @@ WriteOutput::WriteOutput(ExecutionParameters exec_params):
 
 void WriteOutput::write_galaxies(int snapshot, std::vector<HaloPtr> halos){
 
-	/*string batch;
+	string batch;
 
 	if(exec_params.simulation_batches.size() == 1){
-		string = std::to_string(exec_params.simulation_batches[0]);
+		batch = std::to_string(exec_params.simulation_batches[0]);
 	}
 	else{
-		string = 'multiple_batches';
-	}*/
+		batch = "multiple_batches";
+	}
 
-	//string fname;// = exec_params.output_directory<<'/'<<exec_params.name_model<<'/'<<std::to_string(snapshot)<<batch<<'galaxies.hdf5';
+	string fname = exec_params.output_directory + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + batch + "/galaxies.hdf5";
 
-	//hdf5::Writer file(fname);
+	hdf5::Writer file(fname);
 
 	//exec_params.simulation_batches.write_attribute<unsigned int>("fileInfo/numberOfFiles");
+	file.write_dataset_v("runInfo/batches", exec_params.simulation_batches);
 
 
 	// Loop over all halos and subhalos to write galaxy properties
