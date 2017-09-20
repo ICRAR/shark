@@ -106,6 +106,11 @@ std::vector<double> ODESolver::evolve() {
 	throw math_error(os.str());
 }
 
+unsigned long int ODESolver::num_evaluations()
+{
+	return driver->n;
+}
+
 ODESolver &ODESolver::operator=(ODESolver &&other) {
 
 	// Normal moving of values

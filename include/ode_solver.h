@@ -101,10 +101,18 @@ public:
 	std::vector<double> evolve();
 
 	/**
+	 * Returns the number of times that the internal ODE system has been
+	 * evaluated so far.
+	 *
+	 * @return The number of times the ODE system has been evaluated.
+	 */
+	unsigned long int num_evaluations();
+
+	/**
 	 * Returns the current time `t` at which the system is sitting
 	 * @return
 	 */
-	inline double current_t() {
+	double current_t() {
 		return t;
 	}
 
