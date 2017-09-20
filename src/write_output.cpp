@@ -79,6 +79,9 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	vector<float> mgas_metals_bulge;
 	vector<float> mBH;
 
+	vector<float> sfr_disk;
+	vector<float> sfr_burst;
+
 	vector<float> rdisk;
 	vector<float> rbulge;
 
@@ -103,6 +106,10 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	vector<float> velocity_y;
 	vector<float> velocity_z;
 
+	vector<int> type;
+	vector<long> id_halo;
+	vector<long> id_subhalo;
+
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
@@ -116,8 +123,8 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 
 			// assign properties of host subhalo
 			auto msubhalo = subhalo->Mvir;
-			auto vsubhalo = subhalo->Vvir;
-			auto cnfw_subhalo = subhalo->concentration;
+			auto vsubhalo = subhalo->Vcirc;
+			auto cnfw = subhalo->concentration;
 			auto L_subhalo = subhalo->L;
 			auto subhalo_position = subhalo->position;
 			auto subhalo_velocity = subhalo->velocity;
@@ -128,14 +135,126 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 			auto reheated_subhalo = subhalo->ejected_galaxy_gas;
 
 			for (auto &galaxy: subhalo->galaxies){
+				mstars_disk.push_back(galaxy->disk_stars.mass);
+				mstars_bulge.push_back(galaxy->bulge_stars.mass);
+				mgas_disk.push_back(galaxy->disk_gas.mass);
+				mgas_bulge.push_back(galaxy->bulge_gas.mass);
+				mstars_metals_disk.push_back(galaxy->disk_stars.mass_metals);
+				mstars_metals_bulge.push_back(galaxy->bulge_stars.mass_metals);
+				mgas_metals_disk.push_back(galaxy->disk_gas.mass_metals);
+				mgas_metals_bulge.push_back(galaxy->bulge_gas.mass_metals);
+				sfr_disk.push_back(galaxy->sfr_disk);
+				sfr_burst.push_back(galaxy->sfr_bulge);
+				mBH.push_back(galaxy->smbh.mass);
 
+				rdisk.push_back(galaxy->disk_stars.rscale);
+				rbulge.push_back(galaxy->bulge_stars.rscale);
 
+				double mhot_gal = 0;
+				double mzhot_gal = 0;
+				double mreheat = 0;
+				double mzreheat =0;
+				int t = 2;
+				if(galaxy->galaxy_type == Galaxy::CENTRAL){
+					t = 0;
+					mhot_gal = hot_subhalo.mass + cold_subhalo.mass;
+					mzhot_gal = hot_subhalo.mass_metals + cold_subhalo.mass_metals;
+					mreheat = reheated_subhalo.mass;
+					mzreheat = reheated_subhalo.mass_metals;
+				}
+				else if(galaxy->galaxy_type == Galaxy::TYPE1){
+					t=1;
+				}
+
+				mhot.push_back(mhot_gal);
+				mhot_metals.push_back(mzhot_gal);
+				mreheated.push_back(mreheat);
+				mreheated_metals.push_back(mzreheat);
+
+				mvir_hosthalo.push_back(mhalo);
+
+				double mvir_gal = 0 ;
+				double vmax_sub = 0;
+				double c_sub = 0;
+				xyz<float> pos;
+				xyz<float> vel;
+
+				if(galaxy->galaxy_type == Galaxy::CENTRAL || galaxy->galaxy_type == Galaxy::TYPE1){
+					mvir_gal = msubhalo;
+					vmax_sub = vsubhalo;
+					c_sub = cnfw;
+					pos = subhalo_position;
+					vel = subhalo_velocity;
+				}
+				else{
+					// In case of type 2 galaxies assign negative positions and velocities.
+					pos.x = -1;
+					pos.y = -1;
+					pos.z = -1;
+					vel.x = -1;
+					vel.y = -1;
+					vel.z = -1;
+				}
+
+				mvir_subhalo.push_back(mvir_gal);
+				vmax_subhalo.push_back(vmax_sub);
+				vvir_hosthalo.push_back(vhalo);
+				cnfw_subhalo.push_back(c_sub);
+
+				position_x.push_back(pos.x);
+				position_y.push_back(pos.y);
+				position_z.push_back(pos.z);
+
+				velocity_x.push_back(vel.x);
+				velocity_y.push_back(vel.y);
+				velocity_z.push_back(vel.z);
+
+				type.push_back(t);
+
+				id_halo.push_back(halo->id);
+				id_subhalo.push_back(subhalo->id);
 
 			}
 		}
 	}
 
+	file.write_dataset_v("Galaxies/mstars_disk", mstars_disk);
+	file.write_dataset_v("Galaxies/mstars_bulge", mstars_bulge);
+	file.write_dataset_v("Galaxies/mgas_disk", mgas_disk);
+	file.write_dataset_v("Galaxies/mgas_bulge", mgas_bulge);
+	file.write_dataset_v("Galaxies/mstars_metals_disk",mstars_metals_disk);
+	file.write_dataset_v("Galaxies/mstars_metals_bulge", mstars_metals_bulge);
+	file.write_dataset_v("Galaxies/mgas_metals_disk", mgas_metals_disk);
+	file.write_dataset_v("Galaxies/mgas_metals_bulge", mgas_metals_bulge);
 
+	file.write_dataset_v("Galaxies/mBH", mBH);
+
+	file.write_dataset_v("Galaxies/rdisk", rdisk);
+	file.write_dataset_v("Galaxies/rbulge", rbulge);
+
+	file.write_dataset_v("Galaxies/mhot", mhot);
+	file.write_dataset_v("Galaxies/mhot_metals", mhot_metals);
+	file.write_dataset_v("Galaxies/mreheated", mreheated);
+	file.write_dataset_v("Galaxies/mreheated_metals", mreheated_metals);
+
+	file.write_dataset_v("Galaxies/mvir_hosthalo", mvir_hosthalo);
+	file.write_dataset_v("Galaxies/mvir_subhalo", mvir_subhalo);
+	file.write_dataset_v("Galaxies/vmax_subhalo", vmax_subhalo);
+	file.write_dataset_v("Galaxies/vvir_hosthalo", vvir_hosthalo);
+	file.write_dataset_v("Galaxies/cnfw_subhalo", cnfw_subhalo);
+
+	file.write_dataset_v("Galaxies/position_x", position_x);
+	file.write_dataset_v("Galaxies/position_y", position_y);
+	file.write_dataset_v("Galaxies/position_z", position_z);
+
+	file.write_dataset_v("Galaxies/velocity_x", velocity_x);
+	file.write_dataset_v("Galaxies/velocity_y", velocity_y);
+	file.write_dataset_v("Galaxies/velocity_z", velocity_z);
+
+	file.write_dataset_v("Galaxies/type", type);
+
+	file.write_dataset_v("Galaxies/id_subhalo", id_halo);
+	file.write_dataset_v("Galaxies/id_subhalo", id_halo);
 
 }
 
