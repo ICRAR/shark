@@ -237,7 +237,7 @@ int run(int argc, char **argv) {
 			return n_galaxies + halo->galaxy_count();
 		});
 
-		LOG(info) << "During snapshot " << snapshot << " there were " << n_galaxies
+		LOG(info) << "During snapshot " << snapshot << " there were " << n_galaxies << " galaxies"
 		          << " which generated " << galaxy_ode_evaluations << " galaxy ODE evaluations ("
 		          << std::setprecision(3) << std::fixed << static_cast<double>(galaxy_ode_evaluations) / n_galaxies
 		          << " [evals/gal])" << " and " << galaxy_starburst_ode_evaluations << " galaxy starburst ODE evaluations ("
