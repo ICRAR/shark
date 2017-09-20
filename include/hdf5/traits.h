@@ -31,30 +31,60 @@ namespace shark {
 
 namespace hdf5 {
 
+//
+// Traits for data type conversion
+//
 template <typename T>
-struct type_traits {
-	const static hid_t preferred_type_id = -100;
-	const static hid_t type_ids[] = {};
+struct datatype_traits {
 };
 
-template <>
-struct type_traits<float> {
-#ifdef __BIG_ENDIAN
-	const static hid_t preferred_type_id = H5T_IEEE_F32BE;
-#else
-	const static hid_t preferred_type_id = H5T_IEEE_F32LE;
-#endif // __BIG_ENDIAN
-	const static hid_t type_ids[] = {H5T_IEEE_F32BE, H5T_IEEE_F32LE};
+template<>
+struct datatype_traits<std::string> {
+	static constexpr hid_t &write_type = H5T_C_S1_g;
+	static constexpr hid_t &native_type = H5T_C_S1_g;
 };
 
-template <>
-struct type_traits<double> {
-#ifdef __BIG_ENDIAN
-	const static hid_t preferred_type_id = H5T_IEEE_F64BE;
-#else
-	const static hid_t preferred_type_id = H5T_IEEE_F64LE;
-#endif // __BIG_ENDIAN
-	const static hid_t type_ids[] = {H5T_IEEE_F64BE, H5T_IEEE_F64LE};
+template<>
+struct datatype_traits<float> {
+	static constexpr hid_t &write_type = H5T_NATIVE_FLOAT_g;
+	static constexpr hid_t &native_type = H5T_NATIVE_FLOAT_g;
+};
+
+template<>
+struct datatype_traits<double> {
+	static constexpr hid_t &write_type = H5T_NATIVE_FLOAT_g;
+	static constexpr hid_t &native_type = H5T_NATIVE_FLOAT_g;
+};
+
+template<>
+struct datatype_traits<int> {
+	static constexpr hid_t &write_type = H5T_NATIVE_INT16_g;
+	static constexpr hid_t &native_type = H5T_NATIVE_INT16_g;
+};
+
+template<>
+struct datatype_traits<bool> {
+	static constexpr hid_t &write_type = H5T_NATIVE_INT16_g;
+	static constexpr hid_t &native_type = H5T_NATIVE_INT16_g;
+};
+
+
+//
+// Traits for HDF5 entities
+//
+template <H5G_obj_t E>
+struct entity_traits {
+	typedef void rettype;
+};
+
+template<>
+struct entity_traits<H5G_GROUP> {
+	typedef H5::Group rettype;
+};
+
+template<>
+struct entity_traits<H5G_DATASET> {
+	typedef H5::DataSet rettype;
 };
 
 }  // namespace hdf5
