@@ -65,9 +65,11 @@ public:
 			GasCooling gas_cooling) :
 		evaluator(evaluator),
 		ode_solver_precision(ode_solver_precision),
-		gas_cooling(gas_cooling)
+		gas_cooling(gas_cooling),
+		galaxy_ode_evaluations(0),
+		galaxy_starburst_ode_evaluations(0)
 	{
-		// no-opsrc/utils.cpp
+		// no-op
 	}
 
 	virtual ~PhysicalModel()
@@ -95,7 +97,9 @@ public:
 
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
 		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v};
-		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
+		auto ode_solver = get_solver(delta_t, y0, params);
+		std::vector<double> y1 = ode_solver.evolve();
+		galaxy_ode_evaluations += ode_solver.num_evaluations();
 		to_galaxy(y1, subhalo, galaxy, delta_t);
 	}
 
@@ -108,7 +112,9 @@ public:
 
 		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);
 		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v};
-		std::vector<double> y1 = get_solver(delta_t, y0, params).evolve();
+		auto solver = get_solver(delta_t, y0, params);
+		std::vector<double> y1 = solver.evolve();
+		galaxy_starburst_ode_evaluations += solver.num_evaluations();
 		to_galaxy_starburst(y1, subhalo, galaxy, delta_t);
 	}
 
@@ -118,10 +124,25 @@ public:
 	virtual std::vector<double> from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy) = 0;
 	virtual void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t) = 0;
 
+	unsigned long int get_galaxy_ode_evaluations() {
+		return galaxy_ode_evaluations;
+	}
+
+	unsigned long int get_galaxy_starburst_ode_evaluations() {
+		return galaxy_starburst_ode_evaluations;
+	}
+
+	void reset_ode_evaluations() {
+		galaxy_ode_evaluations = 0;
+		galaxy_starburst_ode_evaluations = 0;
+	}
+
 private:
 	ODESolver::ode_evaluator evaluator;
 	double ode_solver_precision;
 	GasCooling gas_cooling;
+	unsigned long int galaxy_ode_evaluations;
+	unsigned long int galaxy_starburst_ode_evaluations;
 };
 
 class BasicPhysicalModel : public PhysicalModel<9> {
