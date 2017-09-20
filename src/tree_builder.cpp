@@ -355,7 +355,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 }
 
 
-void HaloBasedTreeBuilder::create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology, DarkMatterHalos &darkmatterhalos)
+void HaloBasedTreeBuilder::create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology, DarkMatterHalos &darkmatterhalos, GasCoolingParameters &cool_params)
 {
 
 	//This function finds subhalos that have no progenitors (so first time they are identified) and are central, and creates a galaxy there.
@@ -374,6 +374,9 @@ void HaloBasedTreeBuilder::create_galaxies(const std::vector<HaloPtr> &halos, Co
 				subhalo->galaxies.push_back(galaxy);
 
 				subhalo->hot_halo_gas.mass = subhalo->host_halo->Mvir * cosmology.universal_baryon_fraction();
+
+				// Assign metallicity to the minimum allowed.
+				subhalo->hot_halo_gas.mass_metals = subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
 
 
 			}

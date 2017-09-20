@@ -45,8 +45,6 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	auto params= reinterpret_cast<BasicPhysicalModel::solver_params *>(data);
 	BasicPhysicalModel &model = dynamic_cast<BasicPhysicalModel &>(params->model);
 
-	double tau = 2.0; /*star formation timescale assumed to be 2Gyr*/
-
 	double R = model.recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
 
 	double yield = model.recycling_parameters.yield; /*yield of newly formed stars*/
@@ -57,9 +55,16 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	double beta = model.stellar_feedback.outflow_rate(SFR, params->v); /*mass loading parameter*/
 
-	double zcold = y[4] / y[1]; /*cold gas metallicity*/
+	double zcold = 0.0; /*cold gas metallicity*/
 
-	double zhot = y[5] / y[2]; /*hot gas metallicity*/
+	if(y[1] > 0) {
+		zcold = y[5] / y[1];
+	}
+
+	double zhot = 0.0; /*hot gas metallicity*/
+	if(y[2] > 0) {
+		zhot = y[6] / y[2];
+	}
 
 	double rsub = 1.0- R;
 
@@ -70,6 +75,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	f[4] = rsub * zcold * SFR;
 	f[5] = mcoolrate * zhot + SFR * (yield - (rsub + beta) * zcold);
 	f[6] = - mcoolrate * zhot;
+
 	f[7] = beta * zcold * SFR;
 
 	// Keeps track of total stellar mass formed.

@@ -29,7 +29,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 
 	options.load("agn_feedback.model", model);
 	options.load("agn_feedback.alpha_cool",alpha_cool);
-	options.load("agn_feedback.epsilon_smbh",f_edd);
+	options.load("agn_feedback.f_edd",f_edd);
 	options.load("agn_feedback.accretion_eff_cooling",accretion_eff_cooling);
 	options.load("agn_feedback.accretion_eff_bursts",accretion_eff_bursts);
 
@@ -58,12 +58,12 @@ AGNFeedback::AGNFeedback(AGNFeedbackParameters parameters, std::shared_ptr<Cosmo
 	// no-op
 }
 
-void AGNFeedback::plant_seed_smbh(Subhalo &subhalo){
+void AGNFeedback::plant_seed_smbh(Halo &halo){
 
-	if (subhalo.Mvir > parameters.mhalo_seed) {
-		auto central = subhalo.central_galaxy();
+	if (halo.Mvir > parameters.mhalo_seed) {
+		auto central = halo.central_subhalo->central_galaxy();
 		if (central and central->smbh.mass == 0) {
-			central->smbh.mass = 0;
+			central->smbh.mass = parameters.mseed;
 			central->smbh.mass_metals = 0;
 		}
 	}
@@ -76,10 +76,11 @@ double AGNFeedback::eddington_luminosity(double mbh){
 
 	if(mbh >0){
 		//Eddington luminosity in units of $10^{40} erg/s$
-		return constants::Eddngtn_Lmnsty_Scale_Factor*mbh/constants::ERG2J;
+		return constants::Eddngtn_Lmnsty_Scale_Factor * mbh / constants::ERG2J;
 	}
-
-	return 0;
+	else {
+		return 0;
+	}
 }
 
 double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double mbh) {

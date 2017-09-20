@@ -35,13 +35,13 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options) :
 	epsilon_cc(0),
 	beta(0)
 {
-	options.load("stellar_feedback.eta_cc", eta_cc);
-	options.load("stellar_feedback.e_sn", e_sn);
-	options.load("stellar_feedback.epsilon_cc", epsilon_cc);
-	options.load("stellar_feedback.beta", beta);
+	options.load("stellar_feedback.eta_cc", eta_cc, true);
+	options.load("stellar_feedback.e_sn", e_sn, true);
+	options.load("stellar_feedback.epsilon_cc", epsilon_cc, true);
+	options.load("stellar_feedback.beta", beta, true);
 
 	//convert energy of SNe into code units.
-	eta_cc = eta_cc *std::pow(constants::MSOLAR_g, -1.0) * std::pow(constants::MPC2CM, -2.0) * std::pow(constants::GYR2S, -3.0);
+	e_sn = e_sn *std::pow(constants::MSOLAR_g, -1.0) * std::pow(constants::MPC2CM, -2.0) * std::pow(constants::GYR2S, 2.0);
 }
 
 
@@ -55,12 +55,13 @@ double StellarFeedback::outflow_rate(double sfr, double v) {
 	/*
 	 * TODO: add here other models for the outflow rate (e.g. GALFORM models and momentum driven models).
 	 */
-	if(sfr <= 0){
+	if(sfr <= 0 || v <= 0){
 		return 0.0;
 	}
 
-	return parameters.epsilon_cc * parameters.e_sn /
-	       std::pow(v, parameters.beta) * parameters.eta_cc * sfr;
+	double beta  = parameters.epsilon_cc * parameters.e_sn /
+		       std::pow(v, parameters.beta) * parameters.eta_cc * sfr;
+	return beta;
 }
 
 }  // namespace shark

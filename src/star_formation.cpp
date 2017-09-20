@@ -97,7 +97,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	/**
 	 * Here, we integrate the SFR surface density profile out to rmax.
 	 */
-	gsl_integration_qags (&F, rmin, rmax, 0.0, 0.02, smax,
+	gsl_integration_qags (&F, rmin, rmax, 0.02, 0.0, smax,
 	                        w, &result, &error);
 
 	gsl_integration_workspace_free (w);

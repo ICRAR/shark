@@ -72,13 +72,15 @@ GasCoolingParameters::GasCoolingParameters(const Options &options) :
 	rcore(0),
 	model(CROTON06),
 	lambdamodel(CLOUDY),
-	cooling_table()
+	cooling_table(),
+	pre_enrich_z(1e-4)
 {
 	string cooling_tables_dir;
 	options.load("gas_cooling.model", model, true);
 	options.load("gas_cooling.rcore", rcore);
 	options.load("gas_cooling.lambdamodel", lambdamodel, true);
 	options.load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
+	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
 
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
 	load_tables(cooling_tables_dir, metallicity_tables);
@@ -233,7 +235,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     	/**
     	 * Plant black hole seed if necessary.
     	 */
-    	agnfeedback->plant_seed_smbh(subhalo);
+    	agnfeedback->plant_seed_smbh(*halo);
 
     	// Calculate Eddington luminosity of BH in central galaxy.
 
@@ -258,12 +260,12 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		double mhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass+subhalo.cold_halo_gas.mass+subhalo.ejected_galaxy_gas.mass);
     		double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals+subhalo.ejected_galaxy_gas.mass_metals);
 
-    		double vvir = cosmology->comoving_to_physical_velocity(subhalo.Vvir, z);
-    		double mvir = cosmology->comoving_to_physical_mass(subhalo.Mvir);
+    		double vvir = halo->Vvir; //cosmology->comoving_to_physical_velocity(subhalo.Vvir, z);
+    		double mvir = cosmology->comoving_to_physical_mass(halo->Mvir);
 
     		double zhot = (mzhot/mhot);
 
-    		double Tvir = 35.9*std::pow(vvir,2); //in K.
+    		double Tvir = 35.9*std::pow(vvir,2.0); //in K.
     		double lgTvir = log10(Tvir); //in K.
 
     		double Rvir = darkmatterhalos->halo_virial_radius(halo)/cosmology->parameters.Hubble_h;//Mpc
@@ -340,7 +342,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
     		if(agnfeedback->parameters.model == AGNFeedbackParameters::GALFORM){
     			if(agnfeedback->parameters.alpha_cool > 0){
-    				double tdyn_rcool = r_cool/vvir*constants::KMS2MPCGYR; //Dynamical timescale at cooling radius.
+    				double tdyn_rcool = r_cool/vvir * constants::MPCKM2GYR; //Dynamical timescale at cooling radius.
         			/**
         			 * Calculate mean density at rcool.
         			 */
@@ -360,7 +362,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
         				//Calculate cooling luminosity.
         				double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot);
 
-        				if(Lcool < agnfeedback->parameters.f_edd * Ledd){
+        				if(Lcool < agnfeedback->parameters.f_edd * Ledd && Lcool > 0){
         					central_galaxy->smbh.macc = agnfeedback->accretion_rate_hothalo_smbh(Lcool, central_galaxy->smbh.mass);
         					//now convert mass accretion rate to comoving units.
         					central_galaxy->smbh.macc = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc);
@@ -368,13 +370,16 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
         		    		// set cooling rate to 0.
         					coolingrate = 0;
         				}
+        				else{
+        					central_galaxy->smbh.macc = 0;
+        				}
 
         			}//end if of hot halo mode.
     			}// end if of AGN feedback model
     		}// end if of GALFORM AGN feedback model.
     		else if(agnfeedback->parameters.model == AGNFeedbackParameters::LGALAXIES){
     			//a pseudo cooling luminosity k*T/lambda(T,Z)
-    			double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10,logl) / std::pow(10,40);
+    			double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / std::pow(10.0,40.0);
 
     			central_galaxy->smbh.macc = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
 				//now convert mass accretion rate to comoving units.
@@ -470,14 +475,14 @@ double GasCooling::cooling_time(double Tvir, double logl, double nh_density){
 
 	using namespace constants;
 
-	return 3.0*k_Boltzmann_erg*Tvir/(2.0*std::pow(10,logl)*nh_density)/GYR2S; //cooling time at notional density in Gyr.;
+	return 3.0*k_Boltzmann_erg*Tvir/(2.0*std::pow(10.0,logl)*nh_density)/GYR2S; //cooling time at notional density in Gyr.;
 }
 
 double GasCooling::mean_density(double mhot, double rvir){
 
 	using namespace constants;
 
-	return mhot*MSOLAR_g/(SPI*std::pow(rvir*MPC2CM,3.0))/M_Atomic_g; //in units of cm^-3.
+	return mhot*MSOLAR_g/(SPI * std::pow(rvir * MPC2CM,3.0)) / (M_Atomic_g * mu_Primordial); //in units of cm^-3.
 }
 
 double GasCooling::cooling_radius(double mhot, double rvir, double tcharac, double logl, double Tvir){
@@ -486,7 +491,7 @@ double GasCooling::cooling_radius(double mhot, double rvir, double tcharac, doub
 
 	double pseudo_density = mhot*MSOLAR_g/(PI4*rvir*MPC2CM); //in units of gr/cm.
 
-	double denominator_temp = 1.5*k_Boltzmann_erg*Tvir*(M_Atomic_g*mu_Primordial)/pow(10.0,logl); //in cgs
+	double denominator_temp = 1.5 * k_Boltzmann_erg * Tvir * (M_Atomic_g*mu_Primordial) / pow(10.0,logl); //in cgs
 
 	return std::pow((pseudo_density/denominator_temp*tcharac),0.5)/MPC2CM; //in Mpc.
 }
@@ -499,15 +504,15 @@ double GasCooling::density_shell(double mhot, double rvir, double r) {
 	 * rho_shell as defined by an isothermal profile.
 	 * Any other hot gas profile should modify rho_shell.
 	 */
-	return mhot*MSOLAR_g /PI4 /(rvir*MPC2CM) / std::pow(r,2.0); //in cgs.
+	return mhot*MSOLAR_g /PI4 /(rvir*MPC2CM) / std::pow(r*MPC2CM,2.0) / (M_Atomic_g*mu_Primordial); //in cgs.
 
 }
 
 double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, double mhot){
 
 	/**
-	 *  This function calculated the cooling luminosity for a given cooling function
-	 *  and a notional gas density profile.
+	 *  This function calculates the cooling luminosity for a given cooling function
+	 *  and a notional gas density profile. Units are returned in 10^40 erg/s.
 	 *
 	 */
 	using namespace constants;
@@ -521,7 +526,7 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 		double mass_enclosed = mhot /PI4 /rvir * (rvir-rcool) * MSOLAR_g;
 
 		//Define cooling luminosity in $10^{40} erg/s$.
-		double Lcool = PI4 * std::pow(10,logl) * mass_enclosed / std::pow(10,40);
+		double Lcool = PI4 * std::pow(10.0,logl) * mass_enclosed / std::pow(10.0,40.0);
 
 		return Lcool;
 	}

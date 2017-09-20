@@ -51,7 +51,7 @@ public:
 	 * All input quantities should be in comoving units.
 	 */
 
-	void plant_seed_smbh(Subhalo &subhalo);
+	void plant_seed_smbh(Halo &halo);
 	double eddington_luminosity(double mbh);
 	double accretion_rate_hothalo_smbh(double Lcool, double mbh);
 	double agn_bolometric_luminosity(double macc);

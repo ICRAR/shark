@@ -62,10 +62,13 @@ public:
 	GasCoolingParameters(const Options &options);
 
 	double rcore;
+	double pre_enrich_z;
+
 	LambdaCoolingModel lambdamodel;
 	CoolingModel model;
 	//cooling tables
 	CoolingTable cooling_table; //these should be an array of parameters.
+
 
 private:
 	tables_idx find_tables(const std::string &cooling_tables_dir);
