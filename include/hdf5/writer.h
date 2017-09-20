@@ -1,5 +1,5 @@
 //
-// Header file for the h5reader class
+// Header file for the hdf5::Writer class
 //
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
@@ -25,21 +25,57 @@
 #ifndef SHARK_HDF5_WRITER_H_
 #define SHARK_HDF5_WRITER_H_
 
-#include <exception>
 #include <memory>
 #include <sstream>
 #include <string>
-#include <type_traits>
+#include <vector>
 
 #include <H5Cpp.h>
 
-#include "utils.h"
 #include "hdf5/iobase.h"
+#include "hdf5/traits.h"
+#include "exceptions.h"
+#include "utils.h"
 
 namespace shark {
 
 namespace hdf5 {
 
+/**
+ * Exception thrown when a group or a dataset path is given by the user,
+ * but the path refers to an existing, different entity.
+ *
+ */
+class object_exists : public exception {
+public:
+	object_exists(const std::string &what) : exception(what) {}
+};
+
+
+// How we write attributes, depending on the data type
+// Strings need some special treatment, so we specialise for them
+template<typename T>
+static inline
+void _create_and_write_attribute(H5::H5Location &loc, const std::string &name, const T &value) {
+	H5::DataType dataType(datatype_traits<T>::write_type);
+	auto attr = loc.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
+	attr.write(H5::DataType(datatype_traits<T>::native_type), &value);
+}
+
+template<>
+inline
+void _create_and_write_attribute<std::string>(H5::H5Location &loc, const std::string &name, const std::string &value) {
+	H5::StrType dataType(H5::PredType::C_S1, value.size());
+	hsize_t size = value.size();
+	auto attr = loc.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
+	attr.write(dataType, value);
+}
+
+
+/**
+ * An object that can write data in the form of attributes and datasets into an
+ * HDF5 file.
+ */
 class Writer : public IOBase {
 
 public:
@@ -51,83 +87,52 @@ public:
 	 * @param overwrite Whether existing files should be overwritten or not
 	 */
 	Writer(const std::string &filename, bool overwrite = true) :
-		IOBase(filename, H5F_ACC_RDWR | (overwrite ? H5F_ACC_CREAT|H5F_ACC_TRUNC : H5F_ACC_EXCL)) {}
+		IOBase(filename, H5F_ACC_RDWR | (overwrite ? H5F_ACC_CREAT : H5F_ACC_EXCL)) {}
 
 	template<typename T>
 	void write_attribute(const std::string &name, const T &value) {
 
-		// The name might contains slashes, so we can navigate through
-		// a hierarchy of groups/datasets
 		std::vector<std::string> parts = tokenize(name, "/");
 
 		// only the attribute name, read directly and come back
 		if( parts.size() == 1 ) {
-			return _write_attribute<T>(hdf5_file, name, value);
+			_create_and_write_attribute<T>(hdf5_file, name, value);
+			return;
 		}
 
-		// else there's a path to follow, go for it!
-		const H5::CommonFG &location = hdf5_file;
-		std::vector<std::string> path_parts(parts.begin(), parts.end()-1);
-		for(auto const &path: path_parts) {
-			// not implemented yet
+		// Get the corresponding group/dataset and write the attribute there
+		std::vector<std::string> path(parts.begin(), parts.end()-1);
+		try {
+			auto group = ensure_group(path);
+			_create_and_write_attribute<T>(group, parts.back(), value);
+		} catch (const object_exists &e) {
+			throw;
+//			auto dataset = open_dataset(path);
+//			_write_attribute<T>(dataset, parts.back(), value);
 		}
 
-		throw std::runtime_error("write_attribute still not implemented for attributes in groups/datasets");
 	}
 
 	template<typename T>
 	void write_dataset(const std::string &name, const T &value) {
-
-		// The name might contains slashes, so we can navigate through
-		// a hierarchy of groups/datasets
 		std::vector<std::string> parts = tokenize(name, "/");
-
-		// only the attribute name, read directly and come back
-		if( parts.size() == 1 ) {
-			return _write_dataset<T>(hdf5_file.openDataSet(name), value);
-		}
-
-		// else there's a path to follow, go for it!
-		const H5::CommonFG &location = hdf5_file;
-		std::vector<std::string> path_parts(parts.begin(), parts.end()-1);
-		for(auto const &path: path_parts) {
-			// not implemented yet
-		}
-
-		throw std::runtime_error("write_dataset still not implemented for attributes in groups/datasets");
+		H5::DataSpace dataSpace(H5S_SCALAR);
+		H5::StrType dataType(H5::PredType::NATIVE_CHAR);
+		auto dataset = ensure_dataset(parts, dataType, dataSpace);
+		_write_dataset(dataset, value);
 	}
 
 	template<typename T>
 	void write_dataset_v(const std::string &name, const std::vector<T> &values) {
-
-		// The name might contains slashes, so we can navigate through
-		// a hierarchy of groups/datasets
 		std::vector<std::string> parts = tokenize(name, "/");
-
-		// only the attribute name, read directly and come back
-		if( parts.size() == 1 ) {
-			return _write_dataset_v<T>(hdf5_file.openDataSet(name), values);
-		}
-
-		// else there's a path to follow, go for it!
-		const H5::CommonFG &location = hdf5_file;
-		std::vector<std::string> path_parts(parts.begin(), parts.end()-1);
-		for(auto const &path: path_parts) {
-			// not implemented yet
-		}
-
-		throw std::runtime_error("write_dataset_v still not implemented for attributes in groups/datasets");
+		const hsize_t size = values.size();
+		H5::DataSpace dataSpace(1, &size);
+		H5::StrType dataType(H5::PredType::NATIVE_CHAR);
+		auto dataset = ensure_dataset(parts, dataType, dataSpace);
+		_write_dataset_v(dataset, values);
 	}
 
 private:
-
-	template <typename T>
-	void _write_attribute(const H5::H5Location &location, const std::string &name, const T &value) {
-		H5::Attribute attr = location.openAttribute(name);
-		H5::DataType type = attr.getDataType();
-		attr.write(type, &value);
-		attr.close();
-	}
 
 	template<typename T>
 	void _write_dataset(const H5::DataSet &dataset, const T &data) {
@@ -149,6 +154,9 @@ private:
 		hsize_t dim_size = get_1d_dimsize(space);
 		dataset.write(data.data(), dataset.getDataType(), space, space);
 	}
+
+	H5::Group ensure_group(const std::vector<std::string> &path) const;
+	H5::DataSet ensure_dataset(const std::vector<std::string> &path, const H5::DataType &dataType, const H5::DataSpace &dataSpace) const;
 
 };
 
