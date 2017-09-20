@@ -258,12 +258,5 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 
 }
 
-void WriteOutput::write_cosmology(){
-
-
-
-
-}
-
 }// namespace shark
 

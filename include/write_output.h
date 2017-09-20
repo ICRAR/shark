@@ -31,7 +31,6 @@ private:
 	SimulationParameters sim_params;
 	CosmologicalParameters cosmo_params;
 
-	void write_cosmology();
 };
 
 }
