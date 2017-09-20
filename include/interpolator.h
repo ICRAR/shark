@@ -53,7 +53,7 @@ public:
 	double get(double x, double y) const;
 
 private:
-	std::unique_ptr<gsl_spline2d> spline2d;
+	std::unique_ptr<gsl_interp2d> interp2d;
 	std::unique_ptr<gsl_interp_accel> xacc;
 	std::unique_ptr<gsl_interp_accel> yacc;
 	const gsl_interp2d_type *type;
