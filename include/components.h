@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <ostream>
 #include <vector>
 
@@ -472,6 +473,13 @@ public:
 		galaxies.clear();
 	}
 
+	///
+	/// Returns the number of galaxies contained in this Halo
+	///
+	unsigned long galaxy_count() {
+		return galaxies.size();
+	}
+
 };
 
 template <typename T>
@@ -596,6 +604,19 @@ public:
 		Mvir += subhalo->Mvir;
 	}
 
+	///
+	/// Returns the number of galaxies contained in this Halo
+	///
+	unsigned long galaxy_count() {
+		unsigned long count = 0;
+		if (central_subhalo) {
+			count = central_subhalo->galaxy_count();
+		}
+		return std::accumulate(satellite_subhalos.begin(), satellite_subhalos.end(), count,
+		[](unsigned long galaxy_count, const SubhaloPtr &subhalo) {
+			return galaxy_count + subhalo->galaxy_count();
+		});
+	}
 };
 
 template <typename T>
