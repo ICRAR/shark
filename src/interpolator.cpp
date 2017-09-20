@@ -32,7 +32,7 @@ namespace shark {
 
 Interpolator::Interpolator(std::vector<double> xvals, std::vector<double> yvals,
 		std::vector<double> zvals, InterpolatorType type) :
-	spline2d(nullptr),
+	interp2d(nullptr),
 	xacc(nullptr),
 	yacc(nullptr),
 	type(to_gsl(type)),
@@ -49,14 +49,14 @@ Interpolator::Interpolator(std::vector<double> xvals, std::vector<double> yvals,
 
 void Interpolator::_init_gsl_objects()
 {
-	spline2d.reset(gsl_spline2d_alloc(type, x.size(), y.size()));
-	gsl_spline2d_init(spline2d.get(), x.data(), y.data(), z.data(), x.size(), y.size());
+	interp2d.reset(gsl_interp2d_alloc(type, x.size(), y.size()));
+	gsl_interp2d_init(interp2d.get(), x.data(), y.data(), z.data(), x.size(), y.size());
 	xacc.reset(gsl_interp_accel_alloc());
 	yacc.reset(gsl_interp_accel_alloc());
 }
 
 Interpolator::Interpolator(const Interpolator &other) :
-	spline2d(nullptr),
+	interp2d(nullptr),
 	xacc(nullptr),
 	yacc(nullptr),
 	type(other.type),
@@ -66,13 +66,13 @@ Interpolator::Interpolator(const Interpolator &other) :
 }
 
 Interpolator::Interpolator(Interpolator &&other) :
-	spline2d(nullptr),
+	interp2d(nullptr),
 	xacc(nullptr),
 	yacc(nullptr),
 	type(other.type),
 	x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z))
 {
-	std::swap(other.spline2d, spline2d);
+	std::swap(other.interp2d, interp2d);
 	std::swap(other.xacc, xacc);
 	std::swap(other.yacc, yacc);
 }
@@ -85,14 +85,16 @@ Interpolator::~Interpolator()
 	if (yacc) {
 		gsl_interp_accel_free(yacc.release());
 	}
-	if (spline2d) {
-		gsl_spline2d_free(spline2d.release());
+	if (interp2d) {
+		gsl_interp2d_free(interp2d.release());
 	}
 }
 
 double Interpolator::get(double x, double y) const
 {
-	return gsl_spline2d_eval(spline2d.get(), x, y, xacc.get(), yacc.get());
+	return gsl_interp2d_eval_extrap(interp2d.get(),
+			this->x.data(), this->y.data(), this->z.data(),
+			x, y, xacc.get(), yacc.get());
 }
 
 const gsl_interp2d_type *Interpolator::to_gsl(InterpolatorType type) const
