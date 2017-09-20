@@ -47,6 +47,7 @@
 #include "agn_feedback.h"
 #include "merger_tree_reader.h"
 #include "tree_builder.h"
+#include "write_output.h"
 
 using namespace std;
 
@@ -180,6 +181,7 @@ int run(int argc, char **argv) {
 	// we loop over merger trees.
 	// Each merger trees has a set of halos at a given snapshot,
 	// which in turn contain galaxies.
+	WriteOutput writer(exec_params, cosmo_parameters, sim_params);
 	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot-1; snapshot++) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
@@ -220,10 +222,10 @@ int run(int argc, char **argv) {
 		//do_stuff_at_halo_level(all_halos_this_snapshot);
 
 //		/*write snapshots only if the user wants outputs at this time.*/
-		/*if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
+		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
 		{
-			//write_output(snapshot, all_halos_this_snapshot);
-		}*/
+			writer.write_galaxies(snapshot, all_halos_this_snapshot);
+		}
 
 		destroy_galaxies_this_snapshot(all_halos_this_snapshot);
 
