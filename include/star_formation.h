@@ -36,6 +36,7 @@
 #include <memory>
 
 #include "cosmology.h"
+#include "integrator.h"
 #include "options.h"
 
 namespace shark {
@@ -73,6 +74,8 @@ public:
 private:
 	StarFormationParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
+	Integrator integrator;
+
 };
 
 }  // namespace shark
