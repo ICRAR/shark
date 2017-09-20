@@ -124,7 +124,7 @@ private:
 	GasCooling gas_cooling;
 };
 
-class BasicPhysicalModel : public PhysicalModel<8> {
+class BasicPhysicalModel : public PhysicalModel<9> {
 public:
 	BasicPhysicalModel(double ode_solver_precision,
 			GasCooling gas_cooling,
