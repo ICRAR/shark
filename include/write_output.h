@@ -23,13 +23,14 @@ public:
 
 	WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  SimulationParameters sim_params);
 
+	void write_galaxies(int snapshot, const std::vector<HaloPtr> &halos);
+
 private:
 
 	ExecutionParameters exec_params;
 	SimulationParameters sim_params;
 	CosmologicalParameters cosmo_params;
 
-	void write_galaxies(int snapshot, std::vector<HaloPtr> halos);
 	void write_cosmology();
 };
 

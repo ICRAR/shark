@@ -28,11 +28,11 @@ WriteOutput::WriteOutput(ExecutionParameters exec_params, CosmologicalParameters
 	exec_params(exec_params),
 	cosmo_params(cosmo_params),
 	sim_params(sim_params)
-	{
-		//no-opt
-	}
+{
+	//no-opt
+}
 
-void WriteOutput::write_galaxies(int snapshot, std::vector<HaloPtr> halos){
+void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos){
 
 	string batch;
 
