@@ -23,8 +23,8 @@
 //
 
 #include <algorithm>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -187,6 +187,8 @@ int run(int argc, char **argv) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
 
+		basic_physicalmodel->reset_ode_evaluations();
+
 		//Calculate the initial and final time of this snapshot.
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
@@ -253,7 +255,7 @@ int run(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 	try {
- 		return shark::run(argc, argv);
+		return shark::run(argc, argv);
 	} catch (const shark::missing_option &e) {
 		std::cerr << "Missing option: " << e.what() << std::endl;
 		return 1;
