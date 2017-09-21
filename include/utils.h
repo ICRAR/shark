@@ -27,7 +27,9 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <map>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -113,6 +115,32 @@ std::ifstream open_file(const std::string &name);
  * @return Whether the string is empty or is a comment
  */
 bool empty_or_comment(const std::string &s);
+
+
+namespace detail {
+	template <int N, typename T>
+	struct _fixed {
+		T _val;
+	};
+}
+
+template <typename T, int N, typename VT>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, detail::_fixed<N, VT> v)
+{
+	os << std::setprecision(3) << std::fixed << v._val;
+	return os;
+}
+
+///
+/// Sent to a stream object, this manipulator will print the given value with a
+/// precision of N decimal places.
+///
+/// @param v The value to send to the stream
+///
+template <int N, typename T>
+detail::_fixed<N, T> fixed(T v) {
+	return {v};
+}
 
 }  // namespace shark
 
