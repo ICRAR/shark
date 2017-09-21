@@ -227,6 +227,20 @@ int run(int argc, char **argv) {
 			writer.write_galaxies(snapshot, all_halos_this_snapshot);
 		}
 
+		// Some high-level ODE iteration count statistics
+		auto galaxy_ode_evaluations = basic_physicalmodel->get_galaxy_ode_evaluations();
+		auto galaxy_starburst_ode_evaluations = basic_physicalmodel->get_galaxy_starburst_ode_evaluations();
+		auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0, [](long n_galaxies, const HaloPtr &halo){
+			return n_galaxies + halo->galaxy_count();
+		});
+
+		LOG(info) << "During snapshot " << snapshot << " there were " << n_galaxies << " galaxies"
+		          << " which generated " << galaxy_ode_evaluations << " galaxy ODE evaluations ("
+		          << std::setprecision(3) << std::fixed << static_cast<double>(galaxy_ode_evaluations) / n_galaxies
+		          << " [evals/gal])" << " and " << galaxy_starburst_ode_evaluations << " galaxy starburst ODE evaluations ("
+		          << std::setprecision(3) << std::fixed << static_cast<double>(galaxy_starburst_ode_evaluations) / n_galaxies
+		          << " [evals/gal])";
+
 		destroy_galaxies_this_snapshot(all_halos_this_snapshot);
 
 	}

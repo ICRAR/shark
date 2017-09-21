@@ -6,7 +6,6 @@
  */
 
 #include <cmath>
-#include <gsl/gsl_integration.h>
 
 #include "star_formation.h"
 #include "numerical_constants.h"
@@ -39,7 +38,8 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 
 StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr<Cosmology> cosmology) :
 	parameters(parameters),
-	cosmology(cosmology)
+	cosmology(cosmology),
+	integrator(1000)
 {
 	// no-op
 }
@@ -49,10 +49,6 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	if (mcold <= constants::min_gas_mass_for_sf || rgas <= constants::min_rgas_for_sf) {
 		return 0;
 	}
-
-	int smax = 1000;
-	gsl_integration_workspace * w
-	    = gsl_integration_workspace_alloc (smax);
 
 	/**
 	 * All input quantities should be in physical units.
@@ -80,27 +76,16 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		galaxy_properties_for_integration *props;
 	};
 
-	StarFormationAndProps sf_and_props = {this, &props};
 	auto f = [](double r, void *ctx) -> double {
 		StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 		return sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
 	};
 
-	gsl_function F;
-	F.function = f;
-	F.params = &sf_and_props;
-
-	double result, error;
 	double rmin = 0;
 	double rmax = 5.0*re;
 
-	/**
-	 * Here, we integrate the SFR surface density profile out to rmax.
-	 */
-	gsl_integration_qags (&F, rmin, rmax, 0.02, 0.0, smax,
-	                        w, &result, &error);
-
-	gsl_integration_workspace_free (w);
+	StarFormationAndProps sf_and_props = {this, &props};
+	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.02, 0.0);
 
 	// Avoid negative values.
 	if(result <0){
