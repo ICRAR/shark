@@ -82,7 +82,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	};
 
 	double rmin = 0;
-	double rmax = 5.0*re;
+	double rmax = 3.0*re;
 
 	StarFormationAndProps sf_and_props = {this, &props};
 	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.02, 0.0);
