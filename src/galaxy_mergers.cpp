@@ -333,6 +333,10 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 	central->bulge_gas.rscale = central->bulge_stars.rscale;
 
+	// Black holes merge regardless of the merger type.
+	central->smbh.mass += satellite->smbh.mass;
+
+	central->smbh.mass_metals += satellite->smbh.mass_metals;
 
 	/**
 	 * Evaluate major mergers
@@ -350,6 +354,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->bulge_gas.mass += central->disk_gas.mass + satellite->gas_mass();
 
 		central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals + satellite->gas_mass_metals();
+
 
 		//Make all disk values 0.
 

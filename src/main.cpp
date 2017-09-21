@@ -23,7 +23,6 @@
 //
 
 #include <algorithm>
-#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -187,8 +186,6 @@ int run(int argc, char **argv) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
 
-		basic_physicalmodel->reset_ode_evaluations();
-
 		//Calculate the initial and final time of this snapshot.
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
@@ -230,20 +227,6 @@ int run(int argc, char **argv) {
 			writer.write_galaxies(snapshot, all_halos_this_snapshot);
 		}
 
-		// Some high-level ODE iteration count statistics
-		auto galaxy_ode_evaluations = basic_physicalmodel->get_galaxy_ode_evaluations();
-		auto galaxy_starburst_ode_evaluations = basic_physicalmodel->get_galaxy_starburst_ode_evaluations();
-		auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0, [](long n_galaxies, const HaloPtr &halo){
-			return n_galaxies + halo->galaxy_count();
-		});
-
-		LOG(info) << "During snapshot " << snapshot << " there were " << n_galaxies
-		          << " which generated " << galaxy_ode_evaluations << " galaxy ODE evaluations ("
-		          << std::setprecision(3) << std::fixed << static_cast<double>(galaxy_ode_evaluations) / n_galaxies
-		          << " [evals/gal])" << " and " << galaxy_starburst_ode_evaluations << " galaxy starburst ODE evaluations ("
-		          << std::setprecision(3) << std::fixed << static_cast<double>(galaxy_starburst_ode_evaluations) / n_galaxies
-		          << " [evals/gal])";
-
 		destroy_galaxies_this_snapshot(all_halos_this_snapshot);
 
 	}
@@ -255,7 +238,7 @@ int run(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 	try {
-		return shark::run(argc, argv);
+ 		return shark::run(argc, argv);
 	} catch (const shark::missing_option &e) {
 		std::cerr << "Missing option: " << e.what() << std::endl;
 		return 1;

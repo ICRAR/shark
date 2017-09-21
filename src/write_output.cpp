@@ -43,7 +43,7 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 		batch = "multiple_batches";
 	}
 
-	string fname = exec_params.output_directory + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + batch + "/galaxies.hdf5";
+	string fname = exec_params.output_directory + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.hdf5";
 
 	hdf5::Writer file(fname);
 
