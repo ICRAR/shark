@@ -139,9 +139,9 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 		star_comp = (parameters.gas_velocity_dispersion / veldisp_star) * Sigma_stars;
 	}
 
-	double pressure = PIO2 * G_MPCGYR2 * Sigma_gas * (Sigma_gas + star_comp); //in units of Msun/Mpc/Gyr^2.
+	double pressure = Pressure_Conv * Sigma_gas * (Sigma_gas + star_comp); //in units of K/cm^3.
 
-	return pressure * Pressure_SimUnits_cgs / k_Boltzmann_erg; //pressure in units of K/cm^3.
+	return pressure;
 }
 }  // namespace shark
 

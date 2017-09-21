@@ -132,7 +132,9 @@ namespace constants {
 	constexpr float Atomic_Mass_Hydrogen=1.00794, sqrtAtomic_Mass_Hydrogen=1.00396215; /*Mass of hydrogen in units of M_Atomic (Particle Data Book 2002, page 283).*/
 	constexpr float Atomic_Mass_Helium=4.002602; /*Mass of helium in units of M_Atomic (Particle Data Book 2002, page 283).*/
 
-	constexpr double Pressure_SimUnits_cgs = std::pow(MSOLAR_g,-1)*MPC2CM*std::pow(GYR2S,2); /*constant to convert pressure from Msun*Mpc^-2*Gyr^-2, to gr*cm^-1*s^-2.
+	constexpr double Pressure_SimUnits_cgs = std::pow(MSOLAR_g,-1)*MPC2CM*std::pow(GYR2S,2); /*constant to convert pressure from Msun*Mpc^-2*Gyr^-2, to gr*cm^-1*s^-2.*/
+
+	constexpr double Pressure_Conv =  PIO2 * G_MPCGYR2 / Pressure_SimUnits_cgs / k_Boltzmann_erg;
 
 	/*Electromagnetism.*/
 	constexpr float Permeability_of_Free_Space=4.0e-7*PI; /*Permeability of free space in units of N A^-2 (definition).*/
