@@ -71,6 +71,14 @@ public:
 
 	double midplane_pressure(double Sigma_gas, double Sigma_stars, double r);
 
+	unsigned long int get_integration_intervals() {
+		return integrator.get_num_intervals();
+	}
+
+	void reset_integration_intervals() {
+		return integrator.reset_num_intervals();
+	}
+
 private:
 	StarFormationParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
