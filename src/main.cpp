@@ -31,7 +31,7 @@
 #include <boost/program_options.hpp>
 #include <gsl/gsl_errno.h>
 
-#include "recycling.h"
+#include "agn_feedback.h"
 #include "config.h"
 #include "components.h"
 #include "cosmology.h"
@@ -44,9 +44,9 @@
 #include "physical_model.h"
 #include "simulation.h"
 #include "execution.h"
+#include "recycling.h"
 #include "reincorporation.h"
 #include "reionisation.h"
-#include "agn_feedback.h"
 #include "merger_tree_reader.h"
 #include "tree_builder.h"
 #include "write_output.h"

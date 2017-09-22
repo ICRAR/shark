@@ -12,10 +12,10 @@
 #include <numeric>
 #include <tuple>
 
+#include "logging.h"
 #include "components.h"
 #include "cosmology.h"
 #include "gas_cooling.h"
-#include "logging.h"
 #include "numerical_constants.h"
 #include "reincorporation.h"
 
