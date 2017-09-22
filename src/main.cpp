@@ -129,7 +129,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
 	   << "  Starburst ODE evaluations:            " << stats.starburst_ode_evaluations
 	   << " (" << fixed<3>(stats.starburst_ode_evaluations_per_galaxy()) << " [evals/gal])" << "\n"
 	   << "  Star formation integration intervals: " << stats.starform_integration_intervals
-	   << " (" << fixed<3>(stats.starform_integration_intervals_per_galaxy_ode_evaluations()) << " [ints/eval])"
+	   << " (" << fixed<3>(stats.starform_integration_intervals_per_galaxy_ode_evaluations()) << " [ints/eval])\n"
 	   << "  Time:                                 " << fixed<3>(stats.duration_millis / 1000.) << " [s]";
 	return os;
 }
