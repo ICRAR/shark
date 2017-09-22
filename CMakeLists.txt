@@ -122,8 +122,8 @@ set(SHARKLIB_SRCS
    src/ode_solver.cpp
    src/physical_model.cpp
    src/recycling.cpp
-   src/reionisation.cpp
    src/reincorporation.cpp
+   src/reionisation.cpp
    src/simulation.cpp
    src/star_formation.cpp
    src/stellar_feedback.cpp
