@@ -26,6 +26,7 @@
 #define SHARK_HDF5_TRAITS
 
 #include <hdf5.h>
+#include <H5Cpp.h>
 
 namespace shark {
 
@@ -33,6 +34,7 @@ namespace hdf5 {
 
 //
 // Traits for data type conversion
+// The references are set in traits.cpp
 //
 template <typename T>
 struct datatype_traits {
@@ -40,32 +42,32 @@ struct datatype_traits {
 
 template<>
 struct datatype_traits<std::string> {
-	static constexpr hid_t &write_type = H5T_C_S1_g;
-	static constexpr hid_t &native_type = H5T_C_S1_g;
+	static const H5::PredType &write_type;
 };
 
 template<>
 struct datatype_traits<float> {
-	static constexpr hid_t &write_type = H5T_NATIVE_FLOAT_g;
-	static constexpr hid_t &native_type = H5T_NATIVE_FLOAT_g;
+	static const H5::PredType &write_type;
 };
 
 template<>
 struct datatype_traits<double> {
-	static constexpr hid_t &write_type = H5T_NATIVE_FLOAT_g;
-	static constexpr hid_t &native_type = H5T_NATIVE_FLOAT_g;
+	static const H5::PredType &write_type;
 };
 
 template<>
 struct datatype_traits<int> {
-	static constexpr hid_t &write_type = H5T_NATIVE_INT16_g;
-	static constexpr hid_t &native_type = H5T_NATIVE_INT16_g;
+	static const H5::PredType &write_type;
+};
+
+template<>
+struct datatype_traits<long int> {
+	static const H5::PredType &write_type;
 };
 
 template<>
 struct datatype_traits<bool> {
-	static constexpr hid_t &write_type = H5T_NATIVE_INT16_g;
-	static constexpr hid_t &native_type = H5T_NATIVE_INT16_g;
+	static const H5::PredType &write_type;
 };
 
 

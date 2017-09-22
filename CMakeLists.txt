@@ -131,6 +131,7 @@ set(SHARKLIB_SRCS
    src/write_output.cpp
    src/hdf5/iobase.cpp
    src/hdf5/reader.cpp
+   src/hdf5/traits.cpp
    src/hdf5/writer.cpp
 )
 add_library(sharklib SHARED ${SHARKLIB_SRCS})
