@@ -151,7 +151,8 @@ public:
 			GasCooling gas_cooling,
 			StellarFeedback stellar_feedback,
 			StarFormation star_formation,
-			RecyclingParameters recycling_parameters);
+			RecyclingParameters recycling_parameters,
+			GasCoolingParameters gas_cooling_parameters);
 
 	std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy);
 	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t);
@@ -162,6 +163,7 @@ public:
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;
 	RecyclingParameters recycling_parameters;
+	GasCoolingParameters gas_cooling_parameters;
 
 	void reset_ode_evaluations() {
 		PhysicalModel::reset_ode_evaluations();

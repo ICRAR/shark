@@ -215,7 +215,7 @@ int run(int argc, char **argv) {
 	StellarFeedback stellar_feedback{stellar_feedback_params};
 	StarFormation star_formation{star_formation_params, cosmology};
 
-	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
+	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters, gas_cooling_params);
 
 	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel,agnfeedback};
 
@@ -236,7 +236,8 @@ int run(int argc, char **argv) {
 	// we loop over merger trees.
 	// Each merger trees has a set of halos at a given snapshot,
 	// which in turn contain galaxies.
-	WriteOutput writer(exec_params, cosmo_parameters, sim_params);
+	WriteOutput writer(exec_params, cosmo_parameters, sim_params, star_formation);
+
 	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot-1; snapshot++) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
@@ -282,7 +283,7 @@ int run(int argc, char **argv) {
 //		/*write snapshots only if the user wants outputs at this time.*/
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
 		{
-			//writer.write_galaxies(snapshot, all_halos_this_snapshot);
+			writer.write_galaxies(snapshot, all_halos_this_snapshot);
 		}
 
 		auto snapshot_time = std::chrono::steady_clock::now() - start;

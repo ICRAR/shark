@@ -196,7 +196,12 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 	throw invalid_option(os.str());
 }
 
-GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback, std::shared_ptr<DarkMatterHalos> darkmatterhalos, std::shared_ptr<Reincorporation> reincorporation) :
+GasCooling::GasCooling(GasCoolingParameters parameters,
+		ReionisationParameters reio_parameters,
+		std::shared_ptr<Cosmology> cosmology,
+		std::shared_ptr<AGNFeedback> agnfeedback,
+		std::shared_ptr<DarkMatterHalos> darkmatterhalos,
+		std::shared_ptr<Reincorporation> reincorporation) :
 	parameters(parameters),
 	reio_parameters(reio_parameters),
 	cosmology(cosmology),
@@ -258,13 +263,16 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     			mreinc_mass = subhalo.ejected_galaxy_gas.mass;
     		}
 
-    		double mreinc_mass_metals = mreinc_mass/subhalo.ejected_galaxy_gas.mass * subhalo.ejected_galaxy_gas.mass_metals;
+    		double mreinc_mass_metals = 0.0;
+    		// If reincorporation mass is >0 then modify gas budget.
+    		if(mreinc_mass > 0){
+    			mreinc_mass_metals = mreinc_mass/subhalo.ejected_galaxy_gas.mass * subhalo.ejected_galaxy_gas.mass_metals;
+        		subhalo.ejected_galaxy_gas.mass -= mreinc_mass;
+        		subhalo.ejected_galaxy_gas.mass_metals -= mreinc_mass_metals;
+        		subhalo.hot_halo_gas.mass += mreinc_mass;
+        		subhalo.hot_halo_gas.mass_metals += mreinc_mass_metals;
+    		}
 
-    		subhalo.hot_halo_gas.mass += mreinc_mass;
-    		subhalo.hot_halo_gas.mass_metals += mreinc_mass_metals;
-
-    		subhalo.ejected_galaxy_gas.mass -= mreinc_mass;
-    		subhalo.ejected_galaxy_gas.mass_metals -= mreinc_mass_metals;
 
     		// Avoid negative values.
     		if(subhalo.ejected_galaxy_gas.mass < constants::tolerance){

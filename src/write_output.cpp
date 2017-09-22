@@ -11,11 +11,14 @@
 #include <memory>
 #include <numeric>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 #include "components.h"
 #include "cosmology.h"
 #include "exceptions.h"
 #include "logging.h"
+#include "star_formation.h"
 #include "write_output.h"
 #include "utils.h"
 #include "hdf5/writer.h"
@@ -24,10 +27,11 @@ using namespace std;
 
 namespace shark {
 
-WriteOutput::WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, SimulationParameters sim_params):
+WriteOutput::WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, SimulationParameters sim_params, StarFormation starformation):
 	exec_params(exec_params),
 	cosmo_params(cosmo_params),
-	sim_params(sim_params)
+	sim_params(sim_params),
+	starformation(starformation)
 {
 	//no-opt
 }
@@ -77,6 +81,11 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	vector<float> mstars_metals_bulge;
 	vector<float> mgas_metals_disk;
 	vector<float> mgas_metals_bulge;
+	vector<float> mmol_disk;
+	vector<float> mmol_bulge;
+	vector<float> matom_disk;
+	vector<float> matom_bulge;
+
 	vector<float> mBH;
 
 	vector<float> sfr_disk;
@@ -135,6 +144,26 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 			auto reheated_subhalo = subhalo->ejected_galaxy_gas;
 
 			for (auto &galaxy: subhalo->galaxies){
+
+				//Calculate molecular gass mass of disk and bulge:
+				double m_mol = 0;
+				double m_atom = 0;
+				double m_mol_b = 0;
+				double m_atom_b = 0;
+				if(galaxy->disk_gas.mass > 0){
+					m_mol = starformation.molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, sim_params.redshifts[snapshot]);
+					m_atom = galaxy->disk_gas.mass - m_mol;
+				}
+				if(galaxy->bulge_gas.mass > 0){
+					m_mol_b = starformation.molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, sim_params.redshifts[snapshot]);
+					m_atom_b = galaxy->bulge_gas.mass - m_mol_b;
+				}
+
+				mmol_disk.push_back(m_mol);
+				mmol_bulge.push_back(m_mol_b);
+				matom_disk.push_back(m_atom);
+				matom_bulge.push_back(m_atom_b);
+
 				mstars_disk.push_back(galaxy->disk_stars.mass);
 				mstars_bulge.push_back(galaxy->bulge_stars.mass);
 				mgas_disk.push_back(galaxy->disk_gas.mass);
@@ -226,6 +255,10 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	file.write_dataset_v("Galaxies/mstars_metals_bulge", mstars_metals_bulge);
 	file.write_dataset_v("Galaxies/mgas_metals_disk", mgas_metals_disk);
 	file.write_dataset_v("Galaxies/mgas_metals_bulge", mgas_metals_bulge);
+	file.write_dataset_v("Galaxies/mmol_disk",mmol_disk);
+	file.write_dataset_v("Galaxies/mmol_bulge",mmol_bulge);
+	file.write_dataset_v("Galaxies/matom_disk",matom_disk);
+	file.write_dataset_v("Galaxies/matom_bulge",matom_bulge);
 
 	file.write_dataset_v("Galaxies/mBH", mBH);
 
@@ -255,6 +288,20 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 
 	file.write_dataset_v("Galaxies/id_subhalo", id_halo);
 	file.write_dataset_v("Galaxies/id_subhalo", id_halo);
+
+
+	string fname_ascii = exec_params.output_directory + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
+
+	fstream file_ascii;
+	file_ascii.open(fname_ascii, ios_base::out);
+
+	for (int i = 0; i <= mstars_disk.size()-1; i++){
+		file_ascii << mstars_disk[i] << " " << mstars_bulge[i] << " " << mgas_disk[i] << " " << mgas_metals_disk[i] <<" " << mgas_bulge[i] << " " << mBH[i] << " " << mhot[i] << " " << mreheated[i] << " " << mstars_disk[i]+mstars_bulge[i] << std::endl;
+	}
+
+	file_ascii.close();
+
+
 
 }
 

@@ -80,7 +80,12 @@ private:
 class GasCooling {
 
 public:
-	GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback, std::shared_ptr<DarkMatterHalos> darkmatterhalos, std::shared_ptr<Reincorporation> reincorporation);
+	GasCooling(GasCoolingParameters parameters,
+			ReionisationParameters reio_parameters,
+			std::shared_ptr<Cosmology> cosmology,
+			std::shared_ptr<AGNFeedback> agnfeedback,
+			std::shared_ptr<DarkMatterHalos> darkmatterhalos,
+			std::shared_ptr<Reincorporation> reincorporation);
 
 	double cooling_rate(Subhalo &subhalo, double z, double deltat);
 	double cooling_time(double Tvir, double logl, double nh_density);

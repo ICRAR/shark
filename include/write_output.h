@@ -14,6 +14,7 @@
 #include "cosmology.h"
 #include "execution.h"
 #include "simulation.h"
+#include "star_formation.h"
 
 namespace shark {
 
@@ -21,7 +22,7 @@ class WriteOutput{
 
 public:
 
-	WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  SimulationParameters sim_params);
+	WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  SimulationParameters sim_params, StarFormation starformation);
 
 	void write_galaxies(int snapshot, const std::vector<HaloPtr> &halos);
 
@@ -30,6 +31,7 @@ private:
 	ExecutionParameters exec_params;
 	SimulationParameters sim_params;
 	CosmologicalParameters cosmo_params;
+	StarFormation starformation;
 
 };
 

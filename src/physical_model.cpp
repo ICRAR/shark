@@ -55,14 +55,14 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	double beta = model.stellar_feedback.outflow_rate(SFR, params->v); /*mass loading parameter*/
 
-	double zcold = 0.0; /*cold gas metallicity*/
+	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas metallicity*/
 
-	if(y[1] > 0) {
+	if(y[1] > 0 && y[5] > 0) {
 		zcold = y[5] / y[1];
 	}
 
-	double zhot = 0.0; /*hot gas metallicity*/
-	if(y[2] > 0) {
+	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*hot gas metallicity*/
+	if(y[2] > 0 && y[6] > 0) {
 		zhot = y[6] / y[2];
 	}
 
@@ -89,11 +89,13 @@ BasicPhysicalModel::BasicPhysicalModel(
 		GasCooling gas_cooling,
 		StellarFeedback stellar_feedback,
 		StarFormation star_formation,
-		RecyclingParameters recycling_parameters) :
+		RecyclingParameters recycling_parameters,
+		GasCoolingParameters gas_cooling_parameters) :
 	PhysicalModel(ode_solver_precision, basic_physicalmodel_evaluator, gas_cooling),
 	stellar_feedback(stellar_feedback),
 	star_formation(star_formation),
-	recycling_parameters(recycling_parameters)
+	recycling_parameters(recycling_parameters),
+	gas_cooling_parameters(gas_cooling_parameters)
 {
 	// no-op
 }
