@@ -51,7 +51,7 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 
 	hdf5::Writer file(fname);
 
-	file.write_dataset_v("runInfo/batches", exec_params.simulation_batches);
+	file.write_dataset("runInfo/batches", exec_params.simulation_batches);
 	file.write_attribute("runInfo/model_name", exec_params.name_model);
 	file.write_attribute("runInfo/ode_solver_precision", exec_params.ode_solver_precision);
 	file.write_attribute("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants);
@@ -247,47 +247,47 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 		}
 	}
 
-	file.write_dataset_v("Galaxies/mstars_disk", mstars_disk);
-	file.write_dataset_v("Galaxies/mstars_bulge", mstars_bulge);
-	file.write_dataset_v("Galaxies/mgas_disk", mgas_disk);
-	file.write_dataset_v("Galaxies/mgas_bulge", mgas_bulge);
-	file.write_dataset_v("Galaxies/mstars_metals_disk",mstars_metals_disk);
-	file.write_dataset_v("Galaxies/mstars_metals_bulge", mstars_metals_bulge);
-	file.write_dataset_v("Galaxies/mgas_metals_disk", mgas_metals_disk);
-	file.write_dataset_v("Galaxies/mgas_metals_bulge", mgas_metals_bulge);
-	file.write_dataset_v("Galaxies/mmol_disk",mmol_disk);
-	file.write_dataset_v("Galaxies/mmol_bulge",mmol_bulge);
-	file.write_dataset_v("Galaxies/matom_disk",matom_disk);
-	file.write_dataset_v("Galaxies/matom_bulge",matom_bulge);
+	file.write_dataset("Galaxies/mstars_disk", mstars_disk);
+	file.write_dataset("Galaxies/mstars_bulge", mstars_bulge);
+	file.write_dataset("Galaxies/mgas_disk", mgas_disk);
+	file.write_dataset("Galaxies/mgas_bulge", mgas_bulge);
+	file.write_dataset("Galaxies/mstars_metals_disk",mstars_metals_disk);
+	file.write_dataset("Galaxies/mstars_metals_bulge", mstars_metals_bulge);
+	file.write_dataset("Galaxies/mgas_metals_disk", mgas_metals_disk);
+	file.write_dataset("Galaxies/mgas_metals_bulge", mgas_metals_bulge);
+	file.write_dataset("Galaxies/mmol_disk",mmol_disk);
+	file.write_dataset("Galaxies/mmol_bulge",mmol_bulge);
+	file.write_dataset("Galaxies/matom_disk",matom_disk);
+	file.write_dataset("Galaxies/matom_bulge",matom_bulge);
 
-	file.write_dataset_v("Galaxies/mBH", mBH);
+	file.write_dataset("Galaxies/mBH", mBH);
 
-	file.write_dataset_v("Galaxies/rdisk", rdisk);
-	file.write_dataset_v("Galaxies/rbulge", rbulge);
+	file.write_dataset("Galaxies/rdisk", rdisk);
+	file.write_dataset("Galaxies/rbulge", rbulge);
 
-	file.write_dataset_v("Galaxies/mhot", mhot);
-	file.write_dataset_v("Galaxies/mhot_metals", mhot_metals);
-	file.write_dataset_v("Galaxies/mreheated", mreheated);
-	file.write_dataset_v("Galaxies/mreheated_metals", mreheated_metals);
+	file.write_dataset("Galaxies/mhot", mhot);
+	file.write_dataset("Galaxies/mhot_metals", mhot_metals);
+	file.write_dataset("Galaxies/mreheated", mreheated);
+	file.write_dataset("Galaxies/mreheated_metals", mreheated_metals);
 
-	file.write_dataset_v("Galaxies/mvir_hosthalo", mvir_hosthalo);
-	file.write_dataset_v("Galaxies/mvir_subhalo", mvir_subhalo);
-	file.write_dataset_v("Galaxies/vmax_subhalo", vmax_subhalo);
-	file.write_dataset_v("Galaxies/vvir_hosthalo", vvir_hosthalo);
-	file.write_dataset_v("Galaxies/cnfw_subhalo", cnfw_subhalo);
+	file.write_dataset("Galaxies/mvir_hosthalo", mvir_hosthalo);
+	file.write_dataset("Galaxies/mvir_subhalo", mvir_subhalo);
+	file.write_dataset("Galaxies/vmax_subhalo", vmax_subhalo);
+	file.write_dataset("Galaxies/vvir_hosthalo", vvir_hosthalo);
+	file.write_dataset("Galaxies/cnfw_subhalo", cnfw_subhalo);
 
-	file.write_dataset_v("Galaxies/position_x", position_x);
-	file.write_dataset_v("Galaxies/position_y", position_y);
-	file.write_dataset_v("Galaxies/position_z", position_z);
+	file.write_dataset("Galaxies/position_x", position_x);
+	file.write_dataset("Galaxies/position_y", position_y);
+	file.write_dataset("Galaxies/position_z", position_z);
 
-	file.write_dataset_v("Galaxies/velocity_x", velocity_x);
-	file.write_dataset_v("Galaxies/velocity_y", velocity_y);
-	file.write_dataset_v("Galaxies/velocity_z", velocity_z);
+	file.write_dataset("Galaxies/velocity_x", velocity_x);
+	file.write_dataset("Galaxies/velocity_y", velocity_y);
+	file.write_dataset("Galaxies/velocity_z", velocity_z);
 
-	file.write_dataset_v("Galaxies/type", type);
+	file.write_dataset("Galaxies/type", type);
 
-	file.write_dataset_v("Galaxies/id_subhalo", id_halo);
-	file.write_dataset_v("Galaxies/id_subhalo", id_halo);
+	file.write_dataset("Galaxies/id_subhalo", id_halo);
+	file.write_dataset("Galaxies/id_subhalo", id_halo);
 
 
 	string fname_ascii = exec_params.output_directory + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
