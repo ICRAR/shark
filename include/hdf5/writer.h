@@ -25,6 +25,7 @@
 #ifndef SHARK_HDF5_WRITER_H_
 #define SHARK_HDF5_WRITER_H_
 
+#include <iterator>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -51,24 +52,94 @@ public:
 	object_exists(const std::string &what) : exception(what) {}
 };
 
+// How we construct data types depends on the type
+template <typename T>
+static inline
+H5::DataType _datatype(const T &val)
+{
+	return H5::DataType(datatype_traits<T>::write_type);
+}
+
+template <>
+inline
+H5::DataType _datatype<std::string>(const std::string &val)
+{
+	return H5::StrType(H5::PredType::C_S1, val.size());
+}
+
+// Overwriting for vectors of values
+template <typename T>
+static inline
+H5::DataType _datatype(const std::vector<T> &val)
+{
+	return H5::DataType(datatype_traits<T>::write_type);
+}
+
+template <>
+inline
+H5::DataType _datatype<std::string>(const std::vector<std::string> &val)
+{
+	return H5::StrType(H5::PredType::C_S1, H5T_VARIABLE);
+}
 
 // How we write attributes, depending on the data type
 // Strings need some special treatment, so we specialise for them
+template <typename T>
+static inline
+H5::DataType _write_attribute(const H5::Attribute &attr, const H5::DataType &dataType, const T &val)
+{
+	attr.write(dataType, &val);
+}
+
+template <>
+inline
+H5::DataType _write_attribute<std::string>(const H5::Attribute &attr, const H5::DataType &dataType, const std::string &val)
+{
+	attr.write(dataType, val);
+}
+
+// How we write datasets, depending on the data type
+template <typename T>
+static inline
+H5::DataType _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const T &val)
+{
+	dataset.write(&val, dataType, dataSpace, dataSpace);
+}
+
+// Specialization for strings, for which there is a specific .write method
+template <>
+inline
+H5::DataType _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::string &val)
+{
+	dataset.write(val, dataType, dataSpace, dataSpace);
+}
+
+// Overwriting of _write_datasets for vectors
+template <typename T>
+static inline
+H5::DataType _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<T> &vals)
+{
+	dataset.write(vals.data(), dataType, dataSpace, dataSpace);
+}
+
+// and specializing for vectors of strings
+template <>
+inline
+H5::DataType _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<std::string> &vals)
+{
+	std::vector<const char *> c_strings;
+	std::transform(vals.begin(), vals.end(), std::back_inserter(c_strings), [](const std::string &s) {
+		return s.c_str();
+	});
+	dataset.write(c_strings.data(), dataType, dataSpace, dataSpace);
+}
+
 template<typename T>
 static inline
 void _create_and_write_attribute(H5::H5Location &loc, const std::string &name, const T &value) {
-	H5::DataType dataType(datatype_traits<T>::write_type);
+	H5::DataType dataType = _datatype<T>(value);
 	auto attr = loc.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
-	attr.write(H5::DataType(datatype_traits<T>::native_type), &value);
-}
-
-template<>
-inline
-void _create_and_write_attribute<std::string>(H5::H5Location &loc, const std::string &name, const std::string &value) {
-	H5::StrType dataType(H5::PredType::C_S1, value.size());
-	hsize_t size = value.size();
-	auto attr = loc.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
-	attr.write(dataType, value);
+	_write_attribute<T>(attr, dataType, value);
 }
 
 
@@ -114,45 +185,22 @@ public:
 
 	template<typename T>
 	void write_dataset(const std::string &name, const T &value) {
-		std::vector<std::string> parts = tokenize(name, "/");
 		H5::DataSpace dataSpace(H5S_SCALAR);
-		H5::StrType dataType(H5::PredType::NATIVE_CHAR);
-		auto dataset = ensure_dataset(parts, dataType, dataSpace);
-		_write_dataset(dataset, value);
+		H5::DataType dataType = _datatype<T>(value);
+		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
+		_write_dataset(dataset, dataType, dataSpace, value);
 	}
 
 	template<typename T>
-	void write_dataset_v(const std::string &name, const std::vector<T> &values) {
-		std::vector<std::string> parts = tokenize(name, "/");
+	void write_dataset(const std::string &name, const std::vector<T> &values) {
 		const hsize_t size = values.size();
 		H5::DataSpace dataSpace(1, &size);
-		H5::StrType dataType(H5::PredType::NATIVE_CHAR);
-		auto dataset = ensure_dataset(parts, dataType, dataSpace);
-		_write_dataset_v(dataset, values);
+		H5::DataType dataType = _datatype<T>(values);
+		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
+		_write_dataset(dataset, dataType, dataSpace, values);
 	}
 
 private:
-
-	template<typename T>
-	void _write_dataset(const H5::DataSet &dataset, const T &data) {
-
-		H5::DataSpace space = get_1d_dataspace(dataset);
-		hsize_t dim_size = get_1d_dimsize(space);
-		if ( dim_size != 1 ) {
-			std::ostringstream os;
-			os << "More than 1 element found in dataset " << dataset.getObjName();
-			throw std::runtime_error(os.str());
-		}
-
-		dataset.write(&data, dataset.getDataType(), space, space);
-	}
-
-	template<typename T>
-	void _write_dataset_v(const H5::DataSet &dataset, const std::vector<T> &data) {
-		H5::DataSpace space = get_1d_dataspace(dataset);
-		hsize_t dim_size = get_1d_dimsize(space);
-		dataset.write(data.data(), dataset.getDataType(), space, space);
-	}
 
 	H5::Group ensure_group(const std::vector<std::string> &path) const;
 	H5::DataSet ensure_dataset(const std::vector<std::string> &path, const H5::DataType &dataType, const H5::DataSpace &dataSpace) const;
