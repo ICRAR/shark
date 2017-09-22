@@ -39,7 +39,7 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr<Cosmology> cosmology) :
 	parameters(parameters),
 	cosmology(cosmology),
-	integrator(1000)
+	integrator(10000)
 {
 	// no-op
 }
