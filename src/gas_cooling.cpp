@@ -12,11 +12,12 @@
 #include <numeric>
 #include <tuple>
 
+#include "components.h"
 #include "cosmology.h"
 #include "gas_cooling.h"
 #include "logging.h"
 #include "numerical_constants.h"
-#include "components.h"
+#include "reincorporation.h"
 
 using namespace std;
 
@@ -195,15 +196,16 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 	throw invalid_option(os.str());
 }
 
-GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback, std::shared_ptr<DarkMatterHalos> darkmatterhalos) :
+GasCooling::GasCooling(GasCoolingParameters parameters, ReionisationParameters reio_parameters, std::shared_ptr<Cosmology> cosmology, std::shared_ptr<AGNFeedback> agnfeedback, std::shared_ptr<DarkMatterHalos> darkmatterhalos, std::shared_ptr<Reincorporation> reincorporation) :
 	parameters(parameters),
 	reio_parameters(reio_parameters),
 	cosmology(cosmology),
 	agnfeedback(agnfeedback),
 	darkmatterhalos(darkmatterhalos),
+	reincorporation(reincorporation),
 	cooling_lambda_interpolator(parameters.cooling_table.get_temperatures(), parameters.cooling_table.get_metallicities(), parameters.cooling_table.get_lambda())
 {
-
+	//no-opt
 }
 
 double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
@@ -249,16 +251,39 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     	}
     	else {
 
+    		// Calculate reincorporated mass and metals.
+    		double mreinc_mass = reincorporation->reincorporated_mass_rate(halo) * deltat;
 
-    		//TODO: see if here it should be total mass for both Croton and Benson models. Probably I should do the reincorporation here.
+    		if(mreinc_mass > subhalo.ejected_galaxy_gas.mass){
+    			mreinc_mass = subhalo.ejected_galaxy_gas.mass;
+    		}
 
+    		double mreinc_mass_metals = mreinc_mass/subhalo.ejected_galaxy_gas.mass * subhalo.ejected_galaxy_gas.mass_metals;
+
+    		subhalo.hot_halo_gas.mass += mreinc_mass;
+    		subhalo.hot_halo_gas.mass_metals += mreinc_mass_metals;
+
+    		subhalo.ejected_galaxy_gas.mass -= mreinc_mass;
+    		subhalo.ejected_galaxy_gas.mass_metals -= mreinc_mass_metals;
+
+    		// Avoid negative values.
+    		if(subhalo.ejected_galaxy_gas.mass < constants::tolerance){
+    			subhalo.ejected_galaxy_gas.mass = 0;
+    			subhalo.ejected_galaxy_gas.mass_metals =0;
+    		}
+    		if(subhalo.ejected_galaxy_gas.mass_metals < 0){
+    			subhalo.ejected_galaxy_gas.mass_metals = 0;
+    		}
+
+    		// Add up accreted mass and metals.
     		subhalo.hot_halo_gas.mass += (subhalo.accreted_mass * cosmology->parameters.OmegaB);
+    		subhalo.hot_halo_gas.mass_metals += (subhalo.accreted_mass * cosmology->parameters.OmegaB * parameters.pre_enrich_z);
 
     		/**
     		 * We need to convert masses and velocities to physical units before proceeding with calculation.
     		 */
-    		double mhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass+subhalo.cold_halo_gas.mass+subhalo.ejected_galaxy_gas.mass);
-    		double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals+subhalo.ejected_galaxy_gas.mass_metals);
+    		double mhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass+subhalo.cold_halo_gas.mass);
+    		double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals);
 
     		double vvir = halo->Vvir; //cosmology->comoving_to_physical_velocity(subhalo.Vvir, z);
     		double mvir = cosmology->comoving_to_physical_mass(halo->Mvir);

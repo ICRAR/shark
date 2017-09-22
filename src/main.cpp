@@ -44,6 +44,7 @@
 #include "physical_model.h"
 #include "simulation.h"
 #include "execution.h"
+#include "reincorporation.h"
 #include "reionisation.h"
 #include "agn_feedback.h"
 #include "merger_tree_reader.h"
@@ -148,6 +149,7 @@ int run(int argc, char **argv) {
 	GasCoolingParameters gas_cooling_params(config_file);
 	RecyclingParameters recycling_parameters(config_file);
 	ReionisationParameters reio_params(config_file);
+	ReincorporationParameters reinc_params(config_file);
 	SimulationParameters sim_params(config_file);
 	StellarFeedbackParameters stellar_feedback_params(config_file);
 	StarFormationParameters star_formation_params(config_file);
@@ -155,9 +157,10 @@ int run(int argc, char **argv) {
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(cosmo_parameters);
 	std::shared_ptr<DarkMatterHalos> dark_matter_halos = std::make_shared<DarkMatterHalos>(dark_matter_halo_parameters, cosmology, sim_params);
 	std::shared_ptr<AGNFeedback> agnfeedback = std::make_shared<AGNFeedback>(agn_params, cosmology);
+	std::shared_ptr<Reincorporation> reincorporation = std::make_shared<Reincorporation>(reinc_params, dark_matter_halos);
 
 	Simulation simulation{sim_params, cosmology};
-	GasCooling gas_cooling{gas_cooling_params, reio_params, cosmology, agnfeedback, dark_matter_halos};
+	GasCooling gas_cooling{gas_cooling_params, reio_params, cosmology, agnfeedback, dark_matter_halos, reincorporation};
 	StellarFeedback stellar_feedback{stellar_feedback_params};
 	StarFormation star_formation{star_formation_params, cosmology};
 

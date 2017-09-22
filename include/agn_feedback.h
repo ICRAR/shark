@@ -65,7 +65,7 @@ private:
 	std::shared_ptr<Cosmology> cosmology;
 };
 
-}
+} //end namespace shark
 
 
 #endif /* INCLUDE_AGN_FEEDBACK_H_ */

@@ -67,7 +67,7 @@ double Integrator::integrate(func_t f, void *params, double from, double to, dou
 	F.params = params;
 
 	double result, abserr;
-	int key = 1;
+	int key = 2;
 	//gsl_integration_qags(&F, from, to, epsabs, epsrel, max_samples, workspace.get(), &result, &abserr);
 	// Adopt a 15 point Gauss-Kronrod rule.
 	gsl_integration_qag(&F, from, to, epsabs, epsrel, max_samples, 1, workspace.get(), &result, &abserr);

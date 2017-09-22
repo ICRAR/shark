@@ -51,7 +51,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	double mcoolrate = params->mcoolrate; /*cooling rate in units of Msun/Gyr*/
 
-	double SFR = y[1] * 0.5; //model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, params->redshift);
+	double SFR = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, params->redshift);
 
 	double beta = model.stellar_feedback.outflow_rate(SFR, params->v); /*mass loading parameter*/
 
