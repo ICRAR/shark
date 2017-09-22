@@ -40,9 +40,20 @@ IOBase::IOBase(const string &filename, unsigned int flags) :
 	// no-op
 }
 
+IOBase::IOBase() :
+	hdf5_file()
+{
+	// no-op
+}
+
 IOBase::~IOBase()
 {
 	hdf5_file.close();
+}
+
+void IOBase::open_file(const std::string &filename, unsigned int flags)
+{
+	hdf5_file.openFile(filename, flags);
 }
 
 const string IOBase::get_filename() const

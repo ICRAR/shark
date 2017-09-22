@@ -39,6 +39,11 @@ class IOBase {
 public:
 
 	/**
+	 * Creates a new IOBase instance without opening a file
+	 */
+	IOBase();
+
+	/**
 	 * Opens the given file in the given mode
 	 *
 	 * @param filename The HDF5 filename
@@ -56,6 +61,14 @@ public:
 	 * @return The filename being handled by this class
 	 */
 	const std::string get_filename() const;
+
+	/**
+	 * Opens the given file in the given mode
+	 *
+	 * @param filename the HDF5 filename
+	 * @param flags The mode in which the file will be opened
+	 */
+	void open_file(const std::string &filename, unsigned int flags);
 
 protected:
 	H5::DataSpace get_1d_dataspace(const H5::DataSet &dataset) const;
