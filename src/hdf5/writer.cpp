@@ -48,7 +48,7 @@ Writer::Writer(const std::string &filename, bool overwrite) :
 	}
 
 	LOG(info) << "Opening " << filepath.normalize() << " for writing";
-	open_file(filename, H5F_ACC_RDWR | (overwrite ? H5F_ACC_CREAT : H5F_ACC_EXCL));
+	open_file(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL);
 }
 
 

@@ -53,7 +53,7 @@ IOBase::~IOBase()
 
 void IOBase::open_file(const std::string &filename, unsigned int flags)
 {
-	hdf5_file.openFile(filename, flags);
+	hdf5_file = H5::H5File(filename, flags);
 }
 
 const string IOBase::get_filename() const
