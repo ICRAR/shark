@@ -22,6 +22,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	accretion_eff_bursts(0),
 	kappa_agn(0),
 	nu_smbh(0),
+	f_smbh(0),
 	model(GALFORM)
 {
 	options.load("agn_feedback.mseed",mseed);
@@ -30,6 +31,8 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	options.load("agn_feedback.model", model);
 	options.load("agn_feedback.alpha_cool",alpha_cool);
 	options.load("agn_feedback.f_edd",f_edd);
+	options.load("agn_feedback.f_smbh", f_smbh);
+
 	options.load("agn_feedback.accretion_eff_cooling",accretion_eff_cooling);
 	options.load("agn_feedback.accretion_eff_bursts",accretion_eff_bursts);
 
@@ -112,6 +115,10 @@ double AGNFeedback::agn_bolometric_luminosity(double macc) {
 	using namespace constants;
 
 	return parameters.nu_smbh * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2) / std::pow(10,40);
+}
+
+double AGNFeedback::smbh_growth_starburst(double mgas){
+	return parameters.f_smbh * mgas;
 }
 
 } // namespace shark

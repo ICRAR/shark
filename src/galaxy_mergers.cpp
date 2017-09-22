@@ -13,6 +13,7 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
 
+#include "agn_feedback.h"
 #include "components.h"
 #include "galaxy_mergers.h"
 #include "numerical_constants.h"
@@ -43,10 +44,11 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 
 }
 
-GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel) :
+GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel, std::shared_ptr<AGNFeedback> agnfeedback) :
 	parameters(parameters),
 	darkmatterhalo(darkmatterhalo),
-	physicalmodel(physicalmodel)
+	physicalmodel(physicalmodel),
+	agnfeedback(agnfeedback)
 {
 	// no-op
 }
@@ -348,22 +350,27 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		 */
 
 		central->bulge_stars.mass += central->disk_stars.mass + satellite->stellar_mass();
-
 		central->bulge_stars.mass_metals += central->disk_stars.mass_metals + satellite->stellar_mass_metals();
-
 		central->bulge_gas.mass += central->disk_gas.mass + satellite->gas_mass();
-
 		central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals + satellite->gas_mass_metals();
 
+		// calculate black hole growth due to starburst.
+		double delta_mbh = agnfeedback->smbh_growth_starburst(central->bulge_gas.mass);
+		double delta_mzbh = delta_mbh/central->bulge_gas.mass * central->bulge_gas.mass_metals;
+
+		// Grow SMBH.
+		central->smbh.mass += delta_mbh;
+		central->smbh.mass_metals += delta_mzbh;
+
+		// Reduce gas available for star formation due to black hole growth.
+		central->bulge_gas.mass -= delta_mbh;
+		central->bulge_gas.mass_metals -= delta_mzbh;
 
 		//Make all disk values 0.
 
 		central->disk_stars.mass = 0;
-
 		central->disk_stars.mass_metals = 0;
-
 		central->disk_gas.mass = 0;
-
 		central->disk_gas.mass_metals = 0;
 
 		/**
@@ -391,6 +398,26 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 			/**
 			 * Triger starburst with available gas.
 			 */
+
+			central->bulge_gas.mass += central->disk_gas.mass;
+			central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals;
+
+			// calculate black hole growth due to starburst.
+			double delta_mbh = agnfeedback->smbh_growth_starburst(central->bulge_gas.mass);
+			double delta_mzbh = delta_mbh/central->bulge_gas.mass * central->bulge_gas.mass_metals;
+
+			// Grow SMBH.
+			central->smbh.mass += delta_mbh;
+			central->smbh.mass_metals += delta_mzbh;
+
+			// Reduce gas available for star formation due to black hole growth.
+			central->bulge_gas.mass -= delta_mbh;
+			central->bulge_gas.mass_metals -= delta_mzbh;
+
+			//Make gas disk values 0.
+			central->disk_gas.mass = 0;
+			central->disk_gas.mass_metals = 0;
+
 			physicalmodel->evolve_galaxy_starburst(*central_subhalo, *central, z, delta_t);
 
 		}

@@ -28,6 +28,7 @@ public:
 	double mhalo_seed;
 	double alpha_cool;
 	double f_edd;
+	double f_smbh;
 	double accretion_eff_cooling;
 	double accretion_eff_bursts;
 	double kappa_agn;
@@ -55,6 +56,7 @@ public:
 	double eddington_luminosity(double mbh);
 	double accretion_rate_hothalo_smbh(double Lcool, double mbh);
 	double agn_bolometric_luminosity(double macc);
+	double smbh_growth_starburst(double mgas);
 
 	// TODO: move this to private when possible
 	AGNFeedbackParameters parameters;

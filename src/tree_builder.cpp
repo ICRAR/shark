@@ -283,6 +283,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 				// this subhalo has no descendants, let's not even try
 				if (!subhalo->has_descendant) {
 					LOG(debug) << subhalo << " has no descendant, not following";
+					halo->remove_subhalo(subhalo);
 					continue;
 				}
 

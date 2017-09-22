@@ -11,6 +11,7 @@
 #include <memory>
 #include <vector>
 
+#include "agn_feedback.h"
 #include "components.h"
 #include "dark_matter_halos.h"
 #include "options.h"
@@ -51,7 +52,7 @@ class GalaxyMergerParameters {
 class GalaxyMergers{
 
 public:
-	GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel);
+	GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel, std::shared_ptr<AGNFeedback> agnfeedback);
 
 	void orbital_parameters(double &vr, double &vt, double f);
 
@@ -80,6 +81,7 @@ private:
 	GalaxyMergerParameters parameters;
 	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
+	std::shared_ptr<AGNFeedback> agnfeedback;
 
 };
 

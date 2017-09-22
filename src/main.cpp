@@ -163,7 +163,7 @@ int run(int argc, char **argv) {
 
 	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters);
 
-	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel};
+	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel,agnfeedback};
 
 	HaloBasedTreeBuilder tree_builder(exec_params);
 
@@ -216,10 +216,10 @@ int run(int argc, char **argv) {
 
 				LOG(debug) << "Galaxy baryon mass of central galaxy: " << halo->central_subhalo->central_galaxy()->baryon_mass();
 
-				/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
-				transfer_galaxies_to_next_snapshot(halo);
+
 			}
 		}
+
 
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		//do_stuff_at_halo_level(all_halos_this_snapshot);
@@ -227,7 +227,7 @@ int run(int argc, char **argv) {
 //		/*write snapshots only if the user wants outputs at this time.*/
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
 		{
-			writer.write_galaxies(snapshot, all_halos_this_snapshot);
+			//writer.write_galaxies(snapshot, all_halos_this_snapshot);
 		}
 
 		// Some high-level ODE iteration count statistics
@@ -244,10 +244,13 @@ int run(int argc, char **argv) {
 		          << std::setprecision(3) << std::fixed << static_cast<double>(galaxy_starburst_ode_evaluations) / n_galaxies
 		          << " [evals/gal])";
 
-		destroy_galaxies_this_snapshot(all_halos_this_snapshot);
+
+		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
+		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot);
 
 	}
 
+	LOG(info) << "Successfully finished";
 	return 0;
 }
 

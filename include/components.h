@@ -565,6 +565,21 @@ public:
 		return all;
 	}
 
+	void remove_subhalo(SubhaloPtr subhalo) {
+
+		if (subhalo == central_subhalo) {
+			central_subhalo.reset();
+			return;
+		}
+
+		auto it = std::find(satellite_subhalos.begin(), satellite_subhalos.end(), subhalo);
+		if (it == satellite_subhalos.end()) {
+			throw "subhalo not in satellites";
+		}
+		satellite_subhalos.erase(it);
+
+	}
+
 	/**
 	 * The mass contained in the subhalos.
 	 * This quantity should be =1 for classic SAMs, but with Rodrigo Canas work
