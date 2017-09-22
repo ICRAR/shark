@@ -27,23 +27,26 @@
 
 namespace shark {
 
-Integrator::Integrator(size_t max_samples) :
+Integrator::Integrator(size_t max_intervals) :
 	workspace(),
-	max_samples(max_samples)
+	max_intervals(max_intervals),
+	num_intervals(0)
 {
 	init_gsl_objects();
 }
 
 Integrator::Integrator(Integrator &&other) :
 	workspace(),
-	max_samples(other.max_samples)
+	max_intervals(other.max_intervals),
+	num_intervals(other.num_intervals)
 {
 	std::swap(workspace, other.workspace);
 }
 
 Integrator::Integrator(const Integrator &other) :
 	workspace(),
-	max_samples(other.max_samples)
+	max_intervals(other.max_intervals),
+	num_intervals(other.num_intervals)
 {
 	init_gsl_objects();
 }
@@ -57,7 +60,7 @@ Integrator::~Integrator()
 
 void Integrator::init_gsl_objects()
 {
-	workspace.reset(gsl_integration_workspace_alloc(max_samples));
+	workspace.reset(gsl_integration_workspace_alloc(max_intervals));
 }
 
 double Integrator::integrate(func_t f, void *params, double from, double to, double epsabs, double epsrel)
@@ -70,9 +73,19 @@ double Integrator::integrate(func_t f, void *params, double from, double to, dou
 	int key = 2;
 	//gsl_integration_qags(&F, from, to, epsabs, epsrel, max_samples, workspace.get(), &result, &abserr);
 	// Adopt a 15 point Gauss-Kronrod rule.
-	gsl_integration_qag(&F, from, to, epsabs, epsrel, max_samples, 1, workspace.get(), &result, &abserr);
+	gsl_integration_qag(&F, from, to, epsabs, epsrel, max_intervals, 1, workspace.get(), &result, &abserr);
+	num_intervals += workspace->size;
 	return result;
 }
 
+unsigned long int Integrator::get_num_intervals()
+{
+	return num_intervals;
+}
+
+void Integrator::reset_num_intervals()
+{
+	num_intervals = 0;
+}
 
 }  // namespace shark

@@ -546,6 +546,20 @@ public:
 	 */
 	std::vector<SubhaloPtr> satellite_subhalos;
 
+	///
+	/// Returns the total number of subhalos contained in this halo
+	///
+	unsigned long subhalo_count() {
+		unsigned int count = (central_subhalo ? 1 : 0);
+		return count + satellite_subhalos.size();
+	}
+
+	///
+	/// Returns a new vector containing pointers to all subhalos contained in
+	/// this halo (i.e., the central and satellite subhalos).
+	///
+	/// @return A vector with all subhalos
+	///
 	std::vector<SubhaloPtr> all_subhalos() {
 
 		std::vector<SubhaloPtr> all;

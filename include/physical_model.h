@@ -162,6 +162,16 @@ public:
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;
 	RecyclingParameters recycling_parameters;
+
+	void reset_ode_evaluations() {
+		PhysicalModel::reset_ode_evaluations();
+		star_formation.reset_integration_intervals();
+	}
+
+	unsigned long int get_star_formation_integration_intervals() {
+		return star_formation.get_integration_intervals();
+	}
+
 };
 
 }  // namespace shark

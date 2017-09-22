@@ -23,7 +23,7 @@
 //
 
 #include <algorithm>
-#include <iomanip>
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -50,6 +50,7 @@
 #include "merger_tree_reader.h"
 #include "tree_builder.h"
 #include "write_output.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -82,6 +83,56 @@ void throw_exception_gsl_handler(const char *reason, const char *file, int line,
 
 void install_gsl_error_handler() {
 	gsl_set_error_handler(&throw_exception_gsl_handler);
+}
+
+struct SnapshotStatistics {
+
+	int snapshot;
+	unsigned long starform_integration_intervals;
+	unsigned long galaxy_ode_evaluations;
+	unsigned long starburst_ode_evaluations;
+	unsigned long n_halos;
+	unsigned long n_subhalos;
+	unsigned long n_galaxies;
+	unsigned long duration_millis;
+
+	double galaxy_ode_evaluations_per_galaxy() const {
+		if (n_galaxies == 0) {
+			return 0;
+		}
+		return static_cast<double>(galaxy_ode_evaluations) / n_galaxies;
+	}
+
+	double starburst_ode_evaluations_per_galaxy() const {
+		if (n_galaxies == 0) {
+			return 0;
+		}
+		return static_cast<double>(starburst_ode_evaluations) / n_galaxies;
+	}
+
+	double starform_integration_intervals_per_galaxy_ode_evaluations() const {
+		if (galaxy_ode_evaluations == 0) {
+			return 0;
+		}
+		return static_cast<double>(starform_integration_intervals) / galaxy_ode_evaluations;
+	}
+};
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStatistics &stats)
+{
+	os << "Snapshot " << stats.snapshot << "\n"
+	   << "  Number of halos:                      " << stats.n_halos << "\n"
+	   << "  Number of subhalos:                   " << stats.n_subhalos << "\n"
+	   << "  Number of galaxies:                   " << stats.n_galaxies << "\n"
+	   << "  Galaxy evolution ODE evaluations:     " << stats.galaxy_ode_evaluations
+	   << " (" << fixed<3>(stats.galaxy_ode_evaluations_per_galaxy()) << " [evals/gal])" << "\n"
+	   << "  Starburst ODE evaluations:            " << stats.starburst_ode_evaluations
+	   << " (" << fixed<3>(stats.starburst_ode_evaluations_per_galaxy()) << " [evals/gal])" << "\n"
+	   << "  Star formation integration intervals: " << stats.starform_integration_intervals
+	   << " (" << fixed<3>(stats.starform_integration_intervals_per_galaxy_ode_evaluations()) << " [ints/eval])\n"
+	   << "  Time:                                 " << fixed<3>(stats.duration_millis / 1000.) << " [s]";
+	return os;
 }
 
 /**
@@ -190,6 +241,7 @@ int run(int argc, char **argv) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
 
+		auto start = std::chrono::steady_clock::now();
 		basic_physicalmodel->reset_ode_evaluations();
 
 		//Calculate the initial and final time of this snapshot.
@@ -233,19 +285,25 @@ int run(int argc, char **argv) {
 			//writer.write_galaxies(snapshot, all_halos_this_snapshot);
 		}
 
-		// Some high-level ODE iteration count statistics
+		auto snapshot_time = std::chrono::steady_clock::now() - start;
+		unsigned long duration_millis = std::chrono::duration_cast<std::chrono::milliseconds>(snapshot_time).count();
+
+		// Some high-level ODE and integration iteration count statistics
+		auto starform_integration_intervals = basic_physicalmodel->get_star_formation_integration_intervals();
 		auto galaxy_ode_evaluations = basic_physicalmodel->get_galaxy_ode_evaluations();
-		auto galaxy_starburst_ode_evaluations = basic_physicalmodel->get_galaxy_starburst_ode_evaluations();
-		auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0, [](long n_galaxies, const HaloPtr &halo){
+		auto starburst_ode_evaluations = basic_physicalmodel->get_galaxy_starburst_ode_evaluations();
+
+		auto n_halos = all_halos_this_snapshot.size();
+		auto n_subhalos = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_subhalos, const HaloPtr &halo) {
+			return n_subhalos + halo->subhalo_count();
+		});
+		auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_galaxies, const HaloPtr &halo) {
 			return n_galaxies + halo->galaxy_count();
 		});
 
-		LOG(info) << "During snapshot " << snapshot << " there were " << n_galaxies << " galaxies"
-		          << " which generated " << galaxy_ode_evaluations << " galaxy ODE evaluations ("
-		          << std::setprecision(3) << std::fixed << static_cast<double>(galaxy_ode_evaluations) / n_galaxies
-		          << " [evals/gal])" << " and " << galaxy_starburst_ode_evaluations << " galaxy starburst ODE evaluations ("
-		          << std::setprecision(3) << std::fixed << static_cast<double>(galaxy_starburst_ode_evaluations) / n_galaxies
-		          << " [evals/gal])";
+		SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
+		                          n_halos, n_subhalos, n_galaxies, duration_millis};
+		LOG(info) << "Statistics for snapshot " << snapshot << std::endl << stats;
 
 
 		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/

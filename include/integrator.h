@@ -40,18 +40,42 @@ public:
 
 	typedef double (*func_t)(double x, void *);
 
-	Integrator(size_t max_samples);
+	///
+	/// Creates a new Integrator that will integrate using at most
+	/// `max_intervals` intervals internally.
+	///
+	/// @param max_intervals
+	///
+	Integrator(size_t max_intervals);
 
 	// Copy/movy constructors, destructor
 	Integrator(const Integrator &other);
 	Integrator(Integrator &&other);
 	~Integrator();
 
+	///
+	/// Integrates function `f` with parameters `params` between `from` and `to`
+	/// using the indicated error tolerances.
+	///
 	double integrate(func_t f, void *params, double from, double to, double epsabs, double epsrel);
+
+	///
+	/// Returns the number of internal intervals used during all integrations
+	/// so far, or since the last call to reset_num_intervals.
+	/// The number of intervals is an indication of how many times the functions
+	/// being integrated have been called.
+	///
+	unsigned long int get_num_intervals();
+
+	///
+	/// Reset the number of intervals count.
+	///
+	void reset_num_intervals();
 
 private:
 	std::unique_ptr<gsl_integration_workspace> workspace;
-	size_t max_samples;
+	size_t max_intervals;
+	unsigned long int num_intervals;
 
 	void init_gsl_objects();
 };
