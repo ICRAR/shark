@@ -51,18 +51,16 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
 			}
 
 			// Check cases where the descendant subhalo will be a satellite, but the current is central. In that case
-			// we modify the type of the central galaxy of this subhalo to type1.
+			// we modify the type of the central galaxy of this subhalo to type1. and the rest to type 2.
 
 			if(subhalo->subhalo_type == Subhalo::CENTRAL && descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
-				int i = 0;
-				auto galaxy = subhalo->galaxies[i];
-				bool foundcentral = false;
-				while(!foundcentral){
+				for (auto &galaxy: subhalo->galaxies){
 					if(galaxy->galaxy_type == Galaxy::CENTRAL){
 						galaxy->galaxy_type == Galaxy::TYPE1;
-						foundcentral = true;
 					}
-					i++;
+					else{
+						galaxy->galaxy_type == Galaxy::TYPE2;
+					}
 				}
 			}
 

@@ -153,10 +153,10 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 					//define subhalo as central.
 					subhalo->subhalo_type = Subhalo::CENTRAL;
 
-					//Now look at most massive ascendants to define which one will be the central.
+					//Now look at most massive ascendants to define which one will be the central, but only in the case the ascendant halo does not have a central already.
 					auto ascendants = subhalo->ordered_ascendants();
 
-					while(ascendants.size() > 0){
+					while(ascendants.size() > 0 && !ascendants[0]->host_halo->central_subhalo){
 						//First ascendant is always the most massive.
 						auto ascendant_central = ascendants[0];
 

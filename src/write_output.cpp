@@ -119,6 +119,8 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	vector<long> id_halo;
 	vector<long> id_subhalo;
 
+	long i=1;
+	long j=1;
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
@@ -240,11 +242,12 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 
 				type.push_back(t);
 
-				id_halo.push_back(halo->id);
-				id_subhalo.push_back(subhalo->id);
-
+				id_halo.push_back(j);
+				id_subhalo.push_back(i);
 			}
+			i++;
 		}
+		j++;
 	}
 
 	file.write_dataset("Galaxies/mstars_disk", mstars_disk);
@@ -286,9 +289,8 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 
 	file.write_dataset("Galaxies/type", type);
 
-	file.write_dataset("Galaxies/id_subhalo", id_halo);
-	file.write_dataset("Galaxies/id_subhalo", id_halo);
-
+	file.write_dataset("Galaxies/id_subhalo", id_subhalo);
+	file.write_dataset("Galaxies/id_halo", id_halo);
 
 	string fname_ascii = exec_params.output_directory + "/" + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
 
@@ -296,7 +298,7 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	file_ascii.open(fname_ascii, ios_base::out);
 
 	for (int i = 0; i <= mstars_disk.size()-1; i++){
-		file_ascii << mstars_disk[i] << " " << mstars_bulge[i] << " " << mgas_disk[i] << " " << mgas_metals_disk[i] <<" " << mgas_bulge[i] << " " << mBH[i] << " " << mhot[i] << " " << mreheated[i] << " " << mstars_disk[i]+mstars_bulge[i] << std::endl;
+		file_ascii << mstars_disk[i] << " " << mstars_bulge[i] << " " << mgas_disk[i] << " " << mgas_metals_disk[i] <<" " << mgas_bulge[i] << " " << mBH[i] << " " << mhot[i] << " " << mreheated[i] << " " << mstars_disk[i]+mstars_bulge[i] << " " << type[i] << " " << id_halo[i] << " " << id_subhalo[i] << std::endl;
 	}
 
 	file_ascii.close();
