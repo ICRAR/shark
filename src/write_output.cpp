@@ -47,7 +47,7 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 		batch = "multiple_batches";
 	}
 
-	string fname = exec_params.output_directory + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.hdf5";
+	string fname = exec_params.output_directory + "/" + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.hdf5";
 
 	hdf5::Writer file(fname);
 
@@ -290,7 +290,7 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	file.write_dataset("Galaxies/id_subhalo", id_halo);
 
 
-	string fname_ascii = exec_params.output_directory + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
+	string fname_ascii = exec_params.output_directory + "/" + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
 
 	fstream file_ascii;
 	file_ascii.open(fname_ascii, ios_base::out);

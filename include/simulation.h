@@ -45,6 +45,8 @@ public:
 	int min_snapshot;
 	int max_snapshot;
 
+	std::string sim_name;
+
 	std::string tree_files_prefix;
 
 	std::map<int,double> redshifts;
