@@ -141,10 +141,15 @@ public:
 	 * Initialize values in zero.
 	 */
 	Galaxy():
-		tmerge(0),
 		galaxy_type(),
+		bulge_stars(),
+		bulge_gas(),
+		disk_stars(),
+		disk_gas(),
+		smbh(),
 		sfr_disk(0),
-		sfr_bulge(0)
+		sfr_bulge(0),
+		tmerge(0)
 	{
 		//no-op
 	}
@@ -293,24 +298,28 @@ public:
 	 * Initialize values in zero.
 	 */
 	Subhalo():
-		haloID(0),
+		snapshot(-1),
 		has_descendant(false),
 		main_progenitor(false),
 		descendant_id(0),
 		descendant_halo_id(0),
-		snapshot(-1),
 		descendant_snapshot(-1),
 		last_snapshot_identified(-1),
+		descendant(0),
+		galaxies(),
 		subhalo_type(),
+		haloID(0),
 		Vvir(0),
 		Mvir(0),
 		L{0, 0, 0},
 		Vcirc(0),
 		concentration(),
-		accreted_mass(0),
-		descendant(0),
-		galaxies(),
+		cooling_subhalo_tracking(),
+		hot_halo_gas(),
+		cold_halo_gas(),
+		ejected_galaxy_gas(),
 		ascendants(),
+		accreted_mass(0),
 		host_halo()
 	{
 		//no-op
