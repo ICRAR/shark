@@ -96,13 +96,13 @@ std::vector<double> ODESolver::evolve() {
 	if (status == GSL_FAILURE) {
 		os << "step size decreases below machine precision ";
 		LOG(warning) << "ODE: step size decreases below machine precision. Will force integration to finish regardless of desired accuracy not reached.";
-		status == GSL_SUCCESS;
+		status = GSL_SUCCESS;
 		return y;
 	}
 	if (status == GSL_ENOPROG) {
 		os << "step size dropped below minimum value";
 		LOG(warning) << "ODE:step size dropped below minimum value. Will force integration to finish regardless of desired accuracy not reached.";
-		status == GSL_SUCCESS;
+		status = GSL_SUCCESS;
 		return y;
 	}
 	else if (status == GSL_EBADFUNC) {
@@ -112,7 +112,7 @@ std::vector<double> ODESolver::evolve() {
 	else if (status == GSL_EMAXITER) {
 		os << "maximum number of steps reached";
 		LOG(warning) << "ODE:maximum number of steps reached. Will force integration to finish regardless of desired accuracy not reached.";
-		status == GSL_SUCCESS;
+		status = GSL_SUCCESS;
 		return y;
 	}
 	else {

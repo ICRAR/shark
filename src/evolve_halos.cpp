@@ -56,10 +56,10 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
 			if(subhalo->subhalo_type == Subhalo::CENTRAL && descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
 				for (auto &galaxy: subhalo->galaxies){
 					if(galaxy->galaxy_type == Galaxy::CENTRAL){
-						galaxy->galaxy_type == Galaxy::TYPE1;
+						galaxy->galaxy_type = Galaxy::TYPE1;
 					}
 					else{
-						galaxy->galaxy_type == Galaxy::TYPE2;
+						galaxy->galaxy_type = Galaxy::TYPE2;
 					}
 				}
 			}
