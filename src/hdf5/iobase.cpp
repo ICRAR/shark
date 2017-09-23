@@ -27,6 +27,8 @@
 #include <stdexcept>
 
 #include "hdf5/iobase.h"
+#include "logging.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -87,6 +89,35 @@ hsize_t IOBase::get_1d_dimsize(const H5::DataSpace &space) const {
 	hsize_t dim_size;
 	space.getSimpleExtentDims(&dim_size, NULL);
 	return dim_size;
+}
+
+H5::DataSet IOBase::get_dataset(const string &name) const {
+
+	LOG(debug) << "Getting dataset " << name << " on file " << get_filename();
+
+	// The name might contains slashes, so we can navigate through
+	// a hierarchy of groups/datasets
+	const vector<string> parts = tokenize(name, "/");
+
+	return get_dataset(parts);
+}
+
+H5::DataSet IOBase::get_dataset(const std::vector<std::string> &path) const {
+
+	// only the attribute name, read directly and come back
+	if( path.size() == 1 ) {
+		return hdf5_file.openDataSet(path[0]);
+	}
+
+	// else there's a path to follow, go for it!
+	H5::Group group = hdf5_file.openGroup(path.front());
+	vector<string> group_paths(path.begin() + 1, path.end() - 1);
+	for(auto const &path: group_paths) {
+		LOG(debug) << "Getting dataset " << path << " on file " << get_filename();
+		group = group.openGroup(path);
+	}
+
+	return group.openDataSet(path.back());
 }
 
 }  // namespace hdf5

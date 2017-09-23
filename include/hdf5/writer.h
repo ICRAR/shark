@@ -176,9 +176,10 @@ public:
 			auto group = ensure_group(path);
 			_create_and_write_attribute<T>(group, parts.back(), value);
 		} catch (const object_exists &e) {
-			throw;
-//			auto dataset = open_dataset(path);
-//			_write_attribute<T>(dataset, parts.back(), value);
+			// name doesn't point to a group but to an existing dataset
+			// if this one fails we give up
+			auto dataset = get_dataset(path);
+			_create_and_write_attribute(dataset, parts.back(), value);
 		}
 
 	}

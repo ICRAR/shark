@@ -25,6 +25,8 @@
 #ifndef INCLUDE_HDF5_IOBASE_H_
 #define INCLUDE_HDF5_IOBASE_H_
 
+#include <vector>
+
 #include <H5Cpp.h>
 
 namespace shark {
@@ -71,9 +73,11 @@ public:
 	void open_file(const std::string &filename, unsigned int flags);
 
 protected:
+
+	H5::DataSet get_dataset(const std::string &name) const;
+	H5::DataSet get_dataset(const std::vector<std::string> &path) const;
 	H5::DataSpace get_1d_dataspace(const H5::DataSet &dataset) const;
 	H5::DataSpace get_2d_dataspace(const H5::DataSet &dataset) const;
-
 	hsize_t get_1d_dimsize(const H5::DataSpace &space) const;
 
 	H5::H5File hdf5_file;

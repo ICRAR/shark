@@ -39,34 +39,6 @@ namespace hdf5 {
 class attribute_not_found : public std::exception {};
 class name_not_found : public std::exception {};
 
-H5::DataSet Reader::get_dataset(const string &name) const {
-
-	LOG(debug) << "Getting dataset " << name << " on file " << get_filename();
-
-	// The name might contains slashes, so we can navigate through
-	// a hierarchy of groups/datasets
-	const vector<string> parts = tokenize(name, "/");
-
-	return get_dataset(parts);
-}
-
-H5::DataSet Reader::get_dataset(const std::vector<std::string> &path) const {
-
-	// only the attribute name, read directly and come back
-	if( path.size() == 1 ) {
-		return hdf5_file.openDataSet(path[0]);
-	}
-
-	// else there's a path to follow, go for it!
-	H5::Group group = hdf5_file.openGroup(path.front());
-	vector<string> group_paths(path.begin() + 1, path.end() - 1);
-	for(auto const &path: group_paths) {
-		LOG(debug) << "Getting dataset " << path << " on file " << get_filename();
-		group = group.openGroup(path);
-	}
-
-	return group.openDataSet(path.back());
-}
 
 H5::Attribute Reader::get_attribute(const string &name) const {
 	LOG(debug) << "Getting attribute " << name << " from file " << get_filename();
