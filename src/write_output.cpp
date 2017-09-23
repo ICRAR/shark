@@ -29,8 +29,8 @@ namespace shark {
 
 WriteOutput::WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, SimulationParameters sim_params, StarFormation starformation):
 	exec_params(exec_params),
-	cosmo_params(cosmo_params),
 	sim_params(sim_params),
+	cosmo_params(cosmo_params),
 	starformation(starformation)
 {
 	//no-opt

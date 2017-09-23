@@ -71,10 +71,10 @@ std::vector<double> CoolingTable::get_lambda()
 
 GasCoolingParameters::GasCoolingParameters(const Options &options) :
 	rcore(0),
-	model(CROTON06),
+	pre_enrich_z(1e-4),
 	lambdamodel(CLOUDY),
-	cooling_table(),
-	pre_enrich_z(1e-4)
+	model(CROTON06),
+	cooling_table()
 {
 	string cooling_tables_dir;
 	options.load("gas_cooling.model", model, true);
@@ -202,8 +202,8 @@ GasCooling::GasCooling(GasCoolingParameters parameters,
 		std::shared_ptr<AGNFeedback> agnfeedback,
 		std::shared_ptr<DarkMatterHalos> darkmatterhalos,
 		std::shared_ptr<Reincorporation> reincorporation) :
-	parameters(parameters),
 	reio_parameters(reio_parameters),
+	parameters(parameters),
 	cosmology(cosmology),
 	agnfeedback(agnfeedback),
 	darkmatterhalos(darkmatterhalos),

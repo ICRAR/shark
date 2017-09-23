@@ -23,9 +23,9 @@ SimulationParameters::SimulationParameters(const Options &options) :
 	particle_mass(0),
 	min_snapshot(0),
 	max_snapshot(0),
+	sim_name(),
 	tree_files_prefix("tree."),
-	redshifts(),
-	sim_name()
+	redshifts()
 {
 
 	std::string redshift_file;
@@ -34,9 +34,9 @@ SimulationParameters::SimulationParameters(const Options &options) :
 	options.load("simulation.particle_mass", particle_mass);
 	options.load("simulation.min_snapshot", min_snapshot);
 	options.load("simulation.max_snapshot", max_snapshot);
+	options.load("simulation.sim_name", sim_name);
 	options.load("simulation.tree_files_prefix", tree_files_prefix);
 	options.load("simulation.redshift_file",redshift_file);
-	options.load("simulation.sim_name", sim_name);
 
 	load_simulation_tables(redshift_file);
 

@@ -18,11 +18,11 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	mhalo_seed(0),
 	alpha_cool(0),
 	f_edd(0),
+	f_smbh(0),
 	accretion_eff_cooling(0),
 	accretion_eff_bursts(0),
 	kappa_agn(0),
 	nu_smbh(0),
-	f_smbh(0),
 	model(GALFORM)
 {
 	options.load("agn_feedback.mseed",mseed);

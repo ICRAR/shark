@@ -19,10 +19,10 @@ ExecutionParameters::ExecutionParameters(const Options &options) :
 	output_snapshots(),
 	output_format(),
 	output_directory(),
+	name_model(),
 	simulation_batches(),
 	skip_missing_descendants(true),
-	ode_solver_precision(),
-	name_model()
+	ode_solver_precision()
 {
 	options.load("execution.output_snapshots", output_snapshots, true);
 	options.load("execution.output_format", output_format, true);
