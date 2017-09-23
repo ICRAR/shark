@@ -90,8 +90,7 @@ template <H5G_obj_t E, typename ... Ts>
 typename entity_traits<E>::rettype
 ensure_entity(const H5::CommonFG &file_or_group, const std::string &name, Ts&&...create_args)
 {
-	// Group exists?
-	bool exists = false;
+	// Loop through subobjects and find entity
 	for(hsize_t i = 0; i < file_or_group.getNumObjs(); i++) {
 
 		auto objtype = file_or_group.getObjTypeByIdx(i);

@@ -67,7 +67,6 @@ H5::Attribute Reader::_get_attribute(const H5::CommonFG &file_or_group, const st
 	}
 
 	auto n_groups = file_or_group.getNumObjs();
-	bool found = false;
 
 	const auto path = parts.front();
 	for(hsize_t i = 0; i < n_groups; i++) {
@@ -77,7 +76,6 @@ H5::Attribute Reader::_get_attribute(const H5::CommonFG &file_or_group, const st
 			continue;
 		}
 
-		found = true;
 		auto objtype = file_or_group.getObjTypeByIdx(i);
 		if (objtype == H5G_GROUP) {
 			std::vector<std::string> subparts(parts.begin() + 1, parts.end());

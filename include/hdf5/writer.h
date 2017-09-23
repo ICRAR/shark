@@ -86,14 +86,14 @@ H5::DataType _datatype<std::string>(const std::vector<std::string> &val)
 // Strings need some special treatment, so we specialise for them
 template <typename T>
 static inline
-H5::DataType _write_attribute(const H5::Attribute &attr, const H5::DataType &dataType, const T &val)
+void _write_attribute(const H5::Attribute &attr, const H5::DataType &dataType, const T &val)
 {
 	attr.write(dataType, &val);
 }
 
 template <>
 inline
-H5::DataType _write_attribute<std::string>(const H5::Attribute &attr, const H5::DataType &dataType, const std::string &val)
+void _write_attribute<std::string>(const H5::Attribute &attr, const H5::DataType &dataType, const std::string &val)
 {
 	attr.write(dataType, val);
 }
@@ -101,7 +101,7 @@ H5::DataType _write_attribute<std::string>(const H5::Attribute &attr, const H5::
 // How we write datasets, depending on the data type
 template <typename T>
 static inline
-H5::DataType _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const T &val)
+void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const T &val)
 {
 	dataset.write(&val, dataType, dataSpace, dataSpace);
 }
@@ -109,7 +109,7 @@ H5::DataType _write_dataset(const H5::DataSet &dataset, const H5::DataType &data
 // Specialization for strings, for which there is a specific .write method
 template <>
 inline
-H5::DataType _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::string &val)
+void _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::string &val)
 {
 	dataset.write(val, dataType, dataSpace, dataSpace);
 }
@@ -117,7 +117,7 @@ H5::DataType _write_dataset<std::string>(const H5::DataSet &dataset, const H5::D
 // Overwriting of _write_datasets for vectors
 template <typename T>
 static inline
-H5::DataType _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<T> &vals)
+void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<T> &vals)
 {
 	dataset.write(vals.data(), dataType, dataSpace, dataSpace);
 }
@@ -125,7 +125,7 @@ H5::DataType _write_dataset(const H5::DataSet &dataset, const H5::DataType &data
 // and specializing for vectors of strings
 template <>
 inline
-H5::DataType _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<std::string> &vals)
+void _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<std::string> &vals)
 {
 	std::vector<const char *> c_strings;
 	std::transform(vals.begin(), vals.end(), std::back_inserter(c_strings), [](const std::string &s) {
