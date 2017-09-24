@@ -61,6 +61,12 @@ struct datatype_traits<int> {
 };
 
 template<>
+struct datatype_traits<unsigned int> {
+	static const H5::PredType &write_type;
+};
+
+
+template<>
 struct datatype_traits<long int> {
 	static const H5::PredType &write_type;
 };

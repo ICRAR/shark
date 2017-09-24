@@ -196,7 +196,23 @@ std::vector<int> Options::get<std::vector<int>>(const std::string &name, const s
 		std::vector<std::string> values_as_str = tokenize(value, " ");
 		std::vector<int> values;
 		for(auto value_as_str: values_as_str) {
-			values.push_back(std::stod(value_as_str));
+			values.push_back(std::stoi(value_as_str));
+		}
+		return values;
+	} catch (const std::invalid_argument &e) {
+		std::ostringstream os;
+		os << "Invalid value for option " << name << ": " << value << ". A double was expected";
+		throw invalid_option(os.str());
+	}
+}
+
+template<>
+std::vector<unsigned int> Options::get<std::vector<unsigned int>>(const std::string &name, const std::string &value) const {
+	try {
+		std::vector<std::string> values_as_str = tokenize(value, " ");
+		std::vector<unsigned int> values;
+		for(auto value_as_str: values_as_str) {
+			values.push_back(std::stoul(value_as_str));
 		}
 		return values;
 	} catch (const std::invalid_argument &e) {

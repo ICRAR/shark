@@ -34,6 +34,7 @@ const H5::PredType &datatype_traits<std::string>::write_type = H5::PredType::C_S
 const H5::PredType &datatype_traits<float>::write_type = H5::PredType::NATIVE_FLOAT;
 const H5::PredType &datatype_traits<double>::write_type = H5::PredType::NATIVE_DOUBLE;
 const H5::PredType &datatype_traits<int>::write_type = H5::PredType::NATIVE_INT16;
+const H5::PredType &datatype_traits<unsigned int>::write_type = H5::PredType::NATIVE_UINT16;
 const H5::PredType &datatype_traits<long int>::write_type = H5::PredType::NATIVE_INT32;
 const H5::PredType &datatype_traits<bool>::write_type = H5::PredType::NATIVE_INT8;
 
