@@ -94,7 +94,7 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double mbh) {
 	using namespace constants;
 
 	if (Lcool > 0) {
-		double macc;
+		double macc = 0;
 		if (parameters.model == AGNFeedbackParameters::GALFORM) {
 			macc = Lcool * std::pow(10,40) / std::pow(c_light_cm,2) / parameters.accretion_eff_cooling;
 		}

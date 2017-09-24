@@ -313,8 +313,8 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 			 */
 			double nh_density  = mean_density(mhot, Rvir); //in units of cm^-3.
 
-    		double tcool;
-    		double tcharac;
+    		double tcool = 0;
+    		double tcharac = 0;
 
     		/**
     		 * This corresponds to the very simple model of Croton06, in which the cooling time is assumed to be equal to the
