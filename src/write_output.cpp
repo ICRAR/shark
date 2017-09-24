@@ -126,8 +126,6 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 
 		// assign properties of host halo
 		auto mhalo = halo->Mvir;
-		auto halo_position = halo->position;
-		auto halo_velocity = halo->velocity;
 		auto vhalo = halo->Vvir;
 
 		for (auto &subhalo: halo->all_subhalos()){
@@ -136,7 +134,6 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 			auto msubhalo = subhalo->Mvir;
 			auto vsubhalo = subhalo->Vcirc;
 			auto cnfw = subhalo->concentration;
-			auto L_subhalo = subhalo->L;
 			auto subhalo_position = subhalo->position;
 			auto subhalo_velocity = subhalo->velocity;
 

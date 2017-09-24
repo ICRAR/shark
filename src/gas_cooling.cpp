@@ -294,7 +294,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals);
 
     		double vvir = halo->Vvir; //cosmology->comoving_to_physical_velocity(subhalo.Vvir, z);
-    		double mvir = cosmology->comoving_to_physical_mass(halo->Mvir);
+//    		double mvir = cosmology->comoving_to_physical_mass(halo->Mvir);
 
     		double zhot = (mzhot/mhot);
 
@@ -551,8 +551,7 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 	using namespace constants;
 
 	if(rcool < rvir){
-		double rmin = rcool;
-		double rmax = rvir;
+
 		/**
 		 * For an isothermal profile, we define mass enclosed between rcool and rvir in csg.
 		 */

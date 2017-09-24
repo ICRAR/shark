@@ -87,7 +87,7 @@ double GalaxyMergers::merging_timescale_orbital(double vr, double vt, double f, 
 	int iter = 0, max_iter = 100;
 	const gsl_root_fsolver_type *T;
 	gsl_root_fsolver *s;
-	double r = 0, r_expected = sqrt (5.0);
+	double r = 0;
 	double x_hi = 1, x_lo = E;
 	gsl_function F;
 
@@ -168,19 +168,19 @@ double GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &seconda
 	 * a primary and secondary galaxy. The primary is the central galaxy.
 	 */
 
-	double vt,vr;
+//	double vt,vr;
 
 	double ms = secondary->Mvir;
 
 	double mp = primary->Mvir;
 
-	double c = primary->host_halo->concentration;
+//	double c = primary->host_halo->concentration;
 
 	auto halo = primary->host_halo;
 
 	double tau_dyn = darkmatterhalo->halo_dynamical_time(halo);
 
-	double f = mass_ratio_function(mp, ms);
+//	double f = mass_ratio_function(mp, ms);
 
 	//Calculate well the part of orbital parameters.
 	//Draw orbital parameters from PDF in Benson et al. (2005).

@@ -52,10 +52,7 @@ VELOCIraptorReader::VELOCIraptorReader(shared_ptr<DescendantReader> &reader, con
 
 	// read all descendants info and put them into our internal map
 	// for quick lookup
-	auto t0 = chrono::steady_clock::now();
 	auto descendants = reader->read_whole();
-	auto t1 = chrono::steady_clock::now();
-	auto reading_time = chrono::duration_cast<chrono::milliseconds>(t1 - t0).count();
 
 	for(auto &&descendant: descendants) {
 		descendants_data[descendant.halo_id] = move(descendant);
@@ -72,13 +69,11 @@ const string VELOCIraptorReader::get_filename(int snapshot, int batch)
 const vector<Subhalo> VELOCIraptorReader::read_subhalos(int snapshot)
 {
 	unsigned int nbatches;
-	unsigned int total_subhalos;
 
 	// Give the hdf5 reader a scope so it gets destroyed quickly after use
 	{
 		hdf5::Reader batchfile_0(get_filename(snapshot, 0));
 		nbatches = batchfile_0.read_dataset<unsigned int>("Num_of_files");
-		total_subhalos = batchfile_0.read_dataset<unsigned int>("Total_num_of_groups");
 	}
 
 	// read all batches and add them up to a single vector,
