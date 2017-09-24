@@ -289,19 +289,6 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo);
 	file.write_dataset("Galaxies/id_halo", id_halo);
 
-	string fname_ascii = exec_params.output_directory + "/" + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
-
-	fstream file_ascii;
-	file_ascii.open(fname_ascii, ios_base::out);
-
-	for (int i = 0; i <= mstars_disk.size()-1; i++){
-		file_ascii << mstars_disk[i] << " " << mstars_bulge[i] << " " << mgas_disk[i] << " " << mgas_metals_disk[i] <<" " << mgas_bulge[i] << " " << mBH[i] << " " << mhot[i] << " " << mreheated[i] << " " << mstars_disk[i]+mstars_bulge[i] << " " << type[i] << " " << id_halo[i] << " " << id_subhalo[i] << std::endl;
-	}
-
-	file_ascii.close();
-
-
-
 }
 
 }// namespace shark
