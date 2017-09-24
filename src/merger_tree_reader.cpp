@@ -105,7 +105,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 
 
 
-	int n_subhalos = Mvir.size();
+	auto n_subhalos = Mvir.size();
 
 	if ( !n_subhalos ) {
 		return {};
