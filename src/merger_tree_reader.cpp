@@ -44,7 +44,7 @@ const string SURFSReader::get_filename(int batch)
 	return os.str();
 }
 
-const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<int> batches, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
+const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> batches, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
 {
 
 	// Check that batch numbers are within boundaries
@@ -77,7 +77,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<int> batches, Dar
 	return all_halos;
 }
 
-const std::vector<HaloPtr> SURFSReader::read_halos(int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
+const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
 {
 	const auto fname = get_filename(batch);
 	hdf5::Reader batch_file(fname);

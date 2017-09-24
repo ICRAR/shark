@@ -33,7 +33,7 @@ public:
 	std::string output_format;
 	std::string output_directory;
 	std::string name_model;
-	std::vector<int> simulation_batches;
+	std::vector<unsigned int> simulation_batches;
 
 	bool skip_missing_descendants;
 
