@@ -524,7 +524,7 @@ double GasCooling::cooling_radius(double mhot, double rvir, double tcharac, doub
 
 	double pseudo_density = mhot*MSOLAR_g/(PI4*rvir*MPC2CM); //in units of gr/cm.
 
-	double denominator_temp = 1.5 * k_Boltzmann_erg * Tvir * (M_Atomic_g*mu_Primordial) / pow(10.0,logl); //in cgs
+	double denominator_temp = 1.5 * k_Boltzmann_erg * Tvir * (M_Atomic_g*mu_Primordial) / std::pow(10.0, logl); //in cgs
 
 	return std::pow((pseudo_density/denominator_temp*tcharac),0.5)/MPC2CM; //in Mpc.
 }

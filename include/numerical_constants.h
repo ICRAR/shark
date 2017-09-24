@@ -25,14 +25,27 @@
 #ifndef SHARK_NUMERICAL_CONSTANTS_H_
 #define SHARK_NUMERICAL_CONSTANTS_H_
 
-#include <cmath>
-
 namespace shark {
 
 /**
  * A collection of numerical constants used throughout SHArk
  */
 namespace constants {
+
+
+	// Templated constexpr pow function to define constant powers with positive
+	// integral exponents in our constants
+	// Defined inside the constants namespace to avoid polluting the parennt shark
+	// namespace with a pow function
+	template <int __exp>
+	constexpr double pow (double base) {
+		return base * pow<__exp - 1>(base);
+	};
+
+	template <>
+	constexpr double pow<1>(double base) {
+		return base;
+	};
 
 	constexpr float SQRT2=1.4142135624,LN2=0.6931471806,LN10=2.3025850930,ISO_FAC=2.5/LN10,log4=0.602059991;
 
@@ -41,7 +54,7 @@ namespace constants {
 
 	/*The ratio of a circle's circumference to its diameter, plus some multiples of it.*/
 	constexpr float PI = 3.1415926536, logPI=0.497149873;
-	constexpr float PIO2=PI/2.0, PIO4=PI/4.0, PI4=4.0*PI, PI2=2.0*PI,  logPI4=std::log10(PI4);
+	constexpr float PIO2=PI/2.0, PIO4=PI/4.0, PI4=4.0*PI, PI2=2.0*PI,  logPI4= logPI + log4;
 	constexpr float PISQ=PI*PI, SQRTPI=1.7724538509, SQRT2PI=2.5066282746, SQRT2OPI=0.7978845608;
 	constexpr double DSQRTPI=1.77245385090551602729816748334114518279754945612239;
 	constexpr double DPI=3.14159265358979323846264338327950288419716939937510;
@@ -78,7 +91,7 @@ namespace constants {
 	constexpr float KMS2MPCGYR=KM2M*GYR2S/MPC2M; /*Convert velocity in km/s to Mpc/Gyr.*/
 	constexpr float M2CM=100.0, logM2CM=2.0; /*Number of cm in a m.*/
 	constexpr float KM2CM = M2CM*KM2M; /*Number of cm in a km.*/
-	constexpr float M32CM3=std::pow(M2CM,3); /*Number of cm^3 in a m^3.*/
+	constexpr float M32CM3=pow<3>(M2CM); /*Number of cm^3 in a m^3.*/
 	constexpr float CM32M3=1.0/M32CM3; /*Number of m^3 in a cm^3.*/
 	constexpr float eV2ERG=1.60217733e-12, logeV2ERG=-11.7952894176; /*Convert electron volts to ergs.*/
 	constexpr float eV2J=1.60217733e-19; /*Convert electron volts to Joules.*/
@@ -107,11 +120,11 @@ namespace constants {
 
 	/* Physical constants.*/
 	constexpr float G_SI=6.67259e-11, sqrtG_SI=8.16859228998e-6; /*The gravitational constant in units of m^3/kg/s^2 (Allen's Astrophysical Quantities, page 8).*/
-	constexpr float G=G_SI*MSOLAR/MPC2M/std::pow(KM2M,2), sqrtG=sqrtG_SI*sqrtMSOLAR/sqrtMPC2M/KM2M; /*The gravitational constant in units of (km/s)^2 Mpc/Msun.*/
+	constexpr float G=G_SI*MSOLAR/MPC2M/pow<2>(KM2M), sqrtG=sqrtG_SI*sqrtMSOLAR/sqrtMPC2M/KM2M; /*The gravitational constant in units of (km/s)^2 Mpc/Msun.*/
 	constexpr float G_cgs = 6.67259e-8; /*Gravitational constant in units of cm/gr/s^2.*/
 	constexpr float G_MPCGYR=G_SI*MSOLAR*(GYR2S/MPC2M)/KM2M/MPC2M; /*The gravitational constant in units of km/s Mpc^2 Msun^-1 Gyr^-1*/
-	constexpr float G_MPCGYR2=G_SI*MSOLAR*std::pow(GYR2S/MPC2M,2)/MPC2M; /*The gravitational constant in units of Mpc^3 Msun^-1 Gyr^-2*/
-	constexpr float G_GYRKMS3=G_SI*MSOLAR/GYR2S/std::pow(KM2M,3); /*The gravitational constant in units of Gyr Msol^-1 km^3 s^-3*/
+	constexpr float G_MPCGYR2=G_SI*MSOLAR*pow<2>(GYR2S/MPC2M)/MPC2M; /*The gravitational constant in units of Mpc^3 Msun^-1 Gyr^-2*/
+	constexpr float G_GYRKMS3=G_SI*MSOLAR/GYR2S/pow<3>(KM2M); /*The gravitational constant in units of Gyr Msol^-1 km^3 s^-3*/
 	constexpr double G_KMSPC=G*1e6; /*The gravitational constant in units of (km/s)^2 pc/Msun. Needs to be* in double precision because it is used in the sn_dynamical_feedback routines.*/
 	constexpr float GPI=G*PI*MPC2M/GYR2S/KM2M; /*G*pi in units of Gyr (km/s)^3 Msun^-1*/
 	constexpr float k_Boltzmann=1.3806503e-23; /*Boltzmann's constant in J/K (Particle Data Book 2002, page 5).*/
@@ -128,29 +141,29 @@ namespace constants {
 	constexpr float M_Electron=9.10938188e-31; /*Mass of the electron in kg (Particle Data Book 2002, page 4).*/
 	constexpr float M_Atomic=1.66053873e-27, sqrtM_Atomic=4.07497083425e-14; /*Mass of unit atomic weight in kg (12C=12 scale);*/
 	constexpr float M_Atomic_g=M_Atomic*KILO; /*Mass of unit atomic weight in g (12C=12 scale).*/
-	constexpr float a_Radiation=8.0*std::pow(PI,5)*k_Boltzmann*std::pow(k_Boltzmann/c_light/h_Planck,3)/15.0; /*Radiation constant (J m^-3 K^-4).*/
+	constexpr float a_Radiation=8.0*pow<5>(PI)*k_Boltzmann*pow<3>(k_Boltzmann/c_light/h_Planck)/15.0; /*Radiation constant (J m^-3 K^-4).*/
 	constexpr float Atomic_Mass_Hydrogen=1.00794, sqrtAtomic_Mass_Hydrogen=1.00396215; /*Mass of hydrogen in units of M_Atomic (Particle Data Book 2002, page 283).*/
 	constexpr float Atomic_Mass_Helium=4.002602; /*Mass of helium in units of M_Atomic (Particle Data Book 2002, page 283).*/
 
-	constexpr double Pressure_SimUnits_cgs = std::pow(MSOLAR_g,-1)*MPC2CM*std::pow(GYR2S,2); /*constant to convert pressure from Msun*Mpc^-2*Gyr^-2, to gr*cm^-1*s^-2.*/
+	constexpr double Pressure_SimUnits_cgs = 1/MSOLAR_g * MPC2CM * pow<2>(GYR2S); /*constant to convert pressure from Msun*Mpc^-2*Gyr^-2, to gr*cm^-1*s^-2.*/
 
 	constexpr double Pressure_Conv =  PIO2 * G_MPCGYR2 / Pressure_SimUnits_cgs / k_Boltzmann_erg;
 
 	/*Electromagnetism.*/
 	constexpr float Permeability_of_Free_Space=4.0e-7*PI; /*Permeability of free space in units of N A^-2 (definition).*/
-	constexpr float Permittivity_of_Free_Space=1.0/Permeability_of_Free_Space/std::pow(c_light,2); /*Permittivity of free space in units of Coulombs^2/N/m^2 (definition).*/
+	constexpr float Permittivity_of_Free_Space=1.0/Permeability_of_Free_Space/pow<2>(c_light); /*Permittivity of free space in units of Coulombs^2/N/m^2 (definition).*/
 
 	/*Cosmological constants.*/
 	constexpr float H0100=100.0; /*The Hubble constant in units of h km/s/Mpc.*/
 	constexpr float H0100PGYR=H0100*KM2M*GYR2S/MPC2M; /*The Hubble constant in units of h/Gyr.*/
-	constexpr float RHOCRIT=3.0*std::pow(H0100,2)/8.0/PI/G, sqrtRHOCRIT=0.61237243570*H0100/SQRTPI/sqrtG; /*Critical density of the Universe (3*H0^2/8*PI*G) in h^2 Msun/Mpc^3.*/
+	constexpr float RHOCRIT=3.0*pow<2>(H0100)/8.0/PI/G, sqrtRHOCRIT=0.61237243570*H0100/SQRTPI/sqrtG; /*Critical density of the Universe (3*H0^2/8*PI*G) in h^2 Msun/Mpc^3.*/
 
 	constexpr float X_Hydrogen=0.778; /*Mass fraction of hydrogen in primordial plasma.*/
 	constexpr float Y_Helium  =0.222; /*Mass fraction of helium in primordial plasma.*/
 	constexpr float Z_Metals  =5.36e-10; /*Mass fraction of metals in primordial plasma.*/
 	constexpr float mu_Primordial=1.0/(2.0*X_Hydrogen/Atomic_Mass_Hydrogen+3.0*Y_Helium/Atomic_Mass_Helium); /*Mean atomic weight for fully ionized plasma of primordial composition.*/
 
-	constexpr float M8CRIT=RHOCRIT*4.0*PI*std::pow(8.0,3)/3.0; /*Mass in a sphere of 8Mpc/h radius in a critical density Universe.*/
+	constexpr float M8CRIT=RHOCRIT*4.0*PI*pow<3>(8.0)/3.0; /*Mass in a sphere of 8Mpc/h radius in a critical density Universe.*/
 	constexpr float KHORIZON=H0100*KM2M/c_light; /*Defined as H_0/c in h Mpc^-1.*/
 
 	/*Dark matter halo parameters.*/
