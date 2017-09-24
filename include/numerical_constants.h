@@ -52,13 +52,21 @@ namespace constants {
 	/** Euler's constant */
 	constexpr float Eulers_Constant = 0.5772156649015328606;
 
-	/*The ratio of a circle's circumference to its diameter, plus some multiples of it.*/
-	constexpr float PI = 3.1415926536, logPI=0.497149873;
-	constexpr float PIO2=PI/2.0, PIO4=PI/4.0, PI4=4.0*PI, PI2=2.0*PI,  logPI4= logPI + log4;
-	constexpr float PISQ=PI*PI, SQRTPI=1.7724538509, SQRT2PI=2.5066282746, SQRT2OPI=0.7978845608;
-	constexpr double DSQRTPI=1.77245385090551602729816748334114518279754945612239;
-	constexpr double DPI=3.14159265358979323846264338327950288419716939937510;
-	constexpr double SPI=DPI*4.0/3.0;
+	/* PI and friends */
+	constexpr float PI = 3.1415926536;
+	constexpr float logPI = 0.497149873;
+	constexpr float PIO2 = PI / 2.0;
+	constexpr float PIO4 = PI / 4.0;
+	constexpr float PI4 = 4.0 * PI;
+	constexpr float PI2 = 2.0 * PI;
+	constexpr float logPI4 = logPI + log4;
+	constexpr float PISQ = pow<2>(PI);
+	constexpr float SQRTPI = 1.7724538509;
+	constexpr float SQRT2PI = 2.5066282746;
+	constexpr float SQRT2OPI = 0.7978845608;
+	constexpr double DSQRTPI = 1.77245385090551602729816748334114518279754945612239;
+	constexpr double DPI = 3.14159265358979323846264338327950288419716939937510;
+	constexpr double SPI = DPI * 4.0 / 3.0;
 
 	/*Standard multipliers.*/
 	constexpr float MILLI=1.0e-3, logMILLI=-3.0;
