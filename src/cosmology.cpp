@@ -150,6 +150,7 @@ double Cosmology::expansion_factor(double t){
 		throw std::runtime_error(os.str());
 	}
 
+	return a;
 }
 
 double Cosmology::hubble_parameter (double z){
