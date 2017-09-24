@@ -206,7 +206,21 @@ int run(int argc, char **argv) {
 	StarFormationParameters star_formation_params(config_file);
 
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(cosmo_parameters);
-	std::shared_ptr<DarkMatterHalos> dark_matter_halos = std::make_shared<DarkMatterHalos>(dark_matter_halo_parameters, cosmology, sim_params);
+
+	// TODO: Move this logic away from the main
+	std::shared_ptr<DarkMatterHalos> dark_matter_halos;
+	if (dark_matter_halo_parameters.haloprofile == DarkMatterHaloParameters::NFW) {
+		dark_matter_halos = std::make_shared<NFWDarkMatterHalos>(cosmology, sim_params);
+	}
+	else if (dark_matter_halo_parameters.haloprofile == DarkMatterHaloParameters::EINASTO) {
+		dark_matter_halos = std::make_shared<EinastoDarkMatterHalos>(cosmology, sim_params);
+	}
+	else {
+		std::ostringstream os;
+		os << "Dark Matter halo profile " << dark_matter_halo_parameters.haloprofile
+		   << " not currently supported";
+		throw invalid_argument(os.str());
+	}
 	std::shared_ptr<AGNFeedback> agnfeedback = std::make_shared<AGNFeedback>(agn_params, cosmology);
 	std::shared_ptr<Reincorporation> reincorporation = std::make_shared<Reincorporation>(reinc_params, dark_matter_halos);
 

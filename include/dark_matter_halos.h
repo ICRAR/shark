@@ -33,16 +33,18 @@ public:
 
 };
 
-class DarkMatterHalos{
+
+class DarkMatterHalos {
 
 public:
-	DarkMatterHalos(DarkMatterHaloParameters parameters, std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params);
+	DarkMatterHalos(std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params);
+	virtual ~DarkMatterHalos() {};
 
-	double grav_potential_halo(double r, double c);
+	virtual double grav_potential_halo(double r, double c) const = 0;
 
 	double energy_circular (double r, double c);
 
-	double enclosed_mass(double r, double c);
+	virtual double enclosed_mass(double r, double c) const = 0;
 
 	double halo_dynamical_time (HaloPtr &halo);
 
@@ -60,11 +62,28 @@ public:
 
 	double mmw98_nfw_concentration(double mvir, double vmax, double rvir);
 
-private:
-	DarkMatterHaloParameters parameters;
+protected:
 	std::shared_ptr<Cosmology> cosmology;
 	SimulationParameters sim_params;
 
+};
+
+class NFWDarkMatterHalos : public DarkMatterHalos {
+
+public:
+	using DarkMatterHalos::DarkMatterHalos;
+
+	double grav_potential_halo(double r, double c) const override;
+	double enclosed_mass(double r, double c) const override;
+};
+
+class EinastoDarkMatterHalos : public DarkMatterHalos {
+
+public:
+	using DarkMatterHalos::DarkMatterHalos;
+
+	double grav_potential_halo(double r, double c) const override;
+	double enclosed_mass(double r, double c) const override;
 };
 
 } // namespace shark

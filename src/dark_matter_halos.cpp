@@ -39,74 +39,17 @@ Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &nam
 	throw invalid_option(os.str());
 }
 
-DarkMatterHalos::DarkMatterHalos(DarkMatterHaloParameters parameters, std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params) :
-	parameters(parameters),
+DarkMatterHalos::DarkMatterHalos(std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params) :
 	cosmology(cosmology),
 	sim_params(sim_params)
 	{
 	// no-op
 }
 
-double DarkMatterHalos::grav_potential_halo (double r, double c){
-
-	if(r <=0 ){
-		return 0;
-	}
-	else{
-
-		if(parameters.haloprofile == parameters.NFW){
-
-			double x = r/c;
-
-			double g_c = std::log(1+1/c)-1/(1+c);
-
-			double rhos = 1/(constants::PI4 * std::pow(c,3) * g_c);
-
-			double f_x = 0;
-
-			if(r < 1){
-				f_x = std::log(1+x)/x-1/(1+1/c);
-			}
-			else{
-				f_x = (std::log(1+1/c)-1/(1+c))/x;
-			}
-			return -1 * constants::PI4 * rhos * std::pow(c,2) * f_x;
-
-		}
-		else if(parameters.haloprofile == parameters.EINASTO){
-
-			//TODO: implement Einasto profile.
-			return 0;
-		}
-
-	}
-}
-
 double DarkMatterHalos::energy_circular (double r, double c){
 
     return 0.5 * enclosed_mass(r,c)/r+grav_potential_halo(r, c);
 
-}
-
-double DarkMatterHalos::enclosed_mass(double r, double c){
-
-	if(parameters.haloprofile == parameters.NFW){
-
-		double fa = std::log(1+1/c)-1.0/(1.0+c);
-		double r_c = r/c;
-		if(r < constants::tolerance * c){
-			return  fa* (std::pow(r_c,2)) * (0.5+r_c * (-0.6666667+r_c * (0.75-0.8*r_c) ) );
-		}
-		else{
-			 return fa*(std::log(1.0+r/c)-r/(r+c));
-		}
-
-	}
-	else if(parameters.haloprofile == parameters.EINASTO){
-
-		//TODO: implement Einasto profile.
-		return 0;
-	}
 }
 
 double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
@@ -163,7 +106,52 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){
 	return 0.5566 * rdisk;
 }
 
+double NFWDarkMatterHalos::grav_potential_halo(double r, double c) const
+{
 
+	if (r <=0) {
+		return 0;
+	}
+
+	double x = r/c;
+
+	double g_c = std::log(1+1/c)-1/(1+c);
+
+	double rhos = 1/(constants::PI4 * std::pow(c,3) * g_c);
+
+	double f_x = 0;
+
+	if(r < 1){
+		f_x = std::log(1+x)/x-1/(1+1/c);
+	}
+	else{
+		f_x = (std::log(1+1/c)-1/(1+c))/x;
+	}
+
+	return -1 * constants::PI4 * rhos * std::pow(c,2) * f_x;
+}
+
+double NFWDarkMatterHalos::enclosed_mass(double r, double c) const
+{
+	double fa = std::log(1+1/c)-1.0/(1.0+c);
+	double r_c = r/c;
+	if(r < constants::tolerance * c){
+		return  fa* (std::pow(r_c,2)) * (0.5+r_c * (-0.6666667+r_c * (0.75-0.8*r_c) ) );
+	}
+	return fa*(std::log(1.0+r/c)-r/(r+c));
+}
+
+double EinastoDarkMatterHalos::grav_potential_halo(double r, double c) const
+{
+	//TODO: implement Einasto profile.
+	return 0;
+}
+
+double EinastoDarkMatterHalos::enclosed_mass(double r, double c) const
+{
+	//TODO: implement Einasto profile.
+	return 0;
+}
 
 } // namespace shark
 
