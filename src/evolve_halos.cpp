@@ -40,26 +40,58 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
 	/**
 	 * This function transfer galaxies of the subhalos of this snapshot into the subhalos of the next snapshot, and baryon components from subhalo to subhalo.
 	 */
-	unsigned int subhalos_without_descendant = 0;
+
+	// First make sure central subhalos at this snapshot have only one central galaxy.
 	for(auto &halo: halos){
 		for(SubhaloPtr &subhalo: halo->all_subhalos()) {
+			vector<float> mbaryon;
+			if(subhalo->subhalo_type == Subhalo::SATELLITE){
+				for (auto &galaxy: subhalo->galaxies){
+					if(galaxy->galaxy_type == Galaxy::CENTRAL){
+						std::ostringstream os;
+						os << "Satellite subhalo " << subhalo << " has at least 1 central galaxy";
+						throw invalid_argument(os.str());
+					}
+				}
+			}
+			else{
+				int i = 0;
+				for (auto &galaxy: subhalo->galaxies){
+					if(galaxy->galaxy_type == Galaxy::CENTRAL){
+						i++;
+						mbaryon.push_back(galaxy->baryon_mass());
+					}
+				}
+				if(i==0){
+					std::ostringstream os;
+					os << "Central Subhalo " << subhalo << " has no central galaxy";
+					throw invalid_argument(os.str());
+				}
+				if(i>1){
+					std::ostringstream os;
+					os << "Central Subhalo " << subhalo << " has " << i <<" central galaxies";
+					os << "Baryon masses:" << mbaryon[0] << " " << mbaryon[1];
+					throw invalid_argument(os.str());
+				}
+			}
+		}
+	}
 
+	unsigned int subhalos_without_descendant = 0;
+	for(auto &halo: halos){
+		for(auto &subhalo: halo->all_subhalos()) {
 			auto descendant_subhalo = subhalo->descendant;
+
 			if (!descendant_subhalo) {
 				subhalos_without_descendant++;
 				continue;
 			}
 
-			// Check cases where the descendant subhalo will be a satellite, but the current is central. In that case
-			// we modify the type of the central galaxy of this subhalo to type1. and the rest to type 2.
-
-			if(subhalo->subhalo_type == Subhalo::CENTRAL && descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
+			// If the current halo is not a main progenitor, then make all its central galaxy type 1. The other ones should already be type 1 or 2.
+			if(!subhalo->main_progenitor or descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
 				for (auto &galaxy: subhalo->galaxies){
 					if(galaxy->galaxy_type == Galaxy::CENTRAL){
 						galaxy->galaxy_type = Galaxy::TYPE1;
-					}
-					else{
-						galaxy->galaxy_type = Galaxy::TYPE2;
 					}
 				}
 			}
@@ -73,6 +105,46 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
 			descendant_subhalo->ejected_galaxy_gas = subhalo->ejected_galaxy_gas;
 			descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
 
+		}
+	}
+
+	// Make sure there is only one central galaxy per halo/central subhalo.
+	for(auto &halo: halos){
+		for(SubhaloPtr &subhalo: halo->all_subhalos()) {
+			auto descendant_subhalo = subhalo->descendant;
+			if(!descendant_subhalo){
+				continue;
+			}
+			if(descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
+				for (auto &galaxy: descendant_subhalo->galaxies){
+					if(galaxy->galaxy_type == Galaxy::CENTRAL){
+						std::ostringstream os;
+						os << "Satellite subhalo " << descendant_subhalo << " has at least 1 central galaxy";
+						throw invalid_argument(os.str());
+					}
+				}
+			}
+			else{
+				int i = 0;
+				for (auto &galaxy: descendant_subhalo->galaxies){
+					if(galaxy->galaxy_type == Galaxy::CENTRAL){
+						i++;
+					}
+				}
+				if(i==0){
+					//LOG(warning) << "Central Subhalo " << descendant_subhalo << " has no central galaxy. ";
+					auto order_galaxies = descendant_subhalo->ordered_galaxies();
+					if(order_galaxies.size() > 0){
+						order_galaxies[0]->galaxy_type = Galaxy::CENTRAL;
+						LOG(warning) << "Central Subhalo " << descendant_subhalo << " has no central galaxy. Will make most massive galaxy the central one. Mass of new central "<< order_galaxies[0]->baryon_mass();
+					}
+				}
+				if(i>1){
+					std::ostringstream os;
+					os << "Central Subhalo " << descendant_subhalo << " has " << i <<" central galaxies";
+					throw invalid_argument(os.str());
+				}
+			}
 		}
 	}
 

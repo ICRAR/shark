@@ -489,6 +489,22 @@ public:
 		return galaxies.size();
 	}
 
+	// Sort galaxies by baryon mass.
+	std::vector<GalaxyPtr> ordered_galaxies(){
+
+		if(galaxies.size()==0){
+			return std::vector<GalaxyPtr>();
+		}
+		else if(galaxies.size()>1){
+			std::sort(galaxies.begin(), galaxies.end(), [](const GalaxyPtr &lhs, const GalaxyPtr &rhs) {
+			return lhs->baryon_mass() > rhs->baryon_mass();
+			});
+		}
+
+		return galaxies;
+
+	}
+
 };
 
 template <typename T>
@@ -539,7 +555,8 @@ public:
 		Vvir(0),
 		Mvir(0),
 		concentration(0),
-		snapshot(snapshot)
+		snapshot(snapshot),
+		main_progenitor(false)
 	{
 		// no-op
 		id = halo_id;
@@ -619,6 +636,7 @@ public:
 	 * The snapshot at which this halo is found
 	 */
 	int snapshot;
+	bool main_progenitor;
 
 	HaloPtr descendant;
 	std::vector<HaloPtr> ascendants;
@@ -654,6 +672,20 @@ public:
 		[](unsigned long galaxy_count, const SubhaloPtr &subhalo) {
 			return galaxy_count + subhalo->galaxy_count();
 		});
+	}
+
+	// Sort ascendant halos by Mvir
+	std::vector<HaloPtr> ordered_ascendants(){
+
+		if(ascendants.size()==0){
+			return std::vector<HaloPtr>();
+		}
+		else if(ascendants.size()>1){
+			std::sort(ascendants.begin(), ascendants.end(), [](const HaloPtr &lhs, const HaloPtr &rhs) {
+			return lhs->Mvir > rhs->Mvir;
+			});
+		}
+		return ascendants;
 	}
 };
 

@@ -77,6 +77,9 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	// Define accretion rate
 	define_accretion_rate(trees, sim_params);
 
+	// Define main progenitor.
+	define_main_progenitor(trees, sim_params);
+
 	return trees;
 }
 
@@ -182,7 +185,51 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 			}
 		}
 
+		//Make sure each halo has only one central subhalo and that the rest are satellites.
+		for(auto &tree: trees){
 
+			for(int snapshot=sim_params.min_snapshot; snapshot >= sim_params.max_snapshot; snapshot++) {
+
+				for(auto &halo: tree->halos[snapshot]){
+					int i = 0;
+					for (auto &subhalo: halo->all_subhalos()){
+						if(subhalo->subhalo_type == Subhalo::CENTRAL){
+							i++;
+							if(i > 1){
+								std::ostringstream os;
+								os << "Halo " << halo << " has more than 1 central subhalo at snapshot " << snapshot;
+								throw invalid_argument(os.str());
+							}
+						}
+					}
+					if(i == 0){
+						std::ostringstream os;
+						os << "Halo " << halo << " has no central subhalo at snapshot " << snapshot;
+						throw invalid_argument(os.str());
+					}
+				}
+			}
+		}
+
+}
+
+void TreeBuilder::define_main_progenitor(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+
+	//Loop over trees.
+	for(auto &tree: trees) {
+		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
+			for(auto &halo: tree->halos[snapshot]){
+				auto ascendants = halo->ordered_ascendants();
+				// If halo has ascendants, then define main.
+				if(ascendants.size() > 0){
+					auto main = ascendants[0];
+					main->main_progenitor = true;
+					auto subhalo_cen = main->central_subhalo;
+					subhalo_cen->main_progenitor = true;
+				}
+			}
+		}
+	}
 }
 
 void TreeBuilder::define_accretion_rate(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
@@ -356,33 +403,39 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 }
 
 
-void HaloBasedTreeBuilder::create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology, DarkMatterHalos &darkmatterhalos, GasCoolingParameters &cool_params)
+void HaloBasedTreeBuilder::create_galaxies(std::vector<MergerTreePtr> trees,
+		Cosmology &cosmology,
+		DarkMatterHalos &darkmatterhalos,
+		GasCoolingParameters &cool_params,
+		SimulationParameters sim_params)
 {
 
 	//This function finds subhalos that have no progenitors (so first time they are identified) and are central, and creates a galaxy there.
 
-	for (const auto &halo: halos){
-		for(const auto &subhalo: halo->all_subhalos()) {
-			if(subhalo->ascendants.empty() and subhalo->subhalo_type == Subhalo::CENTRAL and subhalo->galaxies.empty()){
+	//Loop over trees.
+		for(auto &tree: trees) {
+			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
+				for(auto &halo: tree->halos[snapshot]){
+					for (auto &subhalo: halo->all_subhalos()){
+						if(subhalo->ascendants.empty() and subhalo->subhalo_type == Subhalo::CENTRAL and subhalo->galaxies.empty()){
+							auto galaxy = std::make_shared<Galaxy>();
 
-				auto galaxy = std::make_shared<Galaxy>();
+							galaxy->galaxy_type = Galaxy::CENTRAL;
 
-				galaxy->galaxy_type = Galaxy::CENTRAL;
+							//assign an ad-hoc half-mass radius to start with.
+							galaxy->disk_gas.rscale = darkmatterhalos.disk_size_theory(*subhalo);
 
-				//assign an ad-hoc half-mass radius to start with.
-				galaxy->disk_gas.rscale = darkmatterhalos.disk_size_theory(*subhalo);
+							subhalo->galaxies.push_back(galaxy);
 
-				subhalo->galaxies.push_back(galaxy);
+							subhalo->hot_halo_gas.mass = subhalo->host_halo->Mvir * cosmology.universal_baryon_fraction();
 
-				subhalo->hot_halo_gas.mass = subhalo->host_halo->Mvir * cosmology.universal_baryon_fraction();
-
-				// Assign metallicity to the minimum allowed.
-				subhalo->hot_halo_gas.mass_metals = subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
-
-
+							// Assign metallicity to the minimum allowed.
+							subhalo->hot_halo_gas.mass_metals = subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
+						}
+					}
+				}
 			}
 		}
-	}
 
 }
 

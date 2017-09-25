@@ -241,8 +241,8 @@ int run(int argc, char **argv) {
 	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
 	auto merger_trees = tree_builder.build_trees(halos, sim_params);
 
-	// Create the first generation of galaxies in the first halos apprearing.
-	tree_builder.create_galaxies(halos, *cosmology, *dark_matter_halos, gas_cooling_params);
+	// Create the first generation of galaxies in the first halos appearing.
+	tree_builder.create_galaxies(merger_trees, *cosmology, *dark_matter_halos, gas_cooling_params, sim_params);
 
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
 	// calculate evolution in the time from the current to the next snapshot.
@@ -283,10 +283,6 @@ int run(int argc, char **argv) {
 
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
 				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
-
-				LOG(debug) << "Galaxy baryon mass of central galaxy: " << halo->central_subhalo->central_galaxy()->baryon_mass();
-
-
 			}
 		}
 

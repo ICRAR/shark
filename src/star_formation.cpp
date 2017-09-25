@@ -46,7 +46,7 @@ StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr
 
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double z) {
 
-	if (mcold <= constants::min_gas_mass_for_sf || rgas <= constants::min_rgas_for_sf) {
+	if (mcold <= 0 or rgas <= 0) {
 		return 0;
 	}
 
@@ -60,7 +60,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 	double Sigma_gas = cosmology->comoving_to_physical_mass(mcold) / constants::PI2 / (re * re);
 	double Sigma_star = 0;
-	if(mstar){
+	if(mstar > 0 and rstar > 0){
 		Sigma_star = cosmology->comoving_to_physical_mass(mstar) / constants::PI2 / (rse * rse) ;
 	}
 
@@ -89,7 +89,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.05);
 
 	// Avoid negative values.
-	if(result <0){
+	if(result < 0){
 		result = 0.0;
 	}
 
@@ -106,10 +106,15 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 
 	double Sigma_gas = props->sigma_gas0 * std::exp(-r / props->re);
 
+	// Avoid negative numbers.
+	if(Sigma_gas < 0){
+		Sigma_gas = 0;
+	}
+
 	double Sigma_stars = 0;
 
 	// Define Sigma_stars only if stellar mass and radius are positive.
-	if(props->rse > 0 && props->sigma_star0 > 0){
+	if(props->rse > 0 and props->sigma_star0 > 0){
 		Sigma_stars = props->sigma_star0 * std::exp(-r / props->rse);
 	}
 
@@ -125,6 +130,11 @@ double StarFormation::molecular_surface_density(double r, void * params){
 
 	double Sigma_gas = props->sigma_gas0 * std::exp(-r / props->re);
 
+	// Avoid negative numbers
+	if(Sigma_gas < 0){
+		Sigma_gas = 0;
+	}
+
 	double Sigma_stars = 0;
 
 	// Define Sigma_stars only if stellar mass and radius are positive.
@@ -139,7 +149,18 @@ double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double r){
 
 	double rmol = std::pow((midplane_pressure(Sigma_gas,Sigma_stars,r)/parameters.Po),parameters.beta_press);
 
-	return rmol/(1+rmol);
+	double fmol = rmol/(1+rmol);
+
+	// Avoid calculation errors.
+	if(fmol > 1){
+		return 1;
+	}
+	else if(rmol > 0 and rmol < 1){
+		return fmol;
+	}
+	else{
+		return 0;
+	}
 }
 
 double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, double r){
@@ -155,6 +176,7 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 	double veldisp_star = std::sqrt(PI * G * hstar * Sigma_stars); //stellar velocity dispersion in km/s.
 
 	double star_comp = 0;
+
 	if (Sigma_stars > 0 and veldisp_star > 0) {
 		star_comp = (parameters.gas_velocity_dispersion / veldisp_star) * Sigma_stars;
 	}
@@ -166,7 +188,7 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 
 double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas, double rstar, double z) {
 
-	if (mcold <= constants::min_gas_mass_for_sf || rgas <= constants::min_rgas_for_sf) {
+	if (mcold <= 0 or rgas <= 0) {
 		return 0;
 	}
 
@@ -180,7 +202,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 
 	double Sigma_gas = cosmology->comoving_to_physical_mass(mcold) / constants::PI2 / (re * re);
 	double Sigma_star = 0;
-	if(mstar){
+	if(mstar > 0 and rstar > 0){
 		Sigma_star = cosmology->comoving_to_physical_mass(mstar) / constants::PI2 / (rse * rse) ;
 	}
 
@@ -202,10 +224,10 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	};
 
 	double rmin = 0;
-	double rmax = 5.0*re;
+	double rmax = 3.0*re;
 
 	StarFormationAndProps sf_and_props = {this, &props};
-	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.02);
+	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.05);
 
 	// Avoid negative values.
 	if(result <0){

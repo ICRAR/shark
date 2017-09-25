@@ -58,6 +58,7 @@ protected:
 
 	void remove_satellite(HaloPtr halo, SubhaloPtr subhalo);
 
+	void define_main_progenitor(std::vector<MergerTreePtr> trees, SimulationParameters sim_params);
 
 private:
 	ExecutionParameters exec_params;
@@ -70,7 +71,11 @@ class HaloBasedTreeBuilder : public TreeBuilder {
 public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params);
 
-	void create_galaxies(const std::vector<HaloPtr> &halos, Cosmology &cosmology, DarkMatterHalos &darkmatterhalos, GasCoolingParameters &cool_params);
+	void create_galaxies(std::vector<MergerTreePtr> trees,
+			Cosmology &cosmology,
+			DarkMatterHalos &darkmatterhalos,
+			GasCoolingParameters &cool_params,
+			SimulationParameters sim_params);
 
 protected:
 	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) override;
