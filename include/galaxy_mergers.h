@@ -62,7 +62,7 @@ public:
 
 	double merging_timescale_orbital(double vr, double vt, double f, double c);
 
-	double merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary);
+	void merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary);
 
 	void merging_subhalos(HaloPtr &halo);
 

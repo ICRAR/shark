@@ -37,7 +37,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	options.load("agn_feedback.accretion_eff_bursts",accretion_eff_bursts);
 
 	options.load("agn_feedback.kappa_agn", kappa_agn);
-	options.load("agn_feedback.nu_smbh", nu_smbh);
+	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
 }
 template <>
@@ -96,10 +96,10 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double mbh) {
 	if (Lcool > 0) {
 		double macc = 0;
 		if (parameters.model == AGNFeedbackParameters::GALFORM) {
-			macc = Lcool * std::pow(10,40) / std::pow(c_light_cm,2) / parameters.accretion_eff_cooling;
+			macc = Lcool * std::pow(10.0,40.0) / std::pow(c_light_cm,2.0) / parameters.accretion_eff_cooling;
 		}
 		else if (parameters.model == AGNFeedbackParameters::LGALAXIES) {
-			macc = parameters.kappa_agn * 0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * (mbh/MSOLAR_g);
+			macc = parameters.kappa_agn * 0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * std::pow(10.0,40.0) * (mbh*MSOLAR_g);
 		}
 		return macc * MACCRETION_cgs_simu; //accretion rate in units of Msun/Gyr.
 	}
@@ -114,7 +114,9 @@ double AGNFeedback::agn_bolometric_luminosity(double macc) {
 	//return bolometric luminosity in units of 10^40 erg/s.
 	using namespace constants;
 
-	return parameters.nu_smbh * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2) / std::pow(10,40);
+	double Lbol = parameters.nu_smbh * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / std::pow(10.0,40.0);
+
+	return Lbol;
 }
 
 double AGNFeedback::smbh_growth_starburst(double mgas){

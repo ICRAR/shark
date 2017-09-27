@@ -390,7 +390,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
         			 * find out if galaxy is in hot halo mode. Only galaxies in the hot halo regime are
         			 * eligible for (radio) AGN fedback.
         			 */
-        			if(timescale_ratio > 1/agnfeedback->parameters.alpha_cool){
+        			if(timescale_ratio > 1.0/agnfeedback->parameters.alpha_cool){
         				//Halo is eligible for AGN feedback.
         				//Calculate cooling luminosity.
         				double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot);
@@ -419,7 +419,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 				central_galaxy->smbh.macc = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc);
 
 	    		//Mass heating rate from AGN in units of Msun/Gyr.
-	    		double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc)/(0.5*std::pow(vvir*KM2CM,2))*MACCRETION_cgs_simu;
+	    		double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc) * std::pow(10.0,40.0) / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
 
 	    		//modify cooling rate according to heating rate.
 	    		if(mheatrate < coolingrate){

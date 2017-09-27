@@ -86,7 +86,18 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 	StarFormationAndProps sf_and_props = {this, &props};
 	// Adopt 5% accuracy for star formation solution.
-	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.05);
+	// double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.05);
+
+	int bins = 10;
+	double integral = 0.0;
+	double binr = (rmax-rmin)/bins;
+	double rin = 0.0;
+
+	for (int i=0; i<bins; i++){
+		rin = rmin+(i+0.5)*binr;
+		integral += star_formation_rate_surface_density(rin,sf_and_props.props) * binr;
+	}
+	double result = integral;
 
 	// Avoid negative values.
 	if(result < 0){
@@ -236,6 +247,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 
 	return cosmology->physical_to_comoving_mass(result);
 }
+
 
 }  // namespace shark
 

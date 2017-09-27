@@ -52,25 +52,25 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	hdf5::Writer file(fname);
 
 	file.write_dataset("runInfo/batches", exec_params.simulation_batches);
+	file.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision);
+	file.write_dataset("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants);
+	file.write_dataset("runInfo/snapshot", snapshot);
+	file.write_dataset("runInfo/redshift", sim_params.redshifts[snapshot]);
 	file.write_attribute("runInfo/model_name", exec_params.name_model);
-	file.write_attribute("runInfo/ode_solver_precision", exec_params.ode_solver_precision);
-	file.write_attribute("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants);
-	file.write_attribute("runInfo/snapshot", snapshot);
-	file.write_attribute("runInfo/redshift", sim_params.redshifts[snapshot]);
 
 	// Calculate effective volume of the run
 	float volume = sim_params.volume * exec_params.simulation_batches.size();
 
-	file.write_attribute("runInfo/EffectiveVolume", volume);
-	file.write_attribute("runInfo/particle_mass", sim_params.particle_mass);
+	file.write_dataset("runInfo/EffectiveVolume", volume);
+	file.write_dataset("runInfo/particle_mass", sim_params.particle_mass);
 
 	// Write cosmological parameters
-	file.write_attribute("Cosmology/OmegaM", cosmo_params.OmegaM);
-	file.write_attribute("Cosmology/OmegaB", cosmo_params.OmegaB);
-	file.write_attribute("Cosmology/OmegaL", cosmo_params.OmegaL);
-	file.write_attribute("Cosmology/n_s", cosmo_params.n_s);
-	file.write_attribute("Cosmology/sigma8", cosmo_params.sigma8);
-	file.write_attribute("Cosmology/h", cosmo_params.Hubble_h);
+	file.write_dataset("Cosmology/OmegaM", cosmo_params.OmegaM);
+	file.write_dataset("Cosmology/OmegaB", cosmo_params.OmegaB);
+	file.write_dataset("Cosmology/OmegaL", cosmo_params.OmegaL);
+	file.write_dataset("Cosmology/n_s", cosmo_params.n_s);
+	file.write_dataset("Cosmology/sigma8", cosmo_params.sigma8);
+	file.write_dataset("Cosmology/h", cosmo_params.Hubble_h);
 
 	// Create all galaxies properties I want to write
 	vector<float> mstars_disk;
@@ -289,6 +289,15 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo);
 	file.write_dataset("Galaxies/id_halo", id_halo);
 
+	string fname_a = exec_params.output_directory + "/" + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
+	fstream file_a;
+	file_a.open("fname_a", ios_base::out);
+
+	for (int i=0; i <type.size(); i++){
+		file_a << mstars_disk[i] << " " << mstars_bulge[i] << " " <<  matom_disk[i]+matom_bulge[i] << " " << mBH[i] << " " << mgas_metals_disk[i]/mgas_disk[i] << " " << mstars_disk[i]+mstars_bulge[i] << " " << rdisk[i] << " " << rbulge[i] << std::endl;
+	}
+
+	file_a.close();
 }
 
 }// namespace shark

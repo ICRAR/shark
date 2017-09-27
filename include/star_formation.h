@@ -80,6 +80,7 @@ public:
 	}
 
 	double molecular_hydrogen(double mcold, double mstars, double rgas, double rstars, double z);
+
 	double molecular_surface_density(double r, void * params);
 
 private:

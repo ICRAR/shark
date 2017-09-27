@@ -159,7 +159,7 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return mass_ratio/std::log(1+mass_ratio);
 }
 
-double GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary){
+void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary){
 
 	/**
 	 * Function calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary.
@@ -168,17 +168,27 @@ double GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &seconda
 	 * a primary and secondary galaxy. The primary is the central galaxy.
 	 */
 
-//	double vt,vr;
-
-	double ms = secondary->Mvir;
-
-	double mp = primary->Mvir;
-
-//	double c = primary->host_halo->concentration;
-
 	auto halo = primary->host_halo;
 
 	double tau_dyn = darkmatterhalo->halo_dynamical_time(halo);
+
+	double mp = primary->Mvir + primary->central_galaxy()->baryon_mass();
+
+	for (auto &galaxy: secondary->galaxies){
+
+		double mgal = galaxy->baryon_mass();
+		double ms = secondary->Mvir + mgal;
+		double tau_mass = merging_timescale_mass(mp, ms);
+
+		// Define merging timescale and redefine type of galaxy.
+
+		galaxy->tmerge = tau_mass * tau_dyn;
+		galaxy->galaxy_type = Galaxy::TYPE2;
+
+	}
+//	double vt,vr;
+
+//	double c = primary->host_halo->concentration;
 
 //	double f = mass_ratio_function(mp, ms);
 
@@ -188,11 +198,8 @@ double GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &seconda
 
 	//double tau_orbits = merging_timescale_orbital(vr, vt, f, c);
 
-	double tau_mass = merging_timescale_mass(mp, ms);
-
 	//return tau_orbits * tau_mass * tau_dyn;
 
-	return tau_mass * tau_dyn;
 
 }
 
@@ -218,20 +225,11 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 
 			auto satellite_subhalo = subhalo;
 
-			//Calculate dynamical friction timescale.
-			double tau_fric = merging_timescale(central_subhalo, satellite_subhalo);
+			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
+			merging_timescale(central_subhalo, satellite_subhalo);
 
 			//transfer all mass from the satellite_subhalo to the central_subhalo.
 			transfer_baryon_mass(satellite_subhalo, central_subhalo);
-
-			for (auto &galaxy: satellite_subhalo->galaxies){
-
-				//Assign tau_fric to all satellite galaxies in the subhalo that will disappear.
-				galaxy->tmerge = tau_fric;
-
-				//Redefine galaxy type.
-				galaxy->galaxy_type = Galaxy::TYPE2;
-			}
 
 			//Now transfer the galaxies in this subhalo to the central subhalo.
 			satellite_subhalo->transfer_galaxies_to(central_subhalo);
@@ -392,7 +390,6 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->disk_gas.mass += satellite->gas_mass();
 
 		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
-
 
 		if(mass_ratio >= parameters.minor_merger_burst_ratio){
 			/**
