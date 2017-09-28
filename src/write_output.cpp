@@ -118,8 +118,8 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	vector<float> velocity_z;
 
 	vector<int> type;
-	vector<long> id_halo;
-	vector<long> id_subhalo;
+	vector<Halo::id_t> id_halo;
+	vector<Subhalo::id_t> id_subhalo;
 
 	long j=1;
 	// Loop over all halos and subhalos to write galaxy properties
@@ -186,16 +186,12 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 				double mzhot_gal = 0;
 				double mreheat = 0;
 				double mzreheat =0;
-				int t = 2;
+				int t = galaxy->galaxy_type;
 				if(galaxy->galaxy_type == Galaxy::CENTRAL){
-					t = 0;
 					mhot_gal = hot_subhalo.mass + cold_subhalo.mass;
 					mzhot_gal = hot_subhalo.mass_metals + cold_subhalo.mass_metals;
 					mreheat = reheated_subhalo.mass;
 					mzreheat = reheated_subhalo.mass_metals;
-				}
-				else if(galaxy->galaxy_type == Galaxy::TYPE1){
-					t=1;
 				}
 
 				mhot.push_back(mhot_gal);
@@ -299,7 +295,7 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	fstream file_a;
 	file_a.open(fname_a, ios_base::out);
 
-	for (int i=0; i < type.size(); i++){
+	for (unsigned int i=0; i < type.size(); i++){
 		file_a << mstars_disk[i] << " " << mstars_bulge[i] << " " <<  matom_disk[i]+matom_bulge[i] << " " << mBH[i] << " " << mgas_metals_disk[i]/mgas_disk[i] << " " << mstars_disk[i]+mstars_bulge[i] << " " << rdisk[i] << " " << rbulge[i] << " " << id_subhalo[i] << " " << id_halo[i] << std::endl;
 	}
 
