@@ -31,12 +31,18 @@ namespace shark {
 namespace hdf5 {
 
 const H5::PredType &datatype_traits<std::string>::write_type = H5::PredType::C_S1;
-const H5::PredType &datatype_traits<float>::write_type = H5::PredType::NATIVE_FLOAT;
-const H5::PredType &datatype_traits<double>::write_type = H5::PredType::NATIVE_DOUBLE;
-const H5::PredType &datatype_traits<int>::write_type = H5::PredType::NATIVE_INT16;
-const H5::PredType &datatype_traits<unsigned int>::write_type = H5::PredType::NATIVE_UINT16;
-const H5::PredType &datatype_traits<long int>::write_type = H5::PredType::NATIVE_INT32;
 const H5::PredType &datatype_traits<bool>::write_type = H5::PredType::NATIVE_INT8;
+
+const H5::PredType &datatype_traits<float>::native_type = H5::PredType::NATIVE_FLOAT;
+const H5::PredType &datatype_traits<float>::write_type = H5::PredType::NATIVE_FLOAT;
+const H5::PredType &datatype_traits<double>::native_type = H5::PredType::NATIVE_DOUBLE;
+const H5::PredType &datatype_traits<double>::write_type = H5::PredType::NATIVE_DOUBLE;
+const H5::PredType &datatype_traits<int>::native_type = H5::PredType::NATIVE_INT;
+const H5::PredType &datatype_traits<int>::write_type = H5::PredType::NATIVE_INT32;
+const H5::PredType &datatype_traits<unsigned int>::native_type = H5::PredType::NATIVE_UINT;
+const H5::PredType &datatype_traits<unsigned int>::write_type = H5::PredType::NATIVE_UINT32;
+const H5::PredType &datatype_traits<long int>::native_type = H5::PredType::NATIVE_LONG;
+const H5::PredType &datatype_traits<long int>::write_type = H5::PredType::NATIVE_INT64;
 
 }  // namespace hdf5
 

@@ -103,7 +103,18 @@ template <typename T>
 static inline
 void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const T &val)
 {
-	dataset.write(&val, dataType, dataSpace, dataSpace);
+	H5::DataType mem_dataType(datatype_traits<T>::native_type);
+	dataset.write(&val, mem_dataType, dataSpace, dataSpace);
+}
+
+// Specialization for bools, which we need to convert into int first
+template <>
+inline
+void _write_dataset<bool>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const bool &val)
+{
+	int int_val = static_cast<int>(val);
+	H5::DataType mem_dataType(H5::PredType::NATIVE_INT);
+	dataset.write(&int_val, mem_dataType, dataSpace, dataSpace);
 }
 
 // Specialization for strings, for which there is a specific .write method
@@ -119,7 +130,8 @@ template <typename T>
 static inline
 void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<T> &vals)
 {
-	dataset.write(vals.data(), dataType, dataSpace, dataSpace);
+	H5::DataType mem_dataType(datatype_traits<T>::native_type);
+	dataset.write(vals.data(), mem_dataType, dataSpace, dataSpace);
 }
 
 // and specializing for vectors of strings
