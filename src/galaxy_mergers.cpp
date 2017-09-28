@@ -275,7 +275,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 			 * If merging timescale is less than the duration of this snapshot, then proceed to merge. Otherwise, update merging timescale.
 			 */
 			if(galaxy->tmerge < delta_t){
-				create_merger(central_galaxy, galaxy, halo, z, delta_t);
+				create_merger(central_galaxy, galaxy, halo);
 
 				// Accummulate all satellites that we need to delete at the end.
 				all_sats_to_delete.push_back(galaxy);
@@ -296,12 +296,15 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 		central_subhalo->galaxies.erase(it);
 	}
 
+	// Trigger starbursts in all the galaxies that have gas in the bulge.
+	create_starbursts(halo, z, delta_t);
+
 }
 
-void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, double z, double delta_t){
+void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo){
 
 	/**
-	 * This function classifies the merger and computes the starburst in case it takes place.
+	 * This function classifies the merger and transfer all the baryon masses to the right component of the central.
 	 * Inputs:
 	 * central: central galaxy.
 	 * satellite: satellite galaxy.
@@ -339,8 +342,10 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	central->smbh.mass_metals += satellite->smbh.mass_metals;
 
 	/**
-	 * Evaluate major mergers
+	 * Depending on the mass ratio, the baryonic components of the satellite and the disk of the major galaxy are going to be transferred differently.
 	 */
+
+	// Major mergers.
 	if(mass_ratio >= parameters.major_merger_ratio){
 
 		/**
@@ -352,29 +357,12 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->bulge_gas.mass += central->disk_gas.mass + satellite->gas_mass();
 		central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals + satellite->gas_mass_metals();
 
-		// calculate black hole growth due to starburst.
-		double delta_mbh = agnfeedback->smbh_growth_starburst(central->bulge_gas.mass);
-		double delta_mzbh = delta_mbh/central->bulge_gas.mass * central->bulge_gas.mass_metals;
-
-		// Grow SMBH.
-		central->smbh.mass += delta_mbh;
-		central->smbh.mass_metals += delta_mzbh;
-
-		// Reduce gas available for star formation due to black hole growth.
-		central->bulge_gas.mass -= delta_mbh;
-		central->bulge_gas.mass_metals -= delta_mzbh;
-
 		//Make all disk values 0.
 
 		central->disk_stars.mass = 0;
 		central->disk_stars.mass_metals = 0;
 		central->disk_gas.mass = 0;
 		central->disk_gas.mass_metals = 0;
-
-		/**
-		 * Triger starburst with available gas.
-		 */
-		physicalmodel->evolve_galaxy_starburst(*central_subhalo, *central, z, delta_t);
 
 	}
 	else{//minor mergers
@@ -384,43 +372,56 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		 */
 
 		central->bulge_stars.mass += satellite->stellar_mass();
-
 		central->bulge_stars.mass_metals += satellite->stellar_mass_metals();
-
 		central->disk_gas.mass += satellite->gas_mass();
-
 		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
 
 		if(mass_ratio >= parameters.minor_merger_burst_ratio){
-			/**
-			 * Triger starburst with available gas.
-			 */
 
 			central->bulge_gas.mass += central->disk_gas.mass;
 			central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals;
 
-			// calculate black hole growth due to starburst.
-			double delta_mbh = agnfeedback->smbh_growth_starburst(central->bulge_gas.mass);
-			double delta_mzbh = delta_mbh/central->bulge_gas.mass * central->bulge_gas.mass_metals;
-
-			// Grow SMBH.
-			central->smbh.mass += delta_mbh;
-			central->smbh.mass_metals += delta_mzbh;
-
-			// Reduce gas available for star formation due to black hole growth.
-			central->bulge_gas.mass -= delta_mbh;
-			central->bulge_gas.mass_metals -= delta_mzbh;
-
 			//Make gas disk values 0.
 			central->disk_gas.mass = 0;
 			central->disk_gas.mass_metals = 0;
-
-			physicalmodel->evolve_galaxy_starburst(*central_subhalo, *central, z, delta_t);
-
 		}
 
 	}
 
+}
+
+void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
+
+
+	for (auto &subhalo: halo->all_subhalos()){
+		for (auto &galaxy: subhalo->galaxies){
+
+			// Trigger starburst only in case there is gas in the bulge.
+			if(galaxy->bulge_gas.mass > constants::tolerance_mass){
+
+				// Calculate black hole growth due to starburst.
+				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy->bulge_gas.mass);
+				double delta_mzbh = 0;
+				if(galaxy->bulge_gas.mass > 0){
+					delta_mzbh = delta_mbh/galaxy->bulge_gas.mass * galaxy->bulge_gas.mass_metals;
+				}
+
+				// Define accretion rate.
+				galaxy->smbh.macc_sb = delta_mbh/delta_t;
+
+				// Grow SMBH.
+				galaxy->smbh.mass += delta_mbh;
+				galaxy->smbh.mass_metals += delta_mzbh;
+
+				// Reduce gas available for star formation due to black hole growth.
+				galaxy->bulge_gas.mass -= delta_mbh;
+				galaxy->bulge_gas.mass_metals -= delta_mzbh;
+
+				// Trigger starburst.
+				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t);
+			}
+		}
+	}
 
 }
 

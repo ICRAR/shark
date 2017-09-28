@@ -89,11 +89,15 @@ double AGNFeedback::eddington_luminosity(double mbh){
 double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double mbh) {
 
 	/**
-	 * Input Lcool: cooling luminosity in units of 10^40 erg/s.
+	 * Function calculates the accretion rate onto the central black hole based on a cooling luminosity.
+	 * Inputs:
+	 * Lcool: cooling luminosity in units of 10^40 erg/s.
+	 * mbh: mass of central supermassive black hole.
 	 */
+
 	using namespace constants;
 
-	if (Lcool > 0) {
+	if (Lcool > 0 && Lcool < MAXLUM) {
 		double macc = 0;
 		if (parameters.model == AGNFeedbackParameters::GALFORM) {
 			macc = Lcool * std::pow(10.0,40.0) / std::pow(c_light_cm,2.0) / parameters.accretion_eff_cooling;
@@ -120,7 +124,14 @@ double AGNFeedback::agn_bolometric_luminosity(double macc) {
 }
 
 double AGNFeedback::smbh_growth_starburst(double mgas){
-	return parameters.f_smbh * mgas;
+
+	double m = 0;
+
+	if(mgas > 0){
+		m =  parameters.f_smbh * mgas;
+	}
+
+	return m;
 }
 
 } // namespace shark

@@ -117,14 +117,18 @@ public:
 	 * Initialize values in zero.
 	 */
 	BlackHole():
-		macc(0)
+		macc_hh(0),
+		macc_sb(0)
 	{
 		// no-op
 	}
 	/**
-	 * macc: accretion rate onto the black hole.
+	 * macc_hh: accretion rate onto the black hole during hot halo mode.
+	 * macc_sb: accretion rate onto the black hole during starbursts.
 	 */
-	float macc;
+
+	float macc_hh;
+	float macc_sb;
 };
 
 /**

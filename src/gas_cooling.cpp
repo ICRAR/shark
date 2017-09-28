@@ -238,7 +238,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     	//TODO: remove this part and calculate rscale of the stellar disk properly.
     	central_galaxy->disk_stars.rscale = central_galaxy->disk_gas.rscale;
 
-
     	/**
     	 * Plant black hole seed if necessary.
     	 */
@@ -396,15 +395,15 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
         				double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot);
 
         				if(Lcool < agnfeedback->parameters.f_edd * Ledd && Lcool > 0){
-        					central_galaxy->smbh.macc = agnfeedback->accretion_rate_hothalo_smbh(Lcool, central_galaxy->smbh.mass);
+        					central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lcool, central_galaxy->smbh.mass);
         					//now convert mass accretion rate to comoving units.
-        					central_galaxy->smbh.macc = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc);
+        					central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 
         		    		// set cooling rate to 0.
         					coolingrate = 0;
         				}
         				else{
-        					central_galaxy->smbh.macc = 0;
+        					central_galaxy->smbh.macc_hh = 0;
         				}
 
         			}//end if of hot halo mode.
@@ -414,16 +413,16 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     			//a pseudo cooling luminosity k*T/lambda(T,Z)
     			double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / std::pow(10.0,40.0);
 
-    			central_galaxy->smbh.macc = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
+    			central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
 				//now convert mass accretion rate to comoving units.
-				central_galaxy->smbh.macc = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc);
+				central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 
 	    		//Mass heating rate from AGN in units of Msun/Gyr.
-	    		double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc) * std::pow(10.0,40.0) / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
+	    		double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh) * std::pow(10.0,40.0) / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
 
 	    		//modify cooling rate according to heating rate.
 	    		if(mheatrate < coolingrate){
-	    			coolingrate = (1-mheatrate/coolingrate)*coolingrate;
+	    			coolingrate = coolingrate - mheatrate;
 	    		}
 	    		else{
 	    			/*CHECK: If mheatrate is > than cooling rate, then one needs to truncate the BH accretion rate to match that heating rate?*/
@@ -432,16 +431,18 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
 
     		}
     		else{//In the case none of the two models above are included.
-    			central_galaxy->smbh.macc = 0;
+    			central_galaxy->smbh.macc_hh = 0;
     		}
 
     		/**
     		 * Now, we modify the SMBH mass and metals, and the hot gas mass accordingly.
     		 */
-    		if(central_galaxy->smbh.macc > 0){
+    		if(central_galaxy->smbh.macc_hh > 0){
     			//Now calculate new BH mass and metals due to gas accretion from hot halo.
-				central_galaxy->smbh.mass += central_galaxy->smbh.macc * deltat ;
-				central_galaxy->smbh.mass_metals += central_galaxy->smbh.macc * deltat /mhot*mzhot;
+				central_galaxy->smbh.mass += central_galaxy->smbh.macc_hh * deltat ;
+				if(mhot > 0){
+					central_galaxy->smbh.mass_metals += central_galaxy->smbh.macc_hh * deltat /mhot*mzhot;
+				}
 
 	    		/**
 	    		 * Update hot halo gas properties as a response of how much the SMBH is accreting;

@@ -68,7 +68,9 @@ public:
 
 	void merging_galaxies(HaloPtr &halo, double z, double delta_t);
 
-	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, double z, double delta_t);
+	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo);
+
+	void create_starbursts(HaloPtr &halo, double z, double delta_t);
 
 	double bulge_size_merger(double mass_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo);
 
