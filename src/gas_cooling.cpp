@@ -228,15 +228,17 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     if(subhalo.subhalo_type == Subhalo::CENTRAL){
 
     	/**
-    	 * Estimate disk size.
+    	 * Estimate disk size and specific angular momentum.
     	 */
 
     	auto central_galaxy = subhalo.central_galaxy();
 
     	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo);
+    	darkmatterhalos->galaxy_velocity(subhalo);
 
     	//TODO: remove this part and calculate rscale of the stellar disk properly.
     	central_galaxy->disk_stars.rscale = central_galaxy->disk_gas.rscale;
+    	central_galaxy->disk_stars.sAM = central_galaxy->disk_gas.sAM;
 
     	/**
     	 * Plant black hole seed if necessary.
@@ -283,8 +285,8 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		}
 
     		// Add up accreted mass and metals.
-    		subhalo.hot_halo_gas.mass += (subhalo.accreted_mass * cosmology->parameters.OmegaB);
-    		subhalo.hot_halo_gas.mass_metals += (subhalo.accreted_mass * cosmology->parameters.OmegaB * parameters.pre_enrich_z);
+    		subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
+    		subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;
 
     		/**
     		 * We need to convert masses and velocities to physical units before proceeding with calculation.
@@ -411,14 +413,15 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     		}// end if of GALFORM AGN feedback model.
     		else if(agnfeedback->parameters.model == AGNFeedbackParameters::LGALAXIES){
     			//a pseudo cooling luminosity k*T/lambda(T,Z)
-    			double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / std::pow(10.0,40.0);
+    			double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
 
     			central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
+
 				//now convert mass accretion rate to comoving units.
 				central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 
 	    		//Mass heating rate from AGN in units of Msun/Gyr.
-	    		double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh) * std::pow(10.0,40.0) / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
+	    		double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
 
 	    		//modify cooling rate according to heating rate.
 	    		if(mheatrate < coolingrate){

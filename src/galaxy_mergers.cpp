@@ -44,7 +44,10 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 
 }
 
-GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel, std::shared_ptr<AGNFeedback> agnfeedback) :
+GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
+		std::shared_ptr<DarkMatterHalos> darkmatterhalo,
+		std::shared_ptr<BasicPhysicalModel> physicalmodel,
+		std::shared_ptr<AGNFeedback> agnfeedback) :
 	parameters(parameters),
 	darkmatterhalo(darkmatterhalo),
 	physicalmodel(physicalmodel),
@@ -215,6 +218,12 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 
 	auto central_subhalo = halo->central_subhalo;
 
+	if (!central_subhalo) {
+		std::ostringstream os;
+		os << halo << " has no central subhalo - in merging_subhalos";
+		throw exception(os.str());
+	}
+
 	// Assign halo concentration.
 	halo->concentration = halo->central_subhalo->concentration;
 
@@ -251,9 +260,10 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	//First define central subhalo.
 
 	auto &central_subhalo = halo->central_subhalo;
+
 	if (!central_subhalo) {
 		std::ostringstream os;
-		os << halo << " has no central subhalo";
+		os << halo << " has no central subhalo - in merging_galaxies";
 		throw exception(os.str());
 	}
 
@@ -263,7 +273,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	GalaxyPtr central_galaxy = central_subhalo->central_galaxy();
 	if(!central_galaxy){
 		std::ostringstream os;
-		os << central_subhalo << " has no central galaxy";
+		os << central_subhalo << " has no central galaxy - in merging_galaxies";
 		throw exception(os.str());
 	}
 

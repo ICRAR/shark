@@ -33,12 +33,14 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options) :
 	eta_cc(0),
 	e_sn(0),
 	epsilon_cc(0),
-	beta(0)
+	beta(0),
+	v_sn(0)
 {
 	options.load("stellar_feedback.eta_cc", eta_cc, true);
 	options.load("stellar_feedback.e_sn", e_sn, true);
 	options.load("stellar_feedback.epsilon_cc", epsilon_cc, true);
 	options.load("stellar_feedback.beta", beta, true);
+	options.load("stellar_feedback.v_sn", v_sn);
 
 	//convert energy of SNe into code units.
 	e_sn = e_sn *std::pow(constants::MSOLAR_g, -1.0) * std::pow(constants::MPC2CM, -2.0) * std::pow(constants::GYR2S, 2.0);
@@ -61,7 +63,10 @@ double StellarFeedback::outflow_rate(double sfr, double v) {
 
 	double beta  = parameters.epsilon_cc * parameters.e_sn /
 		       std::pow(v, parameters.beta) * parameters.eta_cc * sfr;
-	return beta;
+
+	double beta_galform = std::pow(parameters.v_sn/v, parameters.beta);
+
+	return beta_galform;
 }
 
 }  // namespace shark

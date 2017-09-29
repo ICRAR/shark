@@ -40,6 +40,8 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 
 	string batch;
 
+	int snap_to_write = snapshot+1;
+
 	if(exec_params.simulation_batches.size() == 1){
 		batch = std::to_string(exec_params.simulation_batches[0]);
 	}
@@ -47,15 +49,15 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 		batch = "multiple_batches";
 	}
 
-	string fname = exec_params.output_directory + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.hdf5";
+	string fname = exec_params.output_directory + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snap_to_write) + "/" + batch + "/galaxies.hdf5";
 
 	hdf5::Writer file(fname);
 
 	file.write_dataset("runInfo/batches", exec_params.simulation_batches);
 	file.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision);
 	file.write_dataset("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants);
-	file.write_dataset("runInfo/snapshot", snapshot);
-	file.write_dataset("runInfo/redshift", sim_params.redshifts[snapshot]);
+	file.write_dataset("runInfo/snapshot", snap_to_write);
+	file.write_dataset("runInfo/redshift", sim_params.redshifts[snap_to_write]);
 	file.write_attribute("runInfo/model_name", exec_params.name_model);
 
 	// Calculate effective volume of the run
@@ -295,7 +297,7 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo);
 	file.write_dataset("Galaxies/id_halo", id_halo);
 
-	string fname_a = exec_params.output_directory + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
+	string fname_a = exec_params.output_directory + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snap_to_write) + "/" + batch + "/galaxies.dat";
 	fstream file_a;
 	file_a.open(fname_a, ios_base::out);
 

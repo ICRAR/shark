@@ -36,6 +36,7 @@
 #include "components.h"
 #include "cosmology.h"
 #include "dark_matter_halos.h"
+#include "disk_instability.h"
 #include "evolve_halos.h"
 #include "exceptions.h"
 #include "galaxy_mergers.h"
@@ -195,6 +196,7 @@ int run(int argc, char **argv) {
 	AGNFeedbackParameters agn_params(config_file);
 	CosmologicalParameters cosmo_parameters(config_file);
 	DarkMatterHaloParameters dark_matter_halo_parameters(config_file);
+	DiskInstabilityParameters disk_instability_params(config_file);
 	ExecutionParameters exec_params(config_file);
 	GalaxyMergerParameters merger_parameters(config_file);
 	GasCoolingParameters gas_cooling_params(config_file);
@@ -232,6 +234,7 @@ int run(int argc, char **argv) {
 	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters, gas_cooling_params);
 
 	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel,agnfeedback};
+	DiskInstability disk_instability{disk_instability_params,merger_parameters,basic_physicalmodel,agnfeedback};
 
 	HaloBasedTreeBuilder tree_builder(exec_params);
 
@@ -290,8 +293,8 @@ int run(int argc, char **argv) {
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		//do_stuff_at_halo_level(all_halos_this_snapshot);
 
-//		/*write snapshots only if the user wants outputs at this time.*/
-		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
+//		/*write snapshots only if the user wants outputs at this time (note that what matters here is snapshot+1.*/
+		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end() )
 		{
 			writer.write_galaxies(snapshot, all_halos_this_snapshot);
 		}
@@ -318,7 +321,7 @@ int run(int argc, char **argv) {
 
 
 		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
-		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot);
+		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology);
 
 	}
 

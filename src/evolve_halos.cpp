@@ -35,7 +35,7 @@ void populate_halos(shared_ptr<BasicPhysicalModel> physicalmodel, HaloPtr halo, 
 	}
 }
 
-void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
+void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology){
 
 	/**
 	 * This function transfer galaxies of the subhalos of this snapshot into the subhalos of the next snapshot, and baryon components from subhalo to subhalo.
@@ -63,9 +63,11 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
 					}
 				}
 				if(i==0){
-					std::ostringstream os;
-					os << "Central Subhalo " << subhalo << " has no central galaxy";
-					throw invalid_argument(os.str());
+					auto order_galaxies = subhalo->ordered_galaxies();
+					if(order_galaxies.size() > 0){
+						order_galaxies[0]->galaxy_type = Galaxy::CENTRAL;
+						LOG(warning) << "Central Subhalo " << subhalo << " has no central galaxy. Will make most massive galaxy the central one. Mass of new central "<< order_galaxies[0]->baryon_mass();
+					}
 				}
 				if(i>1){
 					std::ostringstream os;
@@ -124,7 +126,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
 					}
 				}
 			}
-			else{
+			else{ // subhalo is central.
 				int i = 0;
 				for (auto &galaxy: descendant_subhalo->galaxies){
 					if(galaxy->galaxy_type == Galaxy::CENTRAL){
@@ -132,7 +134,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
 					}
 				}
 				if(i==0){
-					//LOG(warning) << "Central Subhalo " << descendant_subhalo << " has no central galaxy. ";
 					auto order_galaxies = descendant_subhalo->ordered_galaxies();
 					if(order_galaxies.size() > 0){
 						order_galaxies[0]->galaxy_type = Galaxy::CENTRAL;
@@ -148,6 +149,27 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos){
 		}
 	}
 
+	// Now calculated accreted hot mass by assuming mass conservation and assuming the universal baryon fraction.
+
+	for(auto &halo: halos){
+
+		auto desc_halo = halo->descendant;
+
+		double total_baryon_mass = 0.0;
+		for (auto &subhalo: halo->all_subhalos()){
+			total_baryon_mass += subhalo->total_baryon_mass();
+		}
+
+		double mbar_desc = desc_halo->Mvir * cosmology.universal_baryon_fraction();
+
+		double mass_acc = mbar_desc - total_baryon_mass;
+		if(mass_acc < 0){
+			mass_acc = 0;
+		}
+
+		desc_halo->central_subhalo->accreted_mass = mass_acc;
+
+	}
 	if (subhalos_without_descendant) {
 		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies";
 	}

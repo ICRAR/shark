@@ -439,7 +439,7 @@ public:
 	std::vector<SubhaloPtr> ascendants;
 
 	/**
-	 * The accreted mass onto the subhalo. This information comes from the merger tree.
+	 * The accreted baryonic mass onto the subhalo. This information comes from the merger tree.
 	 */
 	float accreted_mass;
 
@@ -507,6 +507,20 @@ public:
 
 		return galaxies;
 
+	}
+
+	double total_baryon_mass(){
+
+		double mass= 0.0;
+
+		// add halo components.
+		mass += hot_halo_gas.mass + cold_halo_gas.mass + ejected_galaxy_gas.mass;
+
+		for (auto &galaxy: galaxies){
+			mass += galaxy->baryon_mass() + galaxy->smbh.mass;
+		}
+
+		return mass;
 	}
 
 };

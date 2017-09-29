@@ -62,6 +62,12 @@ public:
 
 	double mmw98_nfw_concentration(double mvir, double vmax, double rvir);
 
+	void galaxy_velocity(Subhalo &subhalo);
+
+	double v2halo (double x, double m, double c, double r);
+	double v2disk (double x, double m, double c, double r);
+	double v2bulge (double x, double m, double c, double r);
+
 protected:
 	std::shared_ptr<Cosmology> cosmology;
 	SimulationParameters sim_params;

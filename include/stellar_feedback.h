@@ -39,6 +39,7 @@ public:
 	double e_sn;
 	double epsilon_cc;
 	double beta;
+	double v_sn;
 
 };
 

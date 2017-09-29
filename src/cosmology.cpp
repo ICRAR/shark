@@ -80,11 +80,11 @@ Cosmology::Cosmology(CosmologicalParameters parameters) :
 }
 
 double Cosmology::comoving_to_physical_size(double r, double z){
-	return r/parameters.Hubble_h;///(1+z);
+	return r/parameters.Hubble_h;
 }
 
 double Cosmology::comoving_to_physical_velocity(double v, double z){
-	return v/(1+z);
+	return v;
 }
 
 double Cosmology::comoving_to_physical_mass(double m){

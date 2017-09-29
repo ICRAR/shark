@@ -74,8 +74,8 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	// Define central galaxies
 	define_central_subhalos(trees, sim_params);
 
-	// Define accretion rate
-	define_accretion_rate(trees, sim_params);
+	// Define accretion rate from DM in case we want this.
+	// define_accretion_rate_from_dm(trees, sim_params, cosmology);
 
 	// Define main progenitor.
 	define_main_progenitor(trees, sim_params);
@@ -232,7 +232,7 @@ void TreeBuilder::define_main_progenitor(std::vector<MergerTreePtr> trees, Simul
 	}
 }
 
-void TreeBuilder::define_accretion_rate(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+void TreeBuilder::define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology){
 
 	//Loop over trees.
 		for(auto &tree: trees) {
@@ -243,15 +243,12 @@ void TreeBuilder::define_accretion_rate(std::vector<MergerTreePtr> trees, Simula
 
 					auto ascendants = halo->ascendants;
 
-					halo->central_subhalo->accreted_mass = halo->Mvir;
-
 					auto Mvir_asc = std::accumulate(ascendants.begin(), ascendants.end(), 0., [](double mass, const HaloPtr &halo) {
 						return mass + halo->Mvir;
 					});
 
 					//Define accreted mass of dark matter.
-
-					halo->central_subhalo->accreted_mass -= Mvir_asc;
+					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * cosmology.universal_baryon_fraction();
 
 					//Avoid negative numbers
 					if(halo->central_subhalo->accreted_mass < 0){
@@ -414,29 +411,29 @@ void HaloBasedTreeBuilder::create_galaxies(std::vector<MergerTreePtr> trees,
 
 	//Loop over trees.
 		for(auto &tree: trees) {
-			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
+			for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot; snapshot++) {
 				for(auto &halo: tree->halos[snapshot]){
-					for (auto &subhalo: halo->all_subhalos()){
-						if(subhalo->ascendants.empty() and subhalo->subhalo_type == Subhalo::CENTRAL and subhalo->galaxies.empty()){
-							auto galaxy = std::make_shared<Galaxy>();
+					auto subhalo = halo->central_subhalo;
 
-							galaxy->galaxy_type = Galaxy::CENTRAL;
+					if(subhalo->ascendants.empty() and subhalo->galaxies.empty()){
 
-							//assign an ad-hoc half-mass radius to start with.
-							galaxy->disk_gas.rscale = darkmatterhalos.disk_size_theory(*subhalo);
+						auto galaxy = std::make_shared<Galaxy>();
+						galaxy->galaxy_type = Galaxy::CENTRAL;
 
-							subhalo->galaxies.push_back(galaxy);
+						//assign an ad-hoc half-mass radius to start with.
+						galaxy->disk_gas.rscale = darkmatterhalos.disk_size_theory(*subhalo);
 
-							subhalo->hot_halo_gas.mass = subhalo->host_halo->Mvir * cosmology.universal_baryon_fraction();
+						subhalo->galaxies.push_back(galaxy);
 
-							// Assign metallicity to the minimum allowed.
-							subhalo->hot_halo_gas.mass_metals = subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
-						}
+						subhalo->hot_halo_gas.mass = halo->Mvir * cosmology.universal_baryon_fraction();
+
+						// Assign metallicity to the minimum allowed.
+						subhalo->hot_halo_gas.mass_metals = subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
+
 					}
 				}
 			}
 		}
-
 }
 
 
