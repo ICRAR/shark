@@ -78,6 +78,13 @@ Options::Options(const string &name)
 		trim(name);
 		trim(value);
 
+		// Remove possible comment in value
+		std::string::size_type hash;
+		if ((hash = value.find('#')) != std::string::npos) {
+			value = value.substr(0, hash);
+			trim(value);
+		}
+
 		if ( option_group.size() == 0 ) {
 			cerr << "WARNING: No option group defined for option " << name << endl;
 		}
