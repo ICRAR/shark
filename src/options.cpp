@@ -95,6 +95,91 @@ Options::Options(const string &name)
 
 }
 
+template <typename T>
+static inline
+T _from_string(const std::string &val);
+
+template <>
+float _from_string<float>(const std::string &val)
+{
+	return std::stof(val);
+}
+
+template <>
+double _from_string<double>(const std::string &val)
+{
+	return std::stod(val);
+}
+
+template <>
+int _from_string<int>(const std::string &val)
+{
+	return std::stoi(val);
+}
+
+template <>
+unsigned int _from_string<unsigned int>(const std::string &val)
+{
+	return std::stoul(val);
+}
+
+template <typename T>
+T _builtin_from_string(const std::string &name, const std::string &val, const std::string &type)
+{
+	try {
+		return _from_string<T>(val);
+	} catch (const std::invalid_argument &e) {
+		std::ostringstream os;
+		os << "Invalid value for option " << name << ": " << val << ". "
+		   << type << " value was expected";
+		throw invalid_option(os.str());
+	}
+}
+
+template <typename Cont>
+typename std::enable_if<std::is_integral<typename Cont::value_type>::value, Cont>::type
+_read_ranges(const std::string &name, const std::string &value, const std::string &sep = ",")
+{
+
+	typedef typename Cont::value_type T;
+
+	std::vector<std::string> values_and_ranges = tokenize(value, sep);
+	Cont values;
+	for(auto value_or_range: values_and_ranges) {
+
+		trim(value_or_range);
+
+		// a dash found neither at the beginning, nor at the end
+		// means that we have a range specification
+		auto pos = value_or_range.find_last_of('-');
+		if (pos != 0 and pos != value_or_range.size() and pos != std::string::npos) {
+			auto first_s = value_or_range.substr(0, pos);
+			auto last_s = value_or_range.substr(pos + 1);
+
+			auto first = _from_string<T>(first_s);
+			auto last = _from_string<T>(last_s);
+
+			// Can't find a more intelligent way of doing this, sorry...
+			if (first < last) {
+				for(auto i = first; i <= last; i++) {
+					std::inserter(values, values.end()) = i;
+				}
+			}
+			else {
+				for(auto i = first; i >= last; i--) {
+					std::inserter(values, values.end()) = i;
+				}
+			}
+			continue;
+		}
+
+		// A normal value
+		std::inserter(values, values.end()) = _from_string<T>(value_or_range);
+	}
+
+	return values;
+}
+
 
 template <>
 std::string Options::get<std::string>(const std::string &name, const std::string &value) const {
@@ -119,35 +204,17 @@ Options::file_format_t Options::get<Options::file_format_t>(const std::string &n
 
 template<>
 int Options::get<int>(const std::string &name, const std::string &value) const {
-	try {
-		return std::stoi(value);
-	} catch (const std::invalid_argument &e) {
-		std::ostringstream os;
-		os << "Invalid value for option " << name << ": " << value << ". An integer was expected";
-		throw invalid_option(os.str());
-	}
+	return _builtin_from_string<int>(name, value, "integer");
 }
 
 template<>
 float Options::get<float>(const std::string &name, const std::string &value) const {
-	try {
-		return std::stof(value);
-	} catch (const std::invalid_argument &e) {
-		std::ostringstream os;
-		os << "Invalid value for option " << name << ": " << value << ". A float was expected";
-		throw invalid_option(os.str());
-	}
+	return _builtin_from_string<float>(name, value, "float");
 }
 
 template<>
 double Options::get<double>(const std::string &name, const std::string &value) const {
-	try {
-		return std::stod(value);
-	} catch (const std::invalid_argument &e) {
-		std::ostringstream os;
-		os << "Invalid value for option " << name << ": " << value << ". A double was expected";
-		throw invalid_option(os.str());
-	}
+	return _builtin_from_string<double>(name, value, "double");
 }
 
 template<>
@@ -167,66 +234,27 @@ bool Options::get<bool>(const std::string &name, const std::string &value) const
 
 template<>
 std::vector<double> Options::get<std::vector<double>>(const std::string &name, const std::string &value) const {
-	try {
-		std::vector<std::string> values_as_str = tokenize(value, " ");
-		std::vector<double> values;
-		for(auto value_as_str: values_as_str) {
-			values.push_back(std::stod(value_as_str));
-		}
-		return values;
-	} catch (const std::invalid_argument &e) {
-		std::ostringstream os;
-		os << "Invalid value for option " << name << ": " << value << ". A double was expected";
-		throw invalid_option(os.str());
-	}
+	std::vector<std::string> values_as_str = tokenize(value, " ");
+	std::vector<double> values;
+	std::transform(values_as_str.begin(), values_as_str.end(), std::back_inserter(values), [&name](const std::string &s) {
+		return _builtin_from_string<double>(name, s, "double");
+	});
+	return values;
 }
 
 template<>
 std::set<int> Options::get<std::set<int>>(const std::string &name, const std::string &value) const {
-	try {
-		std::vector<std::string> values_as_str = tokenize(value, " ");
-		std::set<int> values;
-		for(auto value_as_str: values_as_str) {
-			values.insert(std::stod(value_as_str));
-		}
-		return values;
-	} catch (const std::invalid_argument &e) {
-		std::ostringstream os;
-		os << "Invalid value for option " << name << ": " << value << ". A double was expected";
-		throw invalid_option(os.str());
-	}
+	return _read_ranges<std::set<int>>(name, value, "int");
 }
 
 template<>
 std::vector<int> Options::get<std::vector<int>>(const std::string &name, const std::string &value) const {
-	try {
-		std::vector<std::string> values_as_str = tokenize(value, " ");
-		std::vector<int> values;
-		for(auto value_as_str: values_as_str) {
-			values.push_back(std::stoi(value_as_str));
-		}
-		return values;
-	} catch (const std::invalid_argument &e) {
-		std::ostringstream os;
-		os << "Invalid value for option " << name << ": " << value << ". A double was expected";
-		throw invalid_option(os.str());
-	}
+	return _read_ranges<std::vector<int>>(name, value, "int");
 }
 
 template<>
 std::vector<unsigned int> Options::get<std::vector<unsigned int>>(const std::string &name, const std::string &value) const {
-	try {
-		std::vector<std::string> values_as_str = tokenize(value, " ");
-		std::vector<unsigned int> values;
-		for(auto value_as_str: values_as_str) {
-			values.push_back(std::stoul(value_as_str));
-		}
-		return values;
-	} catch (const std::invalid_argument &e) {
-		std::ostringstream os;
-		os << "Invalid value for option " << name << ": " << value << ". A double was expected";
-		throw invalid_option(os.str());
-	}
+	return _read_ranges<std::vector<unsigned int>>(name, value, "unsigned int");
 }
 
 }  // namespace shark
