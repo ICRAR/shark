@@ -6,13 +6,13 @@
  *      Author: clagos
  */
 
+#include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <iterator>
 #include <memory>
 #include <numeric>
 #include <vector>
-#include <iostream>
-#include <fstream>
 
 #include "components.h"
 #include "cosmology.h"
@@ -23,7 +23,6 @@
 #include "utils.h"
 #include "hdf5/writer.h"
 
-using namespace std;
 
 namespace shark {
 
@@ -37,6 +36,9 @@ WriteOutput::WriteOutput(ExecutionParameters exec_params, CosmologicalParameters
 }
 
 void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos){
+
+	using std::string;
+	using std::vector;
 
 	string batch;
 
@@ -292,9 +294,7 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	file.write_dataset("Galaxies/id_halo", id_halo);
 
 	string fname_a = exec_params.output_directory + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snapshot) + "/" + batch + "/galaxies.dat";
-	fstream file_a;
-	file_a.open(fname_a, ios_base::out);
-
+	std::ofstream file_a(fname_a);
 	for (unsigned int i=0; i < type.size(); i++){
 		file_a << mstars_disk[i] << " " << mstars_bulge[i] << " " <<  matom_disk[i]+matom_bulge[i] << " " << mBH[i] << " " << mgas_metals_disk[i]/mgas_disk[i] << " " << mstars_disk[i]+mstars_bulge[i] << " " << rdisk[i] << " " << rbulge[i] << " " << id_subhalo[i] << " " << id_halo[i] << std::endl;
 	}
