@@ -87,7 +87,7 @@ public:
 			std::shared_ptr<DarkMatterHalos> darkmatterhalos,
 			std::shared_ptr<Reincorporation> reincorporation);
 
-	double cooling_rate(Subhalo &subhalo, double z, double deltat);
+	double cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, double deltat);
 	double cooling_time(double Tvir, double logl, double nh_density);
 	double mean_density(double mhot, double rvir);
 	double cooling_radius(double mhot, double rvir, double tcharac, double logl, double Tvir);

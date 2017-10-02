@@ -413,7 +413,6 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
 	for (auto &subhalo: halo->all_subhalos()){
 		for (auto &galaxy: subhalo->galaxies){
-
 			// Trigger starburst only in case there is gas in the bulge.
 			if(galaxy->bulge_gas.mass > constants::tolerance_mass){
 

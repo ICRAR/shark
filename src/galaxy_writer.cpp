@@ -120,7 +120,13 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 	file.write_dataset("Cosmology/sigma8", cosmo_params.sigma8);
 	file.write_dataset("Cosmology/h", cosmo_params.Hubble_h);
 
-	// Create all galaxies properties I want to write
+	// Crate all subhalo properties to write.
+
+	vector<long> descendant_id;
+	vector<int> main;
+	vector<long> id;
+
+	// Create all galaxies properties to write
 	vector<float> mstars_disk;
 	vector<float> mstars_bulge;
 	vector<float> mgas_disk;
@@ -143,6 +149,8 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 
 	vector<float> rdisk;
 	vector<float> rbulge;
+	vector<float> sAM_disk;
+	vector<float> sAM_bulge;
 
 	vector<float> mhot;
 	vector<float> mhot_metals;
@@ -192,6 +200,14 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 			auto cold_subhalo = subhalo->cold_halo_gas;
 			auto reheated_subhalo = subhalo->ejected_galaxy_gas;
 
+			descendant_id.push_back(subhalo->descendant_id);
+			int m = 0;
+			if(subhalo->main_progenitor){
+				m = 1;
+			}
+			main.push_back(m);
+			id.push_back(subhalo->id);
+
 			for (auto &galaxy: subhalo->galaxies){
 
 				//Calculate molecular gass mass of disk and bulge:
@@ -222,6 +238,9 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 
 				rdisk.push_back(galaxy->disk_stars.rscale);
 				rbulge.push_back(galaxy->bulge_stars.rscale);
+
+				sAM_disk.push_back(galaxy->disk_stars.sAM);
+				sAM_bulge.push_back(galaxy->bulge_stars.sAM);
 
 				double mhot_gal = 0;
 				double mzhot_gal = 0;
@@ -288,6 +307,11 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 		j++;
 	}
 
+
+	file.write_dataset("Subhalo/id", id);
+	file.write_dataset("Subhalo/main_progenitor", main);
+	file.write_dataset("Subhalo/descendant_id", descendant_id);
+
 	file.write_dataset("Galaxies/mstars_disk", mstars_disk);
 	file.write_dataset("Galaxies/mstars_bulge", mstars_bulge);
 	file.write_dataset("Galaxies/mgas_disk", mgas_disk);
@@ -307,6 +331,9 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 
 	file.write_dataset("Galaxies/rdisk", rdisk);
 	file.write_dataset("Galaxies/rbulge", rbulge);
+
+	file.write_dataset("Galaxies/specific_angular_momentum_disk", sAM_disk);
+	file.write_dataset("Galaxies/specific_angular_momentum_bulge", sAM_bulge);
 
 	file.write_dataset("Galaxies/mhot", mhot);
 	file.write_dataset("Galaxies/mhot_metals", mhot_metals);

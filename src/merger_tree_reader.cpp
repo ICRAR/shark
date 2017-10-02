@@ -123,7 +123,6 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 		auto descendant_id = descIndex[i];
 		if (descendant_id == -1) {
 			subhalo->has_descendant = false;
-			subhalo->last_snapshot_identified = subhalo->snapshot;
 		}
 		else {
 			subhalo->has_descendant = true;
@@ -193,7 +192,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 
 	for(const auto &halo: halos) {
 
-		// calculate vvir of halo.
+		// Calculate vvir of halo.
 		halo->Vvir = darkmatterhalos.halo_virial_velocity(halo->Mvir, sim_params.redshifts[halo->snapshot]);
 
 	}

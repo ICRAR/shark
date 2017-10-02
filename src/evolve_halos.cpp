@@ -89,12 +89,11 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				continue;
 			}
 
-			// If the current halo is not a main progenitor, then make all its central galaxy type 1. The other ones should already be type 1 or 2.
+			// If the current subhalo is not a main progenitor, then make its central galaxy type 1. The other ones should already be type 1 or 2.
 			if(!subhalo->main_progenitor or descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
-				for (auto &galaxy: subhalo->galaxies){
-					if(galaxy->galaxy_type == Galaxy::CENTRAL){
-						galaxy->galaxy_type = Galaxy::TYPE1;
-					}
+				auto central = subhalo->central_galaxy();
+				if(central){
+					central->galaxy_type = Galaxy::TYPE1;
 				}
 			}
 
@@ -106,11 +105,10 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 			descendant_subhalo->hot_halo_gas = subhalo->hot_halo_gas;
 			descendant_subhalo->ejected_galaxy_gas = subhalo->ejected_galaxy_gas;
 			descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
-
 		}
 	}
 
-	// Make sure there is only one central galaxy per halo/central subhalo.
+	// Make sure there is only one central galaxy per halo/central in the descendant subhalos.
 	for(auto &halo: halos){
 		for(SubhaloPtr &subhalo: halo->all_subhalos()) {
 			auto descendant_subhalo = subhalo->descendant;
@@ -151,7 +149,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 	// Now calculated accreted hot mass by assuming mass conservation and assuming the universal baryon fraction.
 
-	for(auto &halo: halos){
+	/*for(auto &halo: halos){
 
 		auto desc_halo = halo->descendant;
 
@@ -169,7 +167,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 		desc_halo->central_subhalo->accreted_mass = mass_acc;
 
-	}
+	}*/
+
 	if (subhalos_without_descendant) {
 		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies";
 	}

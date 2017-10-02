@@ -28,7 +28,7 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 	return exec_params;
 }
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology)
 {
 
 	const auto &output_snaps = exec_params.output_snapshots;
@@ -75,7 +75,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	define_central_subhalos(trees, sim_params);
 
 	// Define accretion rate from DM in case we want this.
-	// define_accretion_rate_from_dm(trees, sim_params, cosmology);
+	define_accretion_rate_from_dm(trees, sim_params, *cosmology);
 
 	// Define main progenitor.
 	define_main_progenitor(trees, sim_params);
@@ -123,6 +123,25 @@ void TreeBuilder::link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
 
 }
 
+SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo)
+{
+	// The first subhalo is always the most massive, so it will be the central.
+	auto subhalo = halo->all_subhalos()[0];
+
+	// point central subhalo to this subhalo.
+	halo->central_subhalo = subhalo;
+	halo->position = subhalo->position;
+	halo->velocity = subhalo->velocity;
+
+	//remove subhalo from satellite list.
+	remove_satellite(halo, subhalo);
+
+	//define subhalo as central.
+	subhalo->subhalo_type = Subhalo::CENTRAL;
+
+	return subhalo;
+}
+
 void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
 
 	//This function loops over merger trees and halos to define central galaxies in a self-consistent way. The loop starts at z=0.
@@ -139,46 +158,34 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 						continue;
 					}
 
-					//Only cases with no central subhalos.
-					auto subhalos = halo->all_subhalos();
-
-					// The first subhalo is always the most massive, so it will be the central.
-					auto &subhalo = subhalos[0];
-
-					// point central subhalo to this subhalo.
-					halo->central_subhalo = subhalo;
-					halo->position = subhalo->position;
-					halo->velocity = subhalo->velocity;
-
-					//remove subhalo from satellite list.
-					remove_satellite(halo, subhalo);
-
-					//define subhalo as central.
-					subhalo->subhalo_type = Subhalo::CENTRAL;
+					auto subhalo = define_central_subhalo(halo);
 
 					//Now look at most massive ascendants to define which one will be the central, but only in the case the ascendant halo does not have a central already.
+
+					// Loop going backwards through history:
+					//  * Find the most massive ascendant of this subhalo and its host Halo
+					//  * Define the central subhalo for the Halo (if none defined)
+					//  * Define last_snapshot_identified for non-central ascendants
+					//  * Repeat
 					auto ascendants = subhalo->ordered_ascendants();
+					for(; !ascendants.empty(); ascendants = subhalo->ordered_ascendants()) {
 
-					while(ascendants.size() > 0 && !ascendants[0]->host_halo->central_subhalo){
-						//First ascendant is always the most massive.
-						auto ascendant_central = ascendants[0];
+						auto ascendant_halo = ascendants[0]->host_halo;
 
-						auto host_asc = ascendant_central->host_halo;
+						// If a central subhalo has been defined, then its whole branch
+						// has been processed, so there's no point on continuing
+						if (ascendant_halo->central_subhalo) {
+							break;
+						}
 
-						host_asc->central_subhalo = ascendant_central;
-
-						remove_satellite(host_asc, ascendant_central);
-
-						ascendant_central->subhalo_type = Subhalo::CENTRAL;
+						subhalo = define_central_subhalo(ascendant_halo);
 
 						for (auto &sub: ascendants){
 							// If subhalo is a satellite, then define this snapshot as the last identified one.
 							if(sub->subhalo_type == Subhalo::SATELLITE){
-								sub-> last_snapshot_identified = sub->snapshot;
+								sub->last_snapshot_identified = sub->snapshot;
 							}
 						}
-
-						ascendants = ascendant_central->ordered_ascendants();
 
 					}
 				}
@@ -219,7 +226,9 @@ void TreeBuilder::define_main_progenitor(std::vector<MergerTreePtr> trees, Simul
 	for(auto &tree: trees) {
 		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 			for(auto &halo: tree->halos[snapshot]){
+
 				auto ascendants = halo->ordered_ascendants();
+
 				// If halo has ascendants, then define main.
 				if(ascendants.size() > 0){
 					auto main = ascendants[0];
@@ -247,7 +256,7 @@ void TreeBuilder::define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees
 						return mass + halo->Mvir;
 					});
 
-					//Define accreted mass of dark matter.
+					//Define accreted baryonic mass.
 					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * cosmology.universal_baryon_fraction();
 
 					//Avoid negative numbers
@@ -400,40 +409,50 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 }
 
 
-void HaloBasedTreeBuilder::create_galaxies(std::vector<MergerTreePtr> trees,
+void HaloBasedTreeBuilder::create_galaxies(HaloPtr halo,
 		Cosmology &cosmology,
 		DarkMatterHalos &darkmatterhalos,
 		GasCoolingParameters &cool_params,
 		SimulationParameters sim_params)
 {
+	auto progenitors = halo->ascendants;
 
-	//This function finds subhalos that have no progenitors (so first time they are identified) and are central, and creates a galaxy there.
+	// Halo has ascendants so ignore it, as it should already have galaxies in it.
+	if(halo->ascendants.size() > 0){
+		return;
+	}
 
-	//Loop over trees.
-		for(auto &tree: trees) {
-			for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot; snapshot++) {
-				for(auto &halo: tree->halos[snapshot]){
-					auto subhalo = halo->central_subhalo;
+	auto central_subhalo = halo->central_subhalo;
 
-					if(subhalo->ascendants.empty() and subhalo->galaxies.empty()){
+	if(!central_subhalo->central_galaxy()){
+		//Count how many galaxies this halo has.
+		int i = 0;
 
-						auto galaxy = std::make_shared<Galaxy>();
-						galaxy->galaxy_type = Galaxy::CENTRAL;
-
-						//assign an ad-hoc half-mass radius to start with.
-						galaxy->disk_gas.rscale = darkmatterhalos.disk_size_theory(*subhalo);
-
-						subhalo->galaxies.push_back(galaxy);
-
-						subhalo->hot_halo_gas.mass = halo->Mvir * cosmology.universal_baryon_fraction();
-
-						// Assign metallicity to the minimum allowed.
-						subhalo->hot_halo_gas.mass_metals = subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
-
-					}
-				}
-			}
+		for (auto &galaxy: central_subhalo->galaxies){
+			i ++;
 		}
+
+		if(i > 0){
+			std::ostringstream os;
+			os << "Central Subhalo " << central_subhalo << " has no central galaxy but " << i <<" satellites.";
+			throw invalid_argument(os.str());
+		}
+
+		auto galaxy = std::make_shared<Galaxy>();
+		galaxy->galaxy_type = Galaxy::CENTRAL;
+
+		central_subhalo->galaxies.push_back(galaxy);
+
+		central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology.universal_baryon_fraction();
+
+		// Assign metallicity to the minimum allowed.
+		central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
+
+		//assign an ad-hoc half-mass radius and specific angular momentum to start with.
+		galaxy->disk_gas.rscale = darkmatterhalos.disk_size_theory(*central_subhalo);
+		darkmatterhalos.galaxy_velocity(*central_subhalo);
+	}
+
 }
 
 

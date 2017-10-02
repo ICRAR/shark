@@ -250,10 +250,8 @@ int run(int argc, char **argv) {
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
 	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
-	auto merger_trees = tree_builder.build_trees(halos, sim_params);
+	auto merger_trees = tree_builder.build_trees(halos, sim_params, cosmology);
 
-	// Create the first generation of galaxies in the first halos appearing.
-	tree_builder.create_galaxies(merger_trees, *cosmology, *dark_matter_halos, gas_cooling_params, sim_params);
 
 	// TODO: move this logic away from the main
 	// Also provide a std::make_unique
@@ -288,9 +286,11 @@ int run(int argc, char **argv) {
 			/*here loop over the halos this merger tree has at this time.*/
 			for(auto &halo: tree->halos[snapshot]) {
 
-				//Append this halo to the list of halos of this snapshot
-
+				/*Append this halo to the list of halos of this snapshot*/
 				all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halo);
+
+				/* Create the first generation of galaxies if halo is first appearing.*/
+				tree_builder.create_galaxies(halo, *cosmology, *dark_matter_halos, gas_cooling_params, sim_params);
 
 				/*Check if there are any mergers in this snapshot*/
 

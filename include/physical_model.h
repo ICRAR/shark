@@ -90,7 +90,12 @@ public:
 
 	void evolve_galaxy(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
 	{
-		double mcoolrate = gas_cooling.cooling_rate(subhalo, z, delta_t);
+
+		double mcoolrate = 0;
+		// Define cooling rate only in the case galaxy is central.
+		if(galaxy.galaxy_type == Galaxy::CENTRAL){
+			mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
+		}
 		double rgas  = galaxy.disk_gas.rscale; //gas scale radius.
 		double rstar = galaxy.disk_stars.rscale; //stellar scale radius.
 		double v = subhalo.Vvir;
