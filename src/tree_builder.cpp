@@ -123,11 +123,8 @@ void TreeBuilder::link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
 
 }
 
-SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo)
+SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo)
 {
-	// The first subhalo is always the most massive, so it will be the central.
-	auto subhalo = halo->all_subhalos()[0];
-
 	// point central subhalo to this subhalo.
 	halo->central_subhalo = subhalo;
 	halo->position = subhalo->position;
@@ -158,19 +155,21 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 						continue;
 					}
 
-					auto subhalo = define_central_subhalo(halo);
+					auto central_subhalo = halo->all_subhalos()[0];
+					auto subhalo = define_central_subhalo(halo, central_subhalo);
 
 					//Now look at most massive ascendants to define which one will be the central, but only in the case the ascendant halo does not have a central already.
 
 					// Loop going backwards through history:
 					//  * Find the most massive ascendant of this subhalo and its host Halo
-					//  * Define the central subhalo for the Halo (if none defined)
+					//  * Define that most massive ascendant as the central subhalo for the Halo (if none defined)
 					//  * Define last_snapshot_identified for non-central ascendants
 					//  * Repeat
 					auto ascendants = subhalo->ordered_ascendants();
 					for(; !ascendants.empty(); ascendants = subhalo->ordered_ascendants()) {
 
-						auto ascendant_halo = ascendants[0]->host_halo;
+						auto most_massive_ascendant = ascendants[0];
+						auto ascendant_halo = most_massive_ascendant->host_halo;
 
 						// If a central subhalo has been defined, then its whole branch
 						// has been processed, so there's no point on continuing
@@ -178,7 +177,7 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 							break;
 						}
 
-						subhalo = define_central_subhalo(ascendant_halo);
+						subhalo = define_central_subhalo(ascendant_halo, most_massive_ascendant);
 
 						for (auto &sub: ascendants){
 							// If subhalo is a satellite, then define this snapshot as the last identified one.

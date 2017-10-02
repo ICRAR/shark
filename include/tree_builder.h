@@ -54,7 +54,7 @@ protected:
 
 	void define_central_subhalos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params);
 
-	SubhaloPtr define_central_subhalo(HaloPtr &halo);
+	SubhaloPtr define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo);
 
 	void define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology);
 
