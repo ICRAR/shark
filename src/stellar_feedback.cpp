@@ -61,8 +61,9 @@ double StellarFeedback::outflow_rate(double sfr, double v) {
 		return 0.0;
 	}
 
-	double beta  = parameters.epsilon_cc * parameters.e_sn /
-		       std::pow(v, parameters.beta) * parameters.eta_cc * sfr;
+	// TODO: add as a different model option
+//	double beta  = parameters.epsilon_cc * parameters.e_sn /
+//		       std::pow(v, parameters.beta) * parameters.eta_cc * sfr;
 
 	double beta_galform = std::pow(parameters.v_sn/v, parameters.beta);
 

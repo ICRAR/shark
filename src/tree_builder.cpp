@@ -415,7 +415,6 @@ void HaloBasedTreeBuilder::create_galaxies(HaloPtr halo,
 		GasCoolingParameters &cool_params,
 		SimulationParameters sim_params)
 {
-	auto progenitors = halo->ascendants;
 
 	// Halo has ascendants so ignore it, as it should already have galaxies in it.
 	if(halo->ascendants.size() > 0){
@@ -425,16 +424,13 @@ void HaloBasedTreeBuilder::create_galaxies(HaloPtr halo,
 	auto central_subhalo = halo->central_subhalo;
 
 	if(!central_subhalo->central_galaxy()){
+
 		//Count how many galaxies this halo has.
-		int i = 0;
+		auto galaxy_count = central_subhalo->galaxy_count();
 
-		for (auto &galaxy: central_subhalo->galaxies){
-			i ++;
-		}
-
-		if(i > 0){
+		if(galaxy_count > 0){
 			std::ostringstream os;
-			os << "Central Subhalo " << central_subhalo << " has no central galaxy but " << i <<" satellites.";
+			os << "Central Subhalo " << central_subhalo << " has no central galaxy but " << galaxy_count <<" satellites.";
 			throw invalid_argument(os.str());
 		}
 

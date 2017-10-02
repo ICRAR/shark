@@ -320,7 +320,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals);
 
    	double vvir = halo->Vvir;
- 	double mvir = halo->Mvir;
 
  	double zhot = 0;
  	if(mhot > 0){

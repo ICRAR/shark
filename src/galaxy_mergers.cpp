@@ -326,8 +326,6 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 	//First define central subhalo.
 
-	auto &central_subhalo = halo->central_subhalo;
-
 	double mbar_central = central->baryon_mass();
 
 	double mbar_satellite = satellite->baryon_mass();
