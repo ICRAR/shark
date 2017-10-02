@@ -62,6 +62,13 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, double z, double
 				galaxy->disk_stars.mass_metals = 0;
 				galaxy->disk_gas.mass = 0;
 				galaxy->disk_gas.mass_metals = 0;
+
+				galaxy->disk_gas.rscale = 0;
+				galaxy->disk_stars.rscale = 0;
+				galaxy->disk_gas.sAM = 0;
+				galaxy->disk_stars.sAM = 0;
+
+				create_starburst(subhalo, galaxy, z, delta_t);
 			}
 		}
 	}
@@ -74,14 +81,15 @@ double DiskInstability::toomre_parameter(GalaxyPtr &galaxy){
 	double md =  galaxy->disk_mass();
 	double rd = galaxy->disk_gas.rscale;
 
-	if(md <= 0){
+	if(md <= 0 or rd <= 0){
 		return 100;
 	}
 
 	double denom = 1.68 * constants::G * md / rd;
 
-	return vc / std::sqrt(denom);
+	double t = vc / std::sqrt(denom);
 
+	return t;
 }
 
 double DiskInstability::bulge_size(GalaxyPtr &galaxy){

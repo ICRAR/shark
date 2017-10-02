@@ -234,10 +234,11 @@ double GasCooling::cooling_rate(Subhalo &subhalo, double z, double deltat) {
     	auto central_galaxy = subhalo.central_galaxy();
 
     	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo);
+    	central_galaxy->disk_stars.rscale = central_galaxy->disk_gas.rscale;
+
     	darkmatterhalos->galaxy_velocity(subhalo);
 
-    	//TODO: remove this part and calculate rscale of the stellar disk properly.
-    	central_galaxy->disk_stars.rscale = central_galaxy->disk_gas.rscale;
+    	//TODO: remove this part and calculate rscale and sAM of the stellar disk properly.
     	central_galaxy->disk_stars.sAM = central_galaxy->disk_gas.sAM;
 
     	/**

@@ -184,7 +184,7 @@ void DarkMatterHalos::galaxy_velocity(Subhalo &subhalo){
 		double xb = rbulge / rvir;
 		double v2tot_b = v2halo(xb, mvir, ch, rvir) + v2disk(xb, mdisk, cd, rvir) + v2bulge(xb, mbulge, cb, rvir);
 
-		subhalo.central_galaxy()->bulge_stars.sAM = rdisk * std::sqrt(v2tot_b);
+		subhalo.central_galaxy()->bulge_stars.sAM = rbulge * std::sqrt(v2tot_b);
 	}
 
 }

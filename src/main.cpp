@@ -278,11 +278,14 @@ int run(int argc, char **argv) {
 
 				/*Check if there are any mergers in this snapshot*/
 
-				/*First, determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale.*/
+				/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale.*/
 				galaxy_mergers.merging_subhalos(halo);
 
-				/*Second, evaluate which galaxies are merging in this halo.*/
+				/*Evaluate which galaxies are merging in this halo.*/
 				galaxy_mergers.merging_galaxies(halo, sim_params.redshifts[snapshot], tf-ti);
+
+				/*Evaluate disk instabilities.*/
+				disk_instability.evaluate_disk_instability(halo, sim_params.redshifts[snapshot], tf-ti);
 
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
 				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);

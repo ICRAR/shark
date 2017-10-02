@@ -374,6 +374,11 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->disk_gas.mass = 0;
 		central->disk_gas.mass_metals = 0;
 
+		central->disk_gas.rscale = 0;
+		central->disk_stars.rscale = 0;
+		central->disk_gas.sAM = 0;
+		central->disk_stars.sAM = 0;
+
 	}
 	else{//minor mergers
 
@@ -394,6 +399,9 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 			//Make gas disk values 0.
 			central->disk_gas.mass = 0;
 			central->disk_gas.mass_metals = 0;
+
+			central->disk_gas.rscale = 0;
+			central->disk_gas.sAM = 0;
 		}
 
 	}
