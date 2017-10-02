@@ -142,13 +142,17 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
  */
 int run(int argc, char **argv) {
 
+	using std::string;
+	using std::vector;
 	namespace po = boost::program_options;
 
 	po::options_description visible_opts("SHArk options");
 	visible_opts.add_options()
 		("help,h",      "Show this help message")
 		("version,V",   "Show version and exit")
-		("verbose,v",   po::value<int>()->default_value(3), "Verbosity level. Higher is more verbose");
+		("verbose,v",   po::value<int>()->default_value(3), "Verbosity level. Higher is more verbose")
+		("options,o",   po::value<vector<string>>()->multitoken()->default_value({}, ""),
+		                "Space-separated additional options to override config file");
 
 	po::positional_options_description pdesc;
 	pdesc.add("config-file", 1);
@@ -186,24 +190,28 @@ int run(int argc, char **argv) {
 
 	install_gsl_error_handler();
 
-	/* We read the parameters that have been given as input by the user.*/
-	string config_file = vm["config-file"].as<string>();
+	// Read the configuration file, and override options with any given
+	// on the command-line
+	Options options(vm["config-file"].as<string>());
+	for(auto &opt_spec: vm["options"].as<vector<string>>()) {
+		options.add(opt_spec);
+	}
 
 	/**
 	 * We load all relevant parameters and implement all relevant physical processes needed by the physical model.
 	 */
-	AGNFeedbackParameters agn_params(config_file);
-	CosmologicalParameters cosmo_parameters(config_file);
-	DarkMatterHaloParameters dark_matter_halo_parameters(config_file);
-	ExecutionParameters exec_params(config_file);
-	GalaxyMergerParameters merger_parameters(config_file);
-	GasCoolingParameters gas_cooling_params(config_file);
-	RecyclingParameters recycling_parameters(config_file);
-	ReionisationParameters reio_params(config_file);
-	ReincorporationParameters reinc_params(config_file);
-	SimulationParameters sim_params(config_file);
-	StellarFeedbackParameters stellar_feedback_params(config_file);
-	StarFormationParameters star_formation_params(config_file);
+	AGNFeedbackParameters agn_params(options);
+	CosmologicalParameters cosmo_parameters(options);
+	DarkMatterHaloParameters dark_matter_halo_parameters(options);
+	ExecutionParameters exec_params(options);
+	GalaxyMergerParameters merger_parameters(options);
+	GasCoolingParameters gas_cooling_params(options);
+	RecyclingParameters recycling_parameters(options);
+	ReionisationParameters reio_params(options);
+	ReincorporationParameters reinc_params(options);
+	SimulationParameters sim_params(options);
+	StellarFeedbackParameters stellar_feedback_params(options);
+	StarFormationParameters star_formation_params(options);
 
 	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(cosmo_parameters);
 
