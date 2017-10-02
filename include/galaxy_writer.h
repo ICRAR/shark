@@ -1,16 +1,36 @@
-/*
- * write_output.h
- *
- *  Created on: 18Sep.,2017
- *      Author: clagos
- */
+//
+// Definition of classes that output galaxies into disk
+//
+// ICRAR - International Centre for Radio Astronomy Research
+// (c) UWA - The University of Western Australia, 2017
+// Copyright by UWA (in the framework of the ICRAR)
+// All rights reserved
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+// MA 02111-1307  USA
+//
 
-#ifndef INCLUDE_WRITE_OUTPUT_H_
-#define INCLUDE_WRITE_OUTPUT_H_
+#ifndef SHARK_GALAXY_WRITER_H_
+#define SHARK_GALAXY_WRITER_H_
 
+#include <fstream>
 #include <map>
-#include <memory>
+#include <string>
+#include <vector>
 
+#include "components.h"
 #include "cosmology.h"
 #include "execution.h"
 #include "simulation.h"
@@ -18,24 +38,44 @@
 
 namespace shark {
 
-class WriteOutput{
+class GalaxyWriter {
 
 public:
 
-	WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  SimulationParameters sim_params, StarFormation starformation);
+	GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  SimulationParameters sim_params, StarFormation starformation);
+	virtual ~GalaxyWriter() {};
 
-	void write_galaxies(int snapshot, const std::vector<HaloPtr> &halos);
+	virtual void write(int snapshot, const std::vector<HaloPtr> &halos) = 0;
 
-private:
+protected:
 
 	ExecutionParameters exec_params;
 	SimulationParameters sim_params;
 	CosmologicalParameters cosmo_params;
 	StarFormation starformation;
 
+	std::string get_batch_directory(int snapshot);
+};
+
+class HDF5GalaxyWriter : public GalaxyWriter {
+
+public:
+	using GalaxyWriter::GalaxyWriter;
+	void write(int snapshot, const std::vector<HaloPtr> &halos) override;
+};
+
+class ASCIIGalaxyWriter : public GalaxyWriter {
+
+public:
+	using GalaxyWriter::GalaxyWriter;
+	void write(int snapshot, const std::vector<HaloPtr> &halos) override;
+
+private:
+	void write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f);
+
 };
 
 }
 
 
-#endif /* INCLUDE_WRITE_OUTPUT_H_ */
+#endif /* SHARK_GALAXY_WRITER_H_ */
