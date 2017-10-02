@@ -96,6 +96,7 @@ struct SnapshotStatistics {
 	unsigned long n_subhalos;
 	unsigned long n_galaxies;
 	unsigned long duration_millis;
+	unsigned int galaxies_created;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
 		if (n_galaxies == 0) {
@@ -126,6 +127,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
 	   << "  Number of halos:                      " << stats.n_halos << "\n"
 	   << "  Number of subhalos:                   " << stats.n_subhalos << "\n"
 	   << "  Number of galaxies:                   " << stats.n_galaxies << "\n"
+	   << "  Number of newly created galaxies:     " << stats.galaxies_created << "\n"
 	   << "  Galaxy evolution ODE evaluations:     " << stats.galaxy_ode_evaluations
 	   << " (" << fixed<3>(stats.galaxy_ode_evaluations_per_galaxy()) << " [evals/gal])" << "\n"
 	   << "  Starburst ODE evaluations:            " << stats.starburst_ode_evaluations
@@ -273,6 +275,7 @@ int run(int argc, char **argv) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
 
+		unsigned int galaxies_created = 0;
 		auto start = std::chrono::steady_clock::now();
 		basic_physicalmodel->reset_ode_evaluations();
 
@@ -290,7 +293,10 @@ int run(int argc, char **argv) {
 				all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halo);
 
 				/* Create the first generation of galaxies if halo is first appearing.*/
+				auto pre_galaxy_count = halo->galaxy_count();
 				tree_builder.create_galaxies(halo, *cosmology, *dark_matter_halos, gas_cooling_params, sim_params);
+				auto post_galaxy_count = halo->galaxy_count();
+				galaxies_created += post_galaxy_count - pre_galaxy_count;
 
 				/*Check if there are any mergers in this snapshot*/
 
@@ -336,7 +342,7 @@ int run(int argc, char **argv) {
 		});
 
 		SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
-		                          n_halos, n_subhalos, n_galaxies, duration_millis};
+		                          n_halos, n_subhalos, n_galaxies, duration_millis, galaxies_created};
 		LOG(info) << "Statistics for snapshot " << snapshot << std::endl << stats;
 
 
