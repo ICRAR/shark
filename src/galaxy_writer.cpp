@@ -342,6 +342,8 @@ void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos)
 
 	std::ofstream output(get_output_directory(snapshot) + "/galaxies.dat");
 
+	// TODO: Write a header?
+
 	// Each galaxy corresponds to one line
 	for (const auto &halo: halos) {
 		for(const auto &subhalo: halo->all_subhalos()) {
