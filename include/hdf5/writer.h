@@ -169,7 +169,8 @@ public:
 	 * @param filename The name of the HDF5 file to write
 	 * @param overwrite Whether existing files should be overwritten or not
 	 */
-	Writer(const std::string &filename, bool overwrite = true);
+	Writer(const std::string &filename, bool overwrite = true) :
+		IOBase(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL) {}
 
 	template<typename T>
 	void write_attribute(const std::string &name, const T &value) {

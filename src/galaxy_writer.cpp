@@ -28,6 +28,8 @@
 #include <memory>
 #include <numeric>
 
+#include <boost/filesystem.hpp>
+
 #include "hdf5/writer.h"
 #include "cosmology.h"
 #include "exceptions.h"
@@ -67,24 +69,35 @@ GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParamete
 	//no-opt
 }
 
-std::string GalaxyWriter::get_batch_directory(int snapshot)
+std::string GalaxyWriter::get_output_directory(int snapshot)
 {
+	using namespace boost::filesystem;
+	using std::string;
+
+	string batch_dir = "multiple_batches";
 	if (exec_params.simulation_batches.size() == 1) {
-		return std::to_string(exec_params.simulation_batches[0]);
+		batch_dir = std::to_string(exec_params.simulation_batches[0]);
 	}
 
-	return "multiple_batches";
+	string output_dir = exec_params.output_directory + "/" + sim_params.sim_name +
+	                    "/" + exec_params.name_model + "/" + std::to_string(snapshot) +
+	                    "/" + batch_dir;
+
+	// Make sure the directory structure exists
+	path dirname(output_dir);
+	if (!exists(dirname)) {
+		create_directories(dirname);
+	}
+
+	return output_dir;
 }
+
 void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 
 	using std::string;
 	using std::vector;
 
-	string fname = exec_params.output_directory + "/" + sim_params.sim_name +
-	               "/" + exec_params.name_model + "/" + std::to_string(snapshot) +
-	               "/" + get_batch_directory(snapshot) + "/galaxies.hdf5";
-
-	hdf5::Writer file(fname);
+	hdf5::Writer file(get_output_directory(snapshot) + "/galaxies.hdf5");
 
 	file.write_dataset("runInfo/batches", exec_params.simulation_batches);
 	file.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision);
@@ -327,10 +340,7 @@ void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos)
 	using std::vector;
 	using std::string;
 
-	string fname = exec_params.output_directory + "/" + sim_params.sim_name +
-	                    "/" + exec_params.name_model + "/" + std::to_string(snapshot) +
-	                    "/" + get_batch_directory(snapshot) + "/galaxies.dat";
-	std::ofstream output(fname);
+	std::ofstream output(get_output_directory(snapshot) + "/galaxies.dat");
 
 	// Each galaxy corresponds to one line
 	for (const auto &halo: halos) {

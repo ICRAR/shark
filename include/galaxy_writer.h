@@ -54,7 +54,7 @@ protected:
 	CosmologicalParameters cosmo_params;
 	StarFormation starformation;
 
-	std::string get_batch_directory(int snapshot);
+	std::string get_output_directory(int snapshot);
 };
 
 class HDF5GalaxyWriter : public GalaxyWriter {
