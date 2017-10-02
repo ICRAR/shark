@@ -39,6 +39,7 @@
 #include "evolve_halos.h"
 #include "exceptions.h"
 #include "galaxy_mergers.h"
+#include "galaxy_writer.h"
 #include "logging.h"
 #include "numerical_constants.h"
 #include "physical_model.h"
@@ -49,7 +50,6 @@
 #include "reionisation.h"
 #include "merger_tree_reader.h"
 #include "tree_builder.h"
-#include "write_output.h"
 #include "utils.h"
 
 using namespace std;
@@ -244,14 +244,22 @@ int run(int argc, char **argv) {
 	// Create the first generation of galaxies in the first halos appearing.
 	tree_builder.create_galaxies(merger_trees, *cosmology, *dark_matter_halos, gas_cooling_params, sim_params);
 
+	// TODO: move this logic away from the main
+	// Also provide a std::make_unique
+	std::unique_ptr<GalaxyWriter> writer;
+	if (exec_params.output_format == Options::HDF5) {
+		writer.reset(new HDF5GalaxyWriter(exec_params, cosmo_parameters, sim_params, star_formation));
+	}
+	else {
+		writer.reset(new ASCIIGalaxyWriter(exec_params, cosmo_parameters, sim_params, star_formation));
+	}
+
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
 	// calculate evolution in the time from the current to the next snapshot.
 	// We first loop over snapshots, and for a fixed snapshot,
 	// we loop over merger trees.
 	// Each merger trees has a set of halos at a given snapshot,
 	// which in turn contain galaxies.
-	WriteOutput writer(exec_params, cosmo_parameters, sim_params, star_formation);
-
 	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot-1; snapshot++) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
@@ -293,7 +301,8 @@ int run(int argc, char **argv) {
 //		/*write snapshots only if the user wants outputs at this time.*/
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
 		{
-			writer.write_galaxies(snapshot, all_halos_this_snapshot);
+			LOG(info) << "Will write output file for snapshot " << snapshot;
+			writer->write(snapshot, all_halos_this_snapshot);
 		}
 
 		auto snapshot_time = std::chrono::steady_clock::now() - start;
