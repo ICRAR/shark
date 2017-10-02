@@ -47,7 +47,7 @@ Writer::Writer(const std::string &filename, bool overwrite) :
 		create_directories(dirname);
 	}
 
-	LOG(info) << "Opening " << filepath.normalize() << " for writing";
+	LOG(debug) << "Opening " << filepath.normalize() << " for writing";
 	open_file(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL);
 }
 
