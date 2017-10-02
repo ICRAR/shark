@@ -66,24 +66,9 @@ Options::Options(const string &name)
 			continue;
 		}
 
-		auto tokens = tokenize(line, "=");
-		if (tokens.size() < 2) {
-			ostringstream os;
-			os << "Option " << line << " has no value (should be name = value)";
-			throw invalid_option(os.str());
-		}
-
-		std::string name = tokens[0];
-		std::string value = tokens[1];
-		trim(name);
-		trim(value);
-
-		// Remove possible comment in value
-		std::string::size_type hash;
-		if ((hash = value.find('#')) != std::string::npos) {
-			value = value.substr(0, hash);
-			trim(value);
-		}
+		std::string name;
+		std::string value;
+		parse_option(line, name, value);
 
 		if ( option_group.size() == 0 ) {
 			cerr << "WARNING: No option group defined for option " << name << endl;
@@ -91,6 +76,37 @@ Options::Options(const string &name)
 
 		name = option_group + '.' + name;
 		options[name] = value;
+	}
+
+}
+
+void Options::add(const std::string &optspec)
+{
+	std::string name;
+	std::string value;
+	parse_option(optspec, name, value);
+	options[name] = value;
+}
+
+void Options::parse_option(const std::string &optspec, std::string &name, std::string &value)
+{
+	auto tokens = tokenize(optspec, "=");
+	if (tokens.size() < 2) {
+		ostringstream os;
+		os << "Option " << optspec << " has no value (should be name = value)";
+		throw invalid_option(os.str());
+	}
+
+	name = tokens[0];
+	value = tokens[1];
+	trim(name);
+	trim(value);
+
+	// Remove possible comment in value
+	std::string::size_type hash;
+	if ((hash = value.find('#')) != std::string::npos) {
+		value = value.substr(0, hash);
+		trim(value);
 	}
 
 }
