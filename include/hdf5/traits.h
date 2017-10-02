@@ -40,39 +40,48 @@ template <typename T>
 struct datatype_traits {
 };
 
+// std::string doesn't need a native type because we actually implement its
+// datawriting separately
 template<>
 struct datatype_traits<std::string> {
 	static const H5::PredType &write_type;
 };
 
+// bool doesn't need a native type because it's actually not natively supported
+// by HDF5. We instead manually convert them to int later.
+template<>
+struct datatype_traits<bool> {
+	static const H5::PredType &write_type;
+};
+
 template<>
 struct datatype_traits<float> {
+	static const H5::PredType &native_type;
 	static const H5::PredType &write_type;
 };
 
 template<>
 struct datatype_traits<double> {
+	static const H5::PredType &native_type;
 	static const H5::PredType &write_type;
 };
 
 template<>
 struct datatype_traits<int> {
+	static const H5::PredType &native_type;
 	static const H5::PredType &write_type;
 };
 
 template<>
 struct datatype_traits<unsigned int> {
+	static const H5::PredType &native_type;
 	static const H5::PredType &write_type;
 };
 
 
 template<>
 struct datatype_traits<long int> {
-	static const H5::PredType &write_type;
-};
-
-template<>
-struct datatype_traits<bool> {
+	static const H5::PredType &native_type;
 	static const H5::PredType &write_type;
 };
 

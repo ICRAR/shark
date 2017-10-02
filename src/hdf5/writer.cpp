@@ -24,8 +24,6 @@
 
 #include <utility>
 
-#include <boost/filesystem.hpp>
-
 #include "hdf5/writer.h"
 #include "exceptions.h"
 #include "logging.h"
@@ -34,23 +32,6 @@
 namespace shark {
 
 namespace hdf5 {
-
-Writer::Writer(const std::string &filename, bool overwrite) :
-	IOBase()
-{
-	using namespace boost::filesystem;
-
-	// Make sure the hosting directory exists before opening the file
-	path filepath(filename);
-	path dirname = filepath.normalize().parent_path();
-	if (!exists(dirname)) {
-		create_directories(dirname);
-	}
-
-	LOG(info) << "Opening " << filepath.normalize() << " for writing";
-	open_file(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL);
-}
-
 
 template <H5G_obj_t E>
 inline static

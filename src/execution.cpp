@@ -17,7 +17,7 @@ namespace shark {
 
 ExecutionParameters::ExecutionParameters(const Options &options) :
 	output_snapshots(),
-	output_format(),
+	output_format(Options::HDF5),
 	output_directory(),
 	name_model(),
 	simulation_batches(),

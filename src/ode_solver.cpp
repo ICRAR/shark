@@ -42,10 +42,10 @@ ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, d
 	delta_t(delta_t),
 	step(0),
 	ode_system(),
-	driver(nullptr)
+	driver()
 {
 	ode_system = std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, NULL, y0.size(), NULL});
-	driver = gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rkck, delta_t, 0.0, precision);
+	driver.reset(gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rkck, delta_t, 0.0, precision));
 }
 
 ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, double precision, const std::shared_ptr<gsl_odeiv2_system> &ode_system) :
@@ -55,9 +55,9 @@ ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, d
 	delta_t(delta_t),
 	step(0),
 	ode_system(ode_system),
-	driver(nullptr)
+	driver()
 {
-	driver = gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rkck, delta_t, 0.0, precision);
+	driver.reset(gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rkck, delta_t, 0.0, precision));
 }
 
 ODESolver::ODESolver(ODESolver &&odeSolver) :
@@ -67,14 +67,14 @@ ODESolver::ODESolver(ODESolver &&odeSolver) :
 	delta_t(odeSolver.delta_t),
 	step(odeSolver.step),
 	ode_system(odeSolver.ode_system),
-	driver(odeSolver.driver)
+	driver()
 {
-	odeSolver.driver = nullptr;
+	std::swap(driver, odeSolver.driver);
 }
 
 ODESolver::~ODESolver() {
 	if (driver) {
-		gsl_odeiv2_driver_free(driver);
+		gsl_odeiv2_driver_free(driver.release());
 	}
 }
 
@@ -82,7 +82,7 @@ std::vector<double> ODESolver::evolve() {
 
 	step++;
 	double t_i = t0 + step*delta_t;
-	int status = gsl_odeiv2_driver_apply(driver, &t, t_i, y.data());
+	int status = gsl_odeiv2_driver_apply(driver.get(), &t, t_i, y.data());
 
 	// TODO: add compiler-dependent likelihood macro
 	if (status == GSL_SUCCESS) {
@@ -107,7 +107,7 @@ std::vector<double> ODESolver::evolve() {
 	}
 	else if (status == GSL_EBADFUNC) {
 		os << "user function signaled an error";
-		gsl_odeiv2_driver_reset(driver);
+		gsl_odeiv2_driver_reset(driver.get());
 	}
 	else if (status == GSL_EMAXITER) {
 		os << "maximum number of steps reached";
@@ -136,12 +136,7 @@ ODESolver &ODESolver::operator=(ODESolver &&other) {
 	delta_t = other.delta_t;
 	step = other.step;
 	ode_system = other.ode_system;
-	driver = other.driver;
-
-	// The important bit: let the other object that it doesn't own
-	// the driver anymore, so it doesn't free it up
-	other.driver = nullptr;
-
+	std::swap(driver, other.driver);
 	return *this;
 }
 

@@ -56,6 +56,12 @@ public:
 	 */
 	Options(const std::string &filename);
 
+	/// Adds the option specified by `optspec` to the internal set of options
+	/// loaded into this object
+	///
+	/// @param optspec A ``name = value`` option specification
+	void add(const std::string &optspec);
+
 	/**
 	 * Read the value of option `name`, if present, and set it in `value_holder`
 	 * of type `T`.
@@ -80,6 +86,16 @@ public:
 			value_holder = get<T>(name, it->second);
 		}
 	}
+
+	/// Parses `optspec` into its `name` and `value` components. It does so by
+	/// looking at an equals ("=") sign and interpreting the left-hand side string
+	/// as an option name and the right-hand side string as a value
+	///
+	/// @param optspec The original option specification
+	/// @param name The string where the option name will be stored
+	/// @param value The string where the option value will be stored
+	static
+	void parse_option(const std::string &optspec, std::string &name, std::string &value);
 
 protected:
 

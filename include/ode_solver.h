@@ -128,7 +128,7 @@ private:
 	double delta_t;
 	unsigned int step;
 	std::shared_ptr<gsl_odeiv2_system> ode_system;
-	gsl_odeiv2_driver *driver;
+	std::unique_ptr<gsl_odeiv2_driver> driver;
 };
 
 }  // namespace shark

@@ -1,33 +1,66 @@
-/*
- * write_output.cpp
-
- *
- *  Created on: 18Sep.,2017
- *      Author: clagos
- */
+//
+// Galaxy writer classes implementations
+//
+// ICRAR - International Centre for Radio Astronomy Research
+// (c) UWA - The University of Western Australia, 2017
+// Copyright by UWA (in the framework of the ICRAR)
+// All rights reserved
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+// MA 02111-1307  USA
+//
 
 #include <iomanip>
+#include <iostream>
 #include <iterator>
 #include <memory>
 #include <numeric>
-#include <vector>
-#include <iostream>
-#include <fstream>
 
-#include "components.h"
+#include <boost/filesystem.hpp>
+
+#include "hdf5/writer.h"
 #include "cosmology.h"
 #include "exceptions.h"
+#include "galaxy_writer.h"
 #include "logging.h"
 #include "star_formation.h"
-#include "write_output.h"
 #include "utils.h"
-#include "hdf5/writer.h"
 
-using namespace std;
 
 namespace shark {
 
-WriteOutput::WriteOutput(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, SimulationParameters sim_params, StarFormation starformation):
+static
+void get_molecular_gas(const GalaxyPtr &galaxy, StarFormation &star_formation, SimulationParameters &sim_params, int snapshot,
+                       double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b)
+{
+	*m_mol = 0;
+	*m_atom = 0;
+	*m_mol_b = 0;
+	*m_atom_b = 0;
+
+	if (galaxy->disk_gas.mass > 0) {
+		*m_mol = star_formation.molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, sim_params.redshifts[snapshot]);
+		*m_atom = galaxy->disk_gas.mass - *m_mol;
+	}
+	if (galaxy->bulge_gas.mass > 0) {
+		*m_mol_b = star_formation.molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, sim_params.redshifts[snapshot]);
+		*m_atom_b = galaxy->bulge_gas.mass - *m_mol_b;
+	}
+}
+
+GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, SimulationParameters sim_params, StarFormation starformation):
 	exec_params(exec_params),
 	sim_params(sim_params),
 	cosmo_params(cosmo_params),
@@ -36,28 +69,41 @@ WriteOutput::WriteOutput(ExecutionParameters exec_params, CosmologicalParameters
 	//no-opt
 }
 
-void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos){
+std::string GalaxyWriter::get_output_directory(int snapshot)
+{
+	using namespace boost::filesystem;
+	using std::string;
 
-	string batch;
-
-	int snap_to_write = snapshot+1;
-
-	if(exec_params.simulation_batches.size() == 1){
-		batch = std::to_string(exec_params.simulation_batches[0]);
-	}
-	else{
-		batch = "multiple_batches";
+	string batch_dir = "multiple_batches";
+	if (exec_params.simulation_batches.size() == 1) {
+		batch_dir = std::to_string(exec_params.simulation_batches[0]);
 	}
 
-	string fname = exec_params.output_directory + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snap_to_write) + "/" + batch + "/galaxies.hdf5";
+	string output_dir = exec_params.output_directory + "/" + sim_params.sim_name +
+	                    "/" + exec_params.name_model + "/" + std::to_string(snapshot) +
+	                    "/" + batch_dir;
 
-	hdf5::Writer file(fname);
+	// Make sure the directory structure exists
+	path dirname(output_dir);
+	if (!exists(dirname)) {
+		create_directories(dirname);
+	}
+
+	return output_dir;
+}
+
+void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
+
+	using std::string;
+	using std::vector;
+
+	hdf5::Writer file(get_output_directory(snapshot) + "/galaxies.hdf5");
 
 	file.write_dataset("runInfo/batches", exec_params.simulation_batches);
 	file.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision);
 	file.write_dataset("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants);
-	file.write_dataset("runInfo/snapshot", snap_to_write);
-	file.write_dataset("runInfo/redshift", sim_params.redshifts[snap_to_write]);
+	file.write_dataset("runInfo/snapshot", snapshot);
+	file.write_dataset("runInfo/redshift", sim_params.redshifts[snapshot]);
 	file.write_attribute("runInfo/model_name", exec_params.name_model);
 
 	// Calculate effective volume of the run
@@ -120,8 +166,8 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	vector<float> velocity_z;
 
 	vector<int> type;
-	vector<long> id_halo;
-	vector<long> id_subhalo;
+	vector<Halo::id_t> id_halo;
+	vector<Subhalo::id_t> id_subhalo;
 
 	long j=1;
 	// Loop over all halos and subhalos to write galaxy properties
@@ -149,18 +195,11 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 			for (auto &galaxy: subhalo->galaxies){
 
 				//Calculate molecular gass mass of disk and bulge:
-				double m_mol = 0;
-				double m_atom = 0;
-				double m_mol_b = 0;
-				double m_atom_b = 0;
-				if(galaxy->disk_gas.mass > 0){
-					m_mol = starformation.molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, sim_params.redshifts[snapshot]);
-					m_atom = galaxy->disk_gas.mass - m_mol;
-				}
-				if(galaxy->bulge_gas.mass > 0){
-					m_mol_b = starformation.molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, sim_params.redshifts[snapshot]);
-					m_atom_b = galaxy->bulge_gas.mass - m_mol_b;
-				}
+				double m_mol;
+				double m_atom;
+				double m_mol_b;
+				double m_atom_b;
+				get_molecular_gas(galaxy, starformation, sim_params, snapshot, &m_mol, &m_atom, &m_mol_b, &m_atom_b);
 
 				mmol_disk.push_back(m_mol);
 				mmol_bulge.push_back(m_mol_b);
@@ -188,16 +227,12 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 				double mzhot_gal = 0;
 				double mreheat = 0;
 				double mzreheat =0;
-				int t = 2;
+				int t = galaxy->galaxy_type;
 				if(galaxy->galaxy_type == Galaxy::CENTRAL){
-					t = 0;
 					mhot_gal = hot_subhalo.mass + cold_subhalo.mass;
 					mzhot_gal = hot_subhalo.mass_metals + cold_subhalo.mass_metals;
 					mreheat = reheated_subhalo.mass;
 					mzreheat = reheated_subhalo.mass_metals;
-				}
-				else if(galaxy->galaxy_type == Galaxy::TYPE1){
-					t=1;
 				}
 
 				mhot.push_back(mhot_gal);
@@ -297,15 +332,49 @@ void WriteOutput::write_galaxies(int snapshot, const std::vector<HaloPtr> &halos
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo);
 	file.write_dataset("Galaxies/id_halo", id_halo);
 
-	string fname_a = exec_params.output_directory + sim_params.sim_name + "/" + exec_params.name_model + "/" + std::to_string(snap_to_write) + "/" + batch + "/galaxies.dat";
-	fstream file_a;
-	file_a.open(fname_a, ios_base::out);
+}
 
-	for (int i=0; i < type.size(); i++){
-		file_a << mstars_disk[i] << " " << mstars_bulge[i] << " " <<  matom_disk[i]+matom_bulge[i] << " " << mBH[i] << " " << mgas_metals_disk[i]/mgas_disk[i] << " " << mstars_disk[i]+mstars_bulge[i] << " " << rdisk[i] << " " << rbulge[i] << " " << id_subhalo[i] << " " << id_halo[i] << std::endl;
+void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos)
+{
+
+	using std::vector;
+	using std::string;
+
+	std::ofstream output(get_output_directory(snapshot) + "/galaxies.dat");
+
+	// TODO: Write a header?
+
+	// Each galaxy corresponds to one line
+	for (const auto &halo: halos) {
+		for(const auto &subhalo: halo->all_subhalos()) {
+			for(const auto &galaxy: subhalo->galaxies) {
+				write_galaxy(galaxy, subhalo, snapshot, output);
+			}
+		}
 	}
 
-	file_a.close();
+	output.close();
+}
+
+void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f)
+{
+	auto mstars_disk = galaxy->disk_stars.mass;
+	auto mstars_bulge = galaxy->bulge_stars.mass;
+	auto mgas_disk = galaxy->disk_gas.mass;
+	auto mgas_metals_disk = galaxy->disk_gas.mass_metals;
+	auto mBH = galaxy->smbh.mass;
+	auto rdisk = galaxy->disk_stars.rscale;
+	auto rbulge = galaxy->bulge_stars.rscale;
+	double mmol;
+	double matom;
+	double mmol_b;
+	double matom_b;
+	get_molecular_gas(galaxy, starformation, sim_params, snapshot, &mmol, &matom, &mmol_b, &matom_b);
+
+	f << mstars_disk << " " << mstars_bulge << " " <<  matom + matom_b
+	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "
+	  << mstars_disk + mstars_bulge << " " << rdisk << " " << rbulge << " "
+	  << subhalo->id << " " << subhalo->host_halo->id << "\n";
 
 }
 

@@ -30,7 +30,7 @@ public:
 	ExecutionParameters(const Options &options);
 
 	std::vector<int> output_snapshots;
-	std::string output_format;
+	Options::file_format_t output_format;
 	std::string output_directory;
 	std::string name_model;
 	std::vector<unsigned int> simulation_batches;

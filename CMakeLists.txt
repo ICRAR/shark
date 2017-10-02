@@ -116,6 +116,7 @@ set(SHARKLIB_SRCS
    src/dark_matter_halos.cpp
    src/disk_instability.cpp
    src/galaxy_mergers.cpp
+   src/galaxy_writer.cpp
    src/gas_cooling.cpp
    src/integrator.cpp
    src/interpolator.cpp
@@ -129,7 +130,6 @@ set(SHARKLIB_SRCS
    src/star_formation.cpp
    src/stellar_feedback.cpp
    src/utils.cpp
-   src/write_output.cpp
    src/hdf5/iobase.cpp
    src/hdf5/reader.cpp
    src/hdf5/traits.cpp
