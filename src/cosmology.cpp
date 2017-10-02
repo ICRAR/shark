@@ -79,23 +79,23 @@ Cosmology::Cosmology(CosmologicalParameters parameters) :
 	// no-op
 }
 
-double Cosmology::comoving_to_physical_size(double r, double z){
+double Cosmology::comoving_to_physical_size(double r, double z) const {
 	return r/parameters.Hubble_h;///(1+z);
 }
 
-double Cosmology::comoving_to_physical_velocity(double v, double z){
+double Cosmology::comoving_to_physical_velocity(double v, double z) const {
 	return v/(1+z);
 }
 
-double Cosmology::comoving_to_physical_mass(double m){
+double Cosmology::comoving_to_physical_mass(double m) const {
 	return m/parameters.Hubble_h;
 }
 
-double Cosmology::physical_to_comoving_mass(double m){
+double Cosmology::physical_to_comoving_mass(double m) const {
 	return m*parameters.Hubble_h;
 }
 
-double Cosmology::convert_redshift_to_age(double z){
+double Cosmology::convert_redshift_to_age(double z) const {
 
 	using namespace constants;
 
@@ -127,7 +127,7 @@ double Cosmology::convert_redshift_to_age(double z){
 	return t;
 }
 
-double Cosmology::expansion_factor(double t){
+double Cosmology::expansion_factor(double t) const {
 
 	using namespace constants;
 
@@ -153,7 +153,7 @@ double Cosmology::expansion_factor(double t){
 	return a;
 }
 
-double Cosmology::hubble_parameter (double z){
+double Cosmology::hubble_parameter (double z) const {
 	double H2 = (parameters.OmegaM * std::pow(1.0 + z, 3.0) + parameters.OmegaL);
 	return parameters.Hubble_h * 100.0 * std::sqrt(H2);
 }

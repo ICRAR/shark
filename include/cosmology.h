@@ -77,17 +77,17 @@ class Cosmology {
 public:
 	Cosmology(CosmologicalParameters parameters);
 
-	double comoving_to_physical_size(double r, double z);
-	double comoving_to_physical_velocity(double v, double z);
-	double comoving_to_physical_mass(double m);
-	double physical_to_comoving_mass(double m);
-	double convert_redshift_to_age(double z);
-	double expansion_factor(double a);
-	double universal_baryon_fraction(){
+	double comoving_to_physical_size(double r, double z) const;
+	double comoving_to_physical_velocity(double v, double z) const;
+	double comoving_to_physical_mass(double m) const;
+	double physical_to_comoving_mass(double m) const;
+	double convert_redshift_to_age(double z) const;
+	double expansion_factor(double a) const;
+	double universal_baryon_fraction() const {
 		return parameters.OmegaB/parameters.OmegaM;
 	};
 
-	double hubble_parameter (double z);
+	double hubble_parameter (double z) const;
 
 	CosmologicalParameters parameters;
 
