@@ -40,6 +40,9 @@ project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${PROFIT_LANGS})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
 
+# Options users can give on the command line
+option(SHARK_TEST  "Include test compilation in the build" OFF)
+
 #
 # This is how we look for GSL
 # Some cmake installations don't have a FindGSL, so if that fails
@@ -166,3 +169,14 @@ install(TARGETS sharklib shark-importer
 install(FILES
         include/reader.h
         DESTINATION include/shark)
+
+#
+# Unit tests
+#
+if( SHARK_TEST )
+	find_package(CxxTest)
+	if( CXXTEST_FOUND )
+		enable_testing()
+		add_subdirectory(tests)
+	endif()
+endif()

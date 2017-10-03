@@ -49,6 +49,11 @@ public:
 		ASCII
 	};
 
+	///
+	/// A ctor that creates an empty Options object
+	///
+	Options();
+
 	/**
 	 * A ctor that reads options from a file
 	 *

@@ -30,6 +30,7 @@
 #include <streambuf>
 #include <string>
 
+#include "logging.h"
 #include "options.h"
 #include "utils.h"
 
@@ -37,9 +38,17 @@ using namespace std;
 
 namespace shark {
 
-Options::Options(const string &name)
+Options::Options() :
+	options()
+{
+	// no-op
+}
+
+Options::Options(const string &name) :
+	options()
 {
 
+	LOG(info) << "Loading options from " << name;
 	ifstream f = open_file(name);
 	string line;
 	string option_group;
