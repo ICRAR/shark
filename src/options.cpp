@@ -102,6 +102,18 @@ void Options::parse_option(const std::string &optspec, std::string &name, std::s
 	trim(name);
 	trim(value);
 
+	// Empty after trimming? no way
+	if (name.empty()) {
+		std::ostringstream os;
+		os << "Option without name: " << value;
+		throw invalid_option(os.str());
+	}
+	if (value.empty()) {
+		std::ostringstream os;
+		os << "Option without value: " << name;
+		throw invalid_option(os.str());
+	}
+
 	// Remove possible comment in value
 	std::string::size_type hash;
 	if ((hash = value.find('#')) != std::string::npos) {
@@ -154,7 +166,7 @@ T _builtin_from_string(const std::string &name, const std::string &val, const st
 
 template <typename Cont>
 typename std::enable_if<std::is_integral<typename Cont::value_type>::value, Cont>::type
-_read_ranges(const std::string &name, const std::string &value, const std::string &sep = ",")
+_read_ranges(const std::string &name, const std::string &value, const std::string &sep = " ")
 {
 
 	typedef typename Cont::value_type T;
@@ -164,6 +176,9 @@ _read_ranges(const std::string &name, const std::string &value, const std::strin
 	for(auto value_or_range: values_and_ranges) {
 
 		trim(value_or_range);
+		if (value_or_range.empty()) {
+			continue;
+		}
 
 		// a dash found neither at the beginning, nor at the end
 		// means that we have a range specification
@@ -260,17 +275,17 @@ std::vector<double> Options::get<std::vector<double>>(const std::string &name, c
 
 template<>
 std::set<int> Options::get<std::set<int>>(const std::string &name, const std::string &value) const {
-	return _read_ranges<std::set<int>>(name, value, "int");
+	return _read_ranges<std::set<int>>(name, value);
 }
 
 template<>
 std::vector<int> Options::get<std::vector<int>>(const std::string &name, const std::string &value) const {
-	return _read_ranges<std::vector<int>>(name, value, "int");
+	return _read_ranges<std::vector<int>>(name, value);
 }
 
 template<>
 std::vector<unsigned int> Options::get<std::vector<unsigned int>>(const std::string &name, const std::string &value) const {
-	return _read_ranges<std::vector<unsigned int>>(name, value, "unsigned int");
+	return _read_ranges<std::vector<unsigned int>>(name, value);
 }
 
 }  // namespace shark
