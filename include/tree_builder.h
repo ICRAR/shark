@@ -52,6 +52,10 @@ protected:
 	void link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
 	          const HaloPtr &halo, const HaloPtr &d_halo);
 
+	void ensure_halo_mass_growth(std::vector<MergerTreePtr> trees, SimulationParameters sim_params);
+
+	void spin_interpolated_halos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params);
+
 	void define_central_subhalos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params);
 
 	SubhaloPtr define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo);
@@ -59,8 +63,6 @@ protected:
 	void define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology);
 
 	void remove_satellite(HaloPtr halo, SubhaloPtr subhalo);
-
-	void define_main_progenitor(std::vector<MergerTreePtr> trees, SimulationParameters sim_params);
 
 private:
 	ExecutionParameters exec_params;

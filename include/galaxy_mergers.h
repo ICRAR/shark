@@ -76,7 +76,7 @@ public:
 
 	double r_remnant(double mc, double ms, double rc, double rs);
 
-	void transfer_baryon_mass(SubhaloPtr satellite, SubhaloPtr central);
+	void transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite);
 
 
 private:

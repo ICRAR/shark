@@ -298,11 +298,6 @@ int run(int argc, char **argv) {
 				auto post_galaxy_count = halo->galaxy_count();
 				galaxies_created += post_galaxy_count - pre_galaxy_count;
 
-				/*Check if there are any mergers in this snapshot*/
-
-				/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale.*/
-				galaxy_mergers.merging_subhalos(halo);
-
 				/*Evaluate which galaxies are merging in this halo.*/
 				galaxy_mergers.merging_galaxies(halo, sim_params.redshifts[snapshot], tf-ti);
 
@@ -311,6 +306,9 @@ int run(int argc, char **argv) {
 
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
 				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
+
+				/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale and change galaxy types accordingly.*/
+				galaxy_mergers.merging_subhalos(halo);
 			}
 		}
 

@@ -238,11 +238,38 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 			merging_timescale(central_subhalo, satellite_subhalo);
 
 			//transfer all mass from the satellite_subhalo to the central_subhalo.
-			transfer_baryon_mass(satellite_subhalo, central_subhalo);
+			transfer_baryon_mass(central_subhalo, satellite_subhalo);
 
 			//Now transfer the galaxies in this subhalo to the central subhalo.
 			satellite_subhalo->transfer_galaxies_to(central_subhalo);
 		}
+	}
+
+	//Now evaluate cases where central subhalo disappears in the next snapshot.
+	if(central_subhalo->last_snapshot_identified == central_subhalo->snapshot){
+
+		// Identify the central subhalo of the halo in which the descendant subhalo lives. This is the subhalo to which
+		// the galaxies should be transferred to (rather than the descendant subhalo, which by chance could be a satellite subhalo).
+		auto desc_halo = central_subhalo->descendant->host_halo;
+		auto desc_subhalo = desc_halo->central_subhalo;
+
+		// Find main progenitor subhalo of the descendant subhalo and use that to calculate merging timescales.
+		auto primary_subhalo = desc_subhalo->main();
+
+		if(!primary_subhalo->central_galaxy()){
+			std::ostringstream os;
+			os << "Primary subhalo " << primary_subhalo << " does not have central galaxy - in merging_subhalos.";
+			throw invalid_argument(os.str());
+		}
+
+		//Calculate dynamical friction timescale for all galaxies disappearing in the primary subhalo of the merger in the next snapshot.
+		merging_timescale(primary_subhalo,central_subhalo);
+
+		//transfer all mass from the satellite_subhalo to the central subhalo of the descendant halo.
+		transfer_baryon_mass(desc_subhalo, central_subhalo);
+
+		//Now transfer the galaxies in this subhalo to the central subhalo of the descendant halo.
+		central_subhalo->transfer_galaxies_to(desc_subhalo);
 	}
 
 }
@@ -273,7 +300,10 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	GalaxyPtr central_galaxy = central_subhalo->central_galaxy();
 	if(!central_galaxy){
 		std::ostringstream os;
-		os << central_subhalo << " has no central galaxy - in merging_galaxies";
+		os << central_subhalo << " has no central galaxy - in merging_galaxies.\n";
+		os << central_subhalo << " has a descendant " << central_subhalo->descendant << "which has a type " << central_subhalo->descendant->subhalo_type << "\n";
+		os << central_subhalo << " has " << central_subhalo->ascendants.size() << " ascendants.\n";
+		os << central_subhalo << " has a halo with " << central_subhalo->host_halo->ascendants.size() << " ascendants.";
 		throw exception(os.str());
 	}
 
@@ -502,7 +532,7 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	return std::pow((mc + ms),2)/ (factor1 + factor2 + factor3);
 }
 
-void GalaxyMergers::transfer_baryon_mass(SubhaloPtr satellite, SubhaloPtr central){
+void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite){
 
 	central->hot_halo_gas.mass += satellite->hot_halo_gas.mass;
 	central->hot_halo_gas.mass_metals += satellite->hot_halo_gas.mass_metals;

@@ -102,6 +102,8 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	//Read properties that characterise the position of the subhalo inside the halo.
 	vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
 	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
+	vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
+
 
 	auto n_subhalos = Mvir.size();
 
@@ -128,6 +130,16 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 			subhalo->has_descendant = true;
 			subhalo->descendant_id = descendant_id;
 			subhalo->descendant_halo_id = descHost[i];
+		}
+
+		//Assign main progenitor flags.
+		if(IsMain[i] == 1){
+			subhalo->main_progenitor = true;
+		}
+
+		//Assign interpolated subhalo flags.
+		if(IsInterpolated[i] == 1){
+			subhalo->IsInterpolated = true;
 		}
 
 		//Make all subhalos satellite, because once we construct the merger tree we will find the main branch.

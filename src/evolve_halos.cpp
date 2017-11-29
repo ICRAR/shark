@@ -44,6 +44,12 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	// First make sure central subhalos at this snapshot have only one central galaxy.
 	for(auto &halo: halos){
 		for(SubhaloPtr &subhalo: halo->all_subhalos()) {
+
+			// First check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
+			if(subhalo->last_snapshot_identified == subhalo->snapshot){
+				continue;
+			}
+
 			vector<float> mbaryon;
 			if(subhalo->subhalo_type == Subhalo::SATELLITE){
 				for (auto &galaxy: subhalo->galaxies){
@@ -82,6 +88,12 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	unsigned int subhalos_without_descendant = 0;
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
+
+			// First check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
+			if(subhalo->last_snapshot_identified == subhalo->snapshot){
+				continue;
+			}
+
 			auto descendant_subhalo = subhalo->descendant;
 
 			if (!descendant_subhalo) {

@@ -71,14 +71,17 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 
 	loop_through_halos(halos);
 
+	// Ensure halos only grow in mass.
+	ensure_halo_mass_growth(trees, sim_params);
+
+	// Redefine angular momentum in the case of interpolated halos.
+	spin_interpolated_halos(trees, sim_params);
+
 	// Define central galaxies
 	define_central_subhalos(trees, sim_params);
 
 	// Define accretion rate from DM in case we want this.
 	define_accretion_rate_from_dm(trees, sim_params, *cosmology);
-
-	// Define main progenitor.
-	define_main_progenitor(trees, sim_params);
 
 	return trees;
 }
@@ -158,33 +161,44 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 					auto central_subhalo = halo->all_subhalos()[0];
 					auto subhalo = define_central_subhalo(halo, central_subhalo);
 
-					//Now look at most massive ascendants to define which one will be the central, but only in the case the ascendant halo does not have a central already.
+					// Now walk backwards through the main progenitor branch until subhalo has no more progenitors. This is done only in the case the ascendant
+					// halo does not have a central already.
 
 					// Loop going backwards through history:
-					//  * Find the most massive ascendant of this subhalo and its host Halo
-					//  * Define that most massive ascendant as the central subhalo for the Halo (if none defined)
-					//  * Define last_snapshot_identified for non-central ascendants
+					//  * Find the main progenitor of this subhalo and its host Halo.
+					//  * Define that main progenitor as the central subhalo for the Halo (if none defined).
+					//  * Define last_snapshot_identified for non-central ascendants.
 					//  * Repeat
-					auto ascendants = subhalo->ordered_ascendants();
-					for(; !ascendants.empty(); ascendants = subhalo->ordered_ascendants()) {
+					auto ascendants = subhalo->ascendants;
 
-						auto most_massive_ascendant = ascendants[0];
-						auto ascendant_halo = most_massive_ascendant->host_halo;
+					while(not ascendants.empty()){
+
+						auto main_prog = subhalo->main();
+
+						//Check that there is a main progenitor first, if not, then there's no point on continuing.
+						if(not main_prog){
+							break;
+						}
+
+						auto ascendant_halo = main_prog->host_halo;
 
 						// If a central subhalo has been defined, then its whole branch
-						// has been processed, so there's no point on continuing
+						// has been processed, so there's no point on continuing.
 						if (ascendant_halo->central_subhalo) {
 							break;
 						}
 
-						subhalo = define_central_subhalo(ascendant_halo, most_massive_ascendant);
+						subhalo = define_central_subhalo(ascendant_halo, main_prog);
 
+						// Define property last_identified_snapshot for all the ascendants that are not the main progenitor of the subhalo.
 						for (auto &sub: ascendants){
-							// If subhalo is a satellite, then define this snapshot as the last identified one.
-							if(sub->subhalo_type == Subhalo::SATELLITE){
+							if(!sub->main_progenitor){
 								sub->last_snapshot_identified = sub->snapshot;
 							}
 						}
+
+						// Now move to the ascendants of the main progenitor subhalo and repeat process.
+						ascendants = subhalo->ascendants;
 
 					}
 				}
@@ -216,29 +230,52 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 				}
 			}
 		}
-
 }
 
-void TreeBuilder::define_main_progenitor(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+void TreeBuilder::ensure_halo_mass_growth(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+
+	//This function loops over merger trees and halos to make sure that descendant halos are at least as massive as their progenitors.
 
 	//Loop over trees.
-	for(auto &tree: trees) {
-		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
-			for(auto &halo: tree->halos[snapshot]){
+		for(auto &tree: trees) {
 
-				auto ascendants = halo->ordered_ascendants();
+			for(int snapshot=sim_params.min_snapshot; snapshot > sim_params.min_snapshot; snapshot--) {
 
-				// If halo has ascendants, then define main.
-				if(ascendants.size() > 0){
-					auto main = ascendants[0];
-					main->main_progenitor = true;
-					auto subhalo_cen = main->central_subhalo;
-					subhalo_cen->main_progenitor = true;
+				for(auto &halo: tree->halos[snapshot]){
+					// Check if current mass of halo is larger than descendant. If so, redefine descendant Mvir to that of the progenitor.
+					if(halo->Mvir > halo->descendant->Mvir){
+						halo->descendant->Mvir = halo->Mvir;
+					}
 				}
 			}
 		}
-	}
 }
+
+void TreeBuilder::spin_interpolated_halos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+
+	// This function loops over merger trees and halos and subhalos to make sure that interpolated halos have the right angular momentum and concentration information.
+	// This has to be done starting from the first snapshot forward so that the angular momentum and concentration are propagated correctly if subhalo is interpolated over many snapshots.
+
+	//Loop over trees.
+		for(auto &tree: trees) {
+
+			for(int snapshot=sim_params.min_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
+
+				for(auto &halo: tree->halos[snapshot]){
+
+					for (auto &subhalo: halo->all_subhalos()){
+						//Check if subhalo is there because of interpolation. If so, redefine its angular momentum and concentration to that of its progenitor.
+						if(subhalo->IsInterpolated){
+							auto main_progenitor = subhalo->main();
+							subhalo->L = main_progenitor->L;
+							subhalo->concentration = main_progenitor->concentration;
+						}
+					}
+				}
+			}
+		}
+}
+
 
 void TreeBuilder::define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology){
 
@@ -415,8 +452,8 @@ void HaloBasedTreeBuilder::create_galaxies(HaloPtr halo,
 		SimulationParameters sim_params)
 {
 
-	// Halo has ascendants so ignore it, as it should already have galaxies in it.
-	if(halo->ascendants.size() > 0){
+	// Halo has a central subhalo with ascendants so ignore it, as it should already have galaxies in it.
+	if(halo->central_subhalo->ascendants.size() > 0){
 		return;
 	}
 
@@ -445,6 +482,7 @@ void HaloBasedTreeBuilder::create_galaxies(HaloPtr halo,
 
 		//assign an ad-hoc half-mass radius and specific angular momentum to start with.
 		galaxy->disk_gas.rscale = darkmatterhalos.disk_size_theory(*central_subhalo);
+
 		darkmatterhalos.galaxy_velocity(*central_subhalo);
 	}
 

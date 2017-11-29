@@ -305,6 +305,7 @@ public:
 		snapshot(-1),
 		has_descendant(false),
 		main_progenitor(false),
+		IsInterpolated(false),
 		descendant_id(0),
 		descendant_halo_id(0),
 		descendant_snapshot(-1),
@@ -352,6 +353,12 @@ public:
 	 * Boolean property indicating if subhalo is a main progenitor of its descendant.
 	 */
 	bool main_progenitor;
+
+	/**
+	 * Boolean property indicating if subhalo is the result of an interpolation in snapshots were descendants were missing. In this case Dhalos puts a subhalo in those snapshots
+	 * to ensure continuation of the merger tree.
+	 */
+	bool IsInterpolated;
 
 
 	/**
@@ -461,6 +468,36 @@ public:
 		}
 
 		return ascendants;
+
+	}
+
+	/// Returns main progenitor subhalo.
+	SubhaloPtr main(){
+
+		if(ascendants.size()==0){
+			return SubhaloPtr();
+		}
+		else if(ascendants.size()>0){
+
+			SubhaloPtr main_subhalo;
+
+			bool found_main = false;
+
+			for (auto &sub: ascendants){
+				if(sub->main_progenitor){
+					main_subhalo = sub;
+					found_main = true;
+					continue;
+				}
+			}
+
+			if(!found_main){
+				return SubhaloPtr();
+			}
+
+			return main_subhalo;
+
+		}
 
 	}
 
