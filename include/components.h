@@ -473,31 +473,12 @@ public:
 
 	/// Returns main progenitor subhalo.
 	SubhaloPtr main(){
-
-		if(ascendants.size()==0){
-			return SubhaloPtr();
-		}
-		else if(ascendants.size()>0){
-
-			SubhaloPtr main_subhalo;
-
-			bool found_main = false;
-
-			for (auto &sub: ascendants){
-				if(sub->main_progenitor){
-					main_subhalo = sub;
-					found_main = true;
-					continue;
-				}
+		for (auto &sub: ascendants) {
+			if (sub->main_progenitor) {
+				return sub;
 			}
-
-			if(!found_main){
-				return SubhaloPtr();
-			}
-
-			return main_subhalo;
-
 		}
+		return SubhaloPtr();
 
 	}
 
