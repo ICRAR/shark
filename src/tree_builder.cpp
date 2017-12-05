@@ -86,43 +86,43 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	return trees;
 }
 
-void TreeBuilder::link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
-                       const HaloPtr &halo, const HaloPtr &d_halo) {
+void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_subhalo,
+                       const HaloPtr &parent_halo, const HaloPtr &desc_halo) {
 
 	// Establish ascendant and descendant links at subhalo level
 	// Fail if subhalo has more than one descendant
-	LOG(trace) << "Connecting " << subhalo << " as a parent of " << d_subhalo;
-	d_subhalo->ascendants.push_back(subhalo);
+	LOG(trace) << "Connecting " << parent_shalo << " as a parent of " << desc_subhalo;
+	desc_subhalo->ascendants.push_back(parent_shalo);
 
-	if (subhalo->descendant) {
+	if (parent_shalo->descendant) {
 		std::ostringstream os;
-		os << subhalo << " already has a descendant " << subhalo->descendant;
-		os << " but " << d_subhalo << " is claiming to be its descendant as well";
+		os << parent_shalo << " already has a descendant " << parent_shalo->descendant;
+		os << " but " << desc_subhalo << " is claiming to be its descendant as well";
 		throw invalid_data(os.str());
 	}
-	subhalo->descendant = d_subhalo;
+	parent_shalo->descendant = desc_subhalo;
 
 	// Establish ascendant and descendant link at halo level
 	// Fail if a halo has more than one descendant
-	LOG(trace) << "Connecting " << halo << " as a parent of " << d_halo;
-	d_halo->ascendants.push_back(halo);
+	LOG(trace) << "Connecting " << parent_halo << " as a parent of " << desc_halo;
+	desc_halo->ascendants.push_back(parent_halo);
 
-	if (halo->descendant and halo->descendant->id != d_halo->id) {
+	if (parent_halo->descendant and parent_halo->descendant->id != desc_halo->id) {
 		std::ostringstream os;
-		os << halo << " already has a descendant " << halo->descendant;
-		os << " but " << d_halo << " is claiming to be its descendant as well";
+		os << parent_halo << " already has a descendant " << parent_halo->descendant;
+		os << " but " << desc_halo << " is claiming to be its descendant as well";
 		throw invalid_data(os.str());
 	}
-	halo->descendant = d_halo;
+	parent_halo->descendant = desc_halo;
 
 	// Link this halo to merger tree and back
-	if (!d_halo->merger_tree) {
+	if (!desc_halo->merger_tree) {
 		std::ostringstream os;
-		os << "Descendant " << d_halo << " has no MergerTree associated to it";
+		os << "Descendant " << desc_halo << " has no MergerTree associated to it";
 		throw invalid_data(os.str());
 	}
-	halo->merger_tree = d_halo->merger_tree;
-	halo->merger_tree->add_halo(halo);
+	parent_halo->merger_tree = desc_halo->merger_tree;
+	parent_halo->merger_tree->add_halo(parent_halo);
 
 }
 
