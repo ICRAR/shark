@@ -71,8 +71,9 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				if(i==0){
 					auto order_galaxies = subhalo->ordered_galaxies();
 					if(order_galaxies.size() > 0){
-						order_galaxies[0]->galaxy_type = Galaxy::CENTRAL;
-						LOG(warning) << "Central Subhalo " << subhalo << " has no central galaxy. Will make most massive galaxy the central one. Mass of new central "<< order_galaxies[0]->baryon_mass();
+						std::ostringstream os;
+						os << "Central Subhalo " << subhalo << " has no central galaxy";
+						throw invalid_data(os.str());
 					}
 				}
 				if(i>1){
@@ -146,8 +147,9 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				if(i==0){
 					auto order_galaxies = descendant_subhalo->ordered_galaxies();
 					if(order_galaxies.size() > 0){
-						order_galaxies[0]->galaxy_type = Galaxy::CENTRAL;
-						LOG(warning) << "Central Subhalo " << descendant_subhalo << " has no central galaxy. Will make most massive galaxy the central one. Mass of new central "<< order_galaxies[0]->baryon_mass();
+						std::ostringstream os;
+						os << "Central Subhalo " << descendant_subhalo << " has no central galaxy";
+						throw invalid_data(os.str());
 					}
 				}
 				if(i>1){

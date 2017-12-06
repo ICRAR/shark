@@ -227,6 +227,12 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 	// Assign halo concentration.
 	halo->concentration = halo->central_subhalo->concentration;
 
+	if(!central_subhalo->central_galaxy()){
+		std::ostringstream os;
+		os << "Central subhalo " << central_subhalo << " does not have central galaxy - in merging_subhalos.";
+		throw invalid_argument(os.str());
+	}
+
 	for(auto &subhalo: halo->satellite_subhalos) {
 		//Identify which subhalos will disappear in the next snapshot
 

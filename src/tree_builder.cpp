@@ -177,7 +177,9 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 
 						//Check that there is a main progenitor first, if not, then there's no point on continuing.
 						if(not main_prog){
-							break;
+							std::ostringstream os;
+							os << "Subhalo " << subhalo << " has ascendants but no main progenitor";
+							throw invalid_data(os.str());
 						}
 
 						auto ascendant_halo = main_prog->host_halo;
