@@ -233,12 +233,11 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 		throw invalid_argument(os.str());
 	}
 
-	for(auto &subhalo: halo->satellite_subhalos) {
+	for(auto &satellite_subhalo: halo->satellite_subhalos) {
 		//Identify which subhalos will disappear in the next snapshot
 
-		if(subhalo->last_snapshot_identified == subhalo->snapshot){
+		if(satellite_subhalo->last_snapshot_identified == satellite_subhalo->snapshot){
 
-			auto satellite_subhalo = subhalo;
 
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
 			merging_timescale(central_subhalo, satellite_subhalo);
