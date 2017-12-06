@@ -327,14 +327,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	}
 
 	// Now destroy and remove satellite galaxy.
-	// TODO: Maybe not most efficiently, but it will do for now
-	for(auto &galaxy: all_sats_to_delete) {
-		// we know "it" will point to something known because all_stas_to_delete
-		// contain galaxies from central_subhalo->galaxies, which hasn't been
-		// modified in the meanwhile. Thus, skip any check on "it" and use it blindly
-		auto it = std::find(central_subhalo->galaxies.begin(), central_subhalo->galaxies.end(), galaxy);
-		central_subhalo->galaxies.erase(it);
-	}
+	central_subhalo->remove_galaxies(all_sats_to_delete);
 
 	// Trigger starbursts in all the galaxies that have gas in the bulge.
 	create_starbursts(halo, z, delta_t);

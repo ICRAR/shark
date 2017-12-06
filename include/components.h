@@ -32,6 +32,7 @@
 #include <ostream>
 #include <vector>
 
+#include "logging.h"
 #include "mixins.h"
 
 namespace shark {
@@ -504,6 +505,18 @@ public:
 		galaxies.clear();
 	}
 
+	void remove_galaxies(const std::vector<GalaxyPtr> &to_remove) {
+		// TODO: Maybe not most efficiently, but it will do for now
+		for(auto &galaxy: to_remove) {
+			auto it = std::find(galaxies.begin(), galaxies.end(), galaxy);
+			if (it == galaxies.end()) {
+				LOG(warning) << "Trying to remove galaxy " << galaxy << " which is not in subhalo " << *this << ", ignoring";
+				continue;
+			}
+			LOG(debug) << "Removing galaxy " << galaxy << " from subhalo " << *this;
+			galaxies.erase(it);
+		}
+	}
 	///
 	/// Returns the number of galaxies contained in this Halo
 	///
