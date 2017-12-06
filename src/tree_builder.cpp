@@ -103,10 +103,15 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 	parent_shalo->descendant = desc_subhalo;
 
 	// Establish ascendant and descendant link at halo level
-	// Fail if a halo has more than one descendant
-	LOG(trace) << "Connecting " << parent_halo << " as a parent of " << desc_halo;
-	desc_halo->ascendants.push_back(parent_halo);
+	// Ascendant is only added if not added previously
+	auto it = std::find(desc_halo->ascendants.begin(), desc_halo->ascendants.end(), parent_halo);
+	bool halos_already_linked = it != desc_halo->ascendants.end();
+	if (not halos_already_linked) {
+		LOG(trace) << "Connecting " << parent_halo << " as a parent of " << desc_halo;
+		desc_halo->ascendants.push_back(parent_halo);
+	}
 
+	// Fail if a halo has more than one descendant
 	if (parent_halo->descendant and parent_halo->descendant->id != desc_halo->id) {
 		std::ostringstream os;
 		os << parent_halo << " already has a descendant " << parent_halo->descendant;
@@ -122,7 +127,9 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 		throw invalid_data(os.str());
 	}
 	parent_halo->merger_tree = desc_halo->merger_tree;
-	parent_halo->merger_tree->add_halo(parent_halo);
+	if (not halos_already_linked) {
+		parent_halo->merger_tree->add_halo(parent_halo);
+	}
 
 }
 
