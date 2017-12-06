@@ -62,7 +62,7 @@ protected:
 
 	void define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology);
 
-	void remove_satellite(HaloPtr halo, SubhaloPtr subhalo);
+	void remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo);
 
 private:
 	ExecutionParameters exec_params;
@@ -75,7 +75,7 @@ class HaloBasedTreeBuilder : public TreeBuilder {
 public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params);
 
-	void create_galaxies(HaloPtr halo,
+	void create_galaxies(HaloPtr &halo,
 			Cosmology &cosmology,
 			DarkMatterHalos &darkmatterhalos,
 			GasCoolingParameters &cool_params,

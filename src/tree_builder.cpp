@@ -307,7 +307,7 @@ void TreeBuilder::define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees
 }
 
 
-void TreeBuilder::remove_satellite(HaloPtr halo, SubhaloPtr subhalo){
+void TreeBuilder::remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo){
 
 	auto it = std::find(halo->satellite_subhalos.begin(), halo->satellite_subhalos.end(), subhalo);
 
@@ -445,7 +445,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 }
 
 
-void HaloBasedTreeBuilder::create_galaxies(HaloPtr halo,
+void HaloBasedTreeBuilder::create_galaxies(HaloPtr &halo,
 		Cosmology &cosmology,
 		DarkMatterHalos &darkmatterhalos,
 		GasCoolingParameters &cool_params,
