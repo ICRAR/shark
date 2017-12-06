@@ -39,6 +39,7 @@
 #include "disk_instability.h"
 #include "evolve_halos.h"
 #include "exceptions.h"
+#include "galaxy_creator.h"
 #include "galaxy_mergers.h"
 #include "galaxy_writer.h"
 #include "logging.h"
@@ -254,6 +255,9 @@ int run(int argc, char **argv) {
 	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
 	auto merger_trees = tree_builder.build_trees(halos, sim_params, cosmology);
 
+	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
+	GalaxyCreator galaxy_creator(cosmology, dark_matter_halos, gas_cooling_params, sim_params);
+	galaxy_creator.create_galaxies(merger_trees);
 
 	// TODO: move this logic away from the main
 	// Also provide a std::make_unique
@@ -294,7 +298,6 @@ int run(int argc, char **argv) {
 
 				/* Create the first generation of galaxies if halo is first appearing.*/
 				auto pre_galaxy_count = halo->galaxy_count();
-				tree_builder.create_galaxies(halo, *cosmology, *dark_matter_halos, gas_cooling_params, sim_params);
 				auto post_galaxy_count = halo->galaxy_count();
 				galaxies_created += post_galaxy_count - pre_galaxy_count;
 
