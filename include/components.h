@@ -26,6 +26,7 @@
 #define SHARK_COMPONENTS_H_
 
 #include <algorithm>
+#include <cassert>
 #include <map>
 #include <memory>
 #include <numeric>
@@ -501,8 +502,16 @@ public:
 
 	/// Transfers (i.e., moves) the galaxies from this Subhalo into `target`
 	void transfer_galaxies_to(SubhaloPtr &target) {
+
+		auto gals_before = target->galaxy_count();
+		auto our_gals = galaxies.size();
+		LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+
 		copy_galaxies_to(target);
 		galaxies.clear();
+
+		auto gals_after = target->galaxy_count();
+		assert(gals_before + our_gals == gals_after);
 	}
 
 	void remove_galaxies(const std::vector<GalaxyPtr> &to_remove) {
