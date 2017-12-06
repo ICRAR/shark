@@ -238,6 +238,9 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 
 		if(satellite_subhalo->last_snapshot_identified == satellite_subhalo->snapshot){
 
+			LOG(debug) << "Merging satellite subhalo " << satellite_subhalo
+			           << " into central subhalo " << central_subhalo
+			           << " because this is its last snapshot";
 
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
 			merging_timescale(central_subhalo, satellite_subhalo);
@@ -255,15 +258,25 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 
 		// Identify the central subhalo of the halo in which the descendant subhalo lives. This is the subhalo to which
 		// the galaxies should be transferred to (rather than the descendant subhalo, which by chance could be a satellite subhalo).
-		auto desc_halo = central_subhalo->descendant->host_halo;
-		auto desc_subhalo = desc_halo->central_subhalo;
+		auto desc_subhalo = central_subhalo->descendant->host_halo->central_subhalo;
+
+		LOG(debug) << "Merging central subhalo " << central_subhalo
+		           << " into " << desc_subhalo << " (the central subhalo of its descendant halo)"
+		           << " because this is its last snapshot";
 
 		// Find main progenitor subhalo of the descendant subhalo and use that to calculate merging timescales.
 		auto primary_subhalo = desc_subhalo->main();
 
 		if(!primary_subhalo->central_galaxy()){
 			std::ostringstream os;
-			os << "Primary subhalo " << primary_subhalo << " does not have central galaxy - in merging_subhalos.";
+			os << "Primary subhalo " << primary_subhalo << " (last_snapshot=";
+			os << primary_subhalo->last_snapshot_identified << ") does not have central galaxy - in merging_subhalos. ";
+			os << " Ascendants are: ";
+			auto ascendants = primary_subhalo->ascendants;
+			std::copy(ascendants.begin(), ascendants.end(), std::ostream_iterator<SubhaloPtr>(os, " "));
+			os << ". Galaxies are: ";
+			auto galaxies = primary_subhalo->galaxies;
+			std::copy(galaxies.begin(), galaxies.end(), std::ostream_iterator<GalaxyPtr>(os, " "));
 			throw invalid_argument(os.str());
 		}
 
@@ -305,8 +318,8 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	GalaxyPtr central_galaxy = central_subhalo->central_galaxy();
 	if(!central_galaxy){
 		std::ostringstream os;
-		os << central_subhalo << " has no central galaxy - in merging_galaxies.\n";
-		os << central_subhalo << " has a descendant " << central_subhalo->descendant << "which has a type " << central_subhalo->descendant->subhalo_type << "\n";
+		os << central_subhalo << " has no central galaxy - in merging_galaxies. Number of galaxies " << central_subhalo->galaxy_count() << ".\n";
+		os << central_subhalo << " has a descendant " << central_subhalo->descendant << "which is of type " << central_subhalo->descendant->subhalo_type << "\n";
 		os << central_subhalo << " has " << central_subhalo->ascendants.size() << " ascendants.\n";
 		os << central_subhalo << " has a halo with " << central_subhalo->host_halo->ascendants.size() << " ascendants.";
 		throw exception(os.str());

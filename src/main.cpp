@@ -299,15 +299,19 @@ int run(int argc, char **argv) {
 				galaxies_created += post_galaxy_count - pre_galaxy_count;
 
 				/*Evaluate which galaxies are merging in this halo.*/
+				LOG(debug) << "Merging galaxies in halo " << halo;
 				galaxy_mergers.merging_galaxies(halo, sim_params.redshifts[snapshot], tf-ti);
 
 				/*Evaluate disk instabilities.*/
+				LOG(debug) << "Evaluating disk instability in halo " << halo;
 				disk_instability.evaluate_disk_instability(halo, sim_params.redshifts[snapshot], tf-ti);
 
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
+				LOG(debug) << "Evolving content in halo " << halo;
 				populate_halos(basic_physicalmodel, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
 
 				/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale and change galaxy types accordingly.*/
+				LOG(debug) << "Merging subhalos in halo " << halo;
 				galaxy_mergers.merging_subhalos(halo);
 			}
 		}
@@ -345,6 +349,7 @@ int run(int argc, char **argv) {
 
 
 		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
+		LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
 		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology);
 
 	}

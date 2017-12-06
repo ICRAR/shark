@@ -476,6 +476,7 @@ void HaloBasedTreeBuilder::create_galaxies(HaloPtr &halo,
 		galaxy->galaxy_type = Galaxy::CENTRAL;
 
 		central_subhalo->galaxies.push_back(galaxy);
+		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
 
 		central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology.universal_baryon_fraction();
 
