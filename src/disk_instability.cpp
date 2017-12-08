@@ -113,6 +113,14 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 
 	double rnew = c * std::pow((md + mb),2.0) / (bc + dc + combined_c);
 
+
+	if(std::isnan(rnew) or rnew <= 0 or rnew > 0.1){
+		std::ostringstream os;
+		os << galaxy << " has a bulge size not well defined in disk instabilities.";
+		throw invalid_data(os.str());
+	}
+
+
 	return rnew;
 
 }

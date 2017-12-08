@@ -326,6 +326,12 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
  		zhot = (mzhot/mhot);
  	}
 
+ 	if(mhot < 0 or mhot >1e17 or std::isnan(mhot)){
+		std::ostringstream os;
+		os << halo << " has hot halo gas mass not well defined";
+		throw invalid_data(os.str());
+ 	}
+
    	double Tvir = 35.9*std::pow(vvir,2.0); //in K.
    	double lgTvir = log10(Tvir); //in K.
 	double Rvir = darkmatterhalos->halo_virial_radius(halo)/cosmology->parameters.Hubble_h;//Mpc
@@ -490,6 +496,21 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		//avoid negative numbers.
    		coolingrate = 0;
    	}
+
+ 	if(subhalo.cold_halo_gas.mass < 0 or subhalo.cold_halo_gas.mass >1e17 or std::isnan(subhalo.cold_halo_gas.mass)){
+		std::ostringstream os;
+		os << halo << " has cold halo gas mass not well defined";
+		throw invalid_data(os.str());
+ 	}
+
+  	// Avoid negative values for the hot gas mass.
+  	if(subhalo.hot_halo_gas.mass < constants::tolerance){
+   		subhalo.hot_halo_gas.mass = 0;
+   		subhalo.hot_halo_gas.mass_metals = 0;
+   	}
+  	if(subhalo.hot_halo_gas.mass_metals < constants::tolerance){
+  		subhalo.hot_halo_gas.mass_metals = 0;
+  	}
 
    	return coolingrate;
 

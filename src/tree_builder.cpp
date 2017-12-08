@@ -75,7 +75,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	ensure_halo_mass_growth(trees, sim_params);
 
 	// Redefine angular momentum in the case of interpolated halos.
-	spin_interpolated_halos(trees, sim_params);
+	// spin_interpolated_halos(trees, sim_params);
 
 	// Define central galaxies
 	define_central_subhalos(trees, sim_params);
@@ -139,6 +139,8 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	halo->central_subhalo = subhalo;
 	halo->position = subhalo->position;
 	halo->velocity = subhalo->velocity;
+
+	halo->concentration = subhalo->concentration;
 
 	//remove subhalo from satellite list.
 	remove_satellite(halo, subhalo);
@@ -278,6 +280,13 @@ void TreeBuilder::spin_interpolated_halos(std::vector<MergerTreePtr> trees, Simu
 							auto main_progenitor = subhalo->main();
 							subhalo->L = main_progenitor->L;
 							subhalo->concentration = main_progenitor->concentration;
+							subhalo->host_halo->concentration = main_progenitor->concentration;
+
+							if(subhalo->concentration <= 0){
+								std::ostringstream os;
+								os << "subhalo " << subhalo << " has concentration =0";
+								throw invalid_argument(os.str());
+							}
 						}
 					}
 				}

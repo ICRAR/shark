@@ -371,6 +371,11 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 	double mbar_satellite = satellite->baryon_mass();
 
+	//Create merger only if the galaxies have a baryon_mass > 0.
+	if(mbar_central <= 0 and mbar_satellite <=0 ){
+		return;
+	}
+
 	double mass_ratio = mbar_satellite/mbar_central;
 
 	//If mass ratio>1 is because satellite galaxy is more massive than central, so redefine mass ratio accordingly.
@@ -445,6 +450,13 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 	}
 
+
+	if(std::isnan(central->bulge_stars.mass)){
+		std::ostringstream os;
+		os << central << " has a bulge mass not well defined";
+		throw invalid_data(os.str());
+	}
+
 }
 
 void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
@@ -495,15 +507,17 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 
 	double mtotal_central = 0;
 	double rcentral = 0;
+    double mbar_central = 0;
+    double enc_mass = 0;
 
 	//Define central properties depending on whether merger is major or minor.
 	if(mass_ratio >= parameters.major_merger_ratio){
 
- 		double mbar_central = central->baryon_mass();
+ 		mbar_central = central->baryon_mass();
 
 		rcentral = central->composite_size();
 
-		double enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(halo), halo->concentration);
+		enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(halo), halo->concentration);
 
 		//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
 		//the DM mass enclosed by rcentral.
@@ -519,7 +533,16 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 
 	double rsatellite = satellite->composite_size();
 
-	return r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
+	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
+
+	if(std::isnan(r) or r <= 0 or r>1){
+		std::ostringstream os;
+		os << central << " has a bulge size not well defined in galaxy mergers.";
+		throw invalid_data(os.str());
+	}
+
+
+	return r;
 
 }
 
@@ -534,13 +557,32 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	 * rs: radius satellite.
 	 */
 
-	double factor1  = std::pow(mc,2)/rc;
+	double factor1 = 0;
 
-	double factor2 = std::pow(ms,2)/rs;
+	if(rc > 0 and mc >0){
+		factor1  = std::pow(mc,2)/rc;
+	}
+	double factor2 = 0;
 
-	double factor3 = parameters.f_orbit/parameters.cgal *  mc * ms / (rc + rs);
+	if(rs > 0 and ms > 0){
+		factor2 = std::pow(ms,2)/rs;
+	}
 
-	return std::pow((mc + ms),2)/ (factor1 + factor2 + factor3);
+	double factor3 = 0;
+
+	if(rc > 0 or rs > 0){
+		factor3 = parameters.f_orbit/parameters.cgal *  mc * ms / (rc + rs);
+	}
+
+	double f = (factor1 + factor2 + factor3);
+
+	double r = 0;
+
+	if(f > 0){
+		r = std::pow((mc + ms),2)/ f;
+	}
+
+	return r;
 }
 
 void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite){

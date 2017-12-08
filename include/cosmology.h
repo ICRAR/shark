@@ -83,8 +83,14 @@ public:
 	double physical_to_comoving_mass(double m) const;
 	double convert_redshift_to_age(double z) const;
 	double expansion_factor(double a) const;
+
+	/**
+	 * universal_baryon_fraction: calculates the baryon density with respect to the dark matter density.
+	 * @return
+	 */
 	double universal_baryon_fraction() const {
-		return parameters.OmegaB/parameters.OmegaM;
+		double omega_dm = (parameters.OmegaM-parameters.OmegaB);
+		return parameters.OmegaB/omega_dm;
 	};
 
 	double hubble_parameter (double z) const;

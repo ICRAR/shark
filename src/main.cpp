@@ -324,7 +324,7 @@ int run(int argc, char **argv) {
 		//do_stuff_at_halo_level(all_halos_this_snapshot);
 
 //		/*write snapshots only if the user wants outputs at this time (note that what matters here is snapshot+1.*/
-		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end() )
+		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot;
 			writer->write(snapshot, all_halos_this_snapshot);

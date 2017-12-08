@@ -78,7 +78,7 @@ double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double redshift)
 
 	//Spin parameter calculated from j=sqrt(2) * lambda *G^2/3 M^2/3 / (10*H)^1/3.
 
-	double  j = L.norm()/(mvir/1e10);
+	double  j = L.norm()/(mvir);
 
 	double lambda = j * std::cbrt(10*cosmology->hubble_parameter(redshift)) / constants::SQRT2 / std::pow(constants::G*mvir, 2/3.);
 

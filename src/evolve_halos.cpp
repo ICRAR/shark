@@ -163,7 +163,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 	// Now calculated accreted hot mass by assuming mass conservation and assuming the universal baryon fraction.
 
-	/*for(auto &halo: halos){
+	for(auto &halo: halos){
 
 		auto desc_halo = halo->descendant;
 
@@ -181,7 +181,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 		desc_halo->central_subhalo->accreted_mass = mass_acc;
 
-	}*/
+	}
 
 	if (subhalos_without_descendant) {
 		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies";
