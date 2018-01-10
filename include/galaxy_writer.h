@@ -45,7 +45,9 @@ public:
 	GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  SimulationParameters sim_params, StarFormation starformation);
 	virtual ~GalaxyWriter() {};
 
-	virtual void write(int snapshot, const std::vector<HaloPtr> &halos) = 0;
+	virtual void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon AllBaryons) = 0;
+
+	void track_total_baryons(int snapshot, const std::vector<HaloPtr> &halos);
 
 protected:
 
@@ -61,14 +63,14 @@ class HDF5GalaxyWriter : public GalaxyWriter {
 
 public:
 	using GalaxyWriter::GalaxyWriter;
-	void write(int snapshot, const std::vector<HaloPtr> &halos) override;
+	void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon AllBaryons) override;
 };
 
 class ASCIIGalaxyWriter : public GalaxyWriter {
 
 public:
 	using GalaxyWriter::GalaxyWriter;
-	void write(int snapshot, const std::vector<HaloPtr> &halos) override;
+	void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon AllBaryons) override;
 
 private:
 	void write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f);

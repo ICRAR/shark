@@ -7,6 +7,7 @@
 
 #include <cmath>
 
+#include "components.h"
 #include "star_formation.h"
 #include "numerical_constants.h"
 
@@ -248,6 +249,22 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	return cosmology->physical_to_comoving_mass(result);
 }
 
+void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b)
+{
+	*m_mol = 0;
+	*m_atom = 0;
+	*m_mol_b = 0;
+	*m_atom_b = 0;
+
+	if (galaxy->disk_gas.mass > 0) {
+		*m_mol = molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, z);
+		*m_atom = galaxy->disk_gas.mass - *m_mol;
+	}
+	if (galaxy->bulge_gas.mass > 0) {
+		*m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, z);
+		*m_atom_b = galaxy->bulge_gas.mass - *m_mol_b;
+	}
+}
 
 }  // namespace shark
 

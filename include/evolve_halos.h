@@ -38,6 +38,8 @@ void populate_halos(std::shared_ptr<BasicPhysicalModel> physical_model, HaloPtr 
 
 void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology);
 
+void track_total_baryons(StarFormation starformation, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift);
+
 }  // namespace shark
 
 #endif // SHARK_EVOLVE_HALOS_H_

@@ -31,6 +31,7 @@
 #include <boost/filesystem.hpp>
 
 #include "hdf5/writer.h"
+#include "components.h"
 #include "cosmology.h"
 #include "exceptions.h"
 #include "galaxy_writer.h"
@@ -40,25 +41,6 @@
 
 
 namespace shark {
-
-static
-void get_molecular_gas(const GalaxyPtr &galaxy, StarFormation &star_formation, SimulationParameters &sim_params, int snapshot,
-                       double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b)
-{
-	*m_mol = 0;
-	*m_atom = 0;
-	*m_mol_b = 0;
-	*m_atom_b = 0;
-
-	if (galaxy->disk_gas.mass > 0) {
-		*m_mol = star_formation.molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, sim_params.redshifts[snapshot]);
-		*m_atom = galaxy->disk_gas.mass - *m_mol;
-	}
-	if (galaxy->bulge_gas.mass > 0) {
-		*m_mol_b = star_formation.molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, sim_params.redshifts[snapshot]);
-		*m_atom_b = galaxy->bulge_gas.mass - *m_mol_b;
-	}
-}
 
 GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, SimulationParameters sim_params, StarFormation starformation):
 	exec_params(exec_params),
@@ -92,7 +74,7 @@ std::string GalaxyWriter::get_output_directory(int snapshot)
 	return output_dir;
 }
 
-void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
+void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon AllBaryons){
 
 	using std::string;
 	using std::vector;
@@ -215,7 +197,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 				double m_atom;
 				double m_mol_b;
 				double m_atom_b;
-				get_molecular_gas(galaxy, starformation, sim_params, snapshot, &m_mol, &m_atom, &m_mol_b, &m_atom_b);
+				starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b);
 
 				mmol_disk.push_back(m_mol);
 				mmol_bulge.push_back(m_mol_b);
@@ -325,6 +307,9 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 	file.write_dataset("Galaxies/matom_disk",matom_disk);
 	file.write_dataset("Galaxies/matom_bulge",matom_bulge);
 
+	file.write_dataset("Galaxies/sfr_disk", sfr_disk);
+	file.write_dataset("Galaxies/sfr_burst", sfr_burst);
+
 	file.write_dataset("Galaxies/mBH", mBH);
 	file.write_dataset("Galaxies/BH_accretion_rate_hh", mBH_acc_hh);
 	file.write_dataset("Galaxies/BH_accretion_rate_sb", mBH_acc_sb);
@@ -359,9 +344,34 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos){
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo);
 	file.write_dataset("Galaxies/id_halo", id_halo);
 
+	vector<float> redshifts;
+
+	for (int i=sim_params.min_snapshot; i <= snapshot-1; i++){
+		redshifts.push_back(sim_params.redshifts[i]);
+	}
+
+	file.write_dataset("Global/redshifts", redshifts);
+	file.write_dataset("Global/mcold",AllBaryons.get_masses(AllBaryons.mcold));
+	file.write_dataset("Global/mcold_metals",AllBaryons.get_metals(AllBaryons.mcold));
+	file.write_dataset("Global/mstars",AllBaryons.get_masses(AllBaryons.mstars));
+	file.write_dataset("Global/mstars_metals",AllBaryons.get_metals(AllBaryons.mstars));
+	file.write_dataset("Global/mHI",AllBaryons.get_masses(AllBaryons.mHI));
+	file.write_dataset("Global/mH2",AllBaryons.get_masses(AllBaryons.mH2));
+	file.write_dataset("Global/mBH",AllBaryons.get_masses(AllBaryons.mBH));
+	file.write_dataset("Global/SFR",AllBaryons.SFR);
+
+	file.write_dataset("Global/mhot_halo",AllBaryons.get_masses(AllBaryons.mhot_halo));
+	file.write_dataset("Global/mhot_metals",AllBaryons.get_metals(AllBaryons.mhot_halo));
+	file.write_dataset("Global/mcold_halo",AllBaryons.get_masses(AllBaryons.mcold_halo));
+	file.write_dataset("Global/mcold_halo_metals",AllBaryons.get_metals(AllBaryons.mcold_halo));
+	file.write_dataset("Global/mejected_halo",AllBaryons.get_masses(AllBaryons.mejected_halo));
+	file.write_dataset("Global/mejected_halo_metals",AllBaryons.get_masses(AllBaryons.mejected_halo));
+
+	file.write_dataset("Global/mDM",AllBaryons.get_masses(AllBaryons.mDM));
+
 }
 
-void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos)
+void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon AllBaryons)
 {
 
 	using std::vector;
@@ -396,7 +406,6 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 	double matom;
 	double mmol_b;
 	double matom_b;
-	get_molecular_gas(galaxy, starformation, sim_params, snapshot, &mmol, &matom, &mmol_b, &matom_b);
 
 	f << mstars_disk << " " << mstars_bulge << " " <<  matom + matom_b
 	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "
@@ -404,6 +413,7 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 	  << subhalo->id << " " << subhalo->host_halo->id << "\n";
 
 }
+
 
 }// namespace shark
 

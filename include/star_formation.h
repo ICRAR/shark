@@ -35,6 +35,7 @@
 
 #include <memory>
 
+#include "components.h"
 #include "cosmology.h"
 #include "integrator.h"
 #include "options.h"
@@ -82,6 +83,8 @@ public:
 	double molecular_hydrogen(double mcold, double mstars, double rgas, double rstars, double z);
 
 	double molecular_surface_density(double r, void * params);
+
+	void get_molecular_gas(const GalaxyPtr &galaxy, double z, double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b);
 
 private:
 	StarFormationParameters parameters;

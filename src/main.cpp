@@ -259,6 +259,9 @@ int run(int argc, char **argv) {
 	GalaxyCreator galaxy_creator(cosmology, dark_matter_halos, gas_cooling_params, sim_params);
 	galaxy_creator.create_galaxies(merger_trees);
 
+	// Create class to track all the baryons of the simulation in its different components.
+	auto AllBaryons = std::make_shared<TotalBaryon>();
+
 	// TODO: move this logic away from the main
 	// Also provide a std::make_unique
 	std::unique_ptr<GalaxyWriter> writer;
@@ -320,6 +323,9 @@ int run(int argc, char **argv) {
 		}
 
 
+		/*track all baryons of this snapshot*/
+		track_total_baryons(star_formation, all_halos_this_snapshot, *AllBaryons, sim_params.redshifts[snapshot]);
+
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		//do_stuff_at_halo_level(all_halos_this_snapshot);
 
@@ -327,7 +333,7 @@ int run(int argc, char **argv) {
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot) != exec_params.output_snapshots.end() )
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot;
-			writer->write(snapshot, all_halos_this_snapshot);
+			writer->write(snapshot, all_halos_this_snapshot, *AllBaryons);
 		}
 
 		auto snapshot_time = std::chrono::steady_clock::now() - start;

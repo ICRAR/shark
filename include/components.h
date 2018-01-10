@@ -784,6 +784,54 @@ public:
 	}
 };
 
+class TotalBaryon {
+
+
+public:
+
+	/**
+	 * Class to track all the mass componets in the simulation.
+	 */
+
+	TotalBaryon() :
+		SFR(0)
+	{
+		// no-op
+	}
+
+	std::vector<BaryonBase> mcold;
+	std::vector<BaryonBase> mstars;
+	std::vector<BaryonBase> mhot_halo;
+	std::vector<BaryonBase> mcold_halo;
+	std::vector<BaryonBase> mejected_halo;
+	std::vector<BaryonBase> mBH;
+	std::vector<BaryonBase> mHI;
+	std::vector<BaryonBase> mH2;
+	std::vector<BaryonBase> mDM;
+	std::vector<double> SFR;
+
+	std::vector<double> get_masses (const std::vector<BaryonBase> &B){
+
+		std::vector<double> masses(B.size());
+		std::transform(B.begin(), B.end(), masses.begin(), [](const BaryonBase &b) {
+			return b.mass;
+		});
+
+		return masses;
+	}
+
+	std::vector<double> get_metals (const std::vector<BaryonBase> &B){
+
+		std::vector<double> masses(B.size());
+		std::transform(B.begin(), B.end(), masses.begin(), [](const BaryonBase &b) {
+			return b.mass_metals;
+		});
+
+		return masses;
+	}
+
+};
+
 template <typename T>
 std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const MergerTree &merger_tree)
 {

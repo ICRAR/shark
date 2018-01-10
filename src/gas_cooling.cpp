@@ -304,7 +304,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
   	// Avoid negative values.
   	if(subhalo.ejected_galaxy_gas.mass < constants::tolerance){
    		subhalo.ejected_galaxy_gas.mass = 0;
-   		subhalo.ejected_galaxy_gas.mass_metals =0;
+   		subhalo.ejected_galaxy_gas.mass_metals = 0;
    	}
    	if(subhalo.ejected_galaxy_gas.mass_metals < 0){
    		subhalo.ejected_galaxy_gas.mass_metals = 0;

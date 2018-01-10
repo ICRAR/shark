@@ -189,4 +189,82 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 }
 
+void track_total_baryons(StarFormation starformation, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift){
+
+
+	BaryonBase mcold_total;
+	BaryonBase mhothalo_total;
+	BaryonBase mcoldhalo_total;
+	BaryonBase mejectedhalo_total;
+	BaryonBase mstars_total;
+	BaryonBase MBH_total;
+	BaryonBase mHI_total;
+	BaryonBase mH2_total;
+	BaryonBase mDM_total;
+
+	double SFR_total;
+	SFR_total = 0;
+
+	double total_baryons;
+
+	// Loop over all halos and subhalos to write galaxy properties
+	for (auto &halo: halos){
+
+		// accummulate dark matter mass
+		mDM_total.mass += halo->Mvir;
+
+		for (auto &subhalo: halo->all_subhalos()){
+
+			// Accummulate subhalo baryons
+			mhothalo_total.mass += subhalo->hot_halo_gas.mass;
+			mhothalo_total.mass_metals += subhalo->hot_halo_gas.mass_metals;
+
+			mcoldhalo_total.mass += subhalo->cold_halo_gas.mass;
+			mcoldhalo_total.mass_metals += subhalo->cold_halo_gas.mass_metals;
+
+			mejectedhalo_total.mass += subhalo->ejected_galaxy_gas.mass;
+			mejectedhalo_total.mass_metals += subhalo->ejected_galaxy_gas.mass_metals;
+
+			for (auto &galaxy: subhalo->galaxies){
+
+				//Accummulate galaxy baryons
+
+				double m_mol;
+				double m_atom;
+				double m_mol_b;
+				double m_atom_b;
+				starformation.get_molecular_gas(galaxy, redshift, &m_mol, &m_atom, &m_mol_b, &m_atom_b);
+
+				mHI_total.mass += m_atom+m_atom_b;
+				mH2_total.mass += m_mol+m_mol_b;
+
+				mcold_total.mass += galaxy->disk_gas.mass + galaxy->bulge_gas.mass;
+				mcold_total.mass_metals += galaxy->disk_gas.mass_metals + galaxy->bulge_gas.mass_metals;
+
+				mstars_total.mass += galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
+				mstars_total.mass_metals += galaxy->disk_stars.mass_metals + galaxy->bulge_stars.mass_metals;
+
+				SFR_total =+ galaxy->sfr_disk + galaxy->sfr_bulge;
+
+				MBH_total.mass += galaxy->smbh.mass;
+
+			}
+		}
+	}
+
+	AllBaryons.mstars.push_back(mstars_total);
+	AllBaryons.mcold.push_back(mcold_total);
+	AllBaryons.mHI.push_back(mHI_total);
+	AllBaryons.mH2.push_back(mH2_total);
+	AllBaryons.mBH.push_back(MBH_total);
+	AllBaryons.SFR.push_back(SFR_total);
+
+	AllBaryons.mhot_halo.push_back(mhothalo_total);
+	AllBaryons.mcold_halo.push_back(mcoldhalo_total);
+	AllBaryons.mejected_halo.push_back(mejectedhalo_total);
+
+	AllBaryons.mDM.push_back(mDM_total);
+
+}
+
 }
