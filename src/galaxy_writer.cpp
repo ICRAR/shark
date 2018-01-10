@@ -402,12 +402,14 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 	auto mBH = galaxy->smbh.mass;
 	auto rdisk = galaxy->disk_stars.rscale;
 	auto rbulge = galaxy->bulge_stars.rscale;
-	double mmol;
-	double matom;
-	double mmol_b;
-	double matom_b;
+	double m_mol;
+	double m_atom;
+	double m_mol_b;
+	double m_atom_b;
 
-	f << mstars_disk << " " << mstars_bulge << " " <<  matom + matom_b
+	starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b);
+
+	f << mstars_disk << " " << mstars_bulge << " " <<  m_atom + m_atom_b
 	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "
 	  << mstars_disk + mstars_bulge << " " << rdisk << " " << rbulge << " "
 	  << subhalo->id << " " << subhalo->host_halo->id << "\n";
