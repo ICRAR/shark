@@ -29,11 +29,13 @@ class GalaxyMergerParameters {
 		 * - major_merger_ratio: threshold M2/M1 to consider major mergers. In this case we convert disks to spheroids.
 		 * - minor_merger_burst_ratio: threshold M2/M1 for triggering bursts in minor mergers.
 		 * - merger_random_seed: merger random seed to draw orbital parameters from Benson+05.
+		 * - tau_delay: controls delays from the standard merging timescale for testing purposes.
 		 */
 
 		float major_merger_ratio;
 		float minor_merger_burst_ratio;
 		int merger_random_seed;
+		float tau_delay;
 		std::vector<double> jiang08;
 
 		/**

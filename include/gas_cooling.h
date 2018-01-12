@@ -64,6 +64,7 @@ public:
 
 	double rcore;
 	double pre_enrich_z;
+	double tau_cooling;
 
 	LambdaCoolingModel lambdamodel;
 	CoolingModel model;

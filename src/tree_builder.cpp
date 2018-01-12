@@ -250,7 +250,7 @@ void TreeBuilder::ensure_halo_mass_growth(std::vector<MergerTreePtr> trees, Simu
 	//Loop over trees.
 		for(auto &tree: trees) {
 
-			for(int snapshot=sim_params.min_snapshot; snapshot > sim_params.min_snapshot; snapshot--) {
+			for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
 
 				for(auto &halo: tree->halos[snapshot]){
 					// Check if current mass of halo is larger than descendant. If so, redefine descendant Mvir to that of the progenitor.
@@ -270,7 +270,7 @@ void TreeBuilder::spin_interpolated_halos(std::vector<MergerTreePtr> trees, Simu
 	//Loop over trees.
 		for(auto &tree: trees) {
 
-			for(int snapshot=sim_params.min_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
+			for(int snapshot=sim_params.max_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
 
 				for(auto &halo: tree->halos[snapshot]){
 
@@ -504,6 +504,7 @@ void HaloBasedTreeBuilder::create_galaxies(HaloPtr &halo,
 
 		darkmatterhalos.galaxy_velocity(*central_subhalo);
 	}
+
 
 }
 

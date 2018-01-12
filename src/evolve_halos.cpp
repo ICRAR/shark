@@ -163,7 +163,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 	// Now calculated accreted hot mass by assuming mass conservation and assuming the universal baryon fraction.
 
-	for(auto &halo: halos){
+	/*for(auto &halo: halos){
 
 		auto desc_halo = halo->descendant;
 
@@ -181,7 +181,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 		desc_halo->central_subhalo->accreted_mass = mass_acc;
 
-	}
+	}*/
 
 	if (subhalos_without_descendant) {
 		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies";
@@ -189,7 +189,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 }
 
-void track_total_baryons(StarFormation starformation, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift){
+void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift){
 
 
 	BaryonBase mcold_total;
@@ -244,7 +244,7 @@ void track_total_baryons(StarFormation starformation, const std::vector<HaloPtr>
 				mstars_total.mass += galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
 				mstars_total.mass_metals += galaxy->disk_stars.mass_metals + galaxy->bulge_stars.mass_metals;
 
-				SFR_total =+ galaxy->sfr_disk + galaxy->sfr_bulge;
+				SFR_total += galaxy->sfr_disk + galaxy->sfr_bulge;
 
 				MBH_total.mass += galaxy->smbh.mass;
 

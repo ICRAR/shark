@@ -153,8 +153,6 @@ namespace constants {
 	constexpr float Atomic_Mass_Hydrogen=1.00794, sqrtAtomic_Mass_Hydrogen=1.00396215; /*Mass of hydrogen in units of M_Atomic (Particle Data Book 2002, page 283).*/
 	constexpr float Atomic_Mass_Helium=4.002602; /*Mass of helium in units of M_Atomic (Particle Data Book 2002, page 283).*/
 
-	//constexpr double Pressure_SimUnits_cgs = 1/MSOLAR_g * MPC2CM * pow<2>(GYR2S); /*constant to convert pressure from Msun*Mpc^-2*Gyr^-2, to gr*cm^-1*s^-2.*/
-
 	constexpr double Pressure_Conv =  PIO2 * G * MSOLAR_g / pow<3>(MPC2CM) *  pow<2>(HECTO * KILO)/ k_Boltzmann_erg;
 
 	/*Electromagnetism.*/

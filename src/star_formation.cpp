@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "components.h"
+#include "logging.h"
 #include "star_formation.h"
 #include "numerical_constants.h"
 
@@ -48,6 +49,11 @@ StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double z) {
 
 	if (mcold <= 0 or rgas <= 0) {
+		if(mcold > 0 && rgas <= 0){
+			std::ostringstream os;
+			os << "Galaxy mcold > 0 and rgas = 0";
+			throw invalid_argument(os.str());
+		}
 		return 0;
 	}
 
@@ -87,9 +93,9 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 	StarFormationAndProps sf_and_props = {this, &props};
 	// Adopt 5% accuracy for star formation solution.
-	// double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.05);
+	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.05);
 
-	int bins = 10;
+	/*int bins = 10;
 	double integral = 0.0;
 	double binr = (rmax-rmin)/bins;
 	double rin = 0.0;
@@ -98,12 +104,20 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		rin = rmin+(i+0.5)*binr;
 		integral += star_formation_rate_surface_density(rin,sf_and_props.props) * binr;
 	}
-	double result = integral;
+	double result = integral;*/
 
 	// Avoid negative values.
 	if(result < 0){
 		result = 0.0;
 	}
+
+	if(mcold > 0 && result <= 0){
+		std::ostringstream os;
+		os << "Galaxy with SFR=0 and mcold " << mcold;
+		throw invalid_argument(os.str());
+	}
+
+	double sft = mcold/result;
 
 	return cosmology->physical_to_comoving_mass(result);
 
@@ -130,7 +144,16 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 		Sigma_stars = props->sigma_star0 * std::exp(-r / props->rse);
 	}
 
-	return PI2 * parameters.nu_sf * fmol(Sigma_gas, Sigma_stars, r) * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
+	double fracmol = fmol(Sigma_gas, Sigma_stars, r);
+	double sfr_density = PI2 * parameters.nu_sf * fracmol * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
+
+	if(props->sigma_gas0 > 0 && sfr_density <= 0){
+		std::ostringstream os;
+		os << "Galaxy with SFR surface density =0 and cold gas surface density " << props->sigma_gas0;
+		throw invalid_argument(os.str());
+	}
+
+	return sfr_density;
 }
 
 double StarFormation::molecular_surface_density(double r, void * params){
@@ -167,7 +190,7 @@ double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double r){
 	if(fmol > 1){
 		return 1;
 	}
-	else if(rmol > 0 and rmol < 1){
+	else if(fmol > 0 and fmol < 1){
 		return fmol;
 	}
 	else{
@@ -180,7 +203,6 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 	/**
 	 * This function calculate the midplane pressure of the disk, and returns it in units of K/cm^-3.
 	 */
-	//I need to first convert all my quantities to physical quantities. Do this by calling functions from cosmology.!!!
 
 	using namespace constants;
 

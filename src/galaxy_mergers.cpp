@@ -39,6 +39,8 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	options.load("galaxy_mergers.jiang08_c", jiang08[2], true);
 	options.load("galaxy_mergers.jiang08_d", jiang08[3], true);
 
+	options.load("galaxy_mergers.tau_delay", tau_delay);
+
 	options.load("galaxy_mergers.f_orbit", f_orbit);
 	options.load("galaxy_mergers.cgal", cgal);
 
@@ -185,7 +187,7 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 		// Define merging timescale and redefine type of galaxy.
 
-		galaxy->tmerge = tau_mass * tau_dyn;
+		galaxy->tmerge = parameters.tau_delay * tau_mass * tau_dyn;
 		galaxy->galaxy_type = Galaxy::TYPE2;
 
 	}

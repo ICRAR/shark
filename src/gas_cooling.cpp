@@ -82,6 +82,7 @@ GasCoolingParameters::GasCoolingParameters(const Options &options) :
 	options.load("gas_cooling.lambdamodel", lambdamodel, true);
 	options.load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
 	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
+	options.load("gas_cooling.tau_cooling", tau_cooling);
 
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
 	load_tables(cooling_tables_dir, metallicity_tables);
@@ -230,24 +231,19 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     	//Assume satellite subhalos have 0 cooling rate, and give any hot mass to the central subhalo.
     	//TODO: add gradual ram pressure stripping.
 
-    	if(subhalo.hot_halo_gas.mass > 0){
-    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass += subhalo.hot_halo_gas.mass;
-    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass_metals += subhalo.hot_halo_gas.mass_metals;
+    	if(subhalo.hot_halo_gas.mass > 0 or subhalo.ejected_galaxy_gas.mass > 0 or subhalo.cold_halo_gas.mass){
+    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass += subhalo.hot_halo_gas.mass + subhalo.ejected_galaxy_gas.mass + subhalo.cold_halo_gas.mass;
+    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass_metals += subhalo.hot_halo_gas.mass_metals + subhalo.ejected_galaxy_gas.mass_metals + subhalo.cold_halo_gas.mass_metals;
 
     		subhalo.hot_halo_gas.mass = 0;
     		subhalo.hot_halo_gas.mass_metals = 0;
+
+    		subhalo.ejected_galaxy_gas.mass = 0;
+    		subhalo.ejected_galaxy_gas.mass_metals = 0;
+
+        	subhalo.cold_halo_gas.mass = 0;
+        	subhalo.cold_halo_gas.mass_metals = 0;
     	}
-
-    	if(subhalo.ejected_galaxy_gas.mass > 0){
-    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas.mass += subhalo.ejected_galaxy_gas.mass;
-    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas.mass_metals += subhalo.ejected_galaxy_gas.mass_metals;
-
-        	subhalo.host_halo->central_subhalo->hot_halo_gas.mass += subhalo.hot_halo_gas.mass;
-        	subhalo.host_halo->central_subhalo->hot_halo_gas.mass_metals += subhalo.hot_halo_gas.mass_metals;
-    	}
-
-    	subhalo.cold_halo_gas.mass = 0;
-    	subhalo.cold_halo_gas.mass_metals = 0;
 
     	return 0;
     }
@@ -309,7 +305,8 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	if(subhalo.ejected_galaxy_gas.mass_metals < 0){
    		subhalo.ejected_galaxy_gas.mass_metals = 0;
    	}
-    	// Add up accreted mass and metals.
+
+    // Add up accreted mass and metals.
    	subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
    	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;
 
@@ -356,7 +353,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	 */
    	if(parameters.model == GasCoolingParameters::CROTON06)
    	{
-		tcool = darkmatterhalos->halo_dynamical_time(halo); //in Gyr.
+		tcool = parameters.tau_cooling * darkmatterhalos->halo_dynamical_time(halo); //in Gyr.
 		tcharac = tcool*constants::GYR2S; //in seconds.
 	}
 
@@ -393,7 +390,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	if(r_cool < Rvir){
    		//cooling radius smaller than virial radius
    		coolingrate = 0.5*(r_cool/Rvir)*(mhot/tcool); //in Msun/Gyr.
-   		r_cool = Rvir;
    	}
    	else {
    		//cooling radius larger than virial radius
@@ -480,17 +476,19 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		 * Convert cooling rate back to comoving units. This conversion is only necessary because mass was previously converted to physical.
    		 */
    		coolingrate = cosmology->physical_to_comoving_mass(coolingrate);
+
+   		double mcooled = coolingrate*deltat;
    		/**
    		 * Save properties of cooling gas in the halo gas component that tracks the cold gas.
    		 */
-   		subhalo.cold_halo_gas.mass = coolingrate*deltat;
-   		subhalo.cold_halo_gas.mass_metals = coolingrate*deltat/mhot*mzhot;//fraction of mass in the cold gas is the same as in metals.
+   		subhalo.cold_halo_gas.mass += mcooled;
+   		subhalo.cold_halo_gas.mass_metals += mcooled*mzhot/mhot;//fraction of mass in the cold gas is the same as in metals.
 
    		/**
    		 * Update hot halo gas properties as a response of how much cooling there is in this timestep;
    		 */
-   		subhalo.hot_halo_gas.mass -=subhalo.cold_halo_gas.mass;
-   		subhalo.hot_halo_gas.mass_metals -= subhalo.cold_halo_gas.mass_metals;
+   		subhalo.hot_halo_gas.mass -= mcooled;
+   		subhalo.hot_halo_gas.mass_metals -= mcooled*mzhot/mhot;
    	}
    	else {
    		//avoid negative numbers.

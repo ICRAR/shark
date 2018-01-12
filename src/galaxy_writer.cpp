@@ -346,7 +346,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	vector<float> redshifts;
 
-	for (int i=sim_params.min_snapshot; i <= snapshot-1; i++){
+	for (int i=sim_params.min_snapshot; i <= snapshot; i++){
 		redshifts.push_back(sim_params.redshifts[i]);
 	}
 
