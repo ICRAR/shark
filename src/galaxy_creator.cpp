@@ -67,7 +67,10 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo)
 	// Central subhalo has a central galaxy (somehow!), ignore
 	auto central_subhalo = halo->central_subhalo;
 	if(central_subhalo->central_galaxy()) {
-		return false;
+		std::ostringstream os;
+		os << "Central Subhalo " << central_subhalo << " is first in merger tree but has central galaxy.";
+		throw invalid_argument(os.str());
+		//return false;
 	}
 
 	// Count how many galaxies this halo has.

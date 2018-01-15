@@ -75,12 +75,6 @@ class HaloBasedTreeBuilder : public TreeBuilder {
 public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params);
 
-	void create_galaxies(HaloPtr &halo,
-			Cosmology &cosmology,
-			DarkMatterHalos &darkmatterhalos,
-			GasCoolingParameters &cool_params,
-			SimulationParameters sim_params);
-
 protected:
 	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) override;
 

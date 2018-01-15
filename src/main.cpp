@@ -318,7 +318,7 @@ int run(int argc, char **argv) {
 
 				/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale and change galaxy types accordingly.*/
 				LOG(debug) << "Merging subhalos in halo " << halo;
-				galaxy_mergers.merging_subhalos(halo);
+				galaxy_mergers.merging_subhalos(halo, sim_params.redshifts[snapshot]);
 			}
 		}
 

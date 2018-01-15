@@ -30,7 +30,6 @@ public:
 	double f_edd;
 	double f_smbh;
 	double accretion_eff_cooling;
-	double accretion_eff_bursts;
 	double kappa_agn;
 	double nu_smbh;
 

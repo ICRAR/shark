@@ -46,7 +46,7 @@ public:
 
 	virtual double enclosed_mass(double r, double c) const = 0;
 
-	double halo_dynamical_time (HaloPtr &halo);
+	double halo_dynamical_time (HaloPtr &halo, double z);
 
 	double halo_virial_radius(HaloPtr &halo);
 

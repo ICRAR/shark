@@ -164,7 +164,7 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return mass_ratio/std::log(1+mass_ratio);
 }
 
-void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary){
+void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z){
 
 	/**
 	 * Function calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary.
@@ -175,7 +175,7 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 	auto halo = primary->host_halo;
 
-	double tau_dyn = darkmatterhalo->halo_dynamical_time(halo);
+	double tau_dyn = darkmatterhalo->halo_dynamical_time(halo, z);
 
 	double mp = primary->Mvir + primary->central_galaxy()->baryon_mass();
 
@@ -208,7 +208,7 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 }
 
-void GalaxyMergers::merging_subhalos(HaloPtr &halo){
+void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 
 	/**
 	 * This function evaluates whether subhalos in each timestep are disappearing from the merger tree, and if they are
@@ -245,7 +245,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 			           << " because this is its last snapshot";
 
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
-			merging_timescale(central_subhalo, satellite_subhalo);
+			merging_timescale(central_subhalo, satellite_subhalo, z);
 
 			//transfer all mass from the satellite_subhalo to the central_subhalo.
 			transfer_baryon_mass(central_subhalo, satellite_subhalo);
@@ -283,7 +283,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo){
 		}
 
 		//Calculate dynamical friction timescale for all galaxies disappearing in the primary subhalo of the merger in the next snapshot.
-		merging_timescale(primary_subhalo,central_subhalo);
+		merging_timescale(primary_subhalo, central_subhalo, z);
 
 		//transfer all mass from the satellite_subhalo to the central subhalo of the descendant halo.
 		transfer_baryon_mass(desc_subhalo, central_subhalo);

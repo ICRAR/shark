@@ -20,7 +20,6 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	f_edd(0),
 	f_smbh(0),
 	accretion_eff_cooling(0),
-	accretion_eff_bursts(0),
 	kappa_agn(0),
 	nu_smbh(0),
 	model(GALFORM)
@@ -34,7 +33,6 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	options.load("agn_feedback.f_smbh", f_smbh);
 
 	options.load("agn_feedback.accretion_eff_cooling",accretion_eff_cooling);
-	options.load("agn_feedback.accretion_eff_bursts",accretion_eff_bursts);
 
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);

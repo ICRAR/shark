@@ -31,10 +31,10 @@ Reincorporation::Reincorporation(ReincorporationParameters parameters, std::shar
 	//no-opt
 }
 
-double Reincorporation::reincorporated_mass_rate(HaloPtr halo){
+double Reincorporation::reincorporated_mass_rate(HaloPtr halo, double z){
 
 	double mvir = halo->Mvir;
-	double tdyn = darkmatterhalo->halo_dynamical_time(halo);
+	double tdyn = darkmatterhalo->halo_dynamical_time(halo, z);
 	double mgas = halo->central_subhalo->ejected_galaxy_gas.mass;
 
 	double reincor_rate = mgas * parameters.alpha_reheat/tdyn * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);

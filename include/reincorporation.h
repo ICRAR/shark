@@ -33,7 +33,7 @@ class Reincorporation{
 public:
 	Reincorporation(ReincorporationParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo);
 
-	double reincorporated_mass_rate (HaloPtr halo);
+	double reincorporated_mass_rate (HaloPtr halo, double z);
 
 private:
 

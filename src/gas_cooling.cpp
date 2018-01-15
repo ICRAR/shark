@@ -279,9 +279,8 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     	return 0;
     }
 
-
     // Calculate reincorporated mass and metals.
-	double mreinc_mass = reincorporation->reincorporated_mass_rate(halo) * deltat;
+	double mreinc_mass = reincorporation->reincorporated_mass_rate(halo, z) * deltat;
 
    	if(mreinc_mass > subhalo.ejected_galaxy_gas.mass){
    		mreinc_mass = subhalo.ejected_galaxy_gas.mass;
@@ -353,7 +352,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	 */
    	if(parameters.model == GasCoolingParameters::CROTON06)
    	{
-		tcool = parameters.tau_cooling * darkmatterhalos->halo_dynamical_time(halo); //in Gyr.
+		tcool = parameters.tau_cooling * darkmatterhalos->halo_dynamical_time(halo, z); //in Gyr.
 		tcharac = tcool*constants::GYR2S; //in seconds.
 	}
 
@@ -478,6 +477,12 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		coolingrate = cosmology->physical_to_comoving_mass(coolingrate);
 
    		double mcooled = coolingrate*deltat;
+
+   		// Limit cooled mass to the amount available in the halo
+   		if(mcooled > subhalo.hot_halo_gas.mass){
+   			mcooled = subhalo.hot_halo_gas.mass;
+   		}
+
    		/**
    		 * Save properties of cooling gas in the halo gas component that tracks the cold gas.
    		 */

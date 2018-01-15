@@ -61,9 +61,11 @@ double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
 	return std::cbrt(V3);
 }
 
-double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo){
+double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo, double z){
 
-	return constants::MPCKM2GYR * halo_virial_radius(halo) / halo->Vvir / cosmology->parameters.Hubble_h;
+	double r = halo_virial_radius(halo);
+
+	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / halo->Vvir;
 }
 
 double DarkMatterHalos::halo_virial_radius(HaloPtr &halo){

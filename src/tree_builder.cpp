@@ -463,50 +463,5 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 }
 
 
-void HaloBasedTreeBuilder::create_galaxies(HaloPtr &halo,
-		Cosmology &cosmology,
-		DarkMatterHalos &darkmatterhalos,
-		GasCoolingParameters &cool_params,
-		SimulationParameters sim_params)
-{
-
-	// Halo has a central subhalo with ascendants so ignore it, as it should already have galaxies in it.
-	if(halo->central_subhalo->ascendants.size() > 0){
-		return;
-	}
-
-	auto central_subhalo = halo->central_subhalo;
-
-	if(!central_subhalo->central_galaxy()){
-
-		//Count how many galaxies this halo has.
-		auto galaxy_count = central_subhalo->galaxy_count();
-
-		if(galaxy_count > 0){
-			std::ostringstream os;
-			os << "Central Subhalo " << central_subhalo << " has no central galaxy but " << galaxy_count <<" satellites.";
-			throw invalid_argument(os.str());
-		}
-
-		auto galaxy = std::make_shared<Galaxy>();
-		galaxy->galaxy_type = Galaxy::CENTRAL;
-
-		central_subhalo->galaxies.push_back(galaxy);
-		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
-
-		central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology.universal_baryon_fraction();
-
-		// Assign metallicity to the minimum allowed.
-		central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
-
-		//assign an ad-hoc half-mass radius and specific angular momentum to start with.
-		galaxy->disk_gas.rscale = darkmatterhalos.disk_size_theory(*central_subhalo);
-
-		darkmatterhalos.galaxy_velocity(*central_subhalo);
-	}
-
-
-}
-
 
 }// namespace shark

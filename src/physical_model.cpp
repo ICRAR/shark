@@ -69,7 +69,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	double rsub = 1.0- R;
 
 	f[0] = SFR * rsub;
-	f[1] = mcoolrate - (rsub + beta) * SFR;
+	f[1] = mcoolrate - SFR + SFR * R - beta * SFR;
 	f[2] = - mcoolrate;
 	f[3] = beta * SFR;
 	f[4] = rsub * zcold * SFR;
