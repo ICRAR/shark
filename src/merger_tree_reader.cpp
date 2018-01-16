@@ -91,6 +91,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
 	vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
 	vector<float> cnfw = batch_file.read_dataset_v<float>("haloTrees/cnfw");
+	vector<float> lambda = batch_file.read_dataset_v<float>("haloTrees/lambda");
 
 	//Read indices and the snapshot number at which the subhalo lives.
 	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
@@ -166,6 +167,8 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 		subhalo->Vcirc = Vcirc[i];
 
 		subhalo->concentration = cnfw[i];
+
+		subhalo->lambda = lambda[i];
 
 		// Calculate virial velocity from the virial mass and redshift.
 		subhalo->Vvir = darkmatterhalos.halo_virial_velocity(subhalo->Mvir, sim_params.redshifts[subhalo->snapshot]);

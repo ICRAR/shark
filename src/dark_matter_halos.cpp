@@ -8,6 +8,7 @@
 #include <cmath>
 #include <fstream>
 #include <map>
+#include <random>
 #include <stdexcept>
 #include <tuple>
 
@@ -20,9 +21,18 @@
 namespace shark {
 
 DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options) :
-	haloprofile(NFW)
+	haloprofile(NFW),
+	random_lambda()
 {
+	int lambda;
 	options.load("dark_matter_halo.halo_profile", haloprofile);
+	options.load("dark_matter_halo.lambda_random", lambda);
+
+	if(lambda == 1){
+		random_lambda = true;
+	}
+
+
 }
 
 template <>
@@ -39,9 +49,12 @@ Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &nam
 	throw invalid_option(os.str());
 }
 
-DarkMatterHalos::DarkMatterHalos(std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params) :
+DarkMatterHalos::DarkMatterHalos(DarkMatterHaloParameters &params, std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params) :
+	params(params),
 	cosmology(cosmology),
-	sim_params(sim_params)
+	sim_params(sim_params),
+	generator(),
+	distribution(-3.5,-0.69)
 	{
 	// no-op
 }
@@ -56,9 +69,9 @@ double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
 
 	double hparam = cosmology->hubble_parameter(redshift);
 
-	double V3 = 10.0 *constants::G * mvir * hparam;
+	double vvir = std::cbrt(10.0 *constants::G * mvir * hparam);
 
-	return std::cbrt(V3);
+	return vvir;
 }
 
 double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo, double z){
@@ -76,13 +89,17 @@ double DarkMatterHalos::halo_virial_radius(HaloPtr &halo){
 	return constants::G * halo->Mvir / std::pow(halo->Vvir,2);
 }
 
-double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double redshift){
+double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double rvir){
 
 	//Spin parameter calculated from j=sqrt(2) * lambda *G^2/3 M^2/3 / (10*H)^1/3.
 
-	double  j = L.norm()/(mvir);
+	if(params.random_lambda){
+		return distribution(generator);
+	}
 
-	double lambda = j * std::cbrt(10*cosmology->hubble_parameter(redshift)) / constants::SQRT2 / std::pow(constants::G*mvir, 2/3.);
+	double E = constants::G * std::pow(mvir,2.0) / (2.0 * rvir);
+
+	double lambda = L.norm() * std::sqrt(E) / constants::G * std::pow(mvir, -2.5);
 
 	if(lambda > 1){
 		lambda = 1;
@@ -96,9 +113,12 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){
 	//Calculation comes from assuming rdisk = 2/sqrt(2) *lambda *Rvir;
 	double Rvir = halo_virial_radius(subhalo.host_halo);
 
-	double lambda = halo_lambda(subhalo.L, subhalo.Mvir, sim_params.redshifts[subhalo.snapshot]);
+	double lambda = halo_lambda(subhalo.L, subhalo.Mvir, Rvir);
 
-	double rdisk = 3/constants::SQRT2 * lambda *Rvir;
+	// Limit value of lambda to 1.
+	if(lambda > 1) lambda =1;
+
+	double rdisk = 3/constants::SQRT2 * lambda * Rvir;
 
 	//Numerical factor comes from 1/3 * 1.67. The 1/3 comes from scaling the size to a scale length, and the 1.67 comes from
 	//assuming an exponential disk and scaling the scale length to a half mass radius.

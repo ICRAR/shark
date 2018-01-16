@@ -141,6 +141,7 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	halo->velocity = subhalo->velocity;
 
 	halo->concentration = subhalo->concentration;
+	halo->lambda = subhalo->lambda;
 
 	//remove subhalo from satellite list.
 	remove_satellite(halo, subhalo);

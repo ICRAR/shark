@@ -10,6 +10,7 @@
 
 
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -30,6 +31,7 @@ public:
 	};
 
 	DarkMatterProfile haloprofile;
+	bool random_lambda;
 
 };
 
@@ -37,7 +39,7 @@ public:
 class DarkMatterHalos {
 
 public:
-	DarkMatterHalos(std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params);
+	DarkMatterHalos(DarkMatterHaloParameters &params, std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params);
 	virtual ~DarkMatterHalos() {};
 
 	virtual double grav_potential_halo(double r, double c) const = 0;
@@ -52,7 +54,7 @@ public:
 
 	double halo_virial_velocity (double mvir, double redshift);
 
-	double halo_lambda (xyz<float> L, double mvir, double redshift);
+	double halo_lambda (xyz<float> L, double mvir, double rvir);
 
 	double disk_size_theory (Subhalo &subhalo);
 
@@ -69,8 +71,11 @@ public:
 	double v2bulge (double x, double m, double c, double r);
 
 protected:
+	DarkMatterHaloParameters params;
 	std::shared_ptr<Cosmology> cosmology;
 	SimulationParameters sim_params;
+	std::default_random_engine generator;
+	std::lognormal_distribution<double> distribution;
 
 };
 

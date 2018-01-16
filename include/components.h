@@ -320,7 +320,8 @@ public:
 		Mvir(0),
 		L{0, 0, 0},
 		Vcirc(0),
-		concentration(),
+		concentration(0),
+		lambda(0),
 		cooling_subhalo_tracking(),
 		hot_halo_gas(),
 		cold_halo_gas(),
@@ -414,6 +415,7 @@ public:
 	xyz<float> L;
 	float Vcirc;
 	float concentration;
+	float lambda;
 
 	/**
 	 * This component saves que information of the virial temperature, total halo gas and cooling time history.
@@ -613,6 +615,7 @@ public:
 		Vvir(0),
 		Mvir(0),
 		concentration(0),
+		lambda(0),
 		snapshot(snapshot),
 		main_progenitor(false)
 	{
@@ -689,6 +692,7 @@ public:
 	float Vvir;
 	float Mvir;
 	float concentration;
+	float lambda;
 
 	/**
 	 * The snapshot at which this halo is found

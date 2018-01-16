@@ -223,10 +223,10 @@ int run(int argc, char **argv) {
 	// TODO: Move this logic away from the main
 	std::shared_ptr<DarkMatterHalos> dark_matter_halos;
 	if (dark_matter_halo_parameters.haloprofile == DarkMatterHaloParameters::NFW) {
-		dark_matter_halos = std::make_shared<NFWDarkMatterHalos>(cosmology, sim_params);
+		dark_matter_halos = std::make_shared<NFWDarkMatterHalos>(dark_matter_halo_parameters, cosmology, sim_params);
 	}
 	else if (dark_matter_halo_parameters.haloprofile == DarkMatterHaloParameters::EINASTO) {
-		dark_matter_halos = std::make_shared<EinastoDarkMatterHalos>(cosmology, sim_params);
+		dark_matter_halos = std::make_shared<EinastoDarkMatterHalos>(dark_matter_halo_parameters, cosmology, sim_params);
 	}
 	else {
 		std::ostringstream os;
