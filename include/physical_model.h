@@ -57,6 +57,7 @@ public:
 		double delta_t;
 		double redshift;
 		double v;
+		bool burst;
 	};
 
 	PhysicalModel(
@@ -99,9 +100,10 @@ public:
 		double rgas  = galaxy.disk_gas.rscale; //gas scale radius.
 		double rstar = galaxy.disk_stars.rscale; //stellar scale radius.
 		double v = subhalo.Vvir;
+		bool burst = false;
 
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
-		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v};
+		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v, burst};
 		auto ode_solver = get_solver(delta_t, y0, params);
 		std::vector<double> y1 = ode_solver.evolve();
 		galaxy_ode_evaluations += ode_solver.num_evaluations();
@@ -114,9 +116,10 @@ public:
 		double rgas  = galaxy.bulge_gas.rscale; //gas scale radius.
 		double rstar = galaxy.bulge_stars.rscale; //stellar scale radius.
 		double v = subhalo.Vvir;
+		bool burst = true;
 
 		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);
-		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v};
+		solver_params params{*this, rgas, rstar, mcoolrate, delta_t, z, v, burst};
 		auto solver = get_solver(delta_t, y0, params);
 		std::vector<double> y1 = solver.evolve();
 		galaxy_starburst_ode_evaluations += solver.num_evaluations();

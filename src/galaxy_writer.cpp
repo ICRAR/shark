@@ -140,6 +140,8 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	vector<float> mreheated;
 	vector<float> mreheated_metals;
 
+	vector<float> cooling_rate;
+
 	vector<float> mvir_hosthalo;
 	vector<float> mvir_subhalo;
 	vector<float> vmax_subhalo;
@@ -227,14 +229,18 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 				double mhot_gal = 0;
 				double mzhot_gal = 0;
 				double mreheat = 0;
-				double mzreheat =0;
+				double mzreheat = 0;
+				double rcool = 0;
 				int t = galaxy->galaxy_type;
 				if(galaxy->galaxy_type == Galaxy::CENTRAL){
 					mhot_gal = hot_subhalo.mass + cold_subhalo.mass;
 					mzhot_gal = hot_subhalo.mass_metals + cold_subhalo.mass_metals;
 					mreheat = reheated_subhalo.mass;
 					mzreheat = reheated_subhalo.mass_metals;
+					rcool = halo->cooling_rate;
 				}
+
+				cooling_rate.push_back(rcool);
 
 				mhot.push_back(mhot_gal);
 				mhot_metals.push_back(mzhot_gal);
@@ -324,6 +330,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Galaxies/mhot_metals", mhot_metals);
 	file.write_dataset("Galaxies/mreheated", mreheated);
 	file.write_dataset("Galaxies/mreheated_metals", mreheated_metals);
+	file.write_dataset("Galaxies/cooling_rate", cooling_rate);
 
 	file.write_dataset("Galaxies/mvir_hosthalo", mvir_hosthalo);
 	file.write_dataset("Galaxies/mvir_subhalo", mvir_subhalo);

@@ -19,6 +19,8 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	alpha_cool(0),
 	f_edd(0),
 	f_smbh(0),
+	v_smbh(0),
+	tau_fold(0),
 	accretion_eff_cooling(0),
 	kappa_agn(0),
 	nu_smbh(0),
@@ -30,7 +32,10 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	options.load("agn_feedback.model", model);
 	options.load("agn_feedback.alpha_cool",alpha_cool);
 	options.load("agn_feedback.f_edd",f_edd);
+
 	options.load("agn_feedback.f_smbh", f_smbh);
+	options.load("agn_feedback.v_smbh", v_smbh);
+	options.load("agn_feedback.tau_fold", tau_fold);
 
 	options.load("agn_feedback.accretion_eff_cooling",accretion_eff_cooling);
 
@@ -121,15 +126,25 @@ double AGNFeedback::agn_bolometric_luminosity(double macc) {
 	return Lbol;
 }
 
-double AGNFeedback::smbh_growth_starburst(double mgas){
+double AGNFeedback::smbh_growth_starburst(double mgas, double vvir){
 
 	double m = 0;
 
 	if(mgas > 0){
-		m =  parameters.f_smbh * mgas;
+		m =  parameters.f_smbh * mgas / (1 + std::pow(parameters.v_smbh/vvir, 2.0));
 	}
 
 	return m;
+}
+
+double AGNFeedback::smbh_accretion_timescale(Galaxy &galaxy, double z){
+
+	double vbulge = std::sqrt(constants::G * galaxy.bulge_mass() / galaxy.bulge_gas.rscale);
+
+	double tdyn = constants::MPCKM2GYR * cosmology->comoving_to_physical_size(galaxy.bulge_gas.rscale, z) / vbulge;
+
+	return tdyn * parameters.tau_fold;
+
 }
 
 } // namespace shark

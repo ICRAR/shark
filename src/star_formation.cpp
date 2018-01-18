@@ -19,6 +19,7 @@ struct galaxy_properties_for_integration {
 	double sigma_star0;
 	double re;
 	double rse;
+	bool burst;
 };
 
 StarFormationParameters::StarFormationParameters(const Options &options) :
@@ -27,7 +28,8 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	Po(0),
 	beta_press(0),
 	Accuracy_SFeqs(0),
-	gas_velocity_dispersion(0)
+	gas_velocity_dispersion(0),
+	boost_starburst(1)
 {
 	options.load("star_formation.Molecular_BR_law", Molecular_BR_Law);
 	options.load("star_formation.nu_sf", nu_sf);
@@ -35,6 +37,7 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	options.load("star_formation.beta_press", beta_press);
 	options.load("star_formation.Accuracy_SFeqs", Accuracy_SFeqs);
 	options.load("star_formation.gas_velocity_dispersion", gas_velocity_dispersion);
+	options.load("star_formation.boost_starburst", boost_starburst);
 }
 
 
@@ -46,7 +49,7 @@ StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr
 	// no-op
 }
 
-double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double z) {
+double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double z, bool burst) {
 
 	if (mcold <= 0 or rgas <= 0) {
 		if(mcold > 0 && rgas <= 0){
@@ -75,7 +78,8 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		Sigma_gas,
 		Sigma_star,
 		re,
-		rse
+		rse,
+		burst
 	};
 
 	struct StarFormationAndProps {
@@ -146,6 +150,11 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 
 	double fracmol = fmol(Sigma_gas, Sigma_stars, r);
 	double sfr_density = PI2 * parameters.nu_sf * fracmol * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
+
+	// If the star formation mode is starburst, then apply boosting in star formation.
+	if(props->burst){
+		sfr_density = sfr_density * parameters.boost_starburst;
+	}
 
 	if(props->sigma_gas0 > 0 && sfr_density <= 0){
 		std::ostringstream os;

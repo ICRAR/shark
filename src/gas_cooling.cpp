@@ -515,6 +515,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
   		subhalo.hot_halo_gas.mass_metals = 0;
   	}
 
+  	// Save net cooling rate.
+  	halo->cooling_rate = coolingrate;
+
    	return coolingrate;
 
 }

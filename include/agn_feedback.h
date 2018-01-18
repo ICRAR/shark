@@ -29,6 +29,8 @@ public:
 	double alpha_cool;
 	double f_edd;
 	double f_smbh;
+	double v_smbh;
+	double tau_fold;
 	double accretion_eff_cooling;
 	double kappa_agn;
 	double nu_smbh;
@@ -55,7 +57,8 @@ public:
 	double eddington_luminosity(double mbh);
 	double accretion_rate_hothalo_smbh(double Lcool, double mbh);
 	double agn_bolometric_luminosity(double macc);
-	double smbh_growth_starburst(double mgas);
+	double smbh_growth_starburst(double mgas, double vvir);
+	double smbh_accretion_timescale(Galaxy &galaxy, double z);
 
 	// TODO: move this to private when possible
 	AGNFeedbackParameters parameters;

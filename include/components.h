@@ -616,6 +616,7 @@ public:
 		Mvir(0),
 		concentration(0),
 		lambda(0),
+		cooling_rate(0),
 		snapshot(snapshot),
 		main_progenitor(false)
 	{
@@ -693,6 +694,8 @@ public:
 	float Mvir;
 	float concentration;
 	float lambda;
+
+	float cooling_rate;
 
 	/**
 	 * The snapshot at which this halo is found

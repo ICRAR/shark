@@ -143,6 +143,13 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	halo->concentration = subhalo->concentration;
 	halo->lambda = subhalo->lambda;
 
+	/** If virial velocity of halo (which is calculated from the total mass
+	and redshift) is smaller than the virial velocity of the central subhalo, which is
+	directly calculated in VELOCIraptor, then adopt the VELOCIraptor one.**/
+	if(halo->Vvir < subhalo->Vvir){
+		halo->Vvir = subhalo->Vvir;
+	}
+
 	//remove subhalo from satellite list.
 	remove_satellite(halo, subhalo);
 

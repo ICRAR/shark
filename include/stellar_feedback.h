@@ -40,6 +40,7 @@ public:
 	double epsilon_cc;
 	double beta;
 	double v_sn;
+	double redshift_power;
 
 };
 
@@ -49,7 +50,7 @@ class StellarFeedback {
 public:
 	StellarFeedback(StellarFeedbackParameters parameters);
 
-	double outflow_rate(double sfr, double v);
+	double outflow_rate(double sfr, double v, double z);
 
 private:
 	StellarFeedbackParameters parameters;

@@ -53,6 +53,7 @@ public:
 	double beta_press;
 	double Accuracy_SFeqs;
 	double gas_velocity_dispersion;
+	double boost_starburst;
 };
 
 
@@ -64,7 +65,7 @@ public:
 	/**
 	 * All input quantities should be in comoving units.
 	 */
-	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double z);
+	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double z, bool burst);
 
 	double star_formation_rate_surface_density(double r, void * params);
 

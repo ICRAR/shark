@@ -470,14 +470,16 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 			if(galaxy->bulge_gas.mass > constants::tolerance_mass){
 
 				// Calculate black hole growth due to starburst.
-				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy->bulge_gas.mass);
+				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy->bulge_gas.mass, subhalo->Vvir);
 				double delta_mzbh = 0;
 				if(galaxy->bulge_gas.mass > 0){
 					delta_mzbh = delta_mbh/galaxy->bulge_gas.mass * galaxy->bulge_gas.mass_metals;
 				}
 
+				double tdyn = agnfeedback->smbh_accretion_timescale(*galaxy, z);
+
 				// Define accretion rate.
-				galaxy->smbh.macc_sb = delta_mbh/delta_t;
+				galaxy->smbh.macc_sb = delta_mbh/tdyn;
 
 				// Grow SMBH.
 				galaxy->smbh.mass += delta_mbh;
@@ -489,6 +491,14 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
 				// Trigger starburst.
 				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t);
+
+				// Check for small gas reservoirs left in the bulge.
+				if(galaxy->bulge_gas.mass < constants::tolerance_mass){
+					galaxy->disk_gas.mass += galaxy->bulge_gas.mass;
+					galaxy->disk_gas.mass_metals += galaxy->bulge_gas.mass_metals;
+					galaxy->bulge_gas.mass = 0;
+					galaxy->bulge_gas.mass_metals = 0;
+				}
 			}
 		}
 	}
