@@ -50,7 +50,7 @@ public:
 
 	double halo_dynamical_time (HaloPtr &halo, double z);
 
-	double halo_virial_radius(HaloPtr &halo);
+	double halo_virial_radius(Subhalo &subhalo);
 
 	double halo_virial_velocity (double mvir, double redshift);
 
@@ -60,9 +60,9 @@ public:
 
 	double halo_concentration (HaloPtr &halo);
 
-	double gao_nfw_concentration(double mvir, double a_form);
+	double nfw_concentration(double mvir, double z);
 
-	double mmw98_nfw_concentration(double mvir, double vmax, double rvir);
+	//double mmw98_nfw_concentration(double mvir, double vmax, double rvir);
 
 	void galaxy_velocity(Subhalo &subhalo);
 

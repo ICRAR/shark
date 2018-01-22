@@ -330,7 +330,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
    	double Tvir = 35.9*std::pow(vvir,2.0); //in K.
    	double lgTvir = log10(Tvir); //in K.
-	double Rvir = darkmatterhalos->halo_virial_radius(halo)/cosmology->parameters.Hubble_h;//Mpc
+	double Rvir = darkmatterhalos->halo_virial_radius(subhalo)/cosmology->parameters.Hubble_h;//Mpc
 
    	/**
    	 * Calculates the cooling Lambda function for the metallicity and temperature of this halo.

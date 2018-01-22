@@ -529,7 +529,9 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 
 		rcentral = central->composite_size();
 
-		enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(halo), halo->concentration);
+		auto subhalo_central = halo->central_subhalo;
+
+		enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(*subhalo_central), subhalo_central->concentration);
 
 		//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
 		//the DM mass enclosed by rcentral.

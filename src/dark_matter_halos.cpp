@@ -76,17 +76,19 @@ double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
 
 double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo, double z){
 
-	double r = halo_virial_radius(halo);
+	auto subhalo_central = halo->central_subhalo;
 
-	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / halo->Vvir;
+	double r = halo_virial_radius(*subhalo_central);
+
+	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / subhalo_central->Vvir;
 }
 
-double DarkMatterHalos::halo_virial_radius(HaloPtr &halo){
+double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
 
 	/**
 	 * Function to calculate the halo virial radius. Returns virial radius in Mpc/h.
 	 */
-	return constants::G * halo->Mvir / std::pow(halo->Vvir,2);
+	return constants::G * subhalo.Mvir / std::pow(subhalo.Vvir,2);
 }
 
 double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double rvir){
@@ -111,7 +113,7 @@ double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double rvir){
 double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){
 
 	//Calculation comes from assuming rdisk = 2/sqrt(2) *lambda *Rvir;
-	double Rvir = halo_virial_radius(subhalo.host_halo);
+	double Rvir = halo_virial_radius(subhalo);
 
 	double lambda = halo_lambda(subhalo.L, subhalo.Mvir, Rvir);
 
@@ -120,10 +122,12 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){
 
 	double rdisk = 3/constants::SQRT2 * lambda * Rvir;
 
-	//Numerical factor comes from 1/3 * 1.67. The 1/3 comes from scaling the size to a scale length, and the 1.67 comes from
+	//Numerical factor comes from 1/5 * 1.67. The 1/5 comes from scaling the size to a scale length, and the 1.67 comes from
 	//assuming an exponential disk and scaling the scale length to a half mass radius.
 
-	return 0.5566 * rdisk;
+	return 0.334 * rdisk;
+
+	//return 0.03 * Rvir;
 }
 
 double NFWDarkMatterHalos::grav_potential_halo(double r, double c) const
@@ -175,7 +179,7 @@ double EinastoDarkMatterHalos::enclosed_mass(double r, double c) const
 
 void DarkMatterHalos::galaxy_velocity(Subhalo &subhalo){
 
-	double rvir = halo_virial_radius(subhalo.host_halo);
+	double rvir = halo_virial_radius(subhalo);
 
 	//disk properties.
 	double rdisk = subhalo.central_galaxy()->disk_gas.rscale;
@@ -252,6 +256,12 @@ double DarkMatterHalos::v2bulge (double x, double m, double c, double r){
 
 
 }
+double DarkMatterHalos::nfw_concentration(double mvir, double z){
+
+	return 12.3/(1.0+z) * std::pow(mvir/1.3e13,-0.13);
+
+}
+
 
 } // namespace shark
 
