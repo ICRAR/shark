@@ -11,6 +11,7 @@
 #include "components.h"
 #include "evolve_halos.h"
 #include "logging.h"
+#include "numerical_constants.h"
 
 using namespace std;
 
@@ -189,7 +190,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 }
 
-void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift){
+void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot){
 
 
 	BaryonBase mcold_total;
@@ -202,10 +203,9 @@ void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr
 	BaryonBase mH2_total;
 	BaryonBase mDM_total;
 
-	double SFR_total;
-	SFR_total = 0;
+	double SFR_total = 0;
 
-	double total_baryons;
+	double total_baryons = 0;
 
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
@@ -247,10 +247,11 @@ void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr
 				SFR_total += galaxy->sfr_disk + galaxy->sfr_bulge;
 
 				MBH_total.mass += galaxy->smbh.mass;
-
 			}
 		}
 	}
+
+	total_baryons = mstars_total.mass + mcold_total.mass + MBH_total.mass + mhothalo_total.mass + mcoldhalo_total.mass + mejectedhalo_total.mass;
 
 	AllBaryons.mstars.push_back(mstars_total);
 	AllBaryons.mcold.push_back(mcold_total);
@@ -264,6 +265,17 @@ void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr
 	AllBaryons.mejected_halo.push_back(mejectedhalo_total);
 
 	AllBaryons.mDM.push_back(mDM_total);
+
+	// Test for mass conservation.
+
+	double frac = std::abs(total_baryons-AllBaryons.baryon_total_created[snapshot])/std::max(AllBaryons.baryon_total_created[snapshot],total_baryons);
+
+	if(frac > constants::EPS3){
+		/*std::ostringstream os;
+		os << "Accummulated baryon mass, " << total_baryons << " differs by more than " << constants::EPS3 << " than the baryon mass created by this snapshot, "<< AllBaryons.baryon_total_created[snapshot];
+		throw invalid_data(os.str());*/
+		LOG(warning) << "Accummulated baryon mass differs by " << frac << " with the baryon mass created by this snapshot. The ratio between the two is: "<< total_baryons/AllBaryons.baryon_total_created[snapshot+1];
+	}
 
 }
 
