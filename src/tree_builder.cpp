@@ -28,7 +28,7 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 	return exec_params;
 }
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology, TotalBaryon &AllBaryons)
 {
 
 	const auto &output_snaps = exec_params.output_snapshots;
@@ -81,7 +81,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	define_central_subhalos(trees, sim_params);
 
 	// Define accretion rate from DM in case we want this.
-	define_accretion_rate_from_dm(trees, sim_params, *cosmology);
+	define_accretion_rate_from_dm(trees, sim_params, *cosmology, AllBaryons);
 
 	return trees;
 }
@@ -303,13 +303,12 @@ void TreeBuilder::spin_interpolated_halos(std::vector<MergerTreePtr> trees, Simu
 }
 
 
-void TreeBuilder::define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology){
+void TreeBuilder::define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology, TotalBaryon &AllBaryons){
+
 
 	//Loop over trees.
+	for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 		for(auto &tree: trees) {
-
-			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
-
 				for(auto &halo: tree->halos[snapshot]){
 
 					auto ascendants = halo->ascendants;
@@ -325,10 +324,22 @@ void TreeBuilder::define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees
 					if(halo->central_subhalo->accreted_mass < 0){
 						halo->central_subhalo->accreted_mass = 0;
 					}
-
 				}
-			}
 		}
+	}
+
+	// Now accummulate baryons staring from the highest redshift.
+	double total_baryon_accreted = 0;
+
+	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot; snapshot++) {
+		for(auto &tree: trees) {
+				for(auto &halo: tree->halos[snapshot]){
+					total_baryon_accreted += halo->central_subhalo->accreted_mass;
+				}
+		}
+		// Keep track of the integral of the baryons mass accreted.
+		AllBaryons.baryon_total_created[snapshot] = total_baryon_accreted;
+	}
 
 }
 

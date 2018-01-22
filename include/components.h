@@ -806,6 +806,20 @@ public:
 		// no-op
 	}
 
+	/**
+	 * mcold: total cold gas mass in disk+bulge.
+	 * mstars: total stellar mass in disk+bulge.
+	 * mhot_halo: total hot halo gas.
+	 * mcold_halo: total cold halo gas (that is cooling during the current snapshot).
+	 * mejected_halo: total hot gas that has been ejected from galaxies due to feeback and that has not been reincorporated yet onto the hot halo gas reservoir.
+	 * mBH: total mass locked in black holes.
+	 * mHI: total mass in the form of atomic gas.
+	 * mH2: total mass in the form of molecular gas.
+	 * mDM: total mass in the form of dark matter.
+	 * SFR: integrated SFR of all galaxies over a snapshot.
+	 * baryon_total_created: keeps track of the baryons deposited in DM halos to ensure mass convervations.
+	 */
+
 	std::vector<BaryonBase> mcold;
 	std::vector<BaryonBase> mstars;
 	std::vector<BaryonBase> mhot_halo;
@@ -815,7 +829,9 @@ public:
 	std::vector<BaryonBase> mHI;
 	std::vector<BaryonBase> mH2;
 	std::vector<BaryonBase> mDM;
+
 	std::vector<double> SFR;
+	std::map<int,double> baryon_total_created;
 
 	std::vector<double> get_masses (const std::vector<BaryonBase> &B){
 

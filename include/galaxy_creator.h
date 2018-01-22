@@ -38,7 +38,7 @@ class GalaxyCreator {
 
 public:
 	GalaxyCreator(std::shared_ptr<Cosmology> cosmology, std::shared_ptr<DarkMatterHalos> darkmatterhalos, GasCoolingParameters cool_params, SimulationParameters sim_params);
-	void create_galaxies(const std::vector<MergerTreePtr> &merger_trees);
+	void create_galaxies(const std::vector<MergerTreePtr> &merger_trees, TotalBaryon &AllBaryons);
 
 private:
 	bool create_galaxies(const HaloPtr &halo);

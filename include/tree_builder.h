@@ -41,7 +41,7 @@ class TreeBuilder {
 public:
 	TreeBuilder(ExecutionParameters exec_params);
 	virtual ~TreeBuilder();
-	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology);
+	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology, TotalBaryon &AllBaryons);
 
 protected:
 
@@ -60,7 +60,7 @@ protected:
 
 	SubhaloPtr define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo);
 
-	void define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology);
+	void define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology, TotalBaryon &AllBaryons);
 
 	void remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo);
 

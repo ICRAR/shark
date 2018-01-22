@@ -38,18 +38,23 @@ GalaxyCreator::GalaxyCreator(std::shared_ptr<Cosmology> cosmology, std::shared_p
 	// no-op
 }
 
-void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_trees)
+void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_trees, TotalBaryon &AllBaryons)
 {
 	int galaxies_added = 0;
+	double total_baryon = 0.0;
+
 	auto start = std::chrono::steady_clock::now();
 	for(int snapshot = sim_params.min_snapshot; snapshot <= sim_params.max_snapshot - 1; snapshot++) {
 		for(auto &merger_tree: merger_trees) {
 			for(auto &halo: merger_tree->halos[snapshot]) {
 				if (create_galaxies(halo)) {
 					galaxies_added++;
+					total_baryon += halo->central_subhalo->hot_halo_gas.mass;
 				}
 			}
 		}
+		// Keep track of the total amount of baryons integrated from the first snapshot to the current one.
+		AllBaryons.baryon_total_created[snapshot] += total_baryon;
 	}
 
 	auto d = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();

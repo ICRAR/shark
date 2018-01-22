@@ -249,18 +249,20 @@ int run(int argc, char **argv) {
 
 	HaloBasedTreeBuilder tree_builder(exec_params);
 
+
+	// Create class to track all the baryons of the simulation in its different components.
+	auto AllBaryons = std::make_shared<TotalBaryon>();
+
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
 	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
-	auto merger_trees = tree_builder.build_trees(halos, sim_params, cosmology);
+	auto merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
+
 
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
 	GalaxyCreator galaxy_creator(cosmology, dark_matter_halos, gas_cooling_params, sim_params);
-	galaxy_creator.create_galaxies(merger_trees);
-
-	// Create class to track all the baryons of the simulation in its different components.
-	auto AllBaryons = std::make_shared<TotalBaryon>();
+	galaxy_creator.create_galaxies(merger_trees, *AllBaryons);
 
 	// TODO: move this logic away from the main
 	// Also provide a std::make_unique

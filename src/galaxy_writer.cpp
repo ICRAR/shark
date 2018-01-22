@@ -352,9 +352,10 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Galaxies/id_halo", id_halo);
 
 	vector<float> redshifts;
-
+	vector<double> baryons_ever_created;
 	for (int i=sim_params.min_snapshot; i <= snapshot; i++){
 		redshifts.push_back(sim_params.redshifts[i]);
+		baryons_ever_created.push_back(AllBaryons.baryon_total_created[i]);
 	}
 
 	file.write_dataset("Global/redshifts", redshifts);
@@ -375,6 +376,9 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Global/mejected_halo_metals",AllBaryons.get_masses(AllBaryons.mejected_halo));
 
 	file.write_dataset("Global/mDM",AllBaryons.get_masses(AllBaryons.mDM));
+
+	file.write_dataset("Global/mbar_created",baryons_ever_created);
+
 
 }
 
