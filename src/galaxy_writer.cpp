@@ -353,9 +353,15 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	vector<float> redshifts;
 	vector<double> baryons_ever_created;
-	for (int i=sim_params.min_snapshot; i <= snapshot; i++){
+	vector<double> baryons_ever_lost;
+	double baryons_lost = 0;
+	for (int i=sim_params.min_snapshot+1; i <= snapshot; i++){
 		redshifts.push_back(sim_params.redshifts[i]);
 		baryons_ever_created.push_back(AllBaryons.baryon_total_created[i]);
+
+		// Accummulate baryons lost.
+		baryons_lost += AllBaryons.baryon_total_lost[i];
+		baryons_ever_lost.push_back(baryons_lost);
 	}
 
 	file.write_dataset("Global/redshifts", redshifts);
@@ -366,7 +372,8 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Global/mHI",AllBaryons.get_masses(AllBaryons.mHI));
 	file.write_dataset("Global/mH2",AllBaryons.get_masses(AllBaryons.mH2));
 	file.write_dataset("Global/mBH",AllBaryons.get_masses(AllBaryons.mBH));
-	file.write_dataset("Global/SFR",AllBaryons.SFR);
+	file.write_dataset("Global/SFR_quiescent",AllBaryons.SFR_disk);
+	file.write_dataset("Global/SFR_burst",AllBaryons.SFR_bulge);
 
 	file.write_dataset("Global/mhot_halo",AllBaryons.get_masses(AllBaryons.mhot_halo));
 	file.write_dataset("Global/mhot_metals",AllBaryons.get_metals(AllBaryons.mhot_halo));
@@ -378,7 +385,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Global/mDM",AllBaryons.get_masses(AllBaryons.mDM));
 
 	file.write_dataset("Global/mbar_created",baryons_ever_created);
-
+	file.write_dataset("Global/mbar_lost", baryons_ever_lost);
 
 }
 

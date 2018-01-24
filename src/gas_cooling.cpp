@@ -275,6 +275,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     /**
      * Test for subhalos that are affected by reionisation
      */
+    // TODO: implement different models for reionization.
     if(subhalo.Vvir < reio_parameters.vcut && z < reio_parameters.zcut){
     	return 0;
     }
@@ -315,13 +316,14 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	double mhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass+subhalo.cold_halo_gas.mass);
    	double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals);
 
-   	double vvir = halo->Vvir;
+   	double vvir = subhalo.Vvir;
 
  	double zhot = 0;
  	if(mhot > 0){
  		zhot = (mzhot/mhot);
  	}
 
+ 	// Check for undefined cases.
  	if(mhot < 0 or mhot >1e17 or std::isnan(mhot)){
 		std::ostringstream os;
 		os << halo << " has hot halo gas mass not well defined";
@@ -330,7 +332,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
    	double Tvir = 35.9*std::pow(vvir,2.0); //in K.
    	double lgTvir = log10(Tvir); //in K.
-	double Rvir = darkmatterhalos->halo_virial_radius(subhalo)/cosmology->parameters.Hubble_h;//Mpc
+	double Rvir = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(subhalo), z);//physical Mpc
 
    	/**
    	 * Calculates the cooling Lambda function for the metallicity and temperature of this halo.
@@ -382,9 +384,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		tcharac = integral/(Tvir*mhot/tcool); //available time for cooling in Gyr.
    	}
 
-   	//I STILL NEED TO ADD A LIMIT TO THE TOTAL RADIATED ENERGY TO THE TOTAL THERMAL ENERGY OF THE HALO. SEE EQ. 18 AND 19 IN BENSON ET AL. (2010).
+   	//TODO: I STILL NEED TO ADD A LIMIT TO THE TOTAL RADIATED ENERGY TO THE TOTAL THERMAL ENERGY OF THE HALO. SEE EQ. 18 AND 19 IN BENSON ET AL. (2010).
 
-   	double r_cool = cooling_radius(mhot, Rvir, tcharac, logl, Tvir); //in Mpc.
+   	double r_cool = cooling_radius(mhot, Rvir, tcharac, logl, Tvir); //in physical Mpc.
 
    	if(r_cool < Rvir){
    		//cooling radius smaller than virial radius
@@ -458,16 +460,21 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	 */
    	if(central_galaxy->smbh.macc_hh > 0){
    		//Now calculate new BH mass and metals due to gas accretion from hot halo.
-		central_galaxy->smbh.mass += central_galaxy->smbh.macc_hh * deltat ;
-		if(mhot > 0){
-			central_galaxy->smbh.mass_metals += central_galaxy->smbh.macc_hh * deltat /mhot*mzhot;
-		}
+
+   		double delta_mass_bh = central_galaxy->smbh.macc_hh * deltat;
+   		double delta_metals_bh = 0;
+   		if(mhot > 0) {
+   			delta_mass_bh/mhot * mzhot;
+   		}
+
+		central_galaxy->smbh.mass += delta_mass_bh;
+		central_galaxy->smbh.mass_metals += delta_metals_bh;
 
     	/**
     	 * Update hot halo gas properties as a response of how much the SMBH is accreting;
     	 */
-    	subhalo.hot_halo_gas.mass -= central_galaxy->smbh.mass;
-    	subhalo.hot_halo_gas.mass_metals -= central_galaxy->smbh.mass_metals;
+    	subhalo.hot_halo_gas.mass -= delta_mass_bh;
+    	subhalo.hot_halo_gas.mass_metals -= delta_metals_bh;
    	}
 
    	if(coolingrate > 0){//perform calculations below ONLY if cooling rate >0.
@@ -476,7 +483,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		 */
    		coolingrate = cosmology->physical_to_comoving_mass(coolingrate);
 
-   		double mcooled = coolingrate*deltat;
+   		double mcooled = coolingrate * deltat;
 
    		// Limit cooled mass to the amount available in the halo
    		if(mcooled > subhalo.hot_halo_gas.mass){
@@ -487,19 +494,20 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		 * Save properties of cooling gas in the halo gas component that tracks the cold gas.
    		 */
    		subhalo.cold_halo_gas.mass += mcooled;
-   		subhalo.cold_halo_gas.mass_metals += mcooled*mzhot/mhot;//fraction of mass in the cold gas is the same as in metals.
+   		subhalo.cold_halo_gas.mass_metals += mcooled * mzhot/mhot;//fraction of mass in the cold gas is the same as in metals.
 
    		/**
    		 * Update hot halo gas properties as a response of how much cooling there is in this timestep;
    		 */
    		subhalo.hot_halo_gas.mass -= mcooled;
-   		subhalo.hot_halo_gas.mass_metals -= mcooled*mzhot/mhot;
+   		subhalo.hot_halo_gas.mass_metals -= mcooled * mzhot/mhot;
    	}
    	else {
    		//avoid negative numbers.
    		coolingrate = 0;
    	}
 
+   	// check for undefined values.
  	if(subhalo.cold_halo_gas.mass < 0 or subhalo.cold_halo_gas.mass >1e17 or std::isnan(subhalo.cold_halo_gas.mass)){
 		std::ostringstream os;
 		os << halo << " has cold halo gas mass not well defined";

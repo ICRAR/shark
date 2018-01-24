@@ -245,7 +245,7 @@ int run(int argc, char **argv) {
 	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters, gas_cooling_params);
 
 	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel,agnfeedback};
-	DiskInstability disk_instability{disk_instability_params,merger_parameters,basic_physicalmodel,agnfeedback};
+	DiskInstability disk_instability{disk_instability_params,merger_parameters,dark_matter_halos,basic_physicalmodel,agnfeedback};
 
 	HaloBasedTreeBuilder tree_builder(exec_params);
 
@@ -361,7 +361,7 @@ int run(int argc, char **argv) {
 
 		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 		LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
-		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology);
+		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, *AllBaryons, snapshot);
 
 	}
 

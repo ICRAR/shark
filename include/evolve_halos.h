@@ -36,7 +36,7 @@ namespace shark {
 
 void populate_halos(std::shared_ptr<BasicPhysicalModel> physical_model, HaloPtr halo, int snapshot, double z, double delta_t);
 
-void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology);
+void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology, TotalBaryon &AllBaryons, int snapshot);
 
 void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot);
 

@@ -36,11 +36,12 @@ void populate_halos(shared_ptr<BasicPhysicalModel> physicalmodel, HaloPtr halo, 
 	}
 }
 
-void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology){
+void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology, TotalBaryon &AllBaryons, int snapshot){
 
 	/**
 	 * This function transfer galaxies of the subhalos of this snapshot into the subhalos of the next snapshot, and baryon components from subhalo to subhalo.
 	 */
+
 
 	// First make sure central subhalos at this snapshot have only one central galaxy.
 	for(auto &halo: halos){
@@ -88,6 +89,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	}
 
 	unsigned int subhalos_without_descendant = 0;
+	double baryon_mass_loss = 0;
+
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
 
@@ -100,6 +103,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 			if (!descendant_subhalo) {
 				subhalos_without_descendant++;
+				baryon_mass_loss += subhalo->total_baryon_mass();
 				continue;
 			}
 
@@ -185,7 +189,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	}*/
 
 	if (subhalos_without_descendant) {
-		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies";
+		AllBaryons.baryon_total_lost[snapshot] = baryon_mass_loss;
+		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies.";
 	}
 
 }
@@ -203,7 +208,8 @@ void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr
 	BaryonBase mH2_total;
 	BaryonBase mDM_total;
 
-	double SFR_total = 0;
+	double SFR_total_disk = 0;
+	double SFR_total_burst = 0;
 
 	double total_baryons = 0;
 
@@ -244,7 +250,8 @@ void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr
 				mstars_total.mass += galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
 				mstars_total.mass_metals += galaxy->disk_stars.mass_metals + galaxy->bulge_stars.mass_metals;
 
-				SFR_total += galaxy->sfr_disk + galaxy->sfr_bulge;
+				SFR_total_disk += galaxy->sfr_disk;
+				SFR_total_burst += galaxy->sfr_bulge;
 
 				MBH_total.mass += galaxy->smbh.mass;
 			}
@@ -258,7 +265,8 @@ void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr
 	AllBaryons.mHI.push_back(mHI_total);
 	AllBaryons.mH2.push_back(mH2_total);
 	AllBaryons.mBH.push_back(MBH_total);
-	AllBaryons.SFR.push_back(SFR_total);
+	AllBaryons.SFR_disk.push_back(SFR_total_disk);
+	AllBaryons.SFR_bulge.push_back(SFR_total_burst);
 
 	AllBaryons.mhot_halo.push_back(mhothalo_total);
 	AllBaryons.mcold_halo.push_back(mcoldhalo_total);
@@ -268,13 +276,14 @@ void track_total_baryons(StarFormation &starformation, const std::vector<HaloPtr
 
 	// Test for mass conservation.
 
-	double frac = std::abs(total_baryons-AllBaryons.baryon_total_created[snapshot])/std::max(AllBaryons.baryon_total_created[snapshot],total_baryons);
+	double all_bar = AllBaryons.baryon_total_created[snapshot] - AllBaryons.baryon_total_lost[snapshot];
+	double frac = std::abs(total_baryons-all_bar)/std::max(all_bar,total_baryons);
 
 	if(frac > constants::EPS3){
 		/*std::ostringstream os;
 		os << "Accummulated baryon mass, " << total_baryons << " differs by more than " << constants::EPS3 << " than the baryon mass created by this snapshot, "<< AllBaryons.baryon_total_created[snapshot];
 		throw invalid_data(os.str());*/
-		LOG(warning) << "Accummulated baryon mass differs by " << frac << " with the baryon mass created by this snapshot. The ratio between the two is: "<< total_baryons/AllBaryons.baryon_total_created[snapshot+1];
+		LOG(warning) << "Accummulated baryon mass differs by " << frac << " with the baryon mass created by this snapshot. The ratio between the two is: "<< total_baryons/all_bar;
 	}
 
 }

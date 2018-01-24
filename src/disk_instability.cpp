@@ -30,10 +30,12 @@ DiskInstabilityParameters::DiskInstabilityParameters(const Options &options) :
 
 DiskInstability::DiskInstability(DiskInstabilityParameters parameters,
 		GalaxyMergerParameters merger_params,
+		std::shared_ptr<DarkMatterHalos> darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
 		std::shared_ptr<AGNFeedback> agnfeedback) :
 	parameters(parameters),
 	merger_params(merger_params),
+	darkmatterhalo(darkmatterhalo),
 	physicalmodel(physicalmodel),
 	agnfeedback(agnfeedback)
 {
@@ -44,13 +46,18 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, double z, double
 
 	for (auto &subhalo: halo->all_subhalos()){
 		for (auto &galaxy: subhalo->galaxies){
-			double f = toomre_parameter(galaxy);
+			double f = toomre_parameter(galaxy, subhalo);
 			if(f < parameters.stable){
+
+				/**
+				 * Estimate new bulge size.
+				 */
+				galaxy->bulge_gas.rscale = bulge_size(galaxy);
+				galaxy->bulge_stars.rscale = galaxy->bulge_gas.rscale;
 
 				/**
 				 * Transfer all stars and gas to the bulge.
 				 */
-
 				galaxy->bulge_stars.mass += galaxy->disk_stars.mass;
 				galaxy->bulge_stars.mass_metals += galaxy->disk_stars.mass_metals;
 				galaxy->bulge_gas.mass += galaxy->disk_gas.mass;
@@ -75,9 +82,9 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, double z, double
 
 }
 
-double DiskInstability::toomre_parameter(GalaxyPtr &galaxy){
+double DiskInstability::toomre_parameter(GalaxyPtr &galaxy, SubhaloPtr &subhalo){
 
-	double vc = galaxy->disk_gas.sAM / galaxy->disk_gas.rscale;
+	double vc = subhalo->Vcirc;
 	double md =  galaxy->disk_mass();
 	double rd = galaxy->disk_gas.rscale;
 
@@ -159,6 +166,10 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 			galaxy->disk_gas.mass_metals += galaxy->bulge_gas.mass_metals;
 			galaxy->bulge_gas.mass = 0;
 			galaxy->bulge_gas.mass_metals = 0;
+
+			// Calculate disk size.
+			galaxy->disk_gas.rscale = darkmatterhalo->disk_size_theory(*subhalo);
+			galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;
 		}
 	}
 }

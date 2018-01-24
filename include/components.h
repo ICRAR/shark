@@ -801,7 +801,8 @@ public:
 	 */
 
 	TotalBaryon() :
-		SFR(0)
+		SFR_disk(0),
+		SFR_bulge(0)
 	{
 		// no-op
 	}
@@ -830,8 +831,11 @@ public:
 	std::vector<BaryonBase> mH2;
 	std::vector<BaryonBase> mDM;
 
-	std::vector<double> SFR;
+	std::vector<double> SFR_disk;
+	std::vector<double> SFR_bulge;
+
 	std::map<int,double> baryon_total_created;
+	std::map<int,double> baryon_total_lost;
 
 	std::vector<double> get_masses (const std::vector<BaryonBase> &B){
 

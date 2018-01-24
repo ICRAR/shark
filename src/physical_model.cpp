@@ -22,7 +22,11 @@
 // MA 02111-1307  USA
 //
 
+#include <cmath>
+#include <memory>
+
 #include "physical_model.h"
+#include "logging.h"
 #include "numerical_constants.h"
 
 namespace shark {
@@ -128,6 +132,13 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	 * properties.*/
 
 
+	/* Check unrealistic cases*/
+	if(y[0] < galaxy.disk_stars.mass){
+		std::ostringstream os;
+		os << "Galaxy decreased its stellar mass after disk star formation process.";
+		throw invalid_argument(os.str());
+	}
+
 	galaxy.disk_stars.mass 					= y[0];
 	galaxy.disk_gas.mass   					= y[1];
 	subhalo.cold_halo_gas.mass 				= y[2];
@@ -137,6 +148,7 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	subhalo.cold_halo_gas.mass_metals 		= y[6];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
 
+	// Calculate average SFR.
 	galaxy.sfr_disk                         = y[8]/delta_t;
 
 	/**
@@ -203,6 +215,12 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 {
 	using namespace constants;
 
+	/* Check unrealistic cases*/
+	if(y[0] < galaxy.bulge_stars.mass){
+		std::ostringstream os;
+		os << "Galaxy decreased its stellar mass after burst of star formation.";
+		throw invalid_argument(os.str());
+	}
 
 	/*In the case of starbursts one should be using the bulge instead of the disk
 	 * properties.*/
@@ -212,6 +230,8 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	galaxy.bulge_stars.mass_metals 			= y[4];
 	galaxy.bulge_gas.mass_metals 			= y[5];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
+
+	// Calculate average SFR
 	galaxy.sfr_bulge                        = y[8]/delta_t;
 
 	/**

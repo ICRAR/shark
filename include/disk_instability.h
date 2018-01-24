@@ -29,12 +29,13 @@ class DiskInstability{
 public:
 	DiskInstability (DiskInstabilityParameters parameters,
 			GalaxyMergerParameters merger_params,
+			std::shared_ptr<DarkMatterHalos> darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
 			std::shared_ptr<AGNFeedback> agnfeedback);
 
 	double bulge_size(GalaxyPtr &galaxy);
 
-	double toomre_parameter(GalaxyPtr &galaxy);
+	double toomre_parameter(GalaxyPtr &galaxy, SubhaloPtr &subhalo);
 
 	void evaluate_disk_instability (HaloPtr &halo, double z, double delta_t);
 
@@ -43,6 +44,7 @@ public:
 private:
 	DiskInstabilityParameters parameters;
 	GalaxyMergerParameters merger_params;
+	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
 	std::shared_ptr<AGNFeedback> agnfeedback;
 

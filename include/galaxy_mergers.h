@@ -80,6 +80,8 @@ public:
 
 	void transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite);
 
+	void transfer_bulge_gas(GalaxyPtr &galaxy, SubhaloPtr &subhalo);
+
 
 private:
 	GalaxyMergerParameters parameters;

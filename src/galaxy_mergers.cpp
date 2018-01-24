@@ -226,9 +226,6 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 		throw exception(os.str());
 	}
 
-	// Assign halo concentration.
-	halo->concentration = halo->central_subhalo->concentration;
-
 	if(!central_subhalo->central_galaxy()){
 		std::ostringstream os;
 		os << "Central subhalo " << central_subhalo << " does not have central galaxy - in merging_subhalos.";
@@ -269,6 +266,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 		// Find main progenitor subhalo of the descendant subhalo and use that to calculate merging timescales.
 		auto primary_subhalo = desc_subhalo->main();
 
+		// Detect cases where there is no central galaxy in the main subhalo that will merge with this one in the next snapshot.
 		if(!primary_subhalo->central_galaxy()){
 			std::ostringstream os;
 			os << "Primary subhalo " << primary_subhalo << " (last_snapshot=";
@@ -336,7 +334,6 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 			 */
 			if(galaxy->tmerge < delta_t){
 				create_merger(central_galaxy, galaxy, halo);
-
 				// Accummulate all satellites that we need to delete at the end.
 				all_sats_to_delete.push_back(galaxy);
 			}
@@ -463,7 +460,6 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
-
 	for (auto &subhalo: halo->all_subhalos()){
 		for (auto &galaxy: subhalo->galaxies){
 			// Trigger starburst only in case there is gas in the bulge.
@@ -492,13 +488,13 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				// Trigger starburst.
 				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t);
 
-				// Check for small gas reservoirs left in the bulge.
+				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
 				if(galaxy->bulge_gas.mass < constants::tolerance_mass){
-					galaxy->disk_gas.mass += galaxy->bulge_gas.mass;
-					galaxy->disk_gas.mass_metals += galaxy->bulge_gas.mass_metals;
-					galaxy->bulge_gas.mass = 0;
-					galaxy->bulge_gas.mass_metals = 0;
+					transfer_bulge_gas(galaxy, subhalo);
 				}
+			}
+			else{
+				transfer_bulge_gas(galaxy, subhalo);
 			}
 		}
 	}
@@ -610,8 +606,28 @@ void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellit
 	central->ejected_galaxy_gas.mass += satellite->ejected_galaxy_gas.mass;
 	central->ejected_galaxy_gas.mass_metals += satellite->ejected_galaxy_gas.mass_metals;
 
+	// Make baryon components of satellite subhalo = 0.
+	satellite->hot_halo_gas.mass = 0;
+	satellite->hot_halo_gas.mass_metals = 0;
+
+	satellite->cold_halo_gas.mass = 0;
+	satellite->cold_halo_gas.mass_metals =0;
+
+	satellite->ejected_galaxy_gas.mass = 0;
+	satellite->ejected_galaxy_gas.mass_metals = 0;
 }
 
+void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy, SubhaloPtr &subhalo){
+
+	galaxy->disk_gas.mass += galaxy->bulge_gas.mass;
+	galaxy->disk_gas.mass_metals += galaxy->bulge_gas.mass_metals;
+	galaxy->bulge_gas.mass = 0;
+	galaxy->bulge_gas.mass_metals = 0;
+
+	// Calculate disk size.
+	galaxy->disk_gas.rscale = darkmatterhalo->disk_size_theory(*subhalo);
+	galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;
+}
 
 
 }  // namespace shark
