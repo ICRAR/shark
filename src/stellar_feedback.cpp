@@ -35,7 +35,8 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options) :
 	epsilon_cc(0),
 	beta(0),
 	v_sn(0),
-	redshift_power(0)
+	redshift_power(0),
+	eps_disk(0)
 {
 	options.load("stellar_feedback.eta_cc", eta_cc, true);
 	options.load("stellar_feedback.e_sn", e_sn, true);
@@ -43,6 +44,7 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options) :
 	options.load("stellar_feedback.beta", beta, true);
 	options.load("stellar_feedback.v_sn", v_sn);
 	options.load("stellar_feedback.redshift_power", redshift_power);
+	options.load("stellar_feedback.eps_disk",eps_disk);
 
 	//convert energy of SNe into code units.
 	e_sn = e_sn *std::pow(constants::MSOLAR_g, -1.0) * std::pow(constants::MPC2CM, -2.0) * std::pow(constants::GYR2S, 2.0);
@@ -67,8 +69,8 @@ double StellarFeedback::outflow_rate(double sfr, double v, double z) {
 //	double beta  = parameters.epsilon_cc * parameters.e_sn /
 //		       std::pow(v, parameters.beta) * parameters.eta_cc * sfr;
 
-	double vhot = parameters.v_sn*std::pow((1+z),parameters.redshift_power);
-	double beta_galform = std::pow(vhot/v, parameters.beta);
+	double vhot = parameters.v_sn; //*std::pow((1+z),parameters.redshift_power);
+	double beta_galform = parameters.eps_disk * std::pow((1+z),parameters.redshift_power) * (0.5 + std::pow(vhot/v, parameters.beta));
 
 	return beta_galform;
 }

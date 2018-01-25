@@ -54,9 +54,9 @@ public:
 
 	double halo_virial_velocity (double mvir, double redshift);
 
-	double halo_lambda (xyz<float> L, double mvir, double rvir);
+	double halo_lambda (xyz<float> L, double mvir, double rvir, double z);
 
-	double disk_size_theory (Subhalo &subhalo);
+	double disk_size_theory (Subhalo &subhalo, double z);
 
 	double halo_concentration (HaloPtr &halo);
 

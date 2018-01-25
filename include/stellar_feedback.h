@@ -41,6 +41,7 @@ public:
 	double beta;
 	double v_sn;
 	double redshift_power;
+	double eps_disk;
 
 };
 

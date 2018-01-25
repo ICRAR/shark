@@ -47,7 +47,7 @@ void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_tre
 	for(int snapshot = sim_params.min_snapshot; snapshot <= sim_params.max_snapshot - 1; snapshot++) {
 		for(auto &merger_tree: merger_trees) {
 			for(auto &halo: merger_tree->halos[snapshot]) {
-				if (create_galaxies(halo)) {
+				if (create_galaxies(halo, sim_params.redshifts[snapshot])) {
 					galaxies_added++;
 					total_baryon += halo->central_subhalo->hot_halo_gas.mass;
 				}
@@ -61,7 +61,7 @@ void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_tre
 	LOG(info) << "Created " << galaxies_added << " initial galaxies in " << d << " [ms]";
 }
 
-bool GalaxyCreator::create_galaxies(const HaloPtr &halo)
+bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z)
 {
 
 	// Halo has a central subhalo with ascendants so ignore it, as it should already have galaxies in it.
@@ -98,7 +98,7 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo)
 	central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
 
 	//assign an ad-hoc half-mass radius and specific angular momentum to start with.
-	galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(*central_subhalo);
+	galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(*central_subhalo, z);
 
 	darkmatterhalos->galaxy_velocity(*central_subhalo);
 

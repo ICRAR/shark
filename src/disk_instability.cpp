@@ -70,10 +70,11 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, double z, double
 				galaxy->disk_gas.mass = 0;
 				galaxy->disk_gas.mass_metals = 0;
 
+				/*
 				galaxy->disk_gas.rscale = 0;
 				galaxy->disk_stars.rscale = 0;
 				galaxy->disk_gas.sAM = 0;
-				galaxy->disk_stars.sAM = 0;
+				galaxy->disk_stars.sAM = 0;*/
 
 				create_starburst(subhalo, galaxy, z, delta_t);
 			}
@@ -167,9 +168,9 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 			galaxy->bulge_gas.mass = 0;
 			galaxy->bulge_gas.mass_metals = 0;
 
-			// Calculate disk size.
+			/*// Calculate disk size.
 			galaxy->disk_gas.rscale = darkmatterhalo->disk_size_theory(*subhalo);
-			galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;
+			galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;*/
 		}
 	}
 }

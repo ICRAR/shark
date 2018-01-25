@@ -91,12 +91,13 @@ double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
 	return constants::G * subhalo.Mvir / std::pow(subhalo.Vvir,2);
 }
 
-double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double rvir){
+double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double rvir, double z){
 
 	//Spin parameter calculated from j=sqrt(2) * lambda *G^2/3 M^2/3 / (10*H)^1/3.
+	//Weak redshift evolution applied according to Elahi et al. (2018, arXiv:1712.01988) in the case of random distribution.
 
 	if(params.random_lambda){
-		return distribution(generator);
+		return distribution(generator) * std::pow(1+z,0.4);
 	}
 
 	double E = constants::G * std::pow(mvir,2.0) / (2.0 * rvir);
@@ -110,12 +111,12 @@ double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double rvir){
 	return lambda;
 }
 
-double DarkMatterHalos::disk_size_theory (Subhalo &subhalo){
+double DarkMatterHalos::disk_size_theory (Subhalo &subhalo, double z){
 
 	//Calculation comes from assuming rdisk = 2/sqrt(2) *lambda *Rvir;
 	double Rvir = halo_virial_radius(subhalo);
 
-	double lambda = halo_lambda(subhalo.L, subhalo.Mvir, Rvir);
+	double lambda = halo_lambda(subhalo.L, subhalo.Mvir, Rvir, z);
 
 	// Limit value of lambda to 1.
 	if(lambda > 1) lambda =1;

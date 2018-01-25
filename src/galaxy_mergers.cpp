@@ -417,10 +417,11 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->disk_gas.mass = 0;
 		central->disk_gas.mass_metals = 0;
 
+		/*
 		central->disk_gas.rscale = 0;
 		central->disk_stars.rscale = 0;
 		central->disk_gas.sAM = 0;
-		central->disk_stars.sAM = 0;
+		central->disk_stars.sAM = 0;*/
 
 	}
 	else{//minor mergers
@@ -443,8 +444,9 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 			central->disk_gas.mass = 0;
 			central->disk_gas.mass_metals = 0;
 
+			/*
 			central->disk_gas.rscale = 0;
-			central->disk_gas.sAM = 0;
+			central->disk_gas.sAM = 0;*/
 		}
 
 	}
@@ -545,12 +547,11 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 
 	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
 
-	if(std::isnan(r) or r <= 0 or r>1){
+	if((std::isnan(r) or r <= 0 or r>1) and (mtotal_central > 0 or mbar_satellite > 0)){
 		std::ostringstream os;
 		os << central << " has a bulge size not well defined in galaxy mergers.";
 		throw invalid_data(os.str());
 	}
-
 
 	return r;
 
@@ -624,9 +625,10 @@ void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy, SubhaloPtr &subhalo){
 	galaxy->bulge_gas.mass = 0;
 	galaxy->bulge_gas.mass_metals = 0;
 
+	/*
 	// Calculate disk size.
 	galaxy->disk_gas.rscale = darkmatterhalo->disk_size_theory(*subhalo);
-	galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;
+	galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;*/
 }
 
 

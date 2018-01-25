@@ -223,6 +223,10 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     //Define host halo
     auto halo = subhalo.host_halo;
 
+    // Add up accreted mass and metals.
+   	subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
+   	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;
+
     /**
      * For now assume that gas can cool only in central subhalos and to central galaxies.
      */
@@ -256,7 +260,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	 * Estimate disk size and specific angular momentum.
    	 */
    	auto central_galaxy = subhalo.central_galaxy();
-   	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo);
+   	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo, z);
    	central_galaxy->disk_stars.rscale = central_galaxy->disk_gas.rscale;
 
    	darkmatterhalos->galaxy_velocity(subhalo);
@@ -305,10 +309,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	if(subhalo.ejected_galaxy_gas.mass_metals < 0){
    		subhalo.ejected_galaxy_gas.mass_metals = 0;
    	}
-
-    // Add up accreted mass and metals.
-   	subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
-   	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;
 
    	/**
    	 * We need to convert masses and velocities to physical units before proceeding with calculation.
@@ -485,9 +485,10 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
    		double mcooled = coolingrate * deltat;
 
-   		// Limit cooled mass to the amount available in the halo
+   		// Limit cooled mass to the amount available in the halo and adjust cooling rate accordingly.
    		if(mcooled > subhalo.hot_halo_gas.mass){
    			mcooled = subhalo.hot_halo_gas.mass;
+   			coolingrate = mcooled / deltat;
    		}
 
    		/**
