@@ -29,6 +29,7 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	beta_press(0),
 	Accuracy_SFeqs(0),
 	gas_velocity_dispersion(0),
+	sigma_HI_crit(0),
 	boost_starburst(1)
 {
 	options.load("star_formation.Molecular_BR_law", Molecular_BR_Law);
@@ -38,6 +39,10 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	options.load("star_formation.Accuracy_SFeqs", Accuracy_SFeqs);
 	options.load("star_formation.gas_velocity_dispersion", gas_velocity_dispersion);
 	options.load("star_formation.boost_starburst", boost_starburst);
+	options.load("star_formation.sigma_HI_crit", sigma_HI_crit);
+
+	// Convert surface density to internal code units.
+	sigma_HI_crit = sigma_HI_crit * std::pow(constants::MEGA,2.0);
 }
 
 
@@ -174,9 +179,14 @@ double StarFormation::molecular_surface_density(double r, void * params){
 
 	double Sigma_gas = props->sigma_gas0 * std::exp(-r / props->re);
 
-	// Avoid negative numbers
+	// Avoid negative numbers.
 	if(Sigma_gas < 0){
 		Sigma_gas = 0;
+	}
+
+	// Check for low surface densities..
+	if(Sigma_gas < parameters.sigma_HI_crit){
+		return 0;
 	}
 
 	double Sigma_stars = 0;
@@ -280,6 +290,31 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	return cosmology->physical_to_comoving_mass(result);
 }
 
+double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z){
+
+	double re = cosmology->comoving_to_physical_size(rgas / constants::RDISK_HALF_SCALE, z);
+
+	double sigma0 = mgas/constants::PI2 / (re * re);
+
+	double r_thresh = -re * std::log(parameters.sigma_HI_crit / sigma0);
+
+	double m_in = mgas * ( 1- (1 + r_thresh/re) * std::exp(-r_thresh / re));
+
+	double f_ion = (mgas - m_in) / mgas;
+
+	if(f_ion < 0){
+		f_ion = 0;
+	}
+	else if (f_ion >1){
+		std::ostringstream os;
+		os << "Galaxy with ionised gas fraction >1! Not possible.";
+		throw invalid_argument(os.str());
+	}
+
+	return f_ion;
+
+}
+
 void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b)
 {
 	*m_mol = 0;
@@ -287,9 +322,15 @@ void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double 
 	*m_mol_b = 0;
 	*m_atom_b = 0;
 
+	double f_ion = 0;
+	double m_neutral = 0;
+
+	// Apply ionised fraction correction only in the case of disks.
 	if (galaxy->disk_gas.mass > 0) {
+		f_ion = ionised_gas_fraction(galaxy->disk_gas.mass, galaxy->disk_gas.rscale, z);
+		m_neutral = (1-f_ion) * galaxy->disk_gas.mass;
 		*m_mol = molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, z);
-		*m_atom = galaxy->disk_gas.mass - *m_mol;
+		*m_atom = m_neutral - *m_mol;
 	}
 	if (galaxy->bulge_gas.mass > 0) {
 		*m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, z);

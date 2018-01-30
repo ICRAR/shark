@@ -35,6 +35,14 @@ class StellarFeedbackParameters {
 public:
 	StellarFeedbackParameters(const Options &options);
 
+	enum StellarFeedbackModel {
+		FIRE = 0,
+		LGALAXIES,
+		GALFORM,
+		LAGOS13,
+		LAGOS13Trunc
+	};
+
 	double eps_halo;
 	double vkin_sn;
 	double beta_disk;
@@ -44,6 +52,8 @@ public:
 	double eps_disk;
 	double e_sn;
 	double eta_cc;
+
+	StellarFeedbackModel model;
 
 };
 

@@ -54,6 +54,7 @@ public:
 	double Accuracy_SFeqs;
 	double gas_velocity_dispersion;
 	double boost_starburst;
+	double sigma_HI_crit;
 };
 
 
@@ -86,6 +87,8 @@ public:
 	double molecular_surface_density(double r, void * params);
 
 	void get_molecular_gas(const GalaxyPtr &galaxy, double z, double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b);
+
+	double ionised_gas_fraction(double mgas, double rgas, double z);
 
 private:
 	StarFormationParameters parameters;
