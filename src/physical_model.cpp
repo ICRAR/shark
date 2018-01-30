@@ -57,7 +57,9 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	double SFR = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, params->redshift, params->burst);
 
-	double beta = model.stellar_feedback.outflow_rate(SFR, params->v, params->redshift); /*mass loading parameter*/
+	double beta1, beta2;
+
+	model.stellar_feedback.outflow_rate(SFR, params->v, params->redshift, &beta1, &beta2); /*mass loading parameter*/
 
 	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas metallicity*/
 
@@ -73,14 +75,14 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	double rsub = 1.0- R;
 
 	f[0] = SFR * rsub;
-	f[1] = mcoolrate - (rsub + beta) * SFR;
-	f[2] = - mcoolrate;
-	f[3] = beta * SFR;
+	f[1] = mcoolrate - (rsub + beta1) * SFR;
+	f[2] = - mcoolrate + (beta1 - beta2) * SFR;
+	f[3] = beta2 * SFR;
 	f[4] = rsub * zcold * SFR;
-	f[5] = mcoolrate * zhot + SFR * (yield - (rsub + beta) * zcold);
-	f[6] = - mcoolrate * zhot;
+	f[5] = mcoolrate * zhot + SFR * (yield - (rsub + beta1) * zcold);
+	f[6] = - mcoolrate * zhot + (beta1 - beta2) * zcold * SFR;
 
-	f[7] = beta * zcold * SFR;
+	f[7] = beta2 * zcold * SFR;
 
 	// Keeps track of total stellar mass formed.
 	f[8] = SFR;
@@ -95,7 +97,7 @@ BasicPhysicalModel::BasicPhysicalModel(
 		StellarFeedback stellar_feedback,
 		StarFormation star_formation,
 		RecyclingParameters recycling_parameters,
-		GasCoolingParameters gas_cooling_parameters) :
+		GasCoolingParameters gas_cooling_padoublerameters) :
 	PhysicalModel(ode_solver_precision, basic_physicalmodel_evaluator, gas_cooling),
 	stellar_feedback(stellar_feedback),
 	star_formation(star_formation),
@@ -149,7 +151,7 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
 
 	// Calculate average SFR.
-	galaxy.sfr_disk                         = y[8]/delta_t;
+	galaxy.sfr_disk                         += y[8]/delta_t;
 
 	/**
 	 * Check that metallicities are not negative. If they are, mass in metals is set to zero.
@@ -232,7 +234,7 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
 
 	// Calculate average SFR
-	galaxy.sfr_bulge                        = y[8]/delta_t;
+	galaxy.sfr_bulge                        += y[8]/delta_t;
 
 	/**
 	 * Check that metallicities are not negative. If they are, mass in metals is set to zero.

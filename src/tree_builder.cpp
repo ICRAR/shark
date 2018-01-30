@@ -455,6 +455,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 					}
 
 					LOG(warning) << os.str();
+					halo->remove_subhalo(subhalo);
 				}
 			}
 

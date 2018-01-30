@@ -46,8 +46,13 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	// First make sure central subhalos at this snapshot have only one central galaxy.
 	for(auto &halo: halos){
 		for(SubhaloPtr &subhalo: halo->all_subhalos()) {
+			// Make sure all SFRs are set to 0 for the next snapshot
+			for (GalaxyPtr & galaxy: subhalo->galaxies){
+				galaxy->sfr_bulge = 0;
+				galaxy->sfr_disk  = 0;
+			}
 
-			// First check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
+			// Check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
 			if(subhalo->last_snapshot_identified == subhalo->snapshot){
 				continue;
 			}

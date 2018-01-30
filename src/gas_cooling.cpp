@@ -236,8 +236,11 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     	//TODO: add gradual ram pressure stripping.
 
     	if(subhalo.hot_halo_gas.mass > 0 or subhalo.ejected_galaxy_gas.mass > 0 or subhalo.cold_halo_gas.mass){
-    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass += subhalo.hot_halo_gas.mass + subhalo.ejected_galaxy_gas.mass + subhalo.cold_halo_gas.mass;
-    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass_metals += subhalo.hot_halo_gas.mass_metals + subhalo.ejected_galaxy_gas.mass_metals + subhalo.cold_halo_gas.mass_metals;
+    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass += subhalo.hot_halo_gas.mass + subhalo.cold_halo_gas.mass;
+    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass_metals += subhalo.hot_halo_gas.mass_metals + subhalo.cold_halo_gas.mass_metals;
+
+    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas.mass += subhalo.ejected_galaxy_gas.mass;
+    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas.mass_metals += subhalo.ejected_galaxy_gas.mass_metals;
 
     		subhalo.hot_halo_gas.mass = 0;
     		subhalo.hot_halo_gas.mass_metals = 0;
@@ -285,7 +288,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     }
 
     // Calculate reincorporated mass and metals.
-	double mreinc_mass = reincorporation->reincorporated_mass_rate(halo, z) * deltat;
+	double mreinc_mass = reincorporation->reincorporated_mass(halo, z, deltat);
 
    	if(mreinc_mass > subhalo.ejected_galaxy_gas.mass){
    		mreinc_mass = subhalo.ejected_galaxy_gas.mass;
@@ -330,9 +333,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		throw invalid_data(os.str());
  	}
 
-   	double Tvir = 35.9*std::pow(vvir,2.0); //in K.
+   	double Tvir   = 35.9*std::pow(vvir,2.0); //in K.
    	double lgTvir = log10(Tvir); //in K.
-	double Rvir = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(subhalo), z);//physical Mpc
+	double Rvir   = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(subhalo), z);//physical Mpc
 
    	/**
    	 * Calculates the cooling Lambda function for the metallicity and temperature of this halo.

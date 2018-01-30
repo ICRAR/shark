@@ -35,13 +35,15 @@ class StellarFeedbackParameters {
 public:
 	StellarFeedbackParameters(const Options &options);
 
-	double eta_cc;
-	double e_sn;
-	double epsilon_cc;
-	double beta;
+	double eps_halo;
+	double vkin_sn;
+	double beta_disk;
+	double beta_halo;
 	double v_sn;
 	double redshift_power;
 	double eps_disk;
+	double e_sn;
+	double eta_cc;
 
 };
 
@@ -51,7 +53,7 @@ class StellarFeedback {
 public:
 	StellarFeedback(StellarFeedbackParameters parameters);
 
-	double outflow_rate(double sfr, double v, double z);
+	void outflow_rate(double sfr, double v, double z, double *b1, double *b2);
 
 private:
 	StellarFeedbackParameters parameters;
