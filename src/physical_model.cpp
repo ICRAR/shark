@@ -37,13 +37,15 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	/*
 	 * f[0]: stellar mass of galaxy.
 	 * f[1]: cold gas mass of galaxy.
-	 * f[2]: hot gas mass;
-	 * f[3]: ejected gas mass;
-	 * f[4]: metals locked in the stellar mass of galaxies.
-	 * f[5]: metals locked in the cold gas mass of galaxies.
-	 * f[6]: metals locked in the hot gas mass.
-	 * f[7]: metals locked in the ejected gas mass.
-	 * f[8]: total stellar mass formed (without recycling included).
+	 * f[2]: cold gas in the halo (the one cooling).
+	 * f[3]: hot gas mass.
+	 * f[4]: ejected gas mass.
+	 * f[5]: metals locked in the stellar mass of galaxies.
+	 * f[6]: metals locked in the cold gas mass of galaxies.
+	 * f[7]: metals locked in the cold gas mass of the halo.
+	 * f[8]: metals locked in the hot halo gas reservoir.
+	 * f[9]: metals locked in the ejected gas mass.
+	 * f[10]: total stellar mass formed (without recycling included).
 	 */
 
 	auto params= reinterpret_cast<BasicPhysicalModel::solver_params *>(data);
@@ -57,35 +59,37 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	double SFR = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, params->redshift, params->burst);
 
+	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas minimum metallicity*/
+	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*hot gas minimum metallicity*/
+
 	double beta1, beta2;
 
 	model.stellar_feedback.outflow_rate(SFR, params->v, params->redshift, &beta1, &beta2); /*mass loading parameter*/
 
-	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas metallicity*/
-
-	if(y[1] > 0 && y[5] > 0) {
-		zcold = y[5] / y[1];
+	if(y[1] > 0 && y[6] > 0) {
+		zcold = y[6] / y[1];
 	}
 
-	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*hot gas metallicity*/
-	if(y[2] > 0 && y[6] > 0) {
-		zhot = y[6] / y[2];
+	if(y[2] > 0 && y[7] > 0) {
+		zhot = y[7] / y[2];
 	}
 
-	double rsub = 1.0- R;
+	double rsub = 1.0-R;
 
 	f[0] = SFR * rsub;
 	f[1] = mcoolrate - (rsub + beta1) * SFR;
-	f[2] = - mcoolrate + (beta1 - beta2) * SFR;
-	f[3] = beta2 * SFR;
-	f[4] = rsub * zcold * SFR;
-	f[5] = mcoolrate * zhot + SFR * (yield - (rsub + beta1) * zcold);
-	f[6] = - mcoolrate * zhot + (beta1 - beta2) * zcold * SFR;
+	f[2] = - mcoolrate;
+	f[3] = (beta1 - beta2) * SFR;
+	f[4] = beta2 * SFR;
 
-	f[7] = beta2 * zcold * SFR;
+	f[5] = rsub * zcold * SFR;
+	f[6] = mcoolrate * zhot + SFR * (yield - (rsub + beta1) * zcold);
+	f[7] = - mcoolrate * zhot;
+	f[8] = (beta1 - beta2) * zcold * SFR;
+	f[9] = beta2 * zcold * SFR;
 
 	// Keeps track of total stellar mass formed.
-	f[8] = SFR;
+	f[10] = SFR;
 
 
 	return 0;
@@ -97,7 +101,7 @@ BasicPhysicalModel::BasicPhysicalModel(
 		StellarFeedback stellar_feedback,
 		StarFormation star_formation,
 		RecyclingParameters recycling_parameters,
-		GasCoolingParameters gas_cooling_padoublerameters) :
+		GasCoolingParameters gas_cooling_parameters) :
 	PhysicalModel(ode_solver_precision, basic_physicalmodel_evaluator, gas_cooling),
 	stellar_feedback(stellar_feedback),
 	star_formation(star_formation),
@@ -110,19 +114,36 @@ BasicPhysicalModel::BasicPhysicalModel(
 std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy)
 {
 
-	std::vector<double> y(9);
+	/** Variables introduced to solve ODE equations.
+	 * y[0]: stellar mass of galaxy.
+	 * y[1]: cold gas mass of galaxy.
+	 * y[2]: cold gas in the halo (the one cooling).
+	 * y[3]: hot gas mass;
+	 * y[4]: ejected gas mass;
+	 * y[5]: metals locked in the stellar mass of galaxies.
+	 * y[6]: metals locked in the cold gas mass of galaxies.
+	 * y[7]: metals locked in the cold gas mass of the halo.
+	 * y[8]: metals locked in the hot halo gas reservoir.
+	 * y[9]: metals locked in the ejected gas mass.
+	 * y[10]: total stellar mass formed (without recycling included).
+	 */
+
+	std::vector<double> y(11);
 
 	y[0] = galaxy.disk_stars.mass;
 	y[1] = galaxy.disk_gas.mass;
 	y[2] = subhalo.cold_halo_gas.mass; //This is the component that has the cooling gas.
-	y[3] = subhalo.ejected_galaxy_gas.mass;
-	y[4] = galaxy.disk_stars.mass_metals;
-	y[5] = galaxy.disk_gas.mass_metals;
-	y[6] = subhalo.cold_halo_gas.mass_metals;
-	y[7] = subhalo.ejected_galaxy_gas.mass_metals;
+	y[3] = subhalo.hot_halo_gas.mass;
+	y[4] = subhalo.ejected_galaxy_gas.mass;
+
+	y[5] = galaxy.disk_stars.mass_metals;
+	y[6] = galaxy.disk_gas.mass_metals;
+	y[7] = subhalo.cold_halo_gas.mass_metals;
+	y[8] = subhalo.hot_halo_gas.mass_metals;
+	y[9] = subhalo.ejected_galaxy_gas.mass_metals;
 
 	// Variable to keep track of total stellar mass formed.
-	y[8] = 0;
+	y[10] = 0;
 	return y;
 }
 
@@ -141,17 +162,21 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 		throw invalid_argument(os.str());
 	}
 
+
 	galaxy.disk_stars.mass 					= y[0];
 	galaxy.disk_gas.mass   					= y[1];
 	subhalo.cold_halo_gas.mass 				= y[2];
-	subhalo.ejected_galaxy_gas.mass 		= y[3];
-	galaxy.disk_stars.mass_metals 			= y[4];
-	galaxy.disk_gas.mass_metals 			= y[5];
-	subhalo.cold_halo_gas.mass_metals 		= y[6];
-	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
+	subhalo.hot_halo_gas.mass               = y[3];
+	subhalo.ejected_galaxy_gas.mass 		= y[4];
+
+	galaxy.disk_stars.mass_metals 			= y[5];
+	galaxy.disk_gas.mass_metals 			= y[6];
+	subhalo.cold_halo_gas.mass_metals 		= y[7];
+	subhalo.hot_halo_gas.mass_metals        = y[8];
+	subhalo.ejected_galaxy_gas.mass_metals 	= y[9];
 
 	// Calculate average SFR.
-	galaxy.sfr_disk                         += y[8]/delta_t;
+	galaxy.sfr_disk                         += y[10]/delta_t;
 
 	/**
 	 * Check that metallicities are not negative. If they are, mass in metals is set to zero.
@@ -164,6 +189,9 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	}
 	if(subhalo.cold_halo_gas.mass_metals < tolerance){
 		subhalo.cold_halo_gas.mass_metals = 0;
+	}
+	if(subhalo.hot_halo_gas.mass_metals < tolerance){
+		subhalo.hot_halo_gas.mass_metals = 0;
 	}
 	if(subhalo.ejected_galaxy_gas.mass_metals < tolerance){
 		subhalo.ejected_galaxy_gas.mass_metals = 0;
@@ -185,30 +213,55 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 		subhalo.cold_halo_gas.mass = 0;
 		subhalo.cold_halo_gas.mass_metals = 0;
 	}
+	if(subhalo.hot_halo_gas.mass < tolerance){
+		subhalo.hot_halo_gas.mass = 0;
+		subhalo.hot_halo_gas.mass_metals = 0;
+	}
 	if(subhalo.ejected_galaxy_gas.mass < tolerance){
 		subhalo.ejected_galaxy_gas.mass = 0;
 		subhalo.ejected_galaxy_gas.mass_metals = 0;
 	}
 
+	/* Check unrealistic cases*/
+	if(galaxy.disk_gas.mass < galaxy.disk_gas.mass_metals || subhalo.hot_halo_gas.mass < subhalo.hot_halo_gas.mass_metals || subhalo.ejected_galaxy_gas.mass < subhalo.ejected_galaxy_gas.mass_metals){
+		std::ostringstream os;
+		os << "Galaxy has more gas mass in metals that total gas mass.";
+		throw invalid_argument(os.str());
+	}
 }
 
 
 std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy)
 {
+	/** Variables introduced to solve ODE equations.
+	 * y[0]: stellar mass of galaxy.
+	 * y[1]: cold gas mass of galaxy.
+	 * y[2]: cold gas in the halo (the one cooling); =0 in the case of starbursts.
+	 * y[3]: hot gas mass;
+	 * y[4]: ejected gas mass;
+	 * y[5]: metals locked in the stellar mass of galaxies.
+	 * y[6]: metals locked in the cold gas mass of galaxies.
+	 * y[7]: metals locked in the cold gas mass of the halo.
+	 * y[8]: metals locked in the hot halo gas reservoir.
+	 * y[9]: metals locked in the ejected gas mass.
+	 * y[10]: total stellar mass formed (without recycling included).
+	 */
 
-	std::vector<double> y(9);
+	std::vector<double> y(11);
 
 	y[0] = galaxy.bulge_stars.mass;
 	y[1] = galaxy.bulge_gas.mass;
-	y[2] = 0.0; //This is the component that has the cooling gas.
-	y[3] = subhalo.ejected_galaxy_gas.mass;
-	y[4] = galaxy.bulge_stars.mass_metals;
-	y[5] = galaxy.bulge_gas.mass_metals;
-	y[6] = 0.0; //This is the component that has the cooling gas mass in metals.
-	y[7] = subhalo.ejected_galaxy_gas.mass_metals;
+	y[2] = 0; //there is no gas cooling.
+	y[3] = subhalo.hot_halo_gas.mass;
+	y[4] = subhalo.ejected_galaxy_gas.mass;
+	y[5] = galaxy.bulge_stars.mass_metals;
+	y[6] = galaxy.bulge_gas.mass_metals;
+	y[7] = 0; //there is no gas cooling.
+	y[8] = subhalo.hot_halo_gas.mass_metals;
+	y[9] = subhalo.ejected_galaxy_gas.mass_metals;
 
 	// Variable to keep track of total stellar mass created.
-	y[8] = 0;
+	y[10] = 0;
 
 	return y;
 }
@@ -224,17 +277,20 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 		throw invalid_argument(os.str());
 	}
 
+
 	/*In the case of starbursts one should be using the bulge instead of the disk
 	 * properties.*/
 	galaxy.bulge_stars.mass 				= y[0];
 	galaxy.bulge_gas.mass   				= y[1];
-	subhalo.ejected_galaxy_gas.mass 		= y[3];
-	galaxy.bulge_stars.mass_metals 			= y[4];
-	galaxy.bulge_gas.mass_metals 			= y[5];
-	subhalo.ejected_galaxy_gas.mass_metals 	= y[7];
+	subhalo.hot_halo_gas.mass               = y[3];
+	subhalo.ejected_galaxy_gas.mass 		= y[4];
+	galaxy.bulge_stars.mass_metals 			= y[5];
+	galaxy.bulge_gas.mass_metals 			= y[6];
+	subhalo.hot_halo_gas.mass_metals        = y[8];
+	subhalo.ejected_galaxy_gas.mass_metals 	= y[9];
 
 	// Calculate average SFR
-	galaxy.sfr_bulge                        += y[8]/delta_t;
+	galaxy.sfr_bulge                        += y[10]/delta_t;
 
 	/**
 	 * Check that metallicities are not negative. If they are, mass in metals is set to zero.
@@ -244,6 +300,9 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	}
 	if(galaxy.bulge_gas.mass_metals < tolerance){
 		galaxy.bulge_gas.mass_metals = 0;
+	}
+	if(subhalo.hot_halo_gas.mass_metals < tolerance){
+		subhalo.hot_halo_gas.mass_metals = 0;
 	}
 	if(subhalo.ejected_galaxy_gas.mass_metals < tolerance){
 		subhalo.ejected_galaxy_gas.mass_metals = 0;
@@ -261,9 +320,20 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 		galaxy.bulge_gas.mass = 0;
 		galaxy.bulge_gas.mass_metals = 0;
 	}
+	if(subhalo.hot_halo_gas.mass < tolerance){
+		subhalo.hot_halo_gas.mass = 0;
+		subhalo.hot_halo_gas.mass_metals = 0;
+	}
 	if(subhalo.ejected_galaxy_gas.mass < tolerance){
 		subhalo.ejected_galaxy_gas.mass = 0;
 		subhalo.ejected_galaxy_gas.mass_metals = 0;
+	}
+
+	/* Check unrealistic cases*/
+	if(galaxy.bulge_gas.mass < galaxy.bulge_gas.mass_metals || subhalo.hot_halo_gas.mass < subhalo.hot_halo_gas.mass_metals || subhalo.ejected_galaxy_gas.mass < subhalo.ejected_galaxy_gas.mass_metals){
+		std::ostringstream os;
+		os << "Galaxy has more gas mass in metals that total gas mass.";
+		throw invalid_argument(os.str());
 	}
 
 }

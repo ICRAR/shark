@@ -56,8 +56,8 @@ StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr
 
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double z, bool burst) {
 
-	if (mcold <= 0 or rgas <= 0) {
-		if(mcold > 0 && rgas <= 0){
+	if (mcold <= constants::EPS3 or rgas <= 0) {
+		if(mcold > constants::EPS3 && rgas <= 0){
 			std::ostringstream os;
 			os << "Galaxy mcold > 0 and rgas = 0";
 			throw invalid_argument(os.str());

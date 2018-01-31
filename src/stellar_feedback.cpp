@@ -94,9 +94,6 @@ StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters) :
 }
 
 void StellarFeedback::outflow_rate(double sfr, double v, double z, double *b1, double *b2) {
-	/*
-	 * TODO: add here other models for the outflow rate (e.g. GALFORM models and momentum driven models).
-	 */
 
 	*b1 = 0;
 	*b2 = 0;
@@ -154,11 +151,11 @@ void StellarFeedback::outflow_rate(double sfr, double v, double z, double *b1, d
 
 	double mejected = eps_halo / energ_halo * sfr - mreheat;
 
-
 	if(mejected > 0) {
 		*b2 = mejected/sfr;
 		if(*b2 > *b1){
 			*b2 = *b1;
+			*b1 += constants::EPS3; //add a small number to b1 to make it strictly larger than b2.
 		}
 	}
 	else{
