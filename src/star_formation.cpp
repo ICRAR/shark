@@ -329,7 +329,7 @@ void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double 
 	if (galaxy->disk_gas.mass > 0) {
 		f_ion = ionised_gas_fraction(galaxy->disk_gas.mass, galaxy->disk_gas.rscale, z);
 		m_neutral = (1-f_ion) * galaxy->disk_gas.mass;
-		*m_mol = molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, z);
+		*m_mol = (1-f_ion) * molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, z);
 		*m_atom = m_neutral - *m_mol;
 	}
 	if (galaxy->bulge_gas.mass > 0) {
