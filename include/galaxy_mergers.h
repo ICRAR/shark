@@ -34,6 +34,7 @@ class GalaxyMergerParameters {
 
 		float major_merger_ratio;
 		float minor_merger_burst_ratio;
+		float gas_fraction_burst_ratio;
 		int merger_random_seed;
 		float tau_delay;
 		std::vector<double> jiang08;

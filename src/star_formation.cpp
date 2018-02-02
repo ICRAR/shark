@@ -23,7 +23,7 @@ struct galaxy_properties_for_integration {
 };
 
 StarFormationParameters::StarFormationParameters(const Options &options) :
-	Molecular_BR_Law(0),
+	model(BR06),
 	nu_sf(0),
 	Po(0),
 	beta_press(0),
@@ -32,7 +32,7 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	sigma_HI_crit(0),
 	boost_starburst(1)
 {
-	options.load("star_formation.Molecular_BR_law", Molecular_BR_Law);
+	options.load("star_formation.model", model);
 	options.load("star_formation.nu_sf", nu_sf);
 	options.load("star_formation.Po", Po);
 	options.load("star_formation.beta_press", beta_press);
@@ -45,6 +45,23 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	sigma_HI_crit = sigma_HI_crit * std::pow(constants::MEGA,2.0);
 }
 
+
+template <>
+StarFormationParameters::StarFormationModel
+Options::get<StarFormationParameters::StarFormationModel>(const std::string &name, const std::string &value) const {
+	if ( value == "BR06" ) {
+		return StarFormationParameters::BR06;
+	}
+	else if ( value == "GK11" ) {
+		return StarFormationParameters::GK11;
+	}
+	else if (value == "K13"){
+		return StarFormationParameters::K13;
+	}
+	std::ostringstream os;
+	os << name << " option value invalid: " << value << ". Supported values are BR06, GK11 and K13";
+	throw invalid_option(os.str());
+}
 
 StarFormation::StarFormation(StarFormationParameters parameters, std::shared_ptr<Cosmology> cosmology) :
 	parameters(parameters),
@@ -201,7 +218,17 @@ double StarFormation::molecular_surface_density(double r, void * params){
 
 double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double r){
 
-	double rmol = std::pow((midplane_pressure(Sigma_gas,Sigma_stars,r)/parameters.Po),parameters.beta_press);
+	double rmol = 0;
+
+	if(parameters.model == StarFormationParameters::BR06){
+		rmol = std::pow((midplane_pressure(Sigma_gas,Sigma_stars,r)/parameters.Po),parameters.beta_press);
+	}
+	else if (parameters.model == StarFormationParameters::GK11){
+		//TODO
+	}
+	else if (parameters.model == StarFormationParameters::K13){
+		//TODO
+	}
 
 	double fmol = rmol/(1+rmol);
 

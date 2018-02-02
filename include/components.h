@@ -281,7 +281,8 @@ struct CoolingSubhaloTracking {
 		deltat(),
 		temp(),
 		mass(),
-		tcooling()
+		tcooling(),
+		rheat(0)
 	{
 		//no=op
 	};
@@ -289,6 +290,7 @@ struct CoolingSubhaloTracking {
 	std::vector<double> temp;
 	std::vector<double> mass;
 	std::vector<double> tcooling;
+	double rheat;
 };
 
 

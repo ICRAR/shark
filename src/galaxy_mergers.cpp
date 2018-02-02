@@ -24,6 +24,7 @@ namespace shark {
 GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	major_merger_ratio(0),
 	minor_merger_burst_ratio(0),
+	gas_fraction_burst_ratio(0),
 	merger_random_seed(-1),
 	jiang08(4),
 	f_orbit(1),
@@ -32,6 +33,8 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 
 	options.load("galaxy_mergers.major_merger_ratio", major_merger_ratio, true);
 	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio, true);
+	options.load("galaxy_mergers.gas_fraction_burst_ratio", gas_fraction_burst_ratio, true);
+
 	options.load("galaxy_mergers.merger_random_seed", merger_random_seed);
 
 	options.load("galaxy_mergers.jiang08_a", jiang08[0], true);
@@ -435,7 +438,9 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->disk_gas.mass += satellite->gas_mass();
 		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
 
-		if(mass_ratio >= parameters.minor_merger_burst_ratio){
+		double mgas_ratio  = central->gas_mass()/central->stellar_mass();
+
+		if(mass_ratio >= parameters.minor_merger_burst_ratio & mgas_ratio > parameters.gas_fraction_burst_ratio){
 
 			central->bulge_gas.mass += central->disk_gas.mass;
 			central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals;

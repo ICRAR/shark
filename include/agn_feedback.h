@@ -59,6 +59,7 @@ public:
 	double agn_bolometric_luminosity(double macc);
 	double smbh_growth_starburst(double mgas, double vvir);
 	double smbh_accretion_timescale(Galaxy &galaxy, double z);
+	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir);
 
 	// TODO: move this to private when possible
 	AGNFeedbackParameters parameters;

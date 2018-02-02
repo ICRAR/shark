@@ -126,6 +126,18 @@ double AGNFeedback::agn_bolometric_luminosity(double macc) {
 	return Lbol;
 }
 
+double AGNFeedback::accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir){
+
+	using namespace constants;
+
+	double Lbol = mheatrate * (0.5*std::pow(vvir*KM2CM,2.0)) / MACCRETION_cgs_simu / 1e40;
+
+	double macc = Lbol / (parameters.nu_smbh) / std::pow(c_light_cm,2.0) * 1e40 * MACCRETION_cgs_simu;
+
+	return macc;
+
+}
+
 double AGNFeedback::smbh_growth_starburst(double mgas, double vvir){
 
 	double m = 0;

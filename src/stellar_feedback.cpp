@@ -116,13 +116,13 @@ void StellarFeedback::outflow_rate(double sfr, double v, double z, double *b1, d
 	}
 	else if (parameters.model == StellarFeedbackParameters::LAGOS13){
 
-		power_index += 2.0*std::log10(1+z);
+		//power_index += 2.0*std::log10(1+z);
 		double vhot = parameters.v_sn*std::pow(1+z,parameters.redshift_power);
 		const_sn =  std::pow(vhot/v,power_index);
 	}
 
 	else if (parameters.model == StellarFeedbackParameters::LAGOS13Trunc){
-		power_index += 2.0*std::log10(1+z);
+		//power_index += 2.0*std::log10(1+z);
 		double vhot = parameters.v_sn*std::pow(1+z,parameters.redshift_power);
 
 		if(v > parameters.v_sn){

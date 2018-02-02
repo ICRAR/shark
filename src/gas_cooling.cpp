@@ -445,12 +445,25 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     	//Mass heating rate from AGN in units of Msun/Gyr.
     	double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
 
-    	//modify cooling rate according to heating rate.
-    	if(mheatrate < coolingrate){
-    		coolingrate = coolingrate - mheatrate;
+    	// Calculate heating radius
+    	double rheat = mheatrate/coolingrate * r_cool;
+
+    	if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+    		subhalo.cooling_subhalo_tracking.rheat = rheat;
     	}
-    	else{
-    		/*CHECK: If mheatrate is > than cooling rate, then one needs to truncate the BH accretion rate to match that heating rate?*/
+
+    	double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
+
+    	if(r_ratio > 1){
+    		r_ratio = 1;
+        	//Redefine mheatrate and macc_h accordingly.
+        	mheatrate = r_ratio * coolingrate;
+        	central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh_limit(mheatrate,vvir);
+    	}
+
+    	//modify cooling rate according to heating rate.
+    	coolingrate = (1 - r_ratio)*coolingrate;
+    	if(coolingrate < 0){
     		coolingrate = 0;
     	}
 

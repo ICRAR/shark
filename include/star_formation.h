@@ -47,7 +47,14 @@ class StarFormationParameters {
 public:
 	StarFormationParameters(const Options &options);
 
-	int Molecular_BR_Law;
+	enum StarFormationModel {
+		BR06 = 0,
+		GK11,
+		K13
+	};
+
+	StarFormationModel model;
+
 	double nu_sf;
 	double Po;
 	double beta_press;
