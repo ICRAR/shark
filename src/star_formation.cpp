@@ -119,7 +119,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 	StarFormationAndProps sf_and_props = {this, &props};
 	// Adopt 5% accuracy for star formation solution.
-	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.05);
+	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
 
 	/*int bins = 30;
 	double integral = 0.0;

@@ -24,6 +24,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	accretion_eff_cooling(0),
 	kappa_agn(0),
 	nu_smbh(0),
+	mass_thresh(0),
 	model(GALFORM)
 {
 	options.load("agn_feedback.mseed",mseed);
@@ -42,7 +43,10 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
+	options.load("agn_feedback.mass_thresh", mass_thresh);
+
 }
+
 template <>
 AGNFeedbackParameters::AGNFeedbackModel
 Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, const std::string &value) const {

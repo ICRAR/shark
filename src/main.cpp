@@ -326,7 +326,7 @@ int run(int argc, char **argv) {
 
 
 		/*track all baryons of this snapshot*/
-		track_total_baryons(star_formation, all_halos_this_snapshot, *AllBaryons, sim_params.redshifts[snapshot], snapshot);
+		track_total_baryons(star_formation, *cosmology, all_halos_this_snapshot, *AllBaryons, sim_params.redshifts[snapshot], snapshot);
 
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		//do_stuff_at_halo_level(all_halos_this_snapshot);

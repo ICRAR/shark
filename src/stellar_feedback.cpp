@@ -82,6 +82,9 @@ Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string 
 	else if (value == "LAGOS13Trunc"){
 		return StellarFeedbackParameters::LAGOS13Trunc;
 	}
+	else if (value == "GALFORMFIRE"){
+		return StellarFeedbackParameters::GALFORMFIRE;
+	}
 	std::ostringstream os;
 	os << name << " option value invalid: " << value << ". Supported values are FIRE, GALFORM, LGALAXIES and LAGOS13";
 	throw invalid_option(os.str());
@@ -139,6 +142,9 @@ void StellarFeedback::outflow_rate(double sfr, double v, double z, double *b1, d
 	else if (parameters.model == StellarFeedbackParameters::LGALAXIES){
 
 		const_sn = 0.5 + std::pow(parameters.v_sn/v,power_index);
+	}
+	else if (parameters.model == StellarFeedbackParameters::GALFORMFIRE){
+		const_sn = std::pow((1+z),parameters.redshift_power) * std::pow(parameters.v_sn/v,power_index);
 	}
 
 	*b1 = parameters.eps_disk * const_sn;

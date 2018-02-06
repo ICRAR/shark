@@ -34,6 +34,7 @@ public:
 	double accretion_eff_cooling;
 	double kappa_agn;
 	double nu_smbh;
+	double mass_thresh;
 
 	enum AGNFeedbackModel {
 		LGALAXIES = 0,

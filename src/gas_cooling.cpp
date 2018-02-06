@@ -224,6 +224,8 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     //Define host halo
     auto halo = subhalo.host_halo;
 
+  	halo->cooling_rate = 0;
+
     // Add up accreted mass and metals.
    	subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
    	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;
@@ -434,7 +436,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of GALFORM AGN feedback model.
 
-    else if(agnfeedback->parameters.model == AGNFeedbackParameters::LGALAXIES){
+    else if(agnfeedback->parameters.model == AGNFeedbackParameters::LGALAXIES and halo->Mvir > agnfeedback->parameters.mass_thresh){
     	//a pseudo cooling luminosity k*T/lambda(T,Z)
     	double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
    		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);

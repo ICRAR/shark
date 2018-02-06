@@ -40,7 +40,8 @@ public:
 		LGALAXIES,
 		GALFORM,
 		LAGOS13,
-		LAGOS13Trunc
+		LAGOS13Trunc,
+		GALFORMFIRE
 	};
 
 	double eps_halo;
