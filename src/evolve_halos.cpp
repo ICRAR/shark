@@ -186,6 +186,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, con
 	BaryonBase mcoldhalo_total;
 	BaryonBase mejectedhalo_total;
 	BaryonBase mstars_total;
+	BaryonBase mstars_bursts;
 	BaryonBase MBH_total;
 	BaryonBase mHI_total;
 	BaryonBase mH2_total;
@@ -233,6 +234,9 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, con
 				mstars_total.mass += galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
 				mstars_total.mass_metals += galaxy->disk_stars.mass_metals + galaxy->bulge_stars.mass_metals;
 
+				mstars_bursts.mass += galaxy->burst_stars.mass;
+				mstars_bursts.mass_metals += galaxy->burst_stars.mass_metals;
+
 				SFR_total_disk += galaxy->sfr_disk;
 				SFR_total_burst += galaxy->sfr_bulge;
 
@@ -244,6 +248,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, con
 	total_baryons = mstars_total.mass + mcold_total.mass + MBH_total.mass + mhothalo_total.mass + mcoldhalo_total.mass + mejectedhalo_total.mass;
 
 	AllBaryons.mstars.push_back(mstars_total);
+	AllBaryons.mstars_burst.push_back(mstars_bursts);
 	AllBaryons.mcold.push_back(mcold_total);
 	AllBaryons.mHI.push_back(mHI_total);
 	AllBaryons.mH2.push_back(mH2_total);

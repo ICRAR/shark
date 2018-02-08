@@ -111,10 +111,12 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	// Create all galaxies properties to write
 	vector<float> mstars_disk;
 	vector<float> mstars_bulge;
+	vector<float> mstars_burst;
 	vector<float> mgas_disk;
 	vector<float> mgas_bulge;
 	vector<float> mstars_metals_disk;
 	vector<float> mstars_metals_bulge;
+	vector<float> mstars_metals_burst;
 	vector<float> mgas_metals_disk;
 	vector<float> mgas_metals_bulge;
 	vector<float> mmol_disk;
@@ -201,31 +203,46 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 				double m_atom_b;
 				starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b);
 
+				// Gas components separated into HI and H2.
 				mmol_disk.push_back(m_mol);
 				mmol_bulge.push_back(m_mol_b);
 				matom_disk.push_back(m_atom);
 				matom_bulge.push_back(m_atom_b);
 
+				// Stellar components
 				mstars_disk.push_back(galaxy->disk_stars.mass);
 				mstars_bulge.push_back(galaxy->bulge_stars.mass);
+				mstars_burst.push_back(galaxy->burst_stars.mass);
+
+				// Gas components
 				mgas_disk.push_back(galaxy->disk_gas.mass);
 				mgas_bulge.push_back(galaxy->bulge_gas.mass);
+
+				// Metals of the stellar components.
 				mstars_metals_disk.push_back(galaxy->disk_stars.mass_metals);
 				mstars_metals_bulge.push_back(galaxy->bulge_stars.mass_metals);
+				mstars_metals_burst.push_back(galaxy->burst_stars.mass_metals);
+
+				// Metals of the gas components.
 				mgas_metals_disk.push_back(galaxy->disk_gas.mass_metals);
 				mgas_metals_bulge.push_back(galaxy->bulge_gas.mass_metals);
+
+				// SFRs in disks and bulges.
 				sfr_disk.push_back(galaxy->sfr_disk);
 				sfr_burst.push_back(galaxy->sfr_bulge);
+
+				// Black hole properties.
 				mBH.push_back(galaxy->smbh.mass);
 				mBH_acc_hh.push_back(galaxy->smbh.macc_hh);
 				mBH_acc_sb.push_back(galaxy->smbh.macc_sb);
 
+				// Sizes and specific angular momentum of disks and bulges.
 				rdisk.push_back(galaxy->disk_stars.rscale);
 				rbulge.push_back(galaxy->bulge_stars.rscale);
-
 				sAM_disk.push_back(galaxy->disk_stars.sAM);
 				sAM_bulge.push_back(galaxy->bulge_stars.sAM);
 
+				// Halo properties below.
 				double mhot_gal = 0;
 				double mzhot_gal = 0;
 				double mreheat = 0;
@@ -277,6 +294,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 				vvir_hosthalo.push_back(vhalo);
 				cnfw_subhalo.push_back(c_sub);
 
+				// Galaxy position and velocity.
 				position_x.push_back(pos.x);
 				position_y.push_back(pos.y);
 				position_z.push_back(pos.z);
@@ -302,10 +320,15 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	file.write_dataset("Galaxies/mstars_disk", mstars_disk);
 	file.write_dataset("Galaxies/mstars_bulge", mstars_bulge);
+	file.write_dataset("Galaxies/mstars_burst", mstars_burst);
+
 	file.write_dataset("Galaxies/mgas_disk", mgas_disk);
 	file.write_dataset("Galaxies/mgas_bulge", mgas_bulge);
+
 	file.write_dataset("Galaxies/mstars_metals_disk",mstars_metals_disk);
 	file.write_dataset("Galaxies/mstars_metals_bulge", mstars_metals_bulge);
+	file.write_dataset("Galaxies/mstars_metals_burst", mstars_metals_burst);
+
 	file.write_dataset("Galaxies/mgas_metals_disk", mgas_metals_disk);
 	file.write_dataset("Galaxies/mgas_metals_bulge", mgas_metals_bulge);
 	file.write_dataset("Galaxies/mmol_disk",mmol_disk);
@@ -322,7 +345,6 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	file.write_dataset("Galaxies/rdisk", rdisk);
 	file.write_dataset("Galaxies/rbulge", rbulge);
-
 	file.write_dataset("Galaxies/specific_angular_momentum_disk", sAM_disk);
 	file.write_dataset("Galaxies/specific_angular_momentum_bulge", sAM_bulge);
 
@@ -369,6 +391,8 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Global/mcold_metals",AllBaryons.get_metals(AllBaryons.mcold));
 	file.write_dataset("Global/mstars",AllBaryons.get_masses(AllBaryons.mstars));
 	file.write_dataset("Global/mstars_metals",AllBaryons.get_metals(AllBaryons.mstars));
+	file.write_dataset("Global/mstars_bursts",AllBaryons.get_masses(AllBaryons.mstars_burst));
+	file.write_dataset("Global/mstars_metals_bursts",AllBaryons.get_metals(AllBaryons.mstars_burst));
 	file.write_dataset("Global/mHI",AllBaryons.get_masses(AllBaryons.mHI));
 	file.write_dataset("Global/mH2",AllBaryons.get_masses(AllBaryons.mH2));
 	file.write_dataset("Global/mBH",AllBaryons.get_masses(AllBaryons.mBH));

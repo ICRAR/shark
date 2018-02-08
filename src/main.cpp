@@ -240,7 +240,7 @@ int run(int argc, char **argv) {
 	Simulation simulation{sim_params, cosmology};
 	GasCooling gas_cooling{gas_cooling_params, reio_params, cosmology, agnfeedback, dark_matter_halos, reincorporation};
 	StellarFeedback stellar_feedback{stellar_feedback_params};
-	StarFormation star_formation{star_formation_params, cosmology};
+	StarFormation star_formation{star_formation_params, recycling_parameters, cosmology};
 
 	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters, gas_cooling_params);
 

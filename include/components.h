@@ -179,6 +179,7 @@ public:
 	Baryon bulge_gas;
 	Baryon disk_stars;
 	Baryon disk_gas;
+	Baryon burst_stars;
 	BlackHole smbh;
 
 	//save average star formation rates.
@@ -812,6 +813,7 @@ public:
 	/**
 	 * mcold: total cold gas mass in disk+bulge.
 	 * mstars: total stellar mass in disk+bulge.
+	 * mastars_burst: total stellar mass formed via bursts.
 	 * mhot_halo: total hot halo gas.
 	 * mcold_halo: total cold halo gas (that is cooling during the current snapshot).
 	 * mejected_halo: total hot gas that has been ejected from galaxies due to feeback and that has not been reincorporated yet onto the hot halo gas reservoir.
@@ -825,6 +827,7 @@ public:
 
 	std::vector<BaryonBase> mcold;
 	std::vector<BaryonBase> mstars;
+	std::vector<BaryonBase> mstars_burst;
 	std::vector<BaryonBase> mhot_halo;
 	std::vector<BaryonBase> mcold_halo;
 	std::vector<BaryonBase> mejected_halo;

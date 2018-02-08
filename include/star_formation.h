@@ -39,6 +39,7 @@
 #include "cosmology.h"
 #include "integrator.h"
 #include "options.h"
+#include "recycling.h"
 
 namespace shark {
 
@@ -49,7 +50,7 @@ public:
 
 	enum StarFormationModel {
 		BR06 = 0,
-		GK11,
+		GD14,
 		K13
 	};
 
@@ -68,18 +69,20 @@ public:
 class StarFormation {
 
 public:
-	StarFormation(StarFormationParameters parameters, std::shared_ptr<Cosmology> cosmology);
+	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, std::shared_ptr<Cosmology> cosmology);
 
 	/**
 	 * All input quantities should be in comoving units.
 	 */
-	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double z, bool burst);
+	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double zgas, double z, bool burst);
 
 	double star_formation_rate_surface_density(double r, void * params);
 
-	double fmol(double Sigma_gas, double Sigma_stars, double r);
+	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r);
 
 	double midplane_pressure(double Sigma_gas, double Sigma_stars, double r);
+
+	double gd14_sigma_norm(double d_mw, double u_mw);
 
 	unsigned long int get_integration_intervals() {
 		return integrator.get_num_intervals();
@@ -89,7 +92,7 @@ public:
 		return integrator.reset_num_intervals();
 	}
 
-	double molecular_hydrogen(double mcold, double mstars, double rgas, double rstars, double z);
+	double molecular_hydrogen(double mcold, double mstars, double rgas, double rstars, double zgas, double z);
 
 	double molecular_surface_density(double r, void * params);
 
@@ -99,6 +102,7 @@ public:
 
 private:
 	StarFormationParameters parameters;
+	RecyclingParameters recycleparams;
 	std::shared_ptr<Cosmology> cosmology;
 	Integrator integrator;
 

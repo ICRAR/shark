@@ -57,14 +57,8 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	double mcoolrate = params->mcoolrate; /*cooling rate in units of Msun/Gyr*/
 
-	double SFR = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, params->redshift, params->burst);
-
 	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas minimum metallicity*/
 	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*hot gas minimum metallicity*/
-
-	double beta1, beta2;
-
-	model.stellar_feedback.outflow_rate(SFR, params->v, params->redshift, &beta1, &beta2); /*mass loading parameter*/
 
 	if(y[1] > 0 && y[6] > 0) {
 		zcold = y[6] / y[1];
@@ -73,6 +67,12 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	if(y[2] > 0 && y[7] > 0) {
 		zhot = y[7] / y[2];
 	}
+
+	double SFR = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, zcold, params->redshift, params->burst);
+
+	double beta1, beta2;
+
+	model.stellar_feedback.outflow_rate(SFR, params->v, params->redshift, &beta1, &beta2); /*mass loading parameter*/
 
 	double rsub = 1.0-R;
 
@@ -161,7 +161,6 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 		os << "Galaxy decreased its stellar mass after disk star formation process.";
 		throw invalid_argument(os.str());
 	}
-
 
 	galaxy.disk_stars.mass 					= y[0];
 	galaxy.disk_gas.mass   					= y[1];
@@ -280,6 +279,11 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 
 	/*In the case of starbursts one should be using the bulge instead of the disk
 	 * properties.*/
+
+	// Accummulated burst stellar mass:
+	galaxy.burst_stars.mass                 += y[0] -  galaxy.bulge_stars.mass;
+	galaxy.burst_stars.mass_metals          += y[5] -  galaxy.bulge_stars.mass_metals;
+
 	galaxy.bulge_stars.mass 				= y[0];
 	galaxy.bulge_gas.mass   				= y[1];
 	subhalo.hot_halo_gas.mass               = y[3];
