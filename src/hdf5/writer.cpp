@@ -33,6 +33,8 @@ namespace shark {
 
 namespace hdf5 {
 
+const std::string Writer::NO_COMMENT;
+
 template <H5G_obj_t E>
 inline static
 typename entity_traits<E>::rettype

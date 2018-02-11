@@ -198,19 +198,27 @@ public:
 	}
 
 	template<typename T>
-	void write_dataset(const std::string &name, const T &value) {
+	void write_dataset(const std::string &name, const T &value, const std::string &comment = NO_COMMENT) {
 		H5::DataSpace dataSpace(H5S_SCALAR);
 		H5::DataType dataType = _datatype<T>(value);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
+		if (not comment.empty()) {
+			dataset.setComment(comment);
+			_create_and_write_attribute(dataset, "comment", comment);
+		}
 		_write_dataset(dataset, dataType, dataSpace, value);
 	}
 
 	template<typename T>
-	void write_dataset(const std::string &name, const std::vector<T> &values) {
+	void write_dataset(const std::string &name, const std::vector<T> &values, const std::string &comment = NO_COMMENT) {
 		const hsize_t size = values.size();
 		H5::DataSpace dataSpace(1, &size);
 		H5::DataType dataType = _datatype<T>(values);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
+		if (not comment.empty()) {
+			dataset.setComment(comment);
+			_create_and_write_attribute(dataset, "comment", comment);
+		}
 		_write_dataset(dataset, dataType, dataSpace, values);
 	}
 
@@ -219,6 +227,7 @@ private:
 	H5::Group ensure_group(const std::vector<std::string> &path) const;
 	H5::DataSet ensure_dataset(const std::vector<std::string> &path, const H5::DataType &dataType, const H5::DataSpace &dataSpace) const;
 
+	static const std::string NO_COMMENT;
 };
 
 }  // namespace hdf5
