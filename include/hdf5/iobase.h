@@ -54,9 +54,14 @@ public:
 	IOBase(const std::string &filename, unsigned int flags);
 
 	/**
-	 * Closes the file
+	 * Closes the file and destroys this class
 	 */
 	~IOBase();
+
+	/**
+	 * Closes the file
+	 */
+	void close();
 
 	/**
 	 * Returns the filename being handled by this class
@@ -82,6 +87,9 @@ protected:
 
 	H5::H5File hdf5_file;
 
+private:
+
+	bool opened;
 };
 
 }  // namespace hdf5

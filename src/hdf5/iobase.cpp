@@ -37,20 +37,32 @@ namespace shark {
 namespace hdf5 {
 
 IOBase::IOBase(const string &filename, unsigned int flags) :
-	hdf5_file(filename, flags)
+	hdf5_file(filename, flags),
+	opened(true)
 {
 	// no-op
 }
 
 IOBase::IOBase() :
-	hdf5_file()
+	hdf5_file(),
+	opened(true)
 {
 	// no-op
 }
 
 IOBase::~IOBase()
 {
+	close();
+}
+
+void IOBase::close()
+{
+	if (not opened) {
+		return;
+	}
+
 	hdf5_file.close();
+	opened = false;
 }
 
 void IOBase::open_file(const std::string &filename, unsigned int flags)
