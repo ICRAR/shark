@@ -102,11 +102,15 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Cosmology/sigma8", cosmo_params.sigma8);
 	file.write_dataset("Cosmology/h", cosmo_params.Hubble_h);
 
+	string comment;
+
 	// Crate all subhalo properties to write.
 
 	vector<long> descendant_id;
 	vector<int> main;
 	vector<long> id;
+	vector<long> id_galaxy;
+
 
 	// Create all galaxies properties to write
 	vector<float> mstars_disk;
@@ -163,7 +167,8 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	vector<Halo::id_t> id_halo;
 	vector<Subhalo::id_t> id_subhalo;
 
-	long j=1;
+	long j = 1;
+	long gal_id = 1;
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
@@ -230,6 +235,8 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 				// SFRs in disks and bulges.
 				sfr_disk.push_back(galaxy->sfr_disk);
 				sfr_burst.push_back(galaxy->sfr_bulge);
+
+
 
 				// Black hole properties.
 				mBH.push_back(galaxy->smbh.mass);
@@ -307,31 +314,58 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 				id_halo.push_back(j);
 				id_subhalo.push_back(i);
+
+				id_galaxy.push_back(gal_id);
+
+				gal_id ++;
 			}
 			i++;
 		}
 		j++;
 	}
 
+	comment = "Subhalo id";
+	file.write_dataset("Subhalo/id", id, comment);
 
-	file.write_dataset("Subhalo/id", id);
-	file.write_dataset("Subhalo/main_progenitor", main);
-	file.write_dataset("Subhalo/descendant_id", descendant_id);
+	comment = "=1 if subhalo is the main progenitor' =0 otherwise.";
+	file.write_dataset("Subhalo/main_progenitor", main, comment);
 
-	file.write_dataset("Galaxies/mstars_disk", mstars_disk);
-	file.write_dataset("Galaxies/mstars_bulge", mstars_bulge);
-	file.write_dataset("Galaxies/mstars_burst", mstars_burst);
+	comment = "id of the subhalo that is the descendant of this subhalo";
+	file.write_dataset("Subhalo/descendant_id", descendant_id, comment);
 
-	file.write_dataset("Galaxies/mgas_disk", mgas_disk);
-	file.write_dataset("Galaxies/mgas_bulge", mgas_bulge);
+	comment = "stellar mass in the disk [Msun/h]";
+	file.write_dataset("Galaxies/mstars_disk", mstars_disk, comment);
 
-	file.write_dataset("Galaxies/mstars_metals_disk",mstars_metals_disk);
-	file.write_dataset("Galaxies/mstars_metals_bulge", mstars_metals_bulge);
-	file.write_dataset("Galaxies/mstars_metals_burst", mstars_metals_burst);
+	comment = "stellar mass in the bulge [Msun/h]";
+	file.write_dataset("Galaxies/mstars_bulge", mstars_bulge, comment);
 
-	file.write_dataset("Galaxies/mgas_metals_disk", mgas_metals_disk);
-	file.write_dataset("Galaxies/mgas_metals_bulge", mgas_metals_bulge);
-	file.write_dataset("Galaxies/mmol_disk",mmol_disk);
+	comment = "stellar mass formed via starbursts [Msun/h]";
+	file.write_dataset("Galaxies/mstars_burst", mstars_burst, comment);
+
+	comment = "total gas mass in the disk [Msun/h]";
+	file.write_dataset("Galaxies/mgas_disk", mgas_disk, comment);
+
+	comment = "gas mass in the bulge [Msun/h]";
+	file.write_dataset("Galaxies/mgas_bulge", mgas_bulge, comment);
+
+	comment = "mass of metals locked in stars in the disk [Msun/h]";
+	file.write_dataset("Galaxies/mstars_metals_disk",mstars_metals_disk, comment);
+
+	comment = "mass of metals locked in stars in the bulge [Msun/h]";
+	file.write_dataset("Galaxies/mstars_metals_bulge", mstars_metals_bulge, comment);
+
+	comment = "mass of metals locked in stars that formed via starbursts [Msun/h]";
+	file.write_dataset("Galaxies/mstars_metals_burst", mstars_metals_burst, comment);
+
+	comment = "mass of metals locked in the gas of the disk [Msun/yr]";
+	file.write_dataset("Galaxies/mgas_metals_disk", mgas_metals_disk, comment);
+
+	comment = "mass of metals locked in the gas of the bulge [Msun/yr]";
+	file.write_dataset("Galaxies/mgas_metals_bulge", mgas_metals_bulge, comment);
+
+	comment = "molecular gas mass (helium plus hydrogen) in the disk [Msun/yr]";
+	file.write_dataset("Galaxies/mmol_disk",mmol_disk, comment);
+
 	file.write_dataset("Galaxies/mmol_bulge",mmol_bulge);
 	file.write_dataset("Galaxies/matom_disk",matom_disk);
 	file.write_dataset("Galaxies/matom_bulge",matom_bulge);
@@ -372,6 +406,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo);
 	file.write_dataset("Galaxies/id_halo", id_halo);
+	file.write_dataset("Galaxies/id_galaxy", id_galaxy);
 
 	vector<float> redshifts;
 	vector<double> baryons_ever_created;
@@ -410,6 +445,36 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	file.write_dataset("Global/mbar_created",baryons_ever_created);
 	file.write_dataset("Global/mbar_lost", baryons_ever_lost);
+
+	// check if the user wants star formation histories to be output at this snapshot.
+	if(exec_params.output_sf_histories){
+		if(std::find(exec_params.snapshots_sf_histories.begin(), exec_params.snapshots_sf_histories.end(), snapshot+1) != exec_params.snapshots_sf_histories.end()){
+			hdf5::Writer file_sfh(get_output_directory(snapshot) + "/star_formation_histories.hdf5");
+
+			long gal_id = 1;
+			for (auto &halo: halos){
+				for (auto &subhalo: halo->all_subhalos()){
+					for (auto &galaxy: subhalo->galaxies){
+						string gal_name;
+						gal_name = "Galaxy" + std::to_string(gal_id);
+
+						comment = "Star formation rates [Msun/yr/h]";
+						file_sfh.write_dataset(gal_name+"/"+"SFR", galaxy->sfr_history, comment);
+
+						comment = "Redshifts";
+						file_sfh.write_dataset(gal_name+"/"+"redshift", galaxy->z_history, comment);
+
+						comment = "Total cold gas mass [Msun/h]";
+						file_sfh.write_dataset(gal_name+"/"+"mgas", galaxy->get_masses(galaxy->gas_history));
+
+						comment = "Total cold gas mass in metals [Msun/h]";
+						file_sfh.write_dataset(gal_name+"/"+"mgas_metals", galaxy->get_metals(galaxy->gas_history));
+						gal_id ++;
+					}
+				}
+			}
+		}
+	}
 
 }
 

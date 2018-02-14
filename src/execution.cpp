@@ -22,7 +22,9 @@ ExecutionParameters::ExecutionParameters(const Options &options) :
 	name_model(),
 	simulation_batches(),
 	skip_missing_descendants(true),
-	ode_solver_precision()
+	ode_solver_precision(),
+	output_sf_histories(false),
+	snapshots_sf_histories()
 {
 	options.load("execution.output_snapshots", output_snapshots, true);
 	options.load("execution.output_format", output_format, true);
@@ -32,6 +34,8 @@ ExecutionParameters::ExecutionParameters(const Options &options) :
 	options.load("execution.ode_solver_precision", ode_solver_precision, true);
 	options.load("execution.name_model", name_model, true);
 
+	options.load("execution.output_sf_histories", output_sf_histories);
+	options.load("execution.snapshots_sf_histories", snapshots_sf_histories);
 }
 
 }

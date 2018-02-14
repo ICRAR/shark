@@ -37,6 +37,15 @@ public:
 
 	bool skip_missing_descendants;
 
+	/**
+	 * Parameters of sf histories:
+	 * output_sf_histories: boolean parameter set to true if the user wants the star formation histories to be output.
+	 * snapshots_sf_histories: vector of int with the snapshots the user wants the star formation histories output at.
+	 */
+	bool output_sf_histories;
+	std::vector<int> snapshots_sf_histories;
+
+
 	float ode_solver_precision;
 };
 

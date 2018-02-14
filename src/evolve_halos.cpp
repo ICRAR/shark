@@ -23,7 +23,6 @@ void evolve_system( shared_ptr<BasicPhysicalModel> physicalmodel, SubhaloPtr &su
 	// Solve ODEs for this system
 	for(auto &galaxy: subhalo->galaxies) {
 		physicalmodel->evolve_galaxy(*subhalo, *galaxy, z, delta_t);
-		//Solve_Systems();
 	}
 
 }
@@ -178,7 +177,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 }
 
-void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot){
+void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot){
 
 
 	BaryonBase mcold_total;
@@ -216,6 +215,12 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, con
 			mejectedhalo_total.mass_metals += subhalo->ejected_galaxy_gas.mass_metals;
 
 			for (auto &galaxy: subhalo->galaxies){
+
+				if(execparams.output_sf_histories){
+					galaxy->sfr_history.push_back(galaxy->sfr_bulge+galaxy->sfr_disk);
+					galaxy->gas_history.push_back(galaxy->disk_gas);
+					galaxy->z_history.push_back(redshift);
+				}
 
 				//Accummulate galaxy baryons
 

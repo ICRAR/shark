@@ -30,6 +30,7 @@
 
 #include "components.h"
 #include "cosmology.h"
+#include "execution.h"
 #include "physical_model.h"
 
 namespace shark {
@@ -38,7 +39,7 @@ void populate_halos(std::shared_ptr<BasicPhysicalModel> physical_model, HaloPtr 
 
 void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology, TotalBaryon &AllBaryons, int snapshot);
 
-void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot);
+void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot);
 
 }  // namespace shark
 

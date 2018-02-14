@@ -186,6 +186,31 @@ public:
 	float sfr_disk;
 	float sfr_bulge;
 
+	//save star formation and gas history
+	std::vector<float>  sfr_history;
+	std::vector<Baryon> gas_history;
+	std::vector<float>  z_history;
+
+	std::vector<double> get_masses (const std::vector<Baryon> &B){
+
+		std::vector<double> masses(B.size());
+		std::transform(B.begin(), B.end(), masses.begin(), [](const Baryon &b) {
+			return b.mass;
+		});
+
+		return masses;
+	}
+
+	std::vector<double> get_metals (const std::vector<Baryon> &B){
+
+		std::vector<double> masses(B.size());
+		std::transform(B.begin(), B.end(), masses.begin(), [](const Baryon &b) {
+			return b.mass_metals;
+		});
+
+		return masses;
+	}
+
 	/**
 	 * dynamical friction timescale, which is defined only is galaxy is satellite.
 	 */
