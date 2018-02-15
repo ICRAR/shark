@@ -79,30 +79,56 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	using std::string;
 	using std::vector;
 
+	string comment;
+
 	hdf5::Writer file(get_output_directory(snapshot) + "/galaxies.hdf5");
 
-	file.write_dataset("runInfo/batches", exec_params.simulation_batches);
-	file.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision);
-	file.write_dataset("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants);
-	file.write_dataset("runInfo/snapshot", snapshot);
-	file.write_dataset("runInfo/redshift", sim_params.redshifts[snapshot]);
+	comment = "number of batches analysed";
+	file.write_dataset("runInfo/batches", exec_params.simulation_batches, comment);
+
+	comment = "accuracy applied when solving the ODE system of the physical model.";
+	file.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision, comment);
+
+	comment = "boolean parameter that sets whether the code ignores subhalos that have no descendants.";
+	file.write_dataset("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants, comment);
+
+	comment = "output snapshot";
+	file.write_dataset("runInfo/snapshot", snapshot, comment);
+
+	comment = "output redshift";
+	file.write_dataset("runInfo/redshift", sim_params.redshifts[snapshot], comment);
+
 	file.write_attribute("runInfo/model_name", exec_params.name_model);
 
 	// Calculate effective volume of the run
 	float volume = sim_params.volume * exec_params.simulation_batches.size();
 
-	file.write_dataset("runInfo/EffectiveVolume", volume);
-	file.write_dataset("runInfo/particle_mass", sim_params.particle_mass);
+	comment = "effective volume of this run [cMpc/h]";
+	file.write_dataset("runInfo/EffectiveVolume", volume, comment);
+
+	comment = "dark matter particle mass of this simulation [Msun/h]";
+	file.write_dataset("runInfo/particle_mass", sim_params.particle_mass, comment);
 
 	// Write cosmological parameters
-	file.write_dataset("Cosmology/OmegaM", cosmo_params.OmegaM);
-	file.write_dataset("Cosmology/OmegaB", cosmo_params.OmegaB);
-	file.write_dataset("Cosmology/OmegaL", cosmo_params.OmegaL);
-	file.write_dataset("Cosmology/n_s", cosmo_params.n_s);
-	file.write_dataset("Cosmology/sigma8", cosmo_params.sigma8);
-	file.write_dataset("Cosmology/h", cosmo_params.Hubble_h);
 
-	string comment;
+	comment = "omega matter assumed in simulation";
+	file.write_dataset("Cosmology/OmegaM", cosmo_params.OmegaM, comment);
+
+	comment = "omega baryon assumed in simulation";
+	file.write_dataset("Cosmology/OmegaB", cosmo_params.OmegaB, comment);
+
+	comment = "omega lambda assumed in simulation";
+	file.write_dataset("Cosmology/OmegaL", cosmo_params.OmegaL, comment);
+
+	comment = "scalar spectral index assumed in simulation";
+	file.write_dataset("Cosmology/n_s", cosmo_params.n_s, comment);
+
+	comment = "fluctuation amplitude at 8 Mpc/h";
+	file.write_dataset("Cosmology/sigma8", cosmo_params.sigma8, comment);
+
+	comment = "normalization of hubble parameter H0 = h * 100 Mpc * km/s";
+	file.write_dataset("Cosmology/h", cosmo_params.Hubble_h, comment);
+
 
 	// Crate all subhalo properties to write.
 
@@ -110,7 +136,6 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	vector<int> main;
 	vector<long> id;
 	vector<long> id_galaxy;
-
 
 	// Create all galaxies properties to write
 	vector<float> mstars_disk;
@@ -357,56 +382,104 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	comment = "mass of metals locked in stars that formed via starbursts [Msun/h]";
 	file.write_dataset("Galaxies/mstars_metals_burst", mstars_metals_burst, comment);
 
-	comment = "mass of metals locked in the gas of the disk [Msun/yr]";
+	comment = "mass of metals locked in the gas of the disk [Msun/h]";
 	file.write_dataset("Galaxies/mgas_metals_disk", mgas_metals_disk, comment);
 
-	comment = "mass of metals locked in the gas of the bulge [Msun/yr]";
+	comment = "mass of metals locked in the gas of the bulge [Msun/h]";
 	file.write_dataset("Galaxies/mgas_metals_bulge", mgas_metals_bulge, comment);
 
-	comment = "molecular gas mass (helium plus hydrogen) in the disk [Msun/yr]";
+	comment = "molecular gas mass (helium plus hydrogen) in the disk [Msun/h]";
 	file.write_dataset("Galaxies/mmol_disk",mmol_disk, comment);
 
-	file.write_dataset("Galaxies/mmol_bulge",mmol_bulge);
-	file.write_dataset("Galaxies/matom_disk",matom_disk);
-	file.write_dataset("Galaxies/matom_bulge",matom_bulge);
+	comment ="molecular gas mass (helium plus hydrogen) in the bulge [Msun/h]";
+	file.write_dataset("Galaxies/mmol_bulge",mmol_bulge, comment);
 
-	file.write_dataset("Galaxies/sfr_disk", sfr_disk);
+	comment = "atomic gas mass (helium plus hydrogen) in the disk [Msun/h]";
+	file.write_dataset("Galaxies/matom_disk",matom_disk, comment);
+
+	comment ="atomic gas mass (helium plus hydrogen) in the bulge [Msun/h]";
+	file.write_dataset("Galaxies/matom_bulge",matom_bulge, comment);
+
+	comment = "star formation rate in the disk [Msun/Gyr/h]";
+	file.write_dataset("Galaxies/sfr_disk", sfr_disk, comment);
+
+	comment = "star formation rate in the bulge [Msun/Gyr/h]";
 	file.write_dataset("Galaxies/sfr_burst", sfr_burst);
 
-	file.write_dataset("Galaxies/mBH", mBH);
+	comment = "black hole mass [Msun/h]";
+	file.write_dataset("Galaxies/mBH", mBH, comment);
+
+	comment = "accretion rate onto the black hole during the hot halo mode [Msun/Gyr/h]";
 	file.write_dataset("Galaxies/BH_accretion_rate_hh", mBH_acc_hh);
+
+	comment = "accretion rate onto the black hole during the starburst mode [Msun/Gyr/h]";
 	file.write_dataset("Galaxies/BH_accretion_rate_sb", mBH_acc_sb);
 
-	file.write_dataset("Galaxies/rdisk", rdisk);
-	file.write_dataset("Galaxies/rbulge", rbulge);
-	file.write_dataset("Galaxies/specific_angular_momentum_disk", sAM_disk);
-	file.write_dataset("Galaxies/specific_angular_momentum_bulge", sAM_bulge);
+	comment = "half-mass radius of the disk [cMpc/h]";
+	file.write_dataset("Galaxies/rdisk", rdisk, comment);
 
-	file.write_dataset("Galaxies/mhot", mhot);
-	file.write_dataset("Galaxies/mhot_metals", mhot_metals);
-	file.write_dataset("Galaxies/mreheated", mreheated);
-	file.write_dataset("Galaxies/mreheated_metals", mreheated_metals);
-	file.write_dataset("Galaxies/cooling_rate", cooling_rate);
+	comment = "half-mass radius of the bulge [cMpc/h]";
+	file.write_dataset("Galaxies/rbulge", rbulge, comment);
 
-	file.write_dataset("Galaxies/mvir_hosthalo", mvir_hosthalo);
-	file.write_dataset("Galaxies/mvir_subhalo", mvir_subhalo);
-	file.write_dataset("Galaxies/vmax_subhalo", vmax_subhalo);
-	file.write_dataset("Galaxies/vvir_hosthalo", vvir_hosthalo);
-	file.write_dataset("Galaxies/cnfw_subhalo", cnfw_subhalo);
+	comment = "specific angular momentum of the disk [km/s * cMpc/h]";
+	file.write_dataset("Galaxies/specific_angular_momentum_disk", sAM_disk, comment);
 
-	file.write_dataset("Galaxies/position_x", position_x);
-	file.write_dataset("Galaxies/position_y", position_y);
-	file.write_dataset("Galaxies/position_z", position_z);
+	comment = "specific angular momentum of the bulge [km/s * cMpc/h]";
+	file.write_dataset("Galaxies/specific_angular_momentum_bulge", sAM_bulge, comment);
 
-	file.write_dataset("Galaxies/velocity_x", velocity_x);
-	file.write_dataset("Galaxies/velocity_y", velocity_y);
-	file.write_dataset("Galaxies/velocity_z", velocity_z);
+	comment = "hot gas mass in the halo [Msun/h]";
+	file.write_dataset("Galaxies/mhot", mhot, comment);
 
-	file.write_dataset("Galaxies/type", type);
+	comment = "mass of metals locked in the hot halo gas [Msun/h]";
+	file.write_dataset("Galaxies/mhot_metals", mhot_metals, comment);
 
-	file.write_dataset("Galaxies/id_subhalo", id_subhalo);
-	file.write_dataset("Galaxies/id_halo", id_halo);
-	file.write_dataset("Galaxies/id_galaxy", id_galaxy);
+	comment = "gas mass in the ejected gas component [Msun/h]";
+	file.write_dataset("Galaxies/mreheated", mreheated, comment);
+
+	comment = "mass of metals locked in the ejected gas component [Msun/h]";
+	file.write_dataset("Galaxies/mreheated_metals", mreheated_metals, comment);
+
+	comment = "cooling rate of the hot halo compoent [Msun/Gyr/h].";
+	file.write_dataset("Galaxies/cooling_rate", cooling_rate, comment);
+
+	comment = "Dark matter mass of the host halo in which this galaxy resides [Msun/h]";
+	file.write_dataset("Galaxies/mvir_hosthalo", mvir_hosthalo, comment);
+
+	comment = "Dark matter mass of the subhalo in which this galaxy resides [Msun/h]";
+	file.write_dataset("Galaxies/mvir_subhalo", mvir_subhalo, comment);
+
+	comment = "Maximum circular velocity of the dark matter subhalo in which this galaxy resides [km/s]";
+	file.write_dataset("Galaxies/vmax_subhalo", vmax_subhalo, comment);
+
+	comment = "Virial velocity of the dark matter halo in which this galaxy resides [km/s]";
+	file.write_dataset("Galaxies/vvir_hosthalo", vvir_hosthalo, comment);
+
+	comment = "NFW concentration parameter of the dark matter halo in which this galaxy resides [dimensionless]";
+	file.write_dataset("Galaxies/cnfw_subhalo", cnfw_subhalo, comment);
+
+	comment = "position component x of galaxy [cMpc/h]";
+	file.write_dataset("Galaxies/position_x", position_x, comment);
+	comment = "position component y of galaxy [cMpc/h]";
+	file.write_dataset("Galaxies/position_y", position_y, comment);
+	comment = "position component z of galaxy [cMpc/h]";
+	file.write_dataset("Galaxies/position_z", position_z, comment);
+
+	comment = "peculiar velocity component x of galaxy [km/s]";
+	file.write_dataset("Galaxies/velocity_x", velocity_x, comment);
+	comment = "peculiar velocity component y of galaxy [km/s]";
+	file.write_dataset("Galaxies/velocity_y", velocity_y, comment);
+	comment = "peculiar velocity component z of galaxy [km/s]";
+	file.write_dataset("Galaxies/velocity_z", velocity_z, comment);
+
+	comment = "galaxy type; =0 for centrals; =1 for satellites that reside in well identified subhalos; =2 for orphan satellites";
+	file.write_dataset("Galaxies/type", type, comment);
+
+	comment = "subhalo ID. Unique to this snapshot.";
+	file.write_dataset("Galaxies/id_subhalo", id_subhalo, comment);
+	comment = "halo ID. Unique to this snapshot.";
+	file.write_dataset("Galaxies/id_halo", id_halo, comment);
+	comment = "galayx ID. Unique to this snapshot.";
+	file.write_dataset("Galaxies/id_galaxy", id_galaxy, comment);
 
 	vector<float> redshifts;
 	vector<double> baryons_ever_created;
@@ -421,30 +494,64 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 		baryons_ever_lost.push_back(baryons_lost);
 	}
 
-	file.write_dataset("Global/redshifts", redshifts);
-	file.write_dataset("Global/mcold",AllBaryons.get_masses(AllBaryons.mcold));
-	file.write_dataset("Global/mcold_metals",AllBaryons.get_metals(AllBaryons.mcold));
-	file.write_dataset("Global/mstars",AllBaryons.get_masses(AllBaryons.mstars));
-	file.write_dataset("Global/mstars_metals",AllBaryons.get_metals(AllBaryons.mstars));
-	file.write_dataset("Global/mstars_bursts",AllBaryons.get_masses(AllBaryons.mstars_burst));
-	file.write_dataset("Global/mstars_metals_bursts",AllBaryons.get_metals(AllBaryons.mstars_burst));
-	file.write_dataset("Global/mHI",AllBaryons.get_masses(AllBaryons.mHI));
-	file.write_dataset("Global/mH2",AllBaryons.get_masses(AllBaryons.mH2));
-	file.write_dataset("Global/mBH",AllBaryons.get_masses(AllBaryons.mBH));
-	file.write_dataset("Global/SFR_quiescent",AllBaryons.SFR_disk);
-	file.write_dataset("Global/SFR_burst",AllBaryons.SFR_bulge);
+	comment = "redshifts of the global outputs.";
+	file.write_dataset("Global/redshifts", redshifts, comment);
 
-	file.write_dataset("Global/mhot_halo",AllBaryons.get_masses(AllBaryons.mhot_halo));
-	file.write_dataset("Global/mhot_metals",AllBaryons.get_metals(AllBaryons.mhot_halo));
-	file.write_dataset("Global/mcold_halo",AllBaryons.get_masses(AllBaryons.mcold_halo));
-	file.write_dataset("Global/mcold_halo_metals",AllBaryons.get_metals(AllBaryons.mcold_halo));
-	file.write_dataset("Global/mejected_halo",AllBaryons.get_masses(AllBaryons.mejected_halo));
-	file.write_dataset("Global/mejected_halo_metals",AllBaryons.get_masses(AllBaryons.mejected_halo));
+	comment = "total cold gas mass (interstellar medium) in the simulated box [Msun/h]";
+	file.write_dataset("Global/mcold",AllBaryons.get_masses(AllBaryons.mcold), comment);
 
-	file.write_dataset("Global/mDM",AllBaryons.get_masses(AllBaryons.mDM));
+	comment = "total mass of metals locked in cold gas in the simulated box [Msun/h]";
+	file.write_dataset("Global/mcold_metals",AllBaryons.get_metals(AllBaryons.mcold), comment);
 
-	file.write_dataset("Global/mbar_created",baryons_ever_created);
-	file.write_dataset("Global/mbar_lost", baryons_ever_lost);
+	comment = "total stellar mass in the simulated box [Msun/h]";
+	file.write_dataset("Global/mstars",AllBaryons.get_masses(AllBaryons.mstars), comment);
+
+	comment = "total mass of metals locked in stars in the simulated box [Msun/h]";
+	file.write_dataset("Global/mstars_metals",AllBaryons.get_metals(AllBaryons.mstars), comment);
+
+	comment = "total stellar mass formed via starbursts in the simulated box [Msun/h]";
+	file.write_dataset("Global/mstars_bursts",AllBaryons.get_masses(AllBaryons.mstars_burst), comment);
+
+	comment = "total mass of metals locked in stars that formed via starbursts in the simulated box [Msun/h]";
+	file.write_dataset("Global/mstars_metals_bursts",AllBaryons.get_metals(AllBaryons.mstars_burst), comment);
+
+	comment = "total atomic gas mass in the simulated box [Msun/h]";
+	file.write_dataset("Global/mHI",AllBaryons.get_masses(AllBaryons.mHI), comment);
+
+	comment = "total molecular gas mass in the simulated box [Msun/h]";
+	file.write_dataset("Global/mH2",AllBaryons.get_masses(AllBaryons.mH2), comment);
+
+	comment = "total mass locked up in black holes in the simulated box [Msun/h]";
+	file.write_dataset("Global/mBH",AllBaryons.get_masses(AllBaryons.mBH), comment);
+
+	comment = "total star formation rate taking place in disks in the simulated box [Msun/Gyr/h]";
+	file.write_dataset("Global/SFR_quiescent",AllBaryons.SFR_disk, comment);
+
+	comment = "total star formation rate taking place in bulges in the simulated box [Msun/Gyr/h]";
+	file.write_dataset("Global/SFR_burst",AllBaryons.SFR_bulge), comment;
+
+	comment = "total hot gas mass in halos in the simulated box [Msun/h]";
+	file.write_dataset("Global/mhot_halo",AllBaryons.get_masses(AllBaryons.mhot_halo),comment);
+	comment = "total mass of metals in the hot gas mass in halos in the simulated box [Msun/h]";
+	file.write_dataset("Global/mhot_metals",AllBaryons.get_metals(AllBaryons.mhot_halo), comment);
+
+	comment = "total halo cold gas in the simulated box [Msun/h]";
+	file.write_dataset("Global/mcold_halo",AllBaryons.get_masses(AllBaryons.mcold_halo), comment);
+	comment = "total mass of metals in the halo cold gas mass in the simulated box [Msun/h]";
+	file.write_dataset("Global/mcold_halo_metals",AllBaryons.get_metals(AllBaryons.mcold_halo), comment);
+
+	comment = "total gas mass ejected from halos (and that has not yet been reincorporated) in the simulated box [Msun/h]";
+	file.write_dataset("Global/mejected_halo",AllBaryons.get_masses(AllBaryons.mejected_halo), comment);
+	comment = "total mass of metals in the ejected gas reservoir in the simulated box [Msun/h]";
+	file.write_dataset("Global/mejected_halo_metals",AllBaryons.get_metals(AllBaryons.mejected_halo), comment);
+
+	comment = "total dark matter mass locked up in halos in the simulated box [Msun/h].";
+	file.write_dataset("Global/mDM",AllBaryons.get_masses(AllBaryons.mDM), comment);
+
+	comment = "total baryon mass in the simulated box [Msun/h]";
+	file.write_dataset("Global/mbar_created",baryons_ever_created, comment);
+	comment = "total baryons lost in the simulated box [Msun/h] (ideally this should be =0)";
+	file.write_dataset("Global/mbar_lost", baryons_ever_lost, comment);
 
 	// check if the user wants star formation histories to be output at this snapshot.
 	if(exec_params.output_sf_histories){
@@ -458,10 +565,10 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 						string gal_name;
 						gal_name = "Galaxy" + std::to_string(gal_id);
 
-						comment = "Star formation rates [Msun/yr/h]";
+						comment = "Star formation rates [Msun/Gyr/h]";
 						file_sfh.write_dataset(gal_name+"/"+"SFR", galaxy->sfr_history, comment);
 
-						comment = "Redshifts";
+						comment = "Redshift outputs for the star formation and cold gas mass histories.";
 						file_sfh.write_dataset(gal_name+"/"+"redshift", galaxy->z_history, comment);
 
 						comment = "Total cold gas mass [Msun/h]";
