@@ -75,6 +75,14 @@ H5::DataType _datatype(const std::vector<T> &val)
 	return H5::DataType(datatype_traits<T>::write_type);
 }
 
+// Overwriting for vectors of values
+template <typename T>
+static inline
+H5::DataType _datatype(const std::vector<std::vector<T>> &val)
+{
+	return H5::DataType(datatype_traits<T>::write_type);
+}
+
 template <>
 inline
 H5::DataType _datatype<std::string>(const std::vector<std::string> &val)
@@ -146,6 +154,35 @@ void _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType 
 	dataset.write(c_strings.data(), dataType, dataSpace, dataSpace);
 }
 
+// Overwriting of _write_datasets for vectors of vectors
+template <typename T>
+static inline
+void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &fDataSpace, const std::vector<std::vector<T>> &vals)
+{
+
+	H5::DataType mem_dataType(datatype_traits<T>::native_type);
+
+	// Find out maximum dimensions of the dataset
+	hsize_t dataset_max_dims[2], dataset_dims[2];
+	fDataSpace.getSimpleExtentDims(dataset_dims, dataset_max_dims);
+
+	// We iterate over each inner vector and write it as a new row
+	// in the dataset. For this, we set the parameters for selecting where the
+	// data will be written into the file. The fstart will thus keep changing
+	// to write each row vector consecutively
+	hsize_t fcount[2] = {1, dataset_max_dims[1]};
+	hsize_t fstart[2] = {0, 0};
+	hsize_t fstride[2] = {1, 1};
+	hsize_t fblock[2] = {1, 1};
+
+	H5::DataSpace mDataSpace(1, dataset_max_dims);
+	for(auto &row: vals) {
+		fDataSpace.selectHyperslab(H5S_SELECT_SET, fcount, fstart, fstride, fblock);
+		dataset.write(row.data(), mem_dataType, mDataSpace, fDataSpace);
+		fstart[0]++;
+	}
+}
+
 template<typename T>
 static inline
 void _create_and_write_attribute(H5::H5Location &loc, const std::string &name, const T &value) {
@@ -213,6 +250,19 @@ public:
 	void write_dataset(const std::string &name, const std::vector<T> &values, const std::string &comment = NO_COMMENT) {
 		const hsize_t size = values.size();
 		H5::DataSpace dataSpace(1, &size);
+		H5::DataType dataType = _datatype<T>(values);
+		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
+		if (not comment.empty()) {
+			dataset.setComment(comment);
+			_create_and_write_attribute(dataset, "comment", comment);
+		}
+		_write_dataset(dataset, dataType, dataSpace, values);
+	}
+
+	template<typename T>
+	void write_dataset(const std::string &name, const std::vector<std::vector<T>> &values, const std::string &comment = NO_COMMENT) {
+		const hsize_t sizes[] = {values.size(), values[0].size()};
+		H5::DataSpace dataSpace(2, sizes);
 		H5::DataType dataType = _datatype<T>(values);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
 		if (not comment.empty()) {

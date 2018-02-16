@@ -133,6 +133,7 @@ set(SHARKLIB_SRCS
    src/simulation.cpp
    src/star_formation.cpp
    src/stellar_feedback.cpp
+   src/tree_builder.cpp
    src/utils.cpp
    src/hdf5/iobase.cpp
    src/hdf5/reader.cpp
@@ -157,8 +158,7 @@ target_link_libraries(shark-importer sharklib)
 set(SHARK_SRCS
 	src/evolve_halos.cpp
 	src/main.cpp
-   src/merger_tree_reader.cpp
-   src/tree_builder.cpp
+	src/merger_tree_reader.cpp
 )
 add_executable(shark ${SHARK_SRCS})
 target_link_libraries(shark sharklib)
