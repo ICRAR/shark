@@ -83,6 +83,24 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	hdf5::Writer file(get_output_directory(snapshot) + "/galaxies.hdf5");
 
+	//Write header
+	write_header(file, snapshot);
+
+	//Write galaxies
+	write_galaxies(file, snapshot, halos);
+
+	//Write total baryon components
+	write_global_properties(file, snapshot, AllBaryons);
+
+	// Write star formation histories.
+	write_histories(snapshot, halos);
+
+}
+
+void HDF5GalaxyWriter::write_header(hdf5::Writer file, int snapshot){
+
+	std::string comment;
+
 	comment = "number of batches analysed";
 	file.write_dataset("runInfo/batches", exec_params.simulation_batches, comment);
 
@@ -128,7 +146,16 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	comment = "normalization of hubble parameter H0 = h * 100 Mpc * km/s";
 	file.write_dataset("Cosmology/h", cosmo_params.Hubble_h, comment);
+}
 
+void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std::vector<HaloPtr> &halos){
+
+
+
+	using std::string;
+	using std::vector;
+
+	string comment;
 
 	// Crate all subhalo properties to write.
 
@@ -349,6 +376,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 		j++;
 	}
 
+	//Write subhalo properties.
 	comment = "Subhalo id";
 	file.write_dataset("Subhalo/id", id, comment);
 
@@ -358,6 +386,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	comment = "id of the subhalo that is the descendant of this subhalo";
 	file.write_dataset("Subhalo/descendant_id", descendant_id, comment);
 
+	//Write galaxy properties.
 	comment = "stellar mass in the disk [Msun/h]";
 	file.write_dataset("Galaxies/mstars_disk", mstars_disk, comment);
 
@@ -404,16 +433,16 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Galaxies/sfr_disk", sfr_disk, comment);
 
 	comment = "star formation rate in the bulge [Msun/Gyr/h]";
-	file.write_dataset("Galaxies/sfr_burst", sfr_burst);
+	file.write_dataset("Galaxies/sfr_burst", sfr_burst, comment);
 
 	comment = "black hole mass [Msun/h]";
 	file.write_dataset("Galaxies/mBH", mBH, comment);
 
 	comment = "accretion rate onto the black hole during the hot halo mode [Msun/Gyr/h]";
-	file.write_dataset("Galaxies/BH_accretion_rate_hh", mBH_acc_hh);
+	file.write_dataset("Galaxies/BH_accretion_rate_hh", mBH_acc_hh, comment);
 
 	comment = "accretion rate onto the black hole during the starburst mode [Msun/Gyr/h]";
-	file.write_dataset("Galaxies/BH_accretion_rate_sb", mBH_acc_sb);
+	file.write_dataset("Galaxies/BH_accretion_rate_sb", mBH_acc_sb, comment);
 
 	comment = "half-mass radius of the disk [cMpc/h]";
 	file.write_dataset("Galaxies/rdisk", rdisk, comment);
@@ -457,6 +486,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	comment = "NFW concentration parameter of the dark matter halo in which this galaxy resides [dimensionless]";
 	file.write_dataset("Galaxies/cnfw_subhalo", cnfw_subhalo, comment);
 
+	//Galaxy position
 	comment = "position component x of galaxy [cMpc/h]";
 	file.write_dataset("Galaxies/position_x", position_x, comment);
 	comment = "position component y of galaxy [cMpc/h]";
@@ -464,6 +494,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	comment = "position component z of galaxy [cMpc/h]";
 	file.write_dataset("Galaxies/position_z", position_z, comment);
 
+	//Galaxy velocity
 	comment = "peculiar velocity component x of galaxy [km/s]";
 	file.write_dataset("Galaxies/velocity_x", velocity_x, comment);
 	comment = "peculiar velocity component y of galaxy [km/s]";
@@ -471,20 +502,32 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	comment = "peculiar velocity component z of galaxy [km/s]";
 	file.write_dataset("Galaxies/velocity_z", velocity_z, comment);
 
+	//Galaxy type.
 	comment = "galaxy type; =0 for centrals; =1 for satellites that reside in well identified subhalos; =2 for orphan satellites";
 	file.write_dataset("Galaxies/type", type, comment);
 
+	//Galaxy IDs.
 	comment = "subhalo ID. Unique to this snapshot.";
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo, comment);
 	comment = "halo ID. Unique to this snapshot.";
 	file.write_dataset("Galaxies/id_halo", id_halo, comment);
 	comment = "galayx ID. Unique to this snapshot.";
 	file.write_dataset("Galaxies/id_galaxy", id_galaxy, comment);
+}
+
+void HDF5GalaxyWriter::write_global_properties (hdf5::Writer file, int snapshot, TotalBaryon AllBaryons){
+
+	using std::string;
+	using std::vector;
+
+	string comment;
 
 	vector<float> redshifts;
 	vector<double> baryons_ever_created;
 	vector<double> baryons_ever_lost;
+
 	double baryons_lost = 0;
+
 	for (int i=sim_params.min_snapshot+1; i <= snapshot; i++){
 		redshifts.push_back(sim_params.redshifts[i]);
 		baryons_ever_created.push_back(AllBaryons.baryon_total_created[i]);
@@ -552,8 +595,16 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	file.write_dataset("Global/mbar_created",baryons_ever_created, comment);
 	comment = "total baryons lost in the simulated box [Msun/h] (ideally this should be =0)";
 	file.write_dataset("Global/mbar_lost", baryons_ever_lost, comment);
+}
 
-	// check if the user wants star formation histories to be output at this snapshot.
+void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr> &halos){
+
+
+	using std::string;
+	using std::vector;
+
+	string comment;
+
 	if(exec_params.output_sf_histories){
 		if(std::find(exec_params.snapshots_sf_histories.begin(), exec_params.snapshots_sf_histories.end(), snapshot) != exec_params.snapshots_sf_histories.end()){
 			hdf5::Writer file_sfh(get_output_directory(snapshot) + "/star_formation_histories.hdf5");
@@ -570,6 +621,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 			float defl_value = -1;
 
 			long gal_id = 1;
+
 			for (auto &halo: halos){
 				for (auto &subhalo: halo->all_subhalos()){
 					for (auto &galaxy: subhalo->galaxies){
@@ -583,7 +635,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 						for(int s=sim_params.min_snapshot; s <= snapshot; s++) {
 
-							auto it = std::find(galaxy->history.begin(), galaxy->history.end(), [s](const HistoryItem &hitem) {
+							auto it = std::find_if(galaxy->history.begin(), galaxy->history.end(), [s](const HistoryItem &hitem) {
 								return hitem.snapshot == s;
 							});
 
@@ -617,56 +669,18 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 						gas_hs_bulge.push_back(gas_gal_bulge);
 						gas_metals_hs_bulge.push_back(gas_metals_gal_bulge);
 
-
 					}
 				}
 			}
 
-			comment = "number of batches analysed";
-			file_sfh.write_dataset("runInfo/batches", exec_params.simulation_batches, comment);
+			vector<float> redshifts;
 
-			comment = "accuracy applied when solving the ODE system of the physical model.";
-			file_sfh.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision, comment);
+			for (int i=sim_params.min_snapshot+1; i <= snapshot; i++){
+				redshifts.push_back(sim_params.redshifts[i]);
+			}
 
-			comment = "boolean parameter that sets whether the code ignores subhalos that have no descendants.";
-			file_sfh.write_dataset("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants, comment);
-
-			comment = "output snapshot";
-			file_sfh.write_dataset("runInfo/snapshot", snapshot, comment);
-
-			comment = "output redshift";
-			file_sfh.write_dataset("runInfo/redshift", sim_params.redshifts[snapshot], comment);
-
-			file_sfh.write_attribute("runInfo/model_name", exec_params.name_model);
-
-			// Calculate effective volume of the run
-			float volume = sim_params.volume * exec_params.simulation_batches.size();
-
-			comment = "effective volume of this run [cMpc/h]";
-			file_sfh.write_dataset("runInfo/EffectiveVolume", volume, comment);
-
-			comment = "dark matter particle mass of this simulation [Msun/h]";
-			file_sfh.write_dataset("runInfo/particle_mass", sim_params.particle_mass, comment);
-
-			// Write cosmological parameters
-
-			comment = "omega matter assumed in simulation";
-			file_sfh.write_dataset("Cosmology/OmegaM", cosmo_params.OmegaM, comment);
-
-			comment = "omega baryon assumed in simulation";
-			file_sfh.write_dataset("Cosmology/OmegaB", cosmo_params.OmegaB, comment);
-
-			comment = "omega lambda assumed in simulation";
-			file_sfh.write_dataset("Cosmology/OmegaL", cosmo_params.OmegaL, comment);
-
-			comment = "scalar spectral index assumed in simulation";
-			file_sfh.write_dataset("Cosmology/n_s", cosmo_params.n_s, comment);
-
-			comment = "fluctuation amplitude at 8 Mpc/h";
-			file_sfh.write_dataset("Cosmology/sigma8", cosmo_params.sigma8, comment);
-
-			comment = "normalization of hubble parameter H0 = h * 100 Mpc * km/s";
-			file_sfh.write_dataset("Cosmology/h", cosmo_params.Hubble_h, comment);
+			//Write header
+			write_header(file_sfh, snapshot);
 
 			comment = "Disk star formation rate histories of all galaxies that have survived to this snapshot [Msun/Gyr/h]";
 			file_sfh.write_dataset("Disks/StarFormationHistories", sfhs_disk, comment);
@@ -692,7 +706,6 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 		}
 
 	}
-
 }
 
 void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon AllBaryons)
@@ -739,7 +752,6 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 	  << subhalo->id << " " << subhalo->host_halo->id << "\n";
 
 }
-
 
 }// namespace shark
 
