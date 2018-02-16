@@ -175,7 +175,8 @@ void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, co
 	hsize_t fstride[2] = {1, 1};
 	hsize_t fblock[2] = {1, 1};
 
-	H5::DataSpace mDataSpace(1, dataset_max_dims);
+	// The data from the vector should only be of length dataset_max_dims[1]
+	H5::DataSpace mDataSpace(1, dataset_max_dims + 1);
 	for(auto &row: vals) {
 		fDataSpace.selectHyperslab(H5S_SELECT_SET, fcount, fstart, fstride, fblock);
 		dataset.write(row.data(), mem_dataType, mDataSpace, fDataSpace);
