@@ -217,9 +217,13 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 			for (auto &galaxy: subhalo->galaxies){
 
 				if(execparams.output_sf_histories){
-					galaxy->sfr_history.push_back(galaxy->sfr_bulge+galaxy->sfr_disk);
-					galaxy->gas_history.push_back(galaxy->disk_gas);
-					galaxy->z_history.push_back(redshift);
+					HistoryItem hist_galaxy;
+					hist_galaxy.sfr_disk  = galaxy->sfr_disk;
+					hist_galaxy.sfr_bulge = galaxy->sfr_bulge;
+					hist_galaxy.gas_disk  = galaxy->disk_gas;
+					hist_galaxy.gas_bulge = galaxy->bulge_gas;
+					hist_galaxy.snapshot = snapshot;
+					galaxy->history.push_back(hist_galaxy);
 				}
 
 				//Accummulate galaxy baryons

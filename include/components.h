@@ -133,6 +133,22 @@ public:
 	float macc_sb;
 };
 
+
+
+/**
+ * Structure that saves the history of relevant baryon components needed for SED calculation later on.
+ */
+struct HistoryItem {
+
+	float  sfr_disk;
+	float sfr_bulge;
+	Baryon gas_disk;
+	Baryon gas_bulge;
+	int snapshot;
+
+};
+
+
 /**
  * A basic galaxy.
  *
@@ -140,6 +156,7 @@ public:
  * galaxy allowed in SHArk contains a disk and a bulge, with either component
  * having gas and stars. A Galaxy also requires to have a SMBH.
  */
+
 class Galaxy : public Identifiable<int> {
 public:
 
@@ -187,29 +204,7 @@ public:
 	float sfr_bulge;
 
 	//save star formation and gas history
-	std::vector<float>  sfr_history;
-	std::vector<Baryon> gas_history;
-	std::vector<float>  z_history;
-
-	std::vector<double> get_masses (const std::vector<Baryon> &B){
-
-		std::vector<double> masses(B.size());
-		std::transform(B.begin(), B.end(), masses.begin(), [](const Baryon &b) {
-			return b.mass;
-		});
-
-		return masses;
-	}
-
-	std::vector<double> get_metals (const std::vector<Baryon> &B){
-
-		std::vector<double> masses(B.size());
-		std::transform(B.begin(), B.end(), masses.begin(), [](const Baryon &b) {
-			return b.mass_metals;
-		});
-
-		return masses;
-	}
+	std::vector<HistoryItem>  history;
 
 	/**
 	 * dynamical friction timescale, which is defined only is galaxy is satellite.

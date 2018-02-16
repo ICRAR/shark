@@ -555,32 +555,142 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 	// check if the user wants star formation histories to be output at this snapshot.
 	if(exec_params.output_sf_histories){
-		if(std::find(exec_params.snapshots_sf_histories.begin(), exec_params.snapshots_sf_histories.end(), snapshot+1) != exec_params.snapshots_sf_histories.end()){
+		if(std::find(exec_params.snapshots_sf_histories.begin(), exec_params.snapshots_sf_histories.end(), snapshot) != exec_params.snapshots_sf_histories.end()){
 			hdf5::Writer file_sfh(get_output_directory(snapshot) + "/star_formation_histories.hdf5");
+
+			//Create the vectors that will save the information of the galaxies
+			vector<vector<float>> sfhs_disk;
+			vector<vector<float>> gas_hs_disk;
+			vector<vector<float>> gas_metals_hs_disk;
+
+			vector<vector<float>> sfhs_bulge;
+			vector<vector<float>> gas_hs_bulge;
+			vector<vector<float>> gas_metals_hs_bulge;
+
+			float defl_value = -1;
 
 			long gal_id = 1;
 			for (auto &halo: halos){
 				for (auto &subhalo: halo->all_subhalos()){
 					for (auto &galaxy: subhalo->galaxies){
-						string gal_name;
-						gal_name = "Galaxy" + std::to_string(gal_id);
 
-						comment = "Star formation rates [Msun/Gyr/h]";
-						file_sfh.write_dataset(gal_name+"/"+"SFR", galaxy->sfr_history, comment);
+						vector<float> sfh_gal_disk;
+						vector<float> gas_gal_disk;
+						vector<float> gas_metals_gal_disk;
+						vector<float> sfh_gal_bulge;
+						vector<float> gas_gal_bulge;
+						vector<float> gas_metals_gal_bulge;
 
-						comment = "Redshift outputs for the star formation and cold gas mass histories.";
-						file_sfh.write_dataset(gal_name+"/"+"redshift", galaxy->z_history, comment);
+						for(int s=sim_params.min_snapshot; s <= snapshot; s++) {
 
-						comment = "Total cold gas mass [Msun/h]";
-						file_sfh.write_dataset(gal_name+"/"+"mgas", galaxy->get_masses(galaxy->gas_history));
+							auto it = std::find(galaxy->history.begin(), galaxy->history.end(), [s](const HistoryItem &hitem) {
+								return hitem.snapshot == s;
+							});
 
-						comment = "Total cold gas mass in metals [Msun/h]";
-						file_sfh.write_dataset(gal_name+"/"+"mgas_metals", galaxy->get_metals(galaxy->gas_history));
-						gal_id ++;
+							if (it == galaxy->history.end()) {
+								sfh_gal_disk.push_back(defl_value);
+								gas_gal_disk.push_back(defl_value);
+								gas_metals_gal_disk.push_back(defl_value);
+								sfh_gal_bulge.push_back(defl_value);
+								gas_gal_bulge.push_back(defl_value);
+								gas_metals_gal_bulge.push_back(defl_value);
+							}
+							else{
+								auto item = *it;
+								// assign disk properties
+								sfh_gal_disk.push_back(item.sfr_disk);
+								gas_gal_disk.push_back(item.gas_disk.mass);
+								gas_metals_gal_disk.push_back(item.gas_disk.mass_metals);
+
+								// assign bulge properties
+								sfh_gal_bulge.push_back(item.sfr_bulge);
+								gas_gal_bulge.push_back(item.gas_bulge.mass);
+								gas_metals_gal_bulge.push_back(item.gas_bulge.mass_metals);
+							}
+						}
+
+						sfhs_disk.push_back(sfh_gal_disk);
+						gas_hs_disk.push_back(gas_gal_disk);
+						gas_metals_hs_disk.push_back(gas_metals_gal_disk);
+
+						sfhs_bulge.push_back(sfh_gal_bulge);
+						gas_hs_bulge.push_back(gas_gal_bulge);
+						gas_metals_hs_bulge.push_back(gas_metals_gal_bulge);
+
+
 					}
 				}
 			}
+
+			comment = "number of batches analysed";
+			file_sfh.write_dataset("runInfo/batches", exec_params.simulation_batches, comment);
+
+			comment = "accuracy applied when solving the ODE system of the physical model.";
+			file_sfh.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision, comment);
+
+			comment = "boolean parameter that sets whether the code ignores subhalos that have no descendants.";
+			file_sfh.write_dataset("runInfo/skip_missing_descendants", exec_params.skip_missing_descendants, comment);
+
+			comment = "output snapshot";
+			file_sfh.write_dataset("runInfo/snapshot", snapshot, comment);
+
+			comment = "output redshift";
+			file_sfh.write_dataset("runInfo/redshift", sim_params.redshifts[snapshot], comment);
+
+			file_sfh.write_attribute("runInfo/model_name", exec_params.name_model);
+
+			// Calculate effective volume of the run
+			float volume = sim_params.volume * exec_params.simulation_batches.size();
+
+			comment = "effective volume of this run [cMpc/h]";
+			file_sfh.write_dataset("runInfo/EffectiveVolume", volume, comment);
+
+			comment = "dark matter particle mass of this simulation [Msun/h]";
+			file_sfh.write_dataset("runInfo/particle_mass", sim_params.particle_mass, comment);
+
+			// Write cosmological parameters
+
+			comment = "omega matter assumed in simulation";
+			file_sfh.write_dataset("Cosmology/OmegaM", cosmo_params.OmegaM, comment);
+
+			comment = "omega baryon assumed in simulation";
+			file_sfh.write_dataset("Cosmology/OmegaB", cosmo_params.OmegaB, comment);
+
+			comment = "omega lambda assumed in simulation";
+			file_sfh.write_dataset("Cosmology/OmegaL", cosmo_params.OmegaL, comment);
+
+			comment = "scalar spectral index assumed in simulation";
+			file_sfh.write_dataset("Cosmology/n_s", cosmo_params.n_s, comment);
+
+			comment = "fluctuation amplitude at 8 Mpc/h";
+			file_sfh.write_dataset("Cosmology/sigma8", cosmo_params.sigma8, comment);
+
+			comment = "normalization of hubble parameter H0 = h * 100 Mpc * km/s";
+			file_sfh.write_dataset("Cosmology/h", cosmo_params.Hubble_h, comment);
+
+			comment = "Disk star formation rate histories of all galaxies that have survived to this snapshot [Msun/Gyr/h]";
+			file_sfh.write_dataset("Disks/StarFormationHistories", sfhs_disk, comment);
+
+			comment = "Disk cold gas mass histories of all galaxies that have survived to this snapshot [Msun/h].";
+			file_sfh.write_dataset("Disks/ColdGasMassHistories", gas_hs_disk, comment);
+
+			comment = "Disk mass of metals in the cold gas histories of all galaxies that have survived to this snapshot [Msun/h]";
+			file_sfh.write_dataset("Disks/ColdGasMassMetalsHistory", gas_metals_hs_disk, comment);
+
+			comment = "Bulge star formation rate histories of all galaxies that have survived to this snapshot [Msun/Gyr/h]";
+			file_sfh.write_dataset("Bulges/StarFormationHistories", sfhs_bulge, comment);
+
+			comment = "Bulge cold gas mass histories of all galaxies that have survived to this snapshot [Msun/h].";
+			file_sfh.write_dataset("Bulges/ColdGasMassHistories", gas_hs_bulge, comment);
+
+			comment = "Bulge mass of metals in the cold gas histories of all galaxies that have survived to this snapshot [Msun/h]";
+			file_sfh.write_dataset("Bulges/ColdGasMassMetalsHistory", gas_metals_hs_bulge, comment);
+
+			comment = "Redshifts of the history outputs.";
+			file_sfh.write_dataset("Redshifts", redshifts, comment);
+
 		}
+
 	}
 
 }
