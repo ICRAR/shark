@@ -636,7 +636,9 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 						for(int s=sim_params.min_snapshot; s <= snapshot; s++) {
 
 							auto it = std::find_if(galaxy->history.begin(), galaxy->history.end(), [s](const HistoryItem &hitem) {
-								return hitem.snapshot == s;
+								//information in snapshot corresponds to the end of it, so effectively, when writing, we need to
+								//compare to s-1.
+								return hitem.snapshot == s-1;
 							});
 
 							if (it == galaxy->history.end()) {
