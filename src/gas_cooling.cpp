@@ -320,6 +320,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	 * We need to convert masses and velocities to physical units before proceeding with calculation.
    	 */
    	double mhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass+subhalo.cold_halo_gas.mass);
+   	double mhot_ejec = cosmology->comoving_to_physical_mass(subhalo.ejected_galaxy_gas.mass);
    	double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals);
 
    	double vvir = subhalo.Vvir;
@@ -387,7 +388,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		for(unsigned i=0;i<subhalo.cooling_subhalo_tracking.deltat.size();++i){
    			integral += subhalo.cooling_subhalo_tracking.temp[i]*subhalo.cooling_subhalo_tracking.mass[i]/subhalo.cooling_subhalo_tracking.tcooling[i]*subhalo.cooling_subhalo_tracking.deltat[i];
    		}
-   		tcharac = integral/(Tvir*mhot/tcool); //available time for cooling in Gyr.
+   		tcharac = integral/(Tvir*mhot/tcool) *constants::GYR2S; //available time for cooling in seconds.
    	}
 
    	//TODO: I STILL NEED TO ADD A LIMIT TO THE TOTAL RADIATED ENERGY TO THE TOTAL THERMAL ENERGY OF THE HALO. SEE EQ. 18 AND 19 IN BENSON ET AL. (2010).
@@ -419,8 +420,8 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
        		 */
        		if(timescale_ratio > 1.0/agnfeedback->parameters.alpha_cool){
        			//Halo is eligible for AGN feedback.
-       			//Calculate cooling luminosity.
-       			double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot);
+       			//Calculate cooling luminosity using total hot gas mass as in GALFORM.
+       			double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot + mhot_ejec);
 
        			if(Lcool < agnfeedback->parameters.f_edd * Ledd && Lcool > 0){
        				central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lcool, central_galaxy->smbh.mass);
@@ -534,6 +535,13 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		throw invalid_data(os.str());
  	}
 
+   	// check for undefined values.
+ 	if(subhalo.hot_halo_gas.mass < 0 or subhalo.hot_halo_gas.mass >1e17 or std::isnan(subhalo.hot_halo_gas.mass)){
+		std::ostringstream os;
+		os << halo << " has hot halo gas mass not well defined";
+		throw invalid_data(os.str());
+ 	}
+
   	// Avoid negative values for the hot gas mass.
   	if(subhalo.hot_halo_gas.mass < constants::tolerance){
    		subhalo.hot_halo_gas.mass = 0;
@@ -599,12 +607,21 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 	if(rcool < rvir){
 
 		/**
-		 * For an isothermal profile, we define mass enclosed between rcool and rvir in csg.
+		 * For an isothermal profile, we define a small core radius.
 		 */
-		double mass_enclosed = mhot /PI4 /rvir * (rvir-rcool) * MSOLAR_g;
+		double rcore = 0.01 * rvir;
+
+		double r1 = rvir/rcore;
+		double r2 = rcool/rcore;
 
 		//Define cooling luminosity in $10^{40} erg/s$.
-		double Lcool = PI4 * std::pow(10.0,logl) * mass_enclosed / std::pow(10.0,40.0);
+		double func1 = std::atan(r1) - r1/(std::pow(r1,2.0) + 1);
+		double func2 = std::atan(r2) - r2/(std::pow(r2,2.0) + 1);
+
+		double ave_pseudo_density = std::pow(mhot, 2.0) / std::pow(rcore,3.0); //in Msun^2/Mpc^3.
+		double factor_geometry = (func1 - func2)/ std::pow(r1 - std::atan(r1), 2.0);
+
+		double Lcool = lcool_conversion_factor / (8.0*PI) * std::pow(10.0,logl) * ave_pseudo_density  * factor_geometry;
 
 		return Lcool;
 	}

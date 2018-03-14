@@ -611,10 +611,14 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 
 			//Create the vectors that will save the information of the galaxies
 			vector<vector<float>> sfhs_disk;
+			vector<vector<float>> stellar_mass_disk;
+			vector<vector<float>> stellar_metals_disk;
 			vector<vector<float>> gas_hs_disk;
 			vector<vector<float>> gas_metals_hs_disk;
 
 			vector<vector<float>> sfhs_bulge;
+			vector<vector<float>> stellar_mass_bulge;
+			vector<vector<float>> stellar_metals_bulge;
 			vector<vector<float>> gas_hs_bulge;
 			vector<vector<float>> gas_metals_hs_bulge;
 
@@ -627,9 +631,13 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 					for (auto &galaxy: subhalo->galaxies){
 
 						vector<float> sfh_gal_disk;
+						vector<float> star_gal_disk;
+						vector<float> star_metals_gal_disk;
 						vector<float> gas_gal_disk;
 						vector<float> gas_metals_gal_disk;
 						vector<float> sfh_gal_bulge;
+						vector<float> star_gal_bulge;
+						vector<float> star_metals_gal_bulge;
 						vector<float> gas_gal_bulge;
 						vector<float> gas_metals_gal_bulge;
 
@@ -643,9 +651,14 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 
 							if (it == galaxy->history.end()) {
 								sfh_gal_disk.push_back(defl_value);
+								star_gal_disk.push_back(defl_value);
+								star_metals_gal_disk.push_back(defl_value);
 								gas_gal_disk.push_back(defl_value);
 								gas_metals_gal_disk.push_back(defl_value);
+
 								sfh_gal_bulge.push_back(defl_value);
+								star_gal_bulge.push_back(defl_value);
+								star_metals_gal_bulge.push_back(defl_value);
 								gas_gal_bulge.push_back(defl_value);
 								gas_metals_gal_bulge.push_back(defl_value);
 							}
@@ -653,21 +666,29 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 								auto item = *it;
 								// assign disk properties
 								sfh_gal_disk.push_back(item.sfr_disk);
+								star_gal_disk.push_back(item.stellar_disk.mass);
+								star_metals_gal_disk.push_back(item.stellar_disk.mass_metals);
 								gas_gal_disk.push_back(item.gas_disk.mass);
 								gas_metals_gal_disk.push_back(item.gas_disk.mass_metals);
 
 								// assign bulge properties
 								sfh_gal_bulge.push_back(item.sfr_bulge);
+								star_gal_bulge.push_back(item.stellar_bulge.mass);
+								star_metals_gal_bulge.push_back(item.stellar_bulge.mass_metals);
 								gas_gal_bulge.push_back(item.gas_bulge.mass);
 								gas_metals_gal_bulge.push_back(item.gas_bulge.mass_metals);
 							}
 						}
 
 						sfhs_disk.push_back(sfh_gal_disk);
+						stellar_mass_disk.push_back(star_gal_disk);
+						stellar_metals_disk.push_back(star_metals_gal_disk);
 						gas_hs_disk.push_back(gas_gal_disk);
 						gas_metals_hs_disk.push_back(gas_metals_gal_disk);
 
 						sfhs_bulge.push_back(sfh_gal_bulge);
+						stellar_mass_bulge.push_back(star_gal_bulge);
+						stellar_metals_bulge.push_back(star_metals_gal_bulge);
 						gas_hs_bulge.push_back(gas_gal_bulge);
 						gas_metals_hs_bulge.push_back(gas_metals_gal_bulge);
 
@@ -684,8 +705,15 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			//Write header
 			write_header(file_sfh, snapshot);
 
+			//Write disk component history.
 			comment = "Disk star formation rate histories of all galaxies that have survived to this snapshot [Msun/Gyr/h]";
 			file_sfh.write_dataset("Disks/StarFormationHistories", sfhs_disk, comment);
+
+			comment = "Disk stellar mass histories of all galaxies that have survived to this snapshot [Msun/h]";
+			file_sfh.write_dataset("Disks/StellarMassHistories", stellar_mass_disk, comment);
+
+			comment = "Disk metals in stars histories of all galaxies that have survived to this snapshot [Msun/h]";
+			file_sfh.write_dataset("Disks/StellarMassMetalsHistories", stellar_metals_disk, comment);
 
 			comment = "Disk cold gas mass histories of all galaxies that have survived to this snapshot [Msun/h].";
 			file_sfh.write_dataset("Disks/ColdGasMassHistories", gas_hs_disk, comment);
@@ -693,8 +721,15 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			comment = "Disk mass of metals in the cold gas histories of all galaxies that have survived to this snapshot [Msun/h]";
 			file_sfh.write_dataset("Disks/ColdGasMassMetalsHistory", gas_metals_hs_disk, comment);
 
+			//Write bulge component history.
 			comment = "Bulge star formation rate histories of all galaxies that have survived to this snapshot [Msun/Gyr/h]";
 			file_sfh.write_dataset("Bulges/StarFormationHistories", sfhs_bulge, comment);
+
+			comment = "Bulge stellar mass histories of all galaxies that have survived to this snapshot [Msun/h]";
+			file_sfh.write_dataset("Bulges/StellarMassHistories", stellar_mass_bulge, comment);
+
+			comment = "Bulge metals in stars histories of all galaxies that have survived to this snapshot [Msun/h]";
+			file_sfh.write_dataset("Bulges/StellarMassMetalsHistories", stellar_metals_bulge, comment);
 
 			comment = "Bulge cold gas mass histories of all galaxies that have survived to this snapshot [Msun/h].";
 			file_sfh.write_dataset("Bulges/ColdGasMassHistories", gas_hs_bulge, comment);

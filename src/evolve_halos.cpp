@@ -220,6 +220,8 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 					HistoryItem hist_galaxy;
 					hist_galaxy.sfr_disk  = galaxy->sfr_disk;
 					hist_galaxy.sfr_bulge = galaxy->sfr_bulge;
+					hist_galaxy.stellar_disk = galaxy->disk_stars;
+					hist_galaxy.stellar_bulge = galaxy->bulge_stars;
 					hist_galaxy.gas_disk  = galaxy->disk_gas;
 					hist_galaxy.gas_bulge = galaxy->bulge_gas;
 					hist_galaxy.snapshot = snapshot;

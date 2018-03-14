@@ -140,8 +140,10 @@ public:
  */
 struct HistoryItem {
 
-	float  sfr_disk;
+	float sfr_disk;
 	float sfr_bulge;
+	Baryon stellar_disk;
+	Baryon stellar_bulge;
 	Baryon gas_disk;
 	Baryon gas_bulge;
 	int snapshot;
