@@ -29,6 +29,14 @@
 
 #include <H5Cpp.h>
 
+#if HDF5_VERSION_MAJOR == 1 && \
+     (HDF5_VERSION_MINOR > 10 || \
+      (HDF5_VERSION_MINOR == 10 && HDF5_VERSION_PATCH >= 1))
+#define HDF5_NEWER_THAN_1_10_0
+#else
+#undef HDF5_NEWER_THAN_1_10_0
+#endif
+
 namespace shark {
 
 namespace hdf5 {

@@ -80,11 +80,10 @@ endmacro()
 #
 macro(find_hdf5)
 	find_package(HDF5 REQUIRED COMPONENTS CXX)
-	if (NOT HDF5_VERSION VERSION_LESS "1.10.1" OR
-	    NOT HDF5_VERSION VERSION_GREATER "1.8.11")
+	if (NOT HDF5_VERSION VERSION_GREATER "1.8.11")
 		message(FATAL_ERROR
 				  "\nHDF5 version ${HDF5_VERSION} found, "
-				  "but shark needs versions between 1.8.12 and 1.10.0\n")
+				  "but shark needs versions at least 1.8.12\n")
 	endif()
 
 	# We need to pass down the information about the HDF5 version to shark

@@ -80,9 +80,17 @@ public:
 
 private:
 
+#ifdef HDF5_NEWER_THAN_1_10_0
+#define HDF5_FILE_GROUP_COMMON_BASE H5::Group
+#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Object
+#else
+#define HDF5_FILE_GROUP_COMMON_BASE H5::CommonFG
+#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Location
+#endif
+
 	H5::Attribute get_attribute(const std::string &name) const;
-	H5::Attribute _get_attribute(const H5::CommonFG &file_or_group, const std::vector<std::string> &path) const;
-	H5::Attribute _get_attribute(const H5::H5Location &l, const std::string attr_name) const;
+	H5::Attribute _get_attribute(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::vector<std::string> &path) const;
+	H5::Attribute _get_attribute(const HDF5_GROUP_DATASET_COMMON_BASE &l, const std::string attr_name) const;
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, T>::type
