@@ -80,7 +80,7 @@ endmacro()
 #
 macro(find_hdf5)
 	find_package(HDF5 REQUIRED COMPONENTS CXX)
-	if (NOT HDF5_VERSION VERSION_LESS "1.10.1" AND
+	if (NOT HDF5_VERSION VERSION_LESS "1.10.1" OR
 	    NOT HDF5_VERSION VERSION_GREATER "1.8.11")
 		message(FATAL_ERROR
 				  "\nHDF5 version ${HDF5_VERSION} found, "
