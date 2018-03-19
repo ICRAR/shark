@@ -64,9 +64,9 @@ macro(find_gsl)
 		message(FATAL_ERROR
 				  "\nNo GSL found in the system. Please install the GSL "
 				  "development files and try again\n")
-	elseif( GSL_VERSION LESS "2.0" )
+	elseif (GSL_VERSION VERSION_LESS "2.0")
 		message(FATAL_ERROR
-				  "\nGSL version ${GSL_VERSION} found, but we need at least 2.0\n")
+				  "\nGSL version ${GSL_VERSION} found, but shark needs at least 2.0\n")
 	endif()
 
 	include_directories(${GSL_INCLUDE_DIRS})
@@ -80,6 +80,12 @@ endmacro()
 #
 macro(find_hdf5)
 	find_package(HDF5 REQUIRED COMPONENTS CXX)
+	if (NOT HDF5_VERSION VERSION_LESS "1.10.1" AND
+	    NOT HDF5_VERSION VERSION_GREATER "1.8.11")
+		message(FATAL_ERROR
+				  "\nHDF5 version ${HDF5_VERSION} found, "
+				  "but shark needs versions between 1.8.12 and 1.10.0\n")
+	endif()
 	set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
 	include_directories(${HDF5_INCLUDE_DIRS})
 endmacro()
