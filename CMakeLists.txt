@@ -44,6 +44,22 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
 option(SHARK_TEST  "Include test compilation in the build" OFF)
 
 #
+# Make sure we have thread support
+# We don't directly use this (yet), but if we don't manually
+# add this library (most likely pthreads) to the set of libraries
+# that shark needs to link against we may end up in compilation
+# errors due to our dependencies using pthreads and not having it
+# listed at compile time.
+# This whole situation looks quite buggy to me, but I'd rather add
+# the pthread dependency here than spend a life trying to find out
+# how to "properly" solve the problem
+#
+macro(find_threads)
+	find_package(Threads)
+	set(SHARK_LIBS ${SHARK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+endmacro()
+
+#
 # This is how we look for GSL
 # Some cmake installations don't have a FindGSL, so if that fails
 # we then try via pkg-config
@@ -113,6 +129,7 @@ endmacro()
 #
 # Go out there and find stuff
 #
+find_threads()
 find_gsl()
 find_hdf5()
 find_boost()
