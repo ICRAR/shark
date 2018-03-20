@@ -16,6 +16,8 @@
 #include "dark_matter_halos.h"
 #include "options.h"
 #include "physical_model.h"
+#include "simulation.h"
+
 
 namespace shark {
 
@@ -55,7 +57,7 @@ class GalaxyMergerParameters {
 class GalaxyMergers{
 
 public:
-	GalaxyMergers(GalaxyMergerParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel, std::shared_ptr<AGNFeedback> agnfeedback);
+	GalaxyMergers(GalaxyMergerParameters parameters, SimulationParameters simparams, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel, std::shared_ptr<AGNFeedback> agnfeedback);
 
 	void orbital_parameters(double &vr, double &vt, double f);
 
@@ -69,9 +71,9 @@ public:
 
 	void merging_subhalos(HaloPtr &halo, double z);
 
-	void merging_galaxies(HaloPtr &halo, double z, double delta_t);
+	void merging_galaxies(HaloPtr &halo, int snapshot, double delta_t);
 
-	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo);
+	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot);
 
 	void create_starbursts(HaloPtr &halo, double z, double delta_t);
 
@@ -83,9 +85,14 @@ public:
 
 	void transfer_bulge_gas(GalaxyPtr &galaxy, SubhaloPtr &subhalo);
 
+	void transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot);
+
+	void transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot);
+
 
 private:
 	GalaxyMergerParameters parameters;
+	SimulationParameters simparams;
 	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
 	std::shared_ptr<AGNFeedback> agnfeedback;

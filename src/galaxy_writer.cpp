@@ -706,36 +706,24 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			write_header(file_sfh, snapshot);
 
 			//Write disk component history.
-			comment = "Disk star formation rate histories of all galaxies that have survived to this snapshot [Msun/Gyr/h]";
+			comment = "Star formation history of stars formed that by this output time end up in the disk [Msun/Gyr/h]";
 			file_sfh.write_dataset("Disks/StarFormationHistories", sfhs_disk, comment);
 
-			comment = "Disk stellar mass histories of all galaxies that have survived to this snapshot [Msun/h]";
+			comment = "History of stellar mass that by this output time ends up in the disk [Msun/h]";
 			file_sfh.write_dataset("Disks/StellarMassHistories", stellar_mass_disk, comment);
 
-			comment = "Disk metals in stars histories of all galaxies that have survived to this snapshot [Msun/h]";
+			comment = "History of stellar mass in metals that by this output time ends up in the disk [Msun/h]";
 			file_sfh.write_dataset("Disks/StellarMassMetalsHistories", stellar_metals_disk, comment);
 
-			comment = "Disk cold gas mass histories of all galaxies that have survived to this snapshot [Msun/h].";
-			file_sfh.write_dataset("Disks/ColdGasMassHistories", gas_hs_disk, comment);
-
-			comment = "Disk mass of metals in the cold gas histories of all galaxies that have survived to this snapshot [Msun/h]";
-			file_sfh.write_dataset("Disks/ColdGasMassMetalsHistory", gas_metals_hs_disk, comment);
-
 			//Write bulge component history.
-			comment = "Bulge star formation rate histories of all galaxies that have survived to this snapshot [Msun/Gyr/h]";
+			comment = "Star formation history of stars formed that by this output time end up in the bulge [Msun/Gyr/h]";
 			file_sfh.write_dataset("Bulges/StarFormationHistories", sfhs_bulge, comment);
 
-			comment = "Bulge stellar mass histories of all galaxies that have survived to this snapshot [Msun/h]";
+			comment = "History of stellar mass that by this output time ends up in the bulge [Msun/h]";
 			file_sfh.write_dataset("Bulges/StellarMassHistories", stellar_mass_bulge, comment);
 
-			comment = "Bulge metals in stars histories of all galaxies that have survived to this snapshot [Msun/h]";
+			comment = "History of stellar mass in metals that by this output time ends up in the bulge [Msun/h]";
 			file_sfh.write_dataset("Bulges/StellarMassMetalsHistories", stellar_metals_bulge, comment);
-
-			comment = "Bulge cold gas mass histories of all galaxies that have survived to this snapshot [Msun/h].";
-			file_sfh.write_dataset("Bulges/ColdGasMassHistories", gas_hs_bulge, comment);
-
-			comment = "Bulge mass of metals in the cold gas histories of all galaxies that have survived to this snapshot [Msun/h]";
-			file_sfh.write_dataset("Bulges/ColdGasMassMetalsHistory", gas_metals_hs_bulge, comment);
 
 			comment = "Redshifts of the history outputs.";
 			file_sfh.write_dataset("Redshifts", redshifts, comment);

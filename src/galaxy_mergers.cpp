@@ -50,10 +50,12 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 }
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
+		SimulationParameters simparams,
 		std::shared_ptr<DarkMatterHalos> darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
 		std::shared_ptr<AGNFeedback> agnfeedback) :
 	parameters(parameters),
+	simparams(simparams),
 	darkmatterhalo(darkmatterhalo),
 	physicalmodel(physicalmodel),
 	agnfeedback(agnfeedback)
@@ -203,7 +205,6 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 	//Calculate well the part of orbital parameters.
 	//Draw orbital parameters from PDF in Benson et al. (2005).
 	//orbital_parameters(vr, vt, f);
-
 	//double tau_orbits = merging_timescale_orbital(vr, vt, f, c);
 
 	//return tau_orbits * tau_mass * tau_dyn;
@@ -295,7 +296,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 
 }
 
-void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
+void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t){
 
 	/**
 	 * This function determines which galaxies are merging in this snapshot by comparing tmerge with the duration of the snapshot.
@@ -306,6 +307,8 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 	 */
 
 	//First define central subhalo.
+
+	double z = simparams.redshifts[snapshot];
 
 	auto &central_subhalo = halo->central_subhalo;
 
@@ -336,7 +339,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 			 * If merging timescale is less than the duration of this snapshot, then proceed to merge. Otherwise, update merging timescale.
 			 */
 			if(galaxy->tmerge < delta_t){
-				create_merger(central_galaxy, galaxy, halo);
+				create_merger(central_galaxy, galaxy, halo, snapshot);
 				// Accummulate all satellites that we need to delete at the end.
 				all_sats_to_delete.push_back(galaxy);
 			}
@@ -354,7 +357,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, double z, double delta_t){
 
 }
 
-void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo){
+void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot){
 
 	/**
 	 * This function classifies the merger and transfer all the baryon masses to the right component of the central.
@@ -397,6 +400,9 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 	central->smbh.mass_metals += satellite->smbh.mass_metals;
 
+	//satellite stellar mass is always transferred to the bulge.
+	//transfer_history_satellite_to_bulge(central, satellite, snapshot);
+
 	/**
 	 * Depending on the mass ratio, the baryonic components of the satellite and the disk of the major galaxy are going to be transferred differently.
 	 */
@@ -412,6 +418,8 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->bulge_stars.mass_metals += central->disk_stars.mass_metals + satellite->stellar_mass_metals();
 		central->bulge_gas.mass += central->disk_gas.mass + satellite->gas_mass();
 		central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals + satellite->gas_mass_metals();
+
+		//transfer_history_disk_to_bulge(central, snapshot);
 
 		//Make all disk values 0.
 
@@ -634,6 +642,97 @@ void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy, SubhaloPtr &subhalo){
 	// Calculate disk size.
 	galaxy->disk_gas.rscale = darkmatterhalo->disk_size_theory(*subhalo);
 	galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;*/
+}
+
+void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot){
+
+	/**
+	 * Function transfers the satellite stellar mass history to the bulge of the central galaxy.
+	 */
+
+	//Transfer history of stellar mass growth until the previous snapshot.
+	for(int s=simparams.min_snapshot; s <= snapshot-1; s++) {
+
+		auto it_sat = std::find_if(satellite->history.begin(), satellite->history.end(), [s](const HistoryItem &hitem) {
+			return hitem.snapshot == s;
+		});
+
+		auto it_cen = std::find_if(central->history.begin(), central->history.end(), [s](const HistoryItem &hitem) {
+			return hitem.snapshot == s;
+		});
+
+		/**There will be four cases:
+			1) that both galaxies existed at snapshot s. In this case transfer history at this snapshot to central.
+			2) that the satellite didn't exist but the central did. In this case do nothing.
+			3) that the central didn't exist but the satellite did. In this create a new entry for the history of the central with the data of the satellite.
+			4) none of the galaxies existed. In this case do nothing.
+		**/
+		if (it_sat == satellite->history.end() and it_cen == central->history.end()){ //neither satellite or central existed.
+			//no-opt.
+		}
+		else if (it_sat == satellite->history.end() and it_cen != central->history.end()){ // satellite didn't exist but central did.
+			//no-opt.
+		}
+		else if (it_sat != satellite->history.end() and it_cen == central->history.end()){ // central didn't exist but satellite did.
+			auto hist_item = *it_sat;
+
+			//transfer all data to the bulge, which is where all of this mass ends up being at.
+			hist_item.sfr_bulge += hist_item.sfr_disk;
+			hist_item.stellar_bulge.mass += hist_item.stellar_disk.mass;
+			hist_item.stellar_bulge.mass_metals += hist_item.stellar_disk.mass_metals;
+
+			//Make disk properties = 0.
+			hist_item.sfr_disk = 0;
+			hist_item.stellar_disk.mass = 0;
+			hist_item.stellar_disk.mass_metals = 0;
+
+			central->history.push_back(hist_item);
+		}
+		else { // both galaxies exist at this snapshot
+			auto hist_sat = *it_sat;
+			auto &hist_cen = *it_cen;
+
+			hist_cen.sfr_bulge += hist_sat.sfr_bulge + hist_sat.sfr_disk;
+			hist_cen.stellar_bulge.mass += hist_sat.stellar_bulge.mass +  hist_sat.stellar_disk.mass;
+			hist_cen.stellar_bulge.mass_metals += hist_sat.stellar_bulge.mass_metals +  hist_sat.stellar_disk.mass_metals;
+		}
+	}
+
+
+}
+
+void GalaxyMergers::transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot){
+
+	/**
+	 * Function transfers the disk stellar mass history to bulge of the central galaxy.
+	 */
+
+	//Transfer history of stellar mass growth until the previous snapshot.
+	for(int s=simparams.min_snapshot; s <= snapshot-1; s++) {
+
+		auto it_cen = std::find_if(central->history.begin(), central->history.end(), [s](const HistoryItem &hitem) {
+			return hitem.snapshot == s;
+		});
+
+		if (it_cen == central->history.end()){ //central didn't exist.
+			//no-opt.
+		}
+		else { // both galaxies exist at this snapshot
+			auto &hist_cen = *it_cen;
+
+			//tranfer disk information to bulge.
+			hist_cen.sfr_bulge += hist_cen.sfr_disk;
+			hist_cen.stellar_bulge.mass += hist_cen.stellar_disk.mass;
+			hist_cen.stellar_bulge.mass_metals += hist_cen.stellar_disk.mass_metals;
+
+			//make disk properties = 0;
+			hist_cen.sfr_disk = 0;
+			hist_cen.stellar_disk.mass = 0;
+			hist_cen.stellar_disk.mass_metals= 0;
+		}
+	}
+
+
 }
 
 

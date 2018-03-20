@@ -244,8 +244,8 @@ int run(int argc, char **argv) {
 
 	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters, gas_cooling_params);
 
-	GalaxyMergers galaxy_mergers{merger_parameters, dark_matter_halos,basic_physicalmodel,agnfeedback};
-	DiskInstability disk_instability{disk_instability_params,merger_parameters,dark_matter_halos,basic_physicalmodel,agnfeedback};
+	GalaxyMergers galaxy_mergers{merger_parameters, sim_params, dark_matter_halos,basic_physicalmodel,agnfeedback};
+	DiskInstability disk_instability{disk_instability_params,merger_parameters,sim_params, dark_matter_halos,basic_physicalmodel,agnfeedback};
 
 	HaloBasedTreeBuilder tree_builder(exec_params);
 
@@ -308,11 +308,11 @@ int run(int argc, char **argv) {
 
 				/*Evaluate which galaxies are merging in this halo.*/
 				LOG(debug) << "Merging galaxies in halo " << halo;
-				galaxy_mergers.merging_galaxies(halo, sim_params.redshifts[snapshot], tf-ti);
+				galaxy_mergers.merging_galaxies(halo, snapshot, tf-ti);
 
 				/*Evaluate disk instabilities.*/
 				LOG(debug) << "Evaluating disk instability in halo " << halo;
-				disk_instability.evaluate_disk_instability(halo, sim_params.redshifts[snapshot], tf-ti);
+				disk_instability.evaluate_disk_instability(halo, snapshot, tf-ti);
 
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
 				LOG(debug) << "Evolving content in halo " << halo;

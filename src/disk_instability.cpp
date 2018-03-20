@@ -30,11 +30,13 @@ DiskInstabilityParameters::DiskInstabilityParameters(const Options &options) :
 
 DiskInstability::DiskInstability(DiskInstabilityParameters parameters,
 		GalaxyMergerParameters merger_params,
+		SimulationParameters simparams,
 		std::shared_ptr<DarkMatterHalos> darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
 		std::shared_ptr<AGNFeedback> agnfeedback) :
 	parameters(parameters),
 	merger_params(merger_params),
+	simparams(simparams),
 	darkmatterhalo(darkmatterhalo),
 	physicalmodel(physicalmodel),
 	agnfeedback(agnfeedback)
@@ -42,7 +44,10 @@ DiskInstability::DiskInstability(DiskInstabilityParameters parameters,
 	// no-op
 }
 
-void DiskInstability::evaluate_disk_instability (HaloPtr &halo, double z, double delta_t){
+void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, double delta_t){
+
+
+	double z = simparams.redshifts[snapshot];
 
 	for (auto &subhalo: halo->all_subhalos()){
 		for (auto &galaxy: subhalo->galaxies){
@@ -64,11 +69,12 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, double z, double
 				galaxy->bulge_gas.mass_metals +=  galaxy->disk_gas.mass_metals;
 
 				//Make all disk values 0.
-
 				galaxy->disk_stars.mass = 0;
 				galaxy->disk_stars.mass_metals = 0;
 				galaxy->disk_gas.mass = 0;
 				galaxy->disk_gas.mass_metals = 0;
+
+				//transfer_history_disk_to_bulge(galaxy, snapshot);
 
 				/*
 				galaxy->disk_gas.rscale = 0;
@@ -174,5 +180,39 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 		}
 	}
 }
+
+void DiskInstability::transfer_history_disk_to_bulge(GalaxyPtr &galaxy, int snapshot){
+
+	/**
+	 * Function transfers the disk stellar mass history to bulge of the central galaxy.
+	 */
+
+	//Transfer history of stellar mass growth until the previous snapshot.
+	for(int s=simparams.min_snapshot; s <= snapshot-1; s++) {
+
+		auto it = std::find_if(galaxy->history.begin(), galaxy->history.end(), [s](const HistoryItem &hitem) {
+			return hitem.snapshot == s;
+		});
+
+		if (it == galaxy->history.end()){ //galaxy didn't exist.
+			//no-opt.
+		}
+		else { // both galaxies exist at this snapshot
+			auto &hist = *it;
+
+			//tranfer disk information to bulge.
+			hist.sfr_bulge += hist.sfr_disk;
+			hist.stellar_bulge.mass += hist.stellar_disk.mass;
+			hist.stellar_bulge.mass_metals += hist.stellar_disk.mass_metals;
+
+			//make disk properties = 0;
+			hist.sfr_disk = 0;
+			hist.stellar_disk.mass = 0;
+			hist.stellar_disk.mass_metals= 0;
+		}
+	}
+
+}
+
 
 }//end namespace shark
