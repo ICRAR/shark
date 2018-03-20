@@ -196,12 +196,9 @@ add_executable(shark ${SHARK_SRCS})
 target_link_libraries(shark sharklib)
 
 # Installing stuff
-install(TARGETS sharklib shark-importer
+install(TARGETS sharklib shark shark-importer
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
-install(FILES
-        include/reader.h
-        DESTINATION include/shark)
 
 #
 # Unit tests
