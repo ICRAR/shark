@@ -184,9 +184,16 @@ void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, co
 	}
 }
 
+#ifdef HDF5_NEWER_THAN_1_10_0
+#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Object
+#else
+#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Location
+#endif
+
+
 template<typename T>
 static inline
-void _create_and_write_attribute(H5::H5Location &loc, const std::string &name, const T &value) {
+void _create_and_write_attribute(HDF5_GROUP_DATASET_COMMON_BASE &loc, const std::string &name, const T &value) {
 	H5::DataType dataType = _datatype<T>(value);
 	auto attr = loc.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
 	_write_attribute<T>(attr, dataType, value);

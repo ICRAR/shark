@@ -57,13 +57,13 @@ H5::Attribute Reader::get_attribute(const string &name) const {
 	}
 }
 
-H5::Attribute Reader::_get_attribute(const H5::CommonFG &file_or_group, const std::vector<std::string> &parts) const
+H5::Attribute Reader::_get_attribute(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::vector<std::string> &parts) const
 {
 
 	// This is the attribute name
 	if (parts.size() == 1) {
 		// both file and groups derive from H5Location too
-		return _get_attribute(dynamic_cast<const H5::H5Location &>(file_or_group), parts[0]);
+		return _get_attribute(dynamic_cast<const HDF5_GROUP_DATASET_COMMON_BASE &>(file_or_group), parts[0]);
 	}
 
 	auto n_groups = file_or_group.getNumObjs();
@@ -90,7 +90,7 @@ H5::Attribute Reader::_get_attribute(const H5::CommonFG &file_or_group, const st
 	throw name_not_found();
 }
 
-H5::Attribute Reader::_get_attribute(const H5::H5Location &l, const std::string attr_name) const {
+H5::Attribute Reader::_get_attribute(const HDF5_GROUP_DATASET_COMMON_BASE &l, const std::string attr_name) const {
 
 	LOG(debug) << "Getting attribute " << attr_name << " from file " << get_filename();
 

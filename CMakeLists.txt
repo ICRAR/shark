@@ -44,6 +44,22 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
 option(SHARK_TEST  "Include test compilation in the build" OFF)
 
 #
+# Make sure we have thread support
+# We don't directly use this (yet), but if we don't manually
+# add this library (most likely pthreads) to the set of libraries
+# that shark needs to link against we may end up in compilation
+# errors due to our dependencies using pthreads and not having it
+# listed at compile time.
+# This whole situation looks quite buggy to me, but I'd rather add
+# the pthread dependency here than spend a life trying to find out
+# how to "properly" solve the problem
+#
+macro(find_threads)
+	find_package(Threads)
+	set(SHARK_LIBS ${SHARK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+endmacro()
+
+#
 # This is how we look for GSL
 # Some cmake installations don't have a FindGSL, so if that fails
 # we then try via pkg-config
@@ -64,9 +80,9 @@ macro(find_gsl)
 		message(FATAL_ERROR
 				  "\nNo GSL found in the system. Please install the GSL "
 				  "development files and try again\n")
-	elseif( GSL_VERSION LESS "2.0" )
+	elseif (GSL_VERSION VERSION_LESS "2.0")
 		message(FATAL_ERROR
-				  "\nGSL version ${GSL_VERSION} found, but we need at least 2.0\n")
+				  "\nGSL version ${GSL_VERSION} found, but shark needs at least 2.0\n")
 	endif()
 
 	include_directories(${GSL_INCLUDE_DIRS})
@@ -80,8 +96,23 @@ endmacro()
 #
 macro(find_hdf5)
 	find_package(HDF5 REQUIRED COMPONENTS CXX)
+	if (NOT HDF5_VERSION VERSION_GREATER "1.8.11")
+		message(FATAL_ERROR
+				  "\nHDF5 version ${HDF5_VERSION} found, "
+				  "but shark needs versions at least 1.8.12\n")
+	endif()
+
+	# We need to pass down the information about the HDF5 version to shark
+	message("-- Using HDF5 version ${HDF5_VERSION}")
+	string(REPLACE "." ";" VERSION_LIST ${HDF5_VERSION})
+	list(GET VERSION_LIST 0 HDF5_VERSION_MAJOR)
+	list(GET VERSION_LIST 1 HDF5_VERSION_MINOR)
+	list(GET VERSION_LIST 2 HDF5_VERSION_PATCH)
 	set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
 	include_directories(${HDF5_INCLUDE_DIRS})
+	add_definitions("-DHDF5_VERSION_MAJOR=${HDF5_VERSION_MAJOR}"
+	                "-DHDF5_VERSION_MINOR=${HDF5_VERSION_MINOR}"
+	                "-DHDF5_VERSION_PATCH=${HDF5_VERSION_PATCH}")
 endmacro()
 
 #
@@ -90,14 +121,15 @@ endmacro()
 # which is a hard requirement -- if it's not there we fail misserably
 #
 macro(find_boost)
-	find_package(Boost 1.54 REQUIRED COMPONENTS filesystem log program_options system)
-	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LOG_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+	find_package(Boost 1.54 COMPONENTS filesystem log program_options system REQUIRED)
+	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LIBRARIES})
 	include_directories(${Boost_INCLUDE_DIRS})
 endmacro()
 
 #
 # Go out there and find stuff
 #
+find_threads()
 find_gsl()
 find_hdf5()
 find_boost()
@@ -164,12 +196,9 @@ add_executable(shark ${SHARK_SRCS})
 target_link_libraries(shark sharklib)
 
 # Installing stuff
-install(TARGETS sharklib shark-importer
+install(TARGETS sharklib shark shark-importer
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
-install(FILES
-        include/reader.h
-        DESTINATION include/shark)
 
 #
 # Unit tests

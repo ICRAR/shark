@@ -35,19 +35,25 @@ namespace hdf5 {
 
 const std::string Writer::NO_COMMENT;
 
+#ifdef HDF5_NEWER_THAN_1_10_0
+#define HDF5_FILE_GROUP_COMMON_BASE H5::Group
+#else
+#define HDF5_FILE_GROUP_COMMON_BASE H5::CommonFG
+#endif
+
 template <H5G_obj_t E>
 inline static
 typename entity_traits<E>::rettype
-get_entity(const H5::CommonFG &file_or_group, const std::string &name);
+get_entity(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name);
 
 template <> inline
-H5::Group get_entity<H5G_GROUP>(const H5::CommonFG &file_or_group, const std::string &name)
+H5::Group get_entity<H5G_GROUP>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name)
 {
 	return file_or_group.openGroup(name);
 }
 
 template <> inline
-H5::DataSet get_entity<H5G_DATASET>(const H5::CommonFG &file_or_group, const std::string &name)
+H5::DataSet get_entity<H5G_DATASET>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name)
 {
 	return file_or_group.openDataSet(name);
 }
@@ -55,23 +61,23 @@ H5::DataSet get_entity<H5G_DATASET>(const H5::CommonFG &file_or_group, const std
 template <H5G_obj_t E, typename ... Ts>
 inline static
 typename entity_traits<E>::rettype
-create_entity(const H5::CommonFG &file_or_group, const std::string &name, Ts&&...create_args);
+create_entity(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name, Ts&&...create_args);
 
 template <> inline
-H5::Group create_entity<H5G_GROUP>(const H5::CommonFG &file_or_group, const std::string &name)
+H5::Group create_entity<H5G_GROUP>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name)
 {
 	return file_or_group.createGroup(name);
 }
 
 template <> inline
-H5::DataSet create_entity<H5G_DATASET>(const H5::CommonFG &file_or_group, const std::string &name, const H5::DataType &dataType, const H5::DataSpace &dataSpace)
+H5::DataSet create_entity<H5G_DATASET>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name, const H5::DataType &dataType, const H5::DataSpace &dataSpace)
 {
 	return file_or_group.createDataSet(name, dataType, dataSpace);
 }
 
 template <H5G_obj_t E, typename ... Ts>
 typename entity_traits<E>::rettype
-ensure_entity(const H5::CommonFG &file_or_group, const std::string &name, Ts&&...create_args)
+ensure_entity(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name, Ts&&...create_args)
 {
 	// Loop through subobjects and find entity
 	for(hsize_t i = 0; i < file_or_group.getNumObjs(); i++) {
