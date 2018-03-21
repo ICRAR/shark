@@ -44,12 +44,12 @@ Options::Options() :
 	// no-op
 }
 
-Options::Options(const string &name) :
+Options::Options(const string &fname) :
 	options()
 {
 
-	LOG(info) << "Loading options from " << name;
-	ifstream f = open_file(name);
+	LOG(info) << "Loading options from " << fname;
+	ifstream f = open_file(fname);
 	string line;
 	string option_group;
 
@@ -84,6 +84,7 @@ Options::Options(const string &name) :
 		}
 
 		name = option_group + '.' + name;
+		LOG(info) << "Loading option from " << fname << ": " << name << " = " << value;
 		options[name] = value;
 	}
 
@@ -94,6 +95,12 @@ void Options::add(const std::string &optspec)
 	std::string name;
 	std::string value;
 	parse_option(optspec, name, value);
+	if (options.find(name) == options.end()) {
+		LOG(info) << "Loading new option: " << name << " = " << value;
+	}
+	else {
+		LOG(info) << "Overwriting option: " << name << " = " << value;
+	}
 	options[name] = value;
 }
 
