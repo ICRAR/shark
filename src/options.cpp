@@ -47,6 +47,10 @@ Options::Options() :
 Options::Options(const string &fname) :
 	options()
 {
+	add_file(fname);
+}
+
+void Options::add_file(const string &fname) {
 
 	LOG(info) << "Loading options from " << fname;
 	ifstream f = open_file(fname);
