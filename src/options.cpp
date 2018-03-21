@@ -88,8 +88,7 @@ void Options::add_file(const string &fname) {
 		}
 
 		name = option_group + '.' + name;
-		LOG(info) << "Loading option from " << fname << ": " << name << " = " << value;
-		options[name] = value;
+		store_option(name, value);
 	}
 
 }
@@ -99,6 +98,11 @@ void Options::add(const std::string &optspec)
 	std::string name;
 	std::string value;
 	parse_option(optspec, name, value);
+	store_option(name, value);
+}
+
+void Options::store_option(const std::string &name, const std::string &value)
+{
 	if (options.find(name) == options.end()) {
 		LOG(info) << "Loading new option: " << name << " = " << value;
 	}

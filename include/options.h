@@ -120,6 +120,8 @@ protected:
 
 	options_t options;
 
+private:
+	void store_option(const std::string &name, const std::string &value);
 };
 
 }  // namespace shark
