@@ -159,7 +159,7 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	return subhalo;
 }
 
-void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
 
 	//This function loops over merger trees and halos to define central galaxies in a self-consistent way. The loop starts at z=0.
 
@@ -251,7 +251,7 @@ void TreeBuilder::define_central_subhalos(std::vector<MergerTreePtr> trees, Simu
 		}
 }
 
-void TreeBuilder::ensure_halo_mass_growth(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
 
 	//This function loops over merger trees and halos to make sure that descendant halos are at least as massive as their progenitors.
 
@@ -270,7 +270,7 @@ void TreeBuilder::ensure_halo_mass_growth(std::vector<MergerTreePtr> trees, Simu
 		}
 }
 
-void TreeBuilder::spin_interpolated_halos(std::vector<MergerTreePtr> trees, SimulationParameters sim_params){
+void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
 
 	// This function loops over merger trees and halos and subhalos to make sure that interpolated halos have the right angular momentum and concentration information.
 	// This has to be done starting from the first snapshot forward so that the angular momentum and concentration are propagated correctly if subhalo is interpolated over many snapshots.
@@ -303,7 +303,7 @@ void TreeBuilder::spin_interpolated_halos(std::vector<MergerTreePtr> trees, Simu
 }
 
 
-void TreeBuilder::define_accretion_rate_from_dm(std::vector<MergerTreePtr> trees, SimulationParameters sim_params, Cosmology &cosmology, TotalBaryon &AllBaryons){
+void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, Cosmology &cosmology, TotalBaryon &AllBaryons){
 
 
 	//Loop over trees.
