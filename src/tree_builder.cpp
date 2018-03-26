@@ -310,6 +310,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 
 	//Loop over trees.
+	auto universal_baryon_fraction = cosmology.universal_baryon_fraction();
 	for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 		for(auto &tree: trees) {
 				for(auto &halo: tree->halos[snapshot]){
@@ -321,7 +322,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 					});
 
 					//Define accreted baryonic mass.
-					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * cosmology.universal_baryon_fraction();
+					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * universal_baryon_fraction;
 
 					//Avoid negative numbers
 					if(halo->central_subhalo->accreted_mass < 0){
