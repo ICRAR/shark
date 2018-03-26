@@ -277,9 +277,11 @@ int run(int argc, char **argv) {
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
-	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
-	auto merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
-
+	std::vector<MergerTreePtr> merger_trees;
+	{
+		auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
+		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
+	}
 
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
 	GalaxyCreator galaxy_creator(cosmology, dark_matter_halos, gas_cooling_params, sim_params);
