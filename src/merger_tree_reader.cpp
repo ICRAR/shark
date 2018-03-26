@@ -77,7 +77,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> bat
 	return all_halos;
 }
 
-const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
+const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
 {
 	const auto fname = get_filename(batch);
 	hdf5::Reader batch_file(fname);
@@ -184,6 +184,13 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	}
 
 	LOG(info) << "Read " << subhalos.size() << " Subhalos from " << fname;
+	return subhalos;
+}
+
+const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
+{
+
+	std::vector<SubhaloPtr> subhalos = read_subhalos(batch, darkmatterhalos, sim_params);
 
 	// Sort subhalos by host index (which intrinsically sorts them by snapshot
 	// since host indices numbers are prefixed with the snapshot number)
