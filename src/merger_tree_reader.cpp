@@ -218,6 +218,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 		halo->add_subhalo(subhalo);
 		subhalo->host_halo = halo;
 	}
+	subhalos.clear();
 
 	std::ostringstream os;
 	os << "Created " << halos.size() << " Halos from these Subhalos. ";
