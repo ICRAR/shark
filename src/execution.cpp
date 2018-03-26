@@ -22,6 +22,7 @@ ExecutionParameters::ExecutionParameters(const Options &options) :
 	name_model(),
 	simulation_batches(),
 	skip_missing_descendants(true),
+	warn_on_missing_descendants(true),
 	ode_solver_precision(),
 	output_sf_histories(false),
 	snapshots_sf_histories()
@@ -31,6 +32,7 @@ ExecutionParameters::ExecutionParameters(const Options &options) :
 	options.load("execution.output_directory", output_directory, true);
 	options.load("execution.simulation_batches", simulation_batches, true);
 	options.load("execution.skip_missing_descendants", skip_missing_descendants);
+	options.load("execution.warn_on_missing_descendants", warn_on_missing_descendants);
 	options.load("execution.ode_solver_precision", ode_solver_precision, true);
 	options.load("execution.name_model", name_model, true);
 

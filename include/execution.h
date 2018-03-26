@@ -36,6 +36,7 @@ public:
 	std::vector<unsigned int> simulation_batches;
 
 	bool skip_missing_descendants;
+	bool warn_on_missing_descendants;
 
 	/**
 	 * Parameters of sf histories:

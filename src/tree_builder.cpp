@@ -459,12 +459,14 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 					          std::ostream_iterator<SubhaloPtr>(os, "\n  "));
 
 					// Users can choose whether to continue in these situations
-					// (with a warning) or if it should be considered an error
+					// (with or without a warning) or if it should be considered an error
 					if (!get_exec_params().skip_missing_descendants) {
 						throw subhalo_not_found(os.str(), subhalo->descendant_id);
 					}
 
-					LOG(warning) << os.str();
+					if (get_exec_params().warn_on_missing_descendants) {
+						LOG(warning) << os.str();
+					}
 					halo->remove_subhalo(subhalo);
 				}
 			}
