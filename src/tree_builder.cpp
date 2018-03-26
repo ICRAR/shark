@@ -72,15 +72,18 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	loop_through_halos(halos);
 
 	// Ensure halos only grow in mass.
+	LOG(info) << "Making sure halos only grow in mass";
 	ensure_halo_mass_growth(trees, sim_params);
 
 	// Redefine angular momentum in the case of interpolated halos.
 	// spin_interpolated_halos(trees, sim_params);
 
-	// Define central galaxies
+	// Define central subhalos
+	LOG(info) << "Defining central subhalos";
 	define_central_subhalos(trees, sim_params);
 
 	// Define accretion rate from DM in case we want this.
+	LOG(info) << "Defining accretion rate using cosmology";
 	define_accretion_rate_from_dm(trees, sim_params, *cosmology, AllBaryons);
 
 	return trees;

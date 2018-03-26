@@ -197,6 +197,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	std::sort(subhalos.begin(), subhalos.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
 		return lhs->haloID < rhs->haloID;
 	});
+	LOG(info) << "Sorted subhalos by haloID, creating Halos now";
 
 	// Create and assign Halos
 	HaloPtr halo;
