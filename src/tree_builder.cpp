@@ -389,11 +389,14 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 	// Get all snapshots in the Halos and sort them in decreasing order
 	// (but skip the first one, those were already processed and MergerTrees
 	// were built for them)
-	std::set<int> halo_snapshots;
-	for(const auto &halo: halos) {
-		halo_snapshots.insert(halo->snapshot);
+	std::vector<int> sorted_halo_snapshots;
+	{
+		std::set<int> halo_snapshots;
+		for(const auto &halo: halos) {
+			halo_snapshots.insert(halo->snapshot);
+		}
+		sorted_halo_snapshots = std::vector<int>(++(halo_snapshots.rbegin()), halo_snapshots.rend());
 	}
-	std::vector<int> sorted_halo_snapshots(++(halo_snapshots.rbegin()), halo_snapshots.rend());
 
 	// Loop as per instructions above
 	for(int snapshot: sorted_halo_snapshots) {
