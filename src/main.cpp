@@ -264,6 +264,12 @@ int run(int argc, char **argv) {
 
 	HaloBasedTreeBuilder tree_builder(exec_params);
 
+	// Inform the size of things
+	std::ostringstream os;
+	os << "Main structure/class sizes follow. ";
+	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
+	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
+	LOG(info) << os.str();
 
 	// Create class to track all the baryons of the simulation in its different components.
 	auto AllBaryons = std::make_shared<TotalBaryon>();
