@@ -74,7 +74,7 @@ std::string GalaxyWriter::get_output_directory(int snapshot)
 	return output_dir;
 }
 
-void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon AllBaryons){
+void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons){
 
 	using std::string;
 	using std::vector;
@@ -515,7 +515,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	file.write_dataset("Galaxies/id_galaxy", id_galaxy, comment);
 }
 
-void HDF5GalaxyWriter::write_global_properties (hdf5::Writer file, int snapshot, TotalBaryon AllBaryons){
+void HDF5GalaxyWriter::write_global_properties (hdf5::Writer file, int snapshot, TotalBaryon &AllBaryons){
 
 	using std::string;
 	using std::vector;
@@ -746,7 +746,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 	}
 }
 
-void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon AllBaryons)
+void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons)
 {
 
 	using std::vector;

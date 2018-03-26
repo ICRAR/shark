@@ -1,0 +1,183 @@
+#!/bin/bash -l
+#
+# Script to run shark under a queueing system
+#
+# ICRAR - International Centre for Radio Astronomy Research
+# (c) UWA - The University of Western Australia, 2018
+# Copyright by UWA (in the framework of the ICRAR)
+# All rights reserved
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307  USA
+#
+
+info() {
+	echo "shark-run: $1"
+}
+
+error() {
+	echo "shark-run: ERROR: $1" 1>&2
+	exit 1
+}
+
+warning() {
+	echo "shark-run: WARNING: $1" 1>&2
+}
+
+print_usage() {
+	echo
+	echo "$0: Runs shark under a queueing environment"
+	echo
+	echo "Usage: $0 [-h] [-?] [-v verbosity-level] [-m modules] [-S shark_binary] -V subvolumes"
+	echo "       config_file"
+	echo
+	echo " -h, -?: Show this help"
+	echo " -v verbosity-level: shark verbosity"
+	echo " -m modules: colon-separted list of modules to load before running shark"
+	echo " -S: The shark binary to run. Defaults to standard PATH lookup"
+	echo " -V: Space-separated list of subvolumes to process. Can contain ranges like 1-10"
+	echo " config_file: The reference configuration file to use for this shark execution"
+}
+
+# Check we are under the influence of a queueing system
+if [ -z "${SLURM_JOB_ID}" ]
+then
+	warning ""
+	warning "THIS IS NOT MEANT TO HAPPEN"
+	warning ""
+	warning "You seem to be manually running this script, but this script is designed to be run"
+	warning "under a queueing system (PBS/Torque or SLURM) in an HPC facility."
+	warning ""
+	warning "If you are indeed in an HPC center and trying to run shark, you most probably want"
+	warning "to run the shark-submit script (which in turn will invoke us internally)."
+	warning ""
+	warning "Now, if you are really sure of what you are doing, you have nothing to fear..."
+	warning ""
+fi
+
+# Print queueing information for this job
+if [ ! -z "$SLURM_JOB_ID" ]
+then
+	info ""
+	info "Dumping SLURM information for this job submission:"
+	info ""
+	info "Variable                 Description                           Value"
+	info "--------------------------------------------------------------------------------"
+	info "SLURM_CLUSTER_NAME       The cluster we are running shark on   $SLURM_CLUSTER_NAME"
+	info "SLURM_SUBMIT_DIR         Directory the job was submitted from  $SLURM_SUBMIT_DIR"
+	info "SLURM_JOB_PARTITION      The partition we are running shark on $SLURM_JOB_PARTITION"
+	info "SLURM_JOB_NAME           Name of the job                       $SLURM_JOB_NAME"
+	info "SLURM_JOB_ID             This job's unique identifier job      $SLURM_JOB_ID"
+	info "SLURM_JOB_NODELIST       Name of nodes assigned                $SLURM_JOB_NODELIST"
+	info "SLURM_JOB_NUM_NODES      Number of nodes allocated             $SLURM_JOB_NUM_NODES"
+	info "SLURM_JOB_CPUS_PER_NODE  #CPUs per node available              $SLURM_JOB_CPUS_PER_NODE"
+	info "SLURM_NTASKS             #Tasks allocated                      $SLURM_NTASKS"
+	info "SLURM_NTASKS_PER_NODE    #Tasks to run per node                $SLURM_NTASKS_PER_NODE"
+	info "SLURM_MEM_PER_NODE       #Allocated memory per node            $SLURM_MEM_PER_NODE"
+	info ""
+fi
+
+# Default option values
+# These are global variables, so we don't need to pass them around all the time
+verbose=
+module_names=
+shark_verbosity=3
+shark_binary=
+shark_subvolumes=
+
+# Parse command line options
+while getopts "h?m:v:S:V:" opt
+do
+	case "$opt" in
+		[h?])
+			print_usage
+			exit 0
+			;;
+		v)
+			shark_verbosity="$OPTARG"
+			;;
+		m)
+			module_names="$OPTARG"
+			;;
+		S)
+			shark_binary="$OPTARG"
+			;;
+		V)
+			shark_subvolumes="$OPTARG"
+			;;
+		*)
+			print_usage 1>&2
+			exit 1
+			;;
+	esac
+done
+
+# Make sure we have a list of subvolumes to process
+if [ -z "$shark_subvolumes" ]
+then
+	error "Missing -V option with subvolumes list"
+	print_usage 1>&2
+	exit 1
+fi
+
+# Positional argument is the configuration file name
+if [ $(($# - $OPTIND)) -lt 0 ]
+then
+	print_usage 1>&2
+	exit 1
+fi
+
+config_file=${@:$OPTIND:1}
+
+# Which shark binary should be used
+shark_binary=${shark_binary:-shark}
+
+# Make sure the configuration file exists before submitting
+if [ ! -f ${config_file} ]
+then
+	error "File ${config_file} is not an existing (or accessible) file"
+	exit 1
+fi
+
+# List and load modules
+if [ ! -z "$module_names" ]
+then
+	module_names="${module_names//:/ }"
+	info "Loading modules specified by user: $module_names"
+	for m in $module_names
+	do
+		info "Loading module $m"
+		module load "$m" || error "Failed to load module $m"
+	done
+fi
+
+tasks_per_node=${SLURM_TASKS_PER_NODE%%(*}
+mem_per_task_per_node=$(($SLURM_MEM_PER_NODE / $tasks_per_node))
+
+cmd="srun --exclusive --mem-per-cpu $mem_per_task_per_node -c 1 -n 1 -N 1 time $shark_binary -v $shark_verbosity $config_file"
+info ""
+info "================================================================================"
+info "Starting shark via srun with command-line: $cmd -o <subvol>"
+info "================================================================================"
+info ""
+for s in $shark_subvolumes
+do
+	info "Spawning shark run for subvolume $s"
+	$cmd -o "execution.simulation_batches=$s" &> "shark_subvol_${s}.log" &
+done
+
+info "Waiting for all instances to finish"
+wait
+info "Done! Check your results, and good luck!"

@@ -199,6 +199,10 @@ target_link_libraries(shark sharklib)
 install(TARGETS sharklib shark shark-importer
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
+install(PROGRAMS
+       ${CMAKE_SOURCE_DIR}/hpc/shark-run
+		 ${CMAKE_SOURCE_DIR}/hpc/shark-submit
+		 DESTINATION bin)
 
 #
 # Unit tests

@@ -62,9 +62,21 @@ void show_help(const char *prog, const boost::program_options::options_descripti
 	cout << endl;
 	cout << "SHArk: Semianalytic Halos Ark" << endl;
 	cout << endl;
-	cout << "Usage: " << prog << " [options] config-file" << endl;
+	cout << "Usage: " << prog << " [options] config-file [... config-file]" << endl;
+	cout << endl;
+	cout << "Options are loaded from the given configuration files in order. If an option" << endl;
+	cout << "is present in more than one configuration file, the last one takes precedence." << endl;
+	cout << "Options specified via -o take precedence, in order." << endl;
 	cout << endl;
 	cout << desc << endl;
+	cout << "Example:" << endl;
+	cout << endl;
+	cout << endl;
+	cout << " $> " << prog << " -o group1.option1=a group1.option2=b config_file1.txt config_file2.txt" << endl;
+	cout << endl;
+	cout << " It loads options from config_file1.txt first and then from config_file2.txt. On top of that" << endl;;
+	cout << " it also loads options 'group1.option1' and 'group1.option2' from the command-line." << endl;;
+	cout << endl;
 }
 
 void setup_logging(int lvl) {
@@ -159,12 +171,12 @@ int run(int argc, char **argv) {
 		                "Space-separated additional options to override config file");
 
 	po::positional_options_description pdesc;
-	pdesc.add("config-file", 1);
+	pdesc.add("config-file", -1);
 
 	po::options_description all_opts;
 	all_opts.add(visible_opts);
 	all_opts.add_options()
-		("config-file", po::value<string>(), "SHArk config file");
+		("config-file", po::value<vector<string>>()->multitoken(), "SHArk config file(s)");
 
 	// Read command-line options
 	po::variables_map vm;
@@ -182,7 +194,7 @@ int run(int argc, char **argv) {
 		return 0;
 	}
 	if (vm.count("config-file") == 0 ) {
-		cerr << "Missing mandatory <config-file> option" << endl;
+		cerr << "At least one <config-file> option must be given" << endl;
 		return 1;
 	}
 
@@ -196,7 +208,10 @@ int run(int argc, char **argv) {
 
 	// Read the configuration file, and override options with any given
 	// on the command-line
-	Options options(vm["config-file"].as<string>());
+	Options options;
+	for (auto &config_file: vm["config-file"].as<vector<string>>()) {
+		options.add_file(config_file);
+	}
 	for(auto &opt_spec: vm["options"].as<vector<string>>()) {
 		options.add(opt_spec);
 	}

@@ -61,6 +61,11 @@ public:
 	 */
 	Options(const std::string &filename);
 
+	/// Adds the options contained in file @p fname
+	///
+	/// @param fname A file with options to load
+	void add_file(const std::string &fname);
+
 	/// Adds the option specified by `optspec` to the internal set of options
 	/// loaded into this object
 	///
@@ -115,6 +120,8 @@ protected:
 
 	options_t options;
 
+private:
+	void store_option(const std::string &name, const std::string &value);
 };
 
 }  // namespace shark
