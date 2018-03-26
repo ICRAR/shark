@@ -71,6 +71,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> bat
 	for(auto batch: batches) {
 		LOG(info) << "Reading file for batch " << batch;
 		auto halos_batch = read_halos(batch, darkmatterhalos, sim_params);
+		all_halos.reserve(all_halos.size() + halos_batch.size());
 		all_halos.insert(all_halos.end(), halos_batch.begin(), halos_batch.end());
 	}
 
@@ -119,6 +120,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 	LOG(info) << os.str();
 
 	vector<SubhaloPtr> subhalos;
+	subhalos.reserve(n_subhalos);
 	for(unsigned int i=0; i!=n_subhalos; i++) {
 
 		auto subhalo = std::make_shared<Subhalo>();
