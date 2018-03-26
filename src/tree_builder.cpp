@@ -431,6 +431,16 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 				const auto &d_halo = halos_by_id[subhalo->descendant_halo_id];
 				for(auto &d_subhalo: d_halo->all_subhalos()) {
 					if (d_subhalo->id == subhalo->descendant_id) {
+
+						// We support only direct parentage; that is, descendants must be
+						// in the snapshot directly after ours
+						if (subhalo->snapshot != d_subhalo->snapshot - 1) {
+							std::ostringstream os;
+							os << "Subhalo " << d_subhalo << " (snapshot " << subhalo->snapshot << ") ";
+							os << "is not a direct descendant of " << subhalo << " (" << d_subhalo->snapshot << ").";
+							throw invalid_data(os.str());
+						}
+
 						link(subhalo, d_subhalo, halo, d_halo);
 						subhalo_descendant_found = true;
 						halo_linked = true;

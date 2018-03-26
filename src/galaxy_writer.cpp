@@ -641,6 +641,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 						vector<float> gas_gal_bulge;
 						vector<float> gas_metals_gal_bulge;
 
+						bool star_gal_bulge_exists = false;
 						for(int s=sim_params.min_snapshot; s <= snapshot; s++) {
 
 							auto it = std::find_if(galaxy->history.begin(), galaxy->history.end(), [s](const HistoryItem &hitem) {
@@ -650,6 +651,17 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 							});
 
 							if (it == galaxy->history.end()) {
+								if (star_gal_bulge_exists) {
+									std::ostringstream os;
+									os << "The history of the StellarMass of the bulge of " << galaxy << " ceased to exist (temporarily). ";
+									os << "These are the snapshots for which there is a history item: ";
+									vector<int> hsnaps(galaxy->history.size());
+									std::transform(galaxy->history.begin(), galaxy->history.end(), hsnaps.begin(), [](const HistoryItem &hitem) {
+										return hitem.snapshot;
+									});
+									std::copy(hsnaps.begin(), hsnaps.end(), std::ostream_iterator<int>(os, " "));
+									LOG(warning) << os.str();
+								}
 								sfh_gal_disk.push_back(defl_value);
 								star_gal_disk.push_back(defl_value);
 								star_metals_gal_disk.push_back(defl_value);
@@ -662,7 +674,8 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 								gas_gal_bulge.push_back(defl_value);
 								gas_metals_gal_bulge.push_back(defl_value);
 							}
-							else{
+							else {
+								star_gal_bulge_exists = true;
 								auto item = *it;
 								// assign disk properties
 								sfh_gal_disk.push_back(item.sfr_disk);
@@ -680,17 +693,17 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 							}
 						}
 
-						sfhs_disk.push_back(sfh_gal_disk);
-						stellar_mass_disk.push_back(star_gal_disk);
-						stellar_metals_disk.push_back(star_metals_gal_disk);
-						gas_hs_disk.push_back(gas_gal_disk);
-						gas_metals_hs_disk.push_back(gas_metals_gal_disk);
+						sfhs_disk.emplace_back(sfh_gal_disk);
+						stellar_mass_disk.emplace_back(star_gal_disk);
+						stellar_metals_disk.emplace_back(star_metals_gal_disk);
+						gas_hs_disk.emplace_back(gas_gal_disk);
+						gas_metals_hs_disk.emplace_back(gas_metals_gal_disk);
 
-						sfhs_bulge.push_back(sfh_gal_bulge);
-						stellar_mass_bulge.push_back(star_gal_bulge);
-						stellar_metals_bulge.push_back(star_metals_gal_bulge);
-						gas_hs_bulge.push_back(gas_gal_bulge);
-						gas_metals_hs_bulge.push_back(gas_metals_gal_bulge);
+						sfhs_bulge.emplace_back(sfh_gal_bulge);
+						stellar_mass_bulge.emplace_back(star_gal_bulge);
+						stellar_metals_bulge.emplace_back(star_metals_gal_bulge);
+						gas_hs_bulge.emplace_back(gas_gal_bulge);
+						gas_metals_hs_bulge.emplace_back(gas_metals_gal_bulge);
 
 					}
 				}
