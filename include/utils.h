@@ -138,6 +138,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, detail::_fixed<N, V
 /// @param v The value to send to the stream
 ///
 template <int N, typename T>
+inline
 detail::_fixed<N, T> fixed(T v) {
 	return {v};
 }
