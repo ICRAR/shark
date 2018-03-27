@@ -23,7 +23,6 @@
 //
 
 #include <algorithm>
-#include <chrono>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -52,6 +51,7 @@
 #include "reionisation.h"
 #include "merger_tree_reader.h"
 #include "tree_builder.h"
+#include "timer.h"
 #include "utils.h"
 
 using namespace std;
@@ -308,7 +308,7 @@ int run(int argc, char **argv) {
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
 
 		unsigned int galaxies_created = 0;
-		auto start = std::chrono::steady_clock::now();
+		Timer t;
 		basic_physicalmodel->reset_ode_evaluations();
 
 		//Calculate the initial and final time of this snapshot.
@@ -361,8 +361,7 @@ int run(int argc, char **argv) {
 			writer->write(snapshot+1, all_halos_this_snapshot, *AllBaryons);
 		}
 
-		auto snapshot_time = std::chrono::steady_clock::now() - start;
-		unsigned long duration_millis = std::chrono::duration_cast<std::chrono::milliseconds>(snapshot_time).count();
+		auto duration_millis = t.get();
 
 		// Some high-level ODE and integration iteration count statistics
 		auto starform_integration_intervals = basic_physicalmodel->get_star_formation_integration_intervals();
