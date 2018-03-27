@@ -21,6 +21,7 @@
 #include "logging.h"
 #include "merger_tree_reader.h"
 #include "simulation.h"
+#include "timer.h"
 #include "utils.h"
 #include "hdf5/reader.h"
 
@@ -80,6 +81,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> bat
 
 const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
 {
+	Timer t;
 	const auto fname = get_filename(batch);
 	hdf5::Reader batch_file(fname);
 
@@ -109,7 +111,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 
 
 	auto n_subhalos = Mvir.size();
-
+	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
 	if ( !n_subhalos ) {
 		return {};
 	}
@@ -121,6 +123,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 
 	vector<SubhaloPtr> subhalos;
 	subhalos.reserve(n_subhalos);
+	t = Timer();
 	for(unsigned int i=0; i!=n_subhalos; i++) {
 
 		auto subhalo = std::make_shared<Subhalo>();
@@ -185,7 +188,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 		subhalos.push_back(std::move(subhalo));
 	}
 
-	LOG(info) << "Read " << subhalos.size() << " Subhalos from " << fname;
+	LOG(info) << "Created " << subhalos.size() << " Subhalos from " << fname << " in " << t;
 	return subhalos;
 }
 
@@ -227,13 +230,13 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	os << "This should take another ~" << memory_amount(halos.size() * sizeof(Halo)) << " of memory";
 	LOG(info) << os.str();
 
+	Timer t;
 	for(const auto &halo: halos) {
-
 		// Calculate vvir of halo.
 		halo->Vvir = darkmatterhalos.halo_virial_velocity(halo->Mvir, sim_params.redshifts[halo->snapshot]);
 		halo->concentration = darkmatterhalos.nfw_concentration(halo->Mvir,sim_params.redshifts[halo->snapshot]);
-
 	}
+	LOG(info) << "Calculated Vvir and concentration for new Halos in " << t;
 
 	return halos;
 }
