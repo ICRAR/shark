@@ -44,7 +44,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 			LOG(debug) << "Creating MergerTree at " << halo;
 			halo->merger_tree = tree;
 			halo->merger_tree->add_halo(halo);
-			trees.push_back(tree);
+			trees.emplace_back(std::move(tree));
 		}
 	}
 

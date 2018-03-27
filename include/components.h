@@ -736,14 +736,14 @@ public:
 	 */
 	MergerTreePtr merger_tree;
 
-	void add_subhalo(const SubhaloPtr &subhalo) {
+	void add_subhalo(const SubhaloPtr &&subhalo) {
 
 		// Assign subhalo to proper member
 		if (subhalo->subhalo_type == Subhalo::CENTRAL) {
 			central_subhalo = subhalo;
 		}
 		else {
-			satellite_subhalos.push_back(subhalo);
+			satellite_subhalos.emplace_back(subhalo);
 		}
 
 		// Add subhalo mass to halo

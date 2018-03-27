@@ -225,7 +225,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 					hist_galaxy.gas_disk  = galaxy->disk_gas;
 					hist_galaxy.gas_bulge = galaxy->bulge_gas;
 					hist_galaxy.snapshot = snapshot;
-					galaxy->history.push_back(hist_galaxy);
+					galaxy->history.emplace_back(std::move(hist_galaxy));
 				}
 
 				//Accummulate galaxy baryons

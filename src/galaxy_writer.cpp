@@ -693,17 +693,17 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 							}
 						}
 
-						sfhs_disk.emplace_back(sfh_gal_disk);
-						stellar_mass_disk.emplace_back(star_gal_disk);
-						stellar_metals_disk.emplace_back(star_metals_gal_disk);
-						gas_hs_disk.emplace_back(gas_gal_disk);
-						gas_metals_hs_disk.emplace_back(gas_metals_gal_disk);
+						sfhs_disk.emplace_back(std::move(sfh_gal_disk));
+						stellar_mass_disk.emplace_back(std::move(star_gal_disk));
+						stellar_metals_disk.emplace_back(std::move(star_metals_gal_disk));
+						gas_hs_disk.emplace_back(std::move(gas_gal_disk));
+						gas_metals_hs_disk.emplace_back(std::move(gas_metals_gal_disk));
 
-						sfhs_bulge.emplace_back(sfh_gal_bulge);
-						stellar_mass_bulge.emplace_back(star_gal_bulge);
-						stellar_metals_bulge.emplace_back(star_metals_gal_bulge);
-						gas_hs_bulge.emplace_back(gas_gal_bulge);
-						gas_metals_hs_bulge.emplace_back(gas_metals_gal_bulge);
+						sfhs_bulge.emplace_back(std::move(sfh_gal_bulge));
+						stellar_mass_bulge.emplace_back(std::move(star_gal_bulge));
+						stellar_metals_bulge.emplace_back(std::move(star_metals_gal_bulge));
+						gas_hs_bulge.emplace_back(std::move(gas_gal_bulge));
+						gas_metals_hs_bulge.emplace_back(std::move(gas_metals_gal_bulge));
 
 					}
 				}
