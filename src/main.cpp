@@ -279,6 +279,7 @@ int run(int argc, char **argv) {
 	{
 		auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
 		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
+		merger_trees.shrink_to_fit();
 	}
 
 	/* Create the first generation of galaxies if halo is first appearing.*/
