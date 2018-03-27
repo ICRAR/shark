@@ -118,18 +118,21 @@ bool empty_or_comment(const std::string &s);
 
 
 namespace detail {
+
 	template <int N, typename T>
 	struct _fixed {
 		T _val;
 	};
-}
 
-template <typename T, int N, typename VT>
-std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, detail::_fixed<N, VT> v)
-{
-	os << std::setprecision(3) << std::fixed << v._val;
-	return os;
-}
+	template <typename T, int N, typename VT>
+	inline
+	std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, detail::_fixed<N, VT> v)
+	{
+		os << std::setprecision(3) << std::fixed << v._val;
+		return os;
+	}
+
+} // namespace detail
 
 ///
 /// Sent to a stream object, this manipulator will print the given value with a
