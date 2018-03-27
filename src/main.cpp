@@ -109,7 +109,6 @@ struct SnapshotStatistics {
 	unsigned long n_subhalos;
 	unsigned long n_galaxies;
 	unsigned long duration_millis;
-	unsigned int galaxies_created;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
 		if (n_galaxies == 0) {
@@ -140,7 +139,6 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
 	   << "  Number of halos:                      " << stats.n_halos << "\n"
 	   << "  Number of subhalos:                   " << stats.n_subhalos << "\n"
 	   << "  Number of galaxies:                   " << stats.n_galaxies << "\n"
-	   << "  Number of newly created galaxies:     " << stats.galaxies_created << "\n"
 	   << "  Galaxy evolution ODE evaluations:     " << stats.galaxy_ode_evaluations
 	   << " (" << fixed<3>(stats.galaxy_ode_evaluations_per_galaxy()) << " [evals/gal])" << "\n"
 	   << "  Starburst ODE evaluations:            " << stats.starburst_ode_evaluations
@@ -283,6 +281,7 @@ int run(int argc, char **argv) {
 		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
 	}
 
+	/* Create the first generation of galaxies if halo is first appearing.*/
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
 	GalaxyCreator galaxy_creator(cosmology, dark_matter_halos, gas_cooling_params, sim_params);
 	galaxy_creator.create_galaxies(merger_trees, *AllBaryons);
@@ -307,7 +306,6 @@ int run(int argc, char **argv) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
 
-		unsigned int galaxies_created = 0;
 		Timer t;
 		basic_physicalmodel->reset_ode_evaluations();
 
@@ -323,11 +321,6 @@ int run(int argc, char **argv) {
 
 				/*Append this halo to the list of halos of this snapshot*/
 				all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halo);
-
-				/* Create the first generation of galaxies if halo is first appearing.*/
-				auto pre_galaxy_count = halo->galaxy_count();
-				auto post_galaxy_count = halo->galaxy_count();
-				galaxies_created += post_galaxy_count - pre_galaxy_count;
 
 				/*Evaluate which galaxies are merging in this halo.*/
 				LOG(debug) << "Merging galaxies in halo " << halo;
@@ -377,7 +370,7 @@ int run(int argc, char **argv) {
 		});
 
 		SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
-		                          n_halos, n_subhalos, n_galaxies, duration_millis, galaxies_created};
+		                          n_halos, n_subhalos, n_galaxies, duration_millis};
 		LOG(info) << "Statistics for snapshot " << snapshot << std::endl << stats;
 
 
