@@ -40,7 +40,7 @@ print_usage() {
 	echo
 	echo "$0: Submits shark for execution in a queueing system like SLURM or PBS/Torque"
 	echo
-	echo "Usage: $0 [-h] [-?] [-d] [-W working_dir] [-Q queue] [-a account] [-w walltime]"
+	echo "Usage: $0 [-h] [-?] [-d] [-o output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-m modules] [-N num-nodes] [-v | -q] [-S shark_binary]"
 	echo "       [-V subvolumes] config_file"
 	echo
@@ -51,7 +51,7 @@ print_usage() {
 	echo
 	echo "Queueing options"
 	echo
-	echo " -W working_dir: Working directory where shark-related output will be written to"
+	echo " -o output_dir: Output directory where shark-related output will be written to"
 	echo " -Q queue: The queue to submit this job to"
 	echo " -a account: The account to which this submission should be billed to"
 	echo " -w walltime: The walltime to apply to this submission. Defaults to 1 [h]"
@@ -103,7 +103,7 @@ submit_slurm() {
 		cmd="$cmd --job-name $job_name"
 	fi
 
-	cmd="$cmd -D $shark_working_directory"
+	cmd="$cmd -D $shark_output_directory"
 	cmd="$cmd shark-run -v $shark_verbosity"
 
 	# shark-run command-line options
@@ -139,7 +139,7 @@ submit_slurm() {
 dry_run=
 verbose=
 quiet=
-shark_working_directory=
+shark_output_directory=
 queue=
 account=
 job_name=
@@ -151,7 +151,7 @@ shark_binary=
 shark_subvolumes=
 
 # Parse command line options
-while getopts "h?dW:Q:a:w:n:m:N:vqS:V:" opt
+while getopts "h?do:Q:a:w:n:m:N:vqS:V:" opt
 do
 	case "$opt" in
 		[h?])
@@ -185,8 +185,8 @@ do
 		V)
 			shark_subvolumes="$OPTARG"
 			;;
-		W)
-			shark_working_directory="$OPTARG"
+		o)
+			shark_output_directory="$OPTARG"
 			;;
 		Q)
 			queue="$OPTARG"
@@ -274,25 +274,25 @@ fi
 info "This submission will request $num_nodes nodes"
 
 # Make sure we have a proper working directory
-if [ ! -z "$shark_working_directory" ]
+if [ ! -z "$shark_output_directory" ]
 then
-	mkdir -p "$shark_working_directory" || error "Couldn't create working directory at $shark_working_directory"
+	mkdir -p "$shark_output_directory" || error "Couldn't create shark output directory at $shark_output_directory"
 else
-	basedir=${SHARK_WORKING_DIR_BASE:-.}
+	basedir=${SHARK_OUTPUT_DIR_BASE:-.}
 	i=0
 	for i in `seq -w 1 9999`
 	do
-		shark_working_directory="$basedir/shark_run_$i"
-		test ! -d "$shark_working_directory" && mkdir -p "$shark_working_directory" &> /dev/null && break
+		shark_output_directory="$basedir/shark_run_$i"
+		test ! -d "$shark_output_directory" && mkdir -p "$shark_output_directory" &> /dev/null && break
 	done
 fi
-info "Will run shark-run under $shark_working_directory"
+info "Will run shark-run under $shark_output_directory"
 
 # Copy the configuration file over to the working directory
 config_file_bname=`basename $config_file`
-cp "$config_file" "$shark_working_directory"
+cp "$config_file" "$shark_output_directory"
 config_file="$config_file_bname"
-info "Configuration file copied to $shark_working_directory/$config_file"
+info "Configuration file copied to $shark_output_directory/$config_file"
 
 # Check which queueing system there is
 queue_system=
