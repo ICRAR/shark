@@ -28,6 +28,22 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 	return exec_params;
 }
 
+static
+void ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees)
+{
+	for (auto &tree: trees) {
+		for (auto &snapshot_and_halos: tree->halos) {
+			for (auto &halo: snapshot_and_halos.second) {
+				if (halo->merger_tree != tree) {
+					std::ostringstream os;
+					os << halo << " is not actually part of " << tree;
+					throw invalid_data(os.str());
+				}
+			}
+		}
+	}
+}
+
 std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology, TotalBaryon &AllBaryons)
 {
 
@@ -70,6 +86,9 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	}
 
 	loop_through_halos(halos);
+
+	// Make sure merger trees are fully self-contained
+	ensure_trees_are_self_contained(trees);
 
 	// Ensure halos only grow in mass.
 	LOG(info) << "Making sure halos only grow in mass";
