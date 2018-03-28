@@ -29,7 +29,6 @@ info() {
 
 error() {
 	echo "shark-submit: ERROR: $1" 1>&2
-	exit 1
 }
 
 warning() {
@@ -187,6 +186,7 @@ do
 			then
 				error "-v and -q cannot be specified together"
 				print_usage 1>&2
+				exit 1
 			fi
 			verbose=1
 			shark_verbosity=4
@@ -196,6 +196,7 @@ do
 			then
 				error "-v and -q cannot be specified together"
 				print_usage 1>&2
+				exit 1
 			fi
 			quiet=1
 			shark_verbosity=2
@@ -237,6 +238,7 @@ done
 # Positional argument is the configuration file name
 if [ $(($# - $OPTIND)) -lt 0 ]
 then
+	error "Missing config_file option"
 	print_usage 1>&2
 	exit 1
 fi
@@ -297,7 +299,12 @@ info "This submission will request $num_nodes nodes"
 # Make sure we have a proper working directory
 if [ ! -z "$shark_output_directory" ]
 then
-	mkdir -p "$shark_output_directory" || error "Couldn't create shark output directory at $shark_output_directory"
+	mkdir -p "$shark_output_directory"
+	if [ ! -d "$shark_output_directory" ]
+	then
+		error "Couldn't create shark output directory at $shark_output_directory"
+		exit 1
+	fi
 else
 	basedir=${SHARK_OUTPUT_DIR_BASE:-.}
 	i=0
@@ -334,6 +341,7 @@ then
 	submit_slurm
 else
 	error "PBS/Torque still not supported"
+	exit 1
 fi
 
 info "Submissiong successful. Thanks for using our shark-submit script, come back soon :-)"
