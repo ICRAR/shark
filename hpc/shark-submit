@@ -44,30 +44,51 @@ print_usage() {
 	echo "       [-n job-name] [-m modules] [-N num-nodes] [-v | -q] [-S shark_binary]"
 	echo "       [-V subvolumes] config_file"
 	echo
+	echo
 	echo "General options:"
 	echo
-	echo " -h, -?: Show this help"
-	echo " -d: Dry-run (i.e., don't actually submit shark)"
+	echo " -h, -?          Show this help"
+	echo
+	echo " -d              Dry-run (i.e., don't actually submit shark)"
+	echo
 	echo
 	echo "Queueing options"
 	echo
-	echo " -o output_dir: Output directory where shark-related output will be written to"
-	echo " -Q queue: The queue to submit this job to"
-	echo " -a account: The account to which this submission should be billed to"
-	echo " -w walltime: The walltime to apply to this submission. Defaults to 1 [h]"
-	echo " -n job-name: Job name for this submission"
-	echo " -m modules: colon-separted list of modules to load before running shark"
-	echo " -N num-nodes: Number of nodes to request. If not specified it is automatically"
-	echo "               calculated based on the number of subvolumes (-V option)"
+	echo " -o output_dir   Directory where shark output will be written into. Defaults to"
+	echo "                 a rolling shark_run_<xxxx> name. The SHARK_OUTPUT_DIR_BASE"
+	echo "                 variable, if present, indicates where these directories should"
+	echo "                 be created; otherwise they are created in the current working"
+	echo "                 directory. If -W is given, the SHARK_OUTPUT_DIR_BASE variable"
+	echo "                 is not taken into account"
+	echo
+	echo " -Q queue        The queue (or partition, in some queueing system parlance) to"
+	echo "                 submit this job to"
+	echo
+	echo " -a account      The account to which this submission should be billed to"
+	echo
+	echo " -w walltime     The walltime to apply to this submission. Defaults to 1 [h]"
+	echo
+	echo " -n job-name     Job name for this submission"
+	echo
+	echo " -m modules      Colon-separted list of modules to load before running shark"
+	echo
+	echo " -N num-nodes    Number of nodes to request. If unspecified it is automatically"
+	echo "                 calculated based on the number of subvolumes (-V option)"
+	echo
 	echo
 	echo "SHArk-specific options"
 	echo
-	echo " -v: Run shark in verbose mode"
-	echo " -q: Run shark in quiet mode"
-	echo " -S: The shark binary to run. Defaults to standard PATH lookup"
-	echo " -V: Space-separated list of subvolumes to process. Can contain ranges like 1-10."
-	echo "     Defaults to whatever is present in the configuration file"
-	echo " config_file: The reference configuration file to use for this shark execution"
+	echo " -v              Run shark in verbose mode"
+	echo
+	echo " -q              Run shark in quiet mode"
+	echo
+	echo " -S shark-binary The shark binary to run. Defaults to standard PATH lookup"
+	echo
+	echo " -V subvolumes   Space-separated list of subvolumes to process. Can contain"
+	echo "                 ranges like 1-10. Defaults to whatever is present in the"
+	echo "                 configuration file"
+	echo
+	echo " config_file:    The reference configuration file to use for this shark execution"
 	echo
 }
 
