@@ -244,6 +244,37 @@ then
 fi
 config_file=${@:$OPTIND:1}
 
+# Check which queueing system we are going to use from now on
+queue_system=
+if [ ! -z "$(command -v sbatch 2> /dev/null)" ]
+then
+	queue_system="SLURM"
+elif [ ! -z "$(command -v qsub 2> /dev/null)" ]
+then
+	queue_system="PBS/Torque"
+else
+	error ""
+	error "THIS IS NOT MEANT TO HAPPEN"
+	error ""
+	error "You seem to be running this script in an environment that doesn't have any"
+	error "queueing system present (like PBS/Torque or SLURM), which probably means one"
+	error "of two things:"
+	error ""
+	error " 1) You are not running this in an HPC facility"
+	error " 2) You are running this in an HPC facility, but this script doesn't support"
+	error "    your queueing system (yet)."
+	error ""
+	error "In the case of 1), you probably want to run shark manually. To do that, you can"
+	error "run the \"shark\" binary directly. Use \"shark --help\" for details on how to"
+	error "run shark manually."
+	error ""
+	error "In the (very unfortunate) case of 2), please contact the shark authors with the"
+	error "details of your queueing system so they can add the corresponding support to"
+	error "this script in future versions of shark."
+	error ""
+	exit 1
+fi
+
 # Make sure the configuration file exists
 if [ ! -f ${config_file} ]
 then
@@ -322,20 +353,8 @@ cp "$config_file" "$shark_output_directory"
 config_file="$config_file_bname"
 info "Configuration file copied to $shark_output_directory/$config_file"
 
-# Check which queueing system there is
-queue_system=
-if [ ! -z "$(command -v sbatch 2> /dev/null)" ]
-then
-	queue_system="SLURM"
-elif [ ! -z "$(command -v qsub 2> /dev/null)" ]
-then
-	queue_system="PBS/Torque"
-else
-	error "Cannot determine queue system present in this environment"
-	exit 1
-fi
+# Go, go, go!
 info "Submitting shark to $queue_system"
-
 if [ $queue_system = SLURM ]
 then
 	submit_slurm
