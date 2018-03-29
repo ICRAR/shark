@@ -294,6 +294,23 @@ if [ -z "$shark_subvolumes" ]
 then
 	# Default to whatever is written into the configuration file
 	shark_subvolumes="`egrep '^simulation_batches' "$config_file" | sed -e 's/^simulation_batches\s*=\s*\([^#]\+\).*/\1/'`"
+
+	# If there's nothing in the configuration file, then... is it really one?
+	if [ -z "$shark_subvolumes" ]
+	then
+		error ""
+		error "No subvolumes were given via the -V option, but none could found either in"
+		error "${config_file}. Is ${config_file} really a shark configuration file?"
+		error ""
+		error "If it is, and you don't want to pass down the -V option every time, then"
+		error "you want to put have a \"simulation_batches\" option under the \"execution\""
+		error "group set to the list of subvolumes that shark should process."
+		error ""
+		error "See the output of -h for more information on how to use this script to run"
+		error "shark against many subvolumes."
+		error ""
+		exit 1
+	fi
 fi
 
 # Convert subvolumes specification (which may contain space- and
