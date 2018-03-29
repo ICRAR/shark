@@ -150,7 +150,12 @@ submit_slurm() {
 		info "Submitting shark job with command: $cmd"
 
 		# Go, go, go!
-		eval $cmd || error "Error when submitting job to the queue"
+		eval $cmd
+		if [ $? -ne 0 ]
+		then
+			error "Error when submitting job to the queue"
+			exit 1
+		fi
 	fi
 }
 
