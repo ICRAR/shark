@@ -321,7 +321,7 @@ int run(int argc, char **argv) {
 			for(auto &halo: tree->halos[snapshot]) {
 
 				/*Append this halo to the list of halos of this snapshot*/
-				all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halo);
+				all_halos_this_snapshot.push_back(halo);
 
 				/*Evaluate which galaxies are merging in this halo.*/
 				LOG(debug) << "Merging galaxies in halo " << halo;
