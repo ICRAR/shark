@@ -74,7 +74,7 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				galaxy->disk_gas.mass = 0;
 				galaxy->disk_gas.mass_metals = 0;
 
-				//transfer_history_disk_to_bulge(galaxy, snapshot);
+				transfer_history_disk_to_bulge(galaxy, snapshot);
 
 				/*
 				galaxy->disk_gas.rscale = 0;

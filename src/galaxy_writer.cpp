@@ -79,21 +79,24 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	using std::string;
 	using std::vector;
 
+	//Write output with the number of the coming snapshot. This is because we evolved galaxies to the end of the current snapshot.
+	int snap_to_write = snapshot + 1;
+
 	string comment;
 
-	hdf5::Writer file(get_output_directory(snapshot) + "/galaxies.hdf5");
+	hdf5::Writer file(get_output_directory(snap_to_write) + "/galaxies.hdf5");
 
 	//Write header
-	write_header(file, snapshot);
+	write_header(file, snap_to_write);
 
 	//Write galaxies
-	write_galaxies(file, snapshot, halos);
+	write_galaxies(file, snap_to_write, halos);
 
 	//Write total baryon components
-	write_global_properties(file, snapshot, AllBaryons);
+	write_global_properties(file, snap_to_write, AllBaryons);
 
 	// Write star formation histories.
-	write_histories(snapshot, halos);
+	write_histories(snap_to_write, halos);
 
 }
 
@@ -104,7 +107,7 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer file, int snapshot){
 	comment = "number of batches analysed";
 	file.write_dataset("runInfo/batches", exec_params.simulation_batches, comment);
 
-	comment = "accuracy applied when solving the ODE system of the physical model.";
+	comment = "accuracy applied when solving the ODE system of the physical mo not in the subsequent snapshotdel.";
 	file.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision, comment);
 
 	comment = "boolean parameter that sets whether the code ignores subhalos that have no descendants.";
@@ -661,6 +664,11 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 									});
 									std::copy(hsnaps.begin(), hsnaps.end(), std::ostream_iterator<int>(os, " "));
 									LOG(warning) << os.str();
+									for (auto &item: galaxy->history){
+										std::ostringstream os;
+										os << "snap history: "<< item.snapshot;
+										LOG(warning) << os.str();
+									}
 								}
 								sfh_gal_disk.push_back(defl_value);
 								star_gal_disk.push_back(defl_value);

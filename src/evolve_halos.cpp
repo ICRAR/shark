@@ -41,7 +41,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	 * This function transfer galaxies of the subhalos of this snapshot into the subhalos of the next snapshot, and baryon components from subhalo to subhalo.
 	 */
 
-
 	// First make sure central subhalos at this snapshot have only one central galaxy.
 	for(auto &halo: halos){
 		for(SubhaloPtr &subhalo: halo->all_subhalos()) {
@@ -98,7 +97,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
 
-			// First check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
+			// Check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
 			if(subhalo->last_snapshot_identified == subhalo->snapshot){
 				continue;
 			}
@@ -121,6 +120,12 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 			// Transfer galaxies.
 			subhalo->transfer_galaxies_to(descendant_subhalo);
+
+			if(subhalo->snapshot != descendant_subhalo->snapshot-1){
+				std::ostringstream os;
+				os << "Descendant subhalo is not in the subsequent snapshot";
+				throw invalid_argument(os.str());
+			}
 
 			// Transfer subhalo baryon components.
 			descendant_subhalo->cold_halo_gas = subhalo->cold_halo_gas;
@@ -224,11 +229,11 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 					hist_galaxy.stellar_bulge = galaxy->bulge_stars;
 					hist_galaxy.gas_disk  = galaxy->disk_gas;
 					hist_galaxy.gas_bulge = galaxy->bulge_gas;
-					hist_galaxy.snapshot = snapshot;
+					hist_galaxy.snapshot = subhalo->snapshot;
 					galaxy->history.push_back(hist_galaxy);
 				}
 
-				//Accummulate galaxy baryons
+				//Accumulate galaxy baryons
 
 				double m_mol;
 				double m_atom;

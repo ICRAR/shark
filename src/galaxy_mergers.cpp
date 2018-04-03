@@ -296,7 +296,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 
 }
 
-void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t){
+void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t, int number_mergers){
 
 	/**
 	 * This function determines which galaxies are merging in this snapshot by comparing tmerge with the duration of the snapshot.
@@ -309,6 +309,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 	//First define central subhalo.
 
 	double z = simparams.redshifts[snapshot];
+	number_mergers = 0;
 
 	auto &central_subhalo = halo->central_subhalo;
 
@@ -342,6 +343,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 				create_merger(central_galaxy, galaxy, halo, snapshot);
 				// Accummulate all satellites that we need to delete at the end.
 				all_sats_to_delete.push_back(galaxy);
+				number_mergers ++;
 			}
 			else{
 				galaxy->tmerge = galaxy->tmerge - delta_t;
@@ -401,7 +403,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	central->smbh.mass_metals += satellite->smbh.mass_metals;
 
 	//satellite stellar mass is always transferred to the bulge.
-	//transfer_history_satellite_to_bulge(central, satellite, snapshot);
+	transfer_history_satellite_to_bulge(central, satellite, snapshot);
 
 	/**
 	 * Depending on the mass ratio, the baryonic components of the satellite and the disk of the major galaxy are going to be transferred differently.
@@ -419,7 +421,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->bulge_gas.mass += central->disk_gas.mass + satellite->gas_mass();
 		central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals + satellite->gas_mass_metals();
 
-		//transfer_history_disk_to_bulge(central, snapshot);
+		transfer_history_disk_to_bulge(central, snapshot);
 
 		//Make all disk values 0.
 
@@ -697,7 +699,6 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 			hist_cen.stellar_bulge.mass_metals += hist_sat.stellar_bulge.mass_metals +  hist_sat.stellar_disk.mass_metals;
 		}
 	}
-
 
 }
 

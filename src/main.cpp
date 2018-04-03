@@ -110,6 +110,7 @@ struct SnapshotStatistics {
 	unsigned long n_galaxies;
 	unsigned long duration_millis;
 	unsigned int galaxies_created;
+	int total_mergers;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
 		if (n_galaxies == 0) {
@@ -141,6 +142,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
 	   << "  Number of subhalos:                   " << stats.n_subhalos << "\n"
 	   << "  Number of galaxies:                   " << stats.n_galaxies << "\n"
 	   << "  Number of newly created galaxies:     " << stats.galaxies_created << "\n"
+	   << "  Number of galaxy mergers:             " << stats.total_mergers << "\n"
 	   << "  Galaxy evolution ODE evaluations:     " << stats.galaxy_ode_evaluations
 	   << " (" << fixed<3>(stats.galaxy_ode_evaluations_per_galaxy()) << " [evals/gal])" << "\n"
 	   << "  Starburst ODE evaluations:            " << stats.starburst_ode_evaluations
@@ -307,6 +309,9 @@ int run(int argc, char **argv) {
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
 
+		//Accumulate number of galaxy mergers.
+		int total_mergers_this_snapshot = 0;
+
 		vector<HaloPtr> all_halos_this_snapshot;
 
 		for(auto &tree: merger_trees) {
@@ -321,9 +326,14 @@ int run(int argc, char **argv) {
 				auto post_galaxy_count = halo->galaxy_count();
 				galaxies_created += post_galaxy_count - pre_galaxy_count;
 
+				/* Accumulate mergers of this halo*/
+				int mergers_this_halo = 0;
+
 				/*Evaluate which galaxies are merging in this halo.*/
 				LOG(debug) << "Merging galaxies in halo " << halo;
-				galaxy_mergers.merging_galaxies(halo, snapshot, tf-ti);
+				galaxy_mergers.merging_galaxies(halo, snapshot, tf-ti, mergers_this_halo);
+
+				total_mergers_this_snapshot += mergers_this_halo;
 
 				/*Evaluate disk instabilities.*/
 				LOG(debug) << "Evaluating disk instability in halo " << halo;
@@ -350,7 +360,7 @@ int run(int argc, char **argv) {
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end() )
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot+1;
-			writer->write(snapshot+1, all_halos_this_snapshot, *AllBaryons);
+			writer->write(snapshot, all_halos_this_snapshot, *AllBaryons);
 		}
 
 		auto snapshot_time = std::chrono::steady_clock::now() - start;
@@ -370,7 +380,7 @@ int run(int argc, char **argv) {
 		});
 
 		SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
-		                          n_halos, n_subhalos, n_galaxies, duration_millis, galaxies_created};
+		                          n_halos, n_subhalos, n_galaxies, duration_millis, galaxies_created, total_mergers_this_snapshot};
 		LOG(info) << "Statistics for snapshot " << snapshot << std::endl << stats;
 
 
