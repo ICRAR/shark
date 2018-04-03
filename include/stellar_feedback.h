@@ -64,7 +64,7 @@ class StellarFeedback {
 public:
 	StellarFeedback(StellarFeedbackParameters parameters);
 
-	void outflow_rate(double sfr, double v, double z, double *b1, double *b2);
+	void outflow_rate(double sfr, double v, double z, double &b1, double &b2);
 
 private:
 	StellarFeedbackParameters parameters;

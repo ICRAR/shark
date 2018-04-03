@@ -96,10 +96,10 @@ StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters) :
 	// no-op
 }
 
-void StellarFeedback::outflow_rate(double sfr, double v, double z, double *b1, double *b2) {
+void StellarFeedback::outflow_rate(double sfr, double v, double z, double &b1, double &b2) {
 
-	*b1 = 0;
-	*b2 = 0;
+	b1 = 0;
+	b2 = 0;
 
 	if(sfr <= 0 || v <= 0){
 		return;
@@ -147,25 +147,25 @@ void StellarFeedback::outflow_rate(double sfr, double v, double z, double *b1, d
 		const_sn = std::pow((1+z),parameters.redshift_power) * std::pow(parameters.v_sn/v,power_index);
 	}
 
-	*b1 = parameters.eps_disk * const_sn;
+	b1 = parameters.eps_disk * const_sn;
 
 	double eps_halo = parameters.eps_halo * const_sn *  0.5 * std::pow(vsn,2.0);
 
 	double energ_halo = 0.5 * std::pow(v,2.0);
 
-	double mreheat = *b1 * sfr;
+	double mreheat = b1 * sfr;
 
 	double mejected = eps_halo / energ_halo * sfr - mreheat;
 
 	if(mejected > 0) {
-		*b2 = mejected/sfr;
-		if(*b2 > *b1){
-			*b2 = *b1;
-			*b1 += constants::EPS3; //add a small number to b1 to make it strictly larger than b2.
+		b2 = mejected/sfr;
+		if(b2 > b1){
+			b2 = b1;
+			b1 += constants::EPS3; //add a small number to b1 to make it strictly larger than b2.
 		}
 	}
 	else{
-		*b1 = eps_halo / energ_halo;
+		b1 = eps_halo / energ_halo;
 	}
 
 }
