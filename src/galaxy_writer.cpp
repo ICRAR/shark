@@ -151,6 +151,14 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer file, int snapshot){
 	file.write_dataset("Cosmology/h", cosmo_params.Hubble_h, comment);
 }
 
+template<typename T>
+static inline
+std::size_t report_vsize(std::vector<T> v, std::ostringstream &os, const char *name) {
+	const std::size_t amount = sizeof(T) * v.size();
+	os << " " << name << ": " << memory_amount(amount);
+	return amount;
+};
+
 void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std::vector<HaloPtr> &halos){
 
 
@@ -378,6 +386,59 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 		}
 		j++;
 	}
+
+	std::ostringstream os;
+	std::size_t total = 0;
+#define REPORT(x) total += report_vsize(x, os, #x)
+	REPORT(descendant_id);
+	REPORT(main);
+	REPORT(id);
+	REPORT(id_galaxy);
+	REPORT(mstars_disk);
+	REPORT(mstars_bulge);
+	REPORT(mstars_burst);
+	REPORT(mgas_disk);
+	REPORT(mgas_bulge);
+	REPORT(mstars_metals_disk);
+	REPORT(mstars_metals_bulge);
+	REPORT(mstars_metals_burst);
+	REPORT(mgas_metals_disk);
+	REPORT(mgas_metals_bulge);
+	REPORT(mmol_disk);
+	REPORT(mmol_bulge);
+	REPORT(matom_disk);
+	REPORT(matom_bulge);
+	REPORT(mBH);
+	REPORT(mBH_acc_hh);
+	REPORT(mBH_acc_sb);
+	REPORT(sfr_disk);
+	REPORT(sfr_burst);
+	REPORT(rdisk);
+	REPORT(rbulge);
+	REPORT(sAM_disk);
+	REPORT(sAM_bulge);
+	REPORT(mhot);
+	REPORT(mhot_metals);
+	REPORT(mreheated);
+	REPORT(mreheated_metals);
+	REPORT(cooling_rate);
+	REPORT(mvir_hosthalo);
+	REPORT(mvir_subhalo);
+	REPORT(vmax_subhalo);
+	REPORT(vvir_hosthalo);
+	REPORT(cnfw_subhalo);
+	REPORT(position_x);
+	REPORT(position_y);
+	REPORT(position_z);
+	REPORT(velocity_x);
+	REPORT(velocity_y);
+	REPORT(velocity_z);
+	REPORT(type);
+	REPORT(id_halo);
+	REPORT(id_subhalo);
+
+	LOG(info) << "Total amount of memory used by the writing process: " << memory_amount(total);
+	LOG(debug) << "Detailed amounts follow: " << os.str();
 
 	//Write subhalo properties.
 	comment = "Subhalo id";
@@ -701,17 +762,17 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 							}
 						}
 
-						sfhs_disk.emplace_back(sfh_gal_disk);
-						stellar_mass_disk.emplace_back(star_gal_disk);
-						stellar_metals_disk.emplace_back(star_metals_gal_disk);
-						gas_hs_disk.emplace_back(gas_gal_disk);
-						gas_metals_hs_disk.emplace_back(gas_metals_gal_disk);
+						sfhs_disk.emplace_back(std::move(sfh_gal_disk));
+						stellar_mass_disk.emplace_back(std::move(star_gal_disk));
+						stellar_metals_disk.emplace_back(std::move(star_metals_gal_disk));
+						gas_hs_disk.emplace_back(std::move(gas_gal_disk));
+						gas_metals_hs_disk.emplace_back(std::move(gas_metals_gal_disk));
 
-						sfhs_bulge.emplace_back(sfh_gal_bulge);
-						stellar_mass_bulge.emplace_back(star_gal_bulge);
-						stellar_metals_bulge.emplace_back(star_metals_gal_bulge);
-						gas_hs_bulge.emplace_back(gas_gal_bulge);
-						gas_metals_hs_bulge.emplace_back(gas_metals_gal_bulge);
+						sfhs_bulge.emplace_back(std::move(sfh_gal_bulge));
+						stellar_mass_bulge.emplace_back(std::move(star_gal_bulge));
+						stellar_metals_bulge.emplace_back(std::move(star_metals_gal_bulge));
+						gas_hs_bulge.emplace_back(std::move(gas_gal_bulge));
+						gas_metals_hs_bulge.emplace_back(std::move(gas_metals_gal_bulge));
 
 					}
 				}

@@ -29,7 +29,6 @@ info() {
 
 error() {
 	echo "shark-submit: ERROR: $1" 1>&2
-	exit 1
 }
 
 warning() {
@@ -40,34 +39,55 @@ print_usage() {
 	echo
 	echo "$0: Submits shark for execution in a queueing system like SLURM or PBS/Torque"
 	echo
-	echo "Usage: $0 [-h] [-?] [-d] [-W working_dir] [-Q queue] [-a account] [-w walltime]"
+	echo "Usage: $0 [-h] [-?] [-d] [-o output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-m modules] [-N num-nodes] [-v | -q] [-S shark_binary]"
 	echo "       [-V subvolumes] config_file"
 	echo
+	echo
 	echo "General options:"
 	echo
-	echo " -h, -?: Show this help"
-	echo " -d: Dry-run (i.e., don't actually submit shark)"
+	echo " -h, -?          Show this help"
+	echo
+	echo " -d              Dry-run (i.e., don't actually submit shark)"
+	echo
 	echo
 	echo "Queueing options"
 	echo
-	echo " -W working_dir: Working directory where shark-related output will be written to"
-	echo " -Q queue: The queue to submit this job to"
-	echo " -a account: The account to which this submission should be billed to"
-	echo " -w walltime: The walltime to apply to this submission. Defaults to 1 [h]"
-	echo " -n job-name: Job name for this submission"
-	echo " -m modules: colon-separted list of modules to load before running shark"
-	echo " -N num-nodes: Number of nodes to request. If not specified it is automatically"
-	echo "               calculated based on the number of subvolumes (-V option)"
+	echo " -o output_dir   Directory where shark output will be written into. Defaults to"
+	echo "                 a rolling shark_run_<xxxx> name. The SHARK_OUTPUT_DIR_BASE"
+	echo "                 variable, if present, indicates where these directories should"
+	echo "                 be created; otherwise they are created in the current working"
+	echo "                 directory. If -W is given, the SHARK_OUTPUT_DIR_BASE variable"
+	echo "                 is not taken into account"
+	echo
+	echo " -Q queue        The queue (or partition, in some queueing system parlance) to"
+	echo "                 submit this job to"
+	echo
+	echo " -a account      The account to which this submission should be billed to"
+	echo
+	echo " -w walltime     The walltime to apply to this submission. Defaults to 1 [h]"
+	echo
+	echo " -n job-name     Job name for this submission"
+	echo
+	echo " -m modules      Colon-separted list of modules to load before running shark"
+	echo
+	echo " -N num-nodes    Number of nodes to request. If unspecified it is automatically"
+	echo "                 calculated based on the number of subvolumes (-V option)"
+	echo
 	echo
 	echo "SHArk-specific options"
 	echo
-	echo " -v: Run shark in verbose mode"
-	echo " -q: Run shark in quiet mode"
-	echo " -S: The shark binary to run. Defaults to standard PATH lookup"
-	echo " -V: Space-separated list of subvolumes to process. Can contain ranges like 1-10."
-	echo "     Defaults to whatever is present in the configuration file"
-	echo " config_file: The reference configuration file to use for this shark execution"
+	echo " -v              Run shark in verbose mode"
+	echo
+	echo " -q              Run shark in quiet mode"
+	echo
+	echo " -S shark-binary The shark binary to run. Defaults to standard PATH lookup"
+	echo
+	echo " -V subvolumes   Space-separated list of subvolumes to process. Can contain"
+	echo "                 ranges like 1-10. Defaults to whatever is present in the"
+	echo "                 configuration file"
+	echo
+	echo " config_file:    The reference configuration file to use for this shark execution"
 	echo
 }
 
@@ -103,7 +123,7 @@ submit_slurm() {
 		cmd="$cmd --job-name $job_name"
 	fi
 
-	cmd="$cmd -D $shark_working_directory"
+	cmd="$cmd -D $shark_output_directory"
 	cmd="$cmd shark-run -v $shark_verbosity"
 
 	# shark-run command-line options
@@ -130,7 +150,12 @@ submit_slurm() {
 		info "Submitting shark job with command: $cmd"
 
 		# Go, go, go!
-		eval $cmd || error "Error when submitting job to the queue"
+		eval $cmd
+		if [ $? -ne 0 ]
+		then
+			error "Error when submitting job to the queue"
+			exit 1
+		fi
 	fi
 }
 
@@ -139,7 +164,7 @@ submit_slurm() {
 dry_run=
 verbose=
 quiet=
-shark_working_directory=
+shark_output_directory=
 queue=
 account=
 job_name=
@@ -151,7 +176,7 @@ shark_binary=
 shark_subvolumes=
 
 # Parse command line options
-while getopts "h?dW:Q:a:w:n:m:N:vqS:V:" opt
+while getopts "h?do:Q:a:w:n:m:N:vqS:V:" opt
 do
 	case "$opt" in
 		[h?])
@@ -166,6 +191,7 @@ do
 			then
 				error "-v and -q cannot be specified together"
 				print_usage 1>&2
+				exit 1
 			fi
 			verbose=1
 			shark_verbosity=4
@@ -175,6 +201,7 @@ do
 			then
 				error "-v and -q cannot be specified together"
 				print_usage 1>&2
+				exit 1
 			fi
 			quiet=1
 			shark_verbosity=2
@@ -185,8 +212,8 @@ do
 		V)
 			shark_subvolumes="$OPTARG"
 			;;
-		W)
-			shark_working_directory="$OPTARG"
+		o)
+			shark_output_directory="$OPTARG"
 			;;
 		Q)
 			queue="$OPTARG"
@@ -216,10 +243,42 @@ done
 # Positional argument is the configuration file name
 if [ $(($# - $OPTIND)) -lt 0 ]
 then
+	error "Missing config_file option"
 	print_usage 1>&2
 	exit 1
 fi
 config_file=${@:$OPTIND:1}
+
+# Check which queueing system we are going to use from now on
+queue_system=
+if [ ! -z "$(command -v sbatch 2> /dev/null)" ]
+then
+	queue_system="SLURM"
+elif [ ! -z "$(command -v qsub 2> /dev/null)" ]
+then
+	queue_system="PBS/Torque"
+else
+	error ""
+	error "THIS IS NOT MEANT TO HAPPEN"
+	error ""
+	error "You seem to be running this script in an environment that doesn't have any"
+	error "queueing system present (like PBS/Torque or SLURM), which probably means one"
+	error "of two things:"
+	error ""
+	error " 1) You are not running this in an HPC facility"
+	error " 2) You are running this in an HPC facility, but this script doesn't support"
+	error "    your queueing system (yet)."
+	error ""
+	error "In the case of 1), you probably want to run shark manually. To do that, you can"
+	error "run the \"shark\" binary directly. Use \"shark --help\" for details on how to"
+	error "run shark manually."
+	error ""
+	error "In the (very unfortunate) case of 2), please contact the shark authors with the"
+	error "details of your queueing system so they can add the corresponding support to"
+	error "this script in future versions of shark."
+	error ""
+	exit 1
+fi
 
 # Make sure the configuration file exists
 if [ ! -f ${config_file} ]
@@ -235,6 +294,23 @@ if [ -z "$shark_subvolumes" ]
 then
 	# Default to whatever is written into the configuration file
 	shark_subvolumes="`egrep '^simulation_batches' "$config_file" | sed -e 's/^simulation_batches\s*=\s*\([^#]\+\).*/\1/'`"
+
+	# If there's nothing in the configuration file, then... is it really one?
+	if [ -z "$shark_subvolumes" ]
+	then
+		error ""
+		error "No subvolumes were given via the -V option, but none could found either in"
+		error "${config_file}. Is ${config_file} really a shark configuration file?"
+		error ""
+		error "If it is, and you don't want to pass down the -V option every time, then"
+		error "you want to put have a \"simulation_batches\" option under the \"execution\""
+		error "group set to the list of subvolumes that shark should process."
+		error ""
+		error "See the output of -h for more information on how to use this script to run"
+		error "shark against many subvolumes."
+		error ""
+		exit 1
+	fi
 fi
 
 # Convert subvolumes specification (which may contain space- and
@@ -274,45 +350,39 @@ fi
 info "This submission will request $num_nodes nodes"
 
 # Make sure we have a proper working directory
-if [ ! -z "$shark_working_directory" ]
+if [ ! -z "$shark_output_directory" ]
 then
-	mkdir -p "$shark_working_directory" || error "Couldn't create working directory at $shark_working_directory"
+	mkdir -p "$shark_output_directory"
+	if [ ! -d "$shark_output_directory" ]
+	then
+		error "Couldn't create shark output directory at $shark_output_directory"
+		exit 1
+	fi
 else
-	basedir=${SHARK_WORKING_DIR_BASE:-.}
+	basedir=${SHARK_OUTPUT_DIR_BASE:-.}
 	i=0
 	for i in `seq -w 1 9999`
 	do
-		shark_working_directory="$basedir/shark_run_$i"
-		test ! -d "$shark_working_directory" && mkdir -p "$shark_working_directory" &> /dev/null && break
+		shark_output_directory="$basedir/shark_run_$i"
+		test ! -d "$shark_output_directory" && mkdir -p "$shark_output_directory" &> /dev/null && break
 	done
 fi
-info "Will run shark-run under $shark_working_directory"
+info "Will run shark-run under $shark_output_directory"
 
 # Copy the configuration file over to the working directory
 config_file_bname=`basename $config_file`
-cp "$config_file" "$shark_working_directory"
+cp "$config_file" "$shark_output_directory"
 config_file="$config_file_bname"
-info "Configuration file copied to $shark_working_directory/$config_file"
+info "Configuration file copied to $shark_output_directory/$config_file"
 
-# Check which queueing system there is
-queue_system=
-if [ ! -z "$(command -v sbatch 2> /dev/null)" ]
-then
-	queue_system="SLURM"
-elif [ ! -z "$(command -v qsub 2> /dev/null)" ]
-then
-	queue_system="PBS/Torque"
-else
-	error "Cannot determine queue system present in this environment"
-	exit 1
-fi
+# Go, go, go!
 info "Submitting shark to $queue_system"
-
 if [ $queue_system = SLURM ]
 then
 	submit_slurm
 else
 	error "PBS/Torque still not supported"
+	exit 1
 fi
 
 info "Submissiong successful. Thanks for using our shark-submit script, come back soon :-)"

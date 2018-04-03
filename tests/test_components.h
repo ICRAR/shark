@@ -1,8 +1,8 @@
 //
-// Stellar feedback classes
+// Components unit tests
 //
 // ICRAR - International Centre for Radio Astronomy Research
-// (c) UWA - The University of Western Australia, 2017
+// (c) UWA - The University of Western Australia, 2018
 // Copyright by UWA (in the framework of the ICRAR)
 // All rights reserved
 //
@@ -22,54 +22,40 @@
 // MA 02111-1307  USA
 //
 
+#include <cxxtest/TestSuite.h>
 
-#ifndef SHARK_STELLAR_FEEDBACK_H_
-#define SHARK_STELLAR_FEEDBACK_H_
+#include "components.h"
 
-#include "options.h"
+using namespace shark;
 
-namespace shark {
-
-class StellarFeedbackParameters {
+class TestOptions : public CxxTest::TestSuite {
 
 public:
-	StellarFeedbackParameters(const Options &options);
 
-	enum StellarFeedbackModel {
-		FIRE = 0,
-		LGALAXIES,
-		GALFORM,
-		LAGOS13,
-		LAGOS13Trunc,
-		GALFORMFIRE
-	};
+	void _init_baryons(Baryon &b1, Baryon &b2) {
+		b1.mass = 1.;
+		b1.mass_metals = 2.;
+		b2.mass = 3.;
+		b2.mass_metals = 4.;
+	}
 
-	double eps_halo;
-	double vkin_sn;
-	double beta_disk;
-	double beta_halo;
-	double v_sn;
-	double redshift_power;
-	double eps_disk;
-	double e_sn;
-	double eta_cc;
+	void _assert_addition(const Baryon &b) {
+		TS_ASSERT_DELTA(b.mass, 4., 1e-8);
+		TS_ASSERT_DELTA(b.mass_metals, 6., 1e-8);
+	}
 
-	StellarFeedbackModel model;
+	void test_baryons_compound_addition() {
+		Baryon b1, b2;
+		_init_baryons(b1, b2);
+		b2 += b1;
+		_assert_addition(b2);
+	}
+
+	void test_baryons_addition() {
+		Baryon b1, b2;
+		_init_baryons(b1, b2);
+		Baryon b3 = b2 + b1;
+		_assert_addition(b3);
+	}
 
 };
-
-
-class StellarFeedback {
-
-public:
-	StellarFeedback(StellarFeedbackParameters parameters);
-
-	void outflow_rate(double sfr, double v, double z, double &b1, double &b2);
-
-private:
-	StellarFeedbackParameters parameters;
-};
-
-}  // namespace shark
-
-#endif // SHARK_STELLAR_FEEDBACK_H_

@@ -32,6 +32,8 @@ public:
 
 	const std::vector<HaloPtr> read_halos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params);
 
+	const std::vector<SubhaloPtr> read_subhalos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params);
+
 private:
 
 	std::string prefix;

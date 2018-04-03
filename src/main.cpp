@@ -23,7 +23,6 @@
 //
 
 #include <algorithm>
-#include <chrono>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -52,6 +51,7 @@
 #include "reionisation.h"
 #include "merger_tree_reader.h"
 #include "tree_builder.h"
+#include "timer.h"
 #include "utils.h"
 
 using namespace std;
@@ -109,8 +109,6 @@ struct SnapshotStatistics {
 	unsigned long n_subhalos;
 	unsigned long n_galaxies;
 	unsigned long duration_millis;
-	unsigned int galaxies_created;
-	int total_mergers;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
 		if (n_galaxies == 0) {
@@ -141,8 +139,6 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
 	   << "  Number of halos:                      " << stats.n_halos << "\n"
 	   << "  Number of subhalos:                   " << stats.n_subhalos << "\n"
 	   << "  Number of galaxies:                   " << stats.n_galaxies << "\n"
-	   << "  Number of newly created galaxies:     " << stats.galaxies_created << "\n"
-	   << "  Number of galaxy mergers:             " << stats.total_mergers << "\n"
 	   << "  Galaxy evolution ODE evaluations:     " << stats.galaxy_ode_evaluations
 	   << " (" << fixed<3>(stats.galaxy_ode_evaluations_per_galaxy()) << " [evals/gal])" << "\n"
 	   << "  Starburst ODE evaluations:            " << stats.starburst_ode_evaluations
@@ -266,6 +262,12 @@ int run(int argc, char **argv) {
 
 	HaloBasedTreeBuilder tree_builder(exec_params);
 
+	// Inform the size of things
+	std::ostringstream os;
+	os << "Main structure/class sizes follow. ";
+	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
+	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
+	LOG(info) << os.str();
 
 	// Create class to track all the baryons of the simulation in its different components.
 	auto AllBaryons = std::make_shared<TotalBaryon>();
@@ -273,10 +275,14 @@ int run(int argc, char **argv) {
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
-	auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
-	auto merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
+	std::vector<MergerTreePtr> merger_trees;
+	{
+		auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
+		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
+		merger_trees.shrink_to_fit();
+	}
 
-
+	/* Create the first generation of galaxies if halo is first appearing.*/
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
 	GalaxyCreator galaxy_creator(cosmology, dark_matter_halos, gas_cooling_params, sim_params);
 	galaxy_creator.create_galaxies(merger_trees, *AllBaryons);
@@ -301,16 +307,12 @@ int run(int argc, char **argv) {
 
 		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
 
-		unsigned int galaxies_created = 0;
-		auto start = std::chrono::steady_clock::now();
+		Timer t;
 		basic_physicalmodel->reset_ode_evaluations();
 
 		//Calculate the initial and final time of this snapshot.
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
-
-		//Accumulate number of galaxy mergers.
-		int total_mergers_this_snapshot = 0;
 
 		vector<HaloPtr> all_halos_this_snapshot;
 
@@ -319,21 +321,11 @@ int run(int argc, char **argv) {
 			for(auto &halo: tree->halos[snapshot]) {
 
 				/*Append this halo to the list of halos of this snapshot*/
-				all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halo);
-
-				/* Create the first generation of galaxies if halo is first appearing.*/
-				auto pre_galaxy_count = halo->galaxy_count();
-				auto post_galaxy_count = halo->galaxy_count();
-				galaxies_created += post_galaxy_count - pre_galaxy_count;
-
-				/* Accumulate mergers of this halo*/
-				int mergers_this_halo = 0;
+				all_halos_this_snapshot.push_back(halo);
 
 				/*Evaluate which galaxies are merging in this halo.*/
 				LOG(debug) << "Merging galaxies in halo " << halo;
-				galaxy_mergers.merging_galaxies(halo, snapshot, tf-ti, mergers_this_halo);
-
-				total_mergers_this_snapshot += mergers_this_halo;
+				galaxy_mergers.merging_galaxies(halo, snapshot, tf-ti);
 
 				/*Evaluate disk instabilities.*/
 				LOG(debug) << "Evaluating disk instability in halo " << halo;
@@ -360,11 +352,10 @@ int run(int argc, char **argv) {
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end() )
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot+1;
-			writer->write(snapshot, all_halos_this_snapshot, *AllBaryons);
+			writer->write(snapshot+1, all_halos_this_snapshot, *AllBaryons);
 		}
 
-		auto snapshot_time = std::chrono::steady_clock::now() - start;
-		unsigned long duration_millis = std::chrono::duration_cast<std::chrono::milliseconds>(snapshot_time).count();
+		auto duration_millis = t.get();
 
 		// Some high-level ODE and integration iteration count statistics
 		auto starform_integration_intervals = basic_physicalmodel->get_star_formation_integration_intervals();
@@ -380,7 +371,7 @@ int run(int argc, char **argv) {
 		});
 
 		SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
-		                          n_halos, n_subhalos, n_galaxies, duration_millis, galaxies_created, total_mergers_this_snapshot};
+		                          n_halos, n_subhalos, n_galaxies, duration_millis};
 		LOG(info) << "Statistics for snapshot " << snapshot << std::endl << stats;
 
 

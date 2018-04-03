@@ -44,7 +44,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 			LOG(debug) << "Creating MergerTree at " << halo;
 			halo->merger_tree = tree;
 			halo->merger_tree->add_halo(halo);
-			trees.push_back(tree);
+			trees.emplace_back(std::move(tree));
 		}
 	}
 
@@ -72,15 +72,18 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	loop_through_halos(halos);
 
 	// Ensure halos only grow in mass.
+	LOG(info) << "Making sure halos only grow in mass";
 	ensure_halo_mass_growth(trees, sim_params);
 
 	// Redefine angular momentum in the case of interpolated halos.
 	// spin_interpolated_halos(trees, sim_params);
 
-	// Define central galaxies
+	// Define central subhalos
+	LOG(info) << "Defining central subhalos";
 	define_central_subhalos(trees, sim_params);
 
 	// Define accretion rate from DM in case we want this.
+	LOG(info) << "Defining accretion rate using cosmology";
 	define_accretion_rate_from_dm(trees, sim_params, *cosmology, AllBaryons);
 
 	return trees;
@@ -307,6 +310,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 
 	//Loop over trees.
+	auto universal_baryon_fraction = cosmology.universal_baryon_fraction();
 	for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 		for(auto &tree: trees) {
 				for(auto &halo: tree->halos[snapshot]){
@@ -318,7 +322,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 					});
 
 					//Define accreted baryonic mass.
-					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * cosmology.universal_baryon_fraction();
+					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * universal_baryon_fraction;
 
 					//Avoid negative numbers
 					if(halo->central_subhalo->accreted_mass < 0){
@@ -389,11 +393,14 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 	// Get all snapshots in the Halos and sort them in decreasing order
 	// (but skip the first one, those were already processed and MergerTrees
 	// were built for them)
-	std::set<int> halo_snapshots;
-	for(const auto &halo: halos) {
-		halo_snapshots.insert(halo->snapshot);
+	std::vector<int> sorted_halo_snapshots;
+	{
+		std::set<int> halo_snapshots;
+		for(const auto &halo: halos) {
+			halo_snapshots.insert(halo->snapshot);
+		}
+		sorted_halo_snapshots = std::vector<int>(++(halo_snapshots.rbegin()), halo_snapshots.rend());
 	}
-	std::vector<int> sorted_halo_snapshots(++(halo_snapshots.rbegin()), halo_snapshots.rend());
 
 	// Loop as per instructions above
 	for(int snapshot: sorted_halo_snapshots) {
@@ -459,12 +466,14 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 					          std::ostream_iterator<SubhaloPtr>(os, "\n  "));
 
 					// Users can choose whether to continue in these situations
-					// (with a warning) or if it should be considered an error
+					// (with or without a warning) or if it should be considered an error
 					if (!get_exec_params().skip_missing_descendants) {
 						throw subhalo_not_found(os.str(), subhalo->descendant_id);
 					}
 
-					LOG(warning) << os.str();
+					if (get_exec_params().warn_on_missing_descendants) {
+						LOG(warning) << os.str();
+					}
 					halo->remove_subhalo(subhalo);
 				}
 			}

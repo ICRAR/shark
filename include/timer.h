@@ -25,7 +25,10 @@
 #ifndef SHARK_TIMER_H_
 #define SHARK_TIMER_H_
 
+#include <ostream>
 #include <chrono>
+
+#include "utils.h"
 
 namespace shark {
 
@@ -50,7 +53,7 @@ public:
 	 * @return The time elapsed since the creation of the timer, in [ms]
 	 */
 	inline
-	long get() {
+	unsigned long get() const {
 		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count();
 	}
 
@@ -58,6 +61,36 @@ private:
 	std::chrono::steady_clock::time_point t0;
 
 };
+
+template <typename T>
+inline
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const Timer &t) {
+
+	auto time = t.get();
+	if (time < 1000) {
+		os << t.get() << " [ms]";
+		return os;
+	}
+
+	float ftime = time / 1000.;
+	const char *prefix = " [s]";
+	if (ftime > 60) {
+		ftime = ftime / 60.;
+		prefix = " [min]";
+	}
+	if (ftime > 60) {
+		ftime = ftime / 60.;
+		prefix = " [h]";
+	}
+	if (ftime > 24) {
+		ftime = ftime / 24.;
+		prefix = " [d]";
+	}
+	// that should be enough...
+
+	os << fixed<3>(ftime) << prefix;
+	return os;
+}
 
 }  // namespace shark
 

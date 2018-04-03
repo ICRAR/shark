@@ -118,18 +118,21 @@ bool empty_or_comment(const std::string &s);
 
 
 namespace detail {
+
 	template <int N, typename T>
 	struct _fixed {
 		T _val;
 	};
-}
 
-template <typename T, int N, typename VT>
-std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, detail::_fixed<N, VT> v)
-{
-	os << std::setprecision(3) << std::fixed << v._val;
-	return os;
-}
+	template <typename T, int N, typename VT>
+	inline
+	std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, detail::_fixed<N, VT> v)
+	{
+		os << std::setprecision(3) << std::fixed << v._val;
+		return os;
+	}
+
+} // namespace detail
 
 ///
 /// Sent to a stream object, this manipulator will print the given value with a
@@ -138,8 +141,67 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, detail::_fixed<N, V
 /// @param v The value to send to the stream
 ///
 template <int N, typename T>
+inline
 detail::_fixed<N, T> fixed(T v) {
 	return {v};
+}
+
+namespace detail {
+
+	struct _memory_amount {
+		std::size_t _val;
+	};
+
+	template <typename T>
+	inline
+	std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const detail::_memory_amount &m)
+	{
+
+		if (m._val < 1024) {
+			os << m._val << " [B]";
+			return os;
+		}
+
+		float v = m._val / 1024.;
+		const char *suffix = " [KB]";
+
+		if (v > 1024) {
+			v /= 1024;
+			suffix = " [MB]";
+		}
+		if (v > 1024) {
+			v /= 1024;
+			suffix = " [GB]";
+		}
+		if (v > 1024) {
+			v /= 1024;
+			suffix = " [TB]";
+		}
+		if (v > 1024) {
+			v /= 1024;
+			suffix = " [PB]";
+		}
+		if (v > 1024) {
+			v /= 1024;
+			suffix = " [EB]";
+		}
+		// that should be enough...
+
+		os << fixed<3>(v) << suffix;
+		return os;
+	}
+
+} // namespace detail
+
+///
+/// Sent to a stream object, this manipulator will print the given amount of
+/// memory using the correct suffix and 3 decimal places.
+///
+/// @param v The value to send to the stream
+///
+inline
+detail::_memory_amount memory_amount(std::size_t amount) {
+	return {amount};
 }
 
 }  // namespace shark
