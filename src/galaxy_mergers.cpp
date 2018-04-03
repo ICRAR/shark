@@ -288,10 +288,10 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 		merging_timescale(primary_subhalo, central_subhalo, z);
 
 		//transfer all mass from the satellite_subhalo to the central subhalo of the descendant halo.
-		transfer_baryon_mass(desc_subhalo, central_subhalo);
+		//transfer_baryon_mass(desc_subhalo, central_subhalo);
 
 		//Now transfer the galaxies in this subhalo to the central subhalo of the descendant halo.
-		central_subhalo->transfer_galaxies_to(desc_subhalo);
+		//central_subhalo->transfer_galaxies_to(desc_subhalo);
 	}
 
 }
