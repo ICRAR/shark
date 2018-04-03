@@ -352,7 +352,7 @@ int run(int argc, char **argv) {
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end() )
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot+1;
-			writer->write(snapshot+1, all_halos_this_snapshot, *AllBaryons);
+			writer->write(snapshot, all_halos_this_snapshot, *AllBaryons);
 		}
 
 		auto duration_millis = t.get();

@@ -296,7 +296,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 
 }
 
-void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t, int number_mergers){
+void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t){
 
 	/**
 	 * This function determines which galaxies are merging in this snapshot by comparing tmerge with the duration of the snapshot.
@@ -309,7 +309,6 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 	//First define central subhalo.
 
 	double z = simparams.redshifts[snapshot];
-	number_mergers = 0;
 
 	auto &central_subhalo = halo->central_subhalo;
 
@@ -343,7 +342,6 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 				create_merger(central_galaxy, galaxy, halo, snapshot);
 				// Accummulate all satellites that we need to delete at the end.
 				all_sats_to_delete.push_back(galaxy);
-				number_mergers ++;
 			}
 			else{
 				galaxy->tmerge = galaxy->tmerge - delta_t;

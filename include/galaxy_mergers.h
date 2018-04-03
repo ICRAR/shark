@@ -71,7 +71,7 @@ public:
 
 	void merging_subhalos(HaloPtr &halo, double z);
 
-	void merging_galaxies(HaloPtr &halo, int snapshot, double delta_t, int number_mergers);
+	void merging_galaxies(HaloPtr &halo, int snapshot, double delta_t);
 
 	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot);
 
