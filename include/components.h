@@ -75,6 +75,18 @@ public:
 	 * Metallicity of the baryon component
 	 */
 	float mass_metals;
+
+	BaryonBase &operator+=(const BaryonBase &b) {
+		mass += b.mass;
+		mass_metals += b.mass_metals;
+		return *this;
+	}
+
+	friend BaryonBase operator+(BaryonBase &lhs, const BaryonBase &rhs) {
+		lhs += rhs;
+		return lhs;
+	}
+
 };
 
 /**
@@ -101,6 +113,12 @@ public:
 	 * Specific angular momentum
 	 */
 	float sAM;
+
+	friend Baryon operator+(Baryon &lhs, const Baryon &rhs) {
+		lhs += rhs;
+		return lhs;
+	}
+
 };
 
 /**

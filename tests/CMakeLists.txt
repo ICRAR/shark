@@ -30,7 +30,7 @@
 include_directories(${CXXTEST_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 set(CXXTEST_TESTGEN_ARGS --error-printer --have-eh)
 
-set(SHARK_TEST_NAMES options)
+set(SHARK_TEST_NAMES components options)
 
 foreach(test_name ${SHARK_TEST_NAMES})
 	CXXTEST_ADD_TEST(test_${test_name} test_${test_name}.cpp ${CMAKE_CURRENT_SOURCE_DIR}/test_${test_name}.h)
