@@ -166,7 +166,15 @@ fi
 tasks_per_node=${SLURM_TASKS_PER_NODE%%(*}
 mem_per_task_per_node=$(($SLURM_MEM_PER_NODE / $tasks_per_node))
 
-cmd="srun --exclusive --mem-per-cpu $mem_per_task_per_node -c 1 -n 1 -N 1 time $shark_binary -v $shark_verbosity $config_file"
+# Calculate the command to run
+# If possible, we time each execution (but it's not really necessary)
+cmd="srun --exclusive --mem-per-cpu $mem_per_task_per_node -c 1 -n 1 -N 1"
+if [ -n "$(command -v time 2> /dev/null)" -a "`type -t time`" = "file" ]
+then
+	cmd="$cmd time"
+fi
+cmd="$cmd $shark_binary -v $shark_verbosity $config_file"
+
 info ""
 info "================================================================================"
 info "Starting shark via srun with command-line: $cmd -o <subvol>"
