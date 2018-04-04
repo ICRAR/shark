@@ -269,6 +269,9 @@ public:
 
 	template<typename T>
 	void write_dataset(const std::string &name, const std::vector<std::vector<T>> &values, const std::string &comment = NO_COMMENT) {
+		if (values.empty()) {
+			return;
+		}
 		const hsize_t sizes[] = {values.size(), values[0].size()};
 		H5::DataSpace dataSpace(2, sizes);
 		H5::DataType dataType = _datatype<T>(values);
