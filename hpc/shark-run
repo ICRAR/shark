@@ -184,6 +184,7 @@ then
 fi
 cmd="$cmd $shark_binary -v $shark_verbosity $config_file"
 
+info "Processing subvolumes: $shark_subvolumes"
 info ""
 info "================================================================================"
 info "Starting shark via srun with command-line: $cmd -o <subvol>"
