@@ -276,17 +276,14 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	AllBaryons.mDM.push_back(mDM_total);
 
 	// Test for mass conservation.
-
 	double all_bar = AllBaryons.baryon_total_created[snapshot] - AllBaryons.baryon_total_lost[snapshot];
 	double frac = std::abs((total_baryons-all_bar)/all_bar);
 			//std::abs(total_baryons / mDM_total.mass /  cosmology.universal_baryon_fraction() - 1.0);
 
 	if(frac > constants::EPS3){
-		/*std::ostringstream os;
-		os << "Accummulated baryon mass, " << total_baryons << " differs by more than " << constants::EPS3 << " than the baryon mass created by this snapshot, "<< AllBaryons.baryon_total_created[snapshot];
-		throw invalid_data(os.str());*/
-		LOG(warning) << "Accumulated baryon mass differs by " << (total_baryons/all_bar) << " with the total baryons that have been created by this snapshot.";
-
+		std::ostringstream os;
+		os << "Accumulated baryon mass differs by " << frac << " with the total baryons that have been created by this snapshot.";
+		throw invalid_data(os.str());
 	}
 
 }
