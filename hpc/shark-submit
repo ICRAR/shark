@@ -135,11 +135,6 @@ submit_slurm() {
 	cmd="$cmd -o shark-run.out -e shark-run.err"
 
 	# Queueing accountability
-	if [ ! -z "$num_nodes" ]
-	then
-		cmd="$cmd -N $num_nodes"
-	fi
-
 	if [ ! -z "$account" ]
 	then
 		cmd="$cmd -A $account"
@@ -161,6 +156,11 @@ submit_slurm() {
 	fi
 
 	# Resource limits
+	if [ ! -z "$num_nodes" ]
+	then
+		cmd="$cmd -N $num_nodes"
+	fi
+
 	if [ -n "$mem_per_task" ]
 	then
 		cmd="$cmd --mem-per-cpu $(($mem_per_task / 1024 / 1024))M"
@@ -385,20 +385,6 @@ shark_subvolumes="$svols"
 svols=($svols)
 n_svols=${#svols[@]}
 info "Will submit shark to work on $n_svols subvolumes: $shark_subvolumes"
-
-# Calculate number of nodes needed for this submission,
-# based on the number of subvolumes to process.
-# Skip if the user already enforced a number of nodes already
-if [ -z "$num_nodes" ]
-then
-	num_nodes=$(($n_svols / 24))
-	residual=$(($n_svols % 24))
-	if [ $residual -ne 0 ]
-	then
-		num_nodes=$(($num_nodes + 1))
-	fi
-fi
-info "This submission will request $num_nodes nodes"
 
 # Make sure we have a proper working directory
 if [ ! -z "$shark_output_directory" ]
