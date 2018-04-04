@@ -35,14 +35,46 @@ warning() {
 	echo "shark-submit: WARNING: $1" 1>&2
 }
 
+to_bytes() {
+	x="$1"
+	if [[ "$x" =~ ^([0-9]+)([kKmMgGtT]?) ]]
+	then
+		amount=${BASH_REMATCH[1]}
+		unit=${BASH_REMATCH[2]^*}
+	else
+		error "unknown memory quantity: $x" && exit 1
+	fi
+
+	if [ $unit = K ]
+	then
+		amount=$(($amount * 1024))
+	elif [ $unit = M ]
+	then
+		amount=$(($amount * 1024 * 1024))
+	elif [ $unit = G ]
+	then
+		amount=$(($amount * 1024 * 1024 * 1024))
+	else
+		amount=$(($amount * 1024 * 1024 * 1024 * 1024))
+	fi
+
+	echo "$amount"
+}
+
 print_usage() {
 	echo
 	echo "$0: Submits shark for execution in a queueing system like SLURM or PBS/Torque"
 	echo
 	echo "Usage: $0 [-h] [-?] [-d] [-o output_dir] [-Q queue] [-a account] [-w walltime]"
-	echo "       [-n job-name] [-m modules] [-N num-nodes] [-v | -q] [-S shark_binary]"
-	echo "       [-V subvolumes] config_file"
+	echo "       [-n job-name] [-M modules] [-M mem] [-N num-nodes] [-v | -q]"
+	echo "       [-S shark_binary] [-V subvolumes] config_file"
 	echo
+	echo "This program calculates what is the best way to submit a series of jobs to"
+	echo "execute shark over a number of subvolumes, and performs such submission. The"
+	echo "resources needed by the submission depend on: a) the number of subvolumes to"
+	echo "process (-V option), and b) the memory required by each shark instance"
+	echo "(-m option). An additional -N option allows users to manually specify a minimum"
+	echo "number of nodes to be requested."
 	echo
 	echo "General options:"
 	echo
@@ -69,7 +101,12 @@ print_usage() {
 	echo
 	echo " -n job-name     Job name for this submission"
 	echo
-	echo " -m modules      Colon-separted list of modules to load before running shark"
+	echo " -M modules      Colon-separted list of modules to load before running shark"
+	echo
+	echo " -m mem          Amount of memory needed by each shark instance. It is used to"
+	echo "                 calculate the number of nodes required given a number of tasks."
+	echo "                 If unspecified, the -N option can be used to manually specify a"
+	echo "                 number of nodes"
 	echo
 	echo " -N num-nodes    Number of nodes to request. If unspecified it is automatically"
 	echo "                 calculated based on the number of subvolumes (-V option)"
@@ -123,6 +160,12 @@ submit_slurm() {
 		cmd="$cmd --job-name $job_name"
 	fi
 
+	# Resource limits
+	if [ -n "$mem_per_task" ]
+	then
+		cmd="$cmd --mem-per-cpu $(($mem_per_task / 1024 / 1024))M"
+	fi
+
 	cmd="$cmd -D $shark_output_directory"
 	cmd="$cmd shark-run -v $shark_verbosity"
 
@@ -170,13 +213,14 @@ account=
 job_name=
 walltime="1:00:00"
 modules=
+mem_per_task=
 num_nodes=
 shark_verbosity=3
 shark_binary=
 shark_subvolumes=
 
 # Parse command line options
-while getopts "h?do:Q:a:w:n:m:N:vqS:V:" opt
+while getopts "h?do:Q:a:w:n:M:m:N:vqS:V:" opt
 do
 	case "$opt" in
 		[h?])
@@ -227,8 +271,15 @@ do
 		n)
 			job_name="$OPTARG"
 			;;
-		m)
+		M)
 			modules="$OPTARG"
+			;;
+		m)
+			mem_per_task=`to_bytes "$OPTARG"`
+			if [ $? -ne 0 ]
+			then
+				exit 1
+			fi
 			;;
 		N)
 			num_nodes="$OPTARG"

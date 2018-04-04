@@ -85,6 +85,7 @@ then
 	info "SLURM_JOB_CPUS_PER_NODE  #CPUs per node available              $SLURM_JOB_CPUS_PER_NODE"
 	info "SLURM_NTASKS             #Tasks allocated                      $SLURM_NTASKS"
 	info "SLURM_TASKS_PER_NODE     #Tasks to run per node                $SLURM_TASKS_PER_NODE"
+	info "SLURM_MEM_PER_CPU        #Allocated memory per CPU             $SLURM_MEM_PER_CPU"
 	info "SLURM_MEM_PER_NODE       #Allocated memory per node            $SLURM_MEM_PER_NODE"
 	info ""
 fi
@@ -163,8 +164,16 @@ then
 	done
 fi
 
-tasks_per_node=${SLURM_TASKS_PER_NODE%%(*}
-mem_per_task_per_node=$(($SLURM_MEM_PER_NODE / $tasks_per_node))
+mem_per_task_per_node=${SLURM_MEM_PER_CPU:-}
+if [ -z "$mem_per_task_per_node" ]
+then
+	if [ -z "$SLURM_MEM_PER_NODE" ]
+	then
+		error "Neither SLURM_MEM_PER_CPU nor SLURM_MEM_PER_NODE could be found, cannot calculate memory per shark instance"
+	fi
+	tasks_per_node=${SLURM_TASKS_PER_NODE%%(*}
+	mem_per_task_per_node=$(($SLURM_MEM_PER_NODE / $tasks_per_node))
+fi
 
 # Calculate the command to run
 # If possible, we time each execution (but it's not really necessary)
