@@ -69,10 +69,8 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				galaxy->bulge_gas.mass_metals +=  galaxy->disk_gas.mass_metals;
 
 				//Make all disk values 0.
-				galaxy->disk_stars.mass = 0;
-				galaxy->disk_stars.mass_metals = 0;
-				galaxy->disk_gas.mass = 0;
-				galaxy->disk_gas.mass_metals = 0;
+				galaxy->disk_stars.restore_baryon();
+				galaxy->disk_gas.restore_baryon();
 
 				transfer_history_disk_to_bulge(galaxy, snapshot);
 
@@ -171,8 +169,7 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 		if(galaxy->bulge_gas.mass < constants::tolerance_mass){
 			galaxy->disk_gas.mass += galaxy->bulge_gas.mass;
 			galaxy->disk_gas.mass_metals += galaxy->bulge_gas.mass_metals;
-			galaxy->bulge_gas.mass = 0;
-			galaxy->bulge_gas.mass_metals = 0;
+			galaxy->bulge_gas.restore_baryon();
 
 			/*// Calculate disk size.
 			galaxy->disk_gas.rscale = darkmatterhalo->disk_size_theory(*subhalo);

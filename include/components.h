@@ -87,6 +87,11 @@ public:
 		return lhs;
 	}
 
+	void restore_baryon(){
+		mass = 0;
+		mass_metals = 0;
+	}
+
 };
 
 /**
@@ -117,6 +122,11 @@ public:
 	friend Baryon operator+(Baryon &lhs, const Baryon &rhs) {
 		lhs += rhs;
 		return lhs;
+	}
+
+	void restore_baryon(){
+		mass = 0;
+		mass_metals = 0;
 	}
 
 };

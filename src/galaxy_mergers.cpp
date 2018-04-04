@@ -237,8 +237,8 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 	}
 
 	for(auto &satellite_subhalo: halo->satellite_subhalos) {
-		//Identify which subhalos will disappear in the next snapshot
 
+		//Identify which subhalos will disappear in the next snapshot
 		if(satellite_subhalo->last_snapshot_identified == satellite_subhalo->snapshot){
 
 			LOG(debug) << "Merging satellite subhalo " << satellite_subhalo
@@ -248,15 +248,19 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
 			merging_timescale(central_subhalo, satellite_subhalo, z);
 
-			//transfer all mass from the satellite_subhalo to the central_subhalo.
+			//transfer all mass from the satellite_subhalo to the central_subhalo. Note that this implies a horizontal transfer of information.
 			transfer_baryon_mass(central_subhalo, satellite_subhalo);
 
-			//Now transfer the galaxies in this subhalo to the central subhalo.
+			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_galaxies_to(central_subhalo);
 		}
 	}
 
 	//Now evaluate cases where central subhalo disappears in the next snapshot.
+	/**
+	 * In this case we do not transfer galaxies or baryonic mass from one subhalo to another
+	 * as that would imply a transfer across time, which is what we later do in evolve_halos.cpp
+	 */
 	if(central_subhalo->last_snapshot_identified == central_subhalo->snapshot){
 
 		// Identify the central subhalo of the halo in which the descendant subhalo lives. This is the subhalo to which
@@ -287,11 +291,6 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 		//Calculate dynamical friction timescale for all galaxies disappearing in the primary subhalo of the merger in the next snapshot.
 		merging_timescale(primary_subhalo, central_subhalo, z);
 
-		//transfer all mass from the satellite_subhalo to the central subhalo of the descendant halo.
-		//transfer_baryon_mass(desc_subhalo, central_subhalo);
-
-		//Now transfer the galaxies in this subhalo to the central subhalo of the descendant halo.
-		//central_subhalo->transfer_galaxies_to(desc_subhalo);
 	}
 
 }
@@ -396,9 +395,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	central->bulge_gas.rscale = central->bulge_stars.rscale;
 
 	// Black holes merge regardless of the merger type.
-	central->smbh.mass += satellite->smbh.mass;
-
-	central->smbh.mass_metals += satellite->smbh.mass_metals;
+	central->smbh += satellite->smbh;
 
 	//satellite stellar mass is always transferred to the bulge.
 	transfer_history_satellite_to_bulge(central, satellite, snapshot);
@@ -423,10 +420,8 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 		//Make all disk values 0.
 
-		central->disk_stars.mass = 0;
-		central->disk_stars.mass_metals = 0;
-		central->disk_gas.mass = 0;
-		central->disk_gas.mass_metals = 0;
+		central->disk_stars.restore_baryon();
+		central->disk_gas.restore_baryon();
 
 		/*
 		central->disk_gas.rscale = 0;
@@ -450,12 +445,10 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 		if(mass_ratio >= parameters.minor_merger_burst_ratio & mgas_ratio > parameters.gas_fraction_burst_ratio){
 
-			central->bulge_gas.mass += central->disk_gas.mass;
-			central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals;
+			central->bulge_gas += central->disk_gas;
 
 			//Make gas disk values 0.
-			central->disk_gas.mass = 0;
-			central->disk_gas.mass_metals = 0;
+			central->disk_gas.restore_baryon();
 
 			/*
 			central->disk_gas.rscale = 0;
@@ -611,32 +604,22 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 
 void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite){
 
-	central->hot_halo_gas.mass += satellite->hot_halo_gas.mass;
-	central->hot_halo_gas.mass_metals += satellite->hot_halo_gas.mass_metals;
-
-	central->cold_halo_gas.mass += satellite->cold_halo_gas.mass;
-	central->cold_halo_gas.mass_metals += satellite->cold_halo_gas.mass_metals;
-
-	central->ejected_galaxy_gas.mass += satellite->ejected_galaxy_gas.mass;
-	central->ejected_galaxy_gas.mass_metals += satellite->ejected_galaxy_gas.mass_metals;
+	central->hot_halo_gas += satellite->hot_halo_gas;
+	central->cold_halo_gas += satellite->cold_halo_gas;
+	central->ejected_galaxy_gas += satellite->ejected_galaxy_gas;
 
 	// Make baryon components of satellite subhalo = 0.
-	satellite->hot_halo_gas.mass = 0;
-	satellite->hot_halo_gas.mass_metals = 0;
+	satellite->hot_halo_gas.restore_baryon();
+	satellite->cold_halo_gas.restore_baryon();
+	satellite->ejected_galaxy_gas.restore_baryon();
 
-	satellite->cold_halo_gas.mass = 0;
-	satellite->cold_halo_gas.mass_metals =0;
-
-	satellite->ejected_galaxy_gas.mass = 0;
-	satellite->ejected_galaxy_gas.mass_metals = 0;
 }
 
 void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy, SubhaloPtr &subhalo){
 
-	galaxy->disk_gas.mass += galaxy->bulge_gas.mass;
-	galaxy->disk_gas.mass_metals += galaxy->bulge_gas.mass_metals;
-	galaxy->bulge_gas.mass = 0;
-	galaxy->bulge_gas.mass_metals = 0;
+	galaxy->disk_gas += galaxy->bulge_gas;
+
+	galaxy->bulge_gas.restore_baryon();
 
 	/*
 	// Calculate disk size.

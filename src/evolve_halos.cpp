@@ -97,11 +97,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
 
-			// First check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
-//			if(subhalo->last_snapshot_identified == subhalo->snapshot){
-//				continue;
-//			}
-
 			auto descendant_subhalo = subhalo->descendant;
 
 			if (!descendant_subhalo) {
@@ -118,7 +113,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				}
 			}
 
-			// Transfer galaxies.
+			// Transfer galaxies to descendant subhalo.
 			subhalo->transfer_galaxies_to(descendant_subhalo);
 
 			if(subhalo->snapshot != descendant_subhalo->snapshot-1){
@@ -283,13 +278,15 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	// Test for mass conservation.
 
 	double all_bar = AllBaryons.baryon_total_created[snapshot] - AllBaryons.baryon_total_lost[snapshot];
-	double frac = std::abs(total_baryons / mDM_total.mass /  cosmology.universal_baryon_fraction() - 1.0);
+	double frac = std::abs((total_baryons-all_bar)/all_bar);
+			//std::abs(total_baryons / mDM_total.mass /  cosmology.universal_baryon_fraction() - 1.0);
 
 	if(frac > constants::EPS3){
 		/*std::ostringstream os;
 		os << "Accummulated baryon mass, " << total_baryons << " differs by more than " << constants::EPS3 << " than the baryon mass created by this snapshot, "<< AllBaryons.baryon_total_created[snapshot];
 		throw invalid_data(os.str());*/
-		LOG(warning) << "Accummulated baryon mass differs by " << frac << " with the universal baryon fraction.";
+		LOG(warning) << "Accumulated baryon mass differs by " << (total_baryons/all_bar) << " with the total baryons that have been created by this snapshot.";
+
 	}
 
 }

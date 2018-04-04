@@ -205,20 +205,16 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 		galaxy.disk_stars.mass_metals = 0;
 	}
 	if(galaxy.disk_gas.mass < tolerance){
-		galaxy.disk_gas.mass = 0;
-		galaxy.disk_gas.mass_metals = 0;
+		galaxy.disk_gas.restore_baryon();
 	}
 	if(subhalo.cold_halo_gas.mass < tolerance){
-		subhalo.cold_halo_gas.mass = 0;
-		subhalo.cold_halo_gas.mass_metals = 0;
+		subhalo.cold_halo_gas.restore_baryon();
 	}
 	if(subhalo.hot_halo_gas.mass < tolerance){
-		subhalo.hot_halo_gas.mass = 0;
-		subhalo.hot_halo_gas.mass_metals = 0;
+		subhalo.hot_halo_gas.restore_baryon();
 	}
 	if(subhalo.ejected_galaxy_gas.mass < tolerance){
-		subhalo.ejected_galaxy_gas.mass = 0;
-		subhalo.ejected_galaxy_gas.mass_metals = 0;
+		subhalo.ejected_galaxy_gas.restore_baryon();
 	}
 
 	/* Check unrealistic cases*/
@@ -317,20 +313,16 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	 *
 	 */
 	if(galaxy.bulge_stars.mass < tolerance){
-		galaxy.bulge_stars.mass = 0;
-		galaxy.bulge_stars.mass_metals = 0;
+		galaxy.bulge_stars.restore_baryon();
 	}
 	if(galaxy.bulge_gas.mass < tolerance){
-		galaxy.bulge_gas.mass = 0;
-		galaxy.bulge_gas.mass_metals = 0;
+		galaxy.bulge_gas.restore_baryon();
 	}
 	if(subhalo.hot_halo_gas.mass < tolerance){
-		subhalo.hot_halo_gas.mass = 0;
-		subhalo.hot_halo_gas.mass_metals = 0;
+		subhalo.hot_halo_gas.restore_baryon();
 	}
 	if(subhalo.ejected_galaxy_gas.mass < tolerance){
-		subhalo.ejected_galaxy_gas.mass = 0;
-		subhalo.ejected_galaxy_gas.mass_metals = 0;
+		subhalo.ejected_galaxy_gas.restore_baryon();
 	}
 
 	/* Check unrealistic cases*/

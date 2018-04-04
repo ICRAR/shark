@@ -239,20 +239,15 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     	//TODO: add gradual ram pressure stripping.
 
     	if(subhalo.hot_halo_gas.mass > 0 or subhalo.ejected_galaxy_gas.mass > 0 or subhalo.cold_halo_gas.mass){
-    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass += subhalo.hot_halo_gas.mass + subhalo.cold_halo_gas.mass;
-    		subhalo.host_halo->central_subhalo->hot_halo_gas.mass_metals += subhalo.hot_halo_gas.mass_metals + subhalo.cold_halo_gas.mass_metals;
 
-    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas.mass += subhalo.ejected_galaxy_gas.mass;
-    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas.mass_metals += subhalo.ejected_galaxy_gas.mass_metals;
+    		subhalo.host_halo->central_subhalo->hot_halo_gas += subhalo.hot_halo_gas;
+    		subhalo.host_halo->central_subhalo->hot_halo_gas += subhalo.cold_halo_gas;
+    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas += subhalo.ejected_galaxy_gas;
 
-    		subhalo.hot_halo_gas.mass = 0;
-    		subhalo.hot_halo_gas.mass_metals = 0;
+    		subhalo.hot_halo_gas.restore_baryon();
+    		subhalo.ejected_galaxy_gas.restore_baryon();
+        	subhalo.cold_halo_gas.restore_baryon();
 
-    		subhalo.ejected_galaxy_gas.mass = 0;
-    		subhalo.ejected_galaxy_gas.mass_metals = 0;
-
-        	subhalo.cold_halo_gas.mass = 0;
-        	subhalo.cold_halo_gas.mass_metals = 0;
     	}
 
     	return 0;
@@ -544,8 +539,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
   	// Avoid negative values for the hot gas mass.
   	if(subhalo.hot_halo_gas.mass < constants::tolerance){
-   		subhalo.hot_halo_gas.mass = 0;
-   		subhalo.hot_halo_gas.mass_metals = 0;
+   		subhalo.hot_halo_gas.restore_baryon();
    	}
   	if(subhalo.hot_halo_gas.mass_metals < constants::tolerance){
   		subhalo.hot_halo_gas.mass_metals = 0;
