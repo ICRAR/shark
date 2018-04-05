@@ -1,4 +1,7 @@
 /build
 /.cproject
 /.project
+/.pydevproject
 /bin/
+
+*.pyc
