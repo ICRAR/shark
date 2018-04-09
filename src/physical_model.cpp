@@ -72,7 +72,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	double beta1, beta2;
 
-	model.stellar_feedback.outflow_rate(SFR, params->v, params->redshift, beta1, beta2); /*mass loading parameter*/
+	model.stellar_feedback.outflow_rate(SFR, params->vsubh, params->vgal, params->redshift, beta1, beta2); /*mass loading parameter*/
 
 	double rsub = 1.0-R;
 

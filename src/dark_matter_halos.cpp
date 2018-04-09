@@ -178,20 +178,24 @@ double EinastoDarkMatterHalos::enclosed_mass(double r, double c) const
 	return 0;
 }
 
-void DarkMatterHalos::galaxy_velocity(Subhalo &subhalo){
+void DarkMatterHalos::galaxy_velocity(Subhalo &subhalo, Galaxy &galaxy){
 
 	double rvir = halo_virial_radius(subhalo);
 
 	//disk properties.
-	double rdisk = subhalo.central_galaxy()->disk_gas.rscale;
-	double mdisk = subhalo.central_galaxy()->disk_mass();
-	double cd = rvir / (rdisk / constants::RDISK_HALF_SCALE);
+	double rdisk = galaxy.disk_gas.rscale;
+	double mdisk = galaxy.disk_mass();
+	double cd = 0;
+	if(mdisk > 0 and rdisk > 0){
+		cd = rvir / (rdisk / constants::RDISK_HALF_SCALE);
+	}
 
 	//bulge properties.
-	double rbulge = subhalo.central_galaxy()->bulge_stars.rscale;
-	double mbulge = subhalo.central_galaxy()->bulge_mass();
+	double rbulge = galaxy.bulge_stars.rscale;
+	double mbulge = galaxy.bulge_mass();
 	double cb = 0.0;
-	if(mbulge > 0 and rbulge > 0){
+
+	if(rbulge > 0){
 		cb = rvir/(rbulge / constants::RDISK_HALF_SCALE);
 	}
 
@@ -202,16 +206,21 @@ void DarkMatterHalos::galaxy_velocity(Subhalo &subhalo){
 	double xd = rdisk / rvir;
 
 	//Rotational velocity at the half-mass radius of the disk.
+	double vd = std::sqrt(v2disk(xd, mdisk, cd, rvir));
+	double vb = std::sqrt(v2bulge(xd, mbulge, cb, rvir));
+	double vh = std::sqrt(v2halo(xd, mvir, ch, rvir) );
+
 	double v2tot_d = v2halo(xd, mvir, ch, rvir) + v2disk(xd, mdisk, cd, rvir) + v2bulge(xd, mbulge, cb, rvir);
 
-	subhalo.central_galaxy()->disk_gas.sAM = rdisk * std::sqrt(v2tot_d);
+	galaxy.disk_gas.sAM = rdisk * std::sqrt(v2tot_d);
 
-	if(mbulge > 0 and rbulge > 0){
+	if(rbulge > 0){
 
 		double xb = rbulge / rvir;
 		double v2tot_b = v2halo(xb, mvir, ch, rvir) + v2disk(xb, mdisk, cd, rvir) + v2bulge(xb, mbulge, cb, rvir);
 
-		subhalo.central_galaxy()->bulge_stars.sAM = rbulge * std::sqrt(v2tot_b);
+		galaxy.bulge_stars.sAM = rbulge * std::sqrt(v2tot_b);
+		galaxy.bulge_gas.sAM   = galaxy.bulge_stars.sAM;
 	}
 
 }
@@ -249,14 +258,14 @@ double DarkMatterHalos::v2bulge (double x, double m, double c, double r){
 	double cx = c * x;
 
 	double nom = std::pow(cx,2.0) * c;
-	double denom = std::pow( 1 + std::pow(cx,2.0), -1.5);
+	double denom = std::pow( 1 + std::pow(cx,2.0), 1.5);
 
 	double v = constants::G * m / r * nom/denom;
 
 	return v;
 
-
 }
+
 double DarkMatterHalos::nfw_concentration(double mvir, double z){
 
 	return 12.3/(1.0+z) * std::pow(mvir/1.3e13,-0.13);

@@ -351,6 +351,9 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 	// Now destroy and remove satellite galaxy.
 	central_subhalo->remove_galaxies(all_sats_to_delete);
 
+	//calculate specific angular momentum of bulge and disk.
+	darkmatterhalo->galaxy_velocity(*central_subhalo , *central_galaxy);
+
 	// Trigger starbursts in all the galaxies that have gas in the bulge.
 	create_starbursts(halo, z, delta_t);
 
@@ -456,7 +459,6 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		}
 
 	}
-
 
 	if(std::isnan(central->bulge_stars.mass)){
 		std::ostringstream os;

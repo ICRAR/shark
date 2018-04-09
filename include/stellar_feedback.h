@@ -44,6 +44,22 @@ public:
 		GALFORMFIRE
 	};
 
+	/**
+	 * Note that not all parameters will be used by the stellar feedback model, and which ones and how many are used
+	 * depends on the model adopted.
+	 * Parameter:
+	 * eps_halo: constant in outflow rate from the halo.
+	 * vkin_sn: kinetic velocity of SNe remnant.
+	 * beta_disk: power-law index of velocity dependence on outflows from the galaxy.
+	 * beta_halo: power-law index of velocity dependence on outflows from the halo.
+	 * v_sn: normalization of velocity in SNe feedback/
+	 * redshift_power: redshift dependence of normalization velocity.
+	 * eps_disk: constant in outflow rate from the galaxy.
+	 * e_sn: energy released by a single SNe that couples to the ISM.
+	 * eta_cc: number of SNe per 1 solar mass of mass formed.
+	 * galaxy_scaling: whether we scale SNe outflow rate with the halo or galaxy velocity.
+	 * model: adopted SNe feedback model.
+	 */
 	double eps_halo;
 	double vkin_sn;
 	double beta_disk;
@@ -53,6 +69,7 @@ public:
 	double eps_disk;
 	double e_sn;
 	double eta_cc;
+	bool galaxy_scaling;
 
 	StellarFeedbackModel model;
 
@@ -64,7 +81,7 @@ class StellarFeedback {
 public:
 	StellarFeedback(StellarFeedbackParameters parameters);
 
-	void outflow_rate(double sfr, double v, double z, double &b1, double &b2);
+	void outflow_rate(double sfr, double vsubh, double vgal, double z, double &b1, double &b2);
 
 private:
 	StellarFeedbackParameters parameters;

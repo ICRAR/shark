@@ -80,6 +80,8 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				galaxy->disk_gas.sAM = 0;
 				galaxy->disk_stars.sAM = 0;*/
 
+				darkmatterhalo->galaxy_velocity(*subhalo, *galaxy);
+
 				create_starburst(subhalo, galaxy, z, delta_t);
 			}
 		}

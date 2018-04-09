@@ -264,7 +264,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo, z);
    	central_galaxy->disk_stars.rscale = central_galaxy->disk_gas.rscale;
 
-   	darkmatterhalos->galaxy_velocity(subhalo);
+   	darkmatterhalos->galaxy_velocity(subhalo, *central_galaxy);
    	//TODO: remove this part and calculate rscale and sAM of the stellar disk properly.
    	central_galaxy->disk_stars.sAM = central_galaxy->disk_gas.sAM;
 

@@ -100,7 +100,7 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z)
 	//assign an ad-hoc half-mass radius and specific angular momentum to start with.
 	galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(*central_subhalo, z);
 
-	darkmatterhalos->galaxy_velocity(*central_subhalo);
+	darkmatterhalos->galaxy_velocity(*central_subhalo, *galaxy);
 
 	return true;
 

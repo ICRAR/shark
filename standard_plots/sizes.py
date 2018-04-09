@@ -44,11 +44,15 @@ xmf = mbins + dm/2.0
 
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
-                 disk_size_sat, disk_size_cen, BT_fractions):
+                 disk_size_sat, disk_size_cen, BT_fractions, bulge_vel, disk_vel):
 
-    h0, _, mdisk, mbulge, mBH, rdisk, rbulge, typeg = hdf5_data
+    h0, _, mdisk, mbulge, mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk, specific_angular_momentum_bulge = hdf5_data
+                           
     bin_it = functools.partial(us.wmedians, xbins=xmf)
 
+    vdisk = specific_angular_momentum_disk / rdisk #in km/s
+    vbulge = specific_angular_momentum_bulge / rbulge #in km/s
+    
     ind = np.where(mdisk+mbulge > 0)
     rcomb[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                             y=np.log10((mdisk[ind]*rdisk[ind]  + mbulge[ind]*rbulge[ind])*MpcToKpc / (mdisk[ind]+mbulge[ind])))
@@ -58,9 +62,14 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     disk_size[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                 y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
+    ind = np.where((mdisk > 0) & (typeg == 0) & (mbulge/mdisk < 0.5))
+    disk_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                                y=np.log10(vdisk[ind]))
+
     ind = np.where((mdisk > 0) & (typeg == 0))
     disk_size_cen[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                     y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
+    
     ind = np.where((mdisk > 0) & (typeg > 0))
     disk_size_sat[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                     y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
@@ -71,6 +80,11 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
 
     BH[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
+    
+    ind = np.where((mbulge > 0) & (mbulge/mdisk > 0.5))
+    bulge_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                    y=np.log10(vbulge[ind]))
+    
 
 
 def plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size):
@@ -167,6 +181,52 @@ def plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size):
     common.savefig(outdir, fig, 'sizes.pdf')
 
 
+def plot_velocities(plt, outdir, disk_vel, bulge_vel):
+
+    fig = plt.figure(figsize=(5,9.5))
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
+    ytit = "$\\rm log_{10} (\\rm v_{\\rm 50, disk}/km s^{-1})$"
+    xmin, xmax, ymin, ymax = 8, 12, 1, 3
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    # LTG ##################################
+    ax = fig.add_subplot(211)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax.text(xleg, yleg, 'z=0')
+
+    #Predicted size-mass for disks in disk=dominated galaxies
+    ind = np.where(disk_vel[0,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = disk_vel[0,0,ind]
+    errdn = disk_vel[0,1,ind]
+    errup = disk_vel[0,2,ind]
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk centrals B/T<0.5")
+
+    common.prepare_legend(ax, ['k'], loc=2)
+
+    # ETGs ##################################
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
+    ytit = "$\\rm log_{10} (\\rm v_{\\rm 50, bulge}/km s^{-1})$"
+    xmin, xmax, ymin, ymax = 8, 12, 1, 3
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ax = fig.add_subplot(212)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax.text(xleg, yleg, 'z=0')
+
+    #Predicted size-mass for bulges in bulge-dominated systems
+    ind = np.where(bulge_vel[0,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = bulge_vel[0,0,ind]
+    errdn = bulge_vel[0,1,ind]
+    errup = bulge_vel[0,2,ind]
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk bulges B/T > 0.5")
+
+    common.prepare_legend(ax, ['k'], loc=2)
+    common.savefig(outdir, fig, 'velocities.pdf')
+    
 def plot_sizes_combined(plt, outdir, rcomb):
 
     fig = plt.figure(figsize=(5,5))
@@ -268,7 +328,7 @@ def main():
 
     plt = common.load_matplotlib()
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mBH',
-                           'rdisk', 'rbulge', 'type')}
+                           'rdisk', 'rbulge', 'type', 'specific_angular_momentum_disk', 'specific_angular_momentum_bulge')}
 
     modeldir, outdir, obsdir = common.parse_args(requires_snapshot=False)
 
@@ -280,12 +340,16 @@ def main():
     disk_size_sat = np.zeros(shape = (len(zlist), 3, len(xmf)))
     disk_size_cen = np.zeros(shape = (len(zlist), 3, len(xmf)))
     BT_fractions = np.zeros(shape = (len(zlist), len(xmf)))
+    disk_vel =  np.zeros(shape = (len(zlist), 3, len(xmf))) 
+    bulge_vel =  np.zeros(shape = (len(zlist), 3, len(xmf)))
+    
     for index in range(0,4):
         hdf5_data = common.read_data(modeldir, zlist[index], fields, subvolume=0)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
-                     disk_size_sat, disk_size_cen, BT_fractions)
+                     disk_size_sat, disk_size_cen, BT_fractions, bulge_vel, disk_vel)
 
     plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size)
+    plot_velocities(plt, outdir, disk_vel, bulge_vel)
     plot_sizes_combined(plt, outdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions)

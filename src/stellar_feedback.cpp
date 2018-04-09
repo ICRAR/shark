@@ -39,12 +39,14 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options) :
 	eps_disk(1),
 	eta_cc(0),
 	e_sn(0),
-	model(FIRE)
+	model(FIRE),
+	galaxy_scaling(false)
 {
 
 	double epsilon_cc = 0, energy=0;
 
 	options.load("stellar_feedback.model", model, true);
+	options.load("stellar_feedback.galaxy_scaling", galaxy_scaling);
 
 	// The parameters below *must* be specified.
 	options.load("stellar_feedback.beta_disk", beta_disk, true);
@@ -96,7 +98,13 @@ StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters) :
 	// no-op
 }
 
-void StellarFeedback::outflow_rate(double sfr, double v, double z, double &b1, double &b2) {
+void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double z, double &b1, double &b2) {
+
+
+	double v = vsubh;
+	if(parameters.galaxy_scaling){
+		v  = vgal;
+	}
 
 	b1 = 0;
 	b2 = 0;
