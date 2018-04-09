@@ -38,7 +38,7 @@ def prepare_data(hdf5_data, index, massgal, massbar):
 
     (h0, _, mdisk, mbulge, mBH, mgas, mgas_bulge, mhot,
      mreheated, mhalo, typeg) = hdf5_data
-
+     
     ind = np.where((typeg <= 0) & (mdisk+mbulge > 0))
     massgal[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                    y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
@@ -72,8 +72,12 @@ def plot_SMHM_z(plt, outdir, massgal):
     indexes = (0, 1, 2, 3, 4, 5)
     all_labels = (('SHArk', 'Moster+13', 'Behroozi+13'), )
 
-    for subplot, z, idx, labels in zip(subplots, zs, indexes, all_labels):
-
+    for i in range(0,5):
+        subplot = subplots[i]
+        z = zs[i]
+        idx = indexes[i]
+        labels = all_labels[0]
+        
         # z=0 ##################################
         ax = fig.add_subplot(subplot)
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
@@ -81,14 +85,20 @@ def plot_SMHM_z(plt, outdir, massgal):
         ax.text(xleg, yleg, 'z=%s' % str(z))
 
         #Predicted SMHM
-        ind = np.where(massgal[idx,0,:] != 0)
+        ind = np.where(massgal[i,0,:] != 0)
         xplot = xmf[ind]
-        yplot = massgal[idx,0,ind]
-
+        yplot = massgal[i,0,ind]
+        errdn = massgal[i,1,ind]
+        errup = massgal[i,2,ind]
+    
         if not labels:
             ax.errorbar(xplot, yplot[0], color='k')
+            ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
+            ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
         else:
             ax.errorbar(xplot, yplot[0], color='k', label=labels[0])
+            ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
+            ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
 
         M1 = pow(10.0, M10 + M11 * z/(z+1))
         N = N10 + N11 * z/(z+1)
@@ -103,7 +113,7 @@ def plot_SMHM_z(plt, outdir, massgal):
         else:
             ax.plot(xmf,np.log10(m),'r', linestyle='dashed', linewidth=3, label=labels[1])
 
-        a = 1/(1+z)
+        a = 1.0/(1.0+z)
         nu = np.exp(-4*a*a)
         log_epsilon = -1.777 + (-0.006*(a-1)) * nu
         M1= 11.514 + ( - 1.793 * (a-1) - 0.251 * z) * nu
@@ -213,10 +223,10 @@ def plot_BMHM_z(plt, outdir, massbar):
 def main():
 
     plt = common.load_matplotlib()
-    fields = {'Galaxies': {'mstars_disk', 'mstars_bulge', 'mBH', 'mgas_disk',
+    fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mBH', 'mgas_disk',
                            'mgas_bulge', 'mhot', 'mreheated', 'mvir_hosthalo',
-                           'type'}}
-
+                           'type')}
+    
     modeldir, outdir = common.parse_args(requires_snapshot=False, requires_observations=False)
 
     zlist = ["199","174", "156", "131", "113", "99"]
