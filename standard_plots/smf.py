@@ -57,8 +57,8 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     xobs = lm
     indx = np.where(p > 0)
     yobs = np.log10(p[indx])
-    ydn = np.log10(p[indx]-dpdn[indx])
-    yup = np.log10(p[indx]+dpup[indx])
+    ydn = yobs - np.log10(p[indx]-dpdn[indx])
+    yup = np.log10(p[indx]+dpup[indx]) - yobs
     z0obs.append((observation("Wright+2017", xobs[indx], yobs, ydn, yup, err_absolute=False), 'o'))
 
     lm, p3, dp3 = common.load_observation(obsdir, 'mf/SMF_Bernardi2013_SerExp.data', [0,1,2])
@@ -72,7 +72,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     yobs[indx] = p3[indx]
     lerr[indx] = dp3[indx]
     herr[indx] = dp3[indx]
-    z0obs.append((observation("Bernardi+2013", xobs, yobs, lerr, herr, err_absolute=True), 'x'))
+    z0obs.append((observation("Bernardi+2013", xobs, yobs, lerr, herr, err_absolute=False), 'x'))
 
     # Moustakas (Chabrier IMF), ['Moustakas+2013, several redshifts']
     zdnM13, lmM13, pM13, dp_dn_M13, dp_up_M13 = common.load_observation(obsdir, 'mf/SMF_Moustakas2013.data', [0,3,5,6,7])

@@ -44,7 +44,7 @@ def prepare_data(hdf5_data):
     Lcool = np.zeros(shape = len(typeg))
 
     ind = np.where((typeg == 0) & (cooling_rate > 0) & (vhalo > 0))
-    tvir[ind]  = 35.9 * pow(vhalo[ind],2.0) * ConvKtoeV / 1e3 #in keV
+    tvir[ind]  = 97.48 * pow(vhalo[ind],2.0) * ConvKtoeV / 1e3 #in keV
     Lcool[ind] = 0.5  * cooling_rate[ind] * pow(vhalo[ind] ,2.0) * lcool_sim_to_cgs #cooling luminosity in units of 10^40 erg/s
 
     return us.wmedians(x=np.log10(tvir[ind]), y=np.log10(Lcool[ind]), xbins=tfunc)

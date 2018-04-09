@@ -332,7 +332,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		throw invalid_data(os.str());
  	}
 
-   	double Tvir   = 35.9*std::pow(vvir,2.0); //in K.
+   	double Tvir   = 97.48*std::pow(vvir,2.0); //in K.
    	double lgTvir = log10(Tvir); //in K.
 	double Rvir   = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(subhalo), z);//physical Mpc
 

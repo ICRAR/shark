@@ -69,8 +69,8 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     bulge_size[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    BH[index,0,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
-                           y=np.log10(mBH[ind]) - np.log10(float(h0)))
+    BH[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
+                    y=np.log10(mBH[ind]) - np.log10(float(h0)))
 
 
 def plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size):
