@@ -199,12 +199,12 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 }
 
 GasCooling::GasCooling(GasCoolingParameters parameters,
-		ReionisationParameters reio_parameters,
+		std::shared_ptr<Reionisation> reionisation,
 		std::shared_ptr<Cosmology> cosmology,
 		std::shared_ptr<AGNFeedback> agnfeedback,
 		std::shared_ptr<DarkMatterHalos> darkmatterhalos,
 		std::shared_ptr<Reincorporation> reincorporation) :
-	reio_parameters(reio_parameters),
+	reionisation(reionisation),
 	parameters(parameters),
 	cosmology(cosmology),
 	agnfeedback(agnfeedback),
@@ -280,8 +280,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     /**
      * Test for subhalos that are affected by reionisation
      */
-    // TODO: implement different models for reionization.
-    if(subhalo.Vvir < reio_parameters.vcut && z < reio_parameters.zcut){
+    auto reionised_halo = reionisation->reionised_halo(subhalo.Vvir, z);
+
+    if(reionised_halo){
     	return 0;
     }
 

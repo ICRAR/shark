@@ -76,7 +76,7 @@ StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParame
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double zgas, double z, bool burst) {
 
 	if (mcold <= constants::EPS3 or rgas <= 0) {
-		if(mcold > constants::EPS3 && rgas <= 0){
+		if(mcold > constants::EPS3 and rgas <= 0){
 			std::ostringstream os;
 			os << "Galaxy mcold > 0 and rgas = 0";
 			throw invalid_argument(os.str());
@@ -181,9 +181,9 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 		sfr_density = sfr_density * parameters.boost_starburst;
 	}
 
-	if(props->sigma_gas0 > 0 && sfr_density <= 0){
+	if((props->sigma_gas0 > 0 and fracmol > 0) and sfr_density <= 0){
 		std::ostringstream os;
-		os << "Galaxy with SFR surface density =0 and cold gas surface density " << props->sigma_gas0;
+		os << "Galaxy with SFR surface density =0, cold gas surface density " << props->sigma_gas0 << " and fmol > 0";
 		throw invalid_argument(os.str());
 	}
 

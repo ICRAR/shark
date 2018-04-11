@@ -20,10 +20,35 @@ class ReionisationParameters {
 public:
 	ReionisationParameters(const Options &options);
 
+	enum ReionisationModel {
+		GALFORM = 0,
+		SOBACCHI
+	};
+
 	double zcut;
 	double vcut;
+	double alpha_v;
+
+	ReionisationModel model;
+
 
 };
-}
+
+
+class Reionisation{
+
+public:
+	Reionisation(ReionisationParameters parameters);
+
+	bool reionised_halo (double v, double z);
+
+private:
+
+	ReionisationParameters parameters;
+
+};
+
+}//end namespace shark
+
 
 #endif //SHARK_REIONISATION_H_

@@ -249,9 +249,10 @@ int run(int argc, char **argv) {
 	}
 	std::shared_ptr<AGNFeedback> agnfeedback = std::make_shared<AGNFeedback>(agn_params, cosmology);
 	std::shared_ptr<Reincorporation> reincorporation = std::make_shared<Reincorporation>(reinc_params, dark_matter_halos);
+	std::shared_ptr<Reionisation> reionisation = std::make_shared<Reionisation>(reio_params);
 
 	Simulation simulation{sim_params, cosmology};
-	GasCooling gas_cooling{gas_cooling_params, reio_params, cosmology, agnfeedback, dark_matter_halos, reincorporation};
+	GasCooling gas_cooling{gas_cooling_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation};
 	StellarFeedback stellar_feedback{stellar_feedback_params};
 	StarFormation star_formation{star_formation_params, recycling_parameters, cosmology};
 

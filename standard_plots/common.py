@@ -156,6 +156,7 @@ def read_data(model_dir, snapshot, fields, subvolume=0, include_h0_volh=True):
     """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
 
     fname = os.path.join(model_dir, str(snapshot), str(subvolume), 'galaxies.hdf5')
+    print 'will read from', fname
     with h5py.File(fname, 'r') as f:
         h0 = f['Cosmology/h'].value
         volh = f['runInfo/EffectiveVolume'].value

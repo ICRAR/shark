@@ -232,6 +232,7 @@ def main():
     zlist = ["199","174", "156", "131", "113", "99"]
     massgal = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massbar = np.zeros(shape = (len(zlist), 3, len(xmf)))
+
     for idx in range(len(zlist)):
         hdf5_data = common.read_data(modeldir, zlist[idx], fields)
         prepare_data(hdf5_data, idx, massgal, massbar)
