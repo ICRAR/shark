@@ -31,7 +31,9 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	Accuracy_SFeqs(0.05),
 	gas_velocity_dispersion(0),
 	sigma_HI_crit(0),
-	boost_starburst(1)
+	boost_starburst(1),
+	clump_factor_KMT09(1),
+	sigma_crit_KMT09(0)
 {
 	options.load("star_formation.model", model, true);
 	options.load("star_formation.nu_sf", nu_sf, true);
@@ -42,8 +44,13 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	options.load("star_formation.gas_velocity_dispersion", gas_velocity_dispersion);
 	options.load("star_formation.sigma_HI_crit", sigma_HI_crit);
 
+	options.load("star_formation.clump_factor_KMT09", clump_factor_KMT09);
+
 	// Convert surface density to internal code units.
 	sigma_HI_crit = sigma_HI_crit * std::pow(constants::MEGA,2.0);
+
+	// Define critical density for the normal to starburst SF transition for the KMT09 model in Msun/Mpc^2.
+	sigma_crit_KMT09 = 85.0 * std::pow(constants::MEGA , 2.0);
 }
 
 
@@ -59,8 +66,11 @@ Options::get<StarFormationParameters::StarFormationModel>(const std::string &nam
 	else if (value == "K13"){
 		return StarFormationParameters::K13;
 	}
+	else if (value == "KMT09"){
+		return StarFormationParameters::KMT09;
+	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are BR06, GK11 and K13";
+	os << name << " option value invalid: " << value << ". Supported values are BR06, GK11, K13 or KMT09";
 	throw invalid_option(os.str());
 }
 
@@ -174,7 +184,24 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 	}
 
 	double fracmol = fmol(Sigma_gas, Sigma_stars, props->zgas, r);
-	double sfr_density = PI2 * parameters.nu_sf * fracmol * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
+
+	double sfr_density = 0;
+
+	if(parameters.model == StarFormationParameters::BR06 or parameters.model == StarFormationParameters::GD14){
+		sfr_density = PI2 * parameters.nu_sf * fracmol * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
+	}
+	else if (parameters.model == StarFormationParameters::KMT09 or parameters.model == StarFormationParameters::K13){
+		double sfr_ff = 0;
+
+		if(Sigma_gas < parameters.sigma_crit_KMT09){
+			sfr_ff = std::pow(Sigma_gas/parameters.sigma_crit_KMT09, -0.33);
+		}
+		else{
+			sfr_ff = std::pow(Sigma_gas/parameters.sigma_crit_KMT09, 0.33);
+		}
+
+		sfr_density = PI2 * fracmol * sfr_ff * Sigma_gas / 2.6 * r;
+	}
 
 	// If the star formation mode is starburst, then apply boosting in star formation.
 	if(props->burst){
@@ -234,6 +261,17 @@ double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double zgas, do
 	}
 	else if (parameters.model == StarFormationParameters::K13){
 		//TODO
+	}
+	else if (parameters.model == StarFormationParameters::KMT09){
+
+		double chi   = 0.77 * (1.0 + 3.1 * std::pow(zgas,0.365));
+		double s     = std::log(1.0 + 0.6 * chi)/( 0.04 * parameters.clump_factor_KMT09 * Sigma_gas/std::pow(constants::MEGA, 2.0) * zgas);
+		double delta = 0.0712 * std::pow(0.1 / s + 0.675, -2.8);
+		double func  = std::pow(1.0 + std::pow(0.75 * s / (1.0 + delta), -5.0), -0.2);
+		rmol  = (1.0 - func) / func;
+		if(rmol < constants::EPS4){
+			rmol = constants::EPS4;
+		}
 	}
 
 	double fmol = rmol/(1+rmol);

@@ -51,7 +51,8 @@ public:
 	enum StarFormationModel {
 		BR06 = 0,
 		GD14,
-		K13
+		K13,
+		KMT09
 	};
 
 	StarFormationModel model;
@@ -63,6 +64,8 @@ public:
 	double gas_velocity_dispersion;
 	double boost_starburst;
 	double sigma_HI_crit;
+	double clump_factor_KMT09;
+	double sigma_crit_KMT09;
 };
 
 
