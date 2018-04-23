@@ -20,7 +20,7 @@ ReionisationParameters::ReionisationParameters(const Options &options) :
 	zcut(0),
 	vcut(0),
 	alpha_v(0),
-	model(GALFORM)
+	model(LACEY16)
 {
 	options.load("reionisation.vcut", vcut, true);
 	options.load("reionisation.zcut", zcut, true);
@@ -32,15 +32,15 @@ ReionisationParameters::ReionisationParameters(const Options &options) :
 template <>
 ReionisationParameters::ReionisationModel
 Options::get<ReionisationParameters::ReionisationModel>(const std::string &name, const std::string &value) const {
-	if ( value == "GALFORM" ) {
-		return ReionisationParameters::GALFORM;
+	if ( value == "Lacey16" ) {
+		return ReionisationParameters::LACEY16;
 	}
-	else if ( value == "Sobacchi" ) {
-		return ReionisationParameters::SOBACCHI;
+	else if ( value == "Sobacchi13" ) {
+		return ReionisationParameters::SOBACCHI13;
 	}
 
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are GALFORM and Sobacchi";
+	os << name << " option value invalid: " << value << ". Supported values are Lacey16 and Sobacchi13";
 	throw invalid_option(os.str());
 }
 
@@ -52,7 +52,7 @@ Reionisation::Reionisation(ReionisationParameters parameters) :
 
 bool Reionisation::reionised_halo(double v, double z){
 
-	if(parameters.model == ReionisationParameters::GALFORM){
+	if(parameters.model == ReionisationParameters::LACEY16){
 		if(v < parameters.vcut && z < parameters.zcut){
 			return true;
 		}
@@ -60,7 +60,7 @@ bool Reionisation::reionised_halo(double v, double z){
 			return false;
 		}
 	}
-	else if (parameters.model == ReionisationParameters::SOBACCHI){
+	else if (parameters.model == ReionisationParameters::SOBACCHI13){
 		double vthresh = parameters.vcut * std::pow(1.0 + z, parameters.alpha_v) * std::pow((1.0 - std::pow((1.0 + z) /(1.0 + parameters.zcut),2.0)), 0.833);
 		if(v < vthresh){
 			return true;

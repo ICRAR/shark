@@ -45,10 +45,14 @@ class GalaxyMergerParameters {
 		 * Sizes parameters:
 		 * - f_orbit: orbital factor defining orbital energy. It should be =1 for two point masses in a circular orbit separation rgal,1+rgal,2. Lacey et al. (2016) Eq. 18.
 		 * - cgal: parameter that defines internal energy of galaxy. It depends weekly on density profile. =0.49 for a pure exponential disk; =0.45 for a De Vacouleurs profile.
+		 * - fgas_dissipation: parameter that defines how much dissipation there is when calculating the galaxy sizes in mergers. A value of 0 is adopted if no dissipation takes place.
+		 * - merger_ratio_dissipation: parameter that defines the merger mass ratio above which dissipation is triggered.
 		 */
 
 		float f_orbit;
 		float cgal;
+		float merger_ratio_dissipation;
+		double fgas_dissipation;
 
 };
 

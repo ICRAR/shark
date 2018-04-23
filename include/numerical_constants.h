@@ -77,9 +77,9 @@ namespace constants {
 	constexpr float GIGA =1.0e+9, logGIGA =+9.0;
 
 	/* Small numbers (for tolerances usually).*/
-	constexpr float EPS3=1.0e-3;
-	constexpr float EPS4=1.0e-4;
-	constexpr float EPS6=1.0e-6;
+	constexpr double EPS3=1.0e-3;
+	constexpr double EPS4=1.0e-4;
+	constexpr double EPS6=1.0e-6;
 
 	/*Unit conversions.*/
 	constexpr float J2ERG=1.0e7, logJ2ERG=7.0; /*Number of ergs in a Joule.*/

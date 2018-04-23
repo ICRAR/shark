@@ -21,8 +21,8 @@ public:
 	ReionisationParameters(const Options &options);
 
 	enum ReionisationModel {
-		GALFORM = 0,
-		SOBACCHI
+		LACEY16 = 0,
+		SOBACCHI13
 	};
 
 	double zcut;

@@ -28,7 +28,9 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	merger_random_seed(-1),
 	jiang08(4),
 	f_orbit(1),
-	cgal(0.5)
+	cgal(0.5),
+	fgas_dissipation(0),
+	merger_ratio_dissipation(0)
 	{
 
 	options.load("galaxy_mergers.major_merger_ratio", major_merger_ratio, true);
@@ -46,6 +48,8 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 
 	options.load("galaxy_mergers.f_orbit", f_orbit);
 	options.load("galaxy_mergers.cgal", cgal);
+	options.load("galaxy_mergers.fgas_dissipation", fgas_dissipation);
+	options.load("galaxy_mergers.merger_ratio_dissipation", merger_ratio_dissipation);
 
 }
 
@@ -478,6 +482,7 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				// Calculate black hole growth due to starburst.
 				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy->bulge_gas.mass, subhalo->Vvir);
 				double delta_mzbh = 0;
+
 				if(galaxy->bulge_gas.mass > 0){
 					delta_mzbh = delta_mbh/galaxy->bulge_gas.mass * galaxy->bulge_gas.mass_metals;
 				}
@@ -559,6 +564,36 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 		std::ostringstream os;
 		os << central << " has a bulge size not well defined in galaxy mergers.";
 		throw invalid_data(os.str());
+	}
+
+	/**Shrink the sizes depending on the gas fraction of the merger as in Hopkins et al. (2009) and above some mass ratio
+	set by the user.**/
+	if(parameters.fgas_dissipation > 0 and mass_ratio > parameters.merger_ratio_dissipation){
+
+		double mstars = central->stellar_mass() + satellite->stellar_mass();
+		double mgas = central->gas_mass() + satellite->gas_mass();
+		double rnew = r;
+
+		if(mgas > 0 and mstars > 0){
+			double rgas_gal = mgas / mstars;
+			double denom = (1.0 + rgas_gal/parameters.fgas_dissipation);
+			if(denom > 3){
+				denom = 3;
+			}
+			rnew  = r / denom;
+		}
+		else if (mstars == 0 and mgas > 0){
+			//allow a maximum change of a factor of 10.
+			rnew  = r / 3.0;
+		}
+
+		if(rnew <= 0){
+			std::ostringstream os;
+			os << central << " galaxy has rbulge <= 0" << rnew;
+			throw exception(os.str());
+		}
+
+		r = rnew;
 	}
 
 	return r;

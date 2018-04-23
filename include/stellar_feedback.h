@@ -37,11 +37,11 @@ public:
 
 	enum StellarFeedbackModel {
 		FIRE = 0,
-		LGALAXIES,
-		GALFORM,
+		GUO11,
+		LACEY16,
 		LAGOS13,
 		LAGOS13Trunc,
-		GALFORMFIRE
+		LACEY16FIRE
 	};
 
 	/**

@@ -400,7 +400,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		coolingrate = mhot/tcool;
    	}
 
-   	if(agnfeedback->parameters.model == AGNFeedbackParameters::GALFORM){
+   	if(agnfeedback->parameters.model == AGNFeedbackParameters::BOWER06){
    		if(agnfeedback->parameters.alpha_cool > 0){
    			double tdyn_rcool = r_cool/vvir * constants::MPCKM2GYR; //Dynamical timescale at cooling radius.
     		/**
@@ -433,7 +433,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of GALFORM AGN feedback model.
 
-    else if(agnfeedback->parameters.model == AGNFeedbackParameters::LGALAXIES and halo->Mvir > agnfeedback->parameters.mass_thresh){
+    else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 and halo->Mvir > agnfeedback->parameters.mass_thresh){
     	//a pseudo cooling luminosity k*T/lambda(T,Z)
     	double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
    		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);

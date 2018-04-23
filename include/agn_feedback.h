@@ -37,8 +37,8 @@ public:
 	double mass_thresh;
 
 	enum AGNFeedbackModel {
-		LGALAXIES = 0,
-		GALFORM
+		CROTON16 = 0,
+		BOWER06
 	};
 
 	AGNFeedbackModel model;

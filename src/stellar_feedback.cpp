@@ -72,11 +72,11 @@ Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string 
 	if ( value == "FIRE" ) {
 		return StellarFeedbackParameters::FIRE;
 	}
-	else if ( value == "GALFORM" ) {
-		return StellarFeedbackParameters::GALFORM;
+	else if ( value == "LACEY16" ) {
+		return StellarFeedbackParameters::LACEY16;
 	}
-	else if (value == "LGALAXIES"){
-		return StellarFeedbackParameters::LGALAXIES;
+	else if (value == "GUO11"){
+		return StellarFeedbackParameters::GUO11;
 	}
 	else if (value == "LAGOS13"){
 		return StellarFeedbackParameters::LAGOS13;
@@ -84,11 +84,11 @@ Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string 
 	else if (value == "LAGOS13Trunc"){
 		return StellarFeedbackParameters::LAGOS13Trunc;
 	}
-	else if (value == "GALFORMFIRE"){
-		return StellarFeedbackParameters::GALFORMFIRE;
+	else if (value == "LACEY16FIRE"){
+		return StellarFeedbackParameters::LACEY16FIRE;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are FIRE, GALFORM, LGALAXIES and LAGOS13";
+	os << name << " option value invalid: " << value << ". Supported values are FIRE, LACEY16, GUO11, LAGOS13, LAGOS13Trunc and LACEY16FIRE";
 	throw invalid_option(os.str());
 }
 
@@ -143,15 +143,15 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 		const_sn =  std::pow(vhot/v,power_index);
 	}
 
-	else if (parameters.model == StellarFeedbackParameters::GALFORM){
+	else if (parameters.model == StellarFeedbackParameters::LACEY16){
 
 		const_sn = std::pow(parameters.v_sn/v,power_index);
 	}
-	else if (parameters.model == StellarFeedbackParameters::LGALAXIES){
+	else if (parameters.model == StellarFeedbackParameters::GUO11){
 
 		const_sn = 0.5 + std::pow(parameters.v_sn/v,power_index);
 	}
-	else if (parameters.model == StellarFeedbackParameters::GALFORMFIRE){
+	else if (parameters.model == StellarFeedbackParameters::LACEY16FIRE){
 		const_sn = std::pow((1+z),parameters.redshift_power) * std::pow(parameters.v_sn/v,power_index);
 	}
 

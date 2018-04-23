@@ -25,7 +25,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 	kappa_agn(0),
 	nu_smbh(0),
 	mass_thresh(0),
-	model(GALFORM)
+	model(BOWER06)
 {
 	options.load("agn_feedback.mseed",mseed);
 	options.load("agn_feedback.mhalo_seed",mhalo_seed);
@@ -50,14 +50,14 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
 template <>
 AGNFeedbackParameters::AGNFeedbackModel
 Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, const std::string &value) const {
-	if ( value == "galform" ) {
-		return AGNFeedbackParameters::GALFORM;
+	if ( value == "Bower06" ) {
+		return AGNFeedbackParameters::BOWER06;
 	}
-	else if ( value == "l-galaxies" ) {
-		return AGNFeedbackParameters::LGALAXIES;
+	else if ( value == "Croton16" ) {
+		return AGNFeedbackParameters::CROTON16;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are galform and l-galaxies";
+	os << name << " option value invalid: " << value << ". Supported values are Bower06 and Croton16";
 	throw invalid_option(os.str());
 }
 
@@ -106,10 +106,10 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double mbh) {
 
 	if (Lcool > 0 && Lcool < MAXLUM) {
 		double macc = 0;
-		if (parameters.model == AGNFeedbackParameters::GALFORM) {
+		if (parameters.model == AGNFeedbackParameters::BOWER06) {
 			macc = Lcool * 1e40 / std::pow(c_light_cm,2.0) / parameters.accretion_eff_cooling;
 		}
-		else if (parameters.model == AGNFeedbackParameters::LGALAXIES) {
+		else if (parameters.model == AGNFeedbackParameters::CROTON16) {
 			macc = parameters.kappa_agn * 0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * 1e40 * (mbh * MSOLAR_g);
 		}
 		return macc * MACCRETION_cgs_simu; //accretion rate in units of Msun/Gyr.
