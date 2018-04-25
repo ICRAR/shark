@@ -199,13 +199,15 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 }
 
 GasCooling::GasCooling(GasCoolingParameters parameters,
+		StarFormationParameters params_sf,
 		std::shared_ptr<Reionisation> reionisation,
 		std::shared_ptr<Cosmology> cosmology,
 		std::shared_ptr<AGNFeedback> agnfeedback,
 		std::shared_ptr<DarkMatterHalos> darkmatterhalos,
 		std::shared_ptr<Reincorporation> reincorporation) :
-	reionisation(reionisation),
 	parameters(parameters),
+	params_sf(params_sf),
+	reionisation(reionisation),
 	cosmology(cosmology),
 	agnfeedback(agnfeedback),
 	darkmatterhalos(darkmatterhalos),
@@ -257,16 +259,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     	return 0;
     }
 
-   	/**
-   	 * Estimate disk size and specific angular momentum.
-   	 */
    	auto central_galaxy = subhalo.central_galaxy();
-   	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo, z);
-   	central_galaxy->disk_stars.rscale = central_galaxy->disk_gas.rscale;
-
-   	darkmatterhalos->galaxy_velocity(subhalo, *central_galaxy);
-   	//TODO: remove this part and calculate rscale and sAM of the stellar disk properly.
-   	central_galaxy->disk_stars.sAM = central_galaxy->disk_gas.sAM;
 
     /**
      * Plant black hole seed if necessary.
@@ -311,6 +304,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	if(subhalo.ejected_galaxy_gas.mass_metals < 0){
    		subhalo.ejected_galaxy_gas.mass_metals = 0;
    	}
+
+   	//Assume hot halo has the same specific angular momentum of DM halo.
+   	subhalo.hot_halo_gas.sAM = subhalo.L.norm() / subhalo.Mvir;
 
    	/**
    	 * We need to convert masses and velocities to physical units before proceeding with calculation.
@@ -431,7 +427,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
   				}
    			}//end if of hot halo mode.
 		}// end if of AGN feedback model
-	}// end if of GALFORM AGN feedback model.
+	}// end if of BOWER06 AGN feedback model.
 
     else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 and halo->Mvir > agnfeedback->parameters.mass_thresh){
     	//a pseudo cooling luminosity k*T/lambda(T,Z)
@@ -548,6 +544,22 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
   	// Save net cooling rate.
   	halo->cooling_rate = coolingrate;
+
+  	// Always modify the disk_gas.rscale in response to the halo evolution.
+  	if(central_galaxy->disk_gas.rscale >= 0){
+
+  		//Modify rscale based on whether cold_halo.mass is >0
+  	   	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo, z);
+
+  	   	//define disk angular momentum.
+  	   	darkmatterhalos->disk_sAM(subhalo, *central_galaxy);
+
+  	   	if(coolingrate > 0){
+  	  	   	// define cooled gas angular momentum.
+  	   		darkmatterhalos->cooling_gas_sAM(subhalo, *central_galaxy);
+  	   	}
+
+  	}
 
    	return coolingrate;
 

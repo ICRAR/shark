@@ -29,9 +29,8 @@
 
 namespace shark {
 
-GalaxyCreator::GalaxyCreator(std::shared_ptr<Cosmology> cosmology, std::shared_ptr<DarkMatterHalos> darkmatterhalos, GasCoolingParameters cool_params, SimulationParameters sim_params) :
+GalaxyCreator::GalaxyCreator(std::shared_ptr<Cosmology> cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params) :
 	cosmology(cosmology),
-	darkmatterhalos(darkmatterhalos),
 	cool_params(cool_params),
 	sim_params(sim_params)
 {
@@ -96,11 +95,6 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z)
 
 	// Assign metallicity to the minimum allowed.
 	central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
-
-	//assign an ad-hoc half-mass radius and specific angular momentum to start with.
-	galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(*central_subhalo, z);
-
-	darkmatterhalos->galaxy_velocity(*central_subhalo, *galaxy);
 
 	return true;
 

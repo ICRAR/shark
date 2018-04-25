@@ -252,14 +252,14 @@ int run(int argc, char **argv) {
 	std::shared_ptr<Reionisation> reionisation = std::make_shared<Reionisation>(reio_params);
 
 	Simulation simulation{sim_params, cosmology};
-	GasCooling gas_cooling{gas_cooling_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation};
+	GasCooling gas_cooling{gas_cooling_params, star_formation_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation};
 	StellarFeedback stellar_feedback{stellar_feedback_params};
 	StarFormation star_formation{star_formation_params, recycling_parameters, cosmology};
 
 	std::shared_ptr<BasicPhysicalModel> basic_physicalmodel = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_parameters, gas_cooling_params);
 
-	GalaxyMergers galaxy_mergers{merger_parameters, sim_params, dark_matter_halos,basic_physicalmodel,agnfeedback};
-	DiskInstability disk_instability{disk_instability_params,merger_parameters,sim_params, dark_matter_halos,basic_physicalmodel,agnfeedback};
+	GalaxyMergers galaxy_mergers{merger_parameters, sim_params, dark_matter_halos, basic_physicalmodel, agnfeedback};
+	DiskInstability disk_instability{disk_instability_params, merger_parameters, sim_params, dark_matter_halos, basic_physicalmodel, agnfeedback};
 
 	HaloBasedTreeBuilder tree_builder(exec_params);
 
@@ -285,7 +285,7 @@ int run(int argc, char **argv) {
 
 	/* Create the first generation of galaxies if halo is first appearing.*/
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
-	GalaxyCreator galaxy_creator(cosmology, dark_matter_halos, gas_cooling_params, sim_params);
+	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, sim_params);
 	galaxy_creator.create_galaxies(merger_trees, *AllBaryons);
 
 	// TODO: move this logic away from the main

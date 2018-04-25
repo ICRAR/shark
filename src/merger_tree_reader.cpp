@@ -179,7 +179,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 
 		subhalo->concentration = cnfw[i]; //darkmatterhalos.nfw_concentration(subhalo->Mvir,sim_params.redshifts[subhalo->snapshot]);
 
-		subhalo->lambda = lambda[i];
+		subhalo->lambda = darkmatterhalos.halo_lambda(lambda[i], sim_params.redshifts[subhalo->snapshot]);
 
 		// Calculate virial velocity from the virial mass and redshift.
 		subhalo->Vvir = darkmatterhalos.halo_virial_velocity(subhalo->Mvir, sim_params.redshifts[subhalo->snapshot]);

@@ -40,13 +40,15 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options) :
 	eta_cc(0),
 	e_sn(0),
 	model(FIRE),
-	galaxy_scaling(false)
+	galaxy_scaling(false),
+	radial_feedback(false)
 {
 
 	double epsilon_cc = 0, energy=0;
 
 	options.load("stellar_feedback.model", model, true);
 	options.load("stellar_feedback.galaxy_scaling", galaxy_scaling);
+	options.load("stellar_feedback.radial_feedback", radial_feedback);
 
 	// The parameters below *must* be specified.
 	options.load("stellar_feedback.beta_disk", beta_disk, true);
@@ -98,7 +100,7 @@ StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters) :
 	// no-op
 }
 
-void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double z, double &b1, double &b2) {
+void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double z, double &b1, double &b2, double &bj_1, double &bj_2) {
 
 
 	double v = vsubh;
@@ -174,6 +176,15 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 	}
 	else{
 		b1 = eps_halo / energ_halo;
+	}
+
+	// If no radial feedback is applied, then change in angular momentum reflects that of the mass.
+	if(!parameters.radial_feedback){
+		bj_1 = b1;
+		bj_2 = b2;
+	}
+	else{
+		//TODO: implement this part following Peter Mitchell's model for angular momentum.
 	}
 
 }

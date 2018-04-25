@@ -18,7 +18,6 @@
 #include "physical_model.h"
 #include "simulation.h"
 
-
 namespace shark {
 
 class GalaxyMergerParameters {
@@ -32,6 +31,8 @@ class GalaxyMergerParameters {
 		 * - minor_merger_burst_ratio: threshold M2/M1 for triggering bursts in minor mergers.
 		 * - merger_random_seed: merger random seed to draw orbital parameters from Benson+05.
 		 * - tau_delay: controls delays from the standard merging timescale for testing purposes.
+		 * - jiang08: parameters of the best fit dynamical timescale of Jiang et al. (2008).
+		 * - min_mass: minimum mass allowed in bulges. This is to avoid long tails in the star formation histories of bulges.
 		 */
 
 		float major_merger_ratio;
@@ -40,6 +41,7 @@ class GalaxyMergerParameters {
 		int merger_random_seed;
 		float tau_delay;
 		std::vector<double> jiang08;
+		float mass_min;
 
 		/**
 		 * Sizes parameters:
@@ -61,7 +63,11 @@ class GalaxyMergerParameters {
 class GalaxyMergers{
 
 public:
-	GalaxyMergers(GalaxyMergerParameters parameters, SimulationParameters simparams, std::shared_ptr<DarkMatterHalos> darkmatterhalo, std::shared_ptr<BasicPhysicalModel> physicalmodel, std::shared_ptr<AGNFeedback> agnfeedback);
+	GalaxyMergers(GalaxyMergerParameters parameters,
+			SimulationParameters simparams,
+			std::shared_ptr<DarkMatterHalos> darkmatterhalo,
+			std::shared_ptr<BasicPhysicalModel> physicalmodel,
+			std::shared_ptr<AGNFeedback> agnfeedback);
 
 	void orbital_parameters(double &vr, double &vt, double f);
 
@@ -87,7 +93,7 @@ public:
 
 	void transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite);
 
-	void transfer_bulge_gas(GalaxyPtr &galaxy, SubhaloPtr &subhalo);
+	void transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z);
 
 	void transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot);
 

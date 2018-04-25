@@ -127,6 +127,12 @@ public:
 	void restore_baryon(){
 		mass = 0;
 		mass_metals = 0;
+		rscale = 0;
+		sAM = 0;
+	}
+
+	float angular_momentum(){
+		return mass * sAM;
 	}
 
 };
@@ -458,11 +464,17 @@ public:
 	subhalo_type_t subhalo_type;
 
 	/**
-	 * Which Halo does this Subhalo belong to
+	 * haloID: ID of the Halo this Subhalo belong to
 	 */
 	id_t haloID;
 
-	/** TODO: Properly document these */
+	/** Vvir: virial velocity of the subhalo [km/s]
+	 * Mvir: virial mass of the subhalo [Msun/h]
+	 * L: angular momentum of subhalo [Msun/h km/s Mpc/h]
+	 * Vcirc: maximum circular velocity of the subhalo [km/s]
+	 * concentration: NFW concentration parameter of subhalo
+	 * lambda: spin parameter of subhalo
+	 *  */
 	float Vvir;
 	float Mvir;
 	xyz<float> L;
@@ -471,7 +483,7 @@ public:
 	float lambda;
 
 	/**
-	 * This component saves que information of the virial temperature, total halo gas and cooling time history.
+	 * cooling_subhalo_tracking: saves que information of the virial temperature, total halo gas and cooling time history.
 	 */
 	CoolingSubhaloTracking cooling_subhalo_tracking;
 

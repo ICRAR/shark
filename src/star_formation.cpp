@@ -33,7 +33,8 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 	sigma_HI_crit(0),
 	boost_starburst(1),
 	clump_factor_KMT09(1),
-	sigma_crit_KMT09(0)
+	sigma_crit_KMT09(0),
+	angular_momentum_transfer(false)
 {
 	options.load("star_formation.model", model, true);
 	options.load("star_formation.nu_sf", nu_sf, true);
@@ -83,13 +84,20 @@ StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParame
 	// no-op
 }
 
-double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double zgas, double z, bool burst) {
+double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
+								          bool burst, double vgal, double &jrate, double jgas) {
 
-	if (mcold <= constants::EPS3 or rgas <= 0) {
+
+	if (mcold <= constants::EPS3 or rgas <= constants::EPS6 ) {
 		if(mcold > constants::EPS3 and rgas <= 0){
 			std::ostringstream os;
-			os << "Galaxy mcold > 0 and rgas = 0";
+			os << "Galaxy mcold > 0 and rgas <0";
 			throw invalid_argument(os.str());
+		}
+		if(mcold > constants::EPS3 and rgas <= constants::EPS6){
+			std::ostringstream os;
+			os << "Galaxy with extremely small size, rgas < 1e-6";
+			//throw invalid_argument(os.str());
 		}
 		return 0;
 	}
@@ -134,20 +142,31 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	// Adopt 5% accuracy for star formation solution.
 	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
 
-	/*int bins = 30;
-	double integral = 0.0;
-	double binr = (rmax-rmin)/bins;
-	double rin = 0.0;
-
-	for (int i=0; i<bins; i++){
-		rin = rmin+(i+0.5)*binr;
-		integral += star_formation_rate_surface_density(rin,sf_and_props.props) * binr;
-	}
-	double result = integral;*/
-
 	// Avoid negative values.
 	if(result < 0){
 		result = 0.0;
+	}
+
+	// Check whether user wishes to calculate angular momentum transfer from gas to stars.
+	if(parameters.angular_momentum_transfer){
+		auto f_j = [](double r, void *ctx) -> double {
+			StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
+			return r * sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
+		};
+
+		StarFormationAndProps sf_and_props = {this, &props};
+		// Adopt 5% accuracy for star formation solution.
+		jrate = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+		jrate = jrate * vgal; //assumes a flat rotation curve.
+
+		// Avoid negative values.
+		if(jrate < 0){
+			jrate = 0.0;
+		}
+	}
+	else{
+		// case that assumes stellar/gas components have the same sAM.
+		jrate = result * jgas;
 	}
 
 	if(mcold > 0 && result <= 0){
@@ -155,8 +174,6 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		os << "Galaxy with SFR=0 and mcold " << mcold;
 		throw invalid_argument(os.str());
 	}
-
-	double sft = mcold/result;
 
 	return cosmology->physical_to_comoving_mass(result);
 

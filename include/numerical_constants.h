@@ -195,9 +195,6 @@ namespace constants {
 	/*define a tolerance for evaluating negative mass*/
 	constexpr float tolerance = 1e-10;
 
-	/*define a tolerance of gas mass for evaluating starbursts*/
-	constexpr float tolerance_mass = 1e3;
-
 	/* define a maximum cooling luminosity in units of 10^40erg/s.*/
 	constexpr float MAXLUM = 1e30;
 

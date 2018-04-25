@@ -46,7 +46,6 @@ DiskInstability::DiskInstability(DiskInstabilityParameters parameters,
 
 void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, double delta_t){
 
-
 	double z = simparams.redshifts[snapshot];
 
 	for (auto &subhalo: halo->all_subhalos()){
@@ -58,7 +57,12 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				 * Estimate new bulge size.
 				 */
 				galaxy->bulge_gas.rscale = bulge_size(galaxy);
-				galaxy->bulge_stars.rscale = galaxy->bulge_gas.rscale;
+
+
+				/**
+				 * calculate bulge specific angular momentum based on assuming conservation.
+				 */
+				effective_angular_momentum(galaxy);
 
 				/**
 				 * Transfer all stars and gas to the bulge.
@@ -74,13 +78,7 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 
 				transfer_history_disk_to_bulge(galaxy, snapshot);
 
-				/*
-				galaxy->disk_gas.rscale = 0;
-				galaxy->disk_stars.rscale = 0;
-				galaxy->disk_gas.sAM = 0;
-				galaxy->disk_stars.sAM = 0;*/
-
-				darkmatterhalo->galaxy_velocity(*subhalo, *galaxy);
+				//darkmatterhalo->disk_sAM(*subhalo, *galaxy);
 
 				create_starburst(subhalo, galaxy, z, delta_t);
 			}
@@ -134,6 +132,11 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 		throw invalid_data(os.str());
 	}
 
+	if(rnew <= constants::EPS6){
+		std::ostringstream os;
+		os << "Galaxy with extremely small size, rbulge_gas < 1-6, in disk instabilities";
+		throw invalid_argument(os.str());
+	}
 
 	return rnew;
 
@@ -142,7 +145,7 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z, double delta_t){
 
 	// Trigger starburst only in case there is gas in the bulge.
-	if(galaxy->bulge_gas.mass > constants::tolerance_mass){
+	if(galaxy->bulge_gas.mass > merger_params.mass_min){
 
 		// Calculate black hole growth due to starburst.
 		double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy->bulge_gas.mass, subhalo->Vvir);
@@ -168,14 +171,13 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 		physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t);
 
 		// Check for small gas reservoirs left in the bulge.
-		if(galaxy->bulge_gas.mass < constants::tolerance_mass){
-			galaxy->disk_gas.mass += galaxy->bulge_gas.mass;
-			galaxy->disk_gas.mass_metals += galaxy->bulge_gas.mass_metals;
+		if(galaxy->bulge_gas.mass > 0 and galaxy->bulge_gas.mass < merger_params.mass_min){
+
+			darkmatterhalo->transfer_bulge_am(subhalo, galaxy, z);
+			galaxy->disk_gas        += galaxy->bulge_gas;
+
 			galaxy->bulge_gas.restore_baryon();
 
-			/*// Calculate disk size.
-			galaxy->disk_gas.rscale = darkmatterhalo->disk_size_theory(*subhalo);
-			galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;*/
 		}
 	}
 }
@@ -210,6 +212,28 @@ void DiskInstability::transfer_history_disk_to_bulge(GalaxyPtr &galaxy, int snap
 			hist.stellar_disk.mass_metals= 0;
 		}
 	}
+
+}
+
+void DiskInstability::effective_angular_momentum(GalaxyPtr &galaxy){
+
+	double AM_disk_stars  = galaxy->disk_stars.angular_momentum();
+	double AM_bulge_stars = galaxy->bulge_stars.angular_momentum();
+	double AM_disk_gas    = galaxy->disk_gas.angular_momentum();
+	double AM_bulge_gas   = galaxy->bulge_gas.angular_momentum();
+
+	double mgas  = galaxy->disk_gas.mass + galaxy->bulge_gas.mass;
+	double mstar = galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
+
+	// Calculate specific angular momentum only if masses are > 0.
+	if(mgas > 0){
+		galaxy->bulge_gas.sAM   = (AM_disk_gas + AM_bulge_gas) / mgas;
+	}
+
+	if(mstar > 0){
+		galaxy->bulge_stars.sAM = (AM_disk_stars + AM_bulge_stars) / mstar;
+	}
+
 
 }
 

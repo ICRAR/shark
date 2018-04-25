@@ -25,6 +25,7 @@
 #include "options.h"
 #include "reincorporation.h"
 #include "reionisation.h"
+#include "star_formation.h"
 
 namespace shark {
 /**
@@ -68,6 +69,7 @@ public:
 
 	LambdaCoolingModel lambdamodel;
 	CoolingModel model;
+
 	//cooling tables
 	CoolingTable cooling_table; //these should be an array of parameters.
 
@@ -82,6 +84,7 @@ class GasCooling {
 
 public:
 	GasCooling(GasCoolingParameters parameters,
+			StarFormationParameters params_sf,
 			std::shared_ptr<Reionisation> reionisation,
 			std::shared_ptr<Cosmology> cosmology,
 			std::shared_ptr<AGNFeedback> agnfeedback,
@@ -99,6 +102,7 @@ public:
 private:
 
 	GasCoolingParameters parameters;
+	StarFormationParameters params_sf;
 	std::shared_ptr<Reionisation> reionisation;
 	std::shared_ptr<Cosmology> cosmology;
 	std::shared_ptr<AGNFeedback> agnfeedback;

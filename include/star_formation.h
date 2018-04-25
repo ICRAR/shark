@@ -48,11 +48,25 @@ class StarFormationParameters {
 public:
 	StarFormationParameters(const Options &options);
 
+	/**Parameters:
+	 * model: SF model applied
+	 * nu_sf: inverse of the molecular gas depletion timescale for normal star-forming disks [Gyr^-1].
+	 * Po: pressure normalization in the Blitz & Rosolowsky (2006) SF law [K cm^3].
+	 * beta_press: pressure power-law index in the Blitz & Rosolowsky (2006) SF law.
+	 * Accuracy_SFeqs: accuracy desired when numerically solving the integration of the SFR surface density.
+	 * gas_velocity_dispersion: gas velocity dispersion [km/s].
+	 * boost_starburst: boosting factor applied to the SF law in starbursts.
+	 * sigma_HI_crit: critical surface density below which gas is assumed to be ionised.
+	 * clump_factor_KMT09: clumping factor of the ISM for the Krumholz+ models.
+	 * sigma_crit_KMT09: critical gas surface density above which the SF law becomes superlinear in the KMT09 model.
+	 * angular_momentum_transfer: boolean parameter indicating whether the user wants to trigger the calculation of angular momentum transfer within the disk.
+	 *
+	 */
 	enum StarFormationModel {
-		BR06 = 0,
-		GD14,
-		K13,
-		KMT09
+		BR06 = 0,//!< BR06
+		GD14,    //!< GD14
+		K13,     //!< K13
+		KMT09    //!< KMT09
 	};
 
 	StarFormationModel model;
@@ -66,6 +80,8 @@ public:
 	double sigma_HI_crit;
 	double clump_factor_KMT09;
 	double sigma_crit_KMT09;
+
+	bool angular_momentum_transfer;
 };
 
 
@@ -77,7 +93,8 @@ public:
 	/**
 	 * All input quantities should be in comoving units.
 	 */
-	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double zgas, double z, bool burst);
+	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double zgas, double z,
+							   bool burst, double vgal, double &jrate, double jgas);
 
 	double star_formation_rate_surface_density(double r, void * params);
 

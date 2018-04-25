@@ -45,6 +45,7 @@ public:
 
 	void transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot);
 
+	void effective_angular_momentum(GalaxyPtr &galaxy);
 
 private:
 	DiskInstabilityParameters parameters;

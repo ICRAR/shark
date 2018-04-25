@@ -22,10 +22,12 @@ namespace shark {
 
 DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options) :
 	haloprofile(NFW),
+	sizemodel(MO98),
 	random_lambda()
 {
 	int lambda;
 	options.load("dark_matter_halo.halo_profile", haloprofile);
+	options.load("dark_matter_halo.size_model", sizemodel);
 	options.load("dark_matter_halo.lambda_random", lambda);
 
 	if(lambda == 1){
@@ -46,6 +48,21 @@ Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &nam
 	}
 	std::ostringstream os;
 	os << name << " option value invalid: " << value << ". Supported values are nfw and einasto";
+	throw invalid_option(os.str());
+}
+
+
+template <>
+DarkMatterHaloParameters::SizeModel
+Options::get<DarkMatterHaloParameters::SizeModel>(const std::string &name, const std::string &value) const {
+	if ( value == "Mo98" ) {
+		return DarkMatterHaloParameters::MO98;
+	}
+	else if ( value == "Cole00" ) {
+		return DarkMatterHaloParameters::COLE00;
+	}
+	std::ostringstream os;
+	os << name << " option value invalid: " << value << ". Supported values are Mo98 and Cole00";
 	throw invalid_option(os.str());
 }
 
@@ -91,44 +108,43 @@ double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
 	return constants::G * subhalo.Mvir / std::pow(subhalo.Vvir,2);
 }
 
-double DarkMatterHalos::halo_lambda (xyz<float> L, double mvir, double rvir, double z){
+float DarkMatterHalos::halo_lambda (float lambda, double z){
 
-	//Spin parameter calculated from j=sqrt(2) * lambda *G^2/3 M^2/3 / (10*H)^1/3.
-	//Weak redshift evolution applied according to Elahi et al. (2018, arXiv:1712.01988) in the case of random distribution.
+	//Spin parameter either read from the DM files or assumed a random distribution.
+	//In the case of the random distribution, a weak redshift evolution is
+	//applied according to Elahi et al. (2018, arXiv:1712.01988).
 
 	if(params.random_lambda){
 		return distribution(generator) * std::pow(1+z,0.4);
 	}
-
-	double E = constants::G * std::pow(mvir,2.0) / (2.0 * rvir);
-
-	double lambda = L.norm() * std::sqrt(E) / constants::G * std::pow(mvir, -2.5);
-
-	if(lambda > 1){
-		lambda = 1;
+	else{
+		//take the value read from the DM merger trees, but limit it to a maximum of 1.
+		if(lambda > 1){
+			lambda = 1;
+		}
+		return lambda;
 	}
 
-	return lambda;
 }
 
 double DarkMatterHalos::disk_size_theory (Subhalo &subhalo, double z){
 
-	//Calculation comes from assuming rdisk = 2/sqrt(2) *lambda *Rvir;
-	double Rvir = halo_virial_radius(subhalo);
+	if(params.sizemodel == DarkMatterHaloParameters::MO98){
+		//Calculation comes from assuming rdisk = 2/sqrt(2) *lambda *Rvir;
+		double Rvir = halo_virial_radius(subhalo);
 
-	double lambda = halo_lambda(subhalo.L, subhalo.Mvir, Rvir, z);
+		double lambda = subhalo.lambda;
 
-	// Limit value of lambda to 1.
-	if(lambda > 1) lambda =1;
+		double rdisk = 3/constants::SQRT2 * lambda * Rvir;
 
-	double rdisk = 3/constants::SQRT2 * lambda * Rvir;
+		//Numerical factor comes from 1/5 * 1.67. The 1/5 comes from scaling the size to a scale length, and the 1.67 comes from
+		//assuming an exponential disk and scaling the scale length to a half mass radius.
+		return 0.334 * rdisk;
 
-	//Numerical factor comes from 1/5 * 1.67. The 1/5 comes from scaling the size to a scale length, and the 1.67 comes from
-	//assuming an exponential disk and scaling the scale length to a half mass radius.
-
-	return 0.334 * rdisk;
-
-	//return 0.03 * Rvir;
+	}
+	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
+		//TODO
+	}
 }
 
 double NFWDarkMatterHalos::grav_potential_halo(double r, double c) const
@@ -178,20 +194,34 @@ double EinastoDarkMatterHalos::enclosed_mass(double r, double c) const
 	return 0;
 }
 
-void DarkMatterHalos::galaxy_velocity(Subhalo &subhalo, Galaxy &galaxy){
+void DarkMatterHalos::cooling_gas_sAM(Subhalo &subhalo, Galaxy &galaxy){
+
+	if(params.sizemodel == DarkMatterHaloParameters::MO98){
+		//Assumes that cooled gas brings a specific angular momentum that is equivalent to
+		//the disk specific angular momentum that is set by the disk_gas.rscale and disk_gas.sAM.
+		subhalo.cold_halo_gas.sAM = galaxy.disk_gas.sAM;
+	}
+	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
+		//TODO
+	}
+
+}
+
+void DarkMatterHalos::disk_sAM(Subhalo &subhalo, Galaxy &galaxy){
 
 	double rvir = halo_virial_radius(subhalo);
 
 	//disk properties.
 	double rdisk = galaxy.disk_gas.rscale;
+
 	double mdisk = galaxy.disk_mass();
 	double cd = 0;
-	if(mdisk > 0 and rdisk > 0){
+	if(rdisk > 0){
 		cd = rvir / (rdisk / constants::RDISK_HALF_SCALE);
 	}
 
 	//bulge properties.
-	double rbulge = galaxy.bulge_stars.rscale;
+	double rbulge = galaxy.bulge_gas.rscale;
 	double mbulge = galaxy.bulge_mass();
 	double cb = 0.0;
 
@@ -206,23 +236,58 @@ void DarkMatterHalos::galaxy_velocity(Subhalo &subhalo, Galaxy &galaxy){
 	double xd = rdisk / rvir;
 
 	//Rotational velocity at the half-mass radius of the disk.
-	double vd = std::sqrt(v2disk(xd, mdisk, cd, rvir));
-	double vb = std::sqrt(v2bulge(xd, mbulge, cb, rvir));
-	double vh = std::sqrt(v2halo(xd, mvir, ch, rvir) );
-
 	double v2tot_d = v2halo(xd, mvir, ch, rvir) + v2disk(xd, mdisk, cd, rvir) + v2bulge(xd, mbulge, cb, rvir);
 
 	galaxy.disk_gas.sAM = rdisk * std::sqrt(v2tot_d);
 
-	if(rbulge > 0){
+}
 
+void DarkMatterHalos::bulge_sAM(Subhalo &subhalo, Galaxy &galaxy){
+
+	double rvir = halo_virial_radius(subhalo);
+
+	//disk properties.
+	double rdisk = galaxy.disk_gas.rscale;
+	double mdisk = galaxy.disk_mass();
+	double cd = 0;
+	if(rdisk > 0){
+		cd = rvir / (rdisk / constants::RDISK_HALF_SCALE);
+	}
+
+	//bulge properties.
+	double rbulge = galaxy.bulge_gas.rscale;
+	double mbulge = galaxy.bulge_mass();
+	double cb = 0.0;
+
+	if(rbulge > 0){
+		cb = rvir/(rbulge / constants::RDISK_HALF_SCALE);
+	}
+
+	//halo properties.
+	double ch = subhalo.concentration;
+	double mvir = subhalo.host_halo->Mvir;
+
+	if(rbulge > 0){
 		double xb = rbulge / rvir;
 		double v2tot_b = v2halo(xb, mvir, ch, rvir) + v2disk(xb, mdisk, cd, rvir) + v2bulge(xb, mbulge, cb, rvir);
 
-		galaxy.bulge_stars.sAM = rbulge * std::sqrt(v2tot_b);
-		galaxy.bulge_gas.sAM   = galaxy.bulge_stars.sAM;
+		galaxy.bulge_gas.sAM = rbulge * std::sqrt(v2tot_b);
 	}
 
+}
+
+void DarkMatterHalos::transfer_bulge_am(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z){
+
+	//modify AM based on mass weighting. How to do this should depend on size model.
+	if(params.sizemodel == DarkMatterHaloParameters::MO98){
+  	   	galaxy->disk_gas.rscale = disk_size_theory(*subhalo, z);
+
+  	   	//define disk angular momentum.
+  	   	disk_sAM(*subhalo, *galaxy);
+	}
+	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
+		//TODO
+	}
 }
 
 double DarkMatterHalos::v2halo (double x, double m, double c, double r){

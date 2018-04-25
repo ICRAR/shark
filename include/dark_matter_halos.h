@@ -30,7 +30,13 @@ public:
 		EINASTO
 	};
 
+	enum SizeModel{
+		MO98 = 0,
+		COLE00
+	};
+
 	DarkMatterProfile haloprofile;
+	SizeModel sizemodel;
 	bool random_lambda;
 
 };
@@ -54,7 +60,7 @@ public:
 
 	double halo_virial_velocity (double mvir, double redshift);
 
-	double halo_lambda (xyz<float> L, double mvir, double rvir, double z);
+	float halo_lambda (float lambda, double z);
 
 	double disk_size_theory (Subhalo &subhalo, double z);
 
@@ -64,7 +70,13 @@ public:
 
 	//double mmw98_nfw_concentration(double mvir, double vmax, double rvir);
 
-	void galaxy_velocity(Subhalo &subhalo, Galaxy &galaxy);
+	void cooling_gas_sAM(Subhalo &subhalo, Galaxy &galaxy);
+
+	void disk_sAM(Subhalo &subhalo, Galaxy &galaxy);
+
+	void bulge_sAM(Subhalo &subhalo, Galaxy &galaxy);
+
+	void transfer_bulge_am(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z);
 
 	double v2halo (double x, double m, double c, double r);
 	double v2disk (double x, double m, double c, double r);

@@ -26,6 +26,7 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	minor_merger_burst_ratio(0),
 	gas_fraction_burst_ratio(0),
 	merger_random_seed(-1),
+	mass_min(0),
 	jiang08(4),
 	f_orbit(1),
 	cgal(0.5),
@@ -45,6 +46,7 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	options.load("galaxy_mergers.jiang08_d", jiang08[3], true);
 
 	options.load("galaxy_mergers.tau_delay", tau_delay);
+	options.load("galaxy_mergers.mass_min", mass_min);
 
 	options.load("galaxy_mergers.f_orbit", f_orbit);
 	options.load("galaxy_mergers.cgal", cgal);
@@ -356,7 +358,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 	central_subhalo->remove_galaxies(all_sats_to_delete);
 
 	//calculate specific angular momentum of bulge and disk.
-	darkmatterhalo->galaxy_velocity(*central_subhalo , *central_galaxy);
+	//darkmatterhalo->disk_sAM(*central_subhalo , *central_galaxy);
 
 	// Trigger starbursts in all the galaxies that have gas in the bulge.
 	create_starbursts(halo, z, delta_t);
@@ -397,9 +399,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	/**
 	 * First, calculate remnant galaxy's bulge size based on merger properties.
 	 */
-	central->bulge_stars.rscale = bulge_size_merger(mass_ratio, central, satellite, halo);
-
-	central->bulge_gas.rscale = central->bulge_stars.rscale;
+	central->bulge_gas.rscale = bulge_size_merger(mass_ratio, central, satellite, halo);
 
 	// Black holes merge regardless of the merger type.
 	central->smbh += satellite->smbh;
@@ -426,15 +426,8 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		transfer_history_disk_to_bulge(central, snapshot);
 
 		//Make all disk values 0.
-
 		central->disk_stars.restore_baryon();
 		central->disk_gas.restore_baryon();
-
-		/*
-		central->disk_gas.rscale = 0;
-		central->disk_stars.rscale = 0;
-		central->disk_gas.sAM = 0;
-		central->disk_stars.sAM = 0;*/
 
 	}
 	else{//minor mergers
@@ -443,6 +436,14 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		 * Transfer mass. In the case of minor mergers, transfer the satellite' stars to the central bulge, and the satellite' gas to the central's disk.
 		 */
 
+		// Catch the cases where the disk gas mass of the central is = 0 but the satellite is transfering gas to the central disk.
+		// In this case assume that gas conserves its specific AM.
+		if(central->disk_gas.mass == 0 and satellite->gas_mass()){
+			central->disk_gas.rscale = satellite->disk_gas.rscale;
+			central->disk_gas.sAM    = satellite->disk_gas.sAM;
+		}
+
+		// Transfer mass.
 		central->bulge_stars.mass += satellite->stellar_mass();
 		central->bulge_stars.mass_metals += satellite->stellar_mass_metals();
 		central->disk_gas.mass += satellite->gas_mass();
@@ -456,13 +457,14 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 			//Make gas disk values 0.
 			central->disk_gas.restore_baryon();
-
-			/*
-			central->disk_gas.rscale = 0;
-			central->disk_gas.sAM = 0;*/
 		}
 
+
 	}
+
+	// Calculate specific angular momentum after mass was transferred to the bulge.
+	auto subhalo = halo->central_subhalo;
+	darkmatterhalo->bulge_sAM(*subhalo, *central);
 
 	if(std::isnan(central->bulge_stars.mass)){
 		std::ostringstream os;
@@ -477,7 +479,7 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 	for (auto &subhalo: halo->all_subhalos()){
 		for (auto &galaxy: subhalo->galaxies){
 			// Trigger starburst only in case there is gas in the bulge.
-			if(galaxy->bulge_gas.mass > constants::tolerance_mass){
+			if(galaxy->bulge_gas.mass > parameters.mass_min){
 
 				// Calculate black hole growth due to starburst.
 				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy->bulge_gas.mass, subhalo->Vvir);
@@ -504,12 +506,12 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t);
 
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
-				if(galaxy->bulge_gas.mass < constants::tolerance_mass){
-					transfer_bulge_gas(galaxy, subhalo);
+				if(galaxy->bulge_gas.mass > 0 and galaxy->bulge_gas.mass < parameters.mass_min){
+					transfer_bulge_gas(subhalo, galaxy, z);
 				}
 			}
-			else{
-				transfer_bulge_gas(galaxy, subhalo);
+			else if (galaxy->bulge_gas.mass > 0){
+				transfer_bulge_gas(subhalo, galaxy, z);
 			}
 		}
 	}
@@ -549,9 +551,10 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 		mtotal_central = mbar_central + halo->Mvir * enc_mass;
 	}
 	else{
+		//TODO: calculate size of new bulge based on stars being deposited by satellite galaxy.
 		mtotal_central = central->bulge_mass();
 
-		rcentral = central->bulge_stars.rscale;
+		rcentral = central->bulge_gas.rscale;
 	}
 
 	double mbar_satellite = satellite->baryon_mass();
@@ -560,7 +563,7 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 
 	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
 
-	if((std::isnan(r) or r <= 0 or r>1) and (mtotal_central > 0 or mbar_satellite > 0)){
+	if((std::isnan(r) or r <= 0 or r > 1) and (mtotal_central > 0 or mbar_satellite > 0)){
 		std::ostringstream os;
 		os << central << " has a bulge size not well defined in galaxy mergers.";
 		throw invalid_data(os.str());
@@ -594,6 +597,12 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 		}
 
 		r = rnew;
+	}
+
+	if(r <= constants::EPS6){
+		std::ostringstream os;
+		os << "Galaxy with extremely small size, rbulge_gas < 1-6, in galaxy mergers";
+		throw invalid_argument(os.str());
 	}
 
 	return r;
@@ -652,16 +661,14 @@ void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellit
 
 }
 
-void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy, SubhaloPtr &subhalo){
+void GalaxyMergers::transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z){
+
+	darkmatterhalo->transfer_bulge_am(subhalo, galaxy, z);
 
 	galaxy->disk_gas += galaxy->bulge_gas;
 
 	galaxy->bulge_gas.restore_baryon();
 
-	/*
-	// Calculate disk size.
-	galaxy->disk_gas.rscale = darkmatterhalo->disk_size_theory(*subhalo);
-	galaxy->disk_stars.rscale = galaxy->disk_gas.rscale;*/
 }
 
 void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot){
