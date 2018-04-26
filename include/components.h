@@ -577,8 +577,7 @@ public:
 		copy_galaxies_to(target);
 		galaxies.clear();
 
-		auto gals_after = target->galaxy_count();
-		assert(gals_before + our_gals == gals_after);
+		assert(gals_before + our_gals == target->galaxy_count());
 	}
 
 	void remove_galaxies(const std::vector<GalaxyPtr> &to_remove) {
