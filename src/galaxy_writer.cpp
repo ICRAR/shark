@@ -688,8 +688,6 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 
 			float defl_value = -1;
 
-			long gal_id = 1;
-
 			for (auto &halo: halos){
 				for (auto &subhalo: halo->all_subhalos()){
 					for (auto &galaxy: subhalo->galaxies){
