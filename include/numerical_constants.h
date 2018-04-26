@@ -189,8 +189,8 @@ namespace constants {
 	constexpr float corr_factor_He=1.35; /*correction factor to account for helium when only hydrogen is given: H=Mcold/corr_factor_He.*/
 	constexpr float PressureConst=4.33e-12; /*Constant converting the gravity and Boltzmann constants from the MKS system to the units necessary to obtain the pressure in units of K*cm^-3 (cgs).*/
 	constexpr double Eddngtn_Lmnsty_Scale_Factor=4.0*PI*c_light*G_SI*MSOLAR*1.0e-20*M_Atomic*Atomic_Mass_Hydrogen/(sigma_Thomson*1.0e20), Eddngtn_Mdot_Constant = 0.1;
-	constexpr double sigma_gas_mw = 2.5 * std::pow(MEGA,2.0);
-	constexpr double lcool_conversion_factor = 1.0e-6 * std::pow(1.0e-20 * MSOLAR / MPC2M / Atomic_Mass_Hydrogen / M_Atomic, 2.0) / MPC2M; // Convert M_sun^2 kg^-2 ergs s^-1 cm^3 Mpc^-3 to 10^40 erg s^-1;
+	constexpr double sigma_gas_mw = 2.5 * pow<2>(MEGA);
+	constexpr double lcool_conversion_factor = 1.0e-6 * pow<2>(1.0e-20 * MSOLAR / MPC2M / Atomic_Mass_Hydrogen / M_Atomic) / MPC2M; // Convert M_sun^2 kg^-2 ergs s^-1 cm^3 Mpc^-3 to 10^40 erg s^-1;
 
 	/*define a tolerance for evaluating negative mass*/
 	constexpr float tolerance = 1e-10;
