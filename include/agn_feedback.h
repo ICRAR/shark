@@ -24,24 +24,24 @@ class AGNFeedbackParameters {
 public:
 	AGNFeedbackParameters(const Options &options);
 
-	double mseed;
-	double mhalo_seed;
-	double alpha_cool;
-	double f_edd;
-	double f_smbh;
-	double v_smbh;
-	double tau_fold;
-	double accretion_eff_cooling;
-	double kappa_agn;
-	double nu_smbh;
-	double mass_thresh;
+	double mseed = 0;
+	double mhalo_seed = 0;
+	double alpha_cool = 0;
+	double f_edd = 0;
+	double f_smbh = 0;
+	double v_smbh = 0;
+	double tau_fold = 0;
+	double accretion_eff_cooling = 0;
+	double kappa_agn = 0;
+	double nu_smbh = 0;
+	double mass_thresh = 0;
 
 	enum AGNFeedbackModel {
 		CROTON16 = 0,
 		BOWER06
 	};
 
-	AGNFeedbackModel model;
+	AGNFeedbackModel model = BOWER06;
 };
 
 

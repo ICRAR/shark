@@ -17,15 +17,10 @@
 
 namespace shark {
 
-DiskInstabilityParameters::DiskInstabilityParameters(const Options &options) :
-	stable(0),
-	fint(0)
-	{
-
+DiskInstabilityParameters::DiskInstabilityParameters(const Options &options)
+{
 	options.load("disk_instability.stable", stable);
 	options.load("disk_instability.fint", fint);
-
-
 }
 
 DiskInstability::DiskInstability(DiskInstabilityParameters parameters,

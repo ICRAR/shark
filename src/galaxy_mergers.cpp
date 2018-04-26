@@ -21,19 +21,8 @@
 
 namespace shark {
 
-GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
-	major_merger_ratio(0),
-	minor_merger_burst_ratio(0),
-	gas_fraction_burst_ratio(0),
-	merger_random_seed(-1),
-	mass_min(0),
-	jiang08(4),
-	f_orbit(1),
-	cgal(0.5),
-	fgas_dissipation(0),
-	merger_ratio_dissipation(0)
-	{
-
+GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
+{
 	options.load("galaxy_mergers.major_merger_ratio", major_merger_ratio, true);
 	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio, true);
 	options.load("galaxy_mergers.gas_fraction_burst_ratio", gas_fraction_burst_ratio, true);
@@ -52,7 +41,6 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options) :
 	options.load("galaxy_mergers.cgal", cgal);
 	options.load("galaxy_mergers.fgas_dissipation", fgas_dissipation);
 	options.load("galaxy_mergers.merger_ratio_dissipation", merger_ratio_dissipation);
-
 }
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,

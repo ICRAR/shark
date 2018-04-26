@@ -69,19 +69,19 @@ public:
 		KMT09    //!< KMT09
 	};
 
-	StarFormationModel model;
+	StarFormationModel model = BR06;
 
-	double nu_sf;
-	double Po;
-	double beta_press;
-	double Accuracy_SFeqs;
-	double gas_velocity_dispersion;
-	double boost_starburst;
-	double sigma_HI_crit;
-	double clump_factor_KMT09;
-	double sigma_crit_KMT09;
+	double nu_sf = 0;
+	double Po = 0;
+	double beta_press = 0;
+	double Accuracy_SFeqs = 0.05;
+	double gas_velocity_dispersion = 0;
+	double boost_starburst = 1;
+	double sigma_HI_crit = 0;
+	double clump_factor_KMT09 = 1;
+	double sigma_crit_KMT09 = 0;
 
-	bool angular_momentum_transfer;
+	bool angular_momentum_transfer = false;
 };
 
 

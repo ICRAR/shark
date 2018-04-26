@@ -13,19 +13,7 @@
 
 namespace shark {
 
-AGNFeedbackParameters::AGNFeedbackParameters(const Options &options) :
-	mseed(0),
-	mhalo_seed(0),
-	alpha_cool(0),
-	f_edd(0),
-	f_smbh(0),
-	v_smbh(0),
-	tau_fold(0),
-	accretion_eff_cooling(0),
-	kappa_agn(0),
-	nu_smbh(0),
-	mass_thresh(0),
-	model(BOWER06)
+AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 {
 	options.load("agn_feedback.mseed",mseed);
 	options.load("agn_feedback.mhalo_seed",mhalo_seed);

@@ -25,11 +25,11 @@ public:
 		SOBACCHI13
 	};
 
-	double zcut;
-	double vcut;
-	double alpha_v;
+	double zcut = 0;
+	double vcut = 0;
+	double alpha_v = 0;
 
-	ReionisationModel model;
+	ReionisationModel model = LACEY16;
 
 
 };

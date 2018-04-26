@@ -56,13 +56,13 @@ class CosmologicalParameters {
 public:
 	CosmologicalParameters(const Options &options);
 
-	float OmegaM;
-	float OmegaB;
-	float OmegaL;
-	float n_s;
-	float sigma8;
-	float Hubble_h;
-	PowerSpectrumTable power_spectrum;
+	float OmegaM = 0;
+	float OmegaB = 0;
+	float OmegaL = 0;
+	float n_s = 0;
+	float sigma8 = 0;
+	float Hubble_h = 0;
+	PowerSpectrumTable power_spectrum {};
 
 private:
 	void load_tables(const std::string &power_spec_file);

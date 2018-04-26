@@ -16,11 +16,7 @@
 
 namespace shark {
 
-ReionisationParameters::ReionisationParameters(const Options &options) :
-	zcut(0),
-	vcut(0),
-	alpha_v(0),
-	model(LACEY16)
+ReionisationParameters::ReionisationParameters(const Options &options)
 {
 	options.load("reionisation.vcut", vcut, true);
 	options.load("reionisation.zcut", zcut, true);

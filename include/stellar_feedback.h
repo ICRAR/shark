@@ -60,19 +60,19 @@ public:
 	 * galaxy_scaling: whether we scale SNe outflow rate with the halo or galaxy velocity.
 	 * model: adopted SNe feedback model.
 	 */
-	double eps_halo;
-	double vkin_sn;
-	double beta_disk;
-	double beta_halo;
-	double v_sn;
-	double redshift_power;
-	double eps_disk;
-	double e_sn;
-	double eta_cc;
-	bool galaxy_scaling;
-	bool radial_feedback;
+	double eps_halo = 1;
+	double vkin_sn = 0;
+	double beta_disk = 0;
+	double beta_halo = 0;
+	double v_sn = 0;
+	double redshift_power = 0;
+	double eps_disk = 1;
+	double e_sn = 0;
+	double eta_cc = 0;
+	bool galaxy_scaling = false;
+	bool radial_feedback = false;
 
-	StellarFeedbackModel model;
+	StellarFeedbackModel model = FIRE;
 
 };
 

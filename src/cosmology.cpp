@@ -22,14 +22,7 @@
 
 namespace shark {
 
-CosmologicalParameters::CosmologicalParameters(const Options &options) :
-	OmegaM(0),
-	OmegaB(0),
-	OmegaL(0),
-	n_s(0),
-	sigma8(0),
-	Hubble_h(0),
-	power_spectrum()
+CosmologicalParameters::CosmologicalParameters(const Options &options)
 {
 
 	std::string power_spec_file;
