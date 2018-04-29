@@ -65,7 +65,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas minimum metallicity*/
 	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*hot gas minimum metallicity*/
 
-	double jgas = params->vgal * params->rgas; /*current sAM of the cold gas*/
+	double jgas = 2.0 * params->vgal * params->rgas / constants::RDISK_HALF_SCALE; /*current sAM of the cold gas*/
 	double jrate = 0; /*variable that saves the angular momentum transfer rate from gas to stars*/
 
 	if(y[1] > 0 && y[6] > 0) {
@@ -101,6 +101,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	// Keeps track of total stellar mass formed.
 	f[10] = SFR;
 
+	double jin = jrate / SFR;
 	// Solve angular momentum equations.
 	f[11] = rsub * jrate;
 	f[12] = mcoolrate * params->jcold_halo - (rsub + betaj_1) * jrate;
@@ -212,17 +213,37 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	// Equations of angular momentum exchange. Input total angular momentum.
 	// Redefine angular momentum ONLY if the new value is > 0.
 	if(y[11] > 0 and y[12] > 0){
-		// Define vgal before exchange of angular momentum.
-		double vgal = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale;
+
+		// Define vgal before exchange of angular momentum. In the of first star formation episode, assign gas circular velocity
+		/*double v = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale;
+		double vstar = vgas;
+		if(galaxy.disk_stars.sAM > 0 and galaxy.disk_stars.rscale > 0){
+			vstar = galaxy.disk_stars.sAM / galaxy.disk_stars.rscale;
+		}*/
+
+		// WHY IS ALWAYS sAM OF THE STARS LARGER THAN THAT OF THE DISK??
+		/*double jold = galaxy.disk_gas.sAM;
+		double jnew = y[12] / galaxy.disk_gas.mass;
+		double rold = galaxy.disk_gas.rscale;
+		double rnew = jnew / vgas;
+		double rolds = galaxy.disk_stars.rscale;
+		double smform = y[11] - galaxy.disk_stars.mass;*/
+
 
 		galaxy.disk_stars.sAM          = y[11] / galaxy.disk_stars.mass;
-		//galaxy.disk_gas.sAM            = y[12] / galaxy.disk_gas.mass;
+		galaxy.disk_gas.sAM            = y[12] / galaxy.disk_gas.mass;
 		subhalo.cold_halo_gas.sAM      = y[13] / subhalo.cold_halo_gas.mass;
 		subhalo.hot_halo_gas.sAM       = y[14] / subhalo.hot_halo_gas.mass;
 		subhalo.ejected_galaxy_gas.sAM = y[15] / subhalo.ejected_galaxy_gas.mass;
 
-		galaxy.disk_stars.rscale = galaxy.disk_stars.sAM / vgal;
-		//galaxy.disk_gas.rscale = galaxy.disk_gas.sAM / vgal;
+		galaxy.disk_stars.rscale = galaxy.disk_stars.sAM / (2.0 * galaxy.vmax) * constants::RDISK_HALF_SCALE;
+		galaxy.disk_gas.rscale   = galaxy.disk_gas.sAM   / (2.0 * galaxy.vmax) * constants::RDISK_HALF_SCALE;
+
+		if(galaxy.disk_stars.rscale <= constants::EPS6 and galaxy.disk_stars.mass > 0){
+			std::ostringstream os;
+			os << "Galaxy with extremely small size, rdisk_stars < 1-6, in physical model";
+			throw invalid_argument(os.str());
+		}
 
 	}
 
@@ -359,15 +380,34 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	// Equations of angular momentum exchange. Input total angular momentum.
 	// Redefine angular momentum ONLY if the new value is > 0.
 	if(y[11] > 0 and y[12] > 0){
-		// Define vgal before exchange of angular momentum.
-		double vgal = galaxy.bulge_gas.sAM / galaxy.bulge_gas.rscale;
+		// Define vgal before exchange of angular momentum. In the of first star formation episode, assign gas circular velocity.
+		// TODO: use galaxy rotation curve model to find the best r that satisfy the new specific angular momentum.
+		double vgas = galaxy.bulge_gas.sAM / galaxy.bulge_gas.rscale;
+		/*double vstar = vgas;
+		if(galaxy.bulge_stars.sAM > 0 and galaxy.bulge_stars.rscale > 0){
+			vstar = galaxy.bulge_stars.sAM / galaxy.bulge_stars.rscale;
+		}*/
+
+		double jold = galaxy.bulge_gas.sAM;
+		double jnew = y[12] / galaxy.bulge_gas.mass;
+		double rold = galaxy.bulge_gas.rscale;
+		double rnew = jnew / vgas;
+
 		galaxy.bulge_stars.sAM          = y[11] / galaxy.bulge_stars.mass;
-		//galaxy.bulge_gas.sAM            = y[12] / galaxy.bulge_gas.mass;
+		galaxy.bulge_gas.sAM            = y[12] / galaxy.bulge_gas.mass;
 		subhalo.hot_halo_gas.sAM        = y[14] / subhalo.hot_halo_gas.mass;
 		subhalo.ejected_galaxy_gas.sAM  = y[15] / subhalo.ejected_galaxy_gas.mass;
 
-		galaxy.bulge_stars.rscale = galaxy.bulge_stars.sAM / vgal;
-		//galaxy.bulge_gas.rscale   = galaxy.bulge_gas.sAM / vgal;
+		//galaxy.bulge_stars.rscale = galaxy.bulge_stars.sAM / (2.0 * vgas) * constants::RDISK_HALF_SCALE;
+		//galaxy.bulge_gas.rscale   = galaxy.bulge_gas.sAM / (2.0 * vgas) * constants::RDISK_HALF_SCALE;
+		//TEST
+		galaxy.bulge_stars.rscale = galaxy.bulge_gas.rscale;
+
+		if(galaxy.bulge_stars.rscale <= constants::EPS4){
+			std::ostringstream os;
+			os << "Galaxy with extremely small size, rbulge_stars < 1-6, in physical model";
+			//throw invalid_argument(os.str());
+		}
 	}
 
 	/**

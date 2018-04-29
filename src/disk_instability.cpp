@@ -58,7 +58,6 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				 */
 				galaxy->bulge_gas.rscale = bulge_size(galaxy);
 
-
 				/**
 				 * calculate bulge specific angular momentum based on assuming conservation.
 				 */
@@ -109,9 +108,13 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 	double md = galaxy->disk_mass();
 	double mb = galaxy->bulge_mass();
 
-	double rd = galaxy->disk_stars.rscale;
-	double rb = galaxy->bulge_stars.rscale;
-
+	double rd = 0, rb = 0;
+	if(md > 0){
+		rd = (galaxy->disk_stars.rscale * galaxy->disk_stars.mass + galaxy->disk_gas.rscale * galaxy->disk_gas.mass) / md;
+	}
+	if(mb > 0){
+		rb = (galaxy->bulge_stars.rscale * galaxy->bulge_stars.mass + galaxy->bulge_gas.rscale * galaxy->bulge_gas.mass) / mb;
+	}
 	double c = merger_params.cgal;
 
 	double bc = 0;
@@ -135,7 +138,7 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 	if(rnew <= constants::EPS6){
 		std::ostringstream os;
 		os << "Galaxy with extremely small size, rbulge_gas < 1-6, in disk instabilities";
-		throw invalid_argument(os.str());
+		//throw invalid_argument(os.str());
 	}
 
 	return rnew;

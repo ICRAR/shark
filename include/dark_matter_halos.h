@@ -70,7 +70,7 @@ public:
 
 	//double mmw98_nfw_concentration(double mvir, double vmax, double rvir);
 
-	void cooling_gas_sAM(Subhalo &subhalo, Galaxy &galaxy);
+	void cooling_gas_sAM(Subhalo &subhalo, double z);
 
 	void disk_sAM(Subhalo &subhalo, Galaxy &galaxy);
 

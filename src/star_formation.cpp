@@ -38,6 +38,8 @@ StarFormationParameters::StarFormationParameters(const Options &options) :
 {
 	options.load("star_formation.model", model, true);
 	options.load("star_formation.nu_sf", nu_sf, true);
+	options.load("star_formation.angular_momentum_transfer", angular_momentum_transfer);
+
 	options.load("star_formation.Accuracy_SFeqs", Accuracy_SFeqs);
 	options.load("star_formation.boost_starburst", boost_starburst);
 	options.load("star_formation.Po", Po);
@@ -147,6 +149,8 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		result = 0.0;
 	}
 
+	result = cosmology->physical_to_comoving_mass(result);
+
 	// Check whether user wishes to calculate angular momentum transfer from gas to stars.
 	if(parameters.angular_momentum_transfer){
 		auto f_j = [](double r, void *ctx) -> double {
@@ -156,12 +160,17 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 		StarFormationAndProps sf_and_props = {this, &props};
 		// Adopt 5% accuracy for star formation solution.
-		jrate = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
-		jrate = jrate * vgal; //assumes a flat rotation curve.
+		double jSFR = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+		jrate = cosmology->physical_to_comoving_mass(jSFR) * vgal; //assumes a flat rotation curve.
 
+		double effecj = jrate / result;
 		// Avoid negative values.
 		if(jrate < 0){
 			jrate = 0.0;
+		}
+		//Assign maximum value to be jgas.
+		if(effecj > jgas and jgas > 0){
+			jrate = result * jgas;
 		}
 	}
 	else{
@@ -175,7 +184,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		throw invalid_argument(os.str());
 	}
 
-	return cosmology->physical_to_comoving_mass(result);
+	return result;
 
 }
 

@@ -238,6 +238,7 @@ public:
 	//save average star formation rates.
 	float sfr_disk;
 	float sfr_bulge;
+	float vmax;
 
 	//save star formation and gas history
 	std::vector<HistoryItem>  history;
@@ -287,19 +288,56 @@ public:
 		return disk_gas.mass_metals + bulge_gas.mass_metals;
 	}
 
+	double disk_size(){
+
+
+		double rgas  = 0;
+		double rstar = 0;
+
+		if(disk_gas.mass > 0){
+			rgas = disk_gas.rscale;
+		}
+		if(disk_stars.mass > 0){
+			rstar = disk_stars.rscale;
+		}
+
+		double rcomp = 0.0;
+
+		// Define rcomp only if disk has mass.
+		if(disk_mass() > 0){
+			rcomp = (disk_stars.mass * rstar + disk_gas.mass * rgas) / disk_mass();
+		}
+
+		return rcomp;
+	}
+
+	double bulge_size(){
+
+
+		double rgas  = 0;
+		double rstar = 0;
+
+		if(bulge_gas.mass > 0){
+			rgas = bulge_gas.rscale;
+		}
+		if(bulge_stars.mass > 0){
+			rstar = bulge_stars.rscale;
+		}
+
+		double rcomp = 0.0;
+
+		// Define rcomp only if bulge has mass.
+		if(bulge_mass() > 0){
+			rcomp = (bulge_stars.mass * rstar + bulge_gas.mass * rgas) / bulge_mass();
+		}
+
+		return rcomp;
+	}
 
 	double composite_size(){
 
-
-		double rdisk = 0;
-		double rbulge = 0;
-
-		if(disk_mass() > 0){
-			rdisk = (disk_stars.mass * disk_stars.rscale + disk_gas.mass * disk_gas.rscale) / disk_mass();
-		}
-		if(bulge_mass() > 0){
-			rbulge = (bulge_stars.mass * bulge_stars.rscale + bulge_gas.mass * bulge_gas.rscale) / bulge_mass();
-		}
+		double rdisk = disk_size();
+		double rbulge = bulge_size();
 
 		double rcomp = 0.0;
 
@@ -310,6 +348,23 @@ public:
 
 		return rcomp;
 	}
+
+	double stellar_size(){
+
+		double rdisk = disk_size();
+		double rbulge = bulge_size();
+
+		double rcomp = 0.0;
+
+		// Define rcomp only if galaxy has mass.
+		if(baryon_mass() > 0){
+			rcomp = (disk_stars.mass * rdisk + bulge_mass() * rbulge) / baryon_mass();
+		}
+
+		return rcomp;
+	}
+
+
 };
 
 /** This class extends the galaxy to include spatial information.*/

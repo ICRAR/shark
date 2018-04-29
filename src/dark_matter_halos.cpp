@@ -194,16 +194,24 @@ double EinastoDarkMatterHalos::enclosed_mass(double r, double c) const
 	return 0;
 }
 
-void DarkMatterHalos::cooling_gas_sAM(Subhalo &subhalo, Galaxy &galaxy){
+void DarkMatterHalos::cooling_gas_sAM(Subhalo &subhalo, double z){
 
-	if(params.sizemodel == DarkMatterHaloParameters::MO98){
+	if(params.random_lambda){
+		double H0 = 10.0* cosmology->hubble_parameter(z);
+		subhalo.cold_halo_gas.sAM = constants::SQRT2 * std::pow(constants::G,0.66) *
+								    subhalo.lambda * std::pow(subhalo.Mvir,0.66) / std::pow(H0,0.33);
+	}
+	else{
+		subhalo.cold_halo_gas.sAM = subhalo.hot_halo_gas.sAM;
+	}
+	/*if(params.sizemodel == DarkMatterHaloParameters::MO98){
 		//Assumes that cooled gas brings a specific angular momentum that is equivalent to
 		//the disk specific angular momentum that is set by the disk_gas.rscale and disk_gas.sAM.
-		subhalo.cold_halo_gas.sAM = galaxy.disk_gas.sAM;
+		subhalo.cold_halo_gas.sAM = subhalo.hot_halo_gas.sAM; //Mo98_j; //galaxy.disk_gas.sAM;
 	}
 	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
 		//TODO
-	}
+	}*/
 
 }
 
@@ -211,22 +219,22 @@ void DarkMatterHalos::disk_sAM(Subhalo &subhalo, Galaxy &galaxy){
 
 	double rvir = halo_virial_radius(subhalo);
 
-	//disk properties.
-	double rdisk = galaxy.disk_gas.rscale;
-
+	//disk properties. Use composite size of disk.
+	double rdisk = galaxy.disk_size();
 	double mdisk = galaxy.disk_mass();
 	double cd = 0;
+
 	if(rdisk > 0){
 		cd = rvir / (rdisk / constants::RDISK_HALF_SCALE);
 	}
 
-	//bulge properties.
-	double rbulge = galaxy.bulge_gas.rscale;
+	//bulge properties. Use composite size of bulge.
+	double rbulge = galaxy.bulge_size();
 	double mbulge = galaxy.bulge_mass();
 	double cb = 0.0;
 
 	if(rbulge > 0){
-		cb = rvir/(rbulge / constants::RDISK_HALF_SCALE);
+		cb = rvir/(rbulge);
 	}
 
 	//halo properties.
@@ -238,7 +246,7 @@ void DarkMatterHalos::disk_sAM(Subhalo &subhalo, Galaxy &galaxy){
 	//Rotational velocity at the half-mass radius of the disk.
 	double v2tot_d = v2halo(xd, mvir, ch, rvir) + v2disk(xd, mdisk, cd, rvir) + v2bulge(xd, mbulge, cb, rvir);
 
-	galaxy.disk_gas.sAM = rdisk * std::sqrt(v2tot_d);
+	galaxy.disk_gas.sAM = 2.0 * rdisk / constants::RDISK_HALF_SCALE * std::sqrt(v2tot_d);
 
 }
 
@@ -246,21 +254,22 @@ void DarkMatterHalos::bulge_sAM(Subhalo &subhalo, Galaxy &galaxy){
 
 	double rvir = halo_virial_radius(subhalo);
 
-	//disk properties.
-	double rdisk = galaxy.disk_gas.rscale;
+	//disk properties. Use composite size of disk.
+	double rdisk = galaxy.disk_size();
 	double mdisk = galaxy.disk_mass();
 	double cd = 0;
+
 	if(rdisk > 0){
 		cd = rvir / (rdisk / constants::RDISK_HALF_SCALE);
 	}
 
-	//bulge properties.
-	double rbulge = galaxy.bulge_gas.rscale;
+	//bulge properties. Use composite size of bulge.
+	double rbulge = galaxy.bulge_size();
 	double mbulge = galaxy.bulge_mass();
 	double cb = 0.0;
 
 	if(rbulge > 0){
-		cb = rvir/(rbulge / constants::RDISK_HALF_SCALE);
+		cb = rvir/(rbulge);
 	}
 
 	//halo properties.
@@ -270,8 +279,14 @@ void DarkMatterHalos::bulge_sAM(Subhalo &subhalo, Galaxy &galaxy){
 	if(rbulge > 0){
 		double xb = rbulge / rvir;
 		double v2tot_b = v2halo(xb, mvir, ch, rvir) + v2disk(xb, mdisk, cd, rvir) + v2bulge(xb, mbulge, cb, rvir);
+		double vbulge = std::sqrt(v2tot_b);
 
-		galaxy.bulge_gas.sAM = rbulge * std::sqrt(v2tot_b);
+		if(vbulge > 1e3){
+			double vb = std::sqrt(constants::G * mbulge / rbulge);
+			double medd=0;
+		}
+
+		galaxy.bulge_gas.sAM = 2.0 * rbulge / constants::RDISK_HALF_SCALE * vbulge;
 	}
 
 }

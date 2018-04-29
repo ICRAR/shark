@@ -47,11 +47,18 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, bulge_vel, disk_vel):
 
     h0, _, mdisk, mbulge, mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk, specific_angular_momentum_bulge = hdf5_data
-                           
+    
+    zero_bulge = np.where(rbulge <= 0)
+    if(len(rbulge) == len(rbulge[zero_bulge])):
+            #case where there is zero bulge build up.
+            rbulge[zero_bulge] = 1.0
+            specific_angular_momentum_bulge[zero_bulge] = 1.0
+            mbulge[zero_bulge] = 10.0
+
     bin_it = functools.partial(us.wmedians, xbins=xmf)
 
-    vdisk = specific_angular_momentum_disk / rdisk #in km/s
-    vbulge = specific_angular_momentum_bulge / rbulge #in km/s
+    vdisk = specific_angular_momentum_disk / rdisk / 2.0 #in km/s
+    vbulge = specific_angular_momentum_bulge / rbulge / 2.0 #in km/s
     
     ind = np.where(mdisk+mbulge > 0)
     rcomb[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
@@ -144,11 +151,12 @@ def plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size):
 
     #Predicted size-mass for bulges in bulge-dominated systems
     ind = np.where(bulge_size[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = bulge_size[0,0,ind]
-    errdn = bulge_size[0,1,ind]
-    errup = bulge_size[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk bulges")
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = bulge_size[0,0,ind]
+        errdn = bulge_size[0,1,ind]
+        errup = bulge_size[0,2,ind]
+        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk bulges")
 
     #Lange et al. (2016)
     a = 1.819
@@ -218,13 +226,15 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel):
 
     #Predicted size-mass for bulges in bulge-dominated systems
     ind = np.where(bulge_vel[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = bulge_vel[0,0,ind]
-    errdn = bulge_vel[0,1,ind]
-    errup = bulge_vel[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk bulges B/T > 0.5")
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = bulge_vel[0,0,ind]
+        errdn = bulge_vel[0,1,ind]
+        errup = bulge_vel[0,2,ind]
+        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk bulges B/T > 0.5")
 
-    common.prepare_legend(ax, ['k'], loc=2)
+        common.prepare_legend(ax, ['k'], loc=2)
+
     common.savefig(outdir, fig, 'velocities.pdf')
     
 def plot_sizes_combined(plt, outdir, rcomb):
@@ -267,13 +277,14 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
 
     #Predicted SMHM
     ind = np.where(BH[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = BH[0,0,ind]
-    errdn = BH[0,1,ind]
-    errup = BH[0,2,ind]
-    ax.plot(xplot,yplot[0],color='k',label="SHArk")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = BH[0,0,ind]
+        errdn = BH[0,1,ind]
+        errup = BH[0,2,ind]
+        ax.plot(xplot,yplot[0],color='k',label="SHArk")
+        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
+        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     mBH_H04, errup_H04, errdn_H04, mbulge_H04 = common.load_observation(obsdir, 'MBH_sigma_Mbulge_HaeringRix2004.data', [0,1,2,4])
@@ -310,9 +321,10 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions):
 
     #Predicted size-mass for disks
     ind = np.where(BT_fractions[0,:] >= 0)
-    xplot = xmf[ind]
-    yplot = BT_fractions[0,ind]
-    ax.plot(xplot,yplot[0],'r', label ='all z=0 galaxies')
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = BT_fractions[0,ind]
+        ax.plot(xplot,yplot[0],'r', label ='all z=0 galaxies')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     mM16, fM16, errdnfM16, errupfM16 = common.load_observation(obsdir, 'Moffet16.dat', [0,1,2,3])
@@ -328,7 +340,7 @@ def main():
 
     plt = common.load_matplotlib()
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mBH',
-                           'rdisk', 'rbulge', 'type', 'specific_angular_momentum_disk', 'specific_angular_momentum_bulge')}
+                           'rdisk_star', 'rbulge_star', 'type', 'specific_angular_momentum_disk_star', 'specific_angular_momentum_bulge_star')}
 
     modeldir, outdir, obsdir = common.parse_args(requires_snapshot=False)
 

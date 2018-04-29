@@ -545,21 +545,13 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
   	// Save net cooling rate.
   	halo->cooling_rate = coolingrate;
 
-  	// Always modify the disk_gas.rscale in response to the halo evolution.
-  	if(central_galaxy->disk_gas.rscale >= 0){
-
-  		//Modify rscale based on whether cold_halo.mass is >0
-  	   	central_galaxy->disk_gas.rscale = darkmatterhalos->disk_size_theory(subhalo, z);
-
-  	   	//define disk angular momentum.
-  	   	darkmatterhalos->disk_sAM(subhalo, *central_galaxy);
-
-  	   	if(coolingrate > 0){
-  	  	   	// define cooled gas angular momentum.
-  	   		darkmatterhalos->cooling_gas_sAM(subhalo, *central_galaxy);
-  	   	}
-
-  	}
+	if(coolingrate > 0){
+		// define cooled gas angular momentum.
+		darkmatterhalos->cooling_gas_sAM(subhalo, z);
+	}
+	else{
+		subhalo.cold_halo_gas.sAM = 0;
+	}
 
    	return coolingrate;
 

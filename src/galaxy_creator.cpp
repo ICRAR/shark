@@ -96,6 +96,8 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z)
 	// Assign metallicity to the minimum allowed.
 	central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
 
+	galaxy->vmax = central_subhalo->Vcirc;
+
 	return true;
 
 }

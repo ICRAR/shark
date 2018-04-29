@@ -198,10 +198,15 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	vector<float> sfr_disk;
 	vector<float> sfr_burst;
 
-	vector<float> rdisk;
-	vector<float> rbulge;
-	vector<float> sAM_disk;
-	vector<float> sAM_bulge;
+	vector<float> rdisk_gas;
+	vector<float> rbulge_gas;
+	vector<float> sAM_disk_gas;
+	vector<float> sAM_bulge_gas;
+
+	vector<float> rdisk_star;
+	vector<float> rbulge_star;
+	vector<float> sAM_disk_star;
+	vector<float> sAM_bulge_star;
 
 	vector<float> mhot;
 	vector<float> mhot_metals;
@@ -307,10 +312,16 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 				mBH_acc_sb.push_back(galaxy->smbh.macc_sb);
 
 				// Sizes and specific angular momentum of disks and bulges.
-				rdisk.push_back(galaxy->disk_stars.rscale);
-				rbulge.push_back(galaxy->bulge_stars.rscale);
-				sAM_disk.push_back(galaxy->disk_stars.sAM);
-				sAM_bulge.push_back(galaxy->bulge_stars.sAM);
+
+				rdisk_gas.push_back(galaxy->disk_gas.rscale);
+				rbulge_gas.push_back(galaxy->bulge_gas.rscale);
+				sAM_disk_gas.push_back(galaxy->disk_gas.sAM);
+				sAM_bulge_gas.push_back(galaxy->bulge_gas.sAM);
+
+				rdisk_star.push_back(galaxy->disk_stars.rscale);
+				rbulge_star.push_back(galaxy->bulge_stars.rscale);
+				sAM_disk_star.push_back(galaxy->disk_stars.sAM);
+				sAM_bulge_star.push_back(galaxy->bulge_stars.sAM);
 
 				// Halo properties below.
 				double mhot_gal = 0;
@@ -413,10 +424,14 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	REPORT(mBH_acc_sb);
 	REPORT(sfr_disk);
 	REPORT(sfr_burst);
-	REPORT(rdisk);
-	REPORT(rbulge);
-	REPORT(sAM_disk);
-	REPORT(sAM_bulge);
+	REPORT(rdisk_gas);
+	REPORT(rbulge_gas);
+	REPORT(sAM_disk_gas);
+	REPORT(sAM_bulge_gas);
+	REPORT(rdisk_star);
+	REPORT(rbulge_star);
+	REPORT(sAM_disk_star);
+	REPORT(sAM_bulge_star);
 	REPORT(mhot);
 	REPORT(mhot_metals);
 	REPORT(mreheated);
@@ -508,17 +523,29 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	comment = "accretion rate onto the black hole during the starburst mode [Msun/Gyr/h]";
 	file.write_dataset("Galaxies/BH_accretion_rate_sb", mBH_acc_sb, comment);
 
-	comment = "half-mass radius of the disk [cMpc/h]";
-	file.write_dataset("Galaxies/rdisk", rdisk, comment);
+	comment = "half-mass radius of the stellar disk [cMpc/h]";
+	file.write_dataset("Galaxies/rdisk_star", rdisk_star, comment);
 
-	comment = "half-mass radius of the bulge [cMpc/h]";
-	file.write_dataset("Galaxies/rbulge", rbulge, comment);
+	comment = "half-mass radius of the stellar bulge [cMpc/h]";
+	file.write_dataset("Galaxies/rbulge_star", rbulge_star, comment);
 
-	comment = "specific angular momentum of the disk [km/s * cMpc/h]";
-	file.write_dataset("Galaxies/specific_angular_momentum_disk", sAM_disk, comment);
+	comment = "specific angular momentum of the stellar disk [km/s * cMpc/h]";
+	file.write_dataset("Galaxies/specific_angular_momentum_disk_star", sAM_disk_star, comment);
 
-	comment = "specific angular momentum of the bulge [km/s * cMpc/h]";
-	file.write_dataset("Galaxies/specific_angular_momentum_bulge", sAM_bulge, comment);
+	comment = "specific angular momentum of the stellar bulge [km/s * cMpc/h]";
+	file.write_dataset("Galaxies/specific_angular_momentum_bulge_star", sAM_bulge_star, comment);
+
+	comment = "half-mass radius of the gas disk [cMpc/h]";
+	file.write_dataset("Galaxies/rdisk_gas", rdisk_gas, comment);
+
+	comment = "half-mass radius of the gas bulge [cMpc/h]";
+	file.write_dataset("Galaxies/rbulge_gas", rbulge_gas, comment);
+
+	comment = "specific angular momentum of the gas disk [km/s * cMpc/h]";
+	file.write_dataset("Galaxies/specific_angular_momentum_disk_gas", sAM_disk_gas, comment);
+
+	comment = "specific angular momentum of the gas bulge [km/s * cMpc/h]";
+	file.write_dataset("Galaxies/specific_angular_momentum_bulge_gas", sAM_bulge_gas, comment);
 
 	comment = "hot gas mass in the halo [Msun/h]";
 	file.write_dataset("Galaxies/mhot", mhot, comment);

@@ -32,10 +32,11 @@
 #include <gsl/gsl_odeiv2.h>
 #include <recycling.h>
 #include "components.h"
+#include "gas_cooling.h"
+#include "numerical_constants.h"
 #include "ode_solver.h"
 #include "stellar_feedback.h"
 #include "star_formation.h"
-#include "gas_cooling.h"
 
 namespace shark {
 
@@ -100,9 +101,17 @@ public:
 			mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
 		}
 		double rgas       = galaxy.disk_gas.rscale; //gas scale radius.
+		double vgal       = galaxy.disk_gas.sAM / (2.0 * galaxy.disk_gas.rscale / constants::RDISK_HALF_SCALE);
+
+		if(rgas <= 0){
+			//In this case assign a scalelength due to the cooling gas.
+			double rs = subhalo.cold_halo_gas.sAM / (2.0 * galaxy.vmax);
+			rgas = rs * constants::RDISK_HALF_SCALE ;
+			vgal = subhalo.cold_halo_gas.sAM / (2.0 * rs) ;
+		}
+
 		double rstar      = galaxy.disk_stars.rscale; //stellar scale radius.
 		double vsubh      = subhalo.Vvir;
-		double vgal       = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale;
 		double jcold_halo = subhalo.cold_halo_gas.sAM;
 		bool   burst      = false;
 
@@ -121,7 +130,7 @@ public:
 		double rgas       = galaxy.bulge_gas.rscale; //gas scale radius.
 		double rstar      = galaxy.bulge_stars.rscale; //stellar scale radius.
 		double vsubh      = subhalo.Vvir;
-		double vgal       = galaxy.bulge_gas.sAM / galaxy.bulge_gas.rscale;
+		double vgal       = galaxy.bulge_gas.sAM / (2.0 * galaxy.bulge_gas.rscale / constants::RDISK_HALF_SCALE);
 		bool   burst      = true;
 
 		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);

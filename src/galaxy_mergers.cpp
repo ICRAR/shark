@@ -396,10 +396,13 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		mass_ratio = 1 / mass_ratio;
 	}
 
+	// define gas mass ratio of the merger.
+	double mgas_ratio  = (central->gas_mass() + satellite->gas_mass()) / (central->stellar_mass() + central->gas_mass());
+
 	/**
 	 * First, calculate remnant galaxy's bulge size based on merger properties.
 	 */
-	central->bulge_gas.rscale = bulge_size_merger(mass_ratio, central, satellite, halo);
+	central->bulge_gas.rscale = bulge_size_merger(mass_ratio, mgas_ratio, central, satellite, halo);
 
 	// Black holes merge regardless of the merger type.
 	central->smbh += satellite->smbh;
@@ -449,9 +452,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->disk_gas.mass += satellite->gas_mass();
 		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
 
-		double mgas_ratio  = central->gas_mass()/central->stellar_mass();
-
-		if(mass_ratio >= parameters.minor_merger_burst_ratio & mgas_ratio > parameters.gas_fraction_burst_ratio){
+		if(mass_ratio >= parameters.minor_merger_burst_ratio and mgas_ratio > parameters.gas_fraction_burst_ratio){
 
 			central->bulge_gas += central->disk_gas;
 
@@ -518,7 +519,7 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
 }
 
-double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo){
+double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo){
 
 	/**
 	 * This function calculates the bulge sizes resulting from a galaxy mergers following Cole et al. (2000). This assumes
@@ -535,31 +536,44 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
     double mbar_central = 0;
     double enc_mass = 0;
 
+	double mbar_satellite = satellite->baryon_mass();
+
+	double rsatellite = satellite->composite_size();
+
 	//Define central properties depending on whether merger is major or minor.
 	if(mass_ratio >= parameters.major_merger_ratio){
 
  		mbar_central = central->baryon_mass();
 
-		rcentral = central->composite_size();
+ 		rcentral = central->composite_size();
+	}
+	else if (mass_ratio >= parameters.minor_merger_burst_ratio and mgas_ratio > parameters.gas_fraction_burst_ratio){
+		mbar_central = central->bulge_mass() + central->disk_gas.mass;
 
-		auto subhalo_central = halo->central_subhalo;
-
-		enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(*subhalo_central), subhalo_central->concentration);
-
-		//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
-		//the DM mass enclosed by rcentral.
-		mtotal_central = mbar_central + halo->Mvir * enc_mass;
+		if(mbar_central > 0){
+			rcentral = (central->bulge_mass() * central->bulge_stars.rscale + central->disk_gas.rscale * central->disk_gas.mass)
+					/ mbar_central;
+		}
 	}
 	else{
-		//TODO: calculate size of new bulge based on stars being deposited by satellite galaxy.
-		mtotal_central = central->bulge_mass();
+		mbar_central = central->bulge_mass();
 
-		rcentral = central->bulge_gas.rscale;
+		rcentral = central->bulge_size();
+
+		// In this case we only take into account stellar component of satellite to calculate the
+		// new bulge size.
+		mbar_satellite = satellite->stellar_mass();
+
+		rsatellite = satellite->stellar_size();
 	}
 
-	double mbar_satellite = satellite->baryon_mass();
+	auto subhalo_central = halo->central_subhalo;
 
-	double rsatellite = satellite->composite_size();
+	enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(*subhalo_central), subhalo_central->concentration);
+
+	//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
+	//the DM mass enclosed by rcentral.
+	mtotal_central = mbar_central + halo->Mvir * enc_mass;
 
 	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
 
@@ -602,7 +616,7 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, GalaxyPtr &central, G
 	if(r <= constants::EPS6){
 		std::ostringstream os;
 		os << "Galaxy with extremely small size, rbulge_gas < 1-6, in galaxy mergers";
-		throw invalid_argument(os.str());
+		//throw invalid_argument(os.str());
 	}
 
 	return r;
