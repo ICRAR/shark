@@ -35,6 +35,7 @@ zlist = ["199","174", "156", "131"]
 #Constants
 RExp = 1.67
 MpcToKpc = 1e3
+G    = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
 
 mlow = 8
 mupp = 12
@@ -45,9 +46,9 @@ xmf = mbins + dm/2.0
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, bulge_vel, 
-                 disk_vel, sam_stars_disk, sam_gas_disk):
+                 disk_vel, sam_stars_disk, sam_gas_disk, sam_halo):
 
-    h0, _, mdisk, mbulge, mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas = hdf5_data
+    h0, _, mdisk, mbulge, mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, lambda_sub, mvir_s = hdf5_data
     
     zero_bulge = np.where(rbulge <= 0)
     if(len(rbulge) == len(rbulge[zero_bulge])):
@@ -57,6 +58,8 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
             mbulge[zero_bulge] = 10.0
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
+
+    sam_subhalo = 1.41421356237 * G**0.66 * lambda_sub * mvir_s**0.66 / (h0*100.0)**0.33;
 
     vdisk = specific_angular_momentum_disk_star / rdisk / 2.0 #in km/s
     vbulge = specific_angular_momentum_bulge_star / rbulge / 2.0 #in km/s
@@ -76,6 +79,9 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     ind = np.where((specific_angular_momentum_disk_gas > 0) & (mdisk+mbulge > 0))
     sam_gas_disk[index,:]   = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_gas[ind]))
+    ind = np.where((sam_subhalo > 0) & (mdisk+mbulge > 0))
+    sam_halo[index,:]       = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                                y=np.log10(sam_subhalo[ind]))
 
 
     ind = np.where((mdisk > 0) & (typeg == 0) & (mbulge/mdisk < 0.5))
@@ -248,12 +254,12 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel):
 
     common.savefig(outdir, fig, 'velocities.pdf')
  
-def plot_specific_am(plt, outdir, sam_stars_disk, sam_gas_disk):
+def plot_specific_am(plt, outdir, sam_stars_disk, sam_gas_disk, sam_halo):
 
     fig = plt.figure(figsize=(5,9.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm j_{\\rm disk}/kpc km s^{-1})$"
-    xmin, xmax, ymin, ymax = 8, 12, 1, 4
+    xmin, xmax, ymin, ymax = 8, 12, 1.5, 5
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -272,9 +278,9 @@ def plot_specific_am(plt, outdir, sam_stars_disk, sam_gas_disk):
     rRF12Low  = a * xmf[ind] + b - berr
     rRF12High = a * xmf[ind] + b + berr
 
-    ax.plot(xmf[ind],rRF12,'b', linestyle='solid', label ='R\&F')
-    ax.plot(xmf[ind],rRF12Low,'b', linestyle='dotted')
-    ax.plot(xmf[ind],rRF12High,'b', linestyle='dotted')
+    ax.plot(xmf[ind],rRF12,'g', linestyle='solid', label ='R&F')
+    ax.plot(xmf[ind],rRF12Low,'g', linestyle='dotted')
+    ax.plot(xmf[ind],rRF12High,'g', linestyle='dotted')
 
     #Predicted size-mass for disks in disk=dominated galaxies
     ind = np.where(sam_stars_disk[0,0,:] != 0)
@@ -290,7 +296,14 @@ def plot_specific_am(plt, outdir, sam_stars_disk, sam_gas_disk):
     yplot = sam_gas_disk[0,0,ind] + 3.0
     errdn = sam_gas_disk[0,1,ind]
     errup = sam_gas_disk[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="ISM")
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='o',label="ISM")
+
+    ind = np.where(sam_halo[0,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = sam_halo[0,0,ind] + 3.0
+    errdn = sam_halo[0,1,ind]
+    errup = sam_halo[0,2,ind]
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="DM")
 
     common.prepare_legend(ax, ['k'], loc=2)
 
@@ -313,7 +326,15 @@ def plot_specific_am(plt, outdir, sam_stars_disk, sam_gas_disk):
     yplot = sam_gas_disk[3,0,ind] + 3.0
     errdn = sam_gas_disk[3,1,ind]
     errup = sam_gas_disk[3,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="ISM")
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='o',label="ISM")
+
+    ind = np.where(sam_halo[3,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = sam_halo[3,0,ind] + 3.0
+    errdn = sam_halo[3,1,ind]
+    errup = sam_halo[3,2,ind]
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="DM")
+
 
     common.prepare_legend(ax, ['k'], loc=2)
 
@@ -425,7 +446,8 @@ def main():
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mBH',
                            'rdisk_star', 'rbulge_star', 'type', 
                            'specific_angular_momentum_disk_star', 'specific_angular_momentum_bulge_star',
-                           'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas')}
+                           'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
+                           'lambda_subhalo', 'mvir_subhalo')}
 
     modeldir, outdir, obsdir = common.parse_args(requires_snapshot=False)
 
@@ -440,17 +462,18 @@ def main():
     disk_vel =  np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_vel =  np.zeros(shape = (len(zlist), 3, len(xmf)))
     sam_stars_disk = np.zeros(shape = (len(zlist), 3, len(xmf)))
-    sam_gas_disk = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    sam_gas_disk   = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    sam_halo       = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
     for index in range(0,4):
         hdf5_data = common.read_data(modeldir, zlist[index], fields, subvolume=0)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, bulge_vel, disk_vel, 
-                     sam_stars_disk, sam_gas_disk)
+                     sam_stars_disk, sam_gas_disk, sam_halo)
 
     plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size)
     plot_velocities(plt, outdir, disk_vel, bulge_vel)
-    plot_specific_am(plt, outdir, sam_stars_disk, sam_gas_disk)
+    plot_specific_am(plt, outdir, sam_stars_disk, sam_gas_disk, sam_halo)
     plot_sizes_combined(plt, outdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions)
