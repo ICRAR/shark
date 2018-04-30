@@ -107,7 +107,7 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer file, int snapshot){
 	comment = "number of batches analysed";
 	file.write_dataset("runInfo/batches", exec_params.simulation_batches, comment);
 
-	comment = "accuracy applied when solving the ODE system of the physical mo not in the subsequent snapshotdel.";
+	comment = "accuracy applied when solving the ODE system of the physical model.";
 	file.write_dataset("runInfo/ode_solver_precision", exec_params.ode_solver_precision, comment);
 
 	comment = "boolean parameter that sets whether the code ignores subhalos that have no descendants.";
@@ -565,7 +565,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	comment = "mass of metals locked in the ejected gas component [Msun/h]";
 	file.write_dataset("Galaxies/mreheated_metals", mreheated_metals, comment);
 
-	comment = "cooling rate of the hot halo compoent [Msun/Gyr/h].";
+	comment = "cooling rate of the hot halo component [Msun/Gyr/h].";
 	file.write_dataset("Galaxies/cooling_rate", cooling_rate, comment);
 
 	comment = "Dark matter mass of the host halo in which this galaxy resides [Msun/h]";

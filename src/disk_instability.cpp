@@ -52,7 +52,9 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				 * Estimate new bulge size.
 				 */
 				galaxy->bulge_gas.rscale = bulge_size(galaxy);
+				galaxy->bulge_stars.rscale = galaxy->bulge_gas.rscale;
 
+				//
 				/**
 				 * calculate bulge specific angular momentum based on assuming conservation.
 				 */
@@ -71,8 +73,6 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				galaxy->disk_gas.restore_baryon();
 
 				transfer_history_disk_to_bulge(galaxy, snapshot);
-
-				//darkmatterhalo->disk_sAM(*subhalo, *galaxy);
 
 				create_starburst(subhalo, galaxy, z, delta_t);
 			}
@@ -223,15 +223,12 @@ void DiskInstability::effective_angular_momentum(GalaxyPtr &galaxy){
 	double mgas  = galaxy->disk_gas.mass + galaxy->bulge_gas.mass;
 	double mstar = galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
 
-	// Calculate specific angular momentum only if masses are > 0.
-	if(mgas > 0){
-		galaxy->bulge_gas.sAM   = (AM_disk_gas + AM_bulge_gas) / mgas;
+	// Calculate effective specific angular momentum only if masses are > 0. Assume gas and stars mix up well.
+	if(mgas + mstar > 0){
+		double j = (AM_disk_stars + AM_bulge_stars + AM_disk_gas + AM_bulge_gas) / (mgas + mstar);
+		galaxy->bulge_gas.sAM   = j;
+		galaxy->bulge_stars.sAM = j;
 	}
-
-	if(mstar > 0){
-		galaxy->bulge_stars.sAM = (AM_disk_stars + AM_bulge_stars) / mstar;
-	}
-
 
 }
 

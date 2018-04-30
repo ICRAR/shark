@@ -388,9 +388,11 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	double mgas_ratio  = (central->gas_mass() + satellite->gas_mass()) / (central->stellar_mass() + central->gas_mass());
 
 	/**
-	 * First, calculate remnant galaxy's bulge size based on merger properties.
+	 * First, calculate remnant galaxy's bulge size based on merger properties. Assume both stars and gas
+	 * settle in the same configuration.
 	 */
-	central->bulge_gas.rscale = bulge_size_merger(mass_ratio, mgas_ratio, central, satellite, halo);
+	central->bulge_gas.rscale   = bulge_size_merger(mass_ratio, mgas_ratio, central, satellite, halo);
+	central->bulge_stars.rscale = central->bulge_gas.rscale;
 
 	// Black holes merge regardless of the merger type.
 	central->smbh += satellite->smbh;
@@ -427,12 +429,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		 * Transfer mass. In the case of minor mergers, transfer the satellite' stars to the central bulge, and the satellite' gas to the central's disk.
 		 */
 
-		// Catch the cases where the disk gas mass of the central is = 0 but the satellite is transfering gas to the central disk.
-		// In this case assume that gas conserves its specific AM.
-		if(central->disk_gas.mass == 0 and satellite->gas_mass()){
-			central->disk_gas.rscale = satellite->disk_gas.rscale;
-			central->disk_gas.sAM    = satellite->disk_gas.sAM;
-		}
+		double mgas_old = central->disk_gas.mass;
 
 		// Transfer mass.
 		central->bulge_stars.mass += satellite->stellar_mass();
@@ -447,13 +444,25 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 			//Make gas disk values 0.
 			central->disk_gas.restore_baryon();
 		}
+		else{
+			//Check cases where there is no disk in the central but the satellite is bringing gas.
+			if(central->disk_gas.mass > 0 and mgas_old <= 0){
+				double tot_am = satellite->disk_gas.angular_momentum() + satellite->bulge_gas.angular_momentum();
+				central->disk_gas.sAM = tot_am / satellite->gas_mass();
+				central->disk_gas.rscale = central->disk_gas.sAM / (2.0 * central->vmax) * constants::RDISK_HALF_SCALE;
+			}
+		}
+	}
 
-
+	//Assume both stars and gas mix up well during mergers.
+	if(central->bulge_mass() > 0){
+		double v_pseudo = std::sqrt(constants::G * central->bulge_mass() / central->bulge_gas.rscale);
+		central->bulge_gas.sAM   = central->bulge_gas.rscale * v_pseudo;
+		central->bulge_stars.sAM = central->bulge_gas.sAM;
 	}
 
 	// Calculate specific angular momentum after mass was transferred to the bulge.
 	auto subhalo = halo->central_subhalo;
-	darkmatterhalo->bulge_sAM(*subhalo, *central);
 
 	if(std::isnan(central->bulge_stars.mass)){
 		std::ostringstream os;

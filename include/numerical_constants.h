@@ -198,6 +198,9 @@ namespace constants {
 	/* define a maximum cooling luminosity in units of 10^40erg/s.*/
 	constexpr float MAXLUM = 1e30;
 
+	/* Conversion between j/v and the half-mass radius from EAGLE*/
+	constexpr float EAGLEJconv = 0.47714285714;
+
 };
 
 }  // namespace shark

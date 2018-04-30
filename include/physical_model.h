@@ -101,13 +101,12 @@ public:
 			mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
 		}
 		double rgas       = galaxy.disk_gas.rscale; //gas scale radius.
-		double vgal       = galaxy.disk_gas.sAM / (2.0 * galaxy.disk_gas.rscale / constants::RDISK_HALF_SCALE);
+		double vgal       = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale * constants::EAGLEJconv;
 
 		if(rgas <= 0){
 			//In this case assign a scalelength due to the cooling gas.
-			double rs = subhalo.cold_halo_gas.sAM / (2.0 * galaxy.vmax);
-			rgas = rs * constants::RDISK_HALF_SCALE ;
-			vgal = subhalo.cold_halo_gas.sAM / (2.0 * rs) ;
+			rgas = subhalo.cold_halo_gas.sAM / galaxy.vmax * constants::EAGLEJconv;
+			vgal = subhalo.cold_halo_gas.sAM / rgas * constants::EAGLEJconv;
 		}
 
 		double rstar      = galaxy.disk_stars.rscale; //stellar scale radius.
@@ -130,7 +129,7 @@ public:
 		double rgas       = galaxy.bulge_gas.rscale; //gas scale radius.
 		double rstar      = galaxy.bulge_stars.rscale; //stellar scale radius.
 		double vsubh      = subhalo.Vvir;
-		double vgal       = galaxy.bulge_gas.sAM / (2.0 * galaxy.bulge_gas.rscale / constants::RDISK_HALF_SCALE);
+		double vgal       = galaxy.bulge_gas.sAM / galaxy.bulge_gas.rscale;
 		bool   burst      = true;
 
 		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);

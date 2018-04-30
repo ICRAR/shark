@@ -89,7 +89,6 @@ StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParame
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
 								          bool burst, double vgal, double &jrate, double jgas) {
 
-
 	if (mcold <= constants::EPS3 or rgas <= constants::EPS6 ) {
 		if(mcold > constants::EPS3 and rgas <= 0){
 			std::ostringstream os;
@@ -151,31 +150,34 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 	result = cosmology->physical_to_comoving_mass(result);
 
-	// Check whether user wishes to calculate angular momentum transfer from gas to stars.
-	if(parameters.angular_momentum_transfer){
-		auto f_j = [](double r, void *ctx) -> double {
-			StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
-			return r * sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
-		};
+	//Avoid AM calculation in the case of starbursts.
+	if(!burst){
+		// Check whether user wishes to calculate angular momentum transfer from gas to stars.
+		if(parameters.angular_momentum_transfer){
+			auto f_j = [](double r, void *ctx) -> double {
+				StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
+				return r * sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
+			};
 
-		StarFormationAndProps sf_and_props = {this, &props};
-		// Adopt 5% accuracy for star formation solution.
-		double jSFR = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
-		jrate = cosmology->physical_to_comoving_mass(jSFR) * vgal; //assumes a flat rotation curve.
+			StarFormationAndProps sf_and_props = {this, &props};
+			// Adopt 5% accuracy for star formation solution.
+			double jSFR = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+			jrate = cosmology->physical_to_comoving_mass(jSFR) * vgal; //assumes a flat rotation curve.
 
-		double effecj = jrate / result;
-		// Avoid negative values.
-		if(jrate < 0){
-			jrate = 0.0;
+			double effecj = jrate / result;
+			// Avoid negative values.
+			if(jrate < 0){
+				jrate = 0.0;
+			}
+			//Assign maximum value to be jgas.
+			if(effecj > jgas and jgas > 0){
+				jrate = result * jgas;
+			}
 		}
-		//Assign maximum value to be jgas.
-		if(effecj > jgas and jgas > 0){
+		else{
+			// case that assumes stellar/gas components have the same sAM.
 			jrate = result * jgas;
 		}
-	}
-	else{
-		// case that assumes stellar/gas components have the same sAM.
-		jrate = result * jgas;
 	}
 
 	if(mcold > 0 && result <= 0){
