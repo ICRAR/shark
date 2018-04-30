@@ -214,22 +214,6 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	// Redefine angular momentum ONLY if the new value is > 0.
 	if(y[11] > 0 and y[12] > 0){
 
-		// Define vgal before exchange of angular momentum. In the of first star formation episode, assign gas circular velocity
-		/*double v = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale;
-		double vstar = vgas;
-		if(galaxy.disk_stars.sAM > 0 and galaxy.disk_stars.rscale > 0){
-			vstar = galaxy.disk_stars.sAM / galaxy.disk_stars.rscale;
-		}*/
-
-		// WHY IS ALWAYS sAM OF THE STARS LARGER THAN THAT OF THE DISK??
-		/*double jold = galaxy.disk_gas.sAM;
-		double jnew = y[12] / galaxy.disk_gas.mass;
-		double rold = galaxy.disk_gas.rscale;
-		double rnew = jnew / vgas;
-		double rolds = galaxy.disk_stars.rscale;
-		double smform = y[11] - galaxy.disk_stars.mass;*/
-
-
 		galaxy.disk_stars.sAM          = y[11] / galaxy.disk_stars.mass;
 		galaxy.disk_gas.sAM            = y[12] / galaxy.disk_gas.mass;
 		subhalo.cold_halo_gas.sAM      = y[13] / subhalo.cold_halo_gas.mass;
@@ -246,7 +230,6 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 		}
 
 	}
-
 
 	/**
 	 * Check that metallicities are not negative. If they are, mass in metals is set to zero.

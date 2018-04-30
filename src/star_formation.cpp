@@ -23,7 +23,18 @@ struct galaxy_properties_for_integration {
 	bool burst;
 };
 
-StarFormationParameters::StarFormationParameters(const Options &options)
+StarFormationParameters::StarFormationParameters(const Options &options) :
+	model(BR06),
+	nu_sf(0),
+	Po(0),
+	beta_press(0),
+	Accuracy_SFeqs(0.05),
+	gas_velocity_dispersion(0),
+	sigma_HI_crit(0),
+	boost_starburst(1),
+	clump_factor_KMT09(1),
+	sigma_crit_KMT09(0),
+	angular_momentum_transfer(false)
 {
 	options.load("star_formation.model", model, true);
 	options.load("star_formation.nu_sf", nu_sf, true);

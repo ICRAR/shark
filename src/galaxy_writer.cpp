@@ -222,6 +222,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	vector<float> vvir_hosthalo;
 
 	vector<float> cnfw_subhalo;
+	vector<float> lambda_subhalo;
 
 	vector<float> position_x;
 	vector<float> position_y;
@@ -251,6 +252,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 			auto msubhalo = subhalo->Mvir;
 			auto vsubhalo = subhalo->Vcirc;
 			auto cnfw = subhalo->concentration;
+			auto lambda = subhalo->lambda;
 			auto subhalo_position = subhalo->position;
 			auto subhalo_velocity = subhalo->velocity;
 
@@ -350,15 +352,17 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 				double mvir_gal = 0 ;
 				double vmax_sub = 0;
 				double c_sub = 0;
+				double l_sub = 0;
 				xyz<float> pos;
 				xyz<float> vel;
 
 				if(galaxy->galaxy_type == Galaxy::CENTRAL || galaxy->galaxy_type == Galaxy::TYPE1){
 					mvir_gal = msubhalo;
 					vmax_sub = vsubhalo;
-					c_sub = cnfw;
-					pos = subhalo_position;
-					vel = subhalo_velocity;
+					c_sub    = cnfw;
+					l_sub    = lambda;
+					pos      = subhalo_position;
+					vel      = subhalo_velocity;
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions and velocities.
@@ -374,6 +378,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 				vmax_subhalo.push_back(vmax_sub);
 				vvir_hosthalo.push_back(vhalo);
 				cnfw_subhalo.push_back(c_sub);
+				lambda_subhalo.push_back(l_sub);
 
 				// Galaxy position and velocity.
 				position_x.push_back(pos.x);
@@ -442,6 +447,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	REPORT(vmax_subhalo);
 	REPORT(vvir_hosthalo);
 	REPORT(cnfw_subhalo);
+	REPORT(lambda_subhalo);
 	REPORT(position_x);
 	REPORT(position_y);
 	REPORT(position_z);
@@ -574,8 +580,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	comment = "Virial velocity of the dark matter halo in which this galaxy resides [km/s]";
 	file.write_dataset("Galaxies/vvir_hosthalo", vvir_hosthalo, comment);
 
-	comment = "NFW concentration parameter of the dark matter halo in which this galaxy resides [dimensionless]";
+	comment = "NFW concentration parameter of the dark matter subhalo in which this galaxy resides [dimensionless]";
 	file.write_dataset("Galaxies/cnfw_subhalo", cnfw_subhalo, comment);
+
+	comment = "Spin parameter of the dark matter subhalo in which this galaxy resides [dimensionless]";
+	file.write_dataset("Galaxies/lambda_subhalo", lambda_subhalo, comment);
 
 	//Galaxy position
 	comment = "position component x of galaxy [cMpc/h]";
