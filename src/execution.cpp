@@ -15,17 +15,7 @@
 namespace shark {
 
 
-ExecutionParameters::ExecutionParameters(const Options &options) :
-	output_snapshots(),
-	output_format(Options::HDF5),
-	output_directory(),
-	name_model(),
-	simulation_batches(),
-	skip_missing_descendants(true),
-	warn_on_missing_descendants(true),
-	ode_solver_precision(),
-	output_sf_histories(false),
-	snapshots_sf_histories()
+ExecutionParameters::ExecutionParameters(const Options &options)
 {
 	options.load("execution.output_snapshots", output_snapshots, true);
 	options.load("execution.output_format", output_format, true);

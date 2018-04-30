@@ -21,8 +21,8 @@ class DiskInstabilityParameters {
 public:
 	DiskInstabilityParameters(const Options &options);
 
-	float stable;
-	float fint;
+	float stable = 0;
+	float fint = 0;
 };
 
 class DiskInstability{

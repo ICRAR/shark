@@ -63,15 +63,15 @@ public:
 
 	GasCoolingParameters(const Options &options);
 
-	double rcore;
-	double pre_enrich_z;
-	double tau_cooling;
+	double rcore = 0;
+	double pre_enrich_z = 1e-7;
+	double tau_cooling = 0;
 
-	LambdaCoolingModel lambdamodel;
-	CoolingModel model;
+	LambdaCoolingModel lambdamodel = CLOUDY;
+	CoolingModel model = CROTON06;
 
 	//cooling tables
-	CoolingTable cooling_table; //these should be an array of parameters.
+	CoolingTable cooling_table {}; //these should be an array of parameters.
 
 
 private:

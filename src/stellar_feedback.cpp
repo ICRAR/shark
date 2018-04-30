@@ -29,19 +29,7 @@
 
 namespace shark {
 
-StellarFeedbackParameters::StellarFeedbackParameters(const Options &options) :
-	eps_halo(1),
-	vkin_sn(0),
-	beta_disk(0),
-	beta_halo(0),
-	v_sn(0),
-	redshift_power(0),
-	eps_disk(1),
-	eta_cc(0),
-	e_sn(0),
-	model(FIRE),
-	galaxy_scaling(false),
-	radial_feedback(false)
+StellarFeedbackParameters::StellarFeedbackParameters(const Options &options)
 {
 
 	double epsilon_cc = 0, energy=0;

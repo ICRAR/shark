@@ -14,10 +14,7 @@
 
 namespace shark {
 
-ReincorporationParameters::ReincorporationParameters(const Options &options):
-		alpha_reheat(0),
-		mhalo_norm(0),
-		halo_mass_power(0)
+ReincorporationParameters::ReincorporationParameters(const Options &options)
 {
 	options.load("reincorporation.alpha_reheat",alpha_reheat);
 	options.load("reincorporation.mhalo_norm",mhalo_norm);

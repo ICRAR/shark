@@ -34,14 +34,13 @@ class GalaxyMergerParameters {
 		 * - jiang08: parameters of the best fit dynamical timescale of Jiang et al. (2008).
 		 * - min_mass: minimum mass allowed in bulges. This is to avoid long tails in the star formation histories of bulges.
 		 */
-
-		float major_merger_ratio;
-		float minor_merger_burst_ratio;
-		float gas_fraction_burst_ratio;
-		int merger_random_seed;
-		float tau_delay;
-		std::vector<double> jiang08;
-		float mass_min;
+		float major_merger_ratio = 0;
+		float minor_merger_burst_ratio = 0;
+		float gas_fraction_burst_ratio = 0;
+		int merger_random_seed = -1;
+		float tau_delay = 0.05;
+		std::vector<double> jiang08 {4};
+		float mass_min = 0;
 
 		/**
 		 * Sizes parameters:
@@ -51,10 +50,10 @@ class GalaxyMergerParameters {
 		 * - merger_ratio_dissipation: parameter that defines the merger mass ratio above which dissipation is triggered.
 		 */
 
-		float f_orbit;
-		float cgal;
-		float merger_ratio_dissipation;
-		double fgas_dissipation;
+		float f_orbit = 1;
+		float cgal = 0.5;
+		float merger_ratio_dissipation = 0;
+		double fgas_dissipation = 0;
 
 };
 

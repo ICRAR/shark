@@ -39,17 +39,17 @@ class SimulationParameters {
 public:
 	SimulationParameters(const Options &options);
 
-	float volume;
-	float particle_mass;
+	float volume = 0;
+	float particle_mass = 0;
 
-	int min_snapshot;
-	int max_snapshot;
+	int min_snapshot = 0;
+	int max_snapshot = 0;
 
-	std::string sim_name;
+	std::string sim_name {};
 
-	std::string tree_files_prefix;
+	std::string tree_files_prefix {"tree."};
 
-	std::map<int,double> redshifts;
+	std::map<int,double> redshifts {};
 
 
 	void load_simulation_tables(const std::string &redshift_file);

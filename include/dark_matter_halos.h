@@ -35,9 +35,9 @@ public:
 		COLE00
 	};
 
-	DarkMatterProfile haloprofile;
-	SizeModel sizemodel;
-	bool random_lambda;
+	DarkMatterProfile haloprofile = NFW;
+	SizeModel sizemodel = MO98;
+	bool random_lambda = false;
 
 };
 

@@ -20,10 +20,7 @@
 
 namespace shark {
 
-DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options) :
-	haloprofile(NFW),
-	sizemodel(MO98),
-	random_lambda()
+DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 {
 	int lambda;
 	options.load("dark_matter_halo.halo_profile", haloprofile);

@@ -5,23 +5,15 @@
  *      Author: clagos
  */
 
-#include <cmath>
-
 #include "recycling.h"
 
 namespace shark {
 
-RecyclingParameters::RecyclingParameters(const Options &options) :
-	yield(0),
-	recycle(0),
-	zsun(0)
+RecyclingParameters::RecyclingParameters(const Options &options)
 {
 	options.load("recycling.yield", yield, true);
 	options.load("recycling.recycle", recycle, true);
 	options.load("recycling.zsun", zsun, true);
-
 }
 
 }
-
-

@@ -22,9 +22,9 @@ class ReincorporationParameters{
 public:
 	ReincorporationParameters(const Options &options);
 
-	double alpha_reheat;
-	double mhalo_norm;
-	double halo_mass_power;
+	double alpha_reheat = 0;
+	double mhalo_norm = 0;
+	double halo_mass_power = 0;
 
 };
 

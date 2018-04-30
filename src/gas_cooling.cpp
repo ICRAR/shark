@@ -69,13 +69,7 @@ std::vector<double> CoolingTable::get_lambda()
 	return lambda_values;
 }
 
-GasCoolingParameters::GasCoolingParameters(const Options &options) :
-	rcore(0),
-	pre_enrich_z(1e-7),
-	lambdamodel(CLOUDY),
-	model(CROTON06),
-	tau_cooling(0),
-	cooling_table()
+GasCoolingParameters::GasCoolingParameters(const Options &options)
 {
 	string cooling_tables_dir;
 	options.load("gas_cooling.model", model, true);

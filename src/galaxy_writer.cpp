@@ -662,7 +662,7 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer file, int snapshot,
 	file.write_dataset("Global/SFR_quiescent",AllBaryons.SFR_disk, comment);
 
 	comment = "total star formation rate taking place in bulges in the simulated box [Msun/Gyr/h]";
-	file.write_dataset("Global/SFR_burst",AllBaryons.SFR_bulge), comment;
+	file.write_dataset("Global/SFR_burst",AllBaryons.SFR_bulge, comment);
 
 	comment = "total hot gas mass in halos in the simulated box [Msun/h]";
 	file.write_dataset("Global/mhot_halo",AllBaryons.get_masses(AllBaryons.mhot_halo),comment);
@@ -714,8 +714,6 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			vector<vector<float>> gas_metals_hs_bulge;
 
 			float defl_value = -1;
-
-			long gal_id = 1;
 
 			for (auto &halo: halos){
 				for (auto &subhalo: halo->all_subhalos()){
