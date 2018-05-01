@@ -313,7 +313,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk, sam_halo
     ax.plot(ms, js, 'ro',label="Obreschkow+14; stars")
     ax.plot(ms, jg, 'bo',label="Obreschkow+14; gas")
 
-    mg, ms, jg, js = common.load_observation(obsdir, 'LITTLETHINGS_Butler16.dat', [2,3,8,9])
+    mg, ms, jg, js = common.load_observation(obsdir, 'LITTLETHINGS_Butler16.dat', [1,3,7,9])
     ax.plot(ms, js, 'rx',label="Butler+16; stars")
     ax.plot(ms, jg, 'gx',label="Butler+16; gas")
 
