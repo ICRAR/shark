@@ -658,7 +658,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
                  sfe_cen, mainseq_sat, mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen,
                  mzr_sat, plotz, plotz_HImf):
 
-    (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rdisk, mBH, mHI, mH2,
+    (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rdisk_star, mBH, mHI, mH2,
      mgas_disk, mHI_bulge, mH2_bulge, mgas_bulge, mgas_metals_disk,
      mgas_metals_bulge, mstars_metals_disk, mstars_metals_bulge, typeg) = hdf5_data
 
@@ -817,7 +817,7 @@ def main():
     hist_H2mf_sat = np.zeros(shape = (len(zlist), len(mbins)))
 
     fields = {'Galaxies': ('sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge',
-                           'rdisk', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
+                           'rdisk_star', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mgas_metals_disk', 'mgas_metals_bulge',
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type')}

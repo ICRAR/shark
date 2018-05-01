@@ -250,7 +250,7 @@ def main():
     model_dir, output_dir, obs_dir, snapshot = common.parse_args()
 
     fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge',
-                           'rdisk', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
+                           'rdisk_star', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge')}
     hdf5_data = common.read_data(model_dir, snapshot, fields)
 
