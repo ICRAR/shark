@@ -22,15 +22,9 @@ namespace shark {
 
 DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 {
-	int lambda;
 	options.load("dark_matter_halo.halo_profile", haloprofile);
 	options.load("dark_matter_halo.size_model", sizemodel);
-	options.load("dark_matter_halo.lambda_random", lambda);
-
-	if(lambda == 1){
-		random_lambda = true;
-	}
-
+	options.load("dark_matter_halo.lambda_random", random_lambda);
 
 }
 
