@@ -73,13 +73,13 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     disk_size[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                 y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0))
+    ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.5))
     sam_stars_disk[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
-    ind = np.where((specific_angular_momentum_disk_gas > 0) & (mdisk+mbulge > 0))
+    ind = np.where((specific_angular_momentum_disk_gas > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.5))
     sam_gas_disk[index,:]   = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_gas[ind]) - np.log10(float(h0)))
-    ind = np.where((sam_subhalo > 0) & (mdisk+mbulge > 0))
+    ind = np.where((sam_subhalo > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.5))
     sam_halo[index,:]       = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(sam_subhalo[ind]) - np.log10(float(h0)))
 
@@ -92,8 +92,6 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     disk_size_cen[index,:]  = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                     y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
-
-    
     ind = np.where((mdisk > 0) & (typeg > 0))
     disk_size_sat[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                     y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
