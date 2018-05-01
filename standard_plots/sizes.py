@@ -310,7 +310,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk, sam_halo
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.5,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.5,interpolate=True)
 
-    bt, ms, mg, js, jg = common.load_observation(obsdir, 'Obreschkow14_FP.dat', [3,7,8,12,13])
+    bt, ms, mg, js, jg = common.load_observation(obsdir, 'Obreschkow14_FP.dat', [2,7,8,12,13])
     ind = np.where(bt < 0.2)
     ax.plot(ms[ind], js[ind], 'ro',fillstyle='full',label="Obreschkow+14")
     ax.plot(ms[ind], jg[ind], 'bo',fillstyle='full')
