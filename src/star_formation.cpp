@@ -140,7 +140,6 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	double rmax = 5.0*re;
 
 	StarFormationAndProps sf_and_props = {this, &props};
-	// Adopt 5% accuracy for star formation solution.
 	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
 
 	// Avoid negative values.
@@ -160,15 +159,17 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 			};
 
 			StarFormationAndProps sf_and_props = {this, &props};
-			// Adopt 5% accuracy for star formation solution.
 			double jSFR = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
 			jrate = cosmology->physical_to_comoving_mass(jSFR) * vgal; //assumes a flat rotation curve.
 
-			double effecj = jrate / result;
+
 			// Avoid negative values.
 			if(jrate < 0){
 				jrate = 0.0;
 			}
+
+			double effecj = jrate / result;
+
 			//Assign maximum value to be jgas.
 			if(effecj > jgas and jgas > 0){
 				jrate = result * jgas;
