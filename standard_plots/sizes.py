@@ -110,7 +110,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     
 
 
-def plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size):
+def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
 
     fig = plt.figure(figsize=(5,9.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm stars,disk}/M_{\odot})$"
@@ -144,15 +144,18 @@ def plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size):
     a = 5.56
     aerr = 1.745
     b = 0.274
+    ind = np.where(xmf < 10.3)
     rL16 = np.log10(a*pow((pow(10.0,xmf)/1e10),b))
-    rL16Low  = np.log10((a-aerr)*pow((pow(10.0,xmf)/1e10),b))
-    rL16High = np.log10((a+aerr)*pow((pow(10.0,xmf)/1e10),b))
 
-    ax.plot(xmf,rL16,'b', linestyle='solid', label ='L16 disks')
-    ax.plot(xmf,rL16Low,'b', linestyle='dotted')
-    ax.plot(xmf,rL16High,'b', linestyle='dotted')
+    ax.plot(xmf[ind],rL16[ind],'b', linestyle='solid', label ='L16 disks')
 
-    common.prepare_legend(ax, ['b','k','r'], loc=2)
+
+    m,r = common.load_observation(obsdir, 'rdisk_L16.dat', [0,1])
+    ax.plot(m[0:36], r[0:36], linestyle='dotted',color='b',label="50th, 68th, 90th")
+    ax.plot(m[38:83], r[38:83], linestyle='dotted',color='b')
+    ax.plot(m[85:128], r[85:129], linestyle='dotted',color='b')
+
+    common.prepare_legend(ax, ['b','b','k','r'], loc=2)
 
     # ETGs ##################################
     xtit = "$\\rm log_{10} (\\rm M_{\\rm stars, bulge}/M_{\odot})$"
@@ -175,9 +178,9 @@ def plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size):
         ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk bulges")
 
     #Lange et al. (2016)
-    a = 1.819
+    a = 2.319
     aerr = 1.186
-    b = 0.46
+    b = 0.19565217391
     a2 = 1.390
     aerr2 = 0.9
     b2 = 0.624
@@ -185,23 +188,19 @@ def plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size):
     ind = np.where(xmf <= 10.3)
 
     rL16 = np.log10(a*pow((pow(10.0,xmf[ind])/1e10),b))
-    rL16Low  = np.log10((a-aerr)*pow((pow(10.0,xmf[ind])/1e10),b))
-    rL16High = np.log10((a+aerr)*pow((pow(10.0,xmf[ind])/1e10),b))
-
     ax.plot(xmf[ind],rL16,'r', linestyle='solid', label ='L16 $M_{\\rm stars}<2\\times 10^{10}\\rm M_{\odot}$')
-    ax.plot(xmf[ind],rL16Low,'r', linestyle='dotted')
-    ax.plot(xmf[ind],rL16High,'r', linestyle='dotted')
 
-    ind = np.where(xmf >= 10.3)
+    ind = np.where((xmf >= 10.3) & (xmf < 11.5))
     rL16_2 = np.log10(a2*pow((pow(10.0,xmf[ind])/1e10),b2))
-    rL16Low_2  = np.log10((a2-aerr2)*pow((pow(10.0,xmf[ind])/1e10),b2))
-    rL16High_2 = np.log10((a2+aerr2)*pow((pow(10.0,xmf[ind])/1e10),b2))
 
     ax.plot(xmf[ind],rL16_2,'m', linestyle='solid', label ='L16 $M_{\\rm stars}>2\\times 10^{10}\\rm M_{\odot}$')
-    ax.plot(xmf[ind],rL16Low_2,'m', linestyle='dotted')
-    ax.plot(xmf[ind],rL16High_2,'m', linestyle='dotted')
+    
+    m,r = common.load_observation(obsdir, 'rbulge_L16.dat', [0,1])
+    ax.plot(m[0:39], r[0:39], linestyle='dotted',color='r',label="50th, 68th, 90th")
+    ax.plot(m[41:76], r[41:76], linestyle='dotted',color='r')
+    ax.plot(m[78:115], r[78:115], linestyle='dotted',color='r')
 
-    common.prepare_legend(ax, ['r','m','k'], loc=2)
+    common.prepare_legend(ax, ['r','m','r','k'], loc=2)
     common.savefig(outdir, fig, 'sizes.pdf')
 
 
@@ -311,7 +310,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk, sam_halo
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.5,interpolate=True)
 
     bt, ms, mg, js, jg = common.load_observation(obsdir, 'Obreschkow14_FP.dat', [2,7,8,12,13])
-    ind = np.where(bt < 0.2)
+    ind = np.where(bt < 0.5)
     ax.plot(ms[ind], js[ind], 'ro',fillstyle='full',label="Obreschkow+14")
     ax.plot(ms[ind], jg[ind], 'bo',fillstyle='full')
 
@@ -491,7 +490,7 @@ def main():
                      disk_size_sat, disk_size_cen, BT_fractions, bulge_vel, disk_vel, 
                      sam_stars_disk, sam_gas_disk, sam_halo)
 
-    plot_sizes(plt, outdir, disk_size_cen, disk_size_sat, bulge_size)
+    plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size)
     plot_velocities(plt, outdir, disk_vel, bulge_vel)
     plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk, sam_halo)
     plot_sizes_combined(plt, outdir, rcomb)
