@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from scipy.weave.ext_tools import indent
 """Size plots"""
 
 import functools
@@ -309,13 +310,14 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk, sam_halo
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.5,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.5,interpolate=True)
 
-    ms, mg, js, jg = common.load_observation(obsdir, 'Obreschkow14_FP.dat', [7,8,12,13])
-    ax.plot(ms, js, 'ro',label="Obreschkow+14")
-    ax.plot(ms, jg, 'bo')
+    bt, ms, mg, js, jg = common.load_observation(obsdir, 'Obreschkow14_FP.dat', [3,7,8,12,13])
+    ind = np.where(bt < 0.2)
+    ax.plot(ms[ind], js[ind], 'ro',fillstyle='full',label="Obreschkow+14")
+    ax.plot(ms[ind], jg[ind], 'bo',fillstyle='full')
 
     mg, ms, jg, js = common.load_observation(obsdir, 'LITTLETHINGS_Butler16.dat', [1,3,7,9])
-    ax.plot(ms, js, 'rs',label="Butler+16")
-    ax.plot(ms, jg, 'bs')
+    ax.plot(ms, js, 'rs',fillstyle='full',label="Butler+16")
+    ax.plot(ms, jg, 'bs',fillstyle='full')
 
     common.prepare_legend(ax, ['k'], loc=2)
 
