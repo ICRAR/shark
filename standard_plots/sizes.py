@@ -310,12 +310,12 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk, sam_halo
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.5,interpolate=True)
 
     ms, mg, js, jg = common.load_observation(obsdir, 'Obreschkow14_FP.dat', [7,8,12,13])
-    ax.plot(ms, js, 'ro',label="Obreschkow+14; stars")
-    ax.plot(ms, jg, 'bo',label="Obreschkow+14; gas")
+    ax.plot(ms, js, 'ro',label="Obreschkow+14")
+    ax.plot(ms, jg, 'bo')
 
     mg, ms, jg, js = common.load_observation(obsdir, 'LITTLETHINGS_Butler16.dat', [1,3,7,9])
-    ax.plot(ms, js, 'rx',label="Butler+16; stars")
-    ax.plot(ms, jg, 'gx',label="Butler+16; gas")
+    ax.plot(ms, js, 'rs',label="Butler+16")
+    ax.plot(ms, jg, 'bs')
 
     common.prepare_legend(ax, ['k'], loc=2)
 
