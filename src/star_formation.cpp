@@ -179,6 +179,10 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 			jrate = result * jgas;
 		}
 	}
+	else{
+		//In the case of starbursts.
+		jrate = 0;
+	}
 
 	if(mcold > 0 && result <= 0){
 		std::ostringstream os;

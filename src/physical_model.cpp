@@ -101,7 +101,6 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	// Keeps track of total stellar mass formed.
 	f[10] = SFR;
 
-	double jin = jrate / SFR;
 	// Solve angular momentum equations.
 	f[11] = rsub * jrate;
 	f[12] = mcoolrate * params->jcold_halo - (rsub + betaj_1) * jrate;
@@ -219,9 +218,9 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 		galaxy.disk_stars.rscale = galaxy.disk_stars.sAM / galaxy.vmax * constants::EAGLEJconv;
 		galaxy.disk_gas.rscale   = galaxy.disk_gas.sAM   / galaxy.vmax * constants::EAGLEJconv;
 
-		if(galaxy.disk_stars.rscale <= constants::EPS6 and galaxy.disk_stars.mass > 0){
+		if(galaxy.disk_stars.rscale <= constants::tolerance and galaxy.disk_stars.mass > 0){
 			std::ostringstream os;
-			os << "Galaxy with extremely small size, rdisk_stars < 1-6, in physical model";
+			os << "Galaxy with extremely small size, rdisk_stars < 1e-10, in physical model";
 			throw invalid_argument(os.str());
 		}
 
