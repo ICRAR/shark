@@ -43,9 +43,10 @@ void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_tre
 
 	auto timer = Timer();
 	for(int snapshot = sim_params.min_snapshot; snapshot <= sim_params.max_snapshot - 1; snapshot++) {
+		auto z = sim_params.redshifts[snapshot];
 		for(auto &merger_tree: merger_trees) {
 			for(auto &halo: merger_tree->halos[snapshot]) {
-				if (create_galaxies(halo, sim_params.redshifts[snapshot])) {
+				if (create_galaxies(halo, z)) {
 					galaxies_added++;
 					total_baryon += halo->central_subhalo->hot_halo_gas.mass;
 				}
