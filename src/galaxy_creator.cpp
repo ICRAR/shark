@@ -22,10 +22,9 @@
 // MA 02111-1307  USA
 //
 
-#include <chrono>
-
 #include "galaxy_creator.h"
 #include "logging.h"
+#include "timer.h"
 
 namespace shark {
 
@@ -42,7 +41,7 @@ void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_tre
 	int galaxies_added = 0;
 	double total_baryon = 0.0;
 
-	auto start = std::chrono::steady_clock::now();
+	auto timer = Timer();
 	for(int snapshot = sim_params.min_snapshot; snapshot <= sim_params.max_snapshot - 1; snapshot++) {
 		for(auto &merger_tree: merger_trees) {
 			for(auto &halo: merger_tree->halos[snapshot]) {
@@ -56,8 +55,7 @@ void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_tre
 		AllBaryons.baryon_total_created[snapshot] += total_baryon;
 	}
 
-	auto d = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-	LOG(info) << "Created " << galaxies_added << " initial galaxies in " << d << " [ms]";
+	LOG(info) << "Created " << galaxies_added << " initial galaxies in " << timer;
 }
 
 bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z)

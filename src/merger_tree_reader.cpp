@@ -7,7 +7,6 @@
 
 #include <array>
 #include <algorithm>
-#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <sstream>
