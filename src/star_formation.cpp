@@ -132,6 +132,25 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	StarFormationAndProps sf_and_props = {this, &props};
 	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
 
+	double SFR = 0;
+
+	try{
+		SFR = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+	} catch (gsl_error &e) {
+		auto gsl_errno = e.get_gsl_errno();
+		std::ostringstream os;
+		os << "SFR integration failed with GSL error number " << gsl_errno << ": ";
+		os << gsl_strerror(gsl_errno) << ", reason=" << e.get_reason();
+		os << ". We'll attempt manual integration now";
+		LOG(warning) << os.str();
+
+		// Perform manual integration.
+		// TODO: check that error is affordable (i.e., maybe the error is really bad and the
+		// program should stop)
+		SFR = manual_integral(f, &sf_and_props, rmin, rmax);
+	}
+	result = SFR;
+
 	// Avoid negative values.
 	if(result < 0){
 		result = 0.0;
@@ -167,10 +186,10 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 				os << ". We'll attempt manual integration now";
 				LOG(warning) << os.str();
 
-				// TODO: perform manual integration, but only if the error is
-				// affordable (i.e., maybe the error is really bad and the
+				// Perform manual integration.
+				// TODO: check that error is affordable (i.e., maybe the error is really bad and the
 				// program should stop)
-				jSFR = 0;
+				jSFR = manual_integral(f_j, &sf_and_props, rmin, rmax);
 			}
 
 			jrate = cosmology->physical_to_comoving_mass(jSFR) * vgal; //assumes a flat rotation curve.
@@ -409,7 +428,24 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	double rmax = 3.0*re;
 
 	StarFormationAndProps sf_and_props = {this, &props};
-	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, 0.05);
+
+	// React to integration errors by using a way-simpler 4-point manual integration
+	double result = 0;
+	try{
+		result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+	} catch (gsl_error &e) {
+		auto gsl_errno = e.get_gsl_errno();
+		std::ostringstream os;
+		os << "jSFR integration failed with GSL error number " << gsl_errno << ": ";
+		os << gsl_strerror(gsl_errno) << ", reason=" << e.get_reason();
+		os << ". We'll attempt manual integration now";
+		LOG(warning) << os.str();
+
+		// Perform manual integration.
+		// TODO: check that error is affordable (i.e., maybe the error is really bad and the
+		// program should stop)
+		result = manual_integral(f, &sf_and_props, rmin, rmax);
+	}
 
 	// Avoid negative values.
 	if(result <0){
@@ -468,6 +504,31 @@ void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double 
 		*m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, zgas, z);
 		*m_atom_b = galaxy->bulge_gas.mass - *m_mol_b;
 	}
+}
+
+double StarFormation::manual_integral(func_t f, void * params, double rmin, double rmax){
+
+	double integral = 0;
+
+	int nbins = 30;
+
+	// Perform integral in bins of log(r+1).
+	double rminl = std::log10(rmin+1);
+	double rmaxl = std::log10(rmax+1);
+
+	double rbin = (rmaxl - rminl) / nbins;
+
+	for (int bin=0; bin<nbins-1; bin++){
+		double ri = rminl + rbin * bin;
+		double rf = rminl + rbin * (bin+1);
+
+		ri = std::pow(10.0,ri) - 1.0;
+		rf = std::pow(10.0,rf) - 1.0;
+		double rx =(rf + ri) * 0.5 ;
+
+		integral += f(rx, &params) * (rf - ri);
+	}
+
 }
 
 }  // namespace shark

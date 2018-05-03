@@ -90,6 +90,8 @@ class StarFormation {
 public:
 	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, std::shared_ptr<Cosmology> cosmology);
 
+	typedef double (*func_t)(double x, void *);
+
 	/**
 	 * All input quantities should be in comoving units.
 	 */
@@ -97,6 +99,8 @@ public:
 							   bool burst, double vgal, double &jrate, double jgas);
 
 	double star_formation_rate_surface_density(double r, void * params);
+
+	double manual_integral(func_t f, void * params, double rmin, double rmax);
 
 	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r);
 
