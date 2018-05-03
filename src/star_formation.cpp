@@ -6,6 +6,7 @@
  */
 
 #include <cmath>
+#include <gsl/gsl_errno.h>
 
 #include "components.h"
 #include "logging.h"
@@ -148,7 +149,25 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 			};
 
 			StarFormationAndProps sf_and_props = {this, &props};
-			double jSFR = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+
+			// React to integration errors by using a way-simpler 4-point manual integration
+			double jSFR;
+			try{
+				jSFR = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+			} catch (gsl_error &e) {
+				auto gsl_errno = e.get_gsl_errno();
+				std::ostringstream os;
+				os << "jSFR integration failed with GSL error number " << gsl_errno << ": ";
+				os << gsl_strerror(gsl_errno) << ", reason=" << e.get_reason();
+				os << ". We'll attempt manual integration now";
+				LOG(warning) << os.str();
+
+				// TODO: perform manual integration, but only if the error is
+				// affordable (i.e., maybe the error is really bad and the
+				// program should stop)
+				jSFR = 0;
+			}
+
 			jrate = cosmology->physical_to_comoving_mass(jSFR) * vgal; //assumes a flat rotation curve.
 
 
