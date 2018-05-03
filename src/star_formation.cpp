@@ -143,6 +143,11 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	if(!burst){
 		// Check whether user wishes to calculate angular momentum transfer from gas to stars.
 		if(parameters.angular_momentum_transfer){
+
+			// TODO: it would be nice to somehow reuse some of the values from the previous integration
+			// in here. At least initially during the first round the integration algorithm will run
+			// over the same set of 'r' that it used during the first round of the previous integration,
+			// so we could save ourselves lots of calculation by storing those values and reusing them here
 			auto f_j = [](double r, void *ctx) -> double {
 				StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 				return r * sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
