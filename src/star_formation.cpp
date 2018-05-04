@@ -529,6 +529,13 @@ double StarFormation::manual_integral(func_t f, void * params, double rmin, doub
 		integral += f(rx, &params) * (rf - ri);
 	}
 
+	// Avoid negative numbers.
+	if(integral< 0){
+		integral = 0;
+	}
+
+	return integral;
+
 }
 
 }  // namespace shark
