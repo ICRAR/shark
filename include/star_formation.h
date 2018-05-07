@@ -116,11 +116,11 @@ public:
 		return integrator.reset_num_intervals();
 	}
 
-	double molecular_hydrogen(double mcold, double mstars, double rgas, double rstars, double zgas, double z);
+	double molecular_hydrogen(double mcold, double mstars, double rgas, double rstars, double zgas, double z, double &jmol,  double jgas, double vgal, bool bulge, bool jcalc);
 
 	double molecular_surface_density(double r, void * params);
 
-	void get_molecular_gas(const GalaxyPtr &galaxy, double z, double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b);
+	void get_molecular_gas(const GalaxyPtr &galaxy, double z, double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b, double *jatom, double *jmol, bool jcalc);
 
 	double ionised_gas_fraction(double mgas, double rgas, double z);
 

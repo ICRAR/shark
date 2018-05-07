@@ -201,6 +201,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	vector<float> rdisk_gas;
 	vector<float> rbulge_gas;
 	vector<float> sAM_disk_gas;
+	vector<float> sAM_disk_gas_atom;
+	vector<float> sAM_disk_gas_mol;
 	vector<float> sAM_bulge_gas;
 
 	vector<float> rdisk_star;
@@ -271,12 +273,16 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 
 			for (auto &galaxy: subhalo->galaxies){
 
-				//Calculate molecular gass mass of disk and bulge:
+				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
 				double m_mol;
 				double m_atom;
 				double m_mol_b;
 				double m_atom_b;
-				starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b);
+				double jatom;
+				double jmol;
+
+				bool jcalc = true;
+				starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b, &jatom, &jmol, jcalc);
 
 				// Gas components separated into HI and H2.
 				mmol_disk.push_back(m_mol);
@@ -306,8 +312,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 				sfr_disk.push_back(galaxy->sfr_disk);
 				sfr_burst.push_back(galaxy->sfr_bulge);
 
-
-
 				// Black hole properties.
 				mBH.push_back(galaxy->smbh.mass);
 				mBH_acc_hh.push_back(galaxy->smbh.macc_hh);
@@ -318,6 +322,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 				rdisk_gas.push_back(galaxy->disk_gas.rscale);
 				rbulge_gas.push_back(galaxy->bulge_gas.rscale);
 				sAM_disk_gas.push_back(galaxy->disk_gas.sAM);
+				sAM_disk_gas_atom.push_back(jatom);
+				sAM_disk_gas_mol.push_back(jmol);
 				sAM_bulge_gas.push_back(galaxy->bulge_gas.sAM);
 
 				rdisk_star.push_back(galaxy->disk_stars.rscale);
@@ -432,6 +438,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	REPORT(rdisk_gas);
 	REPORT(rbulge_gas);
 	REPORT(sAM_disk_gas);
+	REPORT(sAM_disk_gas_atom);
+	REPORT(sAM_disk_gas_mol);
 	REPORT(sAM_bulge_gas);
 	REPORT(rdisk_star);
 	REPORT(rbulge_star);
@@ -549,6 +557,12 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 
 	comment = "specific angular momentum of the gas disk [km/s * cMpc/h]";
 	file.write_dataset("Galaxies/specific_angular_momentum_disk_gas", sAM_disk_gas, comment);
+
+	comment = "specific angular momentum of the atomic gas disk [km/s * cMpc/h]";
+	file.write_dataset("Galaxies/specific_angular_momentum_disk_gas_atom", sAM_disk_gas_atom, comment);
+
+	comment = "specific angular momentum of the molecular gas disk [km/s * cMpc/h]";
+	file.write_dataset("Galaxies/specific_angular_momentum_disk_gas_mol", sAM_disk_gas_mol, comment);
 
 	comment = "specific angular momentum of the gas bulge [km/s * cMpc/h]";
 	file.write_dataset("Galaxies/specific_angular_momentum_bulge_gas", sAM_bulge_gas, comment);
@@ -884,8 +898,11 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 	double m_atom;
 	double m_mol_b;
 	double m_atom_b;
+	double jatom, jmol;
 
-	starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b);
+	bool jcalc = true;
+
+	starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b, &jatom, &jmol, jcalc);
 
 	f << mstars_disk << " " << mstars_bulge << " " <<  m_atom + m_atom_b
 	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "

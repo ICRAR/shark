@@ -386,7 +386,8 @@ double StarFormation::gd14_sigma_norm(double d_mw, double u_mw){
 	return sigma_r1;
 }
 
-double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas, double rstar, double zgas, double z) {
+double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
+		double &jmol, double jgas, double vgal, bool bulge, bool jcalc) {
 
 	if (mcold <= 0 or rgas <= 0) {
 		return 0;
@@ -452,6 +453,65 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 		result = 0.0;
 	}
 
+	//Avoid AM calculation in the case of starbursts.
+	if(!bulge and jcalc){
+		// Check whether user wishes to calculate angular momentum transfer from gas to stars.
+		if(parameters.angular_momentum_transfer){
+
+			// TODO: it would be nice to somehow reuse some of the values from the previous integration
+			// in here. At least initially during the first round the integration algorithm will run
+			// over the same set of 'r' that it used during the first round of the previous integration,
+			// so we could save ourselves lots of calculation by storing those values and reusing them here
+			auto f_j = [](double r, void *ctx) -> double {
+				StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
+				return r * sf_and_props->star_formation->molecular_surface_density(r, sf_and_props->props);
+			};
+
+			StarFormationAndProps sf_and_props = {this, &props};
+
+			// React to integration errors by using a way-simpler 4-point manual integration
+			jmol = 0;
+			try{
+				jmol = integrator.integrate(f_j, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+			} catch (gsl_error &e) {
+				auto gsl_errno = e.get_gsl_errno();
+				std::ostringstream os;
+				os << "jSFR integration failed with GSL error number " << gsl_errno << ": ";
+				os << gsl_strerror(gsl_errno) << ", reason=" << e.get_reason();
+				os << ". We'll attempt manual integration now";
+				LOG(warning) << os.str();
+
+				// Perform manual integration.
+				// TODO: check that error is affordable (i.e., maybe the error is really bad and the
+				// program should stop)
+				jmol = manual_integral(f_j, &sf_and_props, rmin, rmax);
+			}
+
+			jmol = cosmology->physical_to_comoving_mass(jmol) * vgal; //assumes a flat rotation curve.
+
+			// Avoid negative values.
+			if(jmol < 0){
+				jmol = 0.0;
+			}
+
+			// Normalize by H2 mass.
+			jmol = jmol / result;
+
+			//Assign maximum value to be jgas.
+			if(jmol > jgas and jgas > 0){
+				jmol = jgas;
+			}
+		}
+		else{
+			// case that assumes stellar/gas components have the same sAM.
+			jmol = jgas;
+		}
+	}
+	else{
+		//In the case of bulges or the case where we do not need to calculate j (jcalc == false).
+		jmol = 0;
+	}
+
 	return cosmology->physical_to_comoving_mass(result);
 }
 
@@ -480,28 +540,46 @@ double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z){
 
 }
 
-void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b)
+void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double *m_mol, double *m_atom, double *m_mol_b, double *m_atom_b, double *jatom, double *jmol, bool jcalc)
 {
-	*m_mol = 0;
-	*m_atom = 0;
-	*m_mol_b = 0;
+	*m_mol    = 0;
+	*m_atom   = 0;
+	*m_mol_b  = 0;
 	*m_atom_b = 0;
+	*jmol     = 0;
+	*jatom    = 0;
 
 	double f_ion = 0;
 	double m_neutral = 0;
 	double zgas = 0;
+	bool bulge = true;
+	double jgas = 0;
+	double vgal = galaxy->vmax;
 
 	// Apply ionised fraction correction only in the case of disks.
 	if (galaxy->disk_gas.mass > 0) {
+		jgas = galaxy->disk_gas.sAM;
+		bulge = false;
+
 		f_ion = ionised_gas_fraction(galaxy->disk_gas.mass, galaxy->disk_gas.rscale, z);
 		zgas = galaxy->disk_gas.mass_metals / galaxy->disk_gas.mass;
 		m_neutral = (1-f_ion) * galaxy->disk_gas.mass;
-		*m_mol = (1-f_ion) * molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, zgas, z);
+
+		*m_mol = (1-f_ion) * molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, zgas, z, *jmol, jgas, vgal, bulge, jcalc);
 		*m_atom = m_neutral - *m_mol;
+
+		if(jcalc){
+			// Calculate total AM of molecular gas.
+			double mmol = *m_mol;
+			double sam_mol = *jmol;
+
+			// Calculate specific AM of atomic gas.
+			*jatom = (jgas * (1-f_ion) * galaxy->disk_gas.mass - sam_mol * mmol) / *m_atom;
+		}
 	}
 	if (galaxy->bulge_gas.mass > 0) {
 		zgas = galaxy->bulge_gas.mass_metals / galaxy->bulge_gas.mass;
-		*m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, zgas, z);
+		*m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, zgas, z, *jmol, jgas, vgal, bulge, jcalc);
 		*m_atom_b = galaxy->bulge_gas.mass - *m_mol_b;
 	}
 }

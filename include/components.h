@@ -238,6 +238,8 @@ public:
 	//save average star formation rates.
 	float sfr_disk;
 	float sfr_bulge;
+
+	//save maximum circular velocity.
 	float vmax;
 
 	//save star formation and gas history

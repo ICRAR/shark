@@ -236,7 +236,9 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 				double m_atom;
 				double m_mol_b;
 				double m_atom_b;
-				starformation.get_molecular_gas(galaxy, redshift, &m_mol, &m_atom, &m_mol_b, &m_atom_b);
+				double jatom, jmol;
+				bool jcalc = false;
+				starformation.get_molecular_gas(galaxy, redshift, &m_mol, &m_atom, &m_mol_b, &m_atom_b, &jatom, &jmol, jcalc);
 
 				mHI_total.mass += m_atom+m_atom_b;
 				mH2_total.mass += m_mol+m_mol_b;
