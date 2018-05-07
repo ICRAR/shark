@@ -543,34 +543,22 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
  		mbar_central = central->baryon_mass();
 
  		rcentral = central->composite_size();
-	}
-	else if (mass_ratio >= parameters.minor_merger_burst_ratio and mgas_ratio > parameters.gas_fraction_burst_ratio){
-		mbar_central = central->bulge_mass() + central->disk_gas.mass;
 
-		if(mbar_central > 0){
-			rcentral = (central->bulge_mass() * central->bulge_stars.rscale + central->disk_gas.rscale * central->disk_gas.mass)
-					/ mbar_central;
-		}
+ 		auto subhalo_central = halo->central_subhalo;
+
+ 		enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(*subhalo_central), subhalo_central->concentration);
+
+ 		//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
+ 		//the DM mass enclosed by rcentral.
+ 		mtotal_central = mbar_central + halo->Mvir * enc_mass;
 	}
 	else{
-		mbar_central = central->bulge_mass();
+		// In this case use the same equations as in major mergers, but changing the total central galaxy mass and size
+		// by the current bulge mass and size (as in Lacey+16).
+		mtotal_central = central->bulge_mass();
 
 		rcentral = central->bulge_size();
-
-		// In this case we only take into account stellar component of satellite to calculate the
-		// new bulge size.
-		mbar_satellite = satellite->stellar_mass();
-
-		rsatellite = satellite->stellar_size();
 	}
-
-	auto subhalo_central = halo->central_subhalo;
-
-	enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(*subhalo_central), subhalo_central->concentration);
-
-	//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
-	//the DM mass enclosed by rcentral.
-	mtotal_central = mbar_central + halo->Mvir * enc_mass;
 
 	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
 

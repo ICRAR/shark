@@ -453,6 +453,8 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 		result = 0.0;
 	}
 
+	result = cosmology->physical_to_comoving_mass(result);
+
 	//Avoid AM calculation in the case of starbursts.
 	if(!bulge and jcalc){
 		// Check whether user wishes to calculate angular momentum transfer from gas to stars.
@@ -512,7 +514,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 		jmol = 0;
 	}
 
-	return cosmology->physical_to_comoving_mass(result);
+	return result;
 }
 
 double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z){
