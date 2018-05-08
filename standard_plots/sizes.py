@@ -38,12 +38,15 @@ RExp = 1.67
 MpcToKpc = 1e3
 G    = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
 
-mlow = 8
-mupp = 12
+mlow = 6.5
+mupp = 12.5
 dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
 
+dmobs = 0.4
+mbins_obs = np.arange(mlow,mupp,dmobs)
+xmf_obs = mbins_obs + dmobs/2.0
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, bulge_vel, 
@@ -71,7 +74,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
                             y=np.log10((mdisk[ind]*rdisk[ind]  + mbulge[ind]*rbulge[ind])*MpcToKpc / (mdisk[ind]+mbulge[ind])))
     BT_fractions[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),y=mbulge[ind]/(mdisk[ind]+mbulge[ind]), xbins=xmf)
 
-    ind = np.where(mdisk > 0)
+    ind = np.where((mdisk > 0)  & (mdisk/(mdisk+mbulge) > 0.5))
     disk_size[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                 y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
@@ -95,15 +98,15 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     disk_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(vdisk[ind]))
 
-    ind = np.where((mdisk > 0) & (typeg == 0))
+    ind = np.where((mdisk > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) > 0.5))
     disk_size_cen[index,:]  = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                     y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where((mdisk > 0) & (typeg > 0))
+    ind = np.where((mdisk > 0) & (typeg > 0) & (mdisk/(mdisk+mbulge) > 0.5))
     disk_size_sat[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                     y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where(mbulge > 0)
+    ind = np.where((mbulge > 0) & (mbulge/(mbulge+mdisk) > 0.5))
     bulge_size[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
@@ -263,7 +266,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     fig = plt.figure(figsize=(5,9.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm j_{\\rm disk}/kpc\\, km s^{-1})$"
-    xmin, xmax, ymin, ymax = 8, 12, 1.5, 5
+    xmin, xmax, ymin, ymax = 7, 11.5, 1.5, 5
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -325,15 +328,54 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='g', alpha=0.5,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='g', alpha=0.5,interpolate=True)
 
+    bin_it = functools.partial(us.wmedians, xbins=xmf_obs)
+    
     bt, ms, mg, js, jg, jmol = common.load_observation(obsdir, 'Obreschkow14_FP.dat', [2,7,8,12,14,15])
-    ind = np.where(bt < 0.5)
-    ax.plot(ms[ind], js[ind], 'ro',fillstyle='full', label="Obreschkow+14")
-    ax.plot(ms[ind], jg[ind], 'bo',fillstyle='full')
-    ax.plot(ms[ind], jmol[ind], 'go',fillstyle='full')
+    
+    jobs_sm  = np.zeros(shape = (3, len(xmf_obs)))
+    jobs_hi  = np.zeros(shape = (3, len(xmf_obs)))
+    jobs_h2  = np.zeros(shape = (3, len(xmf_obs)))
+    
+    ind = np.where((bt < 0.5) & (ms > 9.7) )
+    jobs_sm = bin_it(x=ms[ind], y=js[ind])
+    jobs_hi = bin_it(x=ms[ind], y=jg[ind])
+    jobs_h2 = bin_it(x=ms[ind], y=jmol[ind])
+    
+    #ax.plot(ms[ind], js[ind], 'ro',fillstyle='none', label="Obreschkow+14")
+    #ax.plot(ms[ind], jg[ind], 'bo',fillstyle='none')
+    #ax.plot(ms[ind], jmol[ind], 'go',fillstyle='none')
+    
+    ind = np.where(jobs_sm[0,:] != 0)
+    yplot = jobs_sm[0,ind]
+    ax.plot(xmf_obs[ind], yplot[0], 'ro',fillstyle='full', label="Obreschkow+14 (med)")
+    ax.plot(xmf_obs[ind], yplot[0], 'r', linestyle='dotted')
+    
+    ind = np.where(jobs_hi[0,:] != 0)
+    yplot = jobs_hi[0,ind]
+    ax.plot(xmf_obs[ind],  yplot[0], 'bo',fillstyle='full')
+    ax.plot(xmf_obs[ind],  yplot[0], 'b', linestyle='dotted')
+    
+    ind = np.where(jobs_h2[0,:] != 0)
+    yplot = jobs_h2[0,ind]
+    ax.plot(xmf_obs[ind], yplot[0], 'go',fillstyle='full')
+    ax.plot(xmf_obs[ind], yplot[0], 'g', linestyle='dotted')
     
     mg, ms, jg, js = common.load_observation(obsdir, 'LITTLETHINGS_Butler16.dat', [1,3,7,9])
-    ax.plot(ms, js, 'rs',fillstyle='full',label="Butler+16")
-    ax.plot(ms, jg, 'bs',fillstyle='full')
+    jobs_sm = bin_it(x=ms, y=js)
+    jobs_hi = bin_it(x=ms, y=jg)
+    
+    ax.plot(ms, js, 'rs',fillstyle='none',label="Butler+16 (indiv)")
+    ax.plot(ms, jg, 'bs',fillstyle='none')
+    
+    ind = np.where(jobs_sm[0,:] != 0)
+    yplot = jobs_sm[0,ind]
+    #ax.plot(xmf_obs[ind], yplot[0], 'rs',fillstyle='full')
+    #ax.plot(xmf_obs[ind], yplot[0], 'r', linestyle='dotted')
+    
+    ind = np.where(jobs_hi[0,:] != 0)
+    yplot = jobs_hi[0,ind]
+    #ax.plot(xmf_obs[ind], yplot[0], 'bs',fillstyle='full')
+    #ax.plot(xmf_obs[ind], yplot[0], 'b', linestyle='dotted')
 
     common.prepare_legend(ax, ['k'], loc=2)
 
