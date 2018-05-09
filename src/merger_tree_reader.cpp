@@ -108,7 +108,6 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
 	vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
 
-
 	auto n_subhalos = Mvir.size();
 	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
 	if ( !n_subhalos ) {

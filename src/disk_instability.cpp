@@ -45,7 +45,7 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 
 	for (auto &subhalo: halo->all_subhalos()){
 		for (auto &galaxy: subhalo->galaxies){
-			double f = toomre_parameter(galaxy, subhalo);
+			double f = toomre_parameter(galaxy);
 			if(f < parameters.stable){
 
 				/**
@@ -81,9 +81,9 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 
 }
 
-double DiskInstability::toomre_parameter(GalaxyPtr &galaxy, SubhaloPtr &subhalo){
+double DiskInstability::toomre_parameter(GalaxyPtr &galaxy){
 
-	double vc = subhalo->Vcirc;
+	double vc = galaxy->vmax;
 	double md =  galaxy->disk_mass();
 	double rd = galaxy->disk_gas.rscale;
 
@@ -108,7 +108,7 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 		rd = (galaxy->disk_stars.rscale * galaxy->disk_stars.mass + galaxy->disk_gas.rscale * galaxy->disk_gas.mass) / md;
 	}
 	if(mb > 0){
-		rb = (galaxy->bulge_stars.rscale * galaxy->bulge_stars.mass + galaxy->bulge_gas.rscale * galaxy->bulge_gas.mass) / mb;
+		rb = galaxy->bulge_gas.rscale;
 	}
 	double c = merger_params.cgal;
 
@@ -124,7 +124,7 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 	double rnew = c * std::pow((md + mb),2.0) / (bc + dc + combined_c);
 
 
-	if(std::isnan(rnew) or rnew <= 0 or rnew > 0.1){
+	if(std::isnan(rnew) or rnew <= 0 or rnew > 3){
 		std::ostringstream os;
 		os << galaxy << " has a bulge size not well defined in disk instabilities.";
 		throw invalid_data(os.str());
@@ -134,6 +134,10 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 		std::ostringstream os;
 		os << "Galaxy with extremely small size, rbulge_gas < 1-6, in disk instabilities";
 		//throw invalid_argument(os.str());
+	}
+
+	if(rnew > 0.01){
+		double mess=1;
 	}
 
 	return rnew;

@@ -34,9 +34,9 @@ zlist = ["199","174", "156", "131"]
 
 ##################################
 #Constants
-RExp = 1.67
+RExp     = 1.67
 MpcToKpc = 1e3
-G    = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
+G        = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
 
 mlow = 6.5
 mupp = 12.5
@@ -58,7 +58,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     zero_bulge = np.where(rbulge <= 0)
     if(len(rbulge) == len(rbulge[zero_bulge])):
             #case where there is zero bulge build up.
-            rbulge[zero_bulge] = 1.0
+            rbulge[zero_bulge] = 1e-6
             specific_angular_momentum_bulge_star[zero_bulge] = 1.0
             mbulge[zero_bulge] = 10.0
 

@@ -37,7 +37,7 @@ public:
 
 	double bulge_size(GalaxyPtr &galaxy);
 
-	double toomre_parameter(GalaxyPtr &galaxy, SubhaloPtr &subhalo);
+	double toomre_parameter(GalaxyPtr &galaxy);
 
 	void evaluate_disk_instability (HaloPtr &halo, int snapshot, double delta_t);
 

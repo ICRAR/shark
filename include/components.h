@@ -339,7 +339,7 @@ public:
 	double composite_size(){
 
 		double rdisk = disk_size();
-		double rbulge = bulge_size();
+		double rbulge = bulge_stars.rscale;
 
 		double rcomp = 0.0;
 

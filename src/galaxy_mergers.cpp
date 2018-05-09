@@ -394,6 +394,10 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	central->bulge_gas.rscale   = bulge_size_merger(mass_ratio, mgas_ratio, central, satellite, halo);
 	central->bulge_stars.rscale = central->bulge_gas.rscale;
 
+	if(central->bulge_gas.rscale > 0.01){
+		double mess=1;
+	}
+
 	// Black holes merge regardless of the merger type.
 	central->smbh += satellite->smbh;
 
@@ -550,14 +554,14 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
  		//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
  		//the DM mass enclosed by rcentral.
- 		mtotal_central = mbar_central + halo->Mvir * enc_mass;
+ 		mtotal_central = mbar_central + 2.0 * halo->Mvir * enc_mass;
 	}
 	else{
 		// In this case use the same equations as in major mergers, but changing the total central galaxy mass and size
 		// by the current bulge mass and size (as in Lacey+16).
 		mtotal_central = central->bulge_mass();
 
-		rcentral = central->bulge_size();
+		rcentral = central->bulge_gas.rscale;
 	}
 
 	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
@@ -602,6 +606,10 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 		std::ostringstream os;
 		os << "Galaxy with extremely small size, rbulge_gas < 1-6, in galaxy mergers";
 		//throw invalid_argument(os.str());
+	}
+
+	if(r > 0.01){
+		double mess=1;
 	}
 
 	return r;
