@@ -199,7 +199,7 @@ namespace constants {
 	constexpr float MAXLUM = 1e30;
 
 	/* Conversion between j/v and the half-mass radius from EAGLE*/
-	constexpr float EAGLEJconv = 0.37714285714;
+	constexpr float EAGLEJconv = 0.67714285714;
 
 };
 

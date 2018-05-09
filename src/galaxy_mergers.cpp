@@ -385,7 +385,11 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	}
 
 	// define gas mass ratio of the merger.
-	double mgas_ratio  = (central->gas_mass() + satellite->gas_mass()) / (central->stellar_mass() + central->gas_mass());
+	double ms = central->stellar_mass() + satellite->stellar_mass();
+	double mgas_ratio  = 1;
+	if(ms > 0){
+		mgas_ratio = (central->gas_mass() + satellite->gas_mass()) / ms;
+	}
 
 	/**
 	 * First, calculate remnant galaxy's bulge size based on merger properties. Assume both stars and gas
@@ -541,8 +545,11 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
 	double rsatellite = satellite->composite_size();
 
-	//Define central properties depending on whether merger is major or minor.
-	if(mass_ratio >= parameters.major_merger_ratio){
+	double mb = central->bulge_mass();
+
+	//Define central properties depending on whether merger is major or minor merger. In the cases where the central has no bulge we proceed
+	//as for major mergers.
+	if(mass_ratio >= parameters.major_merger_ratio or mb == 0){
 
  		mbar_central = central->baryon_mass();
 
