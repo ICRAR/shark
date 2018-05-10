@@ -70,8 +70,8 @@ double Integrator::integrate(func_t f, void *params, double from, double to, dou
 	F.params = params;
 
 	double result, abserr;
-	// Adopt a 15 point Gauss-Kronrod rule (key = 1).
-	int key = 1;
+	// Adopt a 15 point Gauss-Kronrod rule
+	int key = GSL_INTEG_GAUSS15;
 	gsl_integration_qag(&F, from, to, epsabs, epsrel, max_intervals, key, workspace.get(), &result, &abserr);
 
 	num_intervals += workspace->size;
