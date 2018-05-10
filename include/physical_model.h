@@ -106,7 +106,12 @@ public:
 		if(rgas <= 0){
 			//In this case assign a scalelength due to the cooling gas.
 			rgas = subhalo.cold_halo_gas.sAM / galaxy.vmax * constants::EAGLEJconv;
-			vgal = subhalo.cold_halo_gas.sAM / rgas * constants::EAGLEJconv;
+			if(rgas > 0){
+				vgal = subhalo.cold_halo_gas.sAM / rgas * constants::EAGLEJconv;
+			}
+			else{
+				vgal = 0;
+			}
 		}
 
 		double rstar      = galaxy.disk_stars.rscale; //stellar scale radius.

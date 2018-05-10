@@ -102,11 +102,9 @@ double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
 float DarkMatterHalos::halo_lambda (float lambda, double z){
 
 	//Spin parameter either read from the DM files or assumed a random distribution.
-	//In the case of the random distribution, a weak redshift evolution is
-	//applied according to Elahi et al. (2018, arXiv:1712.01988).
 
 	if(params.random_lambda){
-		return distribution(generator) * std::pow(1+z,0.4);
+		return distribution(generator);
 	}
 	else{
 		//take the value read from the DM merger trees, but limit it to a maximum of 1.

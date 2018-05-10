@@ -178,6 +178,11 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 			darkmatterhalo->transfer_bulge_am(subhalo, galaxy, z);
 			galaxy->disk_gas        += galaxy->bulge_gas;
 
+			if(galaxy->disk_gas.rscale == 0){
+				galaxy->disk_gas.rscale = galaxy->bulge_gas.rscale;
+				galaxy->disk_gas.sAM    = galaxy->bulge_gas.sAM;
+			}
+
 			galaxy->bulge_gas.restore_baryon();
 
 		}

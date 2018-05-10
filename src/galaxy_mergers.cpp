@@ -547,9 +547,10 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
 	double mb = central->bulge_mass();
 
-	//Define central properties depending on whether merger is major or minor merger. In the cases where the central has no bulge we proceed
+	//Define central properties depending on whether merger is major or minor merger.
+	//In the cases where the central has no bulge we proceed
 	//as for major mergers.
-	if(mass_ratio >= parameters.major_merger_ratio or mb == 0){
+	if(mass_ratio >= parameters.major_merger_ratio and mb == 0){
 
  		mbar_central = central->baryon_mass();
 
@@ -637,12 +638,12 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	double factor1 = 0;
 
 	if(rc > 0 and mc >0){
-		factor1  = std::pow(mc,2)/rc;
+		factor1  = std::pow(mc,2.0)/rc;
 	}
 	double factor2 = 0;
 
 	if(rs > 0 and ms > 0){
-		factor2 = std::pow(ms,2)/rs;
+		factor2 = std::pow(ms,2.0)/rs;
 	}
 
 	double factor3 = 0;
@@ -656,7 +657,7 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	double r = 0;
 
 	if(f > 0){
-		r = std::pow((mc + ms),2)/ f;
+		r = std::pow((mc + ms),2.0)/ f;
 	}
 
 	return r;
@@ -680,6 +681,10 @@ void GalaxyMergers::transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 	darkmatterhalo->transfer_bulge_am(subhalo, galaxy, z);
 
 	galaxy->disk_gas += galaxy->bulge_gas;
+	if(galaxy->disk_gas.rscale == 0){
+		galaxy->disk_gas.rscale = galaxy->bulge_gas.rscale;
+		galaxy->disk_gas.sAM    = galaxy->bulge_gas.sAM;
+	}
 
 	galaxy->bulge_gas.restore_baryon();
 

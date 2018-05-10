@@ -58,7 +58,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     zero_bulge = np.where(rbulge <= 0)
     if(len(rbulge) == len(rbulge[zero_bulge])):
             #case where there is zero bulge build up.
-            rbulge[zero_bulge] = 1e-6
+            rbulge[zero_bulge] = 1e-10
             specific_angular_momentum_bulge_star[zero_bulge] = 1.0
             mbulge[zero_bulge] = 10.0
 
@@ -78,15 +78,15 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     disk_size[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                 y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.5) & (typeg == 0))
+    ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.4) & (typeg == 0))
     sam_stars_disk[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
     
-    ind = np.where((specific_angular_momentum_disk_gas > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.5) & (typeg == 0))
+    ind = np.where((specific_angular_momentum_disk_gas > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.4) & (typeg == 0))
     sam_gas_disk_atom[index,:]   = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_gas[ind]) - np.log10(float(h0)))
     
-    ind = np.where((specific_angular_momentum_disk_gas_mol > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.5) & (typeg == 0))
+    ind = np.where((specific_angular_momentum_disk_gas_mol > 0) & (mdisk+mbulge > 0) & (mbulge/mdisk < 0.4) & (typeg == 0))
     sam_gas_disk_mol[index,:]   = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_gas_mol[ind]) - np.log10(float(h0)))
     
@@ -106,7 +106,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
     disk_size_sat[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                     y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where((mbulge > 0) & (mbulge/(mbulge+mdisk) > 0.5))
+    ind = np.where((mbulge > 0) & (mbulge/(mbulge+mdisk) > 0.5) & (rbulge > 1e-6))
     bulge_size[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 

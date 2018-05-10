@@ -79,15 +79,15 @@ StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParame
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
 								          bool burst, double vgal, double &jrate, double jgas) {
 
-	if (mcold <= constants::EPS3 or rgas <= constants::EPS6 ) {
+	if (mcold <= constants::EPS3 or rgas <= constants::tolerance) {
 		if(mcold > constants::EPS3 and rgas <= 0){
 			std::ostringstream os;
 			os << "Galaxy mcold > 0 and rgas <0";
 			throw invalid_argument(os.str());
 		}
-		if(mcold > constants::EPS3 and rgas <= constants::EPS6){
+		if(mcold > constants::EPS3 and rgas <= constants::tolerance){
 			std::ostringstream os;
-			os << "Galaxy with extremely small size, rgas < 1e-6";
+			os << "Galaxy with extremely small size, rgas < 1e-10";
 			//throw invalid_argument(os.str());
 		}
 		return 0;
@@ -130,12 +130,11 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	double rmax = 5.0*re;
 
 	StarFormationAndProps sf_and_props = {this, &props};
-	double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+	//double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
 
-	double SFR = 0;
-
+	double result = 0;
 	try{
-		SFR = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
+		result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
 	} catch (gsl_error &e) {
 		auto gsl_errno = e.get_gsl_errno();
 		std::ostringstream os;
@@ -147,9 +146,8 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		// Perform manual integration.
 		// TODO: check that error is affordable (i.e., maybe the error is really bad and the
 		// program should stop)
-		SFR = manual_integral(f, &sf_and_props, rmin, rmax);
+		result = manual_integral(f, &sf_and_props, rmin, rmax);
 	}
-	result = SFR;
 
 	// Avoid negative values.
 	if(result < 0){
