@@ -54,12 +54,6 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				galaxy->bulge_gas.rscale = bulge_size(galaxy);
 				galaxy->bulge_stars.rscale = galaxy->bulge_gas.rscale;
 
-				//
-				/**
-				 * calculate bulge specific angular momentum based on assuming conservation.
-				 */
-				effective_angular_momentum(galaxy);
-
 				/**
 				 * Transfer all stars and gas to the bulge.
 				 */
@@ -67,6 +61,18 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				galaxy->bulge_stars.mass_metals += galaxy->disk_stars.mass_metals;
 				galaxy->bulge_gas.mass += galaxy->disk_gas.mass;
 				galaxy->bulge_gas.mass_metals +=  galaxy->disk_gas.mass_metals;
+
+				/**Assume both stars and gas mix up well during mergers.
+				 * And calculate a pseudo specific AM as in mergers.*/
+				//
+				//calculate bulge specific angular momentum based on assuming conservation.
+				//
+				//effective_angular_momentum(galaxy);
+				if(galaxy->bulge_mass() > 0){
+					double v_pseudo = std::sqrt(constants::G * galaxy->bulge_mass() / galaxy->bulge_gas.rscale);
+					galaxy->bulge_gas.sAM   = galaxy->bulge_gas.rscale * v_pseudo;
+					galaxy->bulge_stars.sAM = galaxy->bulge_gas.sAM;
+				}
 
 				//Make all disk values 0.
 				galaxy->disk_stars.restore_baryon();
@@ -229,8 +235,8 @@ void DiskInstability::effective_angular_momentum(GalaxyPtr &galaxy){
 	double AM_disk_gas    = galaxy->disk_gas.angular_momentum();
 	double AM_bulge_gas   = galaxy->bulge_gas.angular_momentum();
 
-	double mgas  = galaxy->disk_gas.mass + galaxy->bulge_gas.mass;
-	double mstar = galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
+	double mgas  = galaxy->gas_mass();
+	double mstar = galaxy->stellar_mass();
 
 	// Calculate effective specific angular momentum only if masses are > 0. Assume gas and stars mix up well.
 	if(mgas + mstar > 0){

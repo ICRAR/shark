@@ -547,10 +547,8 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
 	double mb = central->bulge_mass();
 
-	//Define central properties depending on whether merger is major or minor merger.
-	//In the cases where the central has no bulge we proceed
-	//as for major mergers.
-	if(mass_ratio >= parameters.major_merger_ratio and mb == 0){
+	// Define central properties depending on whether merger is major or minor merger.
+	if(mass_ratio >= parameters.major_merger_ratio){
 
  		mbar_central = central->baryon_mass();
 
@@ -560,16 +558,24 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
  		enc_mass = darkmatterhalo->enclosed_mass(rcentral/darkmatterhalo->halo_virial_radius(*subhalo_central), subhalo_central->concentration);
 
- 		//Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
- 		//the DM mass enclosed by rcentral.
+ 		// Because central part of the DM halo behaves like the baryons, the mass of the central galaxy includes
+ 		// the DM mass enclosed by rcentral.
  		mtotal_central = mbar_central + 2.0 * halo->Mvir * enc_mass;
 	}
 	else{
-		// In this case use the same equations as in major mergers, but changing the total central galaxy mass and size
-		// by the current bulge mass and size (as in Lacey+16).
-		mtotal_central = central->bulge_mass();
+		// In this case use the same equations as in major mergers, but changing the total mass of the central that will end up in the
+		// bulge and an effective size (as in Lacey+16).
+		if(mass_ratio >= parameters.minor_merger_burst_ratio and mgas_ratio > parameters.gas_fraction_burst_ratio){
 
-		rcentral = central->bulge_gas.rscale;
+			mtotal_central = central->bulge_mass() + central->disk_gas.mass;
+			rcentral = (central->bulge_size() * central->bulge_mass() + central->disk_gas.mass * central->disk_gas.rscale) / mtotal_central;
+		}
+		else{
+
+			mtotal_central = central->bulge_mass();
+			rcentral = central->bulge_size();
+		}
+
 	}
 
 	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);

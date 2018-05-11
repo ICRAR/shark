@@ -130,7 +130,6 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	double rmax = 5.0*re;
 
 	StarFormationAndProps sf_and_props = {this, &props};
-	//double result = integrator.integrate(f, &sf_and_props, rmin, rmax, 0.0, parameters.Accuracy_SFeqs);
 
 	double result = 0;
 	try{
@@ -169,8 +168,6 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 				StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 				return r * sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
 			};
-
-			StarFormationAndProps sf_and_props = {this, &props};
 
 			// React to integration errors by using a way-simpler 4-point manual integration
 			double jSFR;
@@ -424,7 +421,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	};
 
 	double rmin = 0;
-	double rmax = 3.0*re;
+	double rmax = 5.0*re;
 
 	StarFormationAndProps sf_and_props = {this, &props};
 
@@ -466,8 +463,6 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 				StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 				return r * sf_and_props->star_formation->molecular_surface_density(r, sf_and_props->props);
 			};
-
-			StarFormationAndProps sf_and_props = {this, &props};
 
 			// React to integration errors by using a way-simpler 4-point manual integration
 			jmol = 0;

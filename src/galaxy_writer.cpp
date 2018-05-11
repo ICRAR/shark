@@ -173,6 +173,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	vector<long> descendant_id;
 	vector<int> main;
 	vector<long> id;
+	vector<long> host_id;
 	vector<long> id_galaxy;
 
 	// Create all galaxies properties to write
@@ -236,7 +237,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 
 	vector<int> type;
 	vector<Halo::id_t> id_halo;
+	vector<Halo::id_t> id_halo_tree;
 	vector<Subhalo::id_t> id_subhalo;
+	vector<Subhalo::id_t> id_subhalo_tree;
+
+
 
 	long j = 1;
 	long gal_id = 1;
@@ -249,6 +254,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 		long i=1;
 
 		for (auto &subhalo: halo->all_subhalos()){
+
+			host_id.push_back(halo->id);
 
 			// assign properties of host subhalo
 			auto msubhalo = subhalo->Mvir;
@@ -272,6 +279,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 			id.push_back(subhalo->id);
 
 			for (auto &galaxy: subhalo->galaxies){
+
+				id_halo_tree.push_back(halo->id);
+				id_subhalo_tree.push_back(subhalo->id);
 
 				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
 				double m_mol;
@@ -416,6 +426,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	REPORT(main);
 	REPORT(id);
 	REPORT(id_galaxy);
+	REPORT(host_id);
 	REPORT(mstars_disk);
 	REPORT(mstars_bulge);
 	REPORT(mstars_burst);
@@ -478,6 +489,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 
 	comment = "id of the subhalo that is the descendant of this subhalo";
 	file.write_dataset("Subhalo/descendant_id", descendant_id, comment);
+
+	comment = "id of the host halo of this subhalo";
+	file.write_dataset("Subhalo/host_id", host_id, comment);
 
 	//Write galaxy properties.
 	comment = "stellar mass in the disk [Msun/h]";
@@ -625,8 +639,13 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo, comment);
 	comment = "halo ID. Unique to this snapshot.";
 	file.write_dataset("Galaxies/id_halo", id_halo, comment);
-	comment = "galayx ID. Unique to this snapshot.";
+	comment = "galaxy ID. Unique to this snapshot.";
 	file.write_dataset("Galaxies/id_galaxy", id_galaxy, comment);
+	comment = "subhalo id in the tree (unique to entire halo catalogue).";
+	file.write_dataset("Galaxies/id_subhalo_tree", id_subhalo_tree, comment);
+	comment = "halo id in the tree (unique to entire halo catalogue).";
+	file.write_dataset("Galaxies/id_halo_tree", id_halo_tree, comment);
+
 }
 
 void HDF5GalaxyWriter::write_global_properties (hdf5::Writer file, int snapshot, TotalBaryon &AllBaryons){
