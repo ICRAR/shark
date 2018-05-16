@@ -79,6 +79,10 @@ StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParame
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
 								          bool burst, double vgal, double &jrate, double jgas) {
 
+	if (std::isnan(rgas)) {
+		throw invalid_argument("rgas is NaN, cannot calculate star formation rate");
+	}
+
 	if (mcold <= constants::EPS3 or rgas <= constants::tolerance) {
 		if(mcold > constants::EPS3 and rgas <= 0){
 			std::ostringstream os;
