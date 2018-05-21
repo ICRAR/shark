@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <unistd.h>
 #include <vector>
 
 #include <boost/program_options.hpp>
@@ -97,6 +98,14 @@ void throw_exception_gsl_handler(const char *reason, const char *file, int line,
 
 void install_gsl_error_handler() {
 	gsl_set_error_handler(&throw_exception_gsl_handler);
+}
+
+void log_startup_information()
+{
+	char the_hostname[100];
+	gethostname(the_hostname, 100);
+	LOG(info) << "shark is starting in " << the_hostname;
+	LOG(info) << "shark was built on " << __DATE__ << " " __TIME__;
 }
 
 struct SnapshotStatistics {
@@ -201,6 +210,8 @@ int run(int argc, char **argv) {
 	verbosity = min(max(verbosity, 0), 5);
 	verbosity = 5 - verbosity;
 	setup_logging(verbosity);
+
+	log_startup_information();
 
 	install_gsl_error_handler();
 
