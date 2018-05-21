@@ -437,11 +437,29 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		 * Transfer mass. In the case of minor mergers, transfer the satellite' stars to the central bulge, and the satellite' gas to the central's disk.
 		 */
 
-		double mgas_old = central->disk_gas.mass;
+		double mgas_old_central = central->disk_gas.mass;
 
-		// Transfer mass.
+		// Transfer mass to bulge.
 		central->bulge_stars.mass += satellite->stellar_mass();
 		central->bulge_stars.mass_metals += satellite->stellar_mass_metals();
+
+		// Calculate new angular momentum by adding up the two galaxies.
+		double tot_am = satellite->disk_gas.angular_momentum() + satellite->bulge_gas.angular_momentum();
+		double new_disk_sAM = 0;
+		if(tot_am > 0){
+			new_disk_sAM = (central->disk_gas.angular_momentum() + tot_am) / (central->disk_gas.mass + satellite->gas_mass());
+		}
+		// Modify specific AM and size based on new values.
+		if(tot_am > 0){
+			central->disk_gas.sAM = new_disk_sAM;
+			central->disk_gas.rscale =  central->disk_gas.sAM / (2.0 * central->vmax) * constants::RDISK_HALF_SCALE;
+
+			if (std::isnan(central->disk_gas.sAM) or std::isnan(central->disk_gas.rscale)) {
+				throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - in create_merger gas-rich minor merger");
+			}
+		}
+
+		// Transfer gas mass to central disk.
 		central->disk_gas.mass += satellite->gas_mass();
 		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
 
@@ -454,10 +472,14 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		}
 		else{
 			//Check cases where there is no disk in the central but the satellite is bringing gas.
-			if(central->disk_gas.mass > 0 and mgas_old <= 0){
+			if(satellite->gas_mass() > 0 and mgas_old_central <= 0){
 				double tot_am = satellite->disk_gas.angular_momentum() + satellite->bulge_gas.angular_momentum();
 				central->disk_gas.sAM = tot_am / satellite->gas_mass();
 				central->disk_gas.rscale = central->disk_gas.sAM / (2.0 * central->vmax) * constants::RDISK_HALF_SCALE;
+
+				if (std::isnan(central->disk_gas.sAM) or std::isnan(central->disk_gas.rscale)) {
+					throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - in create_merger gas-poor minor merger");
+				}
 			}
 		}
 	}
@@ -684,12 +706,15 @@ void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellit
 
 void GalaxyMergers::transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z){
 
-	darkmatterhalo->transfer_bulge_am(subhalo, galaxy, z);
-
 	galaxy->disk_gas += galaxy->bulge_gas;
+
 	if(galaxy->disk_gas.rscale == 0){
 		galaxy->disk_gas.rscale = galaxy->bulge_gas.rscale;
 		galaxy->disk_gas.sAM    = galaxy->bulge_gas.sAM;
+
+		if (std::isnan(galaxy->disk_gas.sAM) or std::isnan(galaxy->disk_gas.rscale)) {
+			throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - transfer_bulge_gas");
+		}
 	}
 
 	galaxy->bulge_gas.restore_baryon();

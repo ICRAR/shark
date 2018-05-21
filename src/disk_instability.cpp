@@ -181,12 +181,15 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 		// Check for small gas reservoirs left in the bulge.
 		if(galaxy->bulge_gas.mass > 0 and galaxy->bulge_gas.mass < merger_params.mass_min){
 
-			darkmatterhalo->transfer_bulge_am(subhalo, galaxy, z);
 			galaxy->disk_gas        += galaxy->bulge_gas;
 
 			if(galaxy->disk_gas.rscale == 0){
 				galaxy->disk_gas.rscale = galaxy->bulge_gas.rscale;
 				galaxy->disk_gas.sAM    = galaxy->bulge_gas.sAM;
+
+				if (std::isnan(galaxy->disk_gas.sAM) or std::isnan(galaxy->disk_gas.rscale)) {
+					throw invalid_argument("rgas or sAM are NaN, cannot continue at disk_instabilities");
+				}
 			}
 
 			galaxy->bulge_gas.restore_baryon();

@@ -42,10 +42,11 @@
 
 namespace shark {
 
-GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, SimulationParameters sim_params, StarFormation starformation):
+GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, std::shared_ptr<Cosmology> cosmology, SimulationParameters sim_params, StarFormation starformation):
 	exec_params(exec_params),
-	sim_params(sim_params),
 	cosmo_params(cosmo_params),
+	cosmology(cosmology),
+	sim_params(sim_params),
 	starformation(starformation)
 {
 	//no-opt
@@ -129,6 +130,12 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer file, int snapshot){
 
 	comment = "dark matter particle mass of this simulation [Msun/h]";
 	file.write_dataset("runInfo/particle_mass", sim_params.particle_mass, comment);
+
+	comment = "Box side size of the full simulated volume [Mpc/h]";
+	file.write_dataset("runInfo/lbox", sim_params.lbox, comment);
+
+	comment = "Total number of subvolumes in which the simulated box was divided into";
+	file.write_dataset("runInfo/tot_n_subvolumes", sim_params.tot_nsubvols, comment);
 
 	// Write cosmological parameters
 
@@ -234,6 +241,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	vector<float> velocity_x;
 	vector<float> velocity_y;
 	vector<float> velocity_z;
+
+	vector<float> L_x;
+	vector<float> L_y;
+	vector<float> L_z;
 
 	vector<int> type;
 	vector<Halo::id_t> id_halo;
@@ -371,6 +382,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 				double l_sub = 0;
 				xyz<float> pos;
 				xyz<float> vel;
+				xyz<float> L;
 
 				if(galaxy->galaxy_type == Galaxy::CENTRAL || galaxy->galaxy_type == Galaxy::TYPE1){
 					mvir_gal = msubhalo;
@@ -379,15 +391,22 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 					l_sub    = lambda;
 					pos      = subhalo_position;
 					vel      = subhalo_velocity;
+					L.x      = (subhalo->L.x/subhalo->L.norm()) * galaxy->angular_momentum();
+					L.y      = (subhalo->L.y/subhalo->L.norm()) * galaxy->angular_momentum();
+					L.z      = (subhalo->L.z/subhalo->L.norm()) * galaxy->angular_momentum();
 				}
 				else{
-					// In case of type 2 galaxies assign negative positions and velocities.
+					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
+					// TODO: add positions and velocities based on NFW profile halo.
 					pos.x = -1;
 					pos.y = -1;
 					pos.z = -1;
 					vel.x = -1;
 					vel.y = -1;
 					vel.z = -1;
+					L.x   = -1;
+					L.y   = -1;
+					L.z   = -1;
 				}
 
 				mvir_subhalo.push_back(mvir_gal);
@@ -404,6 +423,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 				velocity_x.push_back(vel.x);
 				velocity_y.push_back(vel.y);
 				velocity_z.push_back(vel.z);
+
+				L_x.push_back(L.x);
+				L_y.push_back(L.y);
+				L_z.push_back(L.z);
 
 				type.push_back(t);
 
@@ -473,6 +496,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	REPORT(velocity_x);
 	REPORT(velocity_y);
 	REPORT(velocity_z);
+	REPORT(L_x);
+	REPORT(L_y);
+	REPORT(L_z);
 	REPORT(type);
 	REPORT(id_halo);
 	REPORT(id_subhalo);
@@ -630,6 +656,14 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	comment = "peculiar velocity component z of galaxy [km/s]";
 	file.write_dataset("Galaxies/velocity_z", velocity_z, comment);
 
+	//Galaxy AM vector
+	comment = "total angular momentum component x of galaxy [Msun/h Mpc/h km/s]";
+	file.write_dataset("Galaxies/L_x", L_x, comment);
+	comment = "total angular momentum component y of galaxy [Msun/h Mpc/h km/s]";
+	file.write_dataset("Galaxies/L_y", L_y, comment);
+	comment = "total angular momentum component z of galaxy [Msun/h Mpc/h km/s]";
+	file.write_dataset("Galaxies/L_z", L_z, comment);
+
 	//Galaxy type.
 	comment = "galaxy type; =0 for centrals; =1 for satellites that reside in well identified subhalos; =2 for orphan satellites";
 	file.write_dataset("Galaxies/type", type, comment);
@@ -755,6 +789,9 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			vector<vector<float>> gas_hs_bulge;
 			vector<vector<float>> gas_metals_hs_bulge;
 
+			vector<long> id_galaxy;
+			long gal_id = 1;
+
 			float defl_value = -1;
 
 			for (auto &halo: halos){
@@ -764,13 +801,9 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 						vector<float> sfh_gal_disk;
 						vector<float> star_gal_disk;
 						vector<float> star_metals_gal_disk;
-						vector<float> gas_gal_disk;
-						vector<float> gas_metals_gal_disk;
 						vector<float> sfh_gal_bulge;
 						vector<float> star_gal_bulge;
 						vector<float> star_metals_gal_bulge;
-						vector<float> gas_gal_bulge;
-						vector<float> gas_metals_gal_bulge;
 
 						bool star_gal_bulge_exists = false;
 						for(int s=sim_params.min_snapshot; s <= snapshot; s++) {
@@ -801,14 +834,10 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 								sfh_gal_disk.push_back(defl_value);
 								star_gal_disk.push_back(defl_value);
 								star_metals_gal_disk.push_back(defl_value);
-								gas_gal_disk.push_back(defl_value);
-								gas_metals_gal_disk.push_back(defl_value);
 
 								sfh_gal_bulge.push_back(defl_value);
 								star_gal_bulge.push_back(defl_value);
 								star_metals_gal_bulge.push_back(defl_value);
-								gas_gal_bulge.push_back(defl_value);
-								gas_metals_gal_bulge.push_back(defl_value);
 							}
 							else {
 								star_gal_bulge_exists = true;
@@ -816,66 +845,76 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 								// assign disk properties
 								sfh_gal_disk.push_back(item.sfr_disk);
 								star_gal_disk.push_back(item.stellar_disk.mass);
-								star_metals_gal_disk.push_back(item.stellar_disk.mass_metals);
-								gas_gal_disk.push_back(item.gas_disk.mass);
-								gas_metals_gal_disk.push_back(item.gas_disk.mass_metals);
+								if(item.stellar_disk.mass > 0){
+									star_metals_gal_disk.push_back(item.stellar_disk.mass_metals/item.stellar_disk.mass);
+								}
+								else{
+									star_metals_gal_disk.push_back(0);
+								}
 
 								// assign bulge properties
 								sfh_gal_bulge.push_back(item.sfr_bulge);
 								star_gal_bulge.push_back(item.stellar_bulge.mass);
-								star_metals_gal_bulge.push_back(item.stellar_bulge.mass_metals);
-								gas_gal_bulge.push_back(item.gas_bulge.mass);
-								gas_metals_gal_bulge.push_back(item.gas_bulge.mass_metals);
+								if(item.stellar_bulge.mass > 0){
+									star_metals_gal_bulge.push_back(item.stellar_bulge.mass_metals/item.stellar_bulge.mass);
+								}
+								else{
+									star_metals_gal_bulge.push_back(0);
+								}
 							}
 						}
 
-						sfhs_disk.emplace_back(std::move(sfh_gal_disk));
-						stellar_mass_disk.emplace_back(std::move(star_gal_disk));
-						stellar_metals_disk.emplace_back(std::move(star_metals_gal_disk));
-						gas_hs_disk.emplace_back(std::move(gas_gal_disk));
-						gas_metals_hs_disk.emplace_back(std::move(gas_metals_gal_disk));
+						// save galaxies only if they have a stellar mass >0 by the output snapshot.
+						if(galaxy->stellar_mass() > 0){
+							sfhs_disk.emplace_back(std::move(sfh_gal_disk));
+							stellar_mass_disk.emplace_back(std::move(star_gal_disk));
+							stellar_metals_disk.emplace_back(std::move(star_metals_gal_disk));
 
-						sfhs_bulge.emplace_back(std::move(sfh_gal_bulge));
-						stellar_mass_bulge.emplace_back(std::move(star_gal_bulge));
-						stellar_metals_bulge.emplace_back(std::move(star_metals_gal_bulge));
-						gas_hs_bulge.emplace_back(std::move(gas_gal_bulge));
-						gas_metals_hs_bulge.emplace_back(std::move(gas_metals_gal_bulge));
+							sfhs_bulge.emplace_back(std::move(sfh_gal_bulge));
+							stellar_mass_bulge.emplace_back(std::move(star_gal_bulge));
+							stellar_metals_bulge.emplace_back(std::move(star_metals_gal_bulge));
 
+							id_galaxy.push_back(gal_id);
+						}
+
+						gal_id ++;
 					}
 				}
 			}
 
 			vector<float> redshifts;
+			vector<float> LBT;
 
 			for (int i=sim_params.min_snapshot+1; i <= snapshot; i++){
 				redshifts.push_back(sim_params.redshifts[i]);
+				LBT.push_back(cosmology->convert_redshift_to_age(sim_params.redshifts[i]));
 			}
 
 			//Write header
 			write_header(file_sfh, snapshot);
 
+			comment = "galaxy ID. Unique to this snapshot.";
+			file_sfh.write_dataset("Galaxies/id_galaxy", id_galaxy, comment);
+
 			//Write disk component history.
 			comment = "Star formation history of stars formed that by this output time end up in the disk [Msun/Gyr/h]";
 			file_sfh.write_dataset("Disks/StarFormationHistories", sfhs_disk, comment);
 
-			comment = "History of stellar mass that by this output time ends up in the disk [Msun/h]";
-			file_sfh.write_dataset("Disks/StellarMassHistories", stellar_mass_disk, comment);
-
-			comment = "History of stellar mass in metals that by this output time ends up in the disk [Msun/h]";
+			comment = "History of stellar metallicity that by this output time ends up in the disk";
 			file_sfh.write_dataset("Disks/StellarMassMetalsHistories", stellar_metals_disk, comment);
 
 			//Write bulge component history.
 			comment = "Star formation history of stars formed that by this output time end up in the bulge [Msun/Gyr/h]";
 			file_sfh.write_dataset("Bulges/StarFormationHistories", sfhs_bulge, comment);
 
-			comment = "History of stellar mass that by this output time ends up in the bulge [Msun/h]";
-			file_sfh.write_dataset("Bulges/StellarMassHistories", stellar_mass_bulge, comment);
-
-			comment = "History of stellar mass in metals that by this output time ends up in the bulge [Msun/h]";
+			comment = "History of stellar metallicity that by this output time ends up in the bulge";
 			file_sfh.write_dataset("Bulges/StellarMassMetalsHistories", stellar_metals_bulge, comment);
 
-			comment = "Redshifts of the history outputs.";
+			comment = "Redshifts of the history outputs";
 			file_sfh.write_dataset("Redshifts", redshifts, comment);
+
+			comment = "Look back time of the history outputs [Gyr]";
+			file_sfh.write_dataset("LBT", LBT, comment);
 
 		}
 

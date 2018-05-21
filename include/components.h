@@ -178,8 +178,6 @@ struct HistoryItem {
 	float sfr_bulge;
 	Baryon stellar_disk;
 	Baryon stellar_bulge;
-	Baryon gas_disk;
-	Baryon gas_bulge;
 	int snapshot;
 
 };
@@ -366,6 +364,10 @@ public:
 		return rcomp;
 	}
 
+	double angular_momentum(){
+
+		return disk_gas.angular_momentum() + disk_stars.angular_momentum() + bulge_gas.angular_momentum() + bulge_stars.angular_momentum();
+	}
 
 };
 

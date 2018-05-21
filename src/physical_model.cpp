@@ -65,6 +65,10 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas minimum metallicity*/
 	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*hot gas minimum metallicity*/
 
+	if (std::isnan(params->rgas) or std::isnan(params->vgal) ) {
+		double mess = 1;
+	}
+
 	double jgas = 2.0 * params->vgal * params->rgas / constants::RDISK_HALF_SCALE; /*current sAM of the cold gas*/
 	double jrate = 0; /*variable that saves the angular momentum transfer rate from gas to stars*/
 
@@ -222,6 +226,10 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 			std::ostringstream os;
 			os << "Galaxy with extremely small size, rdisk_stars < 1e-10, in physical model";
 			throw invalid_argument(os.str());
+		}
+
+		if (std::isnan(galaxy.disk_gas.sAM) or std::isnan(galaxy.disk_gas.rscale)) {
+			throw invalid_argument("rgas or sAM are NaN, cannot continue at physical model");
 		}
 
 	}

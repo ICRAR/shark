@@ -41,9 +41,11 @@ public:
 
 	float volume = 0;
 	float particle_mass = 0;
+	float lbox  =0;
 
 	int min_snapshot = 0;
 	int max_snapshot = 0;
+	int tot_nsubvols = 0;
 
 	std::string sim_name {};
 

@@ -23,13 +23,15 @@ SimulationParameters::SimulationParameters(const Options &options)
 
 	std::string redshift_file;
 
-	options.load("simulation.volume", volume);
+	options.load("simulation.volume", volume, true);
 	options.load("simulation.particle_mass", particle_mass);
-	options.load("simulation.min_snapshot", min_snapshot);
-	options.load("simulation.max_snapshot", max_snapshot);
+	options.load("simulation.lbox", lbox, true);
+	options.load("simulation.tot_n_subvolumes", tot_nsubvols, true);
+	options.load("simulation.min_snapshot", min_snapshot, true);
+	options.load("simulation.max_snapshot", max_snapshot, true);
 	options.load("simulation.sim_name", sim_name);
-	options.load("simulation.tree_files_prefix", tree_files_prefix);
-	options.load("simulation.redshift_file",redshift_file);
+	options.load("simulation.tree_files_prefix", tree_files_prefix, true);
+	options.load("simulation.redshift_file",redshift_file, true);
 
 	load_simulation_tables(redshift_file);
 

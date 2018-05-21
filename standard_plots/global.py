@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from cmath import sqrt
 """Global plots"""
 
 import math
@@ -34,11 +35,13 @@ GyrToYr = 1e9
 Zsun = 0.0127
 minmass = 1.0
 Omegab = 0.0491
-G    = 4.299e-9 #Gravity constant in unots of (km/s)^2 * Mpc/Msun
+G    = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
 rho_crit = 3.0 * pow(100.0,2.0) / 8 / math.pi / G #in units of h^2*Msun/Mpc^3
 sbar = rho_crit * Omegab
+OmegaM = 0.3121
+OmegaL = 0.6879
 
-def prepare_data(hdf5_data):
+def prepare_data(hdf5_data, redshifts):
 
     (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mstar,
      mstar_burst, mBH, sfrdisk, sfrburst, mDM, mcold_halo) = hdf5_data
@@ -74,8 +77,14 @@ def prepare_data(hdf5_data):
     mstarbden = mstar_burst / volh
     mH2den    = mH2 / volh
 
+
     mHIden   = mHI / volh
-    omegaHI = mHIden / (rho_crit*pow(h0,2.0))
+    print len(mHIden), len(redshifts)
+    h = np.zeros(shape = (len(redshifts)))
+    omegaHI = np.zeros(shape = (len(redshifts)))
+    for z in range(0,len(redshifts)):
+        h[z] = h0 * sqrt(OmegaM*pow(1.0+redshifts[z],3.0) + OmegaL)
+        omegaHI[z]  = mHIden[z] / (rho_crit*pow(h0,2.0))
 
     #Assume a gas-dust mass ratio that scales with metallicity. We use the Remy-Ruyer et al. (2013) G/D ratio.
     mdustden = 0.006 * mcold_metals/Zsun / volh
@@ -292,7 +301,7 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ax = fig.add_subplot(111)
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\rho_{\\rm H_2}/ M_{\odot}\,cMpc^{-3})$"
-    common.prepare_ax(ax, 0, 10, 5, 9, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 6, 5, 9, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mH2den > 0)
@@ -371,7 +380,7 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ax = fig.add_subplot(111)
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\Omega_{\\rm H_I})$"
-    common.prepare_ax(ax, 0, 10, -5.5, -2.5, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 6, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     # note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(omegaHI > 0)
@@ -400,7 +409,7 @@ def main():
     (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
      sfr, sfrd, sfrb, mstarden, mstarbden, sfre, sfreH2, mhrat,
-     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI) = prepare_data(hdf5_data)
+     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI) = prepare_data(hdf5_data, redshifts)
 
     plot_mass_densities(plt, outdir, redshifts, mstar_plot, mcold_plot, mhot_plot, meje_plot)
     plot_baryon_fractions(plt, outdir, redshifts, mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot)

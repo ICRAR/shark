@@ -292,10 +292,10 @@ int run(int argc, char **argv) {
 	// Also provide a std::make_unique
 	std::unique_ptr<GalaxyWriter> writer;
 	if (exec_params.output_format == Options::HDF5) {
-		writer.reset(new HDF5GalaxyWriter(exec_params, cosmo_parameters, sim_params, star_formation));
+		writer.reset(new HDF5GalaxyWriter(exec_params, cosmo_parameters, cosmology, sim_params, star_formation));
 	}
 	else {
-		writer.reset(new ASCIIGalaxyWriter(exec_params, cosmo_parameters, sim_params, star_formation));
+		writer.reset(new ASCIIGalaxyWriter(exec_params, cosmo_parameters, cosmology, sim_params, star_formation));
 	}
 
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we

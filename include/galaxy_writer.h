@@ -43,7 +43,7 @@ class GalaxyWriter {
 
 public:
 
-	GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  SimulationParameters sim_params, StarFormation starformation);
+	GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  std::shared_ptr<Cosmology> cosmology, SimulationParameters sim_params, StarFormation starformation);
 	virtual ~GalaxyWriter() {};
 
 	virtual void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons) = 0;
@@ -53,8 +53,9 @@ public:
 protected:
 
 	ExecutionParameters exec_params;
-	SimulationParameters sim_params;
 	CosmologicalParameters cosmo_params;
+	std::shared_ptr<Cosmology> cosmology;
+	SimulationParameters sim_params;
 	StarFormation starformation;
 
 	std::string get_output_directory(int snapshot);

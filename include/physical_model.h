@@ -100,18 +100,14 @@ public:
 		if(galaxy.galaxy_type == Galaxy::CENTRAL){
 			mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
 		}
+
 		double rgas       = galaxy.disk_gas.rscale; //gas scale radius.
 		double vgal       = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale * constants::EAGLEJconv;
 
 		if(rgas <= 0){
 			//In this case assign a scalelength due to the cooling gas.
 			rgas = subhalo.cold_halo_gas.sAM / galaxy.vmax * constants::EAGLEJconv;
-			if(rgas > 0){
-				vgal = subhalo.cold_halo_gas.sAM / rgas * constants::EAGLEJconv;
-			}
-			else{
-				vgal = 0;
-			}
+			vgal = galaxy.vmax;
 		}
 
 		double rstar      = galaxy.disk_stars.rscale; //stellar scale radius.
