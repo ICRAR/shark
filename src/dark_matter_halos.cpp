@@ -378,8 +378,6 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> pos, xyz<float> v, HaloP
 	double vt = normal_distribution(generator);
 	theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
 
-
-
 }
 
 
