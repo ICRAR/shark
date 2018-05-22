@@ -62,8 +62,10 @@ DarkMatterHalos::DarkMatterHalos(DarkMatterHaloParameters &params, std::shared_p
 	cosmology(cosmology),
 	sim_params(sim_params),
 	generator(),
-	distribution(-3.5,-0.69)
+	distribution(-3.5,-0.69),
+	flat_distribution(0,1)
 	{
+	auto x = flat_distribution(generator);
 	// no-op
 }
 
@@ -341,9 +343,47 @@ double DarkMatterHalos::v2bulge (double x, double m, double c, double r){
 
 double DarkMatterHalos::nfw_concentration(double mvir, double z){
 
-	return 12.3/(1.0+z) * std::pow(mvir/1.3e13,-0.13);
+	// From Duffy et al. (2008). Full sample from z=0-2 for Virial masses.
+
+	return 7.85 * std::pow(1.0+z, -0.71) * std::pow(mvir/2.0e12,-0.081);
 
 }
+
+void DarkMatterHalos::generate_random_orbits(xyz<float> pos, xyz<float> v, HaloPtr &halo){
+
+	double c = halo->concentration;
+	auto subhalo = halo->central_subhalo;
+	double rvir = halo_virial_radius(*subhalo);
+	auto pos_halo = subhalo->position;
+
+	shark::NfwDistribution r(c);
+	double rproj = r(generator);
+	double theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
+	double phi   = flat_distribution(generator)*constants::PI2; //flat between 0 and 2PI.
+
+	pos.x = rproj * std::cos(theta) * std::cos(phi) * rvir + pos_halo.x;
+	pos.y = rproj * std::cos(theta) * std::sin(phi) * rvir + pos_halo.y;
+	pos.z = rproj * std::sin(theta) * rvir + pos_halo.z;
+
+
+	// f_c equation from Manera et al. (2013; eq. 23).
+	double f_c = c * (0.5 * c * (1+c) - (1+c) * std::log(1+c))/ std::pow((1+c)*std::log(1+c) - c ,2.0);
+
+	// 1D velocity dispersion.
+	double sigma = 0.333 * std::pow(constants::G * halo->Mvir / rvir * f_c, 0.5);
+
+	std::normal_distribution<double> normal_distribution(0,sigma);
+
+	double vr = normal_distribution(generator);
+	double vt = normal_distribution(generator);
+	theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
+
+
+
+}
+
+
+
 
 
 } // namespace shark

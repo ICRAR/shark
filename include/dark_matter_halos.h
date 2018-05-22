@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "numerical_constants.h"
 #include "components.h"
 #include "cosmology.h"
 #include "simulation.h"
@@ -41,6 +42,28 @@ public:
 
 };
 
+class NfwDistribution {
+
+private:
+	const double c;
+	double norm1, norm2, norm3;
+	std::uniform_real_distribution<double> uniform;
+
+public:
+	NfwDistribution(const double c) : c(c), uniform(0, 1), norm1(0), norm2(0), norm3(0) {
+		norm3 = 1.0 / c;
+		norm1 = std::pow(norm3, 3.0);
+		norm2 = 1.0 - norm1 / std::pow(norm3 + 1, 3.0);
+	};
+
+	template <typename G>
+	double operator()(G &g) {
+		auto p = uniform(g);
+		double x = std::pow(norm1 / (1.0 - p * norm2), 0.333) - norm3;
+		return x;
+	}
+
+};
 
 class DarkMatterHalos {
 
@@ -82,12 +105,15 @@ public:
 	double v2disk (double x, double m, double c, double r);
 	double v2bulge (double x, double m, double c, double r);
 
+	void generate_random_orbits(xyz<float> pos, xyz<float> v, HaloPtr &halo);
+
 protected:
 	DarkMatterHaloParameters params;
 	std::shared_ptr<Cosmology> cosmology;
 	SimulationParameters sim_params;
 	std::default_random_engine generator;
 	std::lognormal_distribution<double> distribution;
+	std::uniform_real_distribution<double> flat_distribution;
 
 };
 
