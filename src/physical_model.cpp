@@ -74,7 +74,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	if(y[1] > 0 && y[6] > 0) {
 		zcold = y[6] / y[1];
-		jgas  = y[12] / y[1];
+		jgas  = y[13] / y[1];
 	}
 
 	if(y[2] > 0 && y[7] > 0) {
