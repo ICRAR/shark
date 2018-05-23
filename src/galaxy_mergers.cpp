@@ -754,14 +754,12 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 			auto hist_item = *it_sat;
 
 			//transfer all data to the bulge, which is where all of this mass ends up being at.
-			hist_item.sfr_bulge += hist_item.sfr_disk;
-			hist_item.stellar_bulge.mass += hist_item.stellar_disk.mass;
-			hist_item.stellar_bulge.mass_metals += hist_item.stellar_disk.mass_metals;
+			hist_item.sfr_bulge   += hist_item.sfr_disk;
+			hist_item.sfr_z_bulge += hist_item.sfr_z_disk;
 
 			//Make disk properties = 0.
-			hist_item.sfr_disk = 0;
-			hist_item.stellar_disk.mass = 0;
-			hist_item.stellar_disk.mass_metals = 0;
+			hist_item.sfr_disk   = 0;
+			hist_item.sfr_z_disk = 0;
 
 			central->history.push_back(hist_item);
 		}
@@ -769,9 +767,9 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 			auto hist_sat = *it_sat;
 			auto &hist_cen = *it_cen;
 
-			hist_cen.sfr_bulge += hist_sat.sfr_bulge + hist_sat.sfr_disk;
-			hist_cen.stellar_bulge.mass += hist_sat.stellar_bulge.mass +  hist_sat.stellar_disk.mass;
-			hist_cen.stellar_bulge.mass_metals += hist_sat.stellar_bulge.mass_metals +  hist_sat.stellar_disk.mass_metals;
+			hist_cen.sfr_bulge   += hist_sat.sfr_bulge + hist_sat.sfr_disk;
+			hist_cen.sfr_z_bulge += hist_sat.sfr_z_bulge + hist_sat.sfr_z_disk;
+
 		}
 	}
 
@@ -797,14 +795,12 @@ void GalaxyMergers::transfer_history_disk_to_bulge(GalaxyPtr &central, int snaps
 			auto &hist_cen = *it_cen;
 
 			//tranfer disk information to bulge.
-			hist_cen.sfr_bulge += hist_cen.sfr_disk;
-			hist_cen.stellar_bulge.mass += hist_cen.stellar_disk.mass;
-			hist_cen.stellar_bulge.mass_metals += hist_cen.stellar_disk.mass_metals;
+			hist_cen.sfr_bulge   += hist_cen.sfr_disk;
+			hist_cen.sfr_z_bulge += hist_cen.sfr_z_disk;
 
 			//make disk properties = 0;
 			hist_cen.sfr_disk = 0;
-			hist_cen.stellar_disk.mass = 0;
-			hist_cen.stellar_disk.mass_metals= 0;
+			hist_cen.sfr_z_disk = 0;
 		}
 	}
 

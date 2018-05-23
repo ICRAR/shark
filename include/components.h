@@ -176,8 +176,9 @@ struct HistoryItem {
 
 	float sfr_disk;
 	float sfr_bulge;
-	Baryon stellar_disk;
-	Baryon stellar_bulge;
+	float sfr_z_disk;
+	float sfr_z_bulge;
+
 	int snapshot;
 
 };
@@ -233,9 +234,11 @@ public:
 	Baryon burst_stars;
 	BlackHole smbh;
 
-	//save average star formation rates.
+	//save average star formation rates and metallicities of the newly formed stars.
 	float sfr_disk;
 	float sfr_bulge;
+	float sfr_z_disk;
+	float sfr_z_bulge;
 
 	//save maximum circular velocity.
 	float vmax;

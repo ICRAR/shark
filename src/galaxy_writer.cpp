@@ -791,14 +791,12 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 					for (auto &galaxy: subhalo->galaxies){
 
 						vector<float> sfh_gal_disk;
-						vector<float> star_gal_disk;
 						vector<float> star_metals_gal_disk;
 						vector<float> sfh_gal_bulge;
-						vector<float> star_gal_bulge;
 						vector<float> star_metals_gal_bulge;
 
 						bool star_gal_bulge_exists = false;
-						for(int s=sim_params.min_snapshot; s <= snapshot; s++) {
+						for(int s=sim_params.min_snapshot+1; s <= snapshot; s++) {
 
 							auto it = std::find_if(galaxy->history.begin(), galaxy->history.end(), [s](const HistoryItem &hitem) {
 								//information in snapshot corresponds to the end of it, so effectively, when writing, we need to
@@ -824,11 +822,9 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 									}
 								}
 								sfh_gal_disk.push_back(defl_value);
-								star_gal_disk.push_back(defl_value);
 								star_metals_gal_disk.push_back(defl_value);
 
 								sfh_gal_bulge.push_back(defl_value);
-								star_gal_bulge.push_back(defl_value);
 								star_metals_gal_bulge.push_back(defl_value);
 							}
 							else {
@@ -836,9 +832,8 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 								auto item = *it;
 								// assign disk properties
 								sfh_gal_disk.push_back(item.sfr_disk);
-								star_gal_disk.push_back(item.stellar_disk.mass);
-								if(item.stellar_disk.mass > 0){
-									star_metals_gal_disk.push_back(item.stellar_disk.mass_metals/item.stellar_disk.mass);
+								if(item.sfr_disk > 0){
+									star_metals_gal_disk.push_back(item.sfr_z_disk/item.sfr_disk);
 								}
 								else{
 									star_metals_gal_disk.push_back(0);
@@ -846,9 +841,8 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 
 								// assign bulge properties
 								sfh_gal_bulge.push_back(item.sfr_bulge);
-								star_gal_bulge.push_back(item.stellar_bulge.mass);
-								if(item.stellar_bulge.mass > 0){
-									star_metals_gal_bulge.push_back(item.stellar_bulge.mass_metals/item.stellar_bulge.mass);
+								if(item.sfr_bulge > 0){
+									star_metals_gal_bulge.push_back(item.sfr_z_bulge/item.sfr_bulge);
 								}
 								else{
 									star_metals_gal_bulge.push_back(0);
@@ -859,11 +853,9 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 						// save galaxies only if they have a stellar mass >0 by the output snapshot.
 						if(galaxy->stellar_mass() > 0){
 							sfhs_disk.emplace_back(std::move(sfh_gal_disk));
-							stellar_mass_disk.emplace_back(std::move(star_gal_disk));
 							stellar_metals_disk.emplace_back(std::move(star_metals_gal_disk));
 
 							sfhs_bulge.emplace_back(std::move(sfh_gal_bulge));
-							stellar_mass_bulge.emplace_back(std::move(star_gal_bulge));
 							stellar_metals_bulge.emplace_back(std::move(star_metals_gal_bulge));
 
 							id_galaxy.push_back(gal_id);

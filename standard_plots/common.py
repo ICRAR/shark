@@ -54,6 +54,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     parser.add_argument('-m', '--model', help='Model name')
     parser.add_argument('-s', '--simu', help='Simulation name')
     parser.add_argument('-S', '--shark-dir', help='SHArk base output directory')
+    parser.add_argument('-v', '--subvolumes', help='subvolumes')
     parser.add_argument('-o', '--output-dir', help='Output directory for plots. Defaults to <shark-dir>/Plots/<simu>/<model>')
 
     if requires_observations:
@@ -83,6 +84,8 @@ def parse_args(requires_snapshot=True, requires_observations=True):
         simu  = opts.simu
         shark_dir = opts.shark_dir
     model_dir = os.path.join(shark_dir, simu, model)
+    
+    #ADD HERE THE subvolumes!
 
     output_dir = opts.output_dir
     if not output_dir:
@@ -155,18 +158,20 @@ def savefig(output_dir, fig, plotname):
 def read_data(model_dir, snapshot, fields, subvolume=0, include_h0_volh=True):
     """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
 
-    fname = os.path.join(model_dir, str(snapshot), str(subvolume), 'galaxies.hdf5')
-    print 'will read from', fname
-    with h5py.File(fname, 'r') as f:
-        h0 = f['Cosmology/h'].value
-        volh = f['runInfo/EffectiveVolume'].value
-        data = []
-        if include_h0_volh:
-            data.append(h0)
-            data.append(volh)
-        for gname, dsnames in fields.items():
-            group = f[gname]
-            for dsname in dsnames:
-                data.append(group[dsname].value)
-
+    for subv in range(0,len(subvolumes)):
+        fname = os.path.join(model_dir, str(snapshot), str(subvolume[subv]), 'galaxies.hdf5')
+        print 'will read from', fname
+        with h5py.File(fname, 'r') as f:
+            if(subv == 0):
+                h0 = f['Cosmology/h'].value
+                volh = f['runInfo/EffectiveVolume'].value
+                data = []
+                if include_h0_volh:
+                    data.append(h0)
+                    data.append(volh * len(subvolumes))
+            for gname, dsnames in fields.items():
+                group = f[gname]
+                for dsname in dsnames:
+                    data.append(group[dsname].value)
+                        
     return data

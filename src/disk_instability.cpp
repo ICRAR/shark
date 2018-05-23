@@ -217,15 +217,13 @@ void DiskInstability::transfer_history_disk_to_bulge(GalaxyPtr &galaxy, int snap
 		else { // both galaxies exist at this snapshot
 			auto &hist = *it;
 
-			//tranfer disk information to bulge.
+			//transfer disk information to bulge.
 			hist.sfr_bulge += hist.sfr_disk;
-			hist.stellar_bulge.mass += hist.stellar_disk.mass;
-			hist.stellar_bulge.mass_metals += hist.stellar_disk.mass_metals;
+			hist.sfr_z_bulge += hist.sfr_z_disk;
 
 			//make disk properties = 0;
-			hist.sfr_disk = 0;
-			hist.stellar_disk.mass = 0;
-			hist.stellar_disk.mass_metals= 0;
+			hist.sfr_disk   = 0;
+			hist.sfr_z_disk = 0;
 		}
 	}
 

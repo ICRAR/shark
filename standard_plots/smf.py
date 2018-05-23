@@ -822,9 +822,9 @@ def main():
                            'mgas_metals_disk', 'mgas_metals_bulge',
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type')}
 
-    modeldir, outdir, obsdir = common.parse_args(requires_snapshot=False)
+    modeldir, subvolumes, outdir, obsdir = common.parse_args(requires_snapshot=False)
     for index in range(0,len(zlist)):
-        hdf5_data = common.read_data(modeldir, zlist[index], fields)
+        hdf5_data = common.read_data(modeldir, zlist[index], fields, subvolumes)
         mass = prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen,
                              hist_smf_sat, hist_HImf, hist_HImf_cen, hist_HImf_sat,
                              hist_H2mf, hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf,
