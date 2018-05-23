@@ -68,23 +68,23 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const Timer &t) {
 
 	auto time = t.get();
 	if (time < 1000) {
-		os << t.get() << " [ms]";
+		os << time << " [ms]";
 		return os;
 	}
 
 	float ftime = time / 1000.;
 	const char *prefix = " [s]";
 	if (ftime > 60) {
-		ftime = ftime / 60.;
+		ftime /= 60;
 		prefix = " [min]";
-	}
-	if (ftime > 60) {
-		ftime = ftime / 60.;
-		prefix = " [h]";
-	}
-	if (ftime > 24) {
-		ftime = ftime / 24.;
-		prefix = " [d]";
+		if (ftime > 60) {
+			ftime /= 60;
+			prefix = " [h]";
+			if (ftime > 24) {
+				ftime /= 24;
+				prefix = " [d]";
+			}
+		}
 	}
 	// that should be enough...
 
