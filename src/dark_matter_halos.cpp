@@ -349,13 +349,16 @@ double DarkMatterHalos::nfw_concentration(double mvir, double z){
 
 }
 
-void DarkMatterHalos::generate_random_orbits(xyz<float> pos, xyz<float> v, HaloPtr &halo){
+void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo){
 
 	double c = halo->concentration;
-	auto subhalo = halo->central_subhalo;
-	double rvir = halo_virial_radius(*subhalo);
-	auto pos_halo = subhalo->position;
 
+	auto   subhalo = halo->central_subhalo;
+	double rvir = halo_virial_radius(*subhalo);
+
+	auto   pos_halo = subhalo->position;
+
+	// Assign positions based on an NFW halo of concentration c.
 	shark::NfwDistribution r(c);
 	double rproj = r(generator);
 	double theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
@@ -365,18 +368,32 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> pos, xyz<float> v, HaloP
 	pos.y = rproj * std::cos(theta) * std::sin(phi) * rvir + pos_halo.y;
 	pos.z = rproj * std::sin(theta) * rvir + pos_halo.z;
 
-
+	// Assign velocities using NFW velocity dispersion and assuming isotropy.
 	// f_c equation from Manera et al. (2013; eq. 23).
-	double f_c = c * (0.5 * c * (1+c) - (1+c) * std::log(1+c))/ std::pow((1+c)*std::log(1+c) - c ,2.0);
+	double f_c = c * (0.5 * c / (c + 1) - std::log(1 + c) / (1 + c))/ (std::log(1 + c) - c / (1 + c), 2.0);
+
+	if(f_c < 0){
+		//Negative values happen if c <<~ 2.6, and thus we set the minimum value to f_c evaluated in c = 2.6.
+		f_c = 0.04411218227;
+	}
 
 	// 1D velocity dispersion.
-	double sigma = 0.333 * std::pow(constants::G * halo->Mvir / rvir * f_c, 0.5);
+	double sigma = std::pow(0.333  * constants::G * halo->Mvir / rvir * f_c, 0.5);
 
 	std::normal_distribution<double> normal_distribution(0,sigma);
 
-	double vr = normal_distribution(generator);
-	double vt = normal_distribution(generator);
+	v.x = normal_distribution(generator) + halo->velocity.x;
+	v.y = normal_distribution(generator) + halo->velocity.y;
+	v.z = normal_distribution(generator) + halo->velocity.z;
+
+	// Assign angular momentum based on random angles,
+	// drawn random angles again
 	theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
+	phi   = flat_distribution(generator)*constants::PI2; //flat between 0 and 2PI.
+	L.x   = total_am *  std::sin(theta) * std::cos(phi);
+	L.y   = total_am *  std::sin(theta) * std::sin(phi);
+	L.z   = total_am *  std::cos(theta);
+
 
 }
 

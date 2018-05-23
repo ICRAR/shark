@@ -32,6 +32,7 @@
 
 #include "components.h"
 #include "cosmology.h"
+#include "dark_matter_halos.h"
 #include "execution.h"
 #include "hdf5/writer.h"
 #include "simulation.h"
@@ -43,7 +44,12 @@ class GalaxyWriter {
 
 public:
 
-	GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  std::shared_ptr<Cosmology> cosmology, SimulationParameters sim_params, StarFormation starformation);
+	GalaxyWriter(ExecutionParameters exec_params,
+			CosmologicalParameters cosmo_params,
+			std::shared_ptr<Cosmology> cosmology,
+			std::shared_ptr<DarkMatterHalos> darkmatterhalo,
+			SimulationParameters sim_params,
+			StarFormation starformation);
 	virtual ~GalaxyWriter() {};
 
 	virtual void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons) = 0;
@@ -55,6 +61,7 @@ protected:
 	ExecutionParameters exec_params;
 	CosmologicalParameters cosmo_params;
 	std::shared_ptr<Cosmology> cosmology;
+	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
 	SimulationParameters sim_params;
 	StarFormation starformation;
 

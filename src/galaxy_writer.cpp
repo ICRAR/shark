@@ -42,10 +42,11 @@
 
 namespace shark {
 
-GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params, std::shared_ptr<Cosmology> cosmology, SimulationParameters sim_params, StarFormation starformation):
+GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  std::shared_ptr<Cosmology> cosmology, std::shared_ptr<DarkMatterHalos> darkmatterhalo, SimulationParameters sim_params, StarFormation starformation):
 	exec_params(exec_params),
 	cosmo_params(cosmo_params),
 	cosmology(cosmology),
+	darkmatterhalo(darkmatterhalo),
 	sim_params(sim_params),
 	starformation(starformation)
 {
@@ -397,16 +398,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
-					// TODO: add positions and velocities based on NFW profile halo.
-					pos.x = -1;
-					pos.y = -1;
-					pos.z = -1;
-					vel.x = -1;
-					vel.y = -1;
-					vel.z = -1;
-					L.x   = -1;
-					L.y   = -1;
-					L.z   = -1;
+					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy->angular_momentum(), halo);
 				}
 
 				mvir_subhalo.push_back(mvir_gal);
@@ -641,27 +633,27 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	file.write_dataset("Galaxies/lambda_subhalo", lambda_subhalo, comment);
 
 	//Galaxy position
-	comment = "position component x of galaxy [cMpc/h]";
+	comment = "position component x of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.";
 	file.write_dataset("Galaxies/position_x", position_x, comment);
-	comment = "position component y of galaxy [cMpc/h]";
+	comment = "position component y of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.";
 	file.write_dataset("Galaxies/position_y", position_y, comment);
-	comment = "position component z of galaxy [cMpc/h]";
+	comment = "position component z of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.";
 	file.write_dataset("Galaxies/position_z", position_z, comment);
 
 	//Galaxy velocity
-	comment = "peculiar velocity component x of galaxy [km/s]";
+	comment = "peculiar velocity component x of galaxy [km/s]. In the case of type 2 galaxies, the velocity is generated to randomly sample the velocity dispersion of a NFW halo with the concentration of the halo the galaxy lives in.";
 	file.write_dataset("Galaxies/velocity_x", velocity_x, comment);
-	comment = "peculiar velocity component y of galaxy [km/s]";
+	comment = "peculiar velocity component y of galaxy [km/s]. In the case of type 2 galaxies, the velocity is generated to randomly sample the velocity dispersion of a NFW halo with the concentration of the halo the galaxy lives in.";
 	file.write_dataset("Galaxies/velocity_y", velocity_y, comment);
-	comment = "peculiar velocity component z of galaxy [km/s]";
+	comment = "peculiar velocity component z of galaxy [km/s]. In the case of type 2 galaxies, the velocity is generated to randomly sample the velocity dispersion of a NFW halo with the concentration of the halo the galaxy lives in.";
 	file.write_dataset("Galaxies/velocity_z", velocity_z, comment);
 
 	//Galaxy AM vector
-	comment = "total angular momentum component x of galaxy [Msun/h Mpc/h km/s]";
+	comment = "total angular momentum component x of galaxy [Msun/h Mpc/h km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
 	file.write_dataset("Galaxies/L_x", L_x, comment);
-	comment = "total angular momentum component y of galaxy [Msun/h Mpc/h km/s]";
+	comment = "total angular momentum component y of galaxy [Msun/h Mpc/h km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
 	file.write_dataset("Galaxies/L_y", L_y, comment);
-	comment = "total angular momentum component z of galaxy [Msun/h Mpc/h km/s]";
+	comment = "total angular momentum component z of galaxy [Msun/h Mpc/h km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
 	file.write_dataset("Galaxies/L_z", L_z, comment);
 
 	//Galaxy type.

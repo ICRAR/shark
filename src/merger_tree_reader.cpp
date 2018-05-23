@@ -175,7 +175,11 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 
 		subhalo->Vcirc = Vcirc[i];
 
-		subhalo->concentration = cnfw[i]; //darkmatterhalos.nfw_concentration(subhalo->Mvir,sim_params.redshifts[subhalo->snapshot]);
+		subhalo->concentration = darkmatterhalos.nfw_concentration(subhalo->Mvir,sim_params.redshifts[subhalo->snapshot]);
+
+		if (subhalo->concentration < 1) {
+			throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
+		}
 
 		subhalo->lambda = darkmatterhalos.halo_lambda(lambda[i], sim_params.redshifts[subhalo->snapshot]);
 

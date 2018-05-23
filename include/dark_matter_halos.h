@@ -8,12 +8,13 @@
 #ifndef INCLUDE_DARK_MATTER_HALOS_H_
 #define INCLUDE_DARK_MATTER_HALOS_H_
 
-
+#include <gsl/gsl_sf_lambert.h>
 #include <memory>
 #include <random>
 #include <string>
 #include <vector>
 
+#include "mixins.h"
 #include "numerical_constants.h"
 #include "components.h"
 #include "cosmology.h"
@@ -46,20 +47,23 @@ class NfwDistribution {
 
 private:
 	const double c;
-	double norm1, norm2, norm3;
+	double norm, a;
 	std::uniform_real_distribution<double> uniform;
 
 public:
-	NfwDistribution(const double c) : c(c), uniform(0, 1), norm1(0), norm2(0), norm3(0) {
-		norm3 = 1.0 / c;
-		norm1 = std::pow(norm3, 3.0);
-		norm2 = 1.0 - norm1 / std::pow(norm3 + 1, 3.0);
+	NfwDistribution(const double c) : c(c), uniform(0, 1), norm(0), a(0) {
+		a = 1.0 / c;
+		norm = std::log((a + 1) / a) - 1 / (a + 1);
 	};
 
 	template <typename G>
 	double operator()(G &g) {
-		auto p = uniform(g);
-		double x = std::pow(norm1 / (1.0 - p * norm2), 0.333) - norm3;
+		auto p    = uniform(g);
+		double m  = p * norm;
+		double wm = - 1.0 / (std::exp( m + 1));
+		double w  = gsl_sf_lambert_W0(wm);
+
+		double x = a * (std::exp(w + m + 1) - 1);
 		return x;
 	}
 
@@ -105,7 +109,7 @@ public:
 	double v2disk (double x, double m, double c, double r);
 	double v2bulge (double x, double m, double c, double r);
 
-	void generate_random_orbits(xyz<float> pos, xyz<float> v, HaloPtr &halo);
+	void generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo);
 
 protected:
 	DarkMatterHaloParameters params;
