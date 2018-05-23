@@ -393,7 +393,6 @@ int run(int argc, char **argv) {
 
 	}
 
-	LOG(info) << "Successfully finished";
 	return 0;
 }
 
@@ -401,7 +400,12 @@ int run(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 	try {
-		return shark::run(argc, argv);
+		shark::Timer timer;
+		auto code = shark::run(argc, argv);
+		if (code == 0) {
+			LOG(info) << "Sucessfully finished in " << timer;
+		}
+		return code;
 	} catch (const shark::missing_option &e) {
 		std::cerr << "Missing option: " << e.what() << std::endl;
 		return 1;
