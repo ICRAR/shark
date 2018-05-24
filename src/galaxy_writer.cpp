@@ -162,7 +162,7 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 
 template<typename T>
 static inline
-std::size_t report_vsize(std::vector<T> v, std::ostringstream &os, const char *name) {
+std::size_t report_vsize(const std::vector<T> &v, std::ostringstream &os, const char *name) {
 	const std::size_t amount = sizeof(T) * v.size();
 	os << " " << name << ": " << memory_amount(amount);
 	return amount;
