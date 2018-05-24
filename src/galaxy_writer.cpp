@@ -37,6 +37,7 @@
 #include "galaxy_writer.h"
 #include "logging.h"
 #include "star_formation.h"
+#include "timer.h"
 #include "utils.h"
 
 
@@ -169,6 +170,7 @@ std::size_t report_vsize(std::vector<T> v, std::ostringstream &os, const char *n
 
 void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos){
 
+	Timer t;
 
 
 	using std::string;
@@ -498,6 +500,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	LOG(info) << "Total amount of memory used by the writing process: " << memory_amount(total);
 	LOG(debug) << "Detailed amounts follow: " << os.str();
 
+	LOG(info) << "Galaxies pivoted and memory reported in " << t;
+
+	t = Timer();
+
 	//Write subhalo properties.
 	comment = "Subhalo id";
 	file.write_dataset("Subhalo/id", id, comment);
@@ -671,6 +677,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("Galaxies/id_subhalo_tree", id_subhalo_tree, comment);
 	comment = "halo id in the tree (unique to entire halo catalogue).";
 	file.write_dataset("Galaxies/id_halo_tree", id_halo_tree, comment);
+
+	LOG(info) << "Galaxies data written in " << t;
 
 }
 
