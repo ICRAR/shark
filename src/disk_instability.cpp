@@ -218,7 +218,7 @@ void DiskInstability::transfer_history_disk_to_bulge(GalaxyPtr &galaxy, int snap
 			auto &hist = *it;
 
 			//transfer disk information to bulge.
-			hist.sfr_bulge += hist.sfr_disk;
+			hist.sfr_bulge   += hist.sfr_disk;
 			hist.sfr_z_bulge += hist.sfr_z_disk;
 
 			//make disk properties = 0;

@@ -882,17 +882,17 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 
 			//Write disk component history.
 			comment = "Star formation history of stars formed that by this output time end up in the disk [Msun/Gyr/h]";
-			file_sfh.write_dataset("Disks/StarFormationHistories", sfhs_disk, comment);
+			file_sfh.write_dataset("Disks/StarFormationRateHistories", sfhs_disk, comment);
 
-			comment = "History of stellar metallicity that by this output time ends up in the disk";
-			file_sfh.write_dataset("Disks/StellarMassMetalsHistories", stellar_metals_disk, comment);
+			comment = "Stellar metallicity of the stars formed in a timestep that by this output time ends up in the disk";
+			file_sfh.write_dataset("Disks/MetallicityHistories", stellar_metals_disk, comment);
 
 			//Write bulge component history.
 			comment = "Star formation history of stars formed that by this output time end up in the bulge [Msun/Gyr/h]";
-			file_sfh.write_dataset("Bulges/StarFormationHistories", sfhs_bulge, comment);
+			file_sfh.write_dataset("Bulges/StarFormationRateHistories", sfhs_bulge, comment);
 
-			comment = "History of stellar metallicity that by this output time ends up in the bulge";
-			file_sfh.write_dataset("Bulges/StellarMassMetalsHistories", stellar_metals_bulge, comment);
+			comment = "Stellar metallicity of the stars formed in a timestep that by this output time ends up in the disk";
+			file_sfh.write_dataset("Bulges/MetallicityHistories", stellar_metals_bulge, comment);
 
 			comment = "Redshifts of the history outputs";
 			file_sfh.write_dataset("Redshifts", redshifts, comment);

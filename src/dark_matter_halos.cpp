@@ -370,7 +370,7 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 
 	// Assign velocities using NFW velocity dispersion and assuming isotropy.
 	// f_c equation from Manera et al. (2013; eq. 23).
-	double f_c = c * (0.5 * c / (c + 1) - std::log(1 + c) / (1 + c))/ (std::log(1 + c) - c / (1 + c), 2.0);
+	double f_c = c * (0.5 * c / (c + 1) - std::log(1 + c) / (1 + c))/ std::pow(std::log(1 + c) - c / (1 + c), 2.0);
 
 	if(f_c < 0){
 		//Negative values happen if c <<~ 2.6, and thus we set the minimum value to f_c evaluated in c = 2.6.
