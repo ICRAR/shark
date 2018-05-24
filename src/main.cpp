@@ -330,7 +330,6 @@ LOG(info) << "shark using " << threads << " thread(s)";
 	auto per_thread_objects = create_per_thread_objects(threads, options, exec_params,
 	    gas_cooling_params, recycling_parameters, sim_params, star_formation_params,
 	    cosmology, dark_matter_halos, star_formation);
-	HaloBasedTreeBuilder tree_builder(exec_params);
 
 	// Inform the size of things
 	std::ostringstream os;
@@ -347,7 +346,8 @@ LOG(info) << "shark using " << threads << " thread(s)";
 	// with their growth history.
 	std::vector<MergerTreePtr> merger_trees;
 	{
-		auto halos = SURFSReader(sim_params.tree_files_prefix).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
+		HaloBasedTreeBuilder tree_builder(exec_params, threads);
+		auto halos = SURFSReader(sim_params.tree_files_prefix, threads).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
 		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
 		merger_trees.shrink_to_fit();
 	}

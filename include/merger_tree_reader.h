@@ -26,7 +26,7 @@ public:
 	 *
 	 * @param trees_dir Directory where all tree files are located
 	 */
-	SURFSReader(const std::string &prefix);
+	SURFSReader(const std::string &prefix, unsigned int threads);
 
 	const std::vector<HaloPtr> read_halos(std::vector<unsigned int> batches, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params);
 
@@ -39,6 +39,8 @@ private:
 	std::string prefix;
 	const std::string get_filename(int batch);
 	const std::vector<Subhalo> read_subhalos_batch(int batch);
+	unsigned int threads = 1;
+
 };
 
 }  // namespace shark
