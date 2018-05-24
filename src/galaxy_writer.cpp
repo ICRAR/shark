@@ -102,7 +102,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 }
 
-void HDF5GalaxyWriter::write_header(hdf5::Writer file, int snapshot){
+void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 
 	std::string comment;
 
@@ -167,7 +167,7 @@ std::size_t report_vsize(std::vector<T> v, std::ostringstream &os, const char *n
 	return amount;
 };
 
-void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std::vector<HaloPtr> &halos){
+void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos){
 
 
 
@@ -674,7 +674,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 
 }
 
-void HDF5GalaxyWriter::write_global_properties (hdf5::Writer file, int snapshot, TotalBaryon &AllBaryons){
+void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot, TotalBaryon &AllBaryons){
 
 	using std::string;
 	using std::vector;
