@@ -37,6 +37,7 @@
 #include "galaxy_writer.h"
 #include "logging.h"
 #include "star_formation.h"
+#include "timer.h"
 #include "utils.h"
 
 
@@ -102,7 +103,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 
 }
 
-void HDF5GalaxyWriter::write_header(hdf5::Writer file, int snapshot){
+void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 
 	std::string comment;
 
@@ -161,14 +162,15 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer file, int snapshot){
 
 template<typename T>
 static inline
-std::size_t report_vsize(std::vector<T> v, std::ostringstream &os, const char *name) {
+std::size_t report_vsize(const std::vector<T> &v, std::ostringstream &os, const char *name) {
 	const std::size_t amount = sizeof(T) * v.size();
 	os << " " << name << ": " << memory_amount(amount);
 	return amount;
 };
 
-void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std::vector<HaloPtr> &halos){
+void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos){
 
+	Timer t;
 
 
 	using std::string;
@@ -498,6 +500,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	LOG(info) << "Total amount of memory used by the writing process: " << memory_amount(total);
 	LOG(debug) << "Detailed amounts follow: " << os.str();
 
+	LOG(info) << "Galaxies pivoted and memory reported in " << t;
+
+	t = Timer();
+
 	//Write subhalo properties.
 	comment = "Subhalo id";
 	file.write_dataset("Subhalo/id", id, comment);
@@ -672,9 +678,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer file, int snapshot, const std
 	comment = "halo id in the tree (unique to entire halo catalogue).";
 	file.write_dataset("Galaxies/id_halo_tree", id_halo_tree, comment);
 
+	LOG(info) << "Galaxies data written in " << t;
+
 }
 
-void HDF5GalaxyWriter::write_global_properties (hdf5::Writer file, int snapshot, TotalBaryon &AllBaryons){
+void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot, TotalBaryon &AllBaryons){
 
 	using std::string;
 	using std::vector;

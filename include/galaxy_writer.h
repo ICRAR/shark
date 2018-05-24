@@ -73,9 +73,9 @@ class HDF5GalaxyWriter : public GalaxyWriter {
 public:
 	using GalaxyWriter::GalaxyWriter;
 	void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons) override;
-	void write_header (hdf5::Writer file, int snapshot);
-	void write_galaxies (hdf5::Writer file, int snapshot, const std::vector<HaloPtr> &halos);
-	void write_global_properties (hdf5::Writer file, int snapshot, TotalBaryon &AllBaryons);
+	void write_header (hdf5::Writer &file, int snapshot);
+	void write_galaxies (hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos);
+	void write_global_properties (hdf5::Writer &file, int snapshot, TotalBaryon &AllBaryons);
 	void write_histories (int snapshot, const std::vector<HaloPtr> &halos);
 };
 
