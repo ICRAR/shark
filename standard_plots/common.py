@@ -22,6 +22,7 @@
 """Common routines for shark plots"""
 
 import argparse
+import collections
 import os
 import sys
 
@@ -34,7 +35,6 @@ if PY2:
 else:
     import configparser
 
-import utilities_statistics as us
 
 def load_matplotlib():
 
@@ -54,7 +54,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     parser.add_argument('-m', '--model', help='Model name')
     parser.add_argument('-s', '--simu', help='Simulation name')
     parser.add_argument('-S', '--shark-dir', help='SHArk base output directory')
-    parser.add_argument('-v', '--subvolumes', help='subvolumes')
+    parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
     parser.add_argument('-o', '--output-dir', help='Output directory for plots. Defaults to <shark-dir>/Plots/<simu>/<model>')
 
     if requires_observations:
@@ -84,8 +84,6 @@ def parse_args(requires_snapshot=True, requires_observations=True):
         simu  = opts.simu
         shark_dir = opts.shark_dir
     model_dir = os.path.join(shark_dir, simu, model)
-    
-    #ADD HERE THE subvolumes!
 
     output_dir = opts.output_dir
     if not output_dir:
@@ -97,7 +95,16 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     except OSError:
         pass
 
-    ret = [model_dir, output_dir]
+    subvolumes = []
+    for r in filter(None, opts.subvolumes.split(',')):
+        if '-' in r:
+            x = [int(x) for x in r.split('-')]
+            subvolumes.extend(list(range(x[0], x[1])))
+            subvolumes.append(x[1])
+        else:
+            subvolumes.append(int(r))
+
+    ret = [model_dir, output_dir, subvolumes]
     if requires_observations:
         ret.append(opts.obs_dir)
     if requires_snapshot:
@@ -155,23 +162,28 @@ def savefig(output_dir, fig, plotname):
     print('Saving plot to %s' % plotfile)
     fig.savefig(plotfile, dvi=300, pad_inches=0)
 
-def read_data(model_dir, snapshot, fields, subvolume=0, include_h0_volh=True):
+def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
 
-    for subv in range(0,len(subvolumes)):
-        fname = os.path.join(model_dir, str(snapshot), str(subvolume[subv]), 'galaxies.hdf5')
-        print 'will read from', fname
+    data = collections.OrderedDict()
+    for idx, subv in enumerate(subvolumes):
+
+        fname = os.path.join(model_dir, str(snapshot), str(subv), 'galaxies.hdf5')
+        print('Reading data from %s' % fname)
         with h5py.File(fname, 'r') as f:
-            if(subv == 0):
-                h0 = f['Cosmology/h'].value
-                volh = f['runInfo/EffectiveVolume'].value
-                data = []
-                if include_h0_volh:
-                    data.append(h0)
-                    data.append(volh * len(subvolumes))
+            if idx == 0 and include_h0_volh:
+                data['h0'] = f['Cosmology/h'].value
+                data['vol'] = f['runInfo/EffectiveVolume'].value * len(subvolumes)
+
             for gname, dsnames in fields.items():
                 group = f[gname]
                 for dsname in dsnames:
-                    data.append(group[dsname].value)
-                        
-    return data
+                    full_name = '%s/%s' % (gname, dsname)
+                    l = data.get(full_name, None)
+                    if l is None:
+                        l = group[dsname].value
+                    else:
+                        l = np.concatenate([l, group[dsname].value])
+                    data[full_name] = l
+
+    return list(data.values())

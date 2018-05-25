@@ -78,10 +78,10 @@ def plot_cooling_rate(plt, outdir, med_tvir):
 def main():
 
     plt = common.load_matplotlib()
-    modeldir, outdir, snapshot = common.parse_args(requires_observations=False)
+    modeldir, outdir, subvols, snapshot = common.parse_args(requires_observations=False)
 
     fields = {'Galaxies': ('type', 'vvir_hosthalo', 'cooling_rate')}
-    hdf5_data = common.read_data(modeldir, snapshot, fields, include_h0_volh=False)
+    hdf5_data = common.read_data(modeldir, snapshot, fields, subvols, include_h0_volh=False)
     med_tvir = prepare_data(hdf5_data)
 
     plot_cooling_rate(plt, outdir, med_tvir)

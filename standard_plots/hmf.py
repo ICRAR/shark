@@ -91,7 +91,7 @@ def prepare_data(hdf5_data, hist, histsh, index):
 def main():
 
     plt = common.load_matplotlib()
-    model_dir, outdir, obsdir = common.parse_args(requires_snapshot=False)
+    model_dir, outdir, subvols, obsdir = common.parse_args(requires_snapshot=False)
 
     # Loop over redshift and subvolumes
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
@@ -105,7 +105,7 @@ def main():
 
     for index in range(0,4):
 
-        hdf5_data = common.read_data(model_dir, zlist[index], fields, 0)
+        hdf5_data = common.read_data(model_dir, zlist[index], fields, subvols)
         prepare_data(hdf5_data, hist, histsh, index)
 
         h0, volh = hdf5_data[0], hdf5_data[1]

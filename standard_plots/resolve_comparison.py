@@ -882,13 +882,13 @@ def plot_bmf_resolve_baryon_components(plt, outdir, obsdir, hist_bmf, hist_smf, 
 def main():
 
     plt = common.load_matplotlib()
-    modeldir, outdir, obsdir, snapshot = common.parse_args()
+    modeldir, outdir, subvols, obsdir, snapshot = common.parse_args()
     fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'rdisk_star',
                            'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mvir_hosthalo')}
 
-    hdf5_data = common.read_data(modeldir, snapshot, fields)
+    hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
 
     (hist_smf, hist_smf_sat, hist_bmf, hist_bmf_sat,
      mHIms, mHIms_true, mHImhalo, mHImhalo_true,
