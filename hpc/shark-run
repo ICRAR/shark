@@ -36,6 +36,37 @@ warning() {
 	echo "shark-run: WARNING: $1" 1>&2
 }
 
+repeat() {
+	_all_vals=""
+	for x in `eval echo {1..$2}`
+	do
+		_all_vals="$_all_vals $1"
+	done
+	echo "${_all_vals## }"
+}
+
+# Turns SLURM quantities specifications to lists of individual values
+# For example:
+#
+# "48(x3),24" --> "48 48 48 24"
+_slurm_quantity_as_list() {
+	_comma_separated_vals="${1//,/ }"
+	_all_vals=""
+	for val in $_comma_separated_vals
+	do
+		if [[ "$val" =~ ^([0-9]+)\(x([0-9]+)\) ]]
+		then
+			_amount=${BASH_REMATCH[1]}
+			_rep=${BASH_REMATCH[2]^*}
+			_all_vals="$_all_vals `repeat $_amount $_rep`"
+		else
+			_all_vals="$_all_vals $val"
+		fi
+	done
+
+	echo "${_all_vals## }"
+}
+
 print_usage() {
 	echo
 	echo "$0: Runs shark under a queueing environment"
@@ -87,6 +118,7 @@ then
 	info "SLURM_TASKS_PER_NODE     #Tasks to run per node                $SLURM_TASKS_PER_NODE"
 	info "SLURM_MEM_PER_CPU        #Allocated memory per CPU             $SLURM_MEM_PER_CPU"
 	info "SLURM_MEM_PER_NODE       #Allocated memory per node            $SLURM_MEM_PER_NODE"
+	info "SLURM_CPUS_PER_TASK      #CPUs to be used by each task         $SLURM_CPUS_PER_TASK"
 	info ""
 fi
 
@@ -132,6 +164,7 @@ then
 	print_usage 1>&2
 	exit 1
 fi
+shark_subvolumes=($shark_subvolumes)
 
 # Positional argument is the configuration file name
 if [ $(($# - $OPTIND)) -lt 0 ]
@@ -164,36 +197,85 @@ then
 	done
 fi
 
-mem_per_task_per_node=${SLURM_MEM_PER_CPU:-}
+cpus_per_node=(`_slurm_quantity_as_list $SLURM_JOB_CPUS_PER_NODE`)
+tasks_per_node=(`_slurm_quantity_as_list $SLURM_TASKS_PER_NODE`)
+info "CPUs per node: ${cpus_per_node[*]}"
+info "Tasks per node: ${tasks_per_node[*]}"
+
+mem_per_task=${SLURM_MEM_PER_CPU:-}
 if [ -z "$mem_per_task_per_node" ]
 then
 	if [ -z "$SLURM_MEM_PER_NODE" ]
 	then
 		error "Neither SLURM_MEM_PER_CPU nor SLURM_MEM_PER_NODE could be found, cannot calculate memory per shark instance"
 	fi
-	tasks_per_node=${SLURM_TASKS_PER_NODE%%(*}
-	mem_per_task_per_node=$(($SLURM_MEM_PER_NODE / $tasks_per_node))
+
+	mem_per_node=(`_slurm_quantity_as_list $SLURM_MEM_PER_NODE`)
+	if [ ${#mem_per_node[*]} = 1 ]
+	then
+		mem_per_node=(`repeat $mem_per_node $SLURM_JOB_NUM_NODES`)
+	fi
+	info "Memory per node: ${mem_per_node[*]}"
+
+	mem_per_task=""
+	for i in `eval echo {1..${#mem_per_node[*]}}`
+	do
+		let "i = i - 1"
+		t=${tasks_per_node[i]}
+		m=${mem_per_node[i]}
+		mem_per_task="$mem_per_task `repeat $(($m / $t)) $t`"
+	done
+	mem_per_task=($mem_per_task)
+else
+	mem_per_task=(`repeat $mem_per_task ${#shark_subvolumes[*]}`)
 fi
+
+cpus_per_task=""
+for i in `eval echo {1..${#cpus_per_node[*]}}`
+do
+	let "i = i - 1"
+	c=${cpus_per_node[i]}
+	t=${tasks_per_node[i]}
+	div=$(( $c / $t ))
+	rem=$(( $c % $t ))
+
+	# Distribute CPUs within a node in round-robin fashion
+	if [ $rem = 0 ]
+	then
+		cpus_per_task="$cpus_per_task `repeat $div $t`"
+	else
+		cpus_per_task="$cpus_per_task `repeat $div $(($t - $rem))` `repeat $(( $div + 1 )) $rem`"
+	fi
+done
+cpus_per_task=($cpus_per_task)
+info "CPUs per task: ${cpus_per_task[*]}"
+info "Memory per task: ${mem_per_task[*]}"
 
 # Calculate the command to run
 # If possible, we time each execution (but it's not really necessary)
-cmd="srun --exclusive --mem-per-cpu $mem_per_task_per_node -c 1 -n 1 -N 1"
+cmd="srun --exclusive -n 1 -N 1"
+post_cmd=""
 if [ -n "$(command -v time 2> /dev/null)" -a "`type -t time`" = "file" ]
 then
-	cmd="$cmd time"
+	post_cmd="time"
 fi
-cmd="$cmd $shark_binary -v $shark_verbosity $config_file"
+post_cmd="$post_cmd $shark_binary -v $shark_verbosity $config_file"
 
-info "Processing subvolumes: $shark_subvolumes"
+info "Processing ${#shark_subvolumes[*]} subvolume(s): ${shark_subvolumes[*]}"
 info ""
 info "================================================================================"
-info "Starting shark via srun with command-line: $cmd -o <subvol>"
+info "Starting shark via srun with command-line:"
+info "$cmd -c <threads> --mem-per-cpu <mem> $post_cmd -o <subvol> -t <threads>"
 info "================================================================================"
 info ""
-for s in $shark_subvolumes
+for i in `eval echo {1..${#shark_subvolumes[*]}}`
 do
-	info "Spawning shark run for subvolume $s"
-	$cmd -o "execution.simulation_batches=$s" &> "shark_subvol_${s}.log" &
+	let "i = i - 1"
+	s=${shark_subvolumes[i]}
+	t=${cpus_per_task[i]}
+	m=${mem_per_task[i]}
+	info "Spawning shark run for subvolume $s with $t threads and $m MB of memory"
+	$cmd -c $t --mem-per-cpu $(($m/$t)) $post_cmd -o "execution.simulation_batches=$s" -t $t &> "shark_subvol_${s}.log" &
 done
 
 info "Waiting for all instances to finish"
