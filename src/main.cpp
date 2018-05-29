@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include <boost/filesystem/convenience.hpp>
 #include <boost/program_options.hpp>
 #include <gsl/gsl_errno.h>
 
@@ -100,12 +101,17 @@ void install_gsl_error_handler() {
 	gsl_set_error_handler(&throw_exception_gsl_handler);
 }
 
-void log_startup_information()
+void log_startup_information(int argc, char **argv)
 {
 	char the_hostname[100];
 	gethostname(the_hostname, 100);
 	LOG(info) << "shark is starting in " << the_hostname;
 	LOG(info) << "shark was built on " << __DATE__ << " " __TIME__;
+	LOG(info) << "shark running at: " << boost::filesystem::current_path().string();
+
+	std::ostringstream os;
+	std::copy(argv, argv + argc, std::ostream_iterator<char *>(os, " "));
+	LOG(info) << "shark started with command line: " << os.str();
 }
 
 struct SnapshotStatistics {
@@ -211,7 +217,7 @@ int run(int argc, char **argv) {
 	verbosity = 5 - verbosity;
 	setup_logging(verbosity);
 
-	log_startup_information();
+	log_startup_information(argc, argv);
 
 	install_gsl_error_handler();
 

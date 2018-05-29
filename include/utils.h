@@ -128,7 +128,7 @@ namespace detail {
 	inline
 	std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, detail::_fixed<N, VT> v)
 	{
-		os << std::setprecision(3) << std::fixed << v._val;
+		os << std::setprecision(N) << std::fixed << v._val;
 		return os;
 	}
 
