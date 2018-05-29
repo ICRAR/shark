@@ -37,12 +37,6 @@ else:
 
 
 def load_matplotlib():
-
-    # Load matplotlib and try to use the cairo backend (works faster)
-    # If it's not there, try with Agg
-    import matplotlib
-    matplotlib.use('cairo')
-
     import matplotlib.pyplot as plt
     plt.rcParams['legend.numpoints'] = 1
     return plt
