@@ -397,13 +397,25 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
 def main():
 
     plt = common.load_matplotlib()
-    modeldir, outdir, obsdir, snapshot = common.parse_args()
+    modeldir, outdir, subvols, obsdir, snapshot = common.parse_args()
 
     fields = {'Global': ('redshifts', 'mHI', 'mH2', 'mcold', 'mcold_metals',
                          'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts',
                          'mBH', 'SFR_quiescent', 'SFR_burst', 'mDM', 'mcold_halo')}
 
-    hdf5_data = common.read_data(modeldir, snapshot, fields)
+    # Read data from each subvolume at a time and add it up
+    # rather than appending it all together
+    for idx, subvol in enumerate(subvols):
+        subvol_data = common.read_data(modeldir, snapshot, fields, [subvol])
+        if idx == 0:
+            hdf5_data = subvol_data
+        else:
+            for subvol_datum, hdf5_datum in zip(subvol_data[3:], hdf5_data[3:]):
+                hdf5_datum += subvol_datum
+
+    # Also make sure that the total volume takes into account the number of subvolumes read
+    hdf5_data[1] = hdf5_data[1] * len(subvols)
+
     h0, redshifts = hdf5_data[0], hdf5_data[2]
 
     (mstar_plot, mcold_plot, mhot_plot, meje_plot,

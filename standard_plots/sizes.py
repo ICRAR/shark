@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from scipy.weave.ext_tools import indent
 """Size plots"""
 
 import functools
@@ -535,7 +534,7 @@ def main():
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo')}
 
-    modeldir, outdir, obsdir = common.parse_args(requires_snapshot=False)
+    modeldir, outdir, subvols, obsdir = common.parse_args(requires_snapshot=False)
 
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -554,7 +553,7 @@ def main():
     sam_halo       = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
     for index in range(0,4):
-        hdf5_data = common.read_data(modeldir, zlist[index], fields, subvolume=0)
+        hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, bulge_vel, disk_vel, 
                      sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo)

@@ -306,7 +306,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				double jmol;
 
 				bool jcalc = true;
-				starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b, &jatom, &jmol, jcalc);
+				starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], m_mol, m_atom, m_mol_b, m_atom_b, jatom, jmol, jcalc);
 
 				// Gas components separated into HI and H2.
 				mmol_disk.push_back(m_mol);
@@ -952,7 +952,7 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 
 	bool jcalc = true;
 
-	starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], &m_mol, &m_atom, &m_mol_b, &m_atom_b, &jatom, &jmol, jcalc);
+	starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], m_mol, m_atom, m_mol_b, m_atom_b, jatom, jmol, jcalc);
 
 	f << mstars_disk << " " << mstars_bulge << " " <<  m_atom + m_atom_b
 	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "
