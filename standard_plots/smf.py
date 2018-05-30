@@ -48,7 +48,6 @@ mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
 imf   = 'cha'
 
-
 def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err):
 
     # z0 obs
@@ -363,7 +362,6 @@ def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):
     common.savefig(outdir, fig, 'SSFR_Mstars.pdf')
 
 
-
 def plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat):
 
     fig = plt.figure(figsize=(9.5,9.5))
@@ -432,7 +430,6 @@ def plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat):
         common.prepare_legend(ax, colors, loc=4)
 
     common.savefig(outdir, fig, 'mzr.pdf')
-
 
 
 def plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat):
@@ -541,7 +538,6 @@ def plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat):
     common.savefig(outdir, fig, 'SFE_Mstars.pdf')
 
 
-
 def plot_fmzr(plt, outdir, fmzr):
 
     fig = plt.figure(figsize=(5,5))
@@ -611,7 +607,6 @@ def plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat):
 
     common.prepare_legend(ax, ['grey','grey','g','r'], loc=4)
     common.savefig(outdir, fig, 'mzr_z0.pdf')
-
 
 
 def plot_sfr_mstars_z0(plt, outdir, obsdir, sfr_seq, mainseqsf):

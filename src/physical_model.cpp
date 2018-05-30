@@ -62,40 +62,46 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	double mcoolrate = params->mcoolrate; /*cooling rate in units of Msun/Gyr*/
 
+	// Define minimum gas metallicities.
 	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas minimum metallicity*/
 	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*hot gas minimum metallicity*/
 
-	if (std::isnan(params->rgas) or std::isnan(params->vgal) ) {
-		double mess = 1;
-	}
-
+	// Define angular momentum parameters.
 	double jgas = 2.0 * params->vgal * params->rgas / constants::RDISK_HALF_SCALE; /*current sAM of the cold gas*/
 	double jrate = 0; /*variable that saves the angular momentum transfer rate from gas to stars*/
 
+	// Define current gas metallicity and angular momentum.
 	if(y[1] > 0 && y[6] > 0) {
 		zcold = y[6] / y[1];
 		jgas  = y[13] / y[1];
 	}
 
+	// Define current hot gas metallicity.
 	if(y[2] > 0 && y[7] > 0) {
 		zhot = y[7] / y[2];
 	}
 
+	// Calculate SFR.
 	double SFR   = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, zcold, params->redshift, params->burst, params->vgal, jrate, jgas);
 
+	// Initialize mass loading and angular momentum loading parameters.
 	double beta1 = 0, beta2 = 0;
 	double betaj_1 = 0, betaj_2 = 0;
 
+	// Calculate mass and angular momentum loading from stellar feedback process.
 	model.stellar_feedback.outflow_rate(SFR, params->vsubh, params->vgal, params->redshift, beta1, beta2, betaj_1, betaj_2); /*mass loading parameter*/
 
+	// Retained fraction.
 	double rsub = 1.0-R;
 
+	// Mass transfer equations.
 	f[0] = SFR * rsub;
 	f[1] = mcoolrate - (rsub + beta1) * SFR;
 	f[2] = - mcoolrate;
 	f[3] = (beta1 - beta2) * SFR;
 	f[4] = beta2 * SFR;
 
+	// Metallicity transfer equations.
 	f[5] = rsub * zcold * SFR;
 	f[6] = mcoolrate * zhot + SFR * (yield - (rsub + beta1) * zcold);
 	f[7] = - mcoolrate * zhot;
@@ -160,12 +166,14 @@ std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, cons
 
 	std::vector<double> y(17);
 
+	// Define mass inputs.
 	y[0] = galaxy.disk_stars.mass;
 	y[1] = galaxy.disk_gas.mass;
 	y[2] = subhalo.cold_halo_gas.mass; //This is the component that has the cooling gas.
 	y[3] = subhalo.hot_halo_gas.mass;
 	y[4] = subhalo.ejected_galaxy_gas.mass;
 
+	// Define mass in metals inputs.
 	y[5] = galaxy.disk_stars.mass_metals;
 	y[6] = galaxy.disk_gas.mass_metals;
 	y[7] = subhalo.cold_halo_gas.mass_metals;
@@ -197,12 +205,14 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 		throw invalid_argument(os.str());
 	}
 
+	// Assign new masses.
 	galaxy.disk_stars.mass 					= y[0];
 	galaxy.disk_gas.mass   					= y[1];
 	subhalo.cold_halo_gas.mass 				= y[2];
 	subhalo.hot_halo_gas.mass               = y[3];
 	subhalo.ejected_galaxy_gas.mass 		= y[4];
 
+	// Assign new mass in metals.
 	galaxy.disk_stars.mass_metals 			= y[5];
 	galaxy.disk_gas.mass_metals 			= y[6];
 	subhalo.cold_halo_gas.mass_metals 		= y[7];
@@ -217,15 +227,18 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	// Redefine angular momentum ONLY if the new value is > 0.
 	if(y[12] > 0 and y[13] > 0){
 
+		// Assign new specific angular momenta.
 		galaxy.disk_stars.sAM          = y[12] / galaxy.disk_stars.mass;
 		galaxy.disk_gas.sAM            = y[13] / galaxy.disk_gas.mass;
 		subhalo.cold_halo_gas.sAM      = y[14] / subhalo.cold_halo_gas.mass;
 		subhalo.hot_halo_gas.sAM       = y[15] / subhalo.hot_halo_gas.mass;
 		subhalo.ejected_galaxy_gas.sAM = y[16] / subhalo.ejected_galaxy_gas.mass;
 
+		// Assign new sizes based on new AM.
 		galaxy.disk_stars.rscale = galaxy.disk_stars.sAM / galaxy.vmax * constants::EAGLEJconv;
 		galaxy.disk_gas.rscale   = galaxy.disk_gas.sAM   / galaxy.vmax * constants::EAGLEJconv;
 
+		// check for unrealistic cases.
 		if(galaxy.disk_stars.rscale <= constants::tolerance and galaxy.disk_stars.mass > 0){
 			std::ostringstream os;
 			os << "Galaxy with extremely small size, rdisk_stars < 1e-10, in physical model";
@@ -313,11 +326,14 @@ std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &sub
 
 	std::vector<double> y(17);
 
+	// Define mass inputs.
 	y[0] = galaxy.bulge_stars.mass;
 	y[1] = galaxy.bulge_gas.mass;
 	y[2] = 0; //there is no gas cooling.
 	y[3] = subhalo.hot_halo_gas.mass;
 	y[4] = subhalo.ejected_galaxy_gas.mass;
+
+	// Define mass in metals inputs.
 	y[5] = galaxy.bulge_stars.mass_metals;
 	y[6] = galaxy.bulge_gas.mass_metals;
 	y[7] = 0; //there is no gas cooling.
@@ -352,10 +368,13 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	galaxy.burst_stars.mass                 += y[0] -  galaxy.bulge_stars.mass;
 	galaxy.burst_stars.mass_metals          += y[5] -  galaxy.bulge_stars.mass_metals;
 
+	// Assign new masses.
 	galaxy.bulge_stars.mass 				= y[0];
 	galaxy.bulge_gas.mass   				= y[1];
 	subhalo.hot_halo_gas.mass               = y[3];
 	subhalo.ejected_galaxy_gas.mass 		= y[4];
+
+	// Assign new mass in metals.
 	galaxy.bulge_stars.mass_metals 			= y[5];
 	galaxy.bulge_gas.mass_metals 			= y[6];
 	subhalo.hot_halo_gas.mass_metals        = y[8];

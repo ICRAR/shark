@@ -94,6 +94,16 @@ public:
 
 	void evolve_galaxy(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
 	{
+		/**
+		 * Parameters that are needed as input in the ode_solver:
+		 * mcoolrate: gas cooling rate onto galaxy [Msun/Gyr/h]
+		 * rgas: half-gas mass radius of the disk [Mpc/h]
+		 * vgal: disk velocity at rgas [km/s]
+		 * rstar: half-stellar mass radius of the disk [Mpc/h]
+		 * vsubh: virial velocity of the host subhalo [km/s]
+		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
+		 * burst: boolean parameter indicating if this is a starburst or not.
+		 */
 
 		double mcoolrate = 0;
 		// Define cooling rate only in the case galaxy is central.
@@ -104,6 +114,7 @@ public:
 		double rgas       = galaxy.disk_gas.rscale; //gas scale radius.
 		double vgal       = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale * constants::EAGLEJconv;
 
+		// Catch cases where gas disk doesn't exist yet.
 		if(rgas <= 0){
 			//In this case assign a scalelength due to the cooling gas.
 			rgas = subhalo.cold_halo_gas.sAM / galaxy.vmax * constants::EAGLEJconv;
@@ -125,6 +136,18 @@ public:
 
 	void evolve_galaxy_starburst(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
 	{
+
+		/**
+		 * Parameters that are needed as input in the ode_solver:
+		 * mcoolrate: gas cooling rate onto galaxy [Msun/Gyr/h]. In the case of starbursts, this is \equiv 0
+		 * rgas: half-gas mass radius of the bulge [Mpc/h]
+		 * vgal: bulge velocity at rgas [km/s]
+		 * rstar: half-stellar mass radius of the bulge [Mpc/h]
+		 * vsubh: virial velocity of the host subhalo [km/s]
+		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
+		 * burst: boolean parameter indicating if this is a starburst or not.
+		 */
+
 		double mcoolrate  = 0; //During central starbursts, cooling rate =0, as cooling gas always settles in the disk (not the bulge).
 		double jcold_halo = 0; //Same as above.
 		double rgas       = galaxy.bulge_gas.rscale; //gas scale radius.

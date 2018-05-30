@@ -318,23 +318,26 @@ double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double zgas, do
 		rmol = std::pow((midplane_pressure(Sigma_gas,Sigma_stars,r)/parameters.Po),parameters.beta_press);
 	}
 	else if (parameters.model == StarFormationParameters::GD14){
+		//Galaxy parameters
 		double d_mw = zgas;
 		double u_mw = Sigma_gas / constants::sigma_gas_mw;
 
 		rmol = Sigma_gas / gd14_sigma_norm(d_mw, u_mw);
 	}
 	else if (parameters.model == StarFormationParameters::K13){
-		//TODO
+
+		double func = k13_fmol(zgas, Sigma_gas);
+		rmol =  (1.0 - func) / func;
+		if(rmol < 1e-4){
+			rmol = 1e-4;
+		}
 	}
 	else if (parameters.model == StarFormationParameters::KMT09){
 
-		double chi   = 0.77 * (1.0 + 3.1 * std::pow(zgas,0.365));
-		double s     = std::log(1.0 + 0.6 * chi)/( 0.04 * parameters.clump_factor_KMT09 * Sigma_gas/std::pow(constants::MEGA, 2.0) * zgas);
-		double delta = 0.0712 * std::pow(0.1 / s + 0.675, -2.8);
-		double func  = std::pow(1.0 + std::pow(0.75 * s / (1.0 + delta), -5.0), -0.2);
+		double func  = kmt09_fmol(zgas, Sigma_gas);
 		rmol  = (1.0 - func) / func;
-		if(rmol < constants::EPS4){
-			rmol = constants::EPS4;
+		if(rmol < 1e-4){
+			rmol = 1e-4;
 		}
 	}
 
@@ -384,6 +387,43 @@ double StarFormation::gd14_sigma_norm(double d_mw, double u_mw){
 
 	return sigma_r1;
 }
+
+double StarFormation::kmt09_fmol(double zgas, double sigma_gas){
+
+	double chi   = 0.77 * (1.0 + 3.1 * std::pow(zgas,0.365));
+	double s     = std::log(1.0 + 0.6 * chi)/( 0.04 * parameters.clump_factor_KMT09 * sigma_gas/std::pow(constants::MEGA, 2.0) * zgas);
+	double delta = 0.0712 * std::pow(0.1 / s + 0.675, -2.8);
+	double func  = std::pow(1.0 + std::pow(0.75 * s / (1.0 + delta), -5.0), -0.2);
+
+	return func;
+}
+
+double StarFormation::k13_fmol(double zgas, double sigma_gas){
+
+	//Galaxy parameters
+	double d_mw = zgas;
+	double u_mw = sigma_gas / constants::sigma_gas_mw;
+	double Sigma0 = sigma_gas /std::pow(constants::MEGA, 2.0); // gas surface density in Msun/pc^2
+
+	// Calculate cold neutral medium densities in the regimes of hydrostatic and two-phase equilibrium.
+	double ncnm_2p    = 23.0 * u_mw * std::pow((1.0 + 3.1 * std::pow(d_mw, 0.365))/4.1, -1) / 10.0; //in units of 10xcm^-3
+	double ncnm_hydro = 0.0124068 * std::pow(Sigma0, 2.0) * (1.0 + std::pow(1.0 + 1250.56/std::pow(Sigma0, 2.0), 0.5)) / 10.0; //in units of 10xcm^-3
+
+	// Assign the maximum of the two densities.
+	double ncnm = std::max(ncnm_2p, ncnm_hydro);
+
+	double Chi = 7.2 * u_mw/ncnm;
+
+	double Tauc = 0.066 * parameters.clump_factor_KMT09 * d_mw * Sigma0;
+	double sfac = std::log10(1 + 0.6 * Chi + 0.01 * std::pow(Chi,2.0)) / (0.6 * Tauc);
+
+	double func = 1 - 0.75 * sfac / (1 + 0.25 * sfac);
+
+	return func;
+
+}
+
+
 
 double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
 		double &jmol, double jgas, double vgal, bool bulge, bool jcalc) {

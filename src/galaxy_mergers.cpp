@@ -398,9 +398,6 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	central->bulge_gas.rscale   = bulge_size_merger(mass_ratio, mgas_ratio, central, satellite, halo);
 	central->bulge_stars.rscale = central->bulge_gas.rscale;
 
-	if(central->bulge_gas.rscale > 0.01){
-		double mess=1;
-	}
 
 	// Black holes merge regardless of the merger type.
 	central->smbh += satellite->smbh;
@@ -644,9 +641,6 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 		//throw invalid_argument(os.str());
 	}
 
-	if(r > 0.01){
-		double mess=1;
-	}
 
 	return r;
 

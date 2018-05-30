@@ -142,10 +142,6 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 		//throw invalid_argument(os.str());
 	}
 
-	if(rnew > 0.01){
-		double mess=1;
-	}
-
 	return rnew;
 
 }

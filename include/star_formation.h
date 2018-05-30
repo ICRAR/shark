@@ -108,6 +108,10 @@ public:
 
 	double gd14_sigma_norm(double d_mw, double u_mw);
 
+	double kmt09_fmol(double zgas, double sigma_gas);
+
+	double k13_fmol(double zgas, double sigma_gas);
+
 	unsigned long int get_integration_intervals() {
 		return integrator.get_num_intervals();
 	}
