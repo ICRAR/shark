@@ -392,6 +392,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
 
+		Timer evolution_t;
 #ifdef SHARK_OPENMP
 		#pragma omp parallel for num_threads(threads) schedule(static)
 #endif // SHARK_OPENMP
@@ -431,6 +432,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 				galaxy_mergers.merging_subhalos(halo, sim_params.redshifts[snapshot]);
 			}
 		}
+		LOG(info) << "Evolved galaxies in " << evolution_t;
 
 		vector<HaloPtr> all_halos_this_snapshot;
 		for (auto &tree: merger_trees) {
