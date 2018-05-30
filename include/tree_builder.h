@@ -39,7 +39,7 @@ namespace shark {
 class TreeBuilder {
 
 public:
-	TreeBuilder(ExecutionParameters exec_params);
+	TreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 	virtual ~TreeBuilder();
 	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology, TotalBaryon &AllBaryons);
 
@@ -51,6 +51,8 @@ protected:
 
 	void link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
 	          const HaloPtr &halo, const HaloPtr &d_halo);
+
+	void ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const;
 
 	void ensure_halo_mass_growth(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params);
 
@@ -66,14 +68,14 @@ protected:
 
 private:
 	ExecutionParameters exec_params;
-
+	unsigned int threads = 1;
 };
 
 
 class HaloBasedTreeBuilder : public TreeBuilder {
 
 public:
-	HaloBasedTreeBuilder(ExecutionParameters exec_params);
+	HaloBasedTreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 
 protected:
 	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) override;

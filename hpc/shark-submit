@@ -131,7 +131,7 @@ print_usage() {
 submit_slurm() {
 
 	# Each SHArk instance uses one CPU
-	cmd="sbatch --ntasks $n_svols --cpus-per-task 1"
+	cmd="sbatch --ntasks $n_svols"
 	cmd="$cmd -o shark-run.out -e shark-run.err"
 
 	# Queueing accountability

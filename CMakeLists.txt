@@ -41,7 +41,8 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
 
 # Options users can give on the command line
-option(SHARK_TEST  "Include test compilation in the build" OFF)
+option(SHARK_TEST       "Include test compilation in the build" OFF)
+option(SHARK_NO_OPENMP  "Don't attempt to include OpenMP support in shark" OFF)
 
 #
 # Make sure we have thread support
@@ -127,12 +128,26 @@ macro(find_boost)
 endmacro()
 
 #
+# Find OpenMP, if required
+#
+macro(find_openmp)
+	find_package(OpenMP)
+	if (OPENMP_FOUND)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+		set(SHARK_OPENMP ON)
+	endif()
+endmacro()
+
+#
 # Go out there and find stuff
 #
 find_threads()
 find_gsl()
 find_hdf5()
 find_boost()
+if (NOT LIBPROFIT_NO_OPENMP)
+	find_openmp()
+endif()
 
 #
 # Save all compile-time options here

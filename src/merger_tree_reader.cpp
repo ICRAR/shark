@@ -15,6 +15,7 @@
 #include <vector>
 #include <tuple>
 
+#include "config.h"
 #include "dark_matter_halos.h"
 #include "exceptions.h"
 #include "logging.h"
@@ -24,12 +25,17 @@
 #include "utils.h"
 #include "hdf5/reader.h"
 
+#ifdef SHARK_OPENMP
+#include <omp.h>
+#endif
+
+
 using namespace std;
 
 namespace shark {
 
-SURFSReader::SURFSReader(const std::string &prefix) :
-	prefix(prefix)
+SURFSReader::SURFSReader(const std::string &prefix, unsigned int threads) :
+	prefix(prefix), threads(threads)
 {
 	if ( prefix.size() == 0 ) {
 		throw invalid_argument("Trees dir has no value");
@@ -119,10 +125,13 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 	os << "After reading we should be using ~" << memory_amount(n_subhalos * sizeof(Subhalo)) << " of memory";
 	LOG(info) << os.str();
 
-	vector<SubhaloPtr> subhalos;
-	subhalos.reserve(n_subhalos);
 	t = Timer();
-	for(unsigned int i=0; i!=n_subhalos; i++) {
+	vector<vector<SubhaloPtr>> t_subhalos(threads);
+
+#ifdef SHARK_OPENMP
+	#pragma omp parallel for num_threads(threads) schedule(static, 10000)
+#endif
+	for(unsigned int i=0; i < n_subhalos; i++) {
 
 		auto subhalo = std::make_shared<Subhalo>();
 
@@ -187,7 +196,18 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 		subhalo->Vvir = darkmatterhalos.halo_virial_velocity(subhalo->Mvir, sim_params.redshifts[subhalo->snapshot]);
 
 		// Done, save it now
-		subhalos.push_back(std::move(subhalo));
+		t_subhalos[omp_get_thread_num()].emplace_back(std::move(subhalo));
+	}
+
+	vector<SubhaloPtr> subhalos;
+	if (threads == 0) {
+		subhalos = std::move(t_subhalos[0]);
+	}
+	else {
+		subhalos.reserve(n_subhalos);
+		for (auto i = 0; i != threads; i++) {
+			subhalos.insert(subhalos.end(), t_subhalos[i].begin(), t_subhalos[i].end());
+		}
 	}
 
 	LOG(info) << "Created " << subhalos.size() << " Subhalos from " << fname << " in " << t;
@@ -232,9 +252,13 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	os << "This should take another ~" << memory_amount(halos.size() * sizeof(Halo)) << " of memory";
 	LOG(info) << os.str();
 
+	// Calculate halos' vvir and concentration
 	Timer t;
-	for(const auto &halo: halos) {
-		// Calculate vvir of halo.
+#ifdef SHARK_OPENMP
+	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10000)
+#endif
+	for(auto it = halos.begin(); it < halos.end(); it++) {
+		const auto &halo = *it;
 		halo->Vvir = darkmatterhalos.halo_virial_velocity(halo->Mvir, sim_params.redshifts[halo->snapshot]);
 		halo->concentration = darkmatterhalos.nfw_concentration(halo->Mvir,sim_params.redshifts[halo->snapshot]);
 	}

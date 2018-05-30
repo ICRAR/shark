@@ -28,4 +28,7 @@
 /// The version of shark
 #define SHARK_VERSION "@SHARK_VERSION@"
 
+/// Whether shark supports OpenMP
+#cmakedefine SHARK_OPENMP
+
 #endif // SHARK_CONFIG_H_
