@@ -32,7 +32,7 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const
 {
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -191,7 +191,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 
 	//Loop over trees.
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -256,7 +256,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 
 		//Make sure each halo has only one central subhalo and that the rest are satellites.
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -291,7 +291,7 @@ void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &tree
 
 	//Loop over trees.
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -315,7 +315,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 
 	//Loop over trees.
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;

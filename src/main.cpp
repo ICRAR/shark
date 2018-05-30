@@ -393,7 +393,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
 
 #ifdef SHARK_OPENMP
-		#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+		#pragma omp parallel for num_threads(threads) schedule(static)
 #endif // SHARK_OPENMP
 		for (auto it = merger_trees.begin(); it < merger_trees.end(); it++) {
 
