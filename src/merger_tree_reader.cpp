@@ -127,6 +127,9 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 
 	t = Timer();
 	vector<vector<SubhaloPtr>> t_subhalos(threads);
+	for (auto &subhalos: t_subhalos) {
+		subhalos.reserve(n_subhalos / threads);
+	}
 
 #ifdef SHARK_OPENMP
 	#pragma omp parallel for num_threads(threads) schedule(static)
