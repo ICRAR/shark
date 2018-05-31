@@ -367,10 +367,10 @@ LOG(info) << "shark using " << threads << " thread(s)";
 	// Also provide a std::make_unique
 	std::unique_ptr<GalaxyWriter> writer;
 	if (exec_params.output_format == Options::HDF5) {
-		writer.reset(new HDF5GalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params, star_formation));
+		writer.reset(new HDF5GalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params));
 	}
 	else {
-		writer.reset(new ASCIIGalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params, star_formation));
+		writer.reset(new ASCIIGalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params));
 	}
 
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
@@ -439,19 +439,25 @@ LOG(info) << "shark using " << threads << " thread(s)";
 			all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), tree->halos[snapshot].begin(), tree->halos[snapshot].end());
 		}
 
+		bool write_galaxies = std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end();
+
+		Timer molgas_t;
+		auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, star_formation, sim_params.redshifts[snapshot], write_galaxies);
+		LOG(info) << "Calculated molecular gas in " << molgas_t;
+
 		/*track all baryons of this snapshot*/
 		Timer tracking_t;
-		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, AllBaryons, sim_params.redshifts[snapshot], snapshot);
+		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, AllBaryons, sim_params.redshifts[snapshot], snapshot, molgas_per_gal);
 		LOG(info) << "Total baryon amounts tracked in " << tracking_t;
 
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		//do_stuff_at_halo_level(all_halos_this_snapshot);
 
 		/*write snapshots only if the user wants outputs at this time (note that what matters here is snapshot+1).*/
-		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end() )
+		if (write_galaxies)
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot+1;
-			writer->write(snapshot, all_halos_this_snapshot, AllBaryons);
+			writer->write(snapshot, all_halos_this_snapshot, AllBaryons, molgas_per_gal);
 		}
 
 		auto duration_millis = t.get();

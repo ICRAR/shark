@@ -43,13 +43,12 @@
 
 namespace shark {
 
-GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  std::shared_ptr<Cosmology> cosmology, std::shared_ptr<DarkMatterHalos> darkmatterhalo, SimulationParameters sim_params, StarFormation starformation):
+GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  std::shared_ptr<Cosmology> cosmology, std::shared_ptr<DarkMatterHalos> darkmatterhalo, SimulationParameters sim_params):
 	exec_params(exec_params),
 	cosmo_params(cosmo_params),
 	cosmology(cosmology),
 	darkmatterhalo(darkmatterhalo),
-	sim_params(sim_params),
-	starformation(starformation)
+	sim_params(sim_params)
 {
 	//no-opt
 }
@@ -77,7 +76,7 @@ std::string GalaxyWriter::get_output_directory(int snapshot)
 	return output_dir;
 }
 
-void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons){
+void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal){
 
 	using std::string;
 	using std::vector;
@@ -93,7 +92,7 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 	write_header(file, snap_to_write);
 
 	//Write galaxies
-	write_galaxies(file, snap_to_write, halos);
+	write_galaxies(file, snap_to_write, halos, molgas_per_gal);
 
 	//Write total baryon components
 	write_global_properties(file, snap_to_write, AllBaryons);
@@ -168,7 +167,7 @@ std::size_t report_vsize(const std::vector<T> &v, std::ostringstream &os, const 
 	return amount;
 };
 
-void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos){
+void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos, const molgas_per_galaxy &molgas_per_gal){
 
 	Timer t;
 
@@ -292,13 +291,13 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			main.push_back(m);
 			id.push_back(subhalo->id);
 
-			for (auto &galaxy: subhalo->galaxies){
+			for (const auto &galaxy: subhalo->galaxies){
 
 				id_halo_tree.push_back(halo->id);
 				id_subhalo_tree.push_back(subhalo->id);
 
 				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
-				auto molecular_gas = starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], true);
+				auto &molecular_gas = molgas_per_gal.at(galaxy);
 
 				// Gas components separated into HI and H2.
 				mmol_disk.push_back(molecular_gas.m_mol);
@@ -905,7 +904,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 	}
 }
 
-void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons)
+void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal)
 {
 
 	using std::vector;
@@ -919,7 +918,7 @@ void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, T
 	for (const auto &halo: halos) {
 		for(const auto &subhalo: halo->all_subhalos()) {
 			for(const auto &galaxy: subhalo->galaxies) {
-				write_galaxy(galaxy, subhalo, snapshot, output);
+				write_galaxy(galaxy, subhalo, snapshot, output, molgas_per_gal);
 			}
 		}
 	}
@@ -927,7 +926,7 @@ void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, T
 	output.close();
 }
 
-void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f)
+void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f, const molgas_per_galaxy &molgas_per_gal)
 {
 	auto mstars_disk = galaxy->disk_stars.mass;
 	auto mstars_bulge = galaxy->bulge_stars.mass;
@@ -936,7 +935,7 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 	auto mBH = galaxy->smbh.mass;
 	auto rdisk = galaxy->disk_stars.rscale;
 	auto rbulge = galaxy->bulge_stars.rscale;
-	auto molecular_gas = starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], true);
+	auto &molecular_gas = molgas_per_gal.at(galaxy);
 
 	f << mstars_disk << " " << mstars_bulge << " " <<  molecular_gas.m_atom + molecular_gas.m_atom_b
 	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "

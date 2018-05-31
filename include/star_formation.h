@@ -146,6 +146,9 @@ private:
 
 };
 
+/// A collection of galaxy-indexed molecular gas objects
+typedef std::map<GalaxyPtr, StarFormation::molecular_gas> molgas_per_galaxy;
+
 }  // namespace shark
 
 #endif /* INCLUDE_STAR_FORMATION_H_ */
