@@ -136,6 +136,10 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 #endif
 	for(unsigned int i=0; i < n_subhalos; i++) {
 
+		if (snap[i] < sim_params.min_snapshot) {
+			continue;
+		}
+
 		auto subhalo = std::make_shared<Subhalo>();
 
 		// Subhalo and Halo index, snapshot
