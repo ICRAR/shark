@@ -374,20 +374,6 @@ public:
 
 };
 
-/** This class extends the galaxy to include spatial information.*/
-class SpatialGalaxy : public Galaxy, public Spatial<float> {
-};
-
-/** Extend galaxy to be satellite by including a merging timescale. */
-class SatelliteGalaxy : public Galaxy {
-public:
-	float tmerge;
-};
-
-/** This class extends the satellite galaxy to include spatial information.*/
-class SpatialSatelliteGalaxy : public SatelliteGalaxy, public Spatial<float> {
-};
-
 
 /**
  * This structure keeps track of the properties of the halo gas, which are necessary to implement a more sophisticated cooling model.
@@ -710,19 +696,6 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const SubhaloPt
 	stream << *subhalo;
 	return stream;
 }
-
-/**
- * Class to extend the properties a subhalo can have, by allowing it to have more baryon components than the basic subhalo.
- */
-class SuperSubhalo : public Subhalo {
-public:
-	float rscale;
-	float sAM;
-	Baryon ejected_galaxy_gas; /*Gas that has been ejected by the galaxy but lives inside the halo.*/
-	Baryon ejected_halo_gas; /*Gas that has been ejected outside the halo.*/
-	Baryon halo_stars; /*Stars that live in the halo and outside the galaxy.*/
-};
-
 
 /**
  * A halo.
