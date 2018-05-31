@@ -31,6 +31,7 @@
 #include <memory>
 #include <numeric>
 #include <ostream>
+#include <set>
 #include <vector>
 
 #include "logging.h"
@@ -803,7 +804,7 @@ public:
 	bool main_progenitor;
 
 	HaloPtr descendant;
-	std::vector<HaloPtr> ascendants;
+	std::set<HaloPtr> ascendants;
 
 	/**
 	 * The merger tree that holds this halo.
@@ -838,19 +839,6 @@ public:
 		});
 	}
 
-	// Sort ascendant halos by Mvir
-	std::vector<HaloPtr> ordered_ascendants(){
-
-		if(ascendants.size()==0){
-			return std::vector<HaloPtr>();
-		}
-		else if(ascendants.size()>1){
-			std::sort(ascendants.begin(), ascendants.end(), [](const HaloPtr &lhs, const HaloPtr &rhs) {
-			return lhs->Mvir > rhs->Mvir;
-			});
-		}
-		return ascendants;
-	}
 };
 
 template <typename T>
