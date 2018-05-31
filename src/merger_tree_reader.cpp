@@ -98,9 +98,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 	vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
 	vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
 	vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
-	vector<float> cnfw = batch_file.read_dataset_v<float>("haloTrees/cnfw");
 	vector<float> lambda = batch_file.read_dataset_v<float>("haloTrees/lambda");
-	vector<float> vvir = batch_file.read_dataset_v<float>("haloTrees/Vvir");
 
 	//Read indices and the snapshot number at which the subhalo lives.
 	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
