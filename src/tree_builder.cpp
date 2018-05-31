@@ -103,6 +103,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 
 	// Define central subhalos
 	LOG(info) << "Defining central subhalos";
+	LOG(info).flush();
 	define_central_subhalos(trees, sim_params);
 
 	// Define accretion rate from DM in case we want this.
@@ -445,6 +446,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 	for(int snapshot: sorted_halo_snapshots) {
 
 		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
+		LOG(info).flush();
 
 		int ignored = 0;
 		for(const auto &halo: halos_by_snapshot[snapshot]) {
