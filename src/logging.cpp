@@ -1,8 +1,8 @@
 //
-// Logging-related definitions
+// Logging for shark
 //
 // ICRAR - International Centre for Radio Astronomy Research
-// (c) UWA - The University of Western Australia, 2017
+// (c) UWA - The University of Western Australia, 2018
 // Copyright by UWA (in the framework of the ICRAR)
 // All rights reserved
 //
@@ -22,18 +22,6 @@
 // MA 02111-1307  USA
 //
 
-#ifndef SHARK_LOGGING_H_
-#define SHARK_LOGGING_H_
+#include "logging.h"
 
-#define BOOST_LOG_DYN_LINK 1
-#include <boost/log/expressions/keyword.hpp>
-#include <boost/log/trivial.hpp>
-
-#define LOG(lvl) BOOST_LOG_TRIVIAL(lvl)
-
-/// The logging level set on this application
-extern ::boost::log::trivial::severity_level logging_level;
-
-#define LOG_ENABLED(lvl) (::boost::log::trivial::severity_level::lvl >= logging_level)
-
-#endif /* SHARK_LOGGING_H_ */
+::boost::log::trivial::severity_level logging_level;

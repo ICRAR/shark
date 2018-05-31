@@ -90,7 +90,7 @@ void setup_logging(int lvl) {
 	namespace log = ::boost::log;
 	namespace trivial = ::boost::log::trivial;
 
-	trivial::severity_level sev_lvl = trivial::severity_level(lvl);
+	trivial::severity_level sev_lvl = logging_level = trivial::severity_level(lvl);
 	log::core::get()->set_filter([sev_lvl](log::attribute_value_set const &s) {
 		return s["Severity"].extract<trivial::severity_level>() >= sev_lvl;
 	});
