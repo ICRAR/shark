@@ -8,6 +8,7 @@
 #include "cosmology.h"
 #include "exceptions.h"
 #include "logging.h"
+#include "timer.h"
 #include "tree_builder.h"
 
 
@@ -443,6 +444,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 	}
 
 	// Loop as per instructions above
+	Timer t;
 	for(int snapshot: sorted_halo_snapshots) {
 
 		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
@@ -539,6 +541,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		          << " that were the last Subhalo of their Subhalo families)";
 	}
 
+	LOG(info) << "Linked all Halos/Subhalos in " << t;
 }
 
 
