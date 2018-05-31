@@ -591,20 +591,18 @@ void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double 
 	double f_ion = 0;
 	double m_neutral = 0;
 	double zgas = 0;
-	bool bulge = true;
 	double jgas = 0;
 	double vgal = galaxy->vmax;
 
 	// Apply ionised fraction correction only in the case of disks.
 	if (galaxy->disk_gas.mass > 0) {
 		jgas = galaxy->disk_gas.sAM;
-		bulge = false;
 
 		f_ion = ionised_gas_fraction(galaxy->disk_gas.mass, galaxy->disk_gas.rscale, z);
 		zgas = galaxy->disk_gas.mass_metals / galaxy->disk_gas.mass;
 		m_neutral = (1-f_ion) * galaxy->disk_gas.mass;
 
-		m_mol = (1-f_ion) * molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, zgas, z, jmol, jgas, vgal, bulge, jcalc);
+		m_mol = (1-f_ion) * molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, zgas, z, jmol, jgas, vgal, false, jcalc);
 		m_atom = m_neutral - m_mol;
 
 		if(jcalc){
@@ -614,7 +612,7 @@ void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double 
 	}
 	if (galaxy->bulge_gas.mass > 0) {
 		zgas = galaxy->bulge_gas.mass_metals / galaxy->bulge_gas.mass;
-		m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, zgas, z, jmol, jgas, vgal, bulge, jcalc);
+		m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, zgas, z, jmol, jgas, vgal, true, jcalc);
 		m_atom_b = galaxy->bulge_gas.mass - m_mol_b;
 	}
 }
