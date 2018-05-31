@@ -247,7 +247,9 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 			halo = std::make_shared<Halo>(halo_id, subhalo->snapshot);
 		}
 
-		LOG(trace) << "Adding " << subhalo << " to " << halo;
+		if (LOG_ENABLED(trace)) {
+			LOG(trace) << "Adding " << subhalo << " to " << halo;
+		}
 		subhalo->host_halo = halo;
 		halo->add_subhalo(std::move(subhalo));
 	}

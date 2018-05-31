@@ -118,7 +118,9 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 
 	// Establish ascendant and descendant links at subhalo level
 	// Fail if subhalo has more than one descendant
-	LOG(trace) << "Connecting " << parent_shalo << " as a parent of " << desc_subhalo;
+	if (LOG_ENABLED(trace)) {
+		LOG(trace) << "Connecting " << parent_shalo << " as a parent of " << desc_subhalo;
+	}
 	desc_subhalo->ascendants.push_back(parent_shalo);
 
 	if (parent_shalo->descendant) {
@@ -457,7 +459,9 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 
 				// this subhalo has no descendants, let's not even try
 				if (!subhalo->has_descendant) {
-					LOG(debug) << subhalo << " has no descendant, not following";
+					if (LOG_ENABLED(debug)) {
+						LOG(debug) << subhalo << " has no descendant, not following";
+					}
 					halo->remove_subhalo(subhalo);
 					continue;
 				}
@@ -466,9 +470,11 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 				// halo anymore (and all its progenitors)
 				auto it = halos_by_id.find(subhalo->descendant_halo_id);
 				if (it == halos_by_id.end()) {
-					LOG(debug) << subhalo << " points to descendant halo/subhalo "
-					           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
-					           << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
+					if (LOG_ENABLED(debug)) {
+						LOG(debug) << subhalo << " points to descendant halo/subhalo "
+						           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
+						           << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
+					}
 					halos_by_id.erase(halo->id);
 					ignored++;
 					break;
@@ -499,13 +505,16 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 				if (!subhalo_descendant_found) {
 
 					std::ostringstream os;
-					os << "Descendant Subhalo id=" << subhalo->descendant_id;
-					os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
-					os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
-					os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
-					auto all_subhalos = d_halo->all_subhalos();
-					std::copy(all_subhalos.begin(), all_subhalos.end(),
-					          std::ostream_iterator<SubhaloPtr>(os, "\n  "));
+					auto exec_params = get_exec_params();
+					if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
+						os << "Descendant Subhalo id=" << subhalo->descendant_id;
+						os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
+						os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
+						os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
+						auto all_subhalos = d_halo->all_subhalos();
+						std::copy(all_subhalos.begin(), all_subhalos.end(),
+								  std::ostream_iterator<SubhaloPtr>(os, "\n  "));
+					}
 
 					// Users can choose whether to continue in these situations
 					// (with or without a warning) or if it should be considered an error
@@ -523,8 +532,10 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 			// If no subhalos were linked, this Halo will not have been linked,
 			// meaning that it also needs to be ignored
 			if (!halo_linked) {
-				LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
-				           << " descendants, ignoring it (and the rest of its progenitors)";
+				if (LOG_ENABLED(debug)) {
+					LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
+					           << " descendants, ignoring it (and the rest of its progenitors)";
+				}
 				halos_by_id.erase(halo->id);
 				ignored++;
 			}
@@ -532,13 +543,15 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		}
 
 		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
-		LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
-		          << std::setprecision(2) << std::setiosflags(std::ios::fixed)
-		          << ignored * 100. / n_snapshot_halos << "%)"
-		          << " Halos ignored at snapshot " << snapshot << " due to"
-		          << " missing descendants (i.e., they were either the last Halo of"
-		          << " their Halo family line, or they only hosted Subhalos"
-		          << " that were the last Subhalo of their Subhalo families)";
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
+			           << std::setprecision(2) << std::setiosflags(std::ios::fixed)
+			           << ignored * 100. / n_snapshot_halos << "%)"
+			           << " Halos ignored at snapshot " << snapshot << " due to"
+			           << " missing descendants (i.e., they were either the last Halo of"
+			           << " their Halo family line, or they only hosted Subhalos"
+			           << " that were the last Subhalo of their Subhalo families)";
+		}
 	}
 
 	LOG(info) << "Linked all Halos/Subhalos in " << t;
