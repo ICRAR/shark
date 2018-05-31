@@ -88,6 +88,16 @@ public:
 class StarFormation {
 
 public:
+
+	struct molecular_gas {
+		double m_mol;
+		double m_atom;
+		double m_mol_b;
+		double m_atom_b;
+		double j_mol;
+		double j_atom;
+	};
+
 	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, std::shared_ptr<Cosmology> cosmology);
 
 	typedef double (*func_t)(double x, void *);
@@ -124,7 +134,7 @@ public:
 
 	double molecular_surface_density(double r, void * params);
 
-	void get_molecular_gas(const GalaxyPtr &galaxy, double z, double &m_mol, double &m_atom, double &m_mol_b, double &m_atom_b, double &jatom, double &jmol, bool jcalc);
+	molecular_gas get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc);
 
 	double ionised_gas_fraction(double mgas, double rgas, double z);
 

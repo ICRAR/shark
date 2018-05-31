@@ -298,21 +298,13 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				id_subhalo_tree.push_back(subhalo->id);
 
 				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
-				double m_mol;
-				double m_atom;
-				double m_mol_b;
-				double m_atom_b;
-				double jatom;
-				double jmol;
-
-				bool jcalc = true;
-				starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], m_mol, m_atom, m_mol_b, m_atom_b, jatom, jmol, jcalc);
+				auto molecular_gas = starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], true);
 
 				// Gas components separated into HI and H2.
-				mmol_disk.push_back(m_mol);
-				mmol_bulge.push_back(m_mol_b);
-				matom_disk.push_back(m_atom);
-				matom_bulge.push_back(m_atom_b);
+				mmol_disk.push_back(molecular_gas.m_mol);
+				mmol_bulge.push_back(molecular_gas.m_mol_b);
+				matom_disk.push_back(molecular_gas.m_atom);
+				matom_bulge.push_back(molecular_gas.m_atom_b);
 
 				// Stellar components
 				mstars_disk.push_back(galaxy->disk_stars.mass);
@@ -346,8 +338,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				rdisk_gas.push_back(galaxy->disk_gas.rscale);
 				rbulge_gas.push_back(galaxy->bulge_gas.rscale);
 				sAM_disk_gas.push_back(galaxy->disk_gas.sAM);
-				sAM_disk_gas_atom.push_back(jatom);
-				sAM_disk_gas_mol.push_back(jmol);
+				sAM_disk_gas_atom.push_back(molecular_gas.j_atom);
+				sAM_disk_gas_mol.push_back(molecular_gas.j_mol);
 				sAM_bulge_gas.push_back(galaxy->bulge_gas.sAM);
 
 				rdisk_star.push_back(galaxy->disk_stars.rscale);
@@ -944,17 +936,9 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 	auto mBH = galaxy->smbh.mass;
 	auto rdisk = galaxy->disk_stars.rscale;
 	auto rbulge = galaxy->bulge_stars.rscale;
-	double m_mol;
-	double m_atom;
-	double m_mol_b;
-	double m_atom_b;
-	double jatom, jmol;
+	auto molecular_gas = starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], true);
 
-	bool jcalc = true;
-
-	starformation.get_molecular_gas(galaxy, sim_params.redshifts[snapshot], m_mol, m_atom, m_mol_b, m_atom_b, jatom, jmol, jcalc);
-
-	f << mstars_disk << " " << mstars_bulge << " " <<  m_atom + m_atom_b
+	f << mstars_disk << " " << mstars_bulge << " " <<  molecular_gas.m_atom + molecular_gas.m_atom_b
 	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "
 	  << mstars_disk + mstars_bulge << " " << rdisk << " " << rbulge << " "
 	  << subhalo->id << " " << subhalo->host_halo->id << "\n";

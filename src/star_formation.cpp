@@ -579,14 +579,14 @@ double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z){
 
 }
 
-void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double &m_mol, double &m_atom, double &m_mol_b, double &m_atom_b, double &jatom, double &jmol, bool jcalc)
+StarFormation::molecular_gas StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc)
 {
-	m_mol    = 0;
-	m_atom   = 0;
-	m_mol_b  = 0;
-	m_atom_b = 0;
-	jmol     = 0;
-	jatom    = 0;
+	double m_mol    = 0;
+	double m_atom   = 0;
+	double m_mol_b  = 0;
+	double m_atom_b = 0;
+	double j_mol     = 0;
+	double j_atom    = 0;
 
 	double f_ion = 0;
 	double m_neutral = 0;
@@ -602,19 +602,21 @@ void StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, double 
 		zgas = galaxy->disk_gas.mass_metals / galaxy->disk_gas.mass;
 		m_neutral = (1-f_ion) * galaxy->disk_gas.mass;
 
-		m_mol = (1-f_ion) * molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, zgas, z, jmol, jgas, vgal, false, jcalc);
+		m_mol = (1-f_ion) * molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, zgas, z, j_mol, jgas, vgal, false, jcalc);
 		m_atom = m_neutral - m_mol;
 
 		if(jcalc){
 			// Calculate specific AM of atomic gas.
-			jatom = (jgas * (1-f_ion) * galaxy->disk_gas.mass - jmol * m_mol) / m_atom;
+			j_atom = (jgas * (1-f_ion) * galaxy->disk_gas.mass - j_mol * m_mol) / m_atom;
 		}
 	}
 	if (galaxy->bulge_gas.mass > 0) {
 		zgas = galaxy->bulge_gas.mass_metals / galaxy->bulge_gas.mass;
-		m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, zgas, z, jmol, jgas, vgal, true, jcalc);
+		m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, zgas, z, j_mol, jgas, vgal, true, jcalc);
 		m_atom_b = galaxy->bulge_gas.mass - m_mol_b;
 	}
+
+	return molecular_gas {m_mol, m_atom, m_mol_b, m_atom_b, j_mol, j_atom};
 }
 
 double StarFormation::manual_integral(func_t f, void * params, double rmin, double rmax){
