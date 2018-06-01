@@ -46,15 +46,17 @@ public:
 class NfwDistribution {
 
 private:
-	const double c;
-	double norm, a;
 	std::uniform_real_distribution<double> uniform;
+	const double a;
+	const double norm;
 
 public:
-	NfwDistribution(const double c) : c(c), uniform(0, 1), norm(0), a(0) {
-		a = 1.0 / c;
-		norm = std::log((a + 1) / a) - 1 / (a + 1);
-	};
+	NfwDistribution(const double c) :
+	    uniform(0, 1),
+	    a(1 / c),
+	    norm(std::log((a + 1) / a) - 1 / (a + 1))
+	{
+	}
 
 	template <typename G>
 	double operator()(G &g) {
