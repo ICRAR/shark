@@ -235,6 +235,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	HaloPtr halo;
 	std::vector<HaloPtr> halos;
 	Halo::id_t last_halo_id = -1;
+	Timer t;
 	for(const auto &subhalo: subhalos) {
 
 		auto halo_id = subhalo->haloID;
@@ -253,12 +254,12 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	subhalos.clear();
 
 	std::ostringstream os;
-	os << "Created " << halos.size() << " Halos from these Subhalos. ";
+	os << "Created " << halos.size() << " Halos from these Subhalos in " << t << ". ";
 	os << "This should take another ~" << memory_amount(halos.size() * sizeof(Halo)) << " of memory";
 	LOG(info) << os.str();
 
 	// Calculate halos' vvir and concentration
-	Timer t;
+	t = Timer();
 #ifdef SHARK_OPENMP
 	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10000)
 #endif
