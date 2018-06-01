@@ -440,7 +440,9 @@ LOG(info) << "shark using " << threads << " thread(s)";
 		}
 
 		/*track all baryons of this snapshot*/
+		Timer tracking_t;
 		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, *AllBaryons, sim_params.redshifts[snapshot], snapshot);
+		LOG(info) << "Total baryon amounts tracked in " << tracking_t;
 
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		//do_stuff_at_halo_level(all_halos_this_snapshot);
