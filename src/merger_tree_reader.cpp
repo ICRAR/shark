@@ -201,7 +201,12 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 		subhalo->Vvir = darkmatterhalos.halo_virial_velocity(subhalo->Mvir, sim_params.redshifts[subhalo->snapshot]);
 
 		// Done, save it now
-		t_subhalos[omp_get_thread_num()].emplace_back(std::move(subhalo));
+#ifdef SHARK_OPENMP
+		auto idx = omp_get_thread_num();
+#else
+		auto idx = 0;
+#endif // SHARK_OPENMP
+		t_subhalos[idx].emplace_back(std::move(subhalo));
 	}
 
 	vector<SubhaloPtr> subhalos;
