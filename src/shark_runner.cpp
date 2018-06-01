@@ -318,7 +318,7 @@ void SharkRunner::impl::run() {
 		bool write_galaxies = std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end();
 
 		Timer molgas_t;
-		auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, star_formation, sim_params.redshifts[snapshot], write_galaxies);
+		auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, star_formation, sim_params.redshifts[snapshot], write_galaxies, threads);
 		LOG(info) << "Calculated molecular gas in " << molgas_t;
 
 		/*track all baryons of this snapshot*/
