@@ -181,7 +181,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 }
 
-molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, const StarFormation &star_formation, double z, bool calc_j)
+molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, StarFormation &star_formation, double z, bool calc_j)
 {
 	molgas_per_galaxy molgas;
 	for (auto &halo: halos) {
