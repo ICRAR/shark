@@ -345,7 +345,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 	LOG(info) << os.str();
 
 	// Create class to track all the baryons of the simulation in its different components.
-	auto AllBaryons = std::make_shared<TotalBaryon>();
+	TotalBaryon AllBaryons;
 
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
@@ -354,14 +354,14 @@ LOG(info) << "shark using " << threads << " thread(s)";
 	{
 		HaloBasedTreeBuilder tree_builder(exec_params, threads);
 		auto halos = SURFSReader(sim_params.tree_files_prefix, threads).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
-		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
+		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, AllBaryons);
 		merger_trees.shrink_to_fit();
 	}
 
 	/* Create the first generation of galaxies if halo is first appearing.*/
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
 	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, sim_params);
-	galaxy_creator.create_galaxies(merger_trees, *AllBaryons);
+	galaxy_creator.create_galaxies(merger_trees, AllBaryons);
 
 	// TODO: move this logic away from the main
 	// Also provide a std::make_unique
@@ -441,7 +441,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 
 		/*track all baryons of this snapshot*/
 		Timer tracking_t;
-		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, *AllBaryons, sim_params.redshifts[snapshot], snapshot);
+		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, AllBaryons, sim_params.redshifts[snapshot], snapshot);
 		LOG(info) << "Total baryon amounts tracked in " << tracking_t;
 
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
@@ -451,7 +451,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end() )
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot+1;
-			writer->write(snapshot, all_halos_this_snapshot, *AllBaryons);
+			writer->write(snapshot, all_halos_this_snapshot, AllBaryons);
 		}
 
 		auto duration_millis = t.get();
@@ -481,7 +481,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 
 		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 		LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
-		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, *AllBaryons, snapshot);
+		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, AllBaryons, snapshot);
 
 	}
 
