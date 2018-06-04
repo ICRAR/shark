@@ -48,11 +48,10 @@ public:
 			CosmologicalParameters cosmo_params,
 			std::shared_ptr<Cosmology> cosmology,
 			std::shared_ptr<DarkMatterHalos> darkmatterhalo,
-			SimulationParameters sim_params,
-			StarFormation starformation);
+			SimulationParameters sim_params);
 	virtual ~GalaxyWriter() {};
 
-	virtual void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons) = 0;
+	virtual void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal) = 0;
 
 	void track_total_baryons(int snapshot, const std::vector<HaloPtr> &halos);
 
@@ -63,7 +62,6 @@ protected:
 	std::shared_ptr<Cosmology> cosmology;
 	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
 	SimulationParameters sim_params;
-	StarFormation starformation;
 
 	std::string get_output_directory(int snapshot);
 };
@@ -72,9 +70,9 @@ class HDF5GalaxyWriter : public GalaxyWriter {
 
 public:
 	using GalaxyWriter::GalaxyWriter;
-	void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons) override;
+	void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal) override;
 	void write_header (hdf5::Writer &file, int snapshot);
-	void write_galaxies (hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos);
+	void write_galaxies (hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos, const molgas_per_galaxy &molgas_per_gal);
 	void write_global_properties (hdf5::Writer &file, int snapshot, TotalBaryon &AllBaryons);
 	void write_histories (int snapshot, const std::vector<HaloPtr> &halos);
 };
@@ -83,10 +81,10 @@ class ASCIIGalaxyWriter : public GalaxyWriter {
 
 public:
 	using GalaxyWriter::GalaxyWriter;
-	void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons) override;
+	void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal) override;
 
 private:
-	void write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f);
+	void write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f, const molgas_per_galaxy &molgas_per_gal);
 
 };
 

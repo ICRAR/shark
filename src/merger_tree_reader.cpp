@@ -98,9 +98,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 	vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
 	vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
 	vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
-	vector<float> cnfw = batch_file.read_dataset_v<float>("haloTrees/cnfw");
 	vector<float> lambda = batch_file.read_dataset_v<float>("haloTrees/lambda");
-	vector<float> vvir = batch_file.read_dataset_v<float>("haloTrees/Vvir");
 
 	//Read indices and the snapshot number at which the subhalo lives.
 	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
@@ -127,11 +125,18 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 
 	t = Timer();
 	vector<vector<SubhaloPtr>> t_subhalos(threads);
+	for (auto &subhalos: t_subhalos) {
+		subhalos.reserve(n_subhalos / threads);
+	}
 
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static, 10000)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for(unsigned int i=0; i < n_subhalos; i++) {
+
+		if (snap[i] < sim_params.min_snapshot) {
+			continue;
+		}
 
 		auto subhalo = std::make_shared<Subhalo>();
 
@@ -196,7 +201,12 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 		subhalo->Vvir = darkmatterhalos.halo_virial_velocity(subhalo->Mvir, sim_params.redshifts[subhalo->snapshot]);
 
 		// Done, save it now
-		t_subhalos[omp_get_thread_num()].emplace_back(std::move(subhalo));
+#ifdef SHARK_OPENMP
+		auto idx = omp_get_thread_num();
+#else
+		auto idx = 0;
+#endif // SHARK_OPENMP
+		t_subhalos[idx].emplace_back(std::move(subhalo));
 	}
 
 	vector<SubhaloPtr> subhalos;
@@ -230,6 +240,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 	HaloPtr halo;
 	std::vector<HaloPtr> halos;
 	Halo::id_t last_halo_id = -1;
+	Timer t;
 	for(const auto &subhalo: subhalos) {
 
 		auto halo_id = subhalo->haloID;
@@ -241,19 +252,21 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 			halo = std::make_shared<Halo>(halo_id, subhalo->snapshot);
 		}
 
-		LOG(trace) << "Adding " << subhalo << " to " << halo;
+		if (LOG_ENABLED(trace)) {
+			LOG(trace) << "Adding " << subhalo << " to " << halo;
+		}
 		subhalo->host_halo = halo;
 		halo->add_subhalo(std::move(subhalo));
 	}
 	subhalos.clear();
 
 	std::ostringstream os;
-	os << "Created " << halos.size() << " Halos from these Subhalos. ";
+	os << "Created " << halos.size() << " Halos from these Subhalos in " << t << ". ";
 	os << "This should take another ~" << memory_amount(halos.size() * sizeof(Halo)) << " of memory";
 	LOG(info) << os.str();
 
 	// Calculate halos' vvir and concentration
-	Timer t;
+	t = Timer();
 #ifdef SHARK_OPENMP
 	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10000)
 #endif

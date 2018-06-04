@@ -8,6 +8,7 @@
 #include "cosmology.h"
 #include "exceptions.h"
 #include "logging.h"
+#include "timer.h"
 #include "tree_builder.h"
 
 
@@ -32,7 +33,7 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const
 {
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -117,7 +118,9 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 
 	// Establish ascendant and descendant links at subhalo level
 	// Fail if subhalo has more than one descendant
-	LOG(trace) << "Connecting " << parent_shalo << " as a parent of " << desc_subhalo;
+	if (LOG_ENABLED(trace)) {
+		LOG(trace) << "Connecting " << parent_shalo << " as a parent of " << desc_subhalo;
+	}
 	desc_subhalo->ascendants.push_back(parent_shalo);
 
 	if (parent_shalo->descendant) {
@@ -130,12 +133,8 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 
 	// Establish ascendant and descendant link at halo level
 	// Ascendant is only added if not added previously
-	auto it = std::find(desc_halo->ascendants.begin(), desc_halo->ascendants.end(), parent_halo);
-	bool halos_already_linked = it != desc_halo->ascendants.end();
-	if (not halos_already_linked) {
-		LOG(trace) << "Connecting " << parent_halo << " as a parent of " << desc_halo;
-		desc_halo->ascendants.push_back(parent_halo);
-	}
+	auto result = desc_halo->ascendants.insert(parent_halo);
+	auto halos_linked = std::get<1>(result);
 
 	// Fail if a halo has more than one descendant
 	if (parent_halo->descendant and parent_halo->descendant->id != desc_halo->id) {
@@ -153,7 +152,7 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 		throw invalid_data(os.str());
 	}
 	parent_halo->merger_tree = desc_halo->merger_tree;
-	if (not halos_already_linked) {
+	if (halos_linked) {
 		parent_halo->merger_tree->add_halo(parent_halo);
 	}
 
@@ -191,7 +190,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 
 	//Loop over trees.
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -223,9 +222,10 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 						auto main_prog = subhalo->main();
 
 						//Check that there is a main progenitor first, if not, then there's no point on continuing.
-						if(not main_prog){
+						if (not main_prog) {
 							std::ostringstream os;
-							os << "Subhalo " << subhalo << " has ascendants but no main progenitor. Interpolated subhalo? " << subhalo->IsInterpolated;
+							os << "Subhalo " << subhalo << " has ascendants but no main progenitor. Here are the ascendants:\n  ";
+							std::copy(ascendants.begin(), ascendants.end(), std::ostream_iterator<SubhaloPtr>(os, "\n  "));
 							throw invalid_data(os.str());
 						}
 
@@ -256,7 +256,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 
 		//Make sure each halo has only one central subhalo and that the rest are satellites.
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -291,7 +291,7 @@ void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &tree
 
 	//Loop over trees.
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -315,7 +315,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 
 	//Loop over trees.
 #ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+	#pragma omp parallel for num_threads(threads) schedule(static)
 #endif
 	for (auto it = trees.begin(); it < trees.cend(); it++) {
 		const auto &tree = *it;
@@ -442,6 +442,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 	}
 
 	// Loop as per instructions above
+	Timer t;
 	for(int snapshot: sorted_halo_snapshots) {
 
 		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
@@ -454,7 +455,9 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 
 				// this subhalo has no descendants, let's not even try
 				if (!subhalo->has_descendant) {
-					LOG(debug) << subhalo << " has no descendant, not following";
+					if (LOG_ENABLED(debug)) {
+						LOG(debug) << subhalo << " has no descendant, not following";
+					}
 					halo->remove_subhalo(subhalo);
 					continue;
 				}
@@ -463,9 +466,11 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 				// halo anymore (and all its progenitors)
 				auto it = halos_by_id.find(subhalo->descendant_halo_id);
 				if (it == halos_by_id.end()) {
-					LOG(debug) << subhalo << " points to descendant halo/subhalo "
-					           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
-					           << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
+					if (LOG_ENABLED(debug)) {
+						LOG(debug) << subhalo << " points to descendant halo/subhalo "
+						           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
+						           << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
+					}
 					halos_by_id.erase(halo->id);
 					ignored++;
 					break;
@@ -496,13 +501,16 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 				if (!subhalo_descendant_found) {
 
 					std::ostringstream os;
-					os << "Descendant Subhalo id=" << subhalo->descendant_id;
-					os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
-					os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
-					os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
-					auto all_subhalos = d_halo->all_subhalos();
-					std::copy(all_subhalos.begin(), all_subhalos.end(),
-					          std::ostream_iterator<SubhaloPtr>(os, "\n  "));
+					auto exec_params = get_exec_params();
+					if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
+						os << "Descendant Subhalo id=" << subhalo->descendant_id;
+						os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
+						os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
+						os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
+						auto all_subhalos = d_halo->all_subhalos();
+						std::copy(all_subhalos.begin(), all_subhalos.end(),
+								  std::ostream_iterator<SubhaloPtr>(os, "\n  "));
+					}
 
 					// Users can choose whether to continue in these situations
 					// (with or without a warning) or if it should be considered an error
@@ -520,8 +528,10 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 			// If no subhalos were linked, this Halo will not have been linked,
 			// meaning that it also needs to be ignored
 			if (!halo_linked) {
-				LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
-				           << " descendants, ignoring it (and the rest of its progenitors)";
+				if (LOG_ENABLED(debug)) {
+					LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
+					           << " descendants, ignoring it (and the rest of its progenitors)";
+				}
 				halos_by_id.erase(halo->id);
 				ignored++;
 			}
@@ -529,15 +539,18 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		}
 
 		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
-		LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
-		          << std::setprecision(2) << std::setiosflags(std::ios::fixed)
-		          << ignored * 100. / n_snapshot_halos << "%)"
-		          << " Halos ignored at snapshot " << snapshot << " due to"
-		          << " missing descendants (i.e., they were either the last Halo of"
-		          << " their Halo family line, or they only hosted Subhalos"
-		          << " that were the last Subhalo of their Subhalo families)";
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
+			           << std::setprecision(2) << std::setiosflags(std::ios::fixed)
+			           << ignored * 100. / n_snapshot_halos << "%)"
+			           << " Halos ignored at snapshot " << snapshot << " due to"
+			           << " missing descendants (i.e., they were either the last Halo of"
+			           << " their Halo family line, or they only hosted Subhalos"
+			           << " that were the last Subhalo of their Subhalo families)";
+		}
 	}
 
+	LOG(info) << "Linked all Halos/Subhalos in " << t;
 }
 
 

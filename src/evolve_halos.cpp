@@ -181,7 +181,20 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 }
 
-void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot){
+molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, StarFormation &star_formation, double z, bool calc_j)
+{
+	molgas_per_galaxy molgas;
+	for (auto &halo: halos) {
+		for (auto &subhalo: halo->all_subhalos()) {
+			for (auto &galaxy: subhalo->galaxies) {
+				molgas[galaxy] = star_formation.get_molecular_gas(galaxy, z, calc_j);
+			}
+		}
+	}
+	return molgas;
+}
+
+void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot, const molgas_per_galaxy &molgas){
 
 
 	BaryonBase mcold_total;
@@ -231,17 +244,10 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 				}
 
 				//Accumulate galaxy baryons
+				auto &molecular_gas = molgas.at(galaxy);
 
-				double m_mol;
-				double m_atom;
-				double m_mol_b;
-				double m_atom_b;
-				double jatom, jmol;
-				bool jcalc = false;
-				starformation.get_molecular_gas(galaxy, redshift, m_mol, m_atom, m_mol_b, m_atom_b, jatom, jmol, jcalc);
-
-				mHI_total.mass += m_atom+m_atom_b;
-				mH2_total.mass += m_mol+m_mol_b;
+				mHI_total.mass += molecular_gas.m_atom + molecular_gas.m_atom_b;
+				mH2_total.mass += molecular_gas.m_mol + molecular_gas.m_mol_b;
 
 				mcold_total.mass += galaxy->disk_gas.mass + galaxy->bulge_gas.mass;
 				mcold_total.mass_metals += galaxy->disk_gas.mass_metals + galaxy->bulge_gas.mass_metals;
@@ -256,6 +262,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 				SFR_total_burst += galaxy->sfr_bulge;
 
 				MBH_total.mass += galaxy->smbh.mass;
+
 			}
 		}
 	}

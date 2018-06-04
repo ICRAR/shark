@@ -31,6 +31,7 @@
 #include <memory>
 #include <numeric>
 #include <ostream>
+#include <set>
 #include <vector>
 
 #include "logging.h"
@@ -374,20 +375,6 @@ public:
 
 };
 
-/** This class extends the galaxy to include spatial information.*/
-class SpatialGalaxy : public Galaxy, public Spatial<float> {
-};
-
-/** Extend galaxy to be satellite by including a merging timescale. */
-class SatelliteGalaxy : public Galaxy {
-public:
-	float tmerge;
-};
-
-/** This class extends the satellite galaxy to include spatial information.*/
-class SpatialSatelliteGalaxy : public SatelliteGalaxy, public Spatial<float> {
-};
-
 
 /**
  * This structure keeps track of the properties of the halo gas, which are necessary to implement a more sophisticated cooling model.
@@ -712,19 +699,6 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const SubhaloPt
 }
 
 /**
- * Class to extend the properties a subhalo can have, by allowing it to have more baryon components than the basic subhalo.
- */
-class SuperSubhalo : public Subhalo {
-public:
-	float rscale;
-	float sAM;
-	Baryon ejected_galaxy_gas; /*Gas that has been ejected by the galaxy but lives inside the halo.*/
-	Baryon ejected_halo_gas; /*Gas that has been ejected outside the halo.*/
-	Baryon halo_stars; /*Stars that live in the halo and outside the galaxy.*/
-};
-
-
-/**
  * A halo.
  *
  * Halos are the largest gravitationally bound structures in the universe. They
@@ -830,7 +804,7 @@ public:
 	bool main_progenitor;
 
 	HaloPtr descendant;
-	std::vector<HaloPtr> ascendants;
+	std::set<HaloPtr> ascendants;
 
 	/**
 	 * The merger tree that holds this halo.
@@ -865,19 +839,6 @@ public:
 		});
 	}
 
-	// Sort ascendant halos by Mvir
-	std::vector<HaloPtr> ordered_ascendants(){
-
-		if(ascendants.size()==0){
-			return std::vector<HaloPtr>();
-		}
-		else if(ascendants.size()>1){
-			std::sort(ascendants.begin(), ascendants.end(), [](const HaloPtr &lhs, const HaloPtr &rhs) {
-			return lhs->Mvir > rhs->Mvir;
-			});
-		}
-		return ascendants;
-	}
 };
 
 template <typename T>

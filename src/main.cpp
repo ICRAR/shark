@@ -90,7 +90,7 @@ void setup_logging(int lvl) {
 	namespace log = ::boost::log;
 	namespace trivial = ::boost::log::trivial;
 
-	trivial::severity_level sev_lvl = trivial::severity_level(lvl);
+	trivial::severity_level sev_lvl = logging_level = trivial::severity_level(lvl);
 	log::core::get()->set_filter([sev_lvl](log::attribute_value_set const &s) {
 		return s["Severity"].extract<trivial::severity_level>() >= sev_lvl;
 	});
@@ -345,7 +345,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 	LOG(info) << os.str();
 
 	// Create class to track all the baryons of the simulation in its different components.
-	auto AllBaryons = std::make_shared<TotalBaryon>();
+	TotalBaryon AllBaryons;
 
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
@@ -354,23 +354,23 @@ LOG(info) << "shark using " << threads << " thread(s)";
 	{
 		HaloBasedTreeBuilder tree_builder(exec_params, threads);
 		auto halos = SURFSReader(sim_params.tree_files_prefix, threads).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
-		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, *AllBaryons);
+		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, AllBaryons);
 		merger_trees.shrink_to_fit();
 	}
 
 	/* Create the first generation of galaxies if halo is first appearing.*/
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
 	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, sim_params);
-	galaxy_creator.create_galaxies(merger_trees, *AllBaryons);
+	galaxy_creator.create_galaxies(merger_trees, AllBaryons);
 
 	// TODO: move this logic away from the main
 	// Also provide a std::make_unique
 	std::unique_ptr<GalaxyWriter> writer;
 	if (exec_params.output_format == Options::HDF5) {
-		writer.reset(new HDF5GalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params, star_formation));
+		writer.reset(new HDF5GalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params));
 	}
 	else {
-		writer.reset(new ASCIIGalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params, star_formation));
+		writer.reset(new ASCIIGalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params));
 	}
 
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
@@ -392,8 +392,9 @@ LOG(info) << "shark using " << threads << " thread(s)";
 		double ti = simulation.convert_snapshot_to_age(snapshot);
 		double tf = simulation.convert_snapshot_to_age(snapshot+1);
 
+		Timer evolution_t;
 #ifdef SHARK_OPENMP
-		#pragma omp parallel for num_threads(threads) schedule(dynamic, 10)
+		#pragma omp parallel for num_threads(threads) schedule(static)
 #endif // SHARK_OPENMP
 		for (auto it = merger_trees.begin(); it < merger_trees.end(); it++) {
 
@@ -431,23 +432,32 @@ LOG(info) << "shark using " << threads << " thread(s)";
 				galaxy_mergers.merging_subhalos(halo, sim_params.redshifts[snapshot]);
 			}
 		}
+		LOG(info) << "Evolved galaxies in " << evolution_t;
 
 		vector<HaloPtr> all_halos_this_snapshot;
 		for (auto &tree: merger_trees) {
 			all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), tree->halos[snapshot].begin(), tree->halos[snapshot].end());
 		}
 
+		bool write_galaxies = std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end();
+
+		Timer molgas_t;
+		auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, star_formation, sim_params.redshifts[snapshot], write_galaxies);
+		LOG(info) << "Calculated molecular gas in " << molgas_t;
+
 		/*track all baryons of this snapshot*/
-		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, *AllBaryons, sim_params.redshifts[snapshot], snapshot);
+		Timer tracking_t;
+		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, AllBaryons, sim_params.redshifts[snapshot], snapshot, molgas_per_gal);
+		LOG(info) << "Total baryon amounts tracked in " << tracking_t;
 
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 		//do_stuff_at_halo_level(all_halos_this_snapshot);
 
 		/*write snapshots only if the user wants outputs at this time (note that what matters here is snapshot+1).*/
-		if(std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end() )
+		if (write_galaxies)
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot+1;
-			writer->write(snapshot, all_halos_this_snapshot, *AllBaryons);
+			writer->write(snapshot, all_halos_this_snapshot, AllBaryons, molgas_per_gal);
 		}
 
 		auto duration_millis = t.get();
@@ -477,7 +487,7 @@ LOG(info) << "shark using " << threads << " thread(s)";
 
 		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 		LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
-		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, *AllBaryons, snapshot);
+		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, AllBaryons, snapshot);
 
 	}
 

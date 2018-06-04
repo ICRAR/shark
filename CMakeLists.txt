@@ -171,6 +171,7 @@ set(SHARKLIB_SRCS
    src/gas_cooling.cpp
    src/integrator.cpp
    src/interpolator.cpp
+   src/logging.cpp
    src/options.cpp
    src/ode_solver.cpp
    src/physical_model.cpp
