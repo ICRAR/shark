@@ -218,8 +218,8 @@ install(TARGETS sharklib shark shark-importer
         LIBRARY DESTINATION lib)
 install(PROGRAMS
        ${CMAKE_SOURCE_DIR}/hpc/shark-run
-		 ${CMAKE_SOURCE_DIR}/hpc/shark-submit
-		 DESTINATION bin)
+       ${CMAKE_SOURCE_DIR}/hpc/shark-submit
+       DESTINATION bin)
 
 #
 # Unit tests
