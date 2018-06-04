@@ -48,15 +48,63 @@
 
 namespace shark {
 
+// A simple structure that holds all objects that need to exist separately for each thread.
+// Only those objects that maintain a state need to be here; the rest can be safely
+// used across many threads.
+// Most notoriously, the GSL ODE system and the GSL integrator (and their shark wrappers)
+// maintain a state, so any class
+// (which keeps a state, and therefore needs to be separate on each thread).
+// The
+struct PerThreadObjects
+{
+	PerThreadObjects(std::shared_ptr<BasicPhysicalModel> &&physical_model, GalaxyMergers &&galaxy_megers, DiskInstability &&disk_instability):
+		physical_model(std::move(physical_model)), galaxy_mergers(std::move(galaxy_megers)), disk_instability(std::move(disk_instability)) {}
+	std::shared_ptr<BasicPhysicalModel> physical_model;
+	GalaxyMergers galaxy_mergers;
+	DiskInstability disk_instability;
+};
+
 /// impl class definition
 class SharkRunner::impl {
 public:
-	impl(const Options &options, unsigned int threads) : options(options), threads(threads) {}
+	impl(const Options &options, unsigned int threads) :
+	    options(options), threads(threads),
+	    cosmo_params(options), dark_matter_halo_params(options),
+	    exec_params(options), gas_cooling_params(options),
+	    recycling_params(options), reincorporation_params(options),
+	    simulation_params(options), star_formation_params(options),
+	    cosmology(make_cosmology(cosmo_params)),
+	    dark_matter_halos(make_dark_matter_halos(dark_matter_halo_params, cosmology, simulation_params)),
+	    writer(make_galaxy_writer(exec_params, cosmo_params, cosmology, dark_matter_halos, simulation_params)),
+	    simulation(simulation_params, cosmology),
+	    star_formation(star_formation_params, recycling_params, cosmology)
+	{
+		create_per_thread_objects();
+	}
+
 	void run();
 
 private:
 	Options options;
 	unsigned int threads;
+	CosmologicalParameters cosmo_params;
+	DarkMatterHaloParameters dark_matter_halo_params;
+	ExecutionParameters exec_params;
+	GasCoolingParameters gas_cooling_params;
+	RecyclingParameters recycling_params;
+	ReincorporationParameters reincorporation_params;
+	SimulationParameters simulation_params;
+	StarFormationParameters star_formation_params;
+	CosmologyPtr cosmology;
+	DarkMatterHalosPtr dark_matter_halos;
+	GalaxyWriterPtr writer;
+	Simulation simulation;
+	StarFormation star_formation;
+	std::vector<PerThreadObjects> thread_objects {};
+	TotalBaryon all_baryons {};
+
+	void create_per_thread_objects();
+	std::vector<MergerTreePtr> get_trees();
 };
 
 // Wiring pimpl to the original class
@@ -122,30 +170,8 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
 	return os;
 }
 
-// A simple structure that holds all objects that need to exist separately for each thread.
-// Only those objects that maintain a state need to be here; the rest can be safely
-// used across many threads.
-// Most notoriously, the GSL ODE system and the GSL integrator (and their shark wrappers)
-// maintain a state, so any class
-// (which keeps a state, and therefore needs to be separate on each thread).
-// The
-struct PerThreadObjects
-{
-	PerThreadObjects(std::shared_ptr<BasicPhysicalModel> &&physical_model, GalaxyMergers &&galaxy_megers, DiskInstability &&disk_instability):
-		physical_model(std::move(physical_model)), galaxy_mergers(std::move(galaxy_megers)), disk_instability(std::move(disk_instability)) {}
-	std::shared_ptr<BasicPhysicalModel> physical_model;
-	GalaxyMergers galaxy_mergers;
-	DiskInstability disk_instability;
-};
 
-
-std::vector<PerThreadObjects> create_per_thread_objects(
-	std::size_t count, const Options &options,
-	ExecutionParameters &exec_params, GasCoolingParameters &gas_cooling_params,
-	RecyclingParameters &recycling_params, SimulationParameters &sim_params,
-	StarFormationParameters &star_formation_params,
-	const CosmologyPtr &cosmology, const DarkMatterHalosPtr &dark_matter_halos,
-	StarFormation &star_formation)
+void SharkRunner::impl::create_per_thread_objects()
 {
 	AGNFeedbackParameters agn_params(options);
 	DiskInstabilityParameters disk_instability_params(options);
@@ -160,37 +186,23 @@ std::vector<PerThreadObjects> create_per_thread_objects(
 	StellarFeedback stellar_feedback {stellar_feedback_params};
 	GasCooling gas_cooling {gas_cooling_params, star_formation_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation};
 
-	std::vector<PerThreadObjects> objects;
-	for(std::size_t i = 0; i != count; i++) {
+	for(unsigned int i = 0; i != threads; i++) {
 		auto physical_model = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_params, gas_cooling_params);
-		GalaxyMergers galaxy_mergers(merger_parameters, sim_params, dark_matter_halos, physical_model, agnfeedback);
-		DiskInstability disk_instability(disk_instability_params, merger_parameters, sim_params, dark_matter_halos, physical_model, agnfeedback);
-		objects.emplace_back(std::move(physical_model), std::move(galaxy_mergers), std::move(disk_instability));
+		GalaxyMergers galaxy_mergers(merger_parameters, simulation_params, dark_matter_halos, physical_model, agnfeedback);
+		DiskInstability disk_instability(disk_instability_params, merger_parameters, simulation_params, dark_matter_halos, physical_model, agnfeedback);
+		thread_objects.emplace_back(std::move(physical_model), std::move(galaxy_mergers), std::move(disk_instability));
 	}
-	return objects;
+}
+
+std::vector<MergerTreePtr> SharkRunner::impl::get_trees()
+{
+	HaloBasedTreeBuilder tree_builder(exec_params, threads);
+	auto halos = SURFSReader(simulation_params.tree_files_prefix, threads).read_halos(exec_params.simulation_batches, *dark_matter_halos, simulation_params);
+	auto merger_trees = tree_builder.build_trees(halos, simulation_params, cosmology, all_baryons);
+	return merger_trees;
 }
 
 void SharkRunner::impl::run() {
-
-	CosmologicalParameters cosmo_parameters(options);
-	DarkMatterHaloParameters dark_matter_halo_parameters(options);
-	ExecutionParameters exec_params(options);
-	GasCoolingParameters gas_cooling_params(options);
-	RecyclingParameters recycling_parameters(options);
-	ReincorporationParameters reinc_params(options);
-	SimulationParameters sim_params(options);
-	StarFormationParameters star_formation_params(options);
-
-	auto cosmology = make_cosmology(cosmo_parameters);
-	auto dark_matter_halos = make_dark_matter_halos(dark_matter_halo_parameters, cosmology, sim_params);
-	auto writer = make_galaxy_writer(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params);
-
-	Simulation simulation{sim_params, cosmology};
-	StarFormation star_formation{star_formation_params, recycling_parameters, cosmology};
-
-	auto per_thread_objects = create_per_thread_objects(threads, options, exec_params,
-	    gas_cooling_params, recycling_parameters, sim_params, star_formation_params,
-	    cosmology, dark_matter_halos, star_formation);
 
 	// Inform the size of things
 	std::ostringstream os;
@@ -199,24 +211,15 @@ void SharkRunner::impl::run() {
 	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
 	LOG(info) << os.str();
 
-	// Create class to track all the baryons of the simulation in its different components.
-	TotalBaryon AllBaryons;
-
 	// Read the merger tree files.
 	// Each merger tree will be a construction of halos and subhalos
 	// with their growth history.
-	std::vector<MergerTreePtr> merger_trees;
-	{
-		HaloBasedTreeBuilder tree_builder(exec_params, threads);
-		auto halos = SURFSReader(sim_params.tree_files_prefix, threads).read_halos(exec_params.simulation_batches, *dark_matter_halos, sim_params);
-		merger_trees = tree_builder.build_trees(halos, sim_params, cosmology, AllBaryons);
-		merger_trees.shrink_to_fit();
-	}
+	std::vector<MergerTreePtr> merger_trees = get_trees();
 
 	/* Create the first generation of galaxies if halo is first appearing.*/
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
-	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, sim_params);
-	galaxy_creator.create_galaxies(merger_trees, AllBaryons);
+	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, simulation_params);
+	galaxy_creator.create_galaxies(merger_trees, all_baryons);
 
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
 	// calculate evolution in the time from the current to the next snapshot.
@@ -224,12 +227,13 @@ void SharkRunner::impl::run() {
 	// we loop over merger trees.
 	// Each merger trees has a set of halos at a given snapshot,
 	// which in turn contain galaxies.
-	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot-1; snapshot++) {
+	for(int snapshot=simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot-1; snapshot++) {
 
+		auto z = simulation_params.redshifts[snapshot];
 		Timer t;
-		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< sim_params.redshifts[snapshot];
+		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< z;
 
-		for(auto &o: per_thread_objects) {
+		for(auto &o: thread_objects) {
 			o.physical_model->reset_ode_evaluations();
 		}
 
@@ -252,7 +256,7 @@ void SharkRunner::impl::run() {
 #else
 			auto which = 0;
 #endif // SHARK_OPENMP
-			auto &objs = per_thread_objects[which];
+			auto &objs = thread_objects[which];
 			auto &physical_model = objs.physical_model;
 			auto &galaxy_mergers = objs.galaxy_mergers;
 			auto &disk_instability = objs.disk_instability;
@@ -276,13 +280,13 @@ void SharkRunner::impl::run() {
 				if (LOG_ENABLED(debug)) {
 					LOG(debug) << "Evolving content in halo " << halo;
 				}
-				populate_halos(physical_model, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
+				populate_halos(physical_model, halo, snapshot, z, tf-ti);
 
 				/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale and change galaxy types accordingly.*/
 				if (LOG_ENABLED(debug)) {
 					LOG(debug) << "Merging subhalos in halo " << halo;
 				}
-				galaxy_mergers.merging_subhalos(halo, sim_params.redshifts[snapshot]);
+				galaxy_mergers.merging_subhalos(halo, z);
 			}
 		}
 		LOG(info) << "Evolved galaxies in " << evolution_t;
@@ -295,12 +299,12 @@ void SharkRunner::impl::run() {
 		bool write_galaxies = std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end();
 
 		Timer molgas_t;
-		auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, star_formation, sim_params.redshifts[snapshot], write_galaxies, threads);
+		auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, star_formation, simulation_params.redshifts[snapshot], write_galaxies, threads);
 		LOG(info) << "Calculated molecular gas in " << molgas_t;
 
 		/*track all baryons of this snapshot*/
 		Timer tracking_t;
-		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, AllBaryons, sim_params.redshifts[snapshot], snapshot, molgas_per_gal);
+		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, all_baryons, z, snapshot, molgas_per_gal);
 		LOG(info) << "Total baryon amounts tracked in " << tracking_t;
 
 		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
@@ -310,19 +314,19 @@ void SharkRunner::impl::run() {
 		if (write_galaxies)
 		{
 			LOG(info) << "Will write output file for snapshot " << snapshot+1;
-			writer->write(snapshot, all_halos_this_snapshot, AllBaryons, molgas_per_gal);
+			writer->write(snapshot, all_halos_this_snapshot, all_baryons, molgas_per_gal);
 		}
 
 		auto duration_millis = t.get();
 
 		// Some high-level ODE and integration iteration count statistics
-		auto starform_integration_intervals = std::accumulate(per_thread_objects.begin(), per_thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+		auto starform_integration_intervals = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
 			return x + o.physical_model->get_star_formation_integration_intervals();
 		});
-		auto galaxy_ode_evaluations = std::accumulate(per_thread_objects.begin(), per_thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+		auto galaxy_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
 			return x + o.physical_model->get_galaxy_ode_evaluations();
 		});
-		auto starburst_ode_evaluations = std::accumulate(per_thread_objects.begin(), per_thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+		auto starburst_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
 			return x + o.physical_model->get_galaxy_starburst_ode_evaluations();
 		});
 		auto n_halos = all_halos_this_snapshot.size();
@@ -340,7 +344,7 @@ void SharkRunner::impl::run() {
 
 		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 		LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
-		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, AllBaryons, snapshot);
+		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, all_baryons, snapshot);
 
 	}
 }
