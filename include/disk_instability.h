@@ -33,7 +33,7 @@ public:
 			SimulationParameters simparams,
 			const DarkMatterHalosPtr &darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
-			std::shared_ptr<AGNFeedback> agnfeedback);
+			const AGNFeedbackPtr &agnfeedback);
 
 	double bulge_size(GalaxyPtr &galaxy);
 
@@ -53,8 +53,7 @@ private:
 	SimulationParameters simparams;
 	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
-	std::shared_ptr<AGNFeedback> agnfeedback;
-
+	AGNFeedbackPtr agnfeedback;
 
 };
 

@@ -47,7 +47,7 @@ GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 		SimulationParameters simparams,
 		const DarkMatterHalosPtr &darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
-		std::shared_ptr<AGNFeedback> agnfeedback) :
+		const AGNFeedbackPtr &agnfeedback) :
 	parameters(parameters),
 	simparams(simparams),
 	darkmatterhalo(darkmatterhalo),

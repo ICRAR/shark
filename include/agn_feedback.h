@@ -8,10 +8,8 @@
 #ifndef INCLUDE_AGN_FEEDBACK_H_
 #define INCLUDE_AGN_FEEDBACK_H_
 
-
 #include <memory>
-#include <string>
-#include <vector>
+#include <utility>
 
 #include "cosmology.h"
 #include "options.h"
@@ -48,7 +46,7 @@ public:
 class AGNFeedback {
 
 public:
-	AGNFeedback(AGNFeedbackParameters parameters, const CosmologyPtr &cosmology);
+	AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology);
 
 	/**
 	 * All input quantities should be in comoving units.
@@ -69,7 +67,15 @@ private:
 	CosmologyPtr cosmology;
 };
 
-} //end namespace shark
+/// Type used by users to handle an instance of AGNFeedback
+typedef std::shared_ptr<AGNFeedback> AGNFeedbackPtr;
 
+template <typename ...Ts>
+AGNFeedbackPtr make_agn_feedback(Ts&&...ts)
+{
+	return std::make_shared<AGNFeedback>(std::forward<Ts>(ts)...);
+}
+
+} //end namespace shark
 
 #endif /* INCLUDE_AGN_FEEDBACK_H_ */

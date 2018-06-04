@@ -49,7 +49,7 @@ Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, c
 	throw invalid_option(os.str());
 }
 
-AGNFeedback::AGNFeedback(AGNFeedbackParameters parameters, const CosmologyPtr &cosmology) :
+AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology) :
 	parameters(parameters),
 	cosmology(cosmology)
 {

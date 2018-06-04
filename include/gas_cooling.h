@@ -87,7 +87,7 @@ public:
 			StarFormationParameters params_sf,
 			std::shared_ptr<Reionisation> reionisation,
 			const CosmologyPtr &cosmology,
-			std::shared_ptr<AGNFeedback> agnfeedback,
+			const AGNFeedbackPtr &agnfeedback,
 			const DarkMatterHalosPtr &darkmatterhalos,
 			std::shared_ptr<Reincorporation> reincorporation);
 
@@ -105,7 +105,7 @@ private:
 	StarFormationParameters params_sf;
 	std::shared_ptr<Reionisation> reionisation;
 	CosmologyPtr cosmology;
-	std::shared_ptr<AGNFeedback> agnfeedback;
+	AGNFeedbackPtr agnfeedback;
 	DarkMatterHalosPtr darkmatterhalos;
 	std::shared_ptr<Reincorporation> reincorporation;
 	Interpolator cooling_lambda_interpolator;
@@ -113,7 +113,5 @@ private:
 };
 
 }  // namespace shark
-
-
 
 #endif /* INCLUDE_GAS_COOLING_H_ */

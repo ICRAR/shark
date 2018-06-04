@@ -66,7 +66,7 @@ public:
 			SimulationParameters simparams,
 			const DarkMatterHalosPtr &darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
-			std::shared_ptr<AGNFeedback> agnfeedback);
+			const AGNFeedbackPtr &agnfeedback);
 
 	void orbital_parameters(double &vr, double &vt, double f);
 
@@ -104,7 +104,7 @@ private:
 	SimulationParameters simparams;
 	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
-	std::shared_ptr<AGNFeedback> agnfeedback;
+	AGNFeedbackPtr agnfeedback;
 
 };
 
