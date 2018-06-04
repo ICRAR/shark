@@ -85,7 +85,7 @@ class GasCooling {
 public:
 	GasCooling(GasCoolingParameters parameters,
 			StarFormationParameters params_sf,
-			std::shared_ptr<Reionisation> reionisation,
+			const ReionisationPtr &reionisation,
 			const CosmologyPtr &cosmology,
 			const AGNFeedbackPtr &agnfeedback,
 			const DarkMatterHalosPtr &darkmatterhalos,
@@ -103,7 +103,7 @@ private:
 
 	GasCoolingParameters parameters;
 	StarFormationParameters params_sf;
-	std::shared_ptr<Reionisation> reionisation;
+	ReionisationPtr reionisation;
 	CosmologyPtr cosmology;
 	AGNFeedbackPtr agnfeedback;
 	DarkMatterHalosPtr darkmatterhalos;

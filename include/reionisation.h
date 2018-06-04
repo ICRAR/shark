@@ -8,8 +8,8 @@
 #ifndef SHARK_REIONISATION_H_
 #define SHARK_REIONISATION_H_
 
-#include <vector>
-#include <string>
+#include <memory>
+#include <utility>
 
 #include "options.h"
 
@@ -35,10 +35,10 @@ public:
 };
 
 
-class Reionisation{
+class Reionisation {
 
 public:
-	Reionisation(ReionisationParameters parameters);
+	Reionisation(const ReionisationParameters &parameters);
 
 	bool reionised_halo (double v, double z);
 
@@ -47,6 +47,14 @@ private:
 	ReionisationParameters parameters;
 
 };
+
+typedef std::shared_ptr<Reionisation> ReionisationPtr;
+
+template <typename ...Ts>
+ReionisationPtr make_reionisation(Ts&&...ts)
+{
+	return std::make_shared<Reionisation>(std::forward<Ts>(ts)...);
+}
 
 }//end namespace shark
 

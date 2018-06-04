@@ -194,7 +194,7 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 
 GasCooling::GasCooling(GasCoolingParameters parameters,
 		StarFormationParameters params_sf,
-		std::shared_ptr<Reionisation> reionisation,
+		const ReionisationPtr &reionisation,
 		const CosmologyPtr &cosmology,
 		const AGNFeedbackPtr &agnfeedback,
 		const DarkMatterHalosPtr &darkmatterhalos,
