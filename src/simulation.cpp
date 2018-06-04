@@ -7,13 +7,16 @@
 
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <map>
+#include <sstream>
 #include <tuple>
 
-#include "simulation.h"
+#include "components.h"
+#include "exceptions.h"
 #include "logging.h"
 #include "numerical_constants.h"
-#include "components.h"
+#include "simulation.h"
 
 
 namespace shark {
@@ -63,6 +66,21 @@ void SimulationParameters::load_simulation_tables(const std::string &redshift_fi
 
 	}
 	f.close();
+
+	// Check that the redshift values descend when snapshots ascend
+	// This also implies that there are no repeated values, which we have seen
+	// which we have seen in the past
+	auto prev_z = std::numeric_limits<double>::max();
+	for(auto &pair: redshifts) {
+		auto z = pair.second;
+		if (z >= prev_z) {
+			std::ostringstream os;
+			os << "redshift at snapshot " << pair.first << " (" << z << ") is not lower than ";
+			os << "redshift at snapshot " << pair.first - 1 << " (" << prev_z << ")";
+			throw invalid_data(os.str());
+		}
+		prev_z = z;
+	}
 
 }
 
