@@ -27,7 +27,10 @@
 
 #include <fstream>
 #include <map>
+#include <memory>
+#include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "components.h"
@@ -88,7 +91,23 @@ private:
 
 };
 
+typedef std::unique_ptr<GalaxyWriter> GalaxyWriterPtr;
+
+template <typename ...Ts>
+GalaxyWriterPtr make_galaxy_writer(const ExecutionParameters &exec_params, Ts&&...ts)
+{
+	if (exec_params.output_format == Options::HDF5) {
+		return GalaxyWriterPtr(new HDF5GalaxyWriter(exec_params, std::forward<Ts>(ts)...));
+	}
+	else if (exec_params.output_format == Options::ASCII) {
+		return GalaxyWriterPtr(new ASCIIGalaxyWriter(exec_params, std::forward<Ts>(ts)...));
+	}
+
+	std::ostringstream os;
+	os << "Output format " << exec_params.output_format << " not currently supported";
+	throw invalid_argument(os.str());
 }
 
+} // namespace shark
 
 #endif /* SHARK_GALAXY_WRITER_H_ */

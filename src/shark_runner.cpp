@@ -183,6 +183,7 @@ void SharkRunner::impl::run() {
 
 	auto cosmology = make_cosmology(cosmo_parameters);
 	auto dark_matter_halos = make_dark_matter_halos(dark_matter_halo_parameters, cosmology, sim_params);
+	auto writer = make_galaxy_writer(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params);
 
 	Simulation simulation{sim_params, cosmology};
 	StarFormation star_formation{star_formation_params, recycling_parameters, cosmology};
@@ -216,16 +217,6 @@ void SharkRunner::impl::run() {
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
 	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, sim_params);
 	galaxy_creator.create_galaxies(merger_trees, AllBaryons);
-
-	// TODO: move this logic away from the main
-	// Also provide a std::make_unique
-	std::unique_ptr<GalaxyWriter> writer;
-	if (exec_params.output_format == Options::HDF5) {
-		writer.reset(new HDF5GalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params));
-	}
-	else {
-		writer.reset(new ASCIIGalaxyWriter(exec_params, cosmo_parameters, cosmology, dark_matter_halos, sim_params));
-	}
 
 	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
 	// calculate evolution in the time from the current to the next snapshot.
