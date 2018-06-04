@@ -470,7 +470,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		double delta_mass_bh = central_galaxy->smbh.macc_hh * deltat;
    		double delta_metals_bh = 0;
    		if(mhot > 0) {
-   			delta_mass_bh/mhot * mzhot;
+   			delta_metals_bh = delta_mass_bh/mhot * mzhot;
    		}
 
 		central_galaxy->smbh.mass += delta_mass_bh;
