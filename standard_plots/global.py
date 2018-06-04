@@ -301,7 +301,7 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ax = fig.add_subplot(111)
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\rho_{\\rm H_2}/ M_{\odot}\,cMpc^{-3})$"
-    common.prepare_ax(ax, 0, 6, 5, 9, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 5, 5, 9, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mH2den > 0)
@@ -334,7 +334,7 @@ def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
     ax = fig.add_subplot(111)
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\rho_{\\rm neutral}/ \\rho_{\\rm crit,z=0})$"
-    common.prepare_ax(ax, 0, 10, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1))
+    common.prepare_ax(ax, 0, 5, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ax.plot(redshifts, mcold + np.log10(Omegab), 'k', label='total neutral')
@@ -380,7 +380,7 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ax = fig.add_subplot(111)
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\Omega_{\\rm H_I})$"
-    common.prepare_ax(ax, 0, 6, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 5, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     # note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(omegaHI > 0)

@@ -188,7 +188,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'g', linestyle='dashed', label ='satellites' if idx == 0 else None)
 
-            if z >= 3:
+            if z >= 1:
                 y = hist_smf_err[4,:]
                 ind = np.where(y < 0.)
                 ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.25 dex error')
