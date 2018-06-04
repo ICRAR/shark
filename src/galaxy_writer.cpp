@@ -418,9 +418,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				velocity_y.push_back(vel.y);
 				velocity_z.push_back(vel.z);
 
-				L_x.push_back(L.x);
-				L_y.push_back(L.y);
-				L_z.push_back(L.z);
+				L_x.push_back(cosmology->comoving_to_physical_angularmomentum(L.x,sim_params.redshifts[snapshot]));
+				L_y.push_back(cosmology->comoving_to_physical_angularmomentum(L.y,sim_params.redshifts[snapshot]));
+				L_z.push_back(cosmology->comoving_to_physical_angularmomentum(L.z,sim_params.redshifts[snapshot]));
 
 				type.push_back(t);
 
@@ -655,11 +655,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("Galaxies/velocity_z", velocity_z, comment);
 
 	//Galaxy AM vector
-	comment = "total angular momentum component x of galaxy [Msun/h Mpc/h km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
-	file.write_dataset("Galaxies/L_x", L_x, comment);
-	comment = "total angular momentum component y of galaxy [Msun/h Mpc/h km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
+	comment = "total angular momentum component x of galaxy [Msun pMpc km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
+	file.write_dataset("Galaxies/L_x", L_x,  comment);
+	comment = "total angular momentum component y of galaxy [Msun pMpc km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
 	file.write_dataset("Galaxies/L_y", L_y, comment);
-	comment = "total angular momentum component z of galaxy [Msun/h Mpc/h km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
+	comment = "total angular momentum component z of galaxy [Msun pMpc km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.";
 	file.write_dataset("Galaxies/L_z", L_z, comment);
 
 	//Galaxy type.
@@ -875,11 +875,16 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			}
 
 			vector<float> redshifts;
-			vector<float> LBT;
+			vector<float> age_mean;
+			vector<float> delta_t;
 
+			double age_uni = std::abs(cosmology->convert_redshift_to_age(0));
 			for (int i=sim_params.min_snapshot+1; i <= snapshot; i++){
 				redshifts.push_back(sim_params.redshifts[i]);
-				LBT.push_back(cosmology->convert_redshift_to_age(sim_params.redshifts[i]));
+				double delta = std::abs(cosmology->convert_redshift_to_age(sim_params.redshifts[i]) - cosmology->convert_redshift_to_age(sim_params.redshifts[i-1]));
+				double age = age_uni - 0.5 * (std::abs(cosmology->convert_redshift_to_age(sim_params.redshifts[i]) + cosmology->convert_redshift_to_age(sim_params.redshifts[i-1])));
+				delta_t.push_back(delta);
+				age_mean.push_back(age);
 			}
 
 			//Write header
@@ -905,8 +910,11 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			comment = "Redshifts of the history outputs";
 			file_sfh.write_dataset("Redshifts", redshifts, comment);
 
-			comment = "Look back time of the history outputs [Gyr]";
-			file_sfh.write_dataset("LBT", LBT, comment);
+			comment = "Look back time to mean time between snapshots [Gyr]";
+			file_sfh.write_dataset("age_mean", age_mean, comment);
+
+			comment = "Time interval covered between snapshots [Gyr]";
+			file_sfh.write_dataset("delta_t", delta_t, comment);
 
 		}
 

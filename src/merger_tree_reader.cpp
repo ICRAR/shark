@@ -109,7 +109,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 	vector<Halo::id_t> hostIndex = batch_file.read_dataset_v<Halo::id_t>("haloTrees/hostIndex");
 	vector<Halo::id_t> descHost = batch_file.read_dataset_v<Halo::id_t>("haloTrees/descendantHost");
 
-	//Read properties that characterise the position of the subhalo inside the halo.
+	//Read properties that characterise the position of the subhalo inside the halo.descendantIndex
 	vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
 	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
 	vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");

@@ -225,7 +225,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 						//Check that there is a main progenitor first, if not, then there's no point on continuing.
 						if(not main_prog){
 							std::ostringstream os;
-							os << "Subhalo " << subhalo << " has ascendants but no main progenitor";
+							os << "Subhalo " << subhalo << " has ascendants but no main progenitor. Interpolated subhalo? " << subhalo->IsInterpolated;
 							throw invalid_data(os.str());
 						}
 

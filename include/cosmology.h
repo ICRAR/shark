@@ -77,6 +77,7 @@ class Cosmology {
 public:
 	Cosmology(CosmologicalParameters parameters);
 
+	double comoving_to_physical_angularmomentum(double r, double z) const;
 	double comoving_to_physical_size(double r, double z) const;
 	double comoving_to_physical_velocity(double v, double z) const;
 	double comoving_to_physical_mass(double m) const;
