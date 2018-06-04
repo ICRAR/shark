@@ -188,6 +188,9 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 		galaxy->tmerge = parameters.tau_delay * tau_mass * tau_dyn;
 		galaxy->galaxy_type = Galaxy::TYPE2;
+		galaxy->concentration_type2 = secondary->concentration;
+		galaxy->msubhalo_type2 = secondary->Mvir;
+		galaxy->lambda_type2 = secondary->lambda;
 
 	}
 //	double vt,vr;

@@ -208,7 +208,11 @@ public:
 		smbh(),
 		sfr_disk(0),
 		sfr_bulge(0),
-		tmerge(0)
+		tmerge(0),
+		concentration_type2(0),
+		msubhalo_type2(0),
+		vvir_type2(0),
+		lambda_type2(0)
 	{
 		//no-op
 	}
@@ -248,9 +252,18 @@ public:
 	std::vector<HistoryItem>  history;
 
 	/**
-	 * dynamical friction timescale, which is defined only is galaxy is satellite.
+	 * tmerge: dynamical friction timescale, which is defined only is galaxy is satellite.
+	 * concentration_type2: concentration of the subhalo this galaxy was before becoming type 2 (only relevant for type 2 galaxies).
+	 * msubhalo_type2: subhalo mass of this galaxy before it became type 2 (only relevant for type 2 galaxies).
+	 * vvir_type2: subhalo virial velocity of this galaxy before it became type 2 (only relevant for type 2 galaxies).
+	 * lambda_type2: subhalo spin parameter of this galaxy before it became type 2 (only relevant for type 2 galaxies).
 	 */
 	float tmerge;
+	float concentration_type2;
+	float msubhalo_type2;
+	float vvir_type2;
+	float lambda_type2;
+
 
 	/**
 	 * Define functions to calculate total mass and metals of various components.

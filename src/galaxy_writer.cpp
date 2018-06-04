@@ -297,7 +297,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
 				auto &molecular_gas = molgas_per_gal.at(galaxy);
-
 				// Gas components separated into HI and H2.
 				mmol_disk.push_back(molecular_gas.m_mol);
 				mmol_bulge.push_back(molecular_gas.m_mol_b);
@@ -387,17 +386,21 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					L.x      = (subhalo->L.x/subhalo->L.norm()) * galaxy->angular_momentum();
 					L.y      = (subhalo->L.y/subhalo->L.norm()) * galaxy->angular_momentum();
 					L.z      = (subhalo->L.z/subhalo->L.norm()) * galaxy->angular_momentum();
+					mvir_subhalo.push_back(mvir_gal);
+					cnfw_subhalo.push_back(c_sub);
+					vvir_hosthalo.push_back(vhalo);
+					lambda_subhalo.push_back(l_sub);
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
 					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy->angular_momentum(), halo);
+					mvir_subhalo.push_back(galaxy->msubhalo_type2);
+					cnfw_subhalo.push_back(galaxy->concentration_type2);
+					vvir_hosthalo.push_back(galaxy->vvir_type2);
+					lambda_subhalo.push_back(galaxy->lambda_type2);
 				}
 
-				mvir_subhalo.push_back(mvir_gal);
-				vmax_subhalo.push_back(vmax_sub);
-				vvir_hosthalo.push_back(vhalo);
-				cnfw_subhalo.push_back(c_sub);
-				lambda_subhalo.push_back(l_sub);
+				vmax_subhalo.push_back(galaxy->vmax);
 
 				// Galaxy position and velocity.
 				position_x.push_back(pos.x);
@@ -566,10 +569,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("Galaxies/BH_accretion_rate_sb", mBH_acc_sb, comment);
 
 	comment = "half-mass radius of the stellar disk [cMpc/h]";
-	file.write_dataset("Galaxies/rdisk_star", rdisk_star, comment);
+	file.write_dataset("Galaxies/rstar_disk", rdisk_star, comment);
 
 	comment = "half-mass radius of the stellar bulge [cMpc/h]";
-	file.write_dataset("Galaxies/rbulge_star", rbulge_star, comment);
+	file.write_dataset("Galaxies/rstar_bulge", rbulge_star, comment);
 
 	comment = "specific angular momentum of the stellar disk [km/s * cMpc/h]";
 	file.write_dataset("Galaxies/specific_angular_momentum_disk_star", sAM_disk_star, comment);
@@ -578,10 +581,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("Galaxies/specific_angular_momentum_bulge_star", sAM_bulge_star, comment);
 
 	comment = "half-mass radius of the gas disk [cMpc/h]";
-	file.write_dataset("Galaxies/rdisk_gas", rdisk_gas, comment);
+	file.write_dataset("Galaxies/rgas_disk", rdisk_gas, comment);
 
 	comment = "half-mass radius of the gas bulge [cMpc/h]";
-	file.write_dataset("Galaxies/rbulge_gas", rbulge_gas, comment);
+	file.write_dataset("Galaxies/rgas_bulge", rbulge_gas, comment);
 
 	comment = "specific angular momentum of the gas disk [km/s * cMpc/h]";
 	file.write_dataset("Galaxies/specific_angular_momentum_disk_gas", sAM_disk_gas, comment);
@@ -613,19 +616,19 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "Dark matter mass of the host halo in which this galaxy resides [Msun/h]";
 	file.write_dataset("Galaxies/mvir_hosthalo", mvir_hosthalo, comment);
 
-	comment = "Dark matter mass of the subhalo in which this galaxy resides [Msun/h]";
+	comment = "Dark matter mass of the subhalo in which this galaxy resides [Msun/h]. In the case of type 2 satellites, this corresponds to the mass its subhalo had before disappearing from the subhalo catalogs.";
 	file.write_dataset("Galaxies/mvir_subhalo", mvir_subhalo, comment);
 
-	comment = "Maximum circular velocity of the dark matter subhalo in which this galaxy resides [km/s]";
+	comment = "Maximum circular velocity of this galaxy [km/s]";
 	file.write_dataset("Galaxies/vmax_subhalo", vmax_subhalo, comment);
 
-	comment = "Virial velocity of the dark matter halo in which this galaxy resides [km/s]";
+	comment = "Virial velocity of the dark matter halo in which this galaxy resides [km/s]. In the case of type 2 satellites, this corresponds to the virial velocity its subhalo had before disappearing from the subhalo catalogs.";
 	file.write_dataset("Galaxies/vvir_hosthalo", vvir_hosthalo, comment);
 
-	comment = "NFW concentration parameter of the dark matter subhalo in which this galaxy resides [dimensionless]";
+	comment = "NFW concentration parameter of the dark matter subhalo in which this galaxy resides [dimensionless]. In the case of type 2 satellites, this corresponds to the concentration its subhalo had before disappearing from the subhalo catalogs.";
 	file.write_dataset("Galaxies/cnfw_subhalo", cnfw_subhalo, comment);
 
-	comment = "Spin parameter of the dark matter subhalo in which this galaxy resides [dimensionless]";
+	comment = "Spin parameter of the dark matter subhalo in which this galaxy resides [dimensionless].  In the case of type 2 satellites, this corresponds to the lambda its subhalo had before disappearing from the subhalo catalogs.";
 	file.write_dataset("Galaxies/lambda_subhalo", lambda_subhalo, comment);
 
 	//Galaxy position
