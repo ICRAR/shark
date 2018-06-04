@@ -284,19 +284,27 @@ void SharkRunner::impl::run() {
 			for(auto &halo: tree->halos[snapshot]) {
 
 				/*Evaluate which galaxies are merging in this halo.*/
-				LOG(debug) << "Merging galaxies in halo " << halo;
+				if (LOG_ENABLED(debug)) {
+					LOG(debug) << "Merging galaxies in halo " << halo;
+				}
 				galaxy_mergers.merging_galaxies(halo, snapshot, tf-ti);
 
 				/*Evaluate disk instabilities.*/
-				LOG(debug) << "Evaluating disk instability in halo " << halo;
+				if (LOG_ENABLED(debug)) {
+					LOG(debug) << "Evaluating disk instability in halo " << halo;
+				}
 				disk_instability.evaluate_disk_instability(halo, snapshot, tf-ti);
 
 				/*populate halos. This function should evolve the subhalos inside the halo.*/
-				LOG(debug) << "Evolving content in halo " << halo;
+				if (LOG_ENABLED(debug)) {
+					LOG(debug) << "Evolving content in halo " << halo;
+				}
 				populate_halos(physical_model, halo, snapshot,  sim_params.redshifts[snapshot], tf-ti);
 
 				/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale and change galaxy types accordingly.*/
-				LOG(debug) << "Merging subhalos in halo " << halo;
+				if (LOG_ENABLED(debug)) {
+					LOG(debug) << "Merging subhalos in halo " << halo;
+				}
 				galaxy_mergers.merging_subhalos(halo, sim_params.redshifts[snapshot]);
 			}
 		}
