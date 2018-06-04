@@ -64,8 +64,7 @@ DarkMatterHalos::DarkMatterHalos(const DarkMatterHaloParameters &params, const C
 	generator(),
 	distribution(-3.5,-0.69),
 	flat_distribution(0,1)
-	{
-	auto x = flat_distribution(generator);
+{
 	// no-op
 }
 
@@ -275,12 +274,6 @@ void DarkMatterHalos::bulge_sAM(Subhalo &subhalo, Galaxy &galaxy){
 		double xb = rbulge / rvir;
 		double v2tot_b = v2halo(xb, mvir, ch, rvir) + v2disk(xb, mdisk, cd, rvir) + v2bulge(xb, mbulge, cb, rvir);
 		double vbulge = std::sqrt(v2tot_b);
-
-		if(vbulge > 1e3){
-			double vb = std::sqrt(constants::G * mbulge / rbulge);
-			double medd=0;
-		}
-
 		galaxy.bulge_gas.sAM = 2.0 * rbulge / constants::RDISK_HALF_SCALE * vbulge;
 	}
 

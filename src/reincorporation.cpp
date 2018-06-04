@@ -28,7 +28,6 @@ Reincorporation::Reincorporation(const ReincorporationParameters &parameters, co
 double Reincorporation::reincorporated_mass(HaloPtr halo, double z, double delta_t){
 
 	double mvir = halo->Mvir;
-	double tdyn = darkmatterhalo->halo_dynamical_time(halo, z);
 	double mgas = halo->central_subhalo->ejected_galaxy_gas.mass;
 
 	double treinc = parameters.alpha_reheat * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);

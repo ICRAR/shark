@@ -567,8 +567,6 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
 	double rsatellite = satellite->composite_size();
 
-	double mb = central->bulge_mass();
-
 	// Define central properties depending on whether merger is major or minor merger.
 	if(mass_ratio >= parameters.major_merger_ratio){
 
