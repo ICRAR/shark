@@ -24,8 +24,6 @@
 #ifndef SHARK_GALAXY_CREATOR_H_
 #define SHARK_GALAXY_CREATOR_H_
 
-#include <memory>
-
 #include "cosmology.h"
 #include "components.h"
 #include "dark_matter_halos.h"
@@ -37,13 +35,13 @@ namespace shark {
 class GalaxyCreator {
 
 public:
-	GalaxyCreator(std::shared_ptr<Cosmology> cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params);
+	GalaxyCreator(const CosmologyPtr &cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params);
 	void create_galaxies(const std::vector<MergerTreePtr> &merger_trees, TotalBaryon &AllBaryons);
 
 private:
 	bool create_galaxies(const HaloPtr &halo, double z);
 
-	std::shared_ptr<Cosmology> cosmology;
+	CosmologyPtr cosmology;
 	GasCoolingParameters cool_params;
 	SimulationParameters sim_params;
 };

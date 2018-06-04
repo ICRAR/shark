@@ -144,7 +144,7 @@ std::vector<PerThreadObjects> create_per_thread_objects(
 	ExecutionParameters &exec_params, GasCoolingParameters &gas_cooling_params,
 	RecyclingParameters &recycling_params, SimulationParameters &sim_params,
 	StarFormationParameters &star_formation_params,
-	std::shared_ptr<Cosmology> &cosmology, std::shared_ptr<DarkMatterHalos> &dark_matter_halos,
+	const CosmologyPtr &cosmology, std::shared_ptr<DarkMatterHalos> &dark_matter_halos,
 	StarFormation &star_formation)
 {
 	AGNFeedbackParameters agn_params(options);
@@ -181,7 +181,7 @@ void SharkRunner::impl::run() {
 	SimulationParameters sim_params(options);
 	StarFormationParameters star_formation_params(options);
 
-	std::shared_ptr<Cosmology> cosmology = std::make_shared<Cosmology>(cosmo_parameters);
+	auto cosmology = make_cosmology(cosmo_parameters);
 
 	// TODO: Move this logic away from the main
 	std::shared_ptr<DarkMatterHalos> dark_matter_halos;

@@ -26,7 +26,6 @@
 #define SHARK_SIMULATION_H_
 
 #include <vector>
-#include <memory>
 #include <string>
 
 #include "cosmology.h"
@@ -62,13 +61,13 @@ class Simulation {
 
 public:
 
-	Simulation(SimulationParameters parameters, std::shared_ptr<Cosmology> cosmology);
+	Simulation(SimulationParameters parameters, const CosmologyPtr &cosmology);
 
 	double convert_snapshot_to_age(int s);
 
 private:
 	SimulationParameters parameters;
-	std::shared_ptr<Cosmology> cosmology;
+	CosmologyPtr cosmology;
 
 
 };

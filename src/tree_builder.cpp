@@ -50,7 +50,7 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 	}
 }
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology, TotalBaryon &AllBaryons)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
 {
 
 	const auto &output_snaps = exec_params.output_snapshots;

@@ -46,7 +46,7 @@ public:
 
 	GalaxyWriter(ExecutionParameters exec_params,
 			CosmologicalParameters cosmo_params,
-			std::shared_ptr<Cosmology> cosmology,
+			const CosmologyPtr &cosmology,
 			std::shared_ptr<DarkMatterHalos> darkmatterhalo,
 			SimulationParameters sim_params);
 	virtual ~GalaxyWriter() {};
@@ -59,7 +59,7 @@ protected:
 
 	ExecutionParameters exec_params;
 	CosmologicalParameters cosmo_params;
-	std::shared_ptr<Cosmology> cosmology;
+	CosmologyPtr cosmology;
 	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
 	SimulationParameters sim_params;
 

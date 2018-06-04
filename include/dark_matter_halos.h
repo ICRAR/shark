@@ -9,7 +9,6 @@
 #define INCLUDE_DARK_MATTER_HALOS_H_
 
 #include <gsl/gsl_sf_lambert.h>
-#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -74,7 +73,7 @@ public:
 class DarkMatterHalos {
 
 public:
-	DarkMatterHalos(DarkMatterHaloParameters &params, std::shared_ptr<Cosmology> cosmology, SimulationParameters &sim_params);
+	DarkMatterHalos(DarkMatterHaloParameters &params, const CosmologyPtr &cosmology, SimulationParameters &sim_params);
 	virtual ~DarkMatterHalos() {};
 
 	virtual double grav_potential_halo(double r, double c) const = 0;
@@ -115,7 +114,7 @@ public:
 
 protected:
 	DarkMatterHaloParameters params;
-	std::shared_ptr<Cosmology> cosmology;
+	CosmologyPtr cosmology;
 	SimulationParameters sim_params;
 	std::default_random_engine generator;
 	std::lognormal_distribution<double> distribution;

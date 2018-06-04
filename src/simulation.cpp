@@ -84,7 +84,7 @@ void SimulationParameters::load_simulation_tables(const std::string &redshift_fi
 
 }
 
-Simulation::Simulation(SimulationParameters parameters, std::shared_ptr<Cosmology> cosmology) :
+Simulation::Simulation(SimulationParameters parameters, const CosmologyPtr &cosmology) :
 	parameters(parameters),
 	cosmology(cosmology)
 {

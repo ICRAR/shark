@@ -48,7 +48,7 @@ public:
 class AGNFeedback {
 
 public:
-	AGNFeedback(AGNFeedbackParameters parameters, std::shared_ptr<Cosmology> cosmology);
+	AGNFeedback(AGNFeedbackParameters parameters, const CosmologyPtr &cosmology);
 
 	/**
 	 * All input quantities should be in comoving units.
@@ -66,7 +66,7 @@ public:
 	AGNFeedbackParameters parameters;
 
 private:
-	std::shared_ptr<Cosmology> cosmology;
+	CosmologyPtr cosmology;
 };
 
 } //end namespace shark

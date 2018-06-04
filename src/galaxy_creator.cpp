@@ -28,7 +28,7 @@
 
 namespace shark {
 
-GalaxyCreator::GalaxyCreator(std::shared_ptr<Cosmology> cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params) :
+GalaxyCreator::GalaxyCreator(const CosmologyPtr &cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params) :
 	cosmology(cosmology),
 	cool_params(cool_params),
 	sim_params(sim_params)

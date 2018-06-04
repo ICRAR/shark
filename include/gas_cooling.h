@@ -86,7 +86,7 @@ public:
 	GasCooling(GasCoolingParameters parameters,
 			StarFormationParameters params_sf,
 			std::shared_ptr<Reionisation> reionisation,
-			std::shared_ptr<Cosmology> cosmology,
+			const CosmologyPtr &cosmology,
 			std::shared_ptr<AGNFeedback> agnfeedback,
 			std::shared_ptr<DarkMatterHalos> darkmatterhalos,
 			std::shared_ptr<Reincorporation> reincorporation);
@@ -104,7 +104,7 @@ private:
 	GasCoolingParameters parameters;
 	StarFormationParameters params_sf;
 	std::shared_ptr<Reionisation> reionisation;
-	std::shared_ptr<Cosmology> cosmology;
+	CosmologyPtr cosmology;
 	std::shared_ptr<AGNFeedback> agnfeedback;
 	std::shared_ptr<DarkMatterHalos> darkmatterhalos;
 	std::shared_ptr<Reincorporation> reincorporation;
