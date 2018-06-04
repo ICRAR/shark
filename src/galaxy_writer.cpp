@@ -829,7 +829,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 								star_gal_bulge_exists = true;
 								auto item = *it;
 								// assign disk properties
-								sfh_gal_disk.push_back(item.sfr_disk);
+								sfh_gal_disk.push_back(item.sfr_disk/constants::GIGA);
 								if(item.sfr_disk > 0){
 									star_metals_gal_disk.push_back(item.sfr_z_disk/item.sfr_disk);
 								}
@@ -838,7 +838,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 								}
 
 								// assign bulge properties
-								sfh_gal_bulge.push_back(item.sfr_bulge);
+								sfh_gal_bulge.push_back(item.sfr_bulge/constants::GIGA);
 								if(item.sfr_bulge > 0){
 									star_metals_gal_bulge.push_back(item.sfr_z_bulge/item.sfr_bulge);
 								}
@@ -884,14 +884,14 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			file_sfh.write_dataset("Galaxies/id_galaxy", id_galaxy, comment);
 
 			//Write disk component history.
-			comment = "Star formation history of stars formed that by this output time end up in the disk [Msun/Gyr/h]";
+			comment = "Star formation history of stars formed that by this output time end up in the disk [Msun/yr/h]";
 			file_sfh.write_dataset("Disks/StarFormationRateHistories", sfhs_disk, comment);
 
 			comment = "Stellar metallicity of the stars formed in a timestep that by this output time ends up in the disk";
 			file_sfh.write_dataset("Disks/MetallicityHistories", stellar_metals_disk, comment);
 
 			//Write bulge component history.
-			comment = "Star formation history of stars formed that by this output time end up in the bulge [Msun/Gyr/h]";
+			comment = "Star formation history of stars formed that by this output time end up in the bulge [Msun/yr/h]";
 			file_sfh.write_dataset("Bulges/StarFormationRateHistories", sfhs_bulge, comment);
 
 			comment = "Stellar metallicity of the stars formed in a timestep that by this output time ends up in the disk";
