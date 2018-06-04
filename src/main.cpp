@@ -34,7 +34,8 @@
 #include <boost/filesystem/convenience.hpp>
 #include <boost/program_options.hpp>
 #include <gsl/gsl_errno.h>
-//
+
+#include "components.h"
 #include "logging.h"
 #include "options.h"
 #include "shark_runner.h"
@@ -101,6 +102,13 @@ void log_startup_information(int argc, char **argv)
 	std::ostringstream os;
 	std::copy(argv, argv + argc, std::ostream_iterator<char *>(os, " "));
 	LOG(info) << "shark started with command line: " << os.str();
+
+	// Inform the size of things
+	os = std::ostringstream();
+	os << "Main structure/class sizes follow. ";
+	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
+	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
+	LOG(info) << os.str();
 }
 
 
@@ -167,7 +175,7 @@ Options read_options(const boost::program_options::variables_map &vm, unsigned i
 #else
 	threads = 1;
 #endif // SHARK_OPENMP
-LOG(info) << "shark using " << threads << " thread(s)";
+	LOG(info) << "shark using " << threads << " thread(s)";
 
 	// Read the configuration file, and override options with any given
 	// on the command-line

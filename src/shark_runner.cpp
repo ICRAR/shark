@@ -206,13 +206,6 @@ std::vector<MergerTreePtr> SharkRunner::impl::import_trees()
 
 void SharkRunner::impl::run() {
 
-	// Inform the size of things
-	std::ostringstream os;
-	os << "Main structure/class sizes follow. ";
-	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
-	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
-	LOG(info) << os.str();
-
 	std::vector<MergerTreePtr> merger_trees = import_trees();
 
 	/* Create the first generation of galaxies if halo is first appearing.*/
