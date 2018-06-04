@@ -322,7 +322,8 @@ double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double zgas, do
 		double d_mw = zgas;
 		double u_mw = Sigma_gas / constants::sigma_gas_mw;
 
-		rmol = Sigma_gas / gd14_sigma_norm(d_mw, u_mw);
+		double alpha = 0.5 + 1/(1 + sqrt(u_mw * std::pow(d_mw,2.0)/600.0));
+		rmol = std::pow(Sigma_gas / gd14_sigma_norm(d_mw, u_mw), alpha);
 	}
 	else if (parameters.model == StarFormationParameters::K13){
 
@@ -378,8 +379,6 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 }
 
 double StarFormation::gd14_sigma_norm(double d_mw, double u_mw){
-
-	double alpha = 0.5 + 1/(1 + sqrt(u_mw * std::pow(d_mw,2.0)/600.0));
 
 	double g = sqrt(std::pow(d_mw,2.0) + 0.0289);
 
