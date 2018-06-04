@@ -156,7 +156,7 @@ std::vector<PerThreadObjects> create_per_thread_objects(
 
 	auto agnfeedback = make_agn_feedback(agn_params, cosmology);
 	auto reionisation = make_reionisation(reio_params);
-	std::shared_ptr<Reincorporation> reincorporation = std::make_shared<Reincorporation>(reinc_params, dark_matter_halos);
+	auto reincorporation = make_reincorporation(reinc_params, dark_matter_halos);
 	StellarFeedback stellar_feedback {stellar_feedback_params};
 	GasCooling gas_cooling {gas_cooling_params, star_formation_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation};
 

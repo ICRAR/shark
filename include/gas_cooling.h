@@ -89,7 +89,7 @@ public:
 			const CosmologyPtr &cosmology,
 			const AGNFeedbackPtr &agnfeedback,
 			const DarkMatterHalosPtr &darkmatterhalos,
-			std::shared_ptr<Reincorporation> reincorporation);
+			const ReincorporationPtr &reincorporation);
 
 	double cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, double deltat);
 	double cooling_time(double Tvir, double logl, double nh_density);
@@ -107,7 +107,7 @@ private:
 	CosmologyPtr cosmology;
 	AGNFeedbackPtr agnfeedback;
 	DarkMatterHalosPtr darkmatterhalos;
-	std::shared_ptr<Reincorporation> reincorporation;
+	ReincorporationPtr reincorporation;
 	Interpolator cooling_lambda_interpolator;
 
 };

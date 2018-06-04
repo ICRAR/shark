@@ -18,7 +18,7 @@ ReincorporationParameters::ReincorporationParameters(const Options &options)
 	options.load("reincorporation.halo_mass_power",halo_mass_power);
 }
 
-Reincorporation::Reincorporation(ReincorporationParameters parameters, const DarkMatterHalosPtr &darkmatterhalo):
+Reincorporation::Reincorporation(const ReincorporationParameters &parameters, const DarkMatterHalosPtr &darkmatterhalo):
 	parameters(parameters),
 	darkmatterhalo(darkmatterhalo)
 {
