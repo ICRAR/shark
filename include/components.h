@@ -208,6 +208,10 @@ public:
 		smbh(),
 		sfr_disk(0),
 		sfr_bulge(0),
+		sfr_z_disk(0),
+		sfr_z_bulge(0),
+		vmax(0),
+		history(),
 		tmerge(0)
 	{
 		//no-op
