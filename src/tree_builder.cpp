@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iomanip>
 #include <iterator>
 #include <memory>
@@ -49,7 +50,7 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 	}
 }
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology, TotalBaryon &AllBaryons)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
 {
 
 	const auto &output_snaps = exec_params.output_snapshots;
@@ -219,14 +220,18 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 
 					while(not ascendants.empty()){
 
+						// Check that there is a main progenitor first
+						// If none is formally defined, we declare the most massive
+						// ascendant to be the main progenitor
 						auto main_prog = subhalo->main();
-
-						//Check that there is a main progenitor first, if not, then there's no point on continuing.
 						if (not main_prog) {
-							std::ostringstream os;
-							os << "Subhalo " << subhalo << " has ascendants but no main progenitor. Here are the ascendants:\n  ";
-							std::copy(ascendants.begin(), ascendants.end(), std::ostream_iterator<SubhaloPtr>(os, "\n  "));
-							throw invalid_data(os.str());
+							auto it = std::max_element(ascendants.begin(), ascendants.end(), [](const SubhaloPtr &s1, const SubhaloPtr &s2) {
+								return s1->Mvir < s2->Mvir;
+							});
+							main_prog = *it;
+							main_prog->main_progenitor = true;
+							LOG(warning) << "No main progenitor defined for " << subhalo << ", defined "
+							             << main_prog << " based on its Mvir";
 						}
 
 						auto ascendant_halo = main_prog->host_halo;

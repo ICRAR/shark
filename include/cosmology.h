@@ -31,8 +31,10 @@
 #ifndef SHARK_COSMOLOGY_H_
 #define SHARK_COSMOLOGY_H_
 
-#include <vector>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "options.h"
 
@@ -75,7 +77,7 @@ private:
 class Cosmology {
 
 public:
-	Cosmology(CosmologicalParameters parameters);
+	Cosmology(const CosmologicalParameters &parameters);
 
 	double comoving_to_physical_angularmomentum(double r, double z) const;
 	double comoving_to_physical_size(double r, double z) const;
@@ -99,6 +101,15 @@ public:
 	CosmologicalParameters parameters;
 
 };
+
+/// Type to be used by users handling pointers to this class
+typedef std::shared_ptr<Cosmology> CosmologyPtr;
+
+template <typename ...Ts>
+CosmologyPtr make_cosmology(Ts&&...ts)
+{
+	return std::make_shared<Cosmology>(std::forward<Ts>(ts)...);
+}
 
 }  // namespace shark
 

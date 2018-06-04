@@ -6,10 +6,7 @@
  */
 
 #include <cmath>
-#include <memory>
 
-#include "components.h"
-#include "dark_matter_halos.h"
 #include "reincorporation.h"
 
 namespace shark {
@@ -21,7 +18,7 @@ ReincorporationParameters::ReincorporationParameters(const Options &options)
 	options.load("reincorporation.halo_mass_power",halo_mass_power);
 }
 
-Reincorporation::Reincorporation(ReincorporationParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo):
+Reincorporation::Reincorporation(const ReincorporationParameters &parameters, const DarkMatterHalosPtr &darkmatterhalo):
 	parameters(parameters),
 	darkmatterhalo(darkmatterhalo)
 {

@@ -67,7 +67,7 @@ Options::get<StarFormationParameters::StarFormationModel>(const std::string &nam
 	throw invalid_option(os.str());
 }
 
-StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, std::shared_ptr<Cosmology> cosmology) :
+StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, const CosmologyPtr &cosmology) :
 	parameters(parameters),
 	recycleparams(recycleparams),
 	cosmology(cosmology),

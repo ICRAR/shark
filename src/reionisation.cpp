@@ -40,7 +40,7 @@ Options::get<ReionisationParameters::ReionisationModel>(const std::string &name,
 	throw invalid_option(os.str());
 }
 
-Reionisation::Reionisation(ReionisationParameters parameters) :
+Reionisation::Reionisation(const ReionisationParameters &parameters) :
 	parameters(parameters)
 {
 	// no-op

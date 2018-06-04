@@ -165,6 +165,7 @@ set(SHARKLIB_SRCS
    src/execution.cpp
    src/dark_matter_halos.cpp
    src/disk_instability.cpp
+   src/evolve_halos.cpp
    src/galaxy_creator.cpp
    src/galaxy_mergers.cpp
    src/galaxy_writer.cpp
@@ -172,12 +173,14 @@ set(SHARKLIB_SRCS
    src/integrator.cpp
    src/interpolator.cpp
    src/logging.cpp
+   src/merger_tree_reader.cpp
    src/options.cpp
    src/ode_solver.cpp
    src/physical_model.cpp
    src/recycling.cpp
    src/reincorporation.cpp
    src/reionisation.cpp
+   src/shark_runner.cpp
    src/simulation.cpp
    src/star_formation.cpp
    src/stellar_feedback.cpp
@@ -204,9 +207,7 @@ target_link_libraries(shark-importer sharklib)
 
 # The shark executable
 set(SHARK_SRCS
-	src/evolve_halos.cpp
 	src/main.cpp
-	src/merger_tree_reader.cpp
 )
 add_executable(shark ${SHARK_SRCS})
 target_link_libraries(shark sharklib)
@@ -217,8 +218,8 @@ install(TARGETS sharklib shark shark-importer
         LIBRARY DESTINATION lib)
 install(PROGRAMS
        ${CMAKE_SOURCE_DIR}/hpc/shark-run
-		 ${CMAKE_SOURCE_DIR}/hpc/shark-submit
-		 DESTINATION bin)
+       ${CMAKE_SOURCE_DIR}/hpc/shark-submit
+       DESTINATION bin)
 
 #
 # Unit tests

@@ -126,8 +126,7 @@ public:
 	}
 
 	void restore_baryon(){
-		mass = 0;
-		mass_metals = 0;
+		BaryonBase::restore_baryon();
 		rscale = 0;
 		sAM = 0;
 	}
@@ -208,11 +207,15 @@ public:
 		smbh(),
 		sfr_disk(0),
 		sfr_bulge(0),
+		sfr_z_disk(0),
+		sfr_z_bulge(0),
+		vmax(0),
+		history(),
 		tmerge(0),
-		concentration_type2(0),
-		msubhalo_type2(0),
-		vvir_type2(0),
-		lambda_type2(0)
+                concentration_type2(0),
+                msubhalo_type2(0),
+                vvir_type2(0),
+                lambda_type2(0)
 	{
 		//no-op
 	}
@@ -585,22 +588,6 @@ public:
 	 * The halo that holds this subhalo.
 	 */
 	HaloPtr host_halo;
-
-	// Sort ascendant subhalos by Mvir
-	std::vector<SubhaloPtr> ordered_ascendants(){
-
-		if(ascendants.size()==0){
-			return std::vector<SubhaloPtr>();
-		}
-		else if(ascendants.size()>1){
-			std::sort(ascendants.begin(), ascendants.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
-			return lhs->Mvir > rhs->Mvir;
-			});
-		}
-
-		return ascendants;
-
-	}
 
 	/// Returns main progenitor subhalo.
 	SubhaloPtr main(){

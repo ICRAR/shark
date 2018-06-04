@@ -85,11 +85,11 @@ class GasCooling {
 public:
 	GasCooling(GasCoolingParameters parameters,
 			StarFormationParameters params_sf,
-			std::shared_ptr<Reionisation> reionisation,
-			std::shared_ptr<Cosmology> cosmology,
-			std::shared_ptr<AGNFeedback> agnfeedback,
-			std::shared_ptr<DarkMatterHalos> darkmatterhalos,
-			std::shared_ptr<Reincorporation> reincorporation);
+			const ReionisationPtr &reionisation,
+			const CosmologyPtr &cosmology,
+			const AGNFeedbackPtr &agnfeedback,
+			const DarkMatterHalosPtr &darkmatterhalos,
+			const ReincorporationPtr &reincorporation);
 
 	double cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, double deltat);
 	double cooling_time(double Tvir, double logl, double nh_density);
@@ -103,17 +103,15 @@ private:
 
 	GasCoolingParameters parameters;
 	StarFormationParameters params_sf;
-	std::shared_ptr<Reionisation> reionisation;
-	std::shared_ptr<Cosmology> cosmology;
-	std::shared_ptr<AGNFeedback> agnfeedback;
-	std::shared_ptr<DarkMatterHalos> darkmatterhalos;
-	std::shared_ptr<Reincorporation> reincorporation;
+	ReionisationPtr reionisation;
+	CosmologyPtr cosmology;
+	AGNFeedbackPtr agnfeedback;
+	DarkMatterHalosPtr darkmatterhalos;
+	ReincorporationPtr reincorporation;
 	Interpolator cooling_lambda_interpolator;
 
 };
 
 }  // namespace shark
-
-
 
 #endif /* INCLUDE_GAS_COOLING_H_ */

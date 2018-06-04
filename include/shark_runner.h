@@ -1,8 +1,8 @@
 //
-// Galaxy creator class declaration
+// Main shark runner class definition
 //
 // ICRAR - International Centre for Radio Astronomy Research
-// (c) UWA - The University of Western Australia, 2017
+// (c) UWA - The University of Western Australia, 2018
 // Copyright by UWA (in the framework of the ICRAR)
 // All rights reserved
 //
@@ -21,31 +21,40 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 // MA 02111-1307  USA
 //
-#ifndef SHARK_GALAXY_CREATOR_H_
-#define SHARK_GALAXY_CREATOR_H_
 
-#include "cosmology.h"
-#include "components.h"
-#include "dark_matter_halos.h"
-#include "gas_cooling.h"
-#include "simulation.h"
+#ifndef SHARK_SHARK_RUNNER_H
+#define SHARK_SHARK_RUNNER_H
+
+#include <memory>
+
+#include "options.h"
 
 namespace shark {
 
-class GalaxyCreator {
+/**
+ * The main driver of a shark instance run.
+ *
+ * A shark runner is given a set of options, and a number of threads to run.
+ * Using only this information it reads the initial data, creates merger trees,
+ * and evolves the galaxies within.
+ *
+ * This particular implementation is separated using the pimpl pattern to hide
+ * most of the internals to client applications (the main.cpp module in our case),
+ * which need only to know about the Options class.
+ */
+class SharkRunner {
 
 public:
-	GalaxyCreator(const CosmologyPtr &cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params);
-	void create_galaxies(const std::vector<MergerTreePtr> &merger_trees, TotalBaryon &AllBaryons);
+	SharkRunner(const Options &options, unsigned int threads);
+	~SharkRunner();
+	void run();
 
 private:
-	bool create_galaxies(const HaloPtr &halo, double z);
+	class impl;
+	std::unique_ptr<impl> pimpl;
 
-	CosmologyPtr cosmology;
-	GasCoolingParameters cool_params;
-	SimulationParameters sim_params;
 };
 
-}  // namespace shark
+} // namespace shark
 
-#endif // SHARK_GALAXY_CREATOR_H_
+#endif // SHARK_SHARK_RUNNER_H

@@ -41,7 +41,7 @@ class TreeBuilder {
 public:
 	TreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 	virtual ~TreeBuilder();
-	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, std::shared_ptr<Cosmology> cosmology, TotalBaryon &AllBaryons);
+	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons);
 
 protected:
 

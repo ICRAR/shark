@@ -98,7 +98,7 @@ public:
 		double j_atom;
 	};
 
-	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, std::shared_ptr<Cosmology> cosmology);
+	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, const CosmologyPtr &cosmology);
 
 	typedef double (*func_t)(double x, void *);
 
@@ -141,7 +141,7 @@ public:
 private:
 	StarFormationParameters parameters;
 	RecyclingParameters recycleparams;
-	std::shared_ptr<Cosmology> cosmology;
+	CosmologyPtr cosmology;
 	Integrator integrator;
 
 };
