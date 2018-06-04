@@ -126,8 +126,7 @@ public:
 	}
 
 	void restore_baryon(){
-		mass = 0;
-		mass_metals = 0;
+		BaryonBase::restore_baryon();
 		rscale = 0;
 		sAM = 0;
 	}
