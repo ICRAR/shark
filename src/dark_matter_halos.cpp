@@ -57,7 +57,7 @@ Options::get<DarkMatterHaloParameters::SizeModel>(const std::string &name, const
 	throw invalid_option(os.str());
 }
 
-DarkMatterHalos::DarkMatterHalos(DarkMatterHaloParameters &params, const CosmologyPtr &cosmology, SimulationParameters &sim_params) :
+DarkMatterHalos::DarkMatterHalos(const DarkMatterHaloParameters &params, const CosmologyPtr &cosmology, SimulationParameters &sim_params) :
 	params(params),
 	cosmology(cosmology),
 	sim_params(sim_params),

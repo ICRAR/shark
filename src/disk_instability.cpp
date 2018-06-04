@@ -26,7 +26,7 @@ DiskInstabilityParameters::DiskInstabilityParameters(const Options &options)
 DiskInstability::DiskInstability(DiskInstabilityParameters parameters,
 		GalaxyMergerParameters merger_params,
 		SimulationParameters simparams,
-		std::shared_ptr<DarkMatterHalos> darkmatterhalo,
+		const DarkMatterHalosPtr &darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
 		std::shared_ptr<AGNFeedback> agnfeedback) :
 	parameters(parameters),

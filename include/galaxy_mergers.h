@@ -64,7 +64,7 @@ class GalaxyMergers{
 public:
 	GalaxyMergers(GalaxyMergerParameters parameters,
 			SimulationParameters simparams,
-			std::shared_ptr<DarkMatterHalos> darkmatterhalo,
+			const DarkMatterHalosPtr &darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
 			std::shared_ptr<AGNFeedback> agnfeedback);
 
@@ -102,7 +102,7 @@ public:
 private:
 	GalaxyMergerParameters parameters;
 	SimulationParameters simparams;
-	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
+	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
 	std::shared_ptr<AGNFeedback> agnfeedback;
 

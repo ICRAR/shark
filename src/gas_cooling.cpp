@@ -197,7 +197,7 @@ GasCooling::GasCooling(GasCoolingParameters parameters,
 		std::shared_ptr<Reionisation> reionisation,
 		const CosmologyPtr &cosmology,
 		std::shared_ptr<AGNFeedback> agnfeedback,
-		std::shared_ptr<DarkMatterHalos> darkmatterhalos,
+		const DarkMatterHalosPtr &darkmatterhalos,
 		std::shared_ptr<Reincorporation> reincorporation) :
 	parameters(parameters),
 	params_sf(params_sf),

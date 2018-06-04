@@ -45,7 +45,7 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 		SimulationParameters simparams,
-		std::shared_ptr<DarkMatterHalos> darkmatterhalo,
+		const DarkMatterHalosPtr &darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
 		std::shared_ptr<AGNFeedback> agnfeedback) :
 	parameters(parameters),
@@ -98,7 +98,7 @@ double GalaxyMergers::merging_timescale_orbital(double vr, double vt, double f, 
 	// Structured passed as void * to GSL
 	struct root_solver_pars {
 		double c;
-		std::shared_ptr<DarkMatterHalos> dark_matter_halo;
+		DarkMatterHalosPtr dark_matter_halo;
 	};
 
 	root_solver_pars pars {c, darkmatterhalo};

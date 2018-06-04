@@ -8,12 +8,9 @@
 #ifndef INCLUDE_REINCORPORATION_H_
 #define INCLUDE_REINCORPORATION_H_
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "components.h"
 #include "dark_matter_halos.h"
+#include "options.h"
 
 namespace shark {
 
@@ -31,15 +28,14 @@ public:
 class Reincorporation{
 
 public:
-	Reincorporation(ReincorporationParameters parameters, std::shared_ptr<DarkMatterHalos> darkmatterhalo);
+	Reincorporation(ReincorporationParameters parameters, const DarkMatterHalosPtr &darkmatterhalo);
 
 	double reincorporated_mass (HaloPtr halo, double z, double delta_t);
 
 private:
 
 	ReincorporationParameters parameters;
-	std::shared_ptr<DarkMatterHalos> darkmatterhalo;
-
+	DarkMatterHalosPtr darkmatterhalo;
 };
 
 

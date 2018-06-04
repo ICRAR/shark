@@ -144,7 +144,7 @@ std::vector<PerThreadObjects> create_per_thread_objects(
 	ExecutionParameters &exec_params, GasCoolingParameters &gas_cooling_params,
 	RecyclingParameters &recycling_params, SimulationParameters &sim_params,
 	StarFormationParameters &star_formation_params,
-	const CosmologyPtr &cosmology, std::shared_ptr<DarkMatterHalos> &dark_matter_halos,
+	const CosmologyPtr &cosmology, const DarkMatterHalosPtr &dark_matter_halos,
 	StarFormation &star_formation)
 {
 	AGNFeedbackParameters agn_params(options);
@@ -182,21 +182,7 @@ void SharkRunner::impl::run() {
 	StarFormationParameters star_formation_params(options);
 
 	auto cosmology = make_cosmology(cosmo_parameters);
-
-	// TODO: Move this logic away from the main
-	std::shared_ptr<DarkMatterHalos> dark_matter_halos;
-	if (dark_matter_halo_parameters.haloprofile == DarkMatterHaloParameters::NFW) {
-		dark_matter_halos = std::make_shared<NFWDarkMatterHalos>(dark_matter_halo_parameters, cosmology, sim_params);
-	}
-	else if (dark_matter_halo_parameters.haloprofile == DarkMatterHaloParameters::EINASTO) {
-		dark_matter_halos = std::make_shared<EinastoDarkMatterHalos>(dark_matter_halo_parameters, cosmology, sim_params);
-	}
-	else {
-		std::ostringstream os;
-		os << "Dark Matter halo profile " << dark_matter_halo_parameters.haloprofile
-		   << " not currently supported";
-		throw invalid_argument(os.str());
-	}
+	auto dark_matter_halos = make_dark_matter_halos(dark_matter_halo_parameters, cosmology, sim_params);
 
 	Simulation simulation{sim_params, cosmology};
 	StarFormation star_formation{star_formation_params, recycling_parameters, cosmology};

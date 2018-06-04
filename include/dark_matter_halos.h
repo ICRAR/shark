@@ -8,10 +8,13 @@
 #ifndef INCLUDE_DARK_MATTER_HALOS_H_
 #define INCLUDE_DARK_MATTER_HALOS_H_
 
-#include <gsl/gsl_sf_lambert.h>
+#include <memory>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include <gsl/gsl_sf_lambert.h>
 
 #include "mixins.h"
 #include "numerical_constants.h"
@@ -73,7 +76,7 @@ public:
 class DarkMatterHalos {
 
 public:
-	DarkMatterHalos(DarkMatterHaloParameters &params, const CosmologyPtr &cosmology, SimulationParameters &sim_params);
+	DarkMatterHalos(const DarkMatterHaloParameters &params, const CosmologyPtr &cosmology, SimulationParameters &sim_params);
 	virtual ~DarkMatterHalos() {};
 
 	virtual double grav_potential_halo(double r, double c) const = 0;
@@ -122,6 +125,9 @@ protected:
 
 };
 
+/// Type used by users to keep track o
+typedef std::shared_ptr<DarkMatterHalos> DarkMatterHalosPtr;
+
 class NFWDarkMatterHalos : public DarkMatterHalos {
 
 public:
@@ -140,9 +146,25 @@ public:
 	double enclosed_mass(double r, double c) const override;
 };
 
+
+/// Factory of DarkMatterHaloPtrs
+template <typename ...Ts>
+DarkMatterHalosPtr make_dark_matter_halos(const DarkMatterHaloParameters &dmh_parameters, Ts&&...ts)
+{
+	if (dmh_parameters.haloprofile == DarkMatterHaloParameters::NFW) {
+		return std::make_shared<NFWDarkMatterHalos>(dmh_parameters, std::forward<Ts>(ts)...);
+	}
+	else if (dmh_parameters.haloprofile == DarkMatterHaloParameters::EINASTO) {
+		return std::make_shared<EinastoDarkMatterHalos>(dmh_parameters, std::forward<Ts>(ts)...);
+	}
+
+	std::ostringstream os;
+	os << "Dark Matter halo profile " << dmh_parameters.haloprofile
+	   << " not currently supported";
+	throw invalid_argument(os.str());
+}
+
 } // namespace shark
-
-
 
 
 #endif /* INCLUDE_DARK_MATTER_HALOS_H_ */

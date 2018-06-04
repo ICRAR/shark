@@ -88,7 +88,7 @@ public:
 			std::shared_ptr<Reionisation> reionisation,
 			const CosmologyPtr &cosmology,
 			std::shared_ptr<AGNFeedback> agnfeedback,
-			std::shared_ptr<DarkMatterHalos> darkmatterhalos,
+			const DarkMatterHalosPtr &darkmatterhalos,
 			std::shared_ptr<Reincorporation> reincorporation);
 
 	double cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, double deltat);
@@ -106,7 +106,7 @@ private:
 	std::shared_ptr<Reionisation> reionisation;
 	CosmologyPtr cosmology;
 	std::shared_ptr<AGNFeedback> agnfeedback;
-	std::shared_ptr<DarkMatterHalos> darkmatterhalos;
+	DarkMatterHalosPtr darkmatterhalos;
 	std::shared_ptr<Reincorporation> reincorporation;
 	Interpolator cooling_lambda_interpolator;
 
