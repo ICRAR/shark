@@ -573,22 +573,6 @@ public:
 	 */
 	HaloPtr host_halo;
 
-	// Sort ascendant subhalos by Mvir
-	std::vector<SubhaloPtr> ordered_ascendants(){
-
-		if(ascendants.size()==0){
-			return std::vector<SubhaloPtr>();
-		}
-		else if(ascendants.size()>1){
-			std::sort(ascendants.begin(), ascendants.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
-			return lhs->Mvir > rhs->Mvir;
-			});
-		}
-
-		return ascendants;
-
-	}
-
 	/// Returns main progenitor subhalo.
 	SubhaloPtr main(){
 		for (auto &sub: ascendants) {
