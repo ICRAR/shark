@@ -34,8 +34,8 @@ using namespace std;
 
 namespace shark {
 
-SURFSReader::SURFSReader(const std::string &prefix, unsigned int threads) :
-	prefix(prefix), threads(threads)
+SURFSReader::SURFSReader(const std::string &prefix, const DarkMatterHalosPtr &dark_matter_halos, const SimulationParameters &simulation_params, unsigned int threads) :
+	prefix(prefix), dark_matter_halos(dark_matter_halos), simulation_params(simulation_params), threads(threads)
 {
 	if ( prefix.size() == 0 ) {
 		throw invalid_argument("Trees dir has no value");
@@ -50,7 +50,7 @@ const string SURFSReader::get_filename(int batch)
 	return os.str();
 }
 
-const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> batches, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
+const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> batches)
 {
 
 	// Check that batch numbers are within boundaries
@@ -76,7 +76,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> bat
 	std::vector<HaloPtr> all_halos;
 	for(auto batch: batches) {
 		LOG(info) << "Reading file for batch " << batch;
-		auto halos_batch = read_halos(batch, darkmatterhalos, sim_params);
+		auto halos_batch = read_halos(batch);
 		all_halos.reserve(all_halos.size() + halos_batch.size());
 		all_halos.insert(all_halos.end(), halos_batch.begin(), halos_batch.end());
 	}
@@ -84,7 +84,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> bat
 	return all_halos;
 }
 
-const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
+const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 {
 	Timer t;
 	const auto fname = get_filename(batch);
@@ -134,7 +134,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 #endif
 	for(unsigned int i=0; i < n_subhalos; i++) {
 
-		if (snap[i] < sim_params.min_snapshot) {
+		if (snap[i] < simulation_params.min_snapshot) {
 			continue;
 		}
 
@@ -189,16 +189,17 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 
 		subhalo->Vcirc = Vcirc[i];
 
-		subhalo->concentration = darkmatterhalos.nfw_concentration(subhalo->Mvir,sim_params.redshifts[subhalo->snapshot]);
+		auto z = simulation_params.redshifts[subhalo->snapshot];
+		subhalo->concentration = dark_matter_halos->nfw_concentration(subhalo->Mvir, z);
 
 		if (subhalo->concentration < 1) {
 			throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
 		}
 
-		subhalo->lambda = darkmatterhalos.halo_lambda(lambda[i], sim_params.redshifts[subhalo->snapshot]);
+		subhalo->lambda = dark_matter_halos->halo_lambda(lambda[i], z);
 
 		// Calculate virial velocity from the virial mass and redshift.
-		subhalo->Vvir = darkmatterhalos.halo_virial_velocity(subhalo->Mvir, sim_params.redshifts[subhalo->snapshot]);
+		subhalo->Vvir = dark_matter_halos->halo_virial_velocity(subhalo->Mvir, z);
 
 		// Done, save it now
 #ifdef SHARK_OPENMP
@@ -224,10 +225,10 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch, Dar
 	return subhalos;
 }
 
-const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatterHalos &darkmatterhalos, SimulationParameters &sim_params)
+const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 {
 
-	std::vector<SubhaloPtr> subhalos = read_subhalos(batch, darkmatterhalos, sim_params);
+	std::vector<SubhaloPtr> subhalos = read_subhalos(batch);
 
 	// Sort subhalos by host index (which intrinsically sorts them by snapshot
 	// since host indices numbers are prefixed with the snapshot number)
@@ -272,8 +273,9 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch, DarkMatte
 #endif
 	for(auto it = halos.begin(); it < halos.end(); it++) {
 		const auto &halo = *it;
-		halo->Vvir = darkmatterhalos.halo_virial_velocity(halo->Mvir, sim_params.redshifts[halo->snapshot]);
-		halo->concentration = darkmatterhalos.nfw_concentration(halo->Mvir,sim_params.redshifts[halo->snapshot]);
+		auto z = simulation_params.redshifts[halo->snapshot];
+		halo->Vvir = dark_matter_halos->halo_virial_velocity(halo->Mvir, z);
+		halo->concentration = dark_matter_halos->nfw_concentration(halo->Mvir,z);
 	}
 	LOG(info) << "Calculated Vvir and concentration for new Halos in " << t;
 

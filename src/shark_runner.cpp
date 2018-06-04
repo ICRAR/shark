@@ -104,7 +104,7 @@ private:
 	TotalBaryon all_baryons {};
 
 	void create_per_thread_objects();
-	std::vector<MergerTreePtr> get_trees();
+	std::vector<MergerTreePtr> import_trees();
 };
 
 // Wiring pimpl to the original class
@@ -194,12 +194,14 @@ void SharkRunner::impl::create_per_thread_objects()
 	}
 }
 
-std::vector<MergerTreePtr> SharkRunner::impl::get_trees()
+std::vector<MergerTreePtr> SharkRunner::impl::import_trees()
 {
+	Timer t;
+	SURFSReader reader(simulation_params.tree_files_prefix, dark_matter_halos, simulation_params, threads);
 	HaloBasedTreeBuilder tree_builder(exec_params, threads);
-	auto halos = SURFSReader(simulation_params.tree_files_prefix, threads).read_halos(exec_params.simulation_batches, *dark_matter_halos, simulation_params);
-	auto merger_trees = tree_builder.build_trees(halos, simulation_params, cosmology, all_baryons);
-	return merger_trees;
+	auto halos = reader.read_halos(exec_params.simulation_batches);
+	return tree_builder.build_trees(halos, simulation_params, cosmology, all_baryons);
+	LOG(info) << "Merger trees imported in " << t;
 }
 
 void SharkRunner::impl::run() {
@@ -211,10 +213,7 @@ void SharkRunner::impl::run() {
 	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
 	LOG(info) << os.str();
 
-	// Read the merger tree files.
-	// Each merger tree will be a construction of halos and subhalos
-	// with their growth history.
-	std::vector<MergerTreePtr> merger_trees = get_trees();
+	std::vector<MergerTreePtr> merger_trees = import_trees();
 
 	/* Create the first generation of galaxies if halo is first appearing.*/
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
