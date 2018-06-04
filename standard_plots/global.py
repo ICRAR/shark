@@ -335,7 +335,7 @@ def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
     ax = fig.add_subplot(111)
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\rho_{\\rm neutral}/ \\rho_{\\rm crit,z=0})$"
-    common.prepare_ax(ax, 0, 10, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1))
+    common.prepare_ax(ax, 0, 10, -5.5, -2.8, xtit, ytit, locators=(0.1, 1, 0.1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ax.plot(redshifts, mcold + np.log10(Omegab), 'k', label='total neutral')
@@ -359,7 +359,7 @@ def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol)
     ax.plot(redshifts[ind],np.log10(mdustden[ind]*pow(h0,2.0)),'r', label ='SHArk all metals')
     
     ind = np.where(mdustden_mol > 0)
-    ax.plot(redshifts[ind],np.log10(mdustden[ind]*pow(h0,2.0)),'r', linestyle = 'dashed', label ='SHArk metals in molecular gas')
+    ax.plot(redshifts[ind],np.log10(mdustden_mol[ind]*pow(h0,2.0)),'r', linestyle = 'dashed', label ='SHArk metals in molecular gas')
     
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     redD17d,redD17u,smdD17,err1,err2,err3,err4 = common.load_observation(obsdir, 'SFR/Driver17_dust.dat', [1,2,3,4,5,6,7])
