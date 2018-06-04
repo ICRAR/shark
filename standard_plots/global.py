@@ -87,7 +87,8 @@ def prepare_data(hdf5_data, redshifts):
         omegaHI[z]  = mHIden[z] / (rho_crit*pow(h0,2.0))
 
     #Assume a gas-dust mass ratio that scales with metallicity. We use the Remy-Ruyer et al. (2013) G/D ratio.
-    mdustden = 0.006 * mcold_metals/Zsun / volh
+    mdustden     = 0.006 * mcold_metals/Zsun / volh
+    mdustden_mol = 0.006 * mcold_metals/Zsun * mH2 / (mH2 + mHI) / volh
 
     mcold_plot = np.zeros(shape = len(mcold))
     mhot_plot = np.zeros(shape = len(mcold))
@@ -124,7 +125,7 @@ def prepare_data(hdf5_data, redshifts):
     return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
      sfr, sfrd, sfrb, mstarden, mstarbden, sfre, sfreH2, mhrat,
-     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI)
+     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol)
 
 def plot_mass_densities(plt, outdir, redshifts, mstar, mcold, mhot, meje):
 
@@ -334,7 +335,7 @@ def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
     ax = fig.add_subplot(111)
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\rho_{\\rm neutral}/ \\rho_{\\rm crit,z=0})$"
-    common.prepare_ax(ax, 0, 5, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1))
+    common.prepare_ax(ax, 0, 10, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ax.plot(redshifts, mcold + np.log10(Omegab), 'k', label='total neutral')
@@ -345,18 +346,21 @@ def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
     common.savefig(outdir, fig, "omega_neutral.pdf")
 
 
-def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden):
+def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol):
 
     fig = plt.figure(figsize=(5,5))
     ax = fig.add_subplot(111)
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\rho_{\\rm dust}/ M_{\odot}\,cMpc^{-3})$"
-    common.prepare_ax(ax, 0, 10, 4, 6.3, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 5, 4, 6.3, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mdustden > 0)
-    ax.plot(redshifts[ind],np.log10(mdustden[ind]*pow(h0,2.0)),'r', label ='SHArk')
-
+    ax.plot(redshifts[ind],np.log10(mdustden[ind]*pow(h0,2.0)),'r', label ='SHArk all metals')
+    
+    ind = np.where(mdustden_mol > 0)
+    ax.plot(redshifts[ind],np.log10(mdustden[ind]*pow(h0,2.0)),'r', linestyle = 'dashed', label ='SHArk metals in molecular gas')
+    
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     redD17d,redD17u,smdD17,err1,err2,err3,err4 = common.load_observation(obsdir, 'SFR/Driver17_dust.dat', [1,2,3,4,5,6,7])
 
@@ -369,7 +373,7 @@ def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden):
 
     ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Driver+17")
 
-    common.prepare_legend(ax, ['r','grey'])
+    common.prepare_legend(ax, ['r','r','grey'])
     common.savefig(outdir, fig, "cosmic_dust.pdf")
 
 
@@ -421,7 +425,7 @@ def main():
     (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
      sfr, sfrd, sfrb, mstarden, mstarbden, sfre, sfreH2, mhrat,
-     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI) = prepare_data(hdf5_data, redshifts)
+     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol) = prepare_data(hdf5_data, redshifts)
 
     plot_mass_densities(plt, outdir, redshifts, mstar_plot, mcold_plot, mhot_plot, meje_plot)
     plot_baryon_fractions(plt, outdir, redshifts, mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot)
@@ -430,7 +434,7 @@ def main():
     plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat)
     plot_mass_cosmic_density(plt, outdir, redshifts, mcold_plot, mHI_plot, mH2_plot)
     plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den)
-    plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden)
+    plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol)
     plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI)
 
 if __name__ == '__main__':
