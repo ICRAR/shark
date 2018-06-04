@@ -45,34 +45,6 @@ public:
 
 };
 
-class NfwDistribution {
-
-private:
-	std::uniform_real_distribution<double> uniform;
-	const double a;
-	const double norm;
-
-public:
-	NfwDistribution(const double c) :
-	    uniform(0, 1),
-	    a(1 / c),
-	    norm(std::log((a + 1) / a) - 1 / (a + 1))
-	{
-	}
-
-	template <typename G>
-	double operator()(G &g) {
-		auto p    = uniform(g);
-		double m  = p * norm;
-		double wm = - 1.0 / (std::exp( m + 1));
-		double w  = gsl_sf_lambert_W0(wm);
-
-		double x = a * (std::exp(w + m + 1) - 1);
-		return x;
-	}
-
-};
-
 class DarkMatterHalos {
 
 public:

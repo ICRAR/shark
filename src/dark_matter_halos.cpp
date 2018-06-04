@@ -16,6 +16,7 @@
 #include "dark_matter_halos.h"
 #include "logging.h"
 #include "numerical_constants.h"
+#include "nfw_distribution.h"
 
 
 namespace shark {
@@ -342,6 +343,15 @@ double DarkMatterHalos::nfw_concentration(double mvir, double z){
 
 }
 
+/// Specialization of lambert_w0 implemented using GSL
+template <>
+struct lambert_w0<double>
+{
+	double operator()(double x) {
+		return gsl_sf_lambert_W0(x);
+	}
+};
+
 void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo){
 
 	double c = halo->concentration;
@@ -352,7 +362,7 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	auto   pos_halo = subhalo->position;
 
 	// Assign positions based on an NFW halo of concentration c.
-	shark::NfwDistribution r(c);
+	nfw_distribution<double> r(c);
 	double rproj = r(generator);
 	double theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
 	double phi   = flat_distribution(generator)*constants::PI2; //flat between 0 and 2PI.
