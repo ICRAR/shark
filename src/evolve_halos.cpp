@@ -22,24 +22,6 @@ using namespace std;
 
 namespace shark {
 
-static
-void evolve_system( shared_ptr<BasicPhysicalModel> physicalmodel, SubhaloPtr &subhalo, int snapshot, double z, double delta_t){
-
-	// Solve ODEs for this system
-	for(auto &galaxy: subhalo->galaxies) {
-		physicalmodel->evolve_galaxy(*subhalo, *galaxy, z, delta_t);
-	}
-
-}
-
-void populate_halos(shared_ptr<BasicPhysicalModel> physicalmodel, HaloPtr halo, int snapshot, double z, double delta_t) {
-
-
-	for(auto &subhalo: halo->all_subhalos()) {
-		evolve_system(physicalmodel, subhalo, snapshot, z, delta_t);
-	}
-}
-
 void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology, TotalBaryon &AllBaryons, int snapshot){
 
 	/**
@@ -183,45 +165,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 		AllBaryons.baryon_total_lost[snapshot] = baryon_mass_loss;
 		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies.";
 	}
-
-}
-
-molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, const StarFormation &star_formation, double z, bool calc_j, unsigned int threads)
-{
-
-	std::vector<StarFormation> star_formations(threads, star_formation);
-	std::vector<molgas_per_galaxy> local_molgas(threads);
-
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif // SHARK_OPENMP
-	for (auto it = halos.begin(); it < halos.end(); it++) {
-
-		auto &halo = *it;
-#ifdef SHARK_OPENMP
-		auto idx = omp_get_thread_num();
-#else
-		auto idx = 0;
-#endif // SHARK_OPENMP
-
-		auto &l_star_formation = star_formations[idx];
-		auto &molgas = local_molgas[idx];
-
-		for (auto &subhalo: halo->all_subhalos()) {
-			for (auto &galaxy: subhalo->galaxies) {
-				molgas[galaxy] = l_star_formation.get_molecular_gas(galaxy, z, calc_j);
-			}
-		}
-	}
-
-	if (threads == 1) {
-		return local_molgas[0];
-	}
-
-	return std::accumulate(local_molgas.begin(), local_molgas.end(), molgas_per_galaxy(), [](molgas_per_galaxy &mg1, molgas_per_galaxy &mg2) {
-		mg1.insert(mg2.begin(), mg2.end());
-		return mg1;
-	});
 
 }
 

@@ -105,6 +105,10 @@ private:
 
 	void create_per_thread_objects();
 	std::vector<MergerTreePtr> import_trees();
+	void evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot);
+	void evolve_merger_tree(const MergerTreePtr &tree, int snapshot, double z, double delta_t);
+	molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, double x, bool calc_j);
+
 };
 
 // Wiring pimpl to the original class
@@ -204,6 +208,174 @@ std::vector<MergerTreePtr> SharkRunner::impl::import_trees()
 	LOG(info) << "Merger trees imported in " << t;
 }
 
+void _get_molecular_gas(const HaloPtr &halo, molgas_per_galaxy &molgas, StarFormation &star_formation, double z, bool calc_j)
+{
+	for (auto &subhalo: halo->all_subhalos()) {
+		for (auto &galaxy: subhalo->galaxies) {
+			molgas[galaxy] = star_formation.get_molecular_gas(galaxy, z, calc_j);
+		}
+	}
+}
+
+molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr> &halos, double z, bool calc_j)
+{
+
+	std::vector<StarFormation> star_formations(threads, star_formation);
+	std::vector<molgas_per_galaxy> local_molgas(threads);
+
+#ifdef SHARK_OPENMP
+	#pragma omp parallel for num_threads(threads) schedule(static)
+#endif // SHARK_OPENMP
+	for (auto it = halos.begin(); it < halos.end(); it++) {
+
+#ifdef SHARK_OPENMP
+		auto idx = omp_get_thread_num();
+#else
+		auto idx = 0;
+#endif // SHARK_OPENMP
+
+		_get_molecular_gas(*it, local_molgas[idx], star_formations[idx], z, calc_j);
+	}
+
+	if (threads == 1) {
+		return local_molgas[0];
+	}
+
+	return std::accumulate(local_molgas.begin(), local_molgas.end(), molgas_per_galaxy(), [](molgas_per_galaxy &mg1, molgas_per_galaxy &mg2) {
+		mg1.insert(mg2.begin(), mg2.end());
+		return mg1;
+	});
+
+}
+
+void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int snapshot, double z, double delta_t)
+{
+	// Get the thread-specific objects needed to run the evolution
+	// In the non-OpenMP case we simply have one
+#ifdef SHARK_OPENMP
+	auto which = omp_get_thread_num();
+#else
+	auto which = 0;
+#endif // SHARK_OPENMP
+	auto &objs = thread_objects[which];
+	auto &physical_model = objs.physical_model;
+	auto &galaxy_mergers = objs.galaxy_mergers;
+	auto &disk_instability = objs.disk_instability;
+
+	/*here loop over the halos this merger tree has at this time.*/
+	for(auto &halo: tree->halos[snapshot]) {
+
+		/*Evaluate which galaxies are merging in this halo.*/
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << "Merging galaxies in halo " << halo;
+		}
+		galaxy_mergers.merging_galaxies(halo, snapshot, delta_t);
+
+		/*Evaluate disk instabilities.*/
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << "Evaluating disk instability in halo " << halo;
+		}
+		disk_instability.evaluate_disk_instability(halo, snapshot, delta_t);
+
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << "Evolving content in halo " << halo;
+		}
+		for(auto &subhalo: halo->all_subhalos()) {
+			for(auto &galaxy: subhalo->galaxies) {
+				physical_model->evolve_galaxy(*subhalo, *galaxy, z, delta_t);
+			}
+		}
+
+		/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale and change galaxy types accordingly.*/
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << "Merging subhalos in halo " << halo;
+		}
+		galaxy_mergers.merging_subhalos(halo, z);
+	}
+
+}
+
+void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot)
+{
+	auto z = simulation_params.redshifts[snapshot];
+	Timer t;
+	LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< z;
+
+	for(auto &o: thread_objects) {
+		o.physical_model->reset_ode_evaluations();
+	}
+
+	//Calculate the initial and final time of this snapshot.
+	double ti = simulation.convert_snapshot_to_age(snapshot);
+	double tf = simulation.convert_snapshot_to_age(snapshot + 1);
+	auto delta_t = tf - ti;
+
+	Timer evolution_t;
+#ifdef SHARK_OPENMP
+	#pragma omp parallel for num_threads(threads) schedule(static)
+#endif // SHARK_OPENMP
+	for (auto it = merger_trees.begin(); it < merger_trees.end(); it++) {
+		evolve_merger_tree(*it, snapshot, simulation_params.redshifts[snapshot], delta_t);
+	}
+	LOG(info) << "Evolved galaxies in " << evolution_t;
+
+	std::vector<HaloPtr> all_halos_this_snapshot;
+	for (auto &tree: merger_trees) {
+		all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), tree->halos[snapshot].begin(), tree->halos[snapshot].end());
+	}
+
+	bool write_galaxies = std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end();
+
+	Timer molgas_t;
+	auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, z, write_galaxies);
+	LOG(info) << "Calculated molecular gas in " << molgas_t;
+
+	/*track all baryons of this snapshot*/
+	Timer tracking_t;
+	track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, all_baryons, z, snapshot, molgas_per_gal);
+	LOG(info) << "Total baryon amounts tracked in " << tracking_t;
+
+	/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
+	//do_stuff_at_halo_level(all_halos_this_snapshot);
+
+	/*write snapshots only if the user wants outputs at this time (note that what matters here is snapshot+1).*/
+	if (write_galaxies)
+	{
+		LOG(info) << "Will write output file for snapshot " << snapshot+1;
+		writer->write(snapshot, all_halos_this_snapshot, all_baryons, molgas_per_gal);
+	}
+
+	auto duration_millis = t.get();
+
+	// Some high-level ODE and integration iteration count statistics
+	auto starform_integration_intervals = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+		return x + o.physical_model->get_star_formation_integration_intervals();
+	});
+	auto galaxy_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+		return x + o.physical_model->get_galaxy_ode_evaluations();
+	});
+	auto starburst_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+		return x + o.physical_model->get_galaxy_starburst_ode_evaluations();
+	});
+	auto n_halos = all_halos_this_snapshot.size();
+	auto n_subhalos = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_subhalos, const HaloPtr &halo) {
+		return n_subhalos + halo->subhalo_count();
+	});
+	auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_galaxies, const HaloPtr &halo) {
+		return n_galaxies + halo->galaxy_count();
+	});
+
+	SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
+							  n_halos, n_subhalos, n_galaxies, duration_millis};
+	LOG(info) << "Statistics for snapshot " << snapshot << std::endl << stats;
+
+
+	/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
+	LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
+	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, all_baryons, snapshot);
+
+}
+
 void SharkRunner::impl::run() {
 
 	std::vector<MergerTreePtr> merger_trees = import_trees();
@@ -213,131 +385,9 @@ void SharkRunner::impl::run() {
 	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, simulation_params);
 	galaxy_creator.create_galaxies(merger_trees, all_baryons);
 
-	// The way we solve for galaxy formation is snapshot by snapshot. The loop is performed out to max snapshot-1, because we
-	// calculate evolution in the time from the current to the next snapshot.
-	// We first loop over snapshots, and for a fixed snapshot,
-	// we loop over merger trees.
-	// Each merger trees has a set of halos at a given snapshot,
-	// which in turn contain galaxies.
-	for(int snapshot=simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot-1; snapshot++) {
-
-		auto z = simulation_params.redshifts[snapshot];
-		Timer t;
-		LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< z;
-
-		for(auto &o: thread_objects) {
-			o.physical_model->reset_ode_evaluations();
-		}
-
-		//Calculate the initial and final time of this snapshot.
-		double ti = simulation.convert_snapshot_to_age(snapshot);
-		double tf = simulation.convert_snapshot_to_age(snapshot+1);
-
-		Timer evolution_t;
-#ifdef SHARK_OPENMP
-		#pragma omp parallel for num_threads(threads) schedule(static)
-#endif // SHARK_OPENMP
-		for (auto it = merger_trees.begin(); it < merger_trees.end(); it++) {
-
-			const auto &tree = *it;
-
-			// Get the thread-specific objects needed to run the evolution
-			// In the non-OpenMP case we simply have one
-#ifdef SHARK_OPENMP
-			auto which = omp_get_thread_num();
-#else
-			auto which = 0;
-#endif // SHARK_OPENMP
-			auto &objs = thread_objects[which];
-			auto &physical_model = objs.physical_model;
-			auto &galaxy_mergers = objs.galaxy_mergers;
-			auto &disk_instability = objs.disk_instability;
-
-			/*here loop over the halos this merger tree has at this time.*/
-			for(auto &halo: tree->halos[snapshot]) {
-
-				/*Evaluate which galaxies are merging in this halo.*/
-				if (LOG_ENABLED(debug)) {
-					LOG(debug) << "Merging galaxies in halo " << halo;
-				}
-				galaxy_mergers.merging_galaxies(halo, snapshot, tf-ti);
-
-				/*Evaluate disk instabilities.*/
-				if (LOG_ENABLED(debug)) {
-					LOG(debug) << "Evaluating disk instability in halo " << halo;
-				}
-				disk_instability.evaluate_disk_instability(halo, snapshot, tf-ti);
-
-				/*populate halos. This function should evolve the subhalos inside the halo.*/
-				if (LOG_ENABLED(debug)) {
-					LOG(debug) << "Evolving content in halo " << halo;
-				}
-				populate_halos(physical_model, halo, snapshot, z, tf-ti);
-
-				/*Determine which subhalos are disappearing in this snapshot and calculate dynamical friction timescale and change galaxy types accordingly.*/
-				if (LOG_ENABLED(debug)) {
-					LOG(debug) << "Merging subhalos in halo " << halo;
-				}
-				galaxy_mergers.merging_subhalos(halo, z);
-			}
-		}
-		LOG(info) << "Evolved galaxies in " << evolution_t;
-
-		std::vector<HaloPtr> all_halos_this_snapshot;
-		for (auto &tree: merger_trees) {
-			all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), tree->halos[snapshot].begin(), tree->halos[snapshot].end());
-		}
-
-		bool write_galaxies = std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end();
-
-		Timer molgas_t;
-		auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, star_formation, simulation_params.redshifts[snapshot], write_galaxies, threads);
-		LOG(info) << "Calculated molecular gas in " << molgas_t;
-
-		/*track all baryons of this snapshot*/
-		Timer tracking_t;
-		track_total_baryons(star_formation, *cosmology, exec_params, all_halos_this_snapshot, all_baryons, z, snapshot, molgas_per_gal);
-		LOG(info) << "Total baryon amounts tracked in " << tracking_t;
-
-		/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
-		//do_stuff_at_halo_level(all_halos_this_snapshot);
-
-		/*write snapshots only if the user wants outputs at this time (note that what matters here is snapshot+1).*/
-		if (write_galaxies)
-		{
-			LOG(info) << "Will write output file for snapshot " << snapshot+1;
-			writer->write(snapshot, all_halos_this_snapshot, all_baryons, molgas_per_gal);
-		}
-
-		auto duration_millis = t.get();
-
-		// Some high-level ODE and integration iteration count statistics
-		auto starform_integration_intervals = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
-			return x + o.physical_model->get_star_formation_integration_intervals();
-		});
-		auto galaxy_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
-			return x + o.physical_model->get_galaxy_ode_evaluations();
-		});
-		auto starburst_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
-			return x + o.physical_model->get_galaxy_starburst_ode_evaluations();
-		});
-		auto n_halos = all_halos_this_snapshot.size();
-		auto n_subhalos = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_subhalos, const HaloPtr &halo) {
-			return n_subhalos + halo->subhalo_count();
-		});
-		auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_galaxies, const HaloPtr &halo) {
-			return n_galaxies + halo->galaxy_count();
-		});
-
-		SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
-		                          n_halos, n_subhalos, n_galaxies, duration_millis};
-		LOG(info) << "Statistics for snapshot " << snapshot << std::endl << stats;
-
-
-		/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
-		LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
-		transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, all_baryons, snapshot);
-
+	// Go, go, go!
+	for(int snapshot = simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot-1; snapshot++) {
+		evolve_merger_trees(merger_trees, snapshot);
 	}
 }
 
