@@ -67,6 +67,8 @@ struct PerThreadObjects
 /// impl class definition
 class SharkRunner::impl {
 public:
+
+	/// @see SharkRunner::SharkRunner(const Options &, unsigned int)
 	impl(const Options &options, unsigned int threads) :
 	    options(options), threads(threads),
 	    cosmo_params(options), dark_matter_halo_params(options),
@@ -82,6 +84,7 @@ public:
 		create_per_thread_objects();
 	}
 
+	/// @see SharkRunner::run
 	void run();
 
 private:
@@ -108,7 +111,6 @@ private:
 	void evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot);
 	void evolve_merger_tree(const MergerTreePtr &tree, int snapshot, double z, double delta_t);
 	molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, double x, bool calc_j);
-
 };
 
 // Wiring pimpl to the original class

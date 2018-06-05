@@ -45,8 +45,19 @@ namespace shark {
 class SharkRunner {
 
 public:
+	/**
+	 * Constructor
+	 *
+	 * If there is any missing or invalid option this constructor will throw
+	 * and exception.
+	 *
+	 * @param options The set of options used to run shark
+	 * @param threads The number of threads used to run shark
+	 */
 	SharkRunner(const Options &options, unsigned int threads);
 	~SharkRunner();
+
+	/// Run shark until completion
 	void run();
 
 private:
