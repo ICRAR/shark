@@ -41,6 +41,7 @@
 #include "galaxy_writer.h"
 #include "logging.h"
 #include "merger_tree_reader.h"
+#include "options.h"
 #include "physical_model.h"
 #include "shark_runner.h"
 #include "timer.h"

@@ -8,7 +8,6 @@
 #include <cmath>
 #include <gsl/gsl_errno.h>
 
-#include "components.h"
 #include "logging.h"
 #include "star_formation.h"
 #include "numerical_constants.h"
