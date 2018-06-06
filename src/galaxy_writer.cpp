@@ -785,7 +785,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			vector<long> id_galaxy;
 			long gal_id = 1;
 
-			float defl_value = -1;
+			float defl_value = 0;
 
 			for (auto &halo: halos){
 				for (auto &subhalo: halo->all_subhalos()){
@@ -904,7 +904,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			file_sfh.write_dataset("Redshifts", redshifts, comment);
 
 			comment = "Look back time to mean time between snapshots [Gyr]";
-			file_sfh.write_dataset("age_mean", age_mean, comment);
+			file_sfh.write_dataset("LBT_mean", age_mean, comment);
 
 			comment = "Time interval covered between snapshots [Gyr]";
 			file_sfh.write_dataset("delta_t", delta_t, comment);
