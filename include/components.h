@@ -255,7 +255,7 @@ public:
 	std::vector<HistoryItem>  history;
 
 	/**
-	 * tmerge: dynamical friction timescale, which is defined only is galaxy is satellite.
+	 * tmerge: dynamical friction timescale, which is defined only if galaxy is satellite.
 	 * concentration_type2: concentration of the subhalo this galaxy was before becoming type 2 (only relevant for type 2 galaxies).
 	 * msubhalo_type2: subhalo mass of this galaxy before it became type 2 (only relevant for type 2 galaxies).
 	 * vvir_type2: subhalo virial velocity of this galaxy before it became type 2 (only relevant for type 2 galaxies).

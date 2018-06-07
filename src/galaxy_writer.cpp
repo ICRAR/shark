@@ -219,6 +219,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> sAM_disk_star;
 	vector<float> sAM_bulge_star;
 
+	vector<float> redshift_of_merger;
+
 	vector<float> mhot;
 	vector<float> mhot_metals;
 
@@ -390,6 +392,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					cnfw_subhalo.push_back(c_sub);
 					vvir_hosthalo.push_back(vhalo);
 					lambda_subhalo.push_back(l_sub);
+					redshift_of_merger.push_back(-1);
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
@@ -398,6 +401,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					cnfw_subhalo.push_back(galaxy->concentration_type2);
 					vvir_hosthalo.push_back(galaxy->vvir_type2);
 					lambda_subhalo.push_back(galaxy->lambda_type2);
+
+					// calculate the age of the universe by the time this galaxy will merge.
+					double tmerge  = cosmology->convert_redshift_to_age(snapshot-1) + galaxy->tmerge;
+					redshift_of_merger.push_back(cosmology->convert_age_to_redshift_lcdm(tmerge));
 				}
 
 				vmax_subhalo.push_back(galaxy->vmax);
@@ -597,6 +604,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "specific angular momentum of the gas bulge [km/s * cMpc/h]";
 	file.write_dataset("Galaxies/specific_angular_momentum_bulge_gas", sAM_bulge_gas, comment);
+
+	comment = "redshift at which this galaxy will merge onto a central galaxy (only relevant for type 2 galaxies)";
+	file.write_dataset("Galaxies/redshift_merger", redshift_of_merger, comment);
 
 	comment = "hot gas mass in the halo [Msun/h]";
 	file.write_dataset("Galaxies/mhot", mhot, comment);

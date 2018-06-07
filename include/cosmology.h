@@ -85,6 +85,7 @@ public:
 	double comoving_to_physical_mass(double m) const;
 	double physical_to_comoving_mass(double m) const;
 	double convert_redshift_to_age(double z) const;
+	double convert_age_to_redshift_lcdm(double t) const;
 	double expansion_factor(double a) const;
 
 	/**

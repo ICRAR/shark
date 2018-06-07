@@ -94,6 +94,10 @@ double Cosmology::physical_to_comoving_mass(double m) const {
 
 double Cosmology::convert_redshift_to_age(double z) const {
 
+	/**
+	 * Function that calculates an age of the universe from a redshift.
+	 */
+
 	using namespace constants;
 
 	double Hubble_Time=1.0/H0100PGYR; //The Hubble time for H_0=100km/s/Mpc.
@@ -123,6 +127,25 @@ double Cosmology::convert_redshift_to_age(double z) const {
 
 	return t;
 }
+
+
+double Cosmology::convert_age_to_redshift_lcdm(double t) const {
+
+	/**
+	 * Function that calculates the redshift given an age. However, this function only applies to a flat universe with non-zero lambda.
+	 */
+
+	using namespace constants;
+
+	double Hubble_Time=1.0/H0100PGYR; //The Hubble time for H_0=100km/s/Mpc.
+
+	double a = std::pow(std::sinh(t / (Hubble_Time*(2/(3*parameters.Hubble_h*std::sqrt(1-parameters.OmegaM))))) / std::sqrt((1.0/parameters.OmegaM-1.0)) , 2.0/3.0);
+
+	double z = 1.0 / a - 1;
+
+	return z;
+}
+
 
 double Cosmology::expansion_factor(double t) const {
 
