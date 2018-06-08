@@ -349,7 +349,7 @@ std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &sub
 	return y;
 }
 
-void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t)
+void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger)
 {
 	using namespace constants;
 
@@ -364,7 +364,7 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	/*In the case of starbursts one should be using the bulge instead of the disk
 	 * properties.*/
 
-	// Accummulated burst stellar mass:
+	// Accumulated burst stellar mass:
 	galaxy.burst_stars.mass                 += y[0] -  galaxy.bulge_stars.mass;
 	galaxy.burst_stars.mass_metals          += y[5] -  galaxy.bulge_stars.mass_metals;
 

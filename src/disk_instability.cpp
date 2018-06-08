@@ -172,7 +172,7 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 		galaxy->bulge_gas.mass_metals -= delta_mzbh;
 
 		// Trigger starburst.
-		physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t);
+		physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t, false);
 
 		// Check for small gas reservoirs left in the bulge.
 		if(galaxy->bulge_gas.mass > 0 and galaxy->bulge_gas.mass < merger_params.mass_min){

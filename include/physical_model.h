@@ -134,7 +134,7 @@ public:
 		to_galaxy(y1, subhalo, galaxy, delta_t);
 	}
 
-	void evolve_galaxy_starburst(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
+	void evolve_galaxy_starburst(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t, bool from_galaxy_merger)
 	{
 
 		/**
@@ -161,14 +161,14 @@ public:
 		auto solver = get_solver(delta_t, y0, params);
 		std::vector<double> y1 = solver.evolve();
 		galaxy_starburst_ode_evaluations += solver.num_evaluations();
-		to_galaxy_starburst(y1, subhalo, galaxy, delta_t);
+		to_galaxy_starburst(y1, subhalo, galaxy, delta_t, from_galaxy_merger);
 	}
 
 	virtual std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy) = 0;
 	virtual void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t) = 0;
 
 	virtual std::vector<double> from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy) = 0;
-	virtual void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t) = 0;
+	virtual void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger) = 0;
 
 	unsigned long int get_galaxy_ode_evaluations() {
 		return galaxy_ode_evaluations;

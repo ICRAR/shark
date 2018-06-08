@@ -471,7 +471,7 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				galaxy->bulge_gas.mass_metals -= delta_mzbh;
 
 				// Trigger starburst.
-				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t);
+				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t, true);
 
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
 				if(galaxy->bulge_gas.mass > 0 and galaxy->bulge_gas.mass < parameters.mass_min){
