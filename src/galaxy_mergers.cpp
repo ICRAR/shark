@@ -52,7 +52,9 @@ GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 	simparams(simparams),
 	darkmatterhalo(darkmatterhalo),
 	physicalmodel(physicalmodel),
-	agnfeedback(agnfeedback)
+	agnfeedback(agnfeedback),
+	generator(),
+	distribution(-0.14, 0.26)
 {
 	// no-op
 }
@@ -70,73 +72,17 @@ void GalaxyMergers::orbital_parameters(double &vr, double &vt, double f){
 	vt = distribution(generator);
 }
 
-double GalaxyMergers::merging_timescale_orbital(double vr, double vt, double f, double c){
+double GalaxyMergers::merging_timescale_orbital(){
 
 	/**
-	 * Input variables:
-	 * (vr,vt): radial and tangential velocities of satellite galaxies.
-	 * f: output of function mass_ratio_function.
-	 * c: concentration parameter of halo.
+	 * Uses function calculated in Lacey & Cole (1993), who found that it was best described by a log
+	 * normal distribution with median value -0.14 and dispersion 0.26.
 	 */
 
-	//Calculate energy of the orbit.
+	//TODO: add other dynamical friction timescales.
 
-	double rVirial = 1; //Virial radius in scaled unit system.
+	return distribution(generator);
 
-	double E = 0.5 * (std::pow(vr,2)+std::pow(vt,2)) / f + darkmatterhalo->grav_potential_halo(rVirial , c);
-
-	//TODO: check that I'm using the right input values for the merging timescale.
-
-	int status;
-	int iter = 0, max_iter = 100;
-	const gsl_root_fsolver_type *T;
-	gsl_root_fsolver *s;
-	double r = 0;
-	double x_hi = 1, x_lo = E;
-	gsl_function F;
-
-	// Structured passed as void * to GSL
-	struct root_solver_pars {
-		double c;
-		DarkMatterHalosPtr dark_matter_halo;
-	};
-
-	root_solver_pars pars {c, darkmatterhalo};
-	F.function = [](double x, void * params) -> double {
-		auto pars = static_cast<root_solver_pars *>(params);
-		return pars->dark_matter_halo->energy_circular(x, pars->c);
-	};
-	F.params = &pars;
-
-	T = gsl_root_fsolver_brent;
-	s = gsl_root_fsolver_alloc (T);
-	gsl_root_fsolver_set (s, &F, x_lo, x_hi);
-
-	do {
-		iter++;
-		status = gsl_root_fsolver_iterate (s);
-		r = gsl_root_fsolver_root (s);
-		x_lo = gsl_root_fsolver_x_lower (s);
-		x_hi = gsl_root_fsolver_x_upper (s);
-		status = gsl_root_test_interval (x_lo, x_hi, 0, 0.001);
-
-		if (status == GSL_SUCCESS)
-			printf ("Converged:\n");
-
-	}
-	while (status == GSL_CONTINUE && iter < max_iter);
-
-	gsl_root_fsolver_free (s);
-
-	double rc_to_rvir = r;
-
-	double vc = std::sqrt(f * darkmatterhalo->enclosed_mass(rc_to_rvir, c)) / rc_to_rvir;
-
-	double eta = (vt/vc) / rc_to_rvir;
-
-	//Apply Jiang et al. (2008) merging timescale.
-
-	return std::sqrt(rc_to_rvir)*(parameters.jiang08[0] * std::pow(eta, parameters.jiang08[1]) + parameters.jiang08[3]) /2 / parameters.jiang08[2];
 }
 
 double GalaxyMergers::mass_ratio_function(double mp, double ms){
@@ -160,7 +106,7 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 
 	double mass_ratio = mp/ms;
 
-	return mass_ratio/std::log(1+mass_ratio);
+	return 0.3722 * mass_ratio/std::log(1+mass_ratio);
 }
 
 void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z){
@@ -180,32 +126,26 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 	for (auto &galaxy: secondary->galaxies){
 
-		double mgal = galaxy->baryon_mass();
-		double ms = secondary->Mvir + mgal;
-		double tau_mass = merging_timescale_mass(mp, ms);
-
 		// Define merging timescale and redefine type of galaxy.
 
-		galaxy->tmerge = parameters.tau_delay * tau_mass * tau_dyn;
+		if(parameters.tau_delay > 0){
+			double mgal = galaxy->baryon_mass();
+			double ms = secondary->Mvir + mgal;
+			double tau_mass = merging_timescale_mass(mp, ms);
+			double tau_orbits = merging_timescale_orbital();
+
+			galaxy->tmerge = parameters.tau_delay * tau_mass * tau_orbits* tau_dyn;
+		}
+		else{
+			galaxy->tmerge = parameters.tau_delay;
+		}
+
 		galaxy->galaxy_type = Galaxy::TYPE2;
 		galaxy->concentration_type2 = secondary->concentration;
 		galaxy->msubhalo_type2 = secondary->Mvir;
 		galaxy->lambda_type2 = secondary->lambda;
 
 	}
-//	double vt,vr;
-
-//	double c = primary->host_halo->concentration;
-
-//	double f = mass_ratio_function(mp, ms);
-
-	//Calculate well the part of orbital parameters.
-	//Draw orbital parameters from PDF in Benson et al. (2005).
-	//orbital_parameters(vr, vt, f);
-	//double tau_orbits = merging_timescale_orbital(vr, vt, f, c);
-
-	//return tau_orbits * tau_mass * tau_dyn;
-
 
 }
 

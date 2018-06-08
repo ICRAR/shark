@@ -9,6 +9,7 @@
 #define INCLUDE_GALAXY_MERGERS_H_
 
 #include <memory>
+#include <random>
 #include <vector>
 
 #include "agn_feedback.h"
@@ -74,7 +75,7 @@ public:
 
 	double merging_timescale_mass(double mp, double ms);
 
-	double merging_timescale_orbital(double vr, double vt, double f, double c);
+	double merging_timescale_orbital();
 
 	void merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z);
 
@@ -105,6 +106,9 @@ private:
 	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
 	AGNFeedbackPtr agnfeedback;
+
+	std::default_random_engine generator;
+	std::lognormal_distribution<double> distribution;
 
 };
 
