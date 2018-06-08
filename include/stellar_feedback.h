@@ -36,7 +36,7 @@ public:
 	StellarFeedbackParameters(const Options &options);
 
 	enum StellarFeedbackModel {
-		FIRE = 0,
+		MURATOV15 = 0,
 		GUO11,
 		LACEY16,
 		LAGOS13,

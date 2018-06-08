@@ -59,26 +59,26 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options)
 template <>
 StellarFeedbackParameters::StellarFeedbackModel
 Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string &name, const std::string &value) const {
-	if ( value == "FIRE" ) {
-		return StellarFeedbackParameters::FIRE;
+	if ( value == "Muratov15" ) {
+		return StellarFeedbackParameters::MURATOV15;
 	}
-	else if ( value == "LACEY16" ) {
+	else if ( value == "Lacey16" ) {
 		return StellarFeedbackParameters::LACEY16;
 	}
-	else if (value == "GUO11"){
+	else if (value == "Guo11"){
 		return StellarFeedbackParameters::GUO11;
 	}
-	else if (value == "LAGOS13"){
+	else if (value == "Lagos13"){
 		return StellarFeedbackParameters::LAGOS13;
 	}
-	else if (value == "LAGOS13Trunc"){
+	else if (value == "Lagos13Trunc"){
 		return StellarFeedbackParameters::LAGOS13Trunc;
 	}
-	else if (value == "LACEY16FIRE"){
+	else if (value == "Lacey16RedDep"){
 		return StellarFeedbackParameters::LACEY16FIRE;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are FIRE, LACEY16, GUO11, LAGOS13, LAGOS13Trunc and LACEY16FIRE";
+	os << name << " option value invalid: " << value << ". Supported values are Muratov14, Lacey16, Guo11, Lagos13, Lagos13Trunc and Lacey16RedDep";
 	throw invalid_option(os.str());
 }
 
@@ -117,13 +117,11 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 	}
 	else if (parameters.model == StellarFeedbackParameters::LAGOS13){
 
-		//power_index += 2.0*std::log10(1+z);
 		double vhot = parameters.v_sn*std::pow(1+z,parameters.redshift_power);
 		const_sn =  std::pow(vhot/v,power_index);
 	}
 
 	else if (parameters.model == StellarFeedbackParameters::LAGOS13Trunc){
-		//power_index += 2.0*std::log10(1+z);
 		double vhot = parameters.v_sn*std::pow(1+z,parameters.redshift_power);
 
 		if(v > parameters.v_sn){
