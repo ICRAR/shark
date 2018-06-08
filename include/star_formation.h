@@ -35,7 +35,6 @@
 
 #include <memory>
 
-#include "components.h"
 #include "cosmology.h"
 #include "integrator.h"
 #include "options.h"

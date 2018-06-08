@@ -41,6 +41,7 @@
 #include "galaxy_writer.h"
 #include "logging.h"
 #include "merger_tree_reader.h"
+#include "options.h"
 #include "physical_model.h"
 #include "shark_runner.h"
 #include "timer.h"
@@ -206,8 +207,9 @@ std::vector<MergerTreePtr> SharkRunner::impl::import_trees()
 	SURFSReader reader(simulation_params.tree_files_prefix, dark_matter_halos, simulation_params, threads);
 	HaloBasedTreeBuilder tree_builder(exec_params, threads);
 	auto halos = reader.read_halos(exec_params.simulation_batches);
-	return tree_builder.build_trees(halos, simulation_params, cosmology, all_baryons);
+	auto trees = tree_builder.build_trees(halos, simulation_params, cosmology, all_baryons);
 	LOG(info) << "Merger trees imported in " << t;
+	return trees;
 }
 
 void _get_molecular_gas(const HaloPtr &halo, molgas_per_galaxy &molgas, StarFormation &star_formation, double z, bool calc_j)

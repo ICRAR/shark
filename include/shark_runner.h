@@ -27,9 +27,10 @@
 
 #include <memory>
 
-#include "options.h"
-
 namespace shark {
+
+// Forward declaration to avoid including options.h
+class Options;
 
 /**
  * The main driver of a shark instance run.
