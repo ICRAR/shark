@@ -364,9 +364,15 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	/*In the case of starbursts one should be using the bulge instead of the disk
 	 * properties.*/
 
-	// Accumulated burst stellar mass:
-	galaxy.burst_stars.mass                 += y[0] -  galaxy.bulge_stars.mass;
-	galaxy.burst_stars.mass_metals          += y[5] -  galaxy.bulge_stars.mass_metals;
+	// Accumulated burst stellar mass in the corresponding baryon budget depending on triggering mechanism:
+	if(from_galaxy_merger){
+		galaxy.galaxymergers_burst_stars.mass                 += y[0] -  galaxy.bulge_stars.mass;
+		galaxy.galaxymergers_burst_stars.mass_metals          += y[5] -  galaxy.bulge_stars.mass_metals;
+	}
+	else{
+		galaxy.diskinstabilities_burst_stars.mass             += y[0] -  galaxy.bulge_stars.mass;
+		galaxy.diskinstabilities_burst_stars.mass_metals      += y[5] -  galaxy.bulge_stars.mass_metals;
+	}
 
 	// Assign new masses.
 	galaxy.bulge_stars.mass 				= y[0];

@@ -72,7 +72,7 @@ public:
 	bool galaxy_scaling = false;
 	bool radial_feedback = false;
 
-	StellarFeedbackModel model = FIRE;
+	StellarFeedbackModel model = MURATOV15;
 
 };
 

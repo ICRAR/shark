@@ -204,6 +204,8 @@ public:
 		bulge_gas(),
 		disk_stars(),
 		disk_gas(),
+		galaxymergers_burst_stars(),
+		diskinstabilities_burst_stars(),
 		smbh(),
 		sfr_disk(0),
 		sfr_bulge(0),
@@ -212,10 +214,10 @@ public:
 		vmax(0),
 		history(),
 		tmerge(0),
-                concentration_type2(0),
-                msubhalo_type2(0),
-                vvir_type2(0),
-                lambda_type2(0)
+        concentration_type2(0),
+        msubhalo_type2(0),
+        vvir_type2(0),
+        lambda_type2(0)
 	{
 		//no-op
 	}
@@ -239,7 +241,8 @@ public:
 	Baryon bulge_gas;
 	Baryon disk_stars;
 	Baryon disk_gas;
-	Baryon burst_stars;
+	Baryon galaxymergers_burst_stars;
+	Baryon diskinstabilities_burst_stars;
 	BlackHole smbh;
 
 	//save average star formation rates and metallicities of the newly formed stars.
@@ -897,7 +900,8 @@ public:
 	/**
 	 * mcold: total cold gas mass in disk+bulge.
 	 * mstars: total stellar mass in disk+bulge.
-	 * mastars_burst: total stellar mass formed via bursts.
+	 * mstars_burst_galaxymergers: total stellar mass formed via bursts driven by galaxy mergers.
+	 * mstars_burst_diskinstabilities: total stellar mass formed via bursts driven by disk instabilities.
 	 * mhot_halo: total hot halo gas.
 	 * mcold_halo: total cold halo gas (that is cooling during the current snapshot).
 	 * mejected_halo: total hot gas that has been ejected from galaxies due to feeback and that has not been reincorporated yet onto the hot halo gas reservoir.
@@ -911,7 +915,8 @@ public:
 
 	std::vector<BaryonBase> mcold;
 	std::vector<BaryonBase> mstars;
-	std::vector<BaryonBase> mstars_burst;
+	std::vector<BaryonBase> mstars_burst_galaxymergers;
+	std::vector<BaryonBase> mstars_burst_diskinstabilities;
 	std::vector<BaryonBase> mhot_halo;
 	std::vector<BaryonBase> mcold_halo;
 	std::vector<BaryonBase> mejected_halo;

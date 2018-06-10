@@ -204,7 +204,7 @@ public:
 	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t);
 
 	std::vector<double> from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy);
-	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t);
+	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger);
 
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;

@@ -107,7 +107,7 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 
 	double power_index = parameters.beta_disk;
 	double const_sn = 0;
-	if (parameters.model == StellarFeedbackParameters::FIRE){
+	if (parameters.model == StellarFeedbackParameters::MURATOV15){
 
 		if(v > parameters.v_sn){
 			power_index = 1;

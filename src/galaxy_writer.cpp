@@ -187,12 +187,14 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	// Create all galaxies properties to write
 	vector<float> mstars_disk;
 	vector<float> mstars_bulge;
-	vector<float> mstars_burst;
+	vector<float> mstars_burst_mergers;
+	vector<float> mstars_burst_diskinstabilities;
 	vector<float> mgas_disk;
 	vector<float> mgas_bulge;
 	vector<float> mstars_metals_disk;
 	vector<float> mstars_metals_bulge;
-	vector<float> mstars_metals_burst;
+	vector<float> mstars_metals_burst_mergers;
+	vector<float> mstars_metals_burst_diskinstabilities;
 	vector<float> mgas_metals_disk;
 	vector<float> mgas_metals_bulge;
 	vector<float> mmol_disk;
@@ -308,7 +310,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				// Stellar components
 				mstars_disk.push_back(galaxy->disk_stars.mass);
 				mstars_bulge.push_back(galaxy->bulge_stars.mass);
-				mstars_burst.push_back(galaxy->burst_stars.mass);
+				mstars_burst_mergers.push_back(galaxy->galaxymergers_burst_stars.mass);
+				mstars_burst_diskinstabilities.push_back(galaxy->diskinstabilities_burst_stars.mass);
+
 
 				// Gas components
 				mgas_disk.push_back(galaxy->disk_gas.mass);
@@ -317,7 +321,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				// Metals of the stellar components.
 				mstars_metals_disk.push_back(galaxy->disk_stars.mass_metals);
 				mstars_metals_bulge.push_back(galaxy->bulge_stars.mass_metals);
-				mstars_metals_burst.push_back(galaxy->burst_stars.mass_metals);
+				mstars_metals_burst_mergers.push_back(galaxy->galaxymergers_burst_stars.mass_metals);
+				mstars_metals_burst_diskinstabilities.push_back(galaxy->diskinstabilities_burst_stars.mass);
 
 				// Metals of the gas components.
 				mgas_metals_disk.push_back(galaxy->disk_gas.mass_metals);
@@ -403,7 +408,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					lambda_subhalo.push_back(galaxy->lambda_type2);
 
 					// calculate the age of the universe by the time this galaxy will merge.
-					double tmerge  = cosmology->convert_redshift_to_age(snapshot-1) + galaxy->tmerge;
+					double tmerge  = cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot-1]) + galaxy->tmerge;
 					redshift_of_merger.push_back(cosmology->convert_age_to_redshift_lcdm(tmerge));
 				}
 
@@ -446,12 +451,14 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(host_id);
 	REPORT(mstars_disk);
 	REPORT(mstars_bulge);
-	REPORT(mstars_burst);
+	REPORT(mstars_burst_mergers);
+	REPORT(mstars_burst_diskinstabilities);
 	REPORT(mgas_disk);
 	REPORT(mgas_bulge);
 	REPORT(mstars_metals_disk);
 	REPORT(mstars_metals_bulge);
-	REPORT(mstars_metals_burst);
+	REPORT(mstars_metals_burst_mergers);
+	REPORT(mstars_metals_burst_diskinstabilities);
 	REPORT(mgas_metals_disk);
 	REPORT(mgas_metals_bulge);
 	REPORT(mmol_disk);
@@ -524,8 +531,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "stellar mass in the bulge [Msun/h]";
 	file.write_dataset("Galaxies/mstars_bulge", mstars_bulge, comment);
 
-	comment = "stellar mass formed via starbursts [Msun/h]";
-	file.write_dataset("Galaxies/mstars_burst", mstars_burst, comment);
+	comment = "stellar mass formed via starbursts driven by galaxy mergers [Msun/h]";
+	file.write_dataset("Galaxies/mstars_burst_mergers", mstars_burst_mergers, comment);
+
+	comment = "stellar mass formed via starbursts driven by disk instabilities [Msun/h]";
+	file.write_dataset("Galaxies/mstars_burst_diskinstabilities", mstars_burst_diskinstabilities, comment);
 
 	comment = "total gas mass in the disk [Msun/h]";
 	file.write_dataset("Galaxies/mgas_disk", mgas_disk, comment);
@@ -539,8 +549,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "mass of metals locked in stars in the bulge [Msun/h]";
 	file.write_dataset("Galaxies/mstars_metals_bulge", mstars_metals_bulge, comment);
 
-	comment = "mass of metals locked in stars that formed via starbursts [Msun/h]";
-	file.write_dataset("Galaxies/mstars_metals_burst", mstars_metals_burst, comment);
+	comment = "mass of metals locked in stars that formed via starbursts driven by galaxy mergers [Msun/h]";
+	file.write_dataset("Galaxies/mstars_metals_burst_mergers", mstars_metals_burst_mergers, comment);
+
+	comment = "mass of metals locked in stars that formed via starbursts driven by disk instabilities [Msun/h]";
+	file.write_dataset("Galaxies/mstars_metals_burst_diskinstabilities", mstars_metals_burst_diskinstabilities, comment);
 
 	comment = "mass of metals locked in the gas of the disk [Msun/h]";
 	file.write_dataset("Galaxies/mgas_metals_disk", mgas_metals_disk, comment);
@@ -722,11 +735,17 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot
 	comment = "total mass of metals locked in stars in the simulated box [Msun/h]";
 	file.write_dataset("Global/mstars_metals",AllBaryons.get_metals(AllBaryons.mstars), comment);
 
-	comment = "total stellar mass formed via starbursts in the simulated box [Msun/h]";
-	file.write_dataset("Global/mstars_bursts",AllBaryons.get_masses(AllBaryons.mstars_burst), comment);
+	comment = "total stellar mass formed via starbursts triggered by galaxy mergers in the simulated box [Msun/h]";
+	file.write_dataset("Global/mstars_bursts_mergers",AllBaryons.get_masses(AllBaryons.mstars_burst_galaxymergers), comment);
 
-	comment = "total mass of metals locked in stars that formed via starbursts in the simulated box [Msun/h]";
-	file.write_dataset("Global/mstars_metals_bursts",AllBaryons.get_metals(AllBaryons.mstars_burst), comment);
+	comment = "total mass of metals locked in stars that formed via starbursts triggered by galaxy mergers in the simulated box [Msun/h]";
+	file.write_dataset("Global/mstars_metals_bursts_mergers",AllBaryons.get_metals(AllBaryons.mstars_burst_galaxymergers), comment);
+
+	comment = "total stellar mass formed via starbursts triggered by disk instabilities in the simulated box [Msun/h]";
+	file.write_dataset("Global/mstars_bursts_diskinstabilities",AllBaryons.get_masses(AllBaryons.mstars_burst_diskinstabilities), comment);
+
+	comment = "total mass of metals locked in stars that formed via starbursts triggered by disk instabilities in the simulated box [Msun/h]";
+	file.write_dataset("Global/mstars_metals_bursts_diskinstabilities",AllBaryons.get_metals(AllBaryons.mstars_burst_diskinstabilities), comment);
 
 	comment = "total atomic gas mass in the simulated box [Msun/h]";
 	file.write_dataset("Global/mHI",AllBaryons.get_masses(AllBaryons.mHI), comment);
