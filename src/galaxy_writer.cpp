@@ -154,7 +154,7 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 	comment = "fluctuation amplitude at 8 Mpc/h";
 	file.write_dataset("Cosmology/sigma8", cosmo_params.sigma8, comment);
 
-	comment = "normalization of hubble parameter H0 = h * 100 Mpc * km/s";
+	comment = "normalization of hubble parameter H0 = h * 100 (km/s)/Mpc";
 	file.write_dataset("Cosmology/h", cosmo_params.Hubble_h, comment);
 }
 
