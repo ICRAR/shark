@@ -70,9 +70,9 @@ def plot_SMHM_z(plt, outdir, massgal):
     subplots = (321, 322, 323, 324, 325, 326)
     zs = (0, 0.5, 1, 2, 3, 4)
     indexes = (0, 1, 2, 3, 4, 5)
-    all_labels = (('SHArk', 'Moster+13', 'Behroozi+13'), )
+    all_labels = (('Shark', 'Moster+13', 'Behroozi+13'), )
 
-    for i in range(0,5):
+    for i in range(0,6):
         subplot = subplots[i]
         z = zs[i]
         idx = indexes[i]
@@ -80,7 +80,8 @@ def plot_SMHM_z(plt, outdir, massgal):
         
         # z=0 ##################################
         ax = fig.add_subplot(subplot)
-        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+	common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+
         ax.tick_params(labelsize=13)
         ax.text(xleg, yleg, 'z=%s' % str(z))
 
@@ -159,7 +160,7 @@ def plot_BMHM_z(plt, outdir, massbar):
     errdn = massbar[0,1,ind]
     errup = massbar[0,2,ind]
 
-    ax.errorbar(xplot,yplot[0],color='k', label="SHArk")
+    ax.errorbar(xplot,yplot[0],color='k', label="Shark")
     ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
 
     ax.plot(xmf,xmf,'r', linestyle='dashed')
@@ -176,7 +177,7 @@ def plot_BMHM_z(plt, outdir, massbar):
     errdn = massbar[1,1,ind]
     errup = massbar[1,2,ind]
 
-    ax.errorbar(xplot,yplot[0],color='k', label="SHArk")
+    ax.errorbar(xplot,yplot[0],color='k', label="Shark")
     ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
 
     ax.plot(xmf,xmf,'r', linestyle='dashed')
@@ -194,7 +195,7 @@ def plot_BMHM_z(plt, outdir, massbar):
     errdn = massbar[2,1,ind]
     errup = massbar[2,2,ind]
 
-    ax.errorbar(xplot,yplot[0],color='k', label="SHArk")
+    ax.errorbar(xplot,yplot[0],color='k', label="Shark")
     ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
 
     ax.plot(xmf,xmf,'r', linestyle='dashed')
@@ -212,7 +213,7 @@ def plot_BMHM_z(plt, outdir, massbar):
     errdn = massbar[3,1,ind]
     errup = massbar[3,2,ind]
 
-    ax.errorbar(xplot,yplot[0],color='k', label="SHArk")
+    ax.errorbar(xplot,yplot[0],color='k', label="Shark")
     ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
 
     ax.plot(xmf,xmf,'r', linestyle='dashed')
@@ -229,7 +230,7 @@ def main():
     
     modeldir, outdir, subvols = common.parse_args(requires_snapshot=False, requires_observations=False)
 
-    zlist = ["199","174", "156", "131", "113", "99"]
+    zlist = ["199", "174", "156", "131", "113", "99"]
     massgal = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massbar = np.zeros(shape = (len(zlist), 3, len(xmf)))
 

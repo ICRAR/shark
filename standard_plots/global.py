@@ -27,6 +27,7 @@ import math
 import numpy as np
 
 import common
+import utilities_statistics as us
 
 
 ##################################
@@ -79,7 +80,6 @@ def prepare_data(hdf5_data, redshifts):
 
 
     mHIden   = mHI / volh
-    print len(mHIden), len(redshifts)
     h = np.zeros(shape = (len(redshifts)))
     omegaHI = np.zeros(shape = (len(redshifts)))
     for z in range(0,len(redshifts)):
@@ -129,18 +129,28 @@ def prepare_data(hdf5_data, redshifts):
 
 def plot_mass_densities(plt, outdir, redshifts, mstar, mcold, mhot, meje):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
 
-    xtit="$\\rm redshift$"
+    xtit="$\\rm Lookback\, time/Gyr$"
     ytit="$\\rm log_{10}(m/m_{\\rm bar,total})$"
 
     ax = fig.add_subplot(111)
-    common.prepare_ax(ax, 0, 10, -6, 0, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    plt.subplots_adjust(bottom=0.15, left=0.15)
 
-    ax.plot(redshifts, mstar,'k', label='stars')
-    ax.plot(redshifts, mcold,'b', label='cold gas')
-    ax.plot(redshifts, mhot,'r', label='hot gas')
-    ax.plot(redshifts, meje,'g', label='ejected gas')
+    common.prepare_ax(ax, 0, 13.5, -5, 0.1, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    new_tick_locations = np.array([0., 2., 4., 6., 8., 10., 12.])
+
+    ax2.set_xticks(new_tick_locations)
+    ax2.set_xticklabels(us.redshift(new_tick_locations), fontsize=12)
+
+    ax2.set_xlabel("redshift",fontsize=13)
+
+    ax.plot(us.look_back_time(redshifts), mstar,'k', label='stars')
+    ax.plot(us.look_back_time(redshifts), mcold,'b', label='ISM gas')
+    ax.plot(us.look_back_time(redshifts), mhot,'r', label='halo gas')
+    ax.plot(us.look_back_time(redshifts), meje,'g', label='ejected gas')
 
     common.prepare_legend(ax, ['k','b','r','g'])
     common.savefig(outdir, fig, "global.pdf")
@@ -157,8 +167,8 @@ def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, m
     common.prepare_ax(ax, 0, 10, -4, 0.5, xtit, ytit, locators=(0.1, 1, 0.1))
 
     ax.plot(redshifts, mstar_dm, 'k', label='stars')
-    ax.plot(redshifts, mcold_dm, 'b', label='cold gas')
-    ax.plot(redshifts, mhot_dm, 'r', label='hot gas')
+    ax.plot(redshifts, mcold_dm, 'b', label='ISM gas')
+    ax.plot(redshifts, mhot_dm, 'r', label='halo gas')
     ax.plot(redshifts, meje_dm, 'g', label='ejected gas')
     ax.plot(redshifts, mbar_dm, 'm', label='total baryons')
 
@@ -173,13 +183,15 @@ def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, m
 
 def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,9))
 
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(CSFRD/ M_{\odot}\,yr^{-1}\,cMpc^{-3})$"
 
-    ax = fig.add_subplot(111)
-    common.prepare_ax(ax, 0, 10, -6, 0, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax = fig.add_subplot(211)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 10, -3, -0.5, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     redK11, SFRK11, err_upK11, err_dnK11 = common.load_observation(obsdir, 'SFR/SFRD_Karim11.data', [0,1,2,3])
@@ -199,19 +211,19 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     indx = np.where( (SFRK11+err_upK11) > 0)
     herr[indx]  = np.log10(SFRK11[indx] + err_upK11[indx])
 
-    ax.errorbar(xobs[0:8], yobs[0:8], yerr=[yobs[0:8]-lerr[0:8],herr[0:8]-yobs[0:8]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Karim+11 obs")
+    ax.errorbar(xobs[0:8], yobs[0:8], yerr=[yobs[0:8]-lerr[0:8],herr[0:8]-yobs[0:8]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Karim+11 obs")
     ax.errorbar(xobs[9:17], yobs[9:17], yerr=[yobs[9:17]-lerr[9:17],herr[9:17]-yobs[9:17]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='x',label="Karim+11 extr")
 
     #Driver (Chabrier IMF), ['Baldry+2012, z<0.06']
     redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'SFR/Driver17_sfr.dat', [0,1,2,3,4,5,6])
 
     hobs = 0.7
-    xobs = (redD17d+redD17u)/2.0
-    yobs = sfrD17 + np.log10(hobs/h0)
+    xobsD17 = (redD17d+redD17u)/2.0
+    yobsD17 = sfrD17 + np.log10(hobs/h0)
 
-    err = yobs*0. - 999.
-    err = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
-    ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Driver+17")
+    errD17 = yobs*0. - 999.
+    errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
+    ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Driver+18")
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfr > 0)
@@ -221,7 +233,25 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ind = np.where(sfrb > 0)
     ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='dotted', label ='bursts')
 
-    common.prepare_legend(ax, ['k','b','r','grey','grey','grey'])
+    common.prepare_legend(ax, ['k','b','r','grey','grey','grey'], loc=1)
+
+    xtit="$\\rm Lookback\, time/Gyr$"
+    ax = fig.add_subplot(212)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 13.5, -3, -0.5, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax.errorbar(us.look_back_time(xobs[0:8]), yobs[0:8], yerr=[yobs[0:8]-lerr[0:8],herr[0:8]-yobs[0:8]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D')
+    ax.errorbar(us.look_back_time(xobs[9:17]), yobs[9:17], yerr=[yobs[9:17]-lerr[9:17],herr[9:17]-yobs[9:17]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='x')
+    ax.errorbar(us.look_back_time(xobsD17), yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+
+    ind = np.where(sfr > 0)
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), 'k', label ='total')
+    ind = np.where(sfrd > 0)
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='dashed',label ='quiescent')
+    ind = np.where(sfrb > 0)
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='dotted', label ='bursts')
+
+
     common.savefig(outdir, fig, "cosmic_sfr.pdf")
 
 
@@ -231,15 +261,17 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(\\rho_{\\rm star}/ M_{\odot}\,cMpc^{-3})$"
 
-    fig = plt.figure(figsize=(5,5))
-    ax = fig.add_subplot(111)
+    fig = plt.figure(figsize=(5,9))
+    ax = fig.add_subplot(211)
+    plt.subplots_adjust(left=0.15)
+
     common.prepare_ax(ax, 0, 10, 5, 8.7, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mstarden > 0)
-    ax.plot(redshifts[ind],np.log10(mstarden[ind]*pow(h0,2.0)), 'r', label='SHArk all galaxies')
+    ax.plot(redshifts[ind],np.log10(mstarden[ind]*pow(h0,2.0)), 'k', label='Shark all galaxies')
     ind = np.where(mstarbden > 0)
-    ax.plot(redshifts[ind],np.log10(mstarbden[ind]*pow(h0,2.0)), 'b', linestyle='dashed', label='mass formed in SBs')
+    ax.plot(redshifts[ind],np.log10(mstarbden[ind]*pow(h0,2.0)), 'r', linestyle='dashed', label='mass formed in SBs')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     redD17d, redD17u, smdD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'SFR/Driver17_smd.dat', [1,2,3,4,5,6,7])
@@ -250,9 +282,23 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
 
     err = yobs*0. - 999.
     err = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
-    ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Driver+17")
+    ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Driver+18")
 
-    common.prepare_legend(ax, ['r','b','grey'])
+    common.prepare_legend(ax, ['k','r','grey'], loc=1)
+
+    xtit="$\\rm Lookback\, time/Gyr$"
+    ax = fig.add_subplot(212)
+    plt.subplots_adjust(left=0.15)
+    common.prepare_ax(ax, 0, 13.5, 5, 8.7, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ind = np.where(mstarden > 0)
+    ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarden[ind]*pow(h0,2.0)), 'k')
+    ind = np.where(mstarbden > 0)
+    ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarbden[ind]*pow(h0,2.0)), 'r', linestyle='dashed')
+    ax.errorbar(us.look_back_time(xobs), yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+
+
     common.savefig(outdir, fig, "cosmic_smd.pdf")
 
 
@@ -263,13 +309,15 @@ def plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat):
 
     # panel 1
     ax = fig.add_subplot(311)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
     xtit="$\\rm redshift$"
     ytit="$\\rm log_{10}(SFR/M_{\\rm cold} Gyr^{-1})$"
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfre > 0)
-    ax.plot(redshifts[ind],np.log10(sfre[ind]), 'r', label='SHArk')
+    ax.plot(redshifts[ind],np.log10(sfre[ind]), 'r', label='Shark')
     common.prepare_legend(ax, ['r'])
 
     #panel 2
@@ -279,7 +327,7 @@ def plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat):
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfreH2 > 0)
-    ax.plot(redshifts[ind],np.log10(sfreH2[ind]), 'r', label='SHArk')
+    ax.plot(redshifts[ind],np.log10(sfreH2[ind]), 'r', label='Shark')
     common.prepare_legend(ax, ['r'])
 
     #panel 3
@@ -289,7 +337,7 @@ def plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat):
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mhrat > 0)
-    ax.plot(redshifts[ind],np.log10(mhrat[ind]), 'r', label ='SHArk')
+    ax.plot(redshifts[ind],np.log10(mhrat[ind]), 'r', label ='Shark')
     common.prepare_legend(ax, ['r'])
 
     common.savefig(outdir, fig, "cosmic_sfe.pdf")
@@ -297,16 +345,27 @@ def plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat):
 
 def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
 
     ax = fig.add_subplot(111)
-    xtit="$\\rm redshift$"
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm Lookback\, time/Gyr$"
     ytit="$\\rm log_{10}(\\rho_{\\rm H_2}/ M_{\odot}\,cMpc^{-3})$"
-    common.prepare_ax(ax, 0, 5, 5, 9, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 13.5, 6, 9, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    new_tick_locations = np.array([0., 2., 4., 6., 8., 10., 12.])
+
+    ax2.set_xticks(new_tick_locations)
+    ax2.set_xticklabels(us.redshift(new_tick_locations), fontsize=12)
+
+    ax2.set_xlabel("redshift",fontsize=13)
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mH2den > 0)
-    ax.plot(redshifts[ind], np.log10(mH2den[ind]*pow(h0,2.0)), 'r', label='SHArk')
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)), 'r', label='Shark')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'SFR/Walter17_H2.dat', [0,1,2,3,4,5])
@@ -320,8 +379,8 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     errylow = np.log10(rhoH2D16) - np.log10(rhoH2loD16)
     erryup  = np.log10(rhoH2upD16) - np.log10(rhoH2D16)
 
-    ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='+',label="Decarli+16")
-    ax.errorbar(xobs[0:1], yobs[0:1], xerr=[errxlow[0:1],errxup[0:1]], yerr=[errylow[0:1],erryup[0:1]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Bosseli+14")
+    ax.errorbar(us.look_back_time(xobs), yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='+',label="Decarli+16")
+    ax.errorbar(us.look_back_time(xobs[0:1]), yobs[0:1], xerr=[errxlow[0:1],errxup[0:1]], yerr=[errylow[0:1],erryup[0:1]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Bosseli+14")
 
     # Legend
     common.prepare_legend(ax, ['r','grey','grey','grey'])
@@ -330,36 +389,57 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
 
 def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
 
-    fig = plt.figure(figsize=(9.5,9.5))
+    fig = plt.figure(figsize=(5,4.5))
 
     ax = fig.add_subplot(111)
-    xtit="$\\rm redshift$"
-    ytit="$\\rm log_{10}(\\rho_{\\rm neutral}/ \\rho_{\\rm crit,z=0})$"
-    common.prepare_ax(ax, 0, 10, -5.5, -2.8, xtit, ytit, locators=(0.1, 1, 0.1))
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm Lookback\,time/Gyr$"
+    ytit="$\\rm log_{10}(\\Omega_{\\rm gas})$"
+    common.prepare_ax(ax, 0, 13.5, -4, -2.7, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    new_tick_locations = np.array([0., 2., 4., 6., 8., 10., 12.])
+
+    ax2.set_xticks(new_tick_locations)
+    ax2.set_xticklabels(us.redshift(new_tick_locations), fontsize=12)
+
+    ax2.set_xlabel("redshift",fontsize=13)
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
-    ax.plot(redshifts, mcold + np.log10(Omegab), 'k', label='total neutral')
-    ax.plot(redshifts, mHI + np.log10(Omegab), 'b', label='atomic')
-    ax.plot(redshifts, mH2 + np.log10(Omegab), 'r', label='molecular')
+    ax.plot(us.look_back_time(redshifts), mcold + np.log10(Omegab), 'k', label='total neutral ISM')
+    ax.plot(us.look_back_time(redshifts), mHI + np.log10(Omegab), 'b', linestyle = 'dotted', label='atomic')
+    ax.plot(us.look_back_time(redshifts), mH2 + np.log10(Omegab), 'r', linestyle = 'dashed',label='molecular')
 
-    common.prepare_legend(ax, ['k','b','r'])
+    common.prepare_legend(ax, ['k','b','r'], loc=1)
     common.savefig(outdir, fig, "omega_neutral.pdf")
 
 
 def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
     ax = fig.add_subplot(111)
-    xtit="$\\rm redshift$"
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm Lookback\,time/Gyr$"
     ytit="$\\rm log_{10}(\\rho_{\\rm dust}/ M_{\odot}\,cMpc^{-3})$"
-    common.prepare_ax(ax, 0, 5, 4, 6.3, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 13.5, 4, 6.3, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    new_tick_locations = np.array([0., 2., 4., 6., 8., 10., 12.])
+
+    ax2.set_xticks(new_tick_locations)
+    ax2.set_xticklabels(us.redshift(new_tick_locations), fontsize=12)
+
+    ax2.set_xlabel("redshift",fontsize=13)
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mdustden > 0)
-    ax.plot(redshifts[ind],np.log10(mdustden[ind]*pow(h0,2.0)),'r', label ='SHArk all metals')
+    ax.plot(us.look_back_time(redshifts[ind]),np.log10(mdustden[ind]*pow(h0,2.0)),'r', label ='Shark all metals')
     
     ind = np.where(mdustden_mol > 0)
-    ax.plot(redshifts[ind],np.log10(mdustden_mol[ind]*pow(h0,2.0)),'r', linestyle = 'dashed', label ='SHArk metals in molecular gas')
+    ax.plot(us.look_back_time(redshifts[ind]),np.log10(mdustden_mol[ind]*pow(h0,2.0)),'r', linestyle = 'dashed', label ='Shark metals in molecular gas')
     
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     redD17d,redD17u,smdD17,err1,err2,err3,err4 = common.load_observation(obsdir, 'SFR/Driver17_dust.dat', [1,2,3,4,5,6,7])
@@ -371,7 +451,7 @@ def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol)
     err = yobs*0. - 999.
     err = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
 
-    ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Driver+17")
+    ax.errorbar(us.look_back_time(xobs), yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Driver+18")
 
     common.prepare_legend(ax, ['r','r','grey'])
     common.savefig(outdir, fig, "cosmic_dust.pdf")
@@ -379,21 +459,32 @@ def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol)
 
 def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
 
     ax = fig.add_subplot(111)
-    xtit="$\\rm redshift$"
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm Lookback\, time/Gyr$"
     ytit="$\\rm log_{10}(\\Omega_{\\rm H_I})$"
-    common.prepare_ax(ax, 0, 5, -5, -1, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 13.5, -5, -2, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    new_tick_locations = np.array([0., 2., 4., 6., 8., 10., 12.])
+
+    ax2.set_xticks(new_tick_locations)
+    ax2.set_xticklabels(us.redshift(new_tick_locations), fontsize=12)
+
+    ax2.set_xlabel("redshift",fontsize=13)
 
     # note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(omegaHI > 0)
-    ax.plot(redshifts[ind], np.log10(omegaHI[ind]*pow(h0,2.0)), 'r', label='SHArk')
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(omegaHI[ind]*pow(h0,2.0)), 'r', label='Shark')
 
     # Rhee+18 compilation
     redR18,reddR18,reduR18,omegaR18,errdnR18,errupR18 = common.load_observation(obsdir, 'Gas/HI_density_for_Claudia.dat', [1,2,3,7,8,9])
 
-    ax.errorbar(redR18,np.log10(omegaR18*1e-3), xerr=[reddR18,reduR18],yerr=[errdnR18,errupR18], ls='None', mfc='None', ecolor = 'grey', mec='grey', marker='o', label="Rhee+18 (comp)")
+    ax.errorbar(us.look_back_time(redR18),np.log10(omegaR18*1e-3), xerr=[reddR18,reduR18],yerr=[errdnR18,errupR18], ls='None', mfc='None', ecolor = 'grey', mec='grey', marker='o', label="Rhee+18 (comp)")
 
     common.prepare_legend(ax, ['r','grey','grey','grey'])
     common.savefig(outdir, fig, "omega_HI.pdf")

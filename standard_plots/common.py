@@ -117,17 +117,20 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1)):
     ax.set_xlim(xmin,xmax)
     ax.set_ylim(ymin,ymax)
     if xtit:
-        ax.set_xlabel(xtit,fontsize=15)
+        ax.set_xlabel(xtit,fontsize=13)
     if ytit:
-        ax.set_ylabel(ytit,fontsize=15)
+        ax.set_ylabel(ytit,fontsize=13)
     ax.xaxis.set_minor_locator(MultipleLocator(locators[0]))
     ax.xaxis.set_major_locator(MultipleLocator(locators[1]))
     ax.yaxis.set_minor_locator(MultipleLocator(locators[2]))
     if len(locators) > 3:
         ax.yaxis.set_major_locator(MultipleLocator(locators[3]))
-    ax.tick_params(labelsize=13)
+    ax.tick_params(labelsize=12)
 
-def prepare_legend(ax, colors, loc=3, **legend_kwargs):
+def prepare_legend(ax, colors, loc=None, **legend_kwargs):
+
+    if(loc == None):
+	loc = 3
     leg = ax.legend(loc=loc, prop={'size': 12}, **legend_kwargs)
     for color,text in zip(colors,leg.get_texts()):
         text.set_color(color)

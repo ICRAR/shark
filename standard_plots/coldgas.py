@@ -37,14 +37,14 @@ xmf = mbins + dm/2.0
 
 def add_observations_to_plot(obsdir, fname, ax, marker, label, color='k'):
     fname = '%s/Gas/%s' % (obsdir, fname)
-    x, y, yerr_up, yerr_down = common.load_observation(obsdir, fname, (0, 1, 2, 3))
+    x, y, yerr_down, yerr_up = common.load_observation(obsdir, fname, (0, 1, 2, 3))
     common.errorbars(ax, x, y, yerr_down, yerr_up, color, marker, label=label, err_absolute=False)
 
 def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
     xleg = xmax - 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
-    ax.text(xleg, yleg, 'z=0')
+    #ax.text(xleg, yleg, 'z=0')
 
 def prepare_data(hdf5_data):
 
@@ -101,12 +101,14 @@ def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relatio
 
     ###################################
     #   Plots global mass densities
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
 
     xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
     ytit="$\\rm log_{10}(M_{\\rm cold}/M_{\\rm star})$"
 
     ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
     prepare_ax(ax, 8, 12, -3, 0.1, xtit, ytit)
 
     #Predicted SMHM
@@ -130,8 +132,8 @@ def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relatio
     ax.errorbar(xplot,yplot[0],color='r',linestyle='dashed', label="satelites")
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    add_observations_to_plot(obs_dir, 'NeutralGasFraction_NonDetEQUpperLimits.dat', ax, 'v', "GASS+COLDGASS", color='grey')
-    add_observations_to_plot(obs_dir, 'NeutralGasFraction_NonDetEQZero.dat', ax, '^', "GASS+COLDGASS", color='grey')
+    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "GASS+COLDGASS", color='grey')
+    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQZero.dat', ax, '^', "GASS+COLDGASS", color='grey')
 
     common.prepare_legend(ax, ['k','b','r','grey','grey'])
     common.savefig(output_dir, fig, "cold_gas_fraction.pdf")
@@ -144,6 +146,8 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
 
     # First subplot
     ax = fig.add_subplot(311)
+    plt.subplots_adjust(left=0.15)
+
     xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
     ytit="$\\rm log_{10}(M_{\\rm HI+H_2}/M_{\\rm star})$"
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
@@ -156,16 +160,18 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ind = np.where(mgas_relation[0,:] != 0)
     xplot = xmf[ind]
     yplot = mgas_relation[0,ind]
-    ax.plot(xplot,yplot[0],color='k', label="SHArk all galaxies")
+    ax.plot(xplot,yplot[0],color='k', label="Shark all galaxies")
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "COLDGAS+GASS")
-    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQZero.dat', ax, '^', "COLDGAS+GASS")
+    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xCOLDGAS+xGASS")
+    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGAS+xGASS")
 
     common.prepare_legend(ax, ['k','k','k'])
 
     # Second subplot
     ax = fig.add_subplot(312)
+    plt.subplots_adjust(left=0.15)
+
     xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
     ytit="$\\rm log_{10}(M_{\\rm HI}/M_{\\rm star})$"
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
@@ -178,17 +184,19 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ind = np.where(mh1_relation[0,:] != 0)
     xplot = xmf[ind]
     yplot = mh1_relation[0,ind]
-    ax.plot(xplot,yplot[0],color='k', label="SHArk all galaxies")
+    ax.plot(xplot,yplot[0],color='k', label="Shark all galaxies")
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "GASS")
-    add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQZero.dat', ax, '^', "GASS")
+    add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xGASS")
+    add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQZero.dat', ax, '^', "xGASS")
 
     # Legend
     common.prepare_legend(ax, ['k','k','k'])
 
     # Third subplot
     ax = fig.add_subplot(313)
+    plt.subplots_adjust(left=0.15)
+
     xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
     ytit="$\\rm log_{10}(M_{\\rm H_2}/M_{\\rm star})$"
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
@@ -201,18 +209,18 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ind = np.where(mh2_relation[0,:] != 0)
     xplot = xmf[ind]
     yplot = mh2_relation[0,ind]
-    ax.plot(xplot,yplot[0],color='k', label="SHArk all galaxies")
+    ax.plot(xplot,yplot[0],color='k', label="Shark all galaxies")
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "COLDGASS")
-    add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQZero.dat', ax, '^', "COLDGASS")
+    add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xCOLDGASS")
+    add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGASS")
 
     common.prepare_legend(ax, ['k','k','k'])
     common.savefig(output_dir, fig, "molecular_gas_fraction.pdf")
 
 def plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_relation_sat):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
 
     ax = fig.add_subplot(111)
     xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
@@ -250,7 +258,7 @@ def main():
     model_dir, output_dir, subvols, obs_dir, snapshot = common.parse_args()
 
     fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge',
-                           'rdisk_star', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
+                           'rstar_disk', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge')}
     hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
 

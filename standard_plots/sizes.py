@@ -138,7 +138,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
     yplot = disk_size_cen[0,0,ind]
     errdn = disk_size_cen[0,1,ind]
     errup = disk_size_cen[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk centrals")
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark centrals")
 
     #Predicted size-mass for disks in disk=dominated galaxies satellites
     ind = np.where(disk_size_sat[0,0,:] != 0)
@@ -146,7 +146,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
     yplot = disk_size_sat[0,0,ind]
     errdn = disk_size_sat[0,1,ind]
     errup = disk_size_sat[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='v',markersize='5',label="SHArk satellites")
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='v',markersize='5',label="Shark satellites")
 
     #Lange et al. (2016)
     a = 5.56
@@ -183,7 +183,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
         yplot = bulge_size[0,0,ind]
         errdn = bulge_size[0,1,ind]
         errup = bulge_size[0,2,ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk bulges")
+        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark bulges")
 
     #Lange et al. (2016)
     a = 2.319
@@ -232,7 +232,7 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel):
     yplot = disk_vel[0,0,ind]
     errdn = disk_vel[0,1,ind]
     errup = disk_vel[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk centrals B/T<0.5")
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark centrals B/T<0.5")
 
     common.prepare_legend(ax, ['k'], loc=2)
 
@@ -254,7 +254,7 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel):
         yplot = bulge_vel[0,0,ind]
         errdn = bulge_vel[0,1,ind]
         errup = bulge_vel[0,2,ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk bulges B/T > 0.5")
+        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark bulges B/T > 0.5")
 
         common.prepare_legend(ax, ['k'], loc=2)
 
@@ -427,7 +427,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     
 def plot_sizes_combined(plt, outdir, rcomb):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
 
     # Total ##################################
     xtit="$\\rm log_{10} (\\rm M_{\\rm stars, total}/M_{\odot})$"
@@ -435,6 +435,8 @@ def plot_sizes_combined(plt, outdir, rcomb):
     xmin, xmax, ymin, ymax = 8, 12, -0.5, 2
 
     ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
     #Predicted size-mass for disks
@@ -443,7 +445,7 @@ def plot_sizes_combined(plt, outdir, rcomb):
     yplot = rcomb[0,0,ind]
     errdn = rcomb[0,1,ind]
     errup = rcomb[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="SHArk disk+bulge combined")
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark disk+bulge combined")
 
     common.prepare_legend(ax, ['k','k','k'], loc=2)
     common.savefig(outdir, fig, 'sizes_combined.pdf')
@@ -451,7 +453,7 @@ def plot_sizes_combined(plt, outdir, rcomb):
 
 def plot_bulge_BH(plt, outdir, obsdir, BH):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm bulge}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
 
@@ -460,6 +462,8 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
     yleg = ymax - 0.1 * (ymax - ymin)
 
     ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg, yleg, 'z=0')
 
@@ -470,7 +474,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
         yplot = BH[0,0,ind]
         errdn = BH[0,1,ind]
         errup = BH[0,2,ind]
-        ax.plot(xplot,yplot[0],color='k',label="SHArk")
+        ax.plot(xplot,yplot[0],color='k',label="Shark")
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
 
@@ -498,13 +502,15 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
 
 def plot_bt_fractions(plt, outdir, obsdir, BT_fractions):
 
-    fig = plt.figure(figsize=(5,5))
+    fig = plt.figure(figsize=(5,4.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
     ytit = "$\\rm f_{\\rm bulges}$"
     xmin, xmax, ymin, ymax = 8, 12, -0.1, 1.05
 
     # LTG ##################################
     ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #Predicted size-mass for disks
@@ -528,7 +534,7 @@ def main():
 
     plt = common.load_matplotlib()
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mBH',
-                           'rdisk_star', 'rbulge_star', 'type', 
+                           'rstar_disk', 'rstar_bulge', 'type', 
                            'specific_angular_momentum_disk_star', 'specific_angular_momentum_bulge_star',
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
