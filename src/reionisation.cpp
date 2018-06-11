@@ -46,25 +46,22 @@ Reionisation::Reionisation(const ReionisationParameters &parameters) :
 	// no-op
 }
 
-bool Reionisation::reionised_halo(double v, double z){
+Reionisation::~Reionisation()
+{
+}
 
-	if(parameters.model == ReionisationParameters::LACEY16){
-		if(v < parameters.vcut && z < parameters.zcut){
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-	else if (parameters.model == ReionisationParameters::SOBACCHI13){
-		double vthresh = parameters.vcut * std::pow(1.0 + z, parameters.alpha_v) * std::pow((1.0 - std::pow((1.0 + z) /(1.0 + parameters.zcut),2.0)), 0.833);
-		if(v < vthresh){
-			return true;
-		}
-		else{
-			return false;
-		}
-	}
+bool Lacey16Reionisation::reionised_halo(double v, double z) const
+{
+	auto &params = get_reionisation_params();
+	return (v < params.vcut && z < params.zcut);
+}
+
+bool Sobacchi13Reionisation::reionised_halo(double v, double z) const
+{
+	using std::pow;
+	auto &params = get_reionisation_params();
+	double vthresh = params.vcut * pow(1.0 + z, params.alpha_v) * pow((1.0 - pow((1.0 + z) /(1.0 + params.zcut), 2.0)), 0.833);
+	return v < vthresh;
 }
 
 }
