@@ -593,11 +593,11 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
     ind = np.where(BT_stable0 >= 0)
     xplot = xmf[ind]
     yplot = BT_stable0[ind]
-    ax.plot(xplot,yplot,color='Goldenrod',linestyle='dashed',label='$\\epsilon_{\\rm disk}=0$')
+    ax.plot(xplot,yplot,color='Goldenrod',linestyle='dashdot',label='$\\epsilon_{\\rm disk}=0$')
     ind = np.where(BT_stable1 >= 0)
     xplot = xmf[ind]
     yplot = BT_stable1[ind]
-    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=1$')
+    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=0.6$')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     mM16, fM16, errdnfM16, errupfM16 = common.load_observation(obsdir, 'Moffet16.dat', [0,1,2,3])

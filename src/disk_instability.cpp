@@ -91,7 +91,8 @@ double DiskInstability::toomre_parameter(GalaxyPtr &galaxy){
 
 	double vc = galaxy->vmax;
 	double md =  galaxy->disk_mass();
-	double rd = galaxy->disk_gas.rscale;
+	//double rd = galaxy->disk_gas.rscale;
+	double rd = galaxy->disk_size();
 
 	if(md <= 0 or rd <= 0){
 		return 100;
