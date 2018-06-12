@@ -110,7 +110,7 @@ def load_observation(obsdir, fname, cols):
     print("Loading observations from %s" % fname)
     return np.loadtxt(fname, usecols=cols, unpack=True)
 
-def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1)):
+def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1), fontsize=13):
 
     from matplotlib.ticker import MultipleLocator
 

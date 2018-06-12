@@ -35,10 +35,10 @@ mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
 
-def add_observations_to_plot(obsdir, fname, ax, marker, label, color='k'):
+def add_observations_to_plot(obsdir, fname, ax, marker, label, color='k', err_absolute=False):
     fname = '%s/Gas/%s' % (obsdir, fname)
     x, y, yerr_down, yerr_up = common.load_observation(obsdir, fname, (0, 1, 2, 3))
-    common.errorbars(ax, x, y, yerr_down, yerr_up, color, marker, label=label, err_absolute=False)
+    common.errorbars(ax, x, y, yerr_down, yerr_up, color, marker, label=label, err_absolute=err_absolute)
 
 def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
@@ -62,8 +62,40 @@ def prepare_data(hdf5_data):
     mh1_gals = np.zeros(shape = (2, n_typeg))
     mgas_gals = np.zeros(shape = (2, n_typeg))
 
+    mh2_gals_ltg = np.zeros(shape = (2, n_typeg))
+    mh1_gals_ltg = np.zeros(shape = (2, n_typeg))
+    mgas_gals_ltg = np.zeros(shape = (2, n_typeg))
+
+    mh2_gals_etg = np.zeros(shape = (2, n_typeg))
+    mh1_gals_etg = np.zeros(shape = (2, n_typeg))
+    mgas_gals_etg = np.zeros(shape = (2, n_typeg))
+
+    ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0) & (mbulge/(mdisk+mbulge) < 0.5))
+    # Data we'll use later
+    mass = mdisk[ind] + mbulge[ind]
+    mgas_gals_ltg[0,ind] = mh1_gals_ltg[0,ind] = mh2_gals_ltg[0,ind] = np.log10(mass) - h0log
+    mgas_gals_ltg[1,ind] = np.log10(XH * (mgas[ind] + mgas_bulge[ind]) / mass)
+    mh1_gals_ltg[1,ind] = np.log10(XH * (mHI[ind] + mHI_bulge[ind]) / mass)
+    mh2_gals_ltg[1,ind] = np.log10(XH * (mH2[ind] + mH2_bulge[ind]) / (mass))
+
+    mgas_relation_ltg = bin_it(x=mgas_gals_ltg[0, ind], y=mgas_gals_ltg[1, ind])
+    mh1_relation_ltg = bin_it(x=mh1_gals_ltg[0, ind], y=mh1_gals_ltg[1, ind])
+    mh2_relation_ltg = bin_it(x=mh2_gals_ltg[0, ind], y=mh2_gals_ltg[1, ind])
+
+    ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0) & (mbulge/(mdisk+mbulge) >= 0.5))
+    # Data we'll use later
+    mass = mdisk[ind] + mbulge[ind]
+    mgas_gals_etg[0,ind] = mh1_gals_etg[0,ind] = mh2_gals_etg[0,ind] = np.log10(mass) - h0log
+    mgas_gals_etg[1,ind] = np.log10(XH * (mgas[ind] + mgas_bulge[ind]) / mass)
+    mh1_gals_etg[1,ind] = np.log10(XH * (mHI[ind] + mHI_bulge[ind]) / mass)
+    mh2_gals_etg[1,ind] = np.log10(XH * (mH2[ind] + mH2_bulge[ind]) / (mass))
+
+    mgas_relation_etg = bin_it(x=mgas_gals_etg[0, ind], y=mgas_gals_etg[1, ind])
+    mh1_relation_etg = bin_it(x=mh1_gals_etg[0, ind], y=mh1_gals_etg[1, ind])
+    mh2_relation_etg = bin_it(x=mh2_gals_etg[0, ind], y=mh2_gals_etg[1, ind])
+
     # Constrains
-    ind = np.where((mdisk + mbulge > 9) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0))
+    ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0))
 
     # Data we'll use later
     mass = mdisk[ind] + mbulge[ind]
@@ -95,7 +127,9 @@ def prepare_data(hdf5_data):
 
     return (mgas_relation, mgas_relation_cen, mgas_relation_sat,
             mh2_gals, mh1_gals, mgas_gals,
-            mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat)
+            mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat, 
+            mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, 
+	    mh1_relation_etg)
 
 def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relation_cen, mgas_relation_sat):
 
@@ -139,28 +173,45 @@ def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relatio
     common.savefig(output_dir, fig, "cold_gas_fraction.pdf")
 
 
-def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation):
+def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, 
+    mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg):
 
     xmin, xmax, ymin, ymax = 9, 12, -3, 1
-    fig = plt.figure(figsize=(5,12.5))
+    fig = plt.figure(figsize=(11,11))
 
     # First subplot
-    ax = fig.add_subplot(311)
+    ax = fig.add_subplot(321)
     plt.subplots_adjust(left=0.15)
 
     xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
     ytit="$\\rm log_{10}(M_{\\rm HI+H_2}/M_{\\rm star})$"
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
-    #Predicted relation
+    #Predicted relation for all galaxies
     ind = np.where((mgas_gals[0,:] > 0) & (mgas_gals[1,:] != 0) )
     xdata = mgas_gals[0,ind]
     ydata = mgas_gals[1,ind]
     us.density_contour(xdata[0], ydata[0], 30, 30, ax=ax) #, **contour_kwargs)
-    ind = np.where(mgas_relation[0,:] != 0)
-    xplot = xmf[ind]
-    yplot = mgas_relation[0,ind]
-    ax.plot(xplot,yplot[0],color='k', label="Shark all galaxies")
+
+    def plot_mrelation(mrelation, color, label=None, linestyle=None):
+        ind = np.where(mrelation[0,:] != 0)
+        xplot = xmf[ind]
+        yplot = mrelation[0,ind]
+        ax.plot(xplot,yplot[0], color=color, label=label, linestyle=linestyle)
+
+    def plot_mrelation_fill(mrelation, color, colorfill, label=None, linestyle=None):
+        ind = np.where(mrelation[0,:] != 0)
+        xplot = xmf[ind]
+        yplot = mrelation[0,ind]
+        errdn = mrelation[1,ind]
+        errup = mrelation[2,ind]
+
+        ax.plot(xplot,yplot[0], color=color, label=label, linestyle=linestyle)
+        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=colorfill, alpha=0.2,interpolate=True)
+        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colorfill, alpha=0.2,interpolate=True)
+
+
+    plot_mrelation(mgas_relation, 'k', label="Shark all galaxies")
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xCOLDGAS+xGASS")
@@ -169,11 +220,25 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     common.prepare_legend(ax, ['k','k','k'])
 
     # Second subplot
-    ax = fig.add_subplot(312)
+    ax = fig.add_subplot(322)
+    xmin, xmax, ymin, ymax = 9, 12, -4, 1
+
+    prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
+
+    plot_mrelation_fill(mgas_relation_ltg, 'b', 'b',label="Shark LTGs",linestyle='dashed')
+    plot_mrelation_fill(mgas_relation_etg, 'r', 'r',label="Shark ETGs",linestyle='dotted')
+
+
+    # Legend
+    common.prepare_legend(ax, ['b','r','k'],loc=1)
+
+    # Third subplot
+    ax = fig.add_subplot(323)
     plt.subplots_adjust(left=0.15)
 
     xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
     ytit="$\\rm log_{10}(M_{\\rm HI}/M_{\\rm star})$"
+    xmin, xmax, ymin, ymax = 9, 12, -3, 1
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
     #Predicted relation
@@ -181,24 +246,42 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     xdata = mh1_gals[0,ind]
     ydata = mh1_gals[1,ind]
     us.density_contour(xdata[0], ydata[0], 30, 30, ax=ax) #, **contour_kwargs)
-    ind = np.where(mh1_relation[0,:] != 0)
-    xplot = xmf[ind]
-    yplot = mh1_relation[0,ind]
-    ax.plot(xplot,yplot[0],color='k', label="Shark all galaxies")
+    plot_mrelation(mh1_relation, 'k')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xGASS")
     add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQZero.dat', ax, '^', "xGASS")
 
-    # Legend
-    common.prepare_legend(ax, ['k','k','k'])
 
-    # Third subplot
-    ax = fig.add_subplot(313)
+    m, mrat, merr = common.load_observation(obs_dir, 'Gas/RHI-Mstars_Brown15.dat', [0,1,2])
+    errdn = np.log10(mrat) - np.log10(mrat - merr) 
+    errup = np.log10(mrat + merr) - np.log10(mrat) 
+    ax.errorbar(m,np.log10(mrat),yerr=[errdn,errup], ls='None', mfc='Salmon', fillstyle='full', ecolor = 'Salmon', mec='Salmon',marker='o',markersize=7, label="Brown+15")
+
+    # Legend
+    common.prepare_legend(ax, ['k','k','Salmon'], loc=1)
+
+    # Fourth subplot
+    ax = fig.add_subplot(324)
+    xmin, xmax, ymin, ymax = 9, 12, -4, 1
+    prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
+
+    plot_mrelation_fill(mh1_relation_ltg, 'b', 'b',linestyle='dashed')
+    plot_mrelation_fill(mh1_relation_etg, 'r', 'r',linestyle='dotted')
+
+    add_observations_to_plot(obs_dir, 'RHI-Mstars_Callette18-LTGs.csv', ax, 's', "Calette+18 LTGs", color='grey', err_absolute=True)
+    add_observations_to_plot(obs_dir, 'RHI-Mstars_Callette18-ETGs.csv', ax, 'o', "Calette+18 ETGs", color='grey', err_absolute=True)
+
+    # Legend
+    common.prepare_legend(ax, ['grey','grey','grey'],loc=1)
+
+    # Fifth subplot
+    ax = fig.add_subplot(325)
     plt.subplots_adjust(left=0.15)
 
     xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
     ytit="$\\rm log_{10}(M_{\\rm H_2}/M_{\\rm star})$"
+    xmin, xmax, ymin, ymax = 9, 12, -3, 1
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
     #Predicted relation
@@ -206,16 +289,28 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     xdata = mh2_gals[0,ind]
     ydata = mh2_gals[1,ind]
     us.density_contour(xdata[0], ydata[0], 30, 30, ax=ax) #, **contour_kwargs)
-    ind = np.where(mh2_relation[0,:] != 0)
-    xplot = xmf[ind]
-    yplot = mh2_relation[0,ind]
-    ax.plot(xplot,yplot[0],color='k', label="Shark all galaxies")
+    plot_mrelation(mh2_relation, 'k')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xCOLDGASS")
     add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGASS")
 
-    common.prepare_legend(ax, ['k','k','k'])
+    common.prepare_legend(ax, ['k','k','k'], loc = 1)
+
+    # Fourth subplot
+    ax = fig.add_subplot(326)
+    xmin, xmax, ymin, ymax = 9, 12, -4, 1
+    prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
+
+    plot_mrelation_fill(mh2_relation_ltg, 'b', 'b',linestyle='dashed')
+    plot_mrelation_fill(mh2_relation_etg, 'r', 'r',linestyle='dotted')
+
+    add_observations_to_plot(obs_dir, 'RH2-Mstars_Callette18-LTGs.csv', ax, 's', "Calette+18 LTGs",color='grey', err_absolute=True)
+    add_observations_to_plot(obs_dir, 'RH2-Mstars_Callette18-ETGs.csv', ax, 'o', "Calette+18 ETGs",color='grey', err_absolute=True)
+
+    # Legend
+    common.prepare_legend(ax, ['grey','grey','grey'],loc=1)
+
     common.savefig(output_dir, fig, "molecular_gas_fraction.pdf")
 
 def plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_relation_sat):
@@ -264,10 +359,14 @@ def main():
 
     (mgas_relation, mgas_relation_cen, mgas_relation_sat,
      mh2_gals, mh1_gals, mgas_gals,
-     mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat) = prepare_data(hdf5_data)
+     mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat,
+     mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg,
+     mgas_relation_etg, mh2_relation_etg, mh1_relation_etg) = prepare_data(hdf5_data)
 
     plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relation_cen, mgas_relation_sat)
-    plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation)
+
+    plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg)
+
     plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_relation_sat)
 
 if __name__ == '__main__':
