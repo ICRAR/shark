@@ -263,6 +263,21 @@ install(PROGRAMS
 #
 if( SHARK_TEST )
 	find_package(CxxTest)
+
+	# In cmake < 3.7 the cxxtestgen executable is always executed through an
+	# interpreter, and doesn't honour the shebang line that could be present.
+	# We try to rectify this situation here with a solution similar to what
+	# is found in cmake >= 3.7
+	if (${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 7 AND
+	    NOT "${CXXTEST_PYTHON_TESTGEN_EXECUTABLE}" STREQUAL "")
+		execute_process(COMMAND ${CXXTEST_PYTHON_TESTGEN_EXECUTABLE} --version
+		                OUTPUT_VARIABLE _CXXTEST_OUT ERROR_VARIABLE _CXXTEST_OUT
+		                RESULT_VARIABLE _CXXTEST_RESULT)
+		if (_CXXTEST_RESULT EQUAL 0)
+			set(CXXTEST_TESTGEN_INTERPRETER "")
+		endif()
+	endif()
+
 	if( CXXTEST_FOUND )
 		enable_testing()
 		add_subdirectory(tests)
