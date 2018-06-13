@@ -29,12 +29,20 @@
 
 #include <H5Cpp.h>
 
+// Define handy macros to detect whether we are above 1.8.11 and/or 1.10.0
+// These versions introduce some important backward-incompatible changes in the
+// C++ API that we need to be aware of if we want to support these versions
+#undef HDF5_NEWER_THAN_1_8_11
+#undef HDF5_NEWER_THAN_1_10_0
 #if HDF5_VERSION_MAJOR == 1 && \
      (HDF5_VERSION_MINOR > 10 || \
       (HDF5_VERSION_MINOR == 10 && HDF5_VERSION_PATCH >= 1))
 #define HDF5_NEWER_THAN_1_10_0
-#else
-#undef HDF5_NEWER_THAN_1_10_0
+#endif
+#if HDF5_VERSION_MAJOR == 1 && \
+     (HDF5_VERSION_MINOR > 8 || \
+      (HDF5_VERSION_MINOR == 8 && HDF5_VERSION_PATCH >= 12))
+#define HDF5_NEWER_THAN_1_8_11
 #endif
 
 namespace shark {
