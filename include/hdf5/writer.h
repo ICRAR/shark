@@ -184,21 +184,13 @@ void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, co
 	}
 }
 
-#ifdef HDF5_NEWER_THAN_1_10_0
-#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Object
-#else
-#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Location
-#endif
-
-
-template<typename T>
+template<typename AttributeHolder, typename T>
 static inline
-void _create_and_write_attribute(HDF5_GROUP_DATASET_COMMON_BASE &loc, const std::string &name, const T &value) {
+void _create_and_write_attribute(AttributeHolder &dataset, const std::string &name, const T &value) {
 	H5::DataType dataType = _datatype<T>(value);
-	auto attr = loc.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
+	auto attr = dataset.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
 	_write_attribute<T>(attr, dataType, value);
 }
-
 
 /**
  * An object that can write data in the form of attributes and datasets into an
@@ -222,7 +214,9 @@ public:
 		if (comment.empty()) {
 			return;
 		}
+#ifdef HDF5_NEWER_THAN_1_8_11
 		dataset.setComment(comment);
+#endif
 		_create_and_write_attribute(dataset, "comment", comment);
 	}
 
@@ -231,10 +225,11 @@ public:
 
 		std::vector<std::string> parts = tokenize(name, "/");
 
-		// only the attribute name, read directly and come back
-		if( parts.size() == 1 ) {
-			_create_and_write_attribute<T>(hdf5_file, name, value);
-			return;
+		// Cannot attach attributes directly to files
+		if (parts.size() == 1) {
+			std::ostringstream os;
+			os << "cannot attach attribute " << name << " directly to HDF5 file";
+			throw invalid_argument(os.str());
 		}
 
 		// Get the corresponding group/dataset and write the attribute there
