@@ -217,6 +217,15 @@ public:
 	Writer(const std::string &filename, bool overwrite = true) :
 		IOBase(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL) {}
 
+	void set_comment(H5::DataSet &dataset, const std::string &comment)
+	{
+		if (comment.empty()) {
+			return;
+		}
+		dataset.setComment(comment);
+		_create_and_write_attribute(dataset, "comment", comment);
+	}
+
 	template<typename T>
 	void write_attribute(const std::string &name, const T &value) {
 
@@ -247,10 +256,7 @@ public:
 		H5::DataSpace dataSpace(H5S_SCALAR);
 		H5::DataType dataType = _datatype<T>(value);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
-		if (not comment.empty()) {
-			dataset.setComment(comment);
-			_create_and_write_attribute(dataset, "comment", comment);
-		}
+		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, value);
 	}
 
@@ -260,10 +266,7 @@ public:
 		H5::DataSpace dataSpace(1, &size);
 		H5::DataType dataType = _datatype<T>(values);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
-		if (not comment.empty()) {
-			dataset.setComment(comment);
-			_create_and_write_attribute(dataset, "comment", comment);
-		}
+		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, values);
 	}
 
@@ -276,10 +279,7 @@ public:
 		H5::DataSpace dataSpace(2, sizes);
 		H5::DataType dataType = _datatype<T>(values);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
-		if (not comment.empty()) {
-			dataset.setComment(comment);
-			_create_and_write_attribute(dataset, "comment", comment);
-		}
+		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, values);
 	}
 
