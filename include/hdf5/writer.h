@@ -241,7 +241,7 @@ public:
 		std::vector<std::string> path(parts.begin(), parts.end()-1);
 		try {
 			auto group = ensure_group(path);
-			_create_and_write_attribute<T>(group, parts.back(), value);
+			_create_and_write_attribute(group, parts.back(), value);
 		} catch (const object_exists &e) {
 			// name doesn't point to a group but to an existing dataset
 			// if this one fails we give up
