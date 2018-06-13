@@ -14,6 +14,7 @@
 
 #include "agn_feedback.h"
 #include "components.h"
+#include "cosmology.h"
 #include "dark_matter_halos.h"
 #include "options.h"
 #include "physical_model.h"
@@ -64,6 +65,7 @@ class GalaxyMergers{
 
 public:
 	GalaxyMergers(GalaxyMergerParameters parameters,
+			const CosmologyPtr &cosmology,
 			SimulationParameters simparams,
 			const DarkMatterHalosPtr &darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
@@ -102,6 +104,7 @@ public:
 
 private:
 	GalaxyMergerParameters parameters;
+	std::shared_ptr<Cosmology> cosmology;
 	SimulationParameters simparams;
 	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;

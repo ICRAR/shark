@@ -39,7 +39,7 @@ public:
 	void create_galaxies(const std::vector<MergerTreePtr> &merger_trees, TotalBaryon &AllBaryons);
 
 private:
-	bool create_galaxies(const HaloPtr &halo, double z);
+	bool create_galaxies(const HaloPtr &halo, double z, id_t ID);
 
 	CosmologyPtr cosmology;
 	GasCoolingParameters cool_params;
