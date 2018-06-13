@@ -39,36 +39,36 @@ namespace hdf5 {
 class attribute_not_found : public std::exception {};
 class name_not_found : public std::exception {};
 
+# ifdef HDF5_NEWER_THAN_1_10_0
+typedef H5::Group CommonFG;
+# else
+typedef H5::CommonFG CommonFG;
+# endif
 
-H5::Attribute Reader::get_attribute(const string &name) const {
-	LOG(debug) << "Getting attribute " << name << " from file " << get_filename();
-	std::vector<std::string> parts = tokenize(name, "/");
-
-	try {
-		return _get_attribute(hdf5_file, parts);
-	} catch (const attribute_not_found &) {
-		std::ostringstream os;
-		os << "Attribute " << name << " doesn't exist in " << get_filename();
-		throw invalid_data(os.str());
-	} catch (const name_not_found &) {
-		std::ostringstream os;
-		os << "Name " << name << " names no object in file " << get_filename();
-		throw invalid_data(os.str());
+template <typename AttributeHolder>
+static H5::Attribute _get_attribute(const AttributeHolder &l, const std::string attr_name)
+{
+	auto exists = H5Aexists(l.getId(), attr_name.c_str());
+	if (exists == 0) {
+		throw attribute_not_found();
 	}
+	else if (exists < 0) {
+		throw std::runtime_error("Error on H5Aexists");
+	}
+	return l.openAttribute(attr_name);
 }
 
-H5::Attribute Reader::_get_attribute(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::vector<std::string> &parts) const
+static H5::Attribute _get_attribute(const CommonFG &file_or_group, const std::vector<std::string> &parts)
 {
-
 	// This is the attribute name
 	if (parts.size() == 1) {
-		// both file and groups derive from H5Location too
-		return _get_attribute(dynamic_cast<const HDF5_GROUP_DATASET_COMMON_BASE &>(file_or_group), parts[0]);
+		// This is a group (we don't support attributes in files)
+		return _get_attribute(static_cast<const H5::Group &>(file_or_group), parts[0]);
 	}
 
 	auto n_groups = file_or_group.getNumObjs();
 
-	const auto path = parts.front();
+	auto &path = parts.front();
 	for(hsize_t i = 0; i < n_groups; i++) {
 
 		auto objname = file_or_group.getObjnameByIdx(i);
@@ -90,15 +90,25 @@ H5::Attribute Reader::_get_attribute(const HDF5_FILE_GROUP_COMMON_BASE &file_or_
 	throw name_not_found();
 }
 
-H5::Attribute Reader::_get_attribute(const HDF5_GROUP_DATASET_COMMON_BASE &l, const std::string attr_name) const {
-
-	LOG(debug) << "Getting attribute " << attr_name << " from file " << get_filename();
-
-	if (!l.attrExists(attr_name)) {
-		throw attribute_not_found();
+H5::Attribute Reader::get_attribute(const string &name) const
+{
+	LOG(debug) << "Getting attribute " << name << " from file " << get_filename();
+	std::vector<std::string> parts = tokenize(name, "/");
+	if (parts.size() == 1) {
+		throw invalid_argument("attribute name does not name a group or dataset");
 	}
 
-	return l.openAttribute(attr_name);
+	try {
+		return _get_attribute(hdf5_file, parts);
+	} catch (const attribute_not_found &) {
+		std::ostringstream os;
+		os << "Attribute " << name << " doesn't exist in " << get_filename();
+		throw invalid_data(os.str());
+	} catch (const name_not_found &) {
+		std::ostringstream os;
+		os << "Name " << name << " names no object in file " << get_filename();
+		throw invalid_data(os.str());
+	}
 }
 
 }  // namespace hdf5
