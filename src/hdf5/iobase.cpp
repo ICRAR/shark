@@ -81,7 +81,10 @@ H5::DataSpace IOBase::get_nd_dataspace(const H5::DataSet &dataset, unsigned int 
 	int ndims = space.getSimpleExtentNdims();
 	if (ndims != expected_ndims) {
 		ostringstream os;
-		os << ndims << " dimensions found in dataset " << dataset.getObjName();
+		os << ndims << " dimensions found in dataset";
+#ifdef HDF5_NEWER_THAN_1_8_11
+		os << " " << dataset.getObjName();
+#endif // HDF5_NEWER_THAN_1_8_11
 		os << ", " << expected_ndims << " expected";
 		throw runtime_error(os.str());
 	}
