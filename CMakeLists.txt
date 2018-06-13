@@ -97,6 +97,42 @@ endmacro()
 #
 macro(find_hdf5)
 	find_package(HDF5 REQUIRED COMPONENTS CXX)
+
+	#
+	# HDF5_VERSION is defined only in cmake 3.3+
+	# Even in these newer cmakes, there are cases in which the version is still
+	# not properly calculated though, so let us check simply for an empty string
+	# and compile a small problem that prints the version of the HDF5 found
+	# by cmake.
+	#
+	if (NOT HDF5_VERSION)
+		message("-- HDF5 version not found automatically, taking it into our hands now...")
+		set(scratch_directory ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/hdf5)
+		set(test_file ${scratch_directory}/cmake_version.cxx)
+		file(WRITE ${test_file}
+		     "#include <stdio.h>\n"
+		     "#include <H5Cpp.h>\n"
+		     "int main(int argc, char **argv) {\n"
+		     "  printf(\"INFO:\" H5_VERSION);\n"
+		     "  return 0;\n"
+		     "}")
+		try_compile(_success ${scratch_directory} ${test_file}
+		            CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${HDF5_INCLUDE_DIRS}"
+		            COPY_FILE ${scratch_directory}/hdf5_version)
+		if (NOT _success)
+			message(FATAL_ERROR "\nFailed to compile test program to find HDF5 version")
+		endif()
+		execute_process(COMMAND ${scratch_directory}/hdf5_version OUTPUT_VARIABLE _VER)
+		string(REGEX MATCH "^INFO:([0-9]+\\.[0-9]+\\.[0-9]+)(-patch([0-9]+))?" INFO_VER "${_VER}")
+		set(HDF5_VERSION ${CMAKE_MATCH_1})
+		if(CMAKE_MATCH_3)
+			set(HDF5_VERSION ${HDF5_VERSION}.${CMAKE_MATCH_3})
+		endif()
+		mark_as_advanced(HDF5_VERSION)
+		message("-- Found HDF5 version ${HDF5_VERSION}")
+	endif()
+
+	# We support 1.8.12+
 	if (NOT HDF5_VERSION VERSION_GREATER "1.8.11")
 		message(FATAL_ERROR
 				  "\nHDF5 version ${HDF5_VERSION} found, "
