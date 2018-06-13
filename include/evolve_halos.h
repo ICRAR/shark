@@ -32,13 +32,15 @@
 #include "cosmology.h"
 #include "execution.h"
 #include "physical_model.h"
+#include "simulation.h"
 #include "star_formation.h"
 
 namespace shark {
 
 void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology, TotalBaryon &AllBaryons, int snapshot);
 
-void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot, const molgas_per_galaxy &molgas);
+void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, SimulationParameters simulation_params, const std::vector<HaloPtr> &halos,
+		TotalBaryon &AllBaryons, int snapshot, const molgas_per_galaxy &molgas, double deltat);
 
 }  // namespace shark
 

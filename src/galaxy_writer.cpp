@@ -183,6 +183,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<long> id;
 	vector<long> host_id;
 	vector<long> id_galaxy;
+	vector<long> descendant_id_galaxy;
 
 	// Create all galaxies properties to write
 	vector<float> mstars_disk;
@@ -208,6 +209,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	vector<float> sfr_disk;
 	vector<float> sfr_burst;
+	vector<float> mean_stellar_age;
 
 	vector<float> rdisk_gas;
 	vector<float> rbulge_gas;
@@ -257,10 +259,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<Subhalo::id_t> id_subhalo;
 	vector<Subhalo::id_t> id_subhalo_tree;
 
-
-
 	long j = 1;
-	long gal_id = 1;
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
@@ -312,7 +311,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mstars_bulge.push_back(galaxy->bulge_stars.mass);
 				mstars_burst_mergers.push_back(galaxy->galaxymergers_burst_stars.mass);
 				mstars_burst_diskinstabilities.push_back(galaxy->diskinstabilities_burst_stars.mass);
-
+				mean_stellar_age.push_back(galaxy->mean_stellar_age / galaxy->total_stellar_mass_ever_formed);
 
 				// Gas components
 				mgas_disk.push_back(galaxy->disk_gas.mass);
@@ -398,6 +397,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					vvir_hosthalo.push_back(vhalo);
 					lambda_subhalo.push_back(l_sub);
 					redshift_of_merger.push_back(-1);
+					if(snapshot < sim_params.max_snapshot){
+						galaxy->descendant_id = galaxy->id;
+					}
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
@@ -409,8 +411,24 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 					// calculate the age of the universe by the time this galaxy will merge.
 					double tmerge  = cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot-1]) + galaxy->tmerge;
-					redshift_of_merger.push_back(cosmology->convert_age_to_redshift_lcdm(tmerge));
+					double redshift_merger = cosmology->convert_age_to_redshift_lcdm(tmerge);
+					redshift_of_merger.push_back(redshift_merger);
+
+					//Check whether this type 2 galaxy will merge on the next snapshot. this is done by
+					//checking if their descendant_id has been defined (which would happen in galaxy_mergers
+					//if this galaxy merges on the next snapshot.
+					if(galaxy->descendant_id < 0 and snapshot < sim_params.max_snapshot){
+						galaxy->descendant_id = galaxy->id;
+					}
 				}
+
+				//force the descendant Id to be = -1 if this is the last snapshot.
+				if(snapshot == sim_params.max_snapshot){
+					galaxy->descendant_id = -1;
+				}
+
+				id_galaxy.push_back(galaxy->id);
+				descendant_id_galaxy.push_back(galaxy->descendant_id);
 
 				vmax_subhalo.push_back(galaxy->vmax);
 
@@ -432,9 +450,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				id_halo.push_back(j);
 				id_subhalo.push_back(i);
 
-				id_galaxy.push_back(gal_id);
-
-				gal_id ++;
 			}
 			i++;
 		}
@@ -448,6 +463,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(main);
 	REPORT(id);
 	REPORT(id_galaxy);
+	REPORT(descendant_id_galaxy);
 	REPORT(host_id);
 	REPORT(mstars_disk);
 	REPORT(mstars_bulge);
@@ -459,6 +475,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mstars_metals_bulge);
 	REPORT(mstars_metals_burst_mergers);
 	REPORT(mstars_metals_burst_diskinstabilities);
+	REPORT(mean_stellar_age);
 	REPORT(mgas_metals_disk);
 	REPORT(mgas_metals_bulge);
 	REPORT(mmol_disk);
@@ -554,6 +571,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "mass of metals locked in stars that formed via starbursts driven by disk instabilities [Msun/h]";
 	file.write_dataset("Galaxies/mstars_metals_burst_diskinstabilities", mstars_metals_burst_diskinstabilities, comment);
+
+	comment = "stellar mass-weighted stellar age [Gyr]";
+	file.write_dataset("Galaxies/mean_stellar_age", mean_stellar_age, comment);
 
 	comment = "mass of metals locked in the gas of the disk [Msun/h]";
 	file.write_dataset("Galaxies/mgas_metals_disk", mgas_metals_disk, comment);
@@ -685,12 +705,19 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	//Galaxy IDs.
 	comment = "subhalo ID. Unique to this snapshot.";
 	file.write_dataset("Galaxies/id_subhalo", id_subhalo, comment);
+
 	comment = "halo ID. Unique to this snapshot.";
 	file.write_dataset("Galaxies/id_halo", id_halo, comment);
-	comment = "galaxy ID. Unique to this snapshot.";
+
+	comment = "galaxy ID. Unique to this galaxy throughout time. If this galaxy never mergers onto a central, then its ID is always the same.";
 	file.write_dataset("Galaxies/id_galaxy", id_galaxy, comment);
+
+	comment = "descendant galaxy ID. Different to galaxy id only if galaxy is type 2 and merges on the next snapshot.";
+	file.write_dataset("Galaxies/descendant_id_galaxy", descendant_id_galaxy, comment);
+
 	comment = "subhalo id in the tree (unique to entire halo catalogue).";
 	file.write_dataset("Galaxies/id_subhalo_tree", id_subhalo_tree, comment);
+
 	comment = "halo id in the tree (unique to entire halo catalogue).";
 	file.write_dataset("Galaxies/id_halo_tree", id_halo_tree, comment);
 

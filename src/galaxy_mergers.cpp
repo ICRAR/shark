@@ -44,11 +44,13 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 }
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
+		const CosmologyPtr &cosmology,
 		SimulationParameters simparams,
 		const DarkMatterHalosPtr &darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
 		const AGNFeedbackPtr &agnfeedback) :
 	parameters(parameters),
+	cosmology(cosmology),
 	simparams(simparams),
 	darkmatterhalo(darkmatterhalo),
 	physicalmodel(physicalmodel),
@@ -276,10 +278,19 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 			 */
 			if(galaxy->tmerge < delta_t){
 				create_merger(central_galaxy, galaxy, halo, snapshot);
-				// Accummulate all satellites that we need to delete at the end.
+				// Accumulate all satellites that we need to delete at the end.
 				all_sats_to_delete.push_back(galaxy);
 			}
 			else{
+				//check if this galaxy will merge on the next snapshot instead, and if so, redefine their descendant_id.
+				if(snapshot+2 < simparams.max_snapshot){
+					double z1 = simparams.redshifts[snapshot];
+					double z2 = simparams.redshifts[snapshot+2];
+					double delta_t_twosnaps = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+					if(galaxy->tmerge < delta_t_twosnaps){
+						galaxy->descendant_id = central_galaxy->id;
+					}
+				}
 				galaxy->tmerge = galaxy->tmerge - delta_t;
 			}
 		}
