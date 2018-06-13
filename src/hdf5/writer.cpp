@@ -110,7 +110,7 @@ H5::Group Writer::ensure_group(const std::vector<std::string> &path) const
 
 	H5::Group group =  ensure_entity<H5G_GROUP>(hdf5_file, path.front());
 	std::vector<std::string> group_paths(path.begin() + 1, path.end());
-	for(auto part: path) {
+	for(auto part: group_paths) {
 		group = ensure_entity<H5G_GROUP>(group, part);
 	}
 	return group;
