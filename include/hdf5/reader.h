@@ -95,15 +95,7 @@ private:
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, T>::type
 	_read_dataset(const H5::DataSet &dataset) const {
-
-		H5::DataSpace space = get_1d_dataspace(dataset);
-		hsize_t dim_size = get_1d_dimsize(space);
-		if ( dim_size != 1 ) {
-			std::ostringstream os;
-			os << "More than 1 element found in dataset " << dataset.getObjName();
-			throw std::runtime_error(os.str());
-		}
-
+		H5::DataSpace space = get_scalar_dataspace(dataset);
 		T data_out;
 		dataset.read(&data_out, dataset.getDataType(), space, space);
 		return data_out;

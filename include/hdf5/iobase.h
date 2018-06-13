@@ -89,6 +89,7 @@ protected:
 
 	H5::DataSet get_dataset(const std::string &name) const;
 	H5::DataSet get_dataset(const std::vector<std::string> &path) const;
+	H5::DataSpace get_scalar_dataspace(const H5::DataSet &dataset) const;
 	H5::DataSpace get_1d_dataspace(const H5::DataSet &dataset) const;
 	H5::DataSpace get_2d_dataspace(const H5::DataSet &dataset) const;
 	hsize_t get_1d_dimsize(const H5::DataSpace &space) const;
@@ -98,6 +99,7 @@ protected:
 private:
 
 	bool opened;
+	H5::DataSpace get_nd_dataspace(const H5::DataSet &dataset, unsigned int expected_ndims) const;
 };
 
 }  // namespace hdf5
