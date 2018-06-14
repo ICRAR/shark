@@ -1,5 +1,7 @@
 # SHArk
 
+[![Build Status](https://travis-ci.org/ICRAR/shark.svg?branch=master)](https://travis-ci.org/ICRAR/shark)
+
 SHArk (Semi-analytic Halo Ark)
 is a new, flexible semi-analytic model of galaxy formation.
 
