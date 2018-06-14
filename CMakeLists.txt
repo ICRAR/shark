@@ -22,7 +22,8 @@
 # You should have received a copy of the GNU General Public License
 # along with libprofit.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.1)
+# cmake 3.2 comes with FindGSL.cmake
+cmake_minimum_required(VERSION 3.2)
 
 # We have the version here
 file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
