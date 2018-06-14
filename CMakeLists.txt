@@ -20,7 +20,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with libprofit.  If not, see <http://www.gnu.org/licenses/>.
+# along with shark.  If not, see <http://www.gnu.org/licenses/>.
 
 # cmake 3.2 comes with FindGSL.cmake
 cmake_minimum_required(VERSION 3.2)
@@ -31,13 +31,13 @@ file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
 # We have only C++ sources, but until cmake 3.4 the check_symbol_exists
 # macro didn't work properly if only defining C++ as the project language
 if( ${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 4 )
-	set(PROFIT_LANGS C CXX)
+	set(SHARK_LANGS C CXX)
 else()
-	set(PROFIT_LANGS CXX)
+	set(SHARK_LANGS CXX)
 endif()
 
 # Our project...
-project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${PROFIT_LANGS})
+project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
 
@@ -182,7 +182,7 @@ find_threads()
 find_gsl()
 find_hdf5()
 find_boost()
-if (NOT LIBPROFIT_NO_OPENMP)
+if (NOT SHARK_NO_OPENMP)
 	find_openmp()
 endif()
 
