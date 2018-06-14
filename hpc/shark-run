@@ -129,9 +129,10 @@ module_names=
 shark_verbosity=3
 shark_binary=
 shark_subvolumes=
+shark_options=()
 
 # Parse command line options
-while getopts "h?m:v:S:V:" opt
+while getopts "h?m:v:S:V:o:" opt
 do
 	case "$opt" in
 		[h?])
@@ -149,6 +150,9 @@ do
 			;;
 		V)
 			shark_subvolumes="$OPTARG"
+			;;
+		o)
+			shark_options+=("$OPTARG")
 			;;
 		*)
 			print_usage 1>&2
@@ -259,7 +263,12 @@ if [ -n "$(command -v time 2> /dev/null)" -a "`type -t time`" = "file" ]
 then
 	post_cmd="time"
 fi
-post_cmd="$post_cmd $shark_binary -v $shark_verbosity $config_file"
+post_cmd="$post_cmd $shark_binary "
+for o in ${shark_options[*]}
+do
+	post_cmd="$post_cmd -o $o"
+done
+post_cmd="$post_cmd -v $shark_verbosity $config_file"
 
 info "Processing ${#shark_subvolumes[*]} subvolume(s): ${shark_subvolumes[*]}"
 info ""
