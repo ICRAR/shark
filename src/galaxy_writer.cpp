@@ -22,6 +22,7 @@
 // MA 02111-1307  USA
 //
 
+#include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -119,6 +120,11 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 
 	comment = "output redshift";
 	file.write_dataset("runInfo/redshift", sim_params.redshifts[snapshot], comment);
+
+	comment = "time at which this shark execution started";
+	char time_str[20];
+	std::strftime(time_str, sizeof(time_str), "%Y-%m-%dT%H:%M:%S", std::gmtime(&exec_params.starting_time));
+	file.write_dataset("runInfo/timestamp", std::string(time_str), comment);
 
 	file.write_attribute("runInfo/model_name", exec_params.name_model);
 
