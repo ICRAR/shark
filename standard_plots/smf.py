@@ -266,10 +266,10 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
             ax.plot(xmf[ind],y[ind],'k', label='Shark' if idx == 0 else None)
             y = hist_smf_modelvar[idx,0:44]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'r', linestyle='dotted', label='$\\beta = 0$ (SN)' if idx == 0 else None)
+            ax.plot(xmf[ind],y[ind],'r', linestyle='dotted', label='$z_{\\rm P} = 0$ (SN)' if idx == 0 else None)
             y = hist_smf_modelvar[idx,136:180]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],color='Crimson', linestyle='dashed', label='$\\alpha = 2$ (SN)' if idx == 0 else None)
+            ax.plot(xmf[ind],y[ind],color='Crimson', linestyle='dashed', label='$\\beta = 2$ (SN)' if idx == 0 else None)
             #y = hist_smf_modelvar[idx,45:90]
             #ind = np.where(y < 0.)
             #ax.plot(xmf[ind],y[ind],'b', linestyle='dashed', label='$f_{\\rm df} = 1$' if idx == 0 else None)
@@ -533,61 +533,221 @@ def plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat):
     common.savefig(outdir, fig, 'mzr.pdf')
 
 
-def plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat):
+def plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainseqsf_1s, mainseqHI, mainseqH2):
 
 
-    fig = plt.figure(figsize=(9.5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    fig = plt.figure(figsize=(4.5,9))
+    plt.subplots_adjust(left=0.15,bottom=0.1)
+
+    xtit=' '
     ytit="$\\rm log_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
-    xmin, xmax, ymin, ymax = 7.1, 12, -3, 3
+    xmin, xmax, ymin, ymax = 8., 12, -3, 2
     xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymin + 0.1 * (ymax - ymin)
+
+
+    mainseqsf_modelvar = np.zeros(shape = (5, 270))
+    mainseqsf_modelvar[0,:], mainseqsf_modelvar[1,:], mainseqsf_modelvar[2,:], mainseqsf_modelvar[3,:], mainseqsf_modelvar[4,:] = common.load_observation('/group/pawsey0119/clagos/Data/', 'SFRMstars_OtherModels.dat', [0,1,2,3,4])
+
+    mainseqsf_GD14  = np.zeros(shape = (2, 5, len(xmf)))
+    mainseqsf_KMT09 = np.zeros(shape = (2, 5, len(xmf)))
+    mainseqsf_K13   = np.zeros(shape = (2, 5, len(xmf)))
+
+    for z in range(0,2):
+            st = len(xmf) * z
+	    for j in range(0,5):
+		    for i in range(0,len(xmf)):
+			    mainseqsf_GD14[z,j,i] = mainseqsf_modelvar[j,st+i]
+
+    for z in range(0,2):
+            st = len(xmf) * (z+2)
+	    for j in range(0,5):
+		    for i in range(0,len(xmf)):
+			    mainseqsf_KMT09[z,j,i] = mainseqsf_modelvar[j,st+i]
+
+    for z in range(0,2):
+            st = len(xmf) * (z+4)
+	    for j in range(0,5):
+		    for i in range(0,len(xmf)):
+			    mainseqsf_K13[z,j,i] = mainseqsf_modelvar[j,st+i]
+
+    idx = 0
+    idx_modelvar = 0
+    z = 0
+    subplot = (311)
+
+    ax = fig.add_subplot(subplot)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+ 
+    #Predicted relation
+    ind = np.where(mainseqsf[idx,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqsf[idx,0,ind]
+    #errdn = mainseqsf[idx,1,ind]
+    #errup = mainseqsf[idx,2,ind]
+    errdn = mainseqsf_1s[idx,1,ind]
+    errup = mainseqsf_1s[idx,2,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', alpha=1,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', alpha=1,interpolate=True)
+    #ax.fill_between(xplot,yplot[0],yplot[0]-errdn_1s[0], facecolor='b', alpha=0.4,interpolate=True)
+    #ax.fill_between(xplot,yplot[0],yplot[0]+errup_1s[0], facecolor='b', alpha=0.4,interpolate=True)
+    ax.plot(xplot,yplot[0],'k', linestyle='solid', label="Shark")
+ 
+    ind = np.where(mainseqsf_GD14[idx_modelvar,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqsf_GD14[idx_modelvar,0,ind]
+    errdn = mainseqsf_GD14[idx_modelvar,3,ind]
+    errup = mainseqsf_GD14[idx_modelvar,4,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.3,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.3,interpolate=True)
+    ax.plot(xplot,yplot[0],'r', linestyle='dashed', label="GD14")
+ 
+    ind = np.where(mainseqsf_KMT09[idx_modelvar,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqsf_KMT09[idx_modelvar,0,ind]
+    errdn = mainseqsf_KMT09[idx_modelvar,3,ind]
+    errup = mainseqsf_KMT09[idx_modelvar,4,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.3,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.3,interpolate=True)
+    ax.plot(xplot,yplot[0],'b', linestyle='dotted', label="KMT09")
+ 
+    ind = np.where(mainseqsf_K13[idx_modelvar,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqsf_K13[idx_modelvar,0,ind]
+    errdn = mainseqsf_K13[idx_modelvar,3,ind]
+    errup = mainseqsf_K13[idx_modelvar,4,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='gold', alpha=0.5,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='gold', alpha=0.5,interpolate=True)
+    ax.plot(xplot,yplot[0],'gold', linestyle='dotted', label="K13")
+ 
+    if(idx == 0):
+            colors = ['k','r','b','gold']
+            common.prepare_legend(ax, colors, bbox_to_anchor=(0.6, -0.05))
+ 
+    #HI gas fraction plots
+    xtit = "" #$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    ytit = "$\\rm log_{10}(\\rm M_{\\rm HI}/M_{\\rm star})$"
+    xmin, xmax, ymin, ymax = 8, 12, -3, 2
+    xleg = xmax - 0.3 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
-    z0obs = observation('Brinchmann+04', [7,11], [-2,1], [-2.3,0.7], [-1.7,1.3], True)
-    z1obs = observation('Elbaz+07', [9,10.7], [-0.3,1.5], [-0.6,1.2], [0,1.8], True)
+    ax = fig.add_subplot(312)
 
-    indeces = (0, 1, 2, 4)
-    zs = (0, 0.5, 1, 2)
-    subplots = (221, 222, 223, 224)
-    observations = (z0obs, None, z1obs, None)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
-    for subplot, z, idx, obs in zip(subplots, zs, indeces, observations):
+    mainseqgas_modelvar = np.zeros(shape = (6, 135))
+    mainseqgas_modelvar[0,:], mainseqgas_modelvar[1,:], mainseqgas_modelvar[2,:], mainseqgas_modelvar[3,:], mainseqgas_modelvar[4,:], mainseqgas_modelvar[5,:] = common.load_observation('/group/pawsey0119/clagos/Data/', 'GasMstars_OtherModels.dat', [0,1,2,3,4,5])
 
-        ax = fig.add_subplot(subplot)
-        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-        ax.text(xleg, yleg, 'z=%s' % str(z))
+    mainseqgas_GD14  = np.zeros(shape = (6, len(xmf)))
+    mainseqgas_KMT09 = np.zeros(shape = (6, len(xmf)))
+    mainseqgas_K13   = np.zeros(shape = (6, len(xmf)))
 
-        #Predicted relation
-        ind = np.where(mainseqsf[idx,0,:] != 0)
-        xplot = xmf[ind]
-        yplot = mainseqsf[idx,0,ind]
-        errdn = mainseqsf[idx,1,ind]
-        errup = mainseqsf[idx,2,ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='o',label="all galaxies")
+    st = 0
+    for j in range(0,6):
+	    for i in range(0,len(xmf)):
+		    mainseqgas_GD14[j,i] = mainseqgas_modelvar[j,st+i]
 
-        ind = np.where(mainseqsf_cen[idx,0,:] != 0)
-        xplot = xmf[ind]
-        yplot = mainseqsf_cen[idx,0,ind]
-        errdn = mainseqsf_cen[idx,1,ind]
-        errup = mainseqsf_cen[idx,2,ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'g', mec='g',marker='o',markersize=2,label="centrals")
+    st = len(xmf) 
+    for j in range(0,6):
+	    for i in range(0,len(xmf)):
+		    mainseqgas_KMT09[j,i] = mainseqgas_modelvar[j,st+i]
 
-        ind = np.where(mainseqsf_sat[idx,0,:] != 0)
-        xplot = xmf[ind]
-        yplot = mainseqsf_sat[idx,0,ind]
-        errdn = mainseqsf_sat[idx,1,ind]
-        errup = mainseqsf_sat[idx,2,ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='o',markersize=2,label="satellites")
+    st = len(xmf) * 2
+    for j in range(0,6):
+	    for i in range(0,len(xmf)):
+		    mainseqgas_K13[j,i] = mainseqgas_modelvar[j,st+i]
 
-        if obs:
-            ax.plot(obs.x, obs.y, 'k', label=obs.label)
-            ax.plot(obs.x, obs.yerrup, 'k', linestyle='dotted')
-            ax.plot(obs.x, obs.yerrdn, 'k', linestyle='dotted')
+    #Predicted relation
+    idx = 0
+   
+    ind = np.where(mainseqHI[idx,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqHI[idx,0,ind]
+    errdn = mainseqHI[idx,1,ind]
+    errup = mainseqHI[idx,2,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', alpha=1,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', alpha=1,interpolate=True)
+    ax.plot(xplot,yplot[0],'k', linestyle='solid')
 
-        colors = ['b', 'g', 'r']
-        if obs:
-            colors.insert(0, 'k')
-        common.prepare_legend(ax, colors)
+    idx_modelvar = 0
+    ind = np.where(mainseqgas_GD14[0+idx_modelvar,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqgas_GD14[0+idx_modelvar,ind]
+    errdn = mainseqgas_GD14[1+idx_modelvar,ind]
+    errup = mainseqgas_GD14[2+idx_modelvar,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.3,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.3,interpolate=True)
+    ax.plot(xplot,yplot[0],'r', linestyle='dashed')
+
+    ind = np.where(mainseqgas_KMT09[0+idx_modelvar,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqgas_KMT09[0+idx_modelvar,ind]
+    errdn = mainseqgas_KMT09[1+idx_modelvar,ind]
+    errup = mainseqgas_KMT09[2+idx_modelvar,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.3,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.3,interpolate=True)
+    ax.plot(xplot,yplot[0],'b', linestyle='dotted')
+
+    ind = np.where((mainseqgas_K13[0+idx_modelvar,:] != 0) & (xmf < 11))
+    xplot = xmf[ind]
+    yplot = mainseqgas_K13[0+idx_modelvar,ind]
+    errdn = mainseqgas_K13[1+idx_modelvar,ind]
+    errup = mainseqgas_K13[2+idx_modelvar,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='gold', alpha=0.5,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='gold', alpha=0.5,interpolate=True)
+    ax.plot(xplot,yplot[0],'gold', linestyle='dotted')
+
+    #HI gas fraction plots
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    ytit = "$\\rm log_{10}(\\rm M_{\\rm H_2}/M_{\\rm star})$"
+
+    xmin, xmax, ymin, ymax = 8., 12, -3, 0.5
+    xleg = xmax - 0.3 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ax = fig.add_subplot(313)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+
+    #Predicted relation
+    ind = np.where(mainseqH2[idx,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqH2[idx,0,ind]
+    errdn = mainseqH2[idx,1,ind]
+    errup = mainseqH2[idx,2,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', alpha=1,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', alpha=1,interpolate=True)
+    ax.plot(xplot,yplot[0],'k', linestyle='solid')
+
+    idx_modelvar = 3
+    ind = np.where(mainseqgas_GD14[0+idx_modelvar,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqgas_GD14[0+idx_modelvar,ind]
+    errdn = mainseqgas_GD14[1+idx_modelvar,ind]
+    errup = mainseqgas_GD14[2+idx_modelvar,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.3,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.3,interpolate=True)
+    ax.plot(xplot,yplot[0],'r', linestyle='dashed')
+
+    ind = np.where(mainseqgas_KMT09[0+idx_modelvar,:] != 0)
+    xplot = xmf[ind]
+    yplot = mainseqgas_KMT09[0+idx_modelvar,ind]
+    errdn = mainseqgas_KMT09[1+idx_modelvar,ind]
+    errup = mainseqgas_KMT09[2+idx_modelvar,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.3,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.3,interpolate=True)
+    ax.plot(xplot,yplot[0],'b', linestyle='dotted')
+
+    ind = np.where((mainseqgas_K13[0+idx_modelvar,:] != 0))
+    xplot = xmf[ind]
+    yplot = mainseqgas_K13[0+idx_modelvar,ind]
+    errdn = mainseqgas_K13[1+idx_modelvar,ind]
+    errup = mainseqgas_K13[2+idx_modelvar,ind]
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='gold', alpha=0.5,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='gold', alpha=0.5,interpolate=True)
+    ax.plot(xplot,yplot[0],'gold', linestyle='dotted')
+
 
     common.savefig(outdir, fig, 'SFR_Mstars.pdf')
 
@@ -844,7 +1004,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
                  hist_H2mf_sat, mainseq, mainseqsf, sfe, mainseq_cen, mainseqsf_cen,
                  sfe_cen, mainseq_sat, mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen,
                  mzr_sat, plotz, plotz_HImf, passive_fractions, hist_ssfr, mszr, 
-		 mszr_cen, mszr_sat):
+		 mszr_cen, mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2):
 
     (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rstar_disk, mBH, mHI, mH2,
      mgas_disk, mHI_bulge, mH2_bulge, mgas_bulge, mgas_metals_disk,
@@ -913,9 +1073,10 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
     hist_H2mf_sat[index,:] = hist_H2mf_sat[index,:] + H_H2
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
+    bin_it_2sigma = functools.partial(us.wmedians_2sigma, xbins=xmf)
+
     ind = np.where((sfr_disk+sfr_burst > 0) & (mdisk+mbulge > 0))
     mainseq[index,:] = bin_it(x=mass[ind], y=np.log10((sfr_disk[ind]+sfr_burst[ind])/(mdisk[ind]+mbulge[ind])))
-    mainseqsf[index,:] = bin_it(x=mass[ind], y=np.log10((sfr_disk[ind]+sfr_burst[ind])/h0/GyrToYr))
     passive_fractions[index,0,:] = us.fractions(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)), y = np.log10((sfr_disk[ind]+sfr_burst[ind])/(mdisk[ind]+mbulge[ind])), xbins=xmf2, ythresh=-2.2)
     passive_fractions[index,0,:] = 1.0 - passive_fractions[index,0,:] 
     H, _ = np.histogram(np.log10((sfr_disk[ind]+sfr_burst[ind])/(mdisk[ind]+mbulge[ind])),bins=np.append(ssfrbins,ssfrupp))
@@ -962,7 +1123,11 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
     ind = np.where((mstars_metals_disk+mstars_metals_bulge > 0.0) & (typeg > 0) & (mass > 8))
     mszr_sat[index,:] = bin_it(x=mass[ind], y=np.log10(((mstars_metals_disk[ind]+mstars_metals_bulge[ind])/(mdisk[ind]+mbulge[ind])/Zsun)))
 
-
+    ind = np.where((sfr_disk+sfr_burst > 0) & (mdisk+mbulge > 0) & ((sfr_disk+sfr_burst)/(mdisk+mbulge) > 1e-3))
+    mainseqsf[index,:] = bin_it_2sigma(x=mass[ind], y=np.log10((sfr_disk[ind]+sfr_burst[ind])/h0/GyrToYr))
+    mainseqsf_1s[index,:] = bin_it(x=mass[ind], y=np.log10((sfr_disk[ind]+sfr_burst[ind])/h0/GyrToYr))
+    mainseqHI[index,:] = bin_it(x=mass[ind], y=np.log10((mHI[ind]+mHI_bulge[ind])/(mdisk[ind]+mbulge[ind])))
+    mainseqH2[index,:] = bin_it(x=mass[ind], y=np.log10((mH2[ind]+mH2_bulge[ind])/(mdisk[ind]+mbulge[ind])))
 
     if volh > 0:
         vol = volh/pow(h0,3.)  # In Mpc^3
@@ -1000,6 +1165,9 @@ def main():
     mainseqsf     = np.zeros(shape = (len(zlist), 3, len(xmf)))
     mainseqsf_cen = np.zeros(shape = (len(zlist), 3, len(xmf)))
     mainseqsf_sat = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    mainseqsf_1s  = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    mainseqHI     = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    mainseqH2     = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
     mzr         = np.zeros(shape = (len(zlist), 3, len(xmf)))
     mzr_cen     = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -1047,7 +1215,8 @@ def main():
                              hist_H2mf, hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf,
                              sfe, mainseq_cen, mainseqsf_cen, sfe_cen, mainseq_sat,
                              mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen, mzr_sat, plotz,
-                             plotz_HImf, passive_fractions, hist_ssfr, mszr, mszr_cen, mszr_sat)
+                             plotz_HImf, passive_fractions, hist_ssfr, mszr, mszr_cen, 
+			     mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2)
 
         h0 = hdf5_data[0]
         if index == 0:
@@ -1090,7 +1259,7 @@ def main():
     plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat)
     plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat)
     plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat)
-    plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat)
+    plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainseqsf_1s, mainseqHI, mainseqH2)
     plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat)
     plot_fmzr(plt, outdir, fmzr)
     plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)

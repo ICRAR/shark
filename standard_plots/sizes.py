@@ -573,8 +573,6 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #Predicted size-mass for disks
-    for x in BT_fractions[0,:]:
-	print x
     ind = np.where(BT_fractions[0,:] >= 0)
     if(len(xmf[ind]) > 0):
         xplot = xmf[ind]
@@ -589,15 +587,17 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
 
     BT_othermodels = common.load_observation('/group/pawsey0119/clagos/Data/', 'BTFractions_OtherModels.dat', [0])
     BT_stable0   = BT_othermodels[0:29]
-    BT_stable1   = BT_othermodels[30:60]
+    BT_stable0p5 = BT_othermodels[30:60]
+    BT_stable1   = BT_othermodels[91:120]
+
     ind = np.where(BT_stable0 >= 0)
     xplot = xmf[ind]
     yplot = BT_stable0[ind]
     ax.plot(xplot,yplot,color='Goldenrod',linestyle='dashdot',label='$\\epsilon_{\\rm disk}=0$')
-    ind = np.where(BT_stable1 >= 0)
+    ind = np.where(BT_stable0p5 >= 0)
     xplot = xmf[ind]
-    yplot = BT_stable1[ind]
-    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=0.6$')
+    yplot = BT_stable0p5[ind]
+    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=0.5$')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     mM16, fM16, errdnfM16, errupfM16 = common.load_observation(obsdir, 'Moffet16.dat', [0,1,2,3])

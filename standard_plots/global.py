@@ -50,8 +50,23 @@ def prepare_data(hdf5_data, redshifts):
 
     sfrall = sfrdisk + sfrburst
 
+    maxden = 6.0*pow(10.0,9.0)
+    ind = 0
+    for i,j,k,l in zip(mhot, meje, mstar, mcold):
+        tot = i+j+k+l
+        if(tot/(volh/pow(h0,2.0)) > maxden):
+		print "density exceeding maxden",tot/(volh/pow(h0,2.0))/maxden
+                #deltam = tot - maxden * (volh/pow(h0,2.0))
+                #print "change",i, i - deltam
+		#mhot[ind] = i - deltam
+        ind = ind +1
+
+
     #Add up cold halo component to hot gas.
     mhot = mhot + mcold_halo
+
+
+    
 
     massbar = mcold+mhot+meje+mstar+mBH
     sfr  = sfrall / volh / GyrToYr
@@ -136,12 +151,12 @@ def prepare_data(hdf5_data, redshifts):
 
 def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, mstarden, mcoldden, mhotden, mejeden):
 
-    fig = plt.figure(figsize=(5,9))
+    fig = plt.figure(figsize=(5,12))
 
     xtit="$\\rm Lookback\, time/Gyr$"
     ytit="$\\rm log_{10}(m/m_{\\rm bar,total})$"
 
-    ax = fig.add_subplot(211)
+    ax = fig.add_subplot(311)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, 0, 13.5, -5, 0.1, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
@@ -164,7 +179,7 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     xtit="$\\rm Lookback\, time/Gyr$"
     ytit="$\\rm log_{10}(\\rho_{\\rm bar} /\\rm M_{\odot} \\rm Mpc^{-3})$"
 
-    ax = fig.add_subplot(212)
+    ax = fig.add_subplot(312)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, 0, 13.5, 6, 10, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
@@ -179,16 +194,72 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
 
     lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'EAGLE_BaryonGrowth.txt', [0,2,3,4,5,6])
-    eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eaglesmout) + pow(10.0, eagleism) + pow(10.0, eaglehg) + pow(10.0, eagleejec))
     eaglesm  = np.log10(pow(10.0, eaglesm) + pow(10.0, eaglesmout))
+    eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
     ind = np.where(eaglesm > 0)
-    ax.plot(lbt[ind], eaglesm[ind] - 6 - np.log10(h0), 'k', linestyle='dotted', label ='EAGLE')
+    ax.plot(lbt[ind], eaglesm[ind] - 6.0 - np.log10(h0), 'k', linestyle='dotted', label ='EAGLE')
     ind = np.where(eagleism > 0)
-    ax.plot(lbt[ind], eagleism[ind]- 6 - np.log10(h0), 'b', linestyle='dotted')
+    ax.plot(lbt[ind], eagleism[ind]- 6.0 - np.log10(h0), 'b', linestyle='dotted')
     ind = np.where(eaglehg > 0)
-    ax.plot(lbt[ind], eaglehg[ind] - 6 - np.log10(h0), 'r', linestyle='dotted')
+    ax.plot(lbt[ind], eaglehg[ind] - 6.0 - np.log10(h0), 'r', linestyle='dotted')
     ind = np.where(eagleejec > 0)
-    ax.plot(lbt[ind], eagleejec[ind] - 6 - np.log10(h0), 'g', linestyle='dotted')
+    ax.plot(lbt[ind], eagleejec[ind] - 6.0 - np.log10(h0), 'g', linestyle='dotted')
+
+#
+#    lbt, galsm, galism, galhg = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,5,4,3])
+#    lbt = max(lbt) - lbt
+#    ind = np.where(galsm > 0)
+#    ax.plot(lbt[ind], np.log10(galsm[ind]) + 10, 'k', linestyle='dashed', label ='GALFORM')
+#    ind = np.where(galism > 0)
+#    ax.plot(lbt[ind], np.log10(galism[ind]) + 10, 'b', linestyle='dashed')
+#    ind = np.where(galhg > 0)
+#    ax.plot(lbt[ind], np.log10(galhg[ind]) + 10, 'r', linestyle='dashed')
+
+    common.prepare_legend(ax, ['k','k','k'], fontsize=10)
+
+    ax = fig.add_subplot(313)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, 0, 13.5, 6, 10, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
+
+    ind = np.where(mstarden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mstarden[ind]*pow(h0,2.0)),'k', label='Shark')
+    ind = np.where(mcoldden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mcoldden[ind]*pow(h0,2.0)),'b')
+    ind = np.where(mhotden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mhotden[ind]*pow(h0,2.0)),'r')
+    ind = np.where(mejeden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
+
+    lbt, galhg, galejec, galsm, galism = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,2,3,4,5])
+    lbt = lbt[0]-lbt
+    galtot  = np.log10(galsm + galism+ galhg + galejec)
+    galsm   = np.log10(galsm)
+    galism  = np.log10(galism)
+    galhg   = np.log10(galhg)
+    galejec = np.log10(galejec)
+
+    h = 0.704
+    vol = np.log10(1953125.0/pow(h,3.0))
+    ind = np.where(galsm > 0)
+    ax.plot(lbt[ind], galsm[ind] - vol - np.log10(h), 'k', linestyle='dashed', label ='GALFORM GP14', linewidth=1)
+    ind = np.where(galism > 0)
+    ax.plot(lbt[ind], galism[ind]- vol - np.log10(h), 'b', linestyle='dashed', linewidth=1)
+    ind = np.where(galhg > 0)
+    ax.plot(lbt[ind], galhg[ind] - vol - np.log10(h), 'r', linestyle='dashed', linewidth=1)
+    ind = np.where(galejec > 0)
+    ax.plot(lbt[ind], galejec[ind] - vol - np.log10(h), 'g', linestyle='dashed', linewidth=1)
+
+    #lbt, eaglesm, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'for_claudia_galform.txt', [0,2,3,4,5])
+    #eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
+    #ind = np.where(eaglesm > 0)
+    #ax.plot(lbt[ind], eaglesm[ind] - 6.0 - np.log10(h0), 'k', linestyle='dotted', label ='GALFORM Peter')
+    #ind = np.where(eagleism > 0)
+    #ax.plot(lbt[ind], eagleism[ind]- 6.0 - np.log10(h0), 'b', linestyle='dotted')
+    #ind = np.where(eaglehg > 0)
+    #ax.plot(lbt[ind], eaglehg[ind] - 6.0 - np.log10(h0), 'r', linestyle='dotted')
+    #ind = np.where(eagleejec > 0)
+    #ax.plot(lbt[ind], eagleejec[ind] - 6.0 - np.log10(h0), 'g', linestyle='dotted')
 
 #    lbt, galsm, galism, galhg = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,5,4,3])
 #    lbt = max(lbt) - lbt

@@ -839,7 +839,6 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			vector<vector<float>> gas_metals_hs_bulge;
 
 			vector<long> id_galaxy;
-			long gal_id = 1;
 
 			float defl_value = 0;
 
@@ -915,10 +914,8 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 							sfhs_bulge.emplace_back(std::move(sfh_gal_bulge));
 							stellar_metals_bulge.emplace_back(std::move(star_metals_gal_bulge));
 
-							id_galaxy.push_back(gal_id);
+							id_galaxy.push_back(galaxy->id);
 						}
-
-						gal_id ++;
 					}
 				}
 			}
@@ -939,7 +936,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			//Write header
 			write_header(file_sfh, snapshot);
 
-			comment = "galaxy ID. Unique to this snapshot.";
+			comment = "galaxy ID. Unique to this galaxy throughout time. If this galaxy never mergers onto a central, then its ID is always the same.";
 			file_sfh.write_dataset("Galaxies/id_galaxy", id_galaxy, comment);
 
 			//Write disk component history.

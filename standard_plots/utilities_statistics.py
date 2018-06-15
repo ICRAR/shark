@@ -23,6 +23,36 @@
 import numpy as np
 import scipy.optimize as so
 
+def wmedians_2sigma(x=None, y=None, xbins=None):
+
+    nbins = len(xbins)
+    #define size of bins, assuming bins are all equally spaced.
+    dx = xbins[1] - xbins[0]
+    result = np.zeros(shape = (3, nbins))
+
+    for i in range (0,nbins):
+        xlow = xbins[i]-dx/2.0
+        xup  = xbins[i]+dx/2.0
+        ind  = np.where((x > xlow) & (x< xup))
+        if(len(x[ind]) > 9):
+
+            obj_bin = len(x[ind])
+            ybin    = y[ind]
+            result[0, i] = np.median(ybin)
+            #sort array on 1/y because we want it to sort from the smallest to the largest item, and the default of argsort is to order from the largest to the smallest.
+            IDs = np.argsort(ybin,kind='quicksort')
+            ID16th = int(np.floor(obj_bin*0.025))+1   #take the lower edge.
+            ID84th = int(np.floor(obj_bin*0.975))-1   #take the upper edge.
+            result[1, i] = np.abs(result[0, i] - ybin[IDs[ID16th]])
+            result[2, i] = np.abs(ybin[IDs[ID84th]] - result[0, i])
+        elif(len(x[ind]) > 0 & len(x[ind]) < 9):
+            result[0, i] = np.median(y[ind])
+            result[1, i] = np.abs(result[0, i]-np.min(y[ind]))
+            result[2, i] = np.abs(np.max(y[ind])-result[0, i])
+
+    return result
+
+
 def wmedians(x=None, y=None, xbins=None):
 
     nbins = len(xbins)

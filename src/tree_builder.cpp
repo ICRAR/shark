@@ -368,6 +368,11 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 					//Define accreted baryonic mass.
 					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * universal_baryon_fraction;
 
+					//TEST: apply maximum to accretion rate at z<1.
+					/*if(halo->central_subhalo->accreted_mass > 0.3*halo->Mvir * universal_baryon_fraction){
+						halo->central_subhalo->accreted_mass = 0.3*halo->Mvir * universal_baryon_fraction;
+					}*/
+
 					//Avoid negative numbers
 					if(halo->central_subhalo->accreted_mass < 0){
 						halo->central_subhalo->accreted_mass = 0;
