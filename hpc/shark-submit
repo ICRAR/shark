@@ -65,9 +65,10 @@ print_usage() {
 	echo
 	echo "$0: Submits shark for execution in a queueing system like SLURM or PBS/Torque"
 	echo
-	echo "Usage: $0 [-h] [-?] [-d] [-o output_dir] [-Q queue] [-a account] [-w walltime]"
+	echo "Usage: $0 [-h] [-?] [-d] [-O output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-M modules] [-M mem] [-N num-nodes] [-v | -q]"
-	echo "       [-S shark_binary] [-V subvolumes] config_file"
+	echo "       [-S shark_binary] [-V subvolumes] [-o opt1=val1 [-o opt2=val2...]]"
+	echo "       config_file"
 	echo
 	echo "This program calculates what is the best way to submit a series of jobs to"
 	echo "execute shark over a number of subvolumes, and performs such submission. The"
@@ -85,7 +86,7 @@ print_usage() {
 	echo
 	echo "Queueing options"
 	echo
-	echo " -o output_dir   Directory where shark output will be written into. Defaults to"
+	echo " -O output_dir   Directory where shark output will be written into. Defaults to"
 	echo "                 a rolling shark_run_<xxxx> name. The SHARK_OUTPUT_DIR_BASE"
 	echo "                 variable, if present, indicates where these directories should"
 	echo "                 be created; otherwise they are created in the current working"
@@ -123,6 +124,10 @@ print_usage() {
 	echo " -V subvolumes   Space-separated list of subvolumes to process. Can contain"
 	echo "                 ranges like 1-10. Defaults to whatever is present in the"
 	echo "                 configuration file"
+	echo
+	echo " -o opt=val ...  Extra options to pass down to shark. Options given this way"
+	echo "                 override those given in the configuration file. This parameter"
+	echo "                 can be given more than one time to pass down multiple options"
 	echo
 	echo " config_file:    The reference configuration file to use for this shark execution"
 	echo
@@ -180,6 +185,12 @@ submit_slurm() {
 		cmd="$cmd -S $shark_binary"
 	fi
 
+	# Extra shark options given to shark-submit
+	for o in ${shark_options[*]}
+	do
+		cmd="$cmd -o \"$o\""
+	done
+
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
 
 	if [ "$dry_run" = "1" ]
@@ -218,9 +229,10 @@ num_nodes=
 shark_verbosity=3
 shark_binary=
 shark_subvolumes=
+shark_options=()
 
 # Parse command line options
-while getopts "h?do:Q:a:w:n:M:m:N:vqS:V:" opt
+while getopts "h?dO:Q:a:w:n:M:m:N:vqS:V:o:" opt
 do
 	case "$opt" in
 		[h?])
@@ -257,6 +269,9 @@ do
 			shark_subvolumes="$OPTARG"
 			;;
 		o)
+			shark_options+=("$OPTARG")
+			;;
+		O)
 			shark_output_directory="$OPTARG"
 			;;
 		Q)

@@ -20,9 +20,10 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with libprofit.  If not, see <http://www.gnu.org/licenses/>.
+# along with shark.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.1)
+# cmake 3.2 comes with FindGSL.cmake
+cmake_minimum_required(VERSION 3.2)
 
 # We have the version here
 file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
@@ -30,13 +31,13 @@ file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
 # We have only C++ sources, but until cmake 3.4 the check_symbol_exists
 # macro didn't work properly if only defining C++ as the project language
 if( ${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 4 )
-	set(PROFIT_LANGS C CXX)
+	set(SHARK_LANGS C CXX)
 else()
-	set(PROFIT_LANGS CXX)
+	set(SHARK_LANGS CXX)
 endif()
 
 # Our project...
-project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${PROFIT_LANGS})
+project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
 
@@ -97,10 +98,46 @@ endmacro()
 #
 macro(find_hdf5)
 	find_package(HDF5 REQUIRED COMPONENTS CXX)
-	if (NOT HDF5_VERSION VERSION_GREATER "1.8.11")
+
+	#
+	# HDF5_VERSION is defined only in cmake 3.3+
+	# Even in these newer cmakes, there are cases in which the version is still
+	# not properly calculated though, so let us check simply for an empty string
+	# and compile a small problem that prints the version of the HDF5 found
+	# by cmake.
+	#
+	if (NOT HDF5_VERSION)
+		message("-- HDF5 version not found automatically, taking it into our hands now...")
+		set(scratch_directory ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/hdf5)
+		set(test_file ${scratch_directory}/cmake_version.cxx)
+		file(WRITE ${test_file}
+		     "#include <stdio.h>\n"
+		     "#include <H5Cpp.h>\n"
+		     "int main(int argc, char **argv) {\n"
+		     "  printf(\"INFO:\" H5_VERSION);\n"
+		     "  return 0;\n"
+		     "}")
+		try_compile(_success ${scratch_directory} ${test_file}
+		            CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${HDF5_INCLUDE_DIRS}"
+		            COPY_FILE ${scratch_directory}/hdf5_version)
+		if (NOT _success)
+			message(FATAL_ERROR "\nFailed to compile test program to find HDF5 version")
+		endif()
+		execute_process(COMMAND ${scratch_directory}/hdf5_version OUTPUT_VARIABLE _VER)
+		string(REGEX MATCH "^INFO:([0-9]+\\.[0-9]+\\.[0-9]+)(-patch([0-9]+))?" INFO_VER "${_VER}")
+		set(HDF5_VERSION ${CMAKE_MATCH_1})
+		if(CMAKE_MATCH_3)
+			set(HDF5_VERSION ${HDF5_VERSION}.${CMAKE_MATCH_3})
+		endif()
+		mark_as_advanced(HDF5_VERSION)
+		message("-- Found HDF5 version ${HDF5_VERSION}")
+	endif()
+
+	# We support 1.8.12+
+	if (NOT HDF5_VERSION VERSION_GREATER "1.7")
 		message(FATAL_ERROR
 				  "\nHDF5 version ${HDF5_VERSION} found, "
-				  "but shark needs versions at least 1.8.12\n")
+				  "but shark needs versions at least 1.8.0\n")
 	endif()
 
 	# We need to pass down the information about the HDF5 version to shark
@@ -145,7 +182,7 @@ find_threads()
 find_gsl()
 find_hdf5()
 find_boost()
-if (NOT LIBPROFIT_NO_OPENMP)
+if (NOT SHARK_NO_OPENMP)
 	find_openmp()
 endif()
 
@@ -226,6 +263,21 @@ install(PROGRAMS
 #
 if( SHARK_TEST )
 	find_package(CxxTest)
+
+	# In cmake < 3.7 the cxxtestgen executable is always executed through an
+	# interpreter, and doesn't honour the shebang line that could be present.
+	# We try to rectify this situation here with a solution similar to what
+	# is found in cmake >= 3.7
+	if (${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 7 AND
+	    NOT "${CXXTEST_PYTHON_TESTGEN_EXECUTABLE}" STREQUAL "")
+		execute_process(COMMAND ${CXXTEST_PYTHON_TESTGEN_EXECUTABLE} --version
+		                OUTPUT_VARIABLE _CXXTEST_OUT ERROR_VARIABLE _CXXTEST_OUT
+		                RESULT_VARIABLE _CXXTEST_RESULT)
+		if (_CXXTEST_RESULT EQUAL 0)
+			set(CXXTEST_TESTGEN_INTERPRETER "")
+		endif()
+	endif()
+
 	if( CXXTEST_FOUND )
 		enable_testing()
 		add_subdirectory(tests)

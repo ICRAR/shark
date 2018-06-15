@@ -80,30 +80,12 @@ public:
 
 private:
 
-#ifdef HDF5_NEWER_THAN_1_10_0
-#define HDF5_FILE_GROUP_COMMON_BASE H5::Group
-#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Object
-#else
-#define HDF5_FILE_GROUP_COMMON_BASE H5::CommonFG
-#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Location
-#endif
-
 	H5::Attribute get_attribute(const std::string &name) const;
-	H5::Attribute _get_attribute(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::vector<std::string> &path) const;
-	H5::Attribute _get_attribute(const HDF5_GROUP_DATASET_COMMON_BASE &l, const std::string attr_name) const;
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, T>::type
 	_read_dataset(const H5::DataSet &dataset) const {
-
-		H5::DataSpace space = get_1d_dataspace(dataset);
-		hsize_t dim_size = get_1d_dimsize(space);
-		if ( dim_size != 1 ) {
-			std::ostringstream os;
-			os << "More than 1 element found in dataset " << dataset.getObjName();
-			throw std::runtime_error(os.str());
-		}
-
+		H5::DataSpace space = get_scalar_dataspace(dataset);
 		T data_out;
 		dataset.read(&data_out, dataset.getDataType(), space, space);
 		return data_out;

@@ -16,6 +16,7 @@
 #ifndef SHARK_EXECUTION_H_
 #define SHARK_EXECUTION_H_
 
+#include <ctime>
 #include <set>
 #include <string>
 #include <vector>
@@ -34,6 +35,7 @@ public:
 	std::string output_directory {};
 	std::string name_model {};
 	std::vector<unsigned int> simulation_batches {};
+	std::time_t starting_time = std::time(nullptr);
 
 	bool skip_missing_descendants = true;
 	bool warn_on_missing_descendants = true;
