@@ -184,21 +184,13 @@ void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, co
 	}
 }
 
-#ifdef HDF5_NEWER_THAN_1_10_0
-#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Object
-#else
-#define HDF5_GROUP_DATASET_COMMON_BASE H5::H5Location
-#endif
-
-
-template<typename T>
+template<typename AttributeHolder, typename T>
 static inline
-void _create_and_write_attribute(HDF5_GROUP_DATASET_COMMON_BASE &loc, const std::string &name, const T &value) {
+void _create_and_write_attribute(AttributeHolder &dataset, const std::string &name, const T &value) {
 	H5::DataType dataType = _datatype<T>(value);
-	auto attr = loc.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
+	auto attr = dataset.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
 	_write_attribute<T>(attr, dataType, value);
 }
-
 
 /**
  * An object that can write data in the form of attributes and datasets into an
@@ -217,22 +209,34 @@ public:
 	Writer(const std::string &filename, bool overwrite = true) :
 		IOBase(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL) {}
 
+	void set_comment(H5::DataSet &dataset, const std::string &comment)
+	{
+		if (comment.empty()) {
+			return;
+		}
+#ifdef HDF5_NEWER_THAN_1_8_11
+		dataset.setComment(comment);
+#endif
+		_create_and_write_attribute(dataset, "comment", comment);
+	}
+
 	template<typename T>
 	void write_attribute(const std::string &name, const T &value) {
 
 		std::vector<std::string> parts = tokenize(name, "/");
 
-		// only the attribute name, read directly and come back
-		if( parts.size() == 1 ) {
-			_create_and_write_attribute<T>(hdf5_file, name, value);
-			return;
+		// Cannot attach attributes directly to files
+		if (parts.size() == 1) {
+			std::ostringstream os;
+			os << "cannot attach attribute " << name << " directly to HDF5 file";
+			throw invalid_argument(os.str());
 		}
 
 		// Get the corresponding group/dataset and write the attribute there
 		std::vector<std::string> path(parts.begin(), parts.end()-1);
 		try {
 			auto group = ensure_group(path);
-			_create_and_write_attribute<T>(group, parts.back(), value);
+			_create_and_write_attribute(group, parts.back(), value);
 		} catch (const object_exists &e) {
 			// name doesn't point to a group but to an existing dataset
 			// if this one fails we give up
@@ -247,10 +251,7 @@ public:
 		H5::DataSpace dataSpace(H5S_SCALAR);
 		H5::DataType dataType = _datatype<T>(value);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
-		if (not comment.empty()) {
-			dataset.setComment(comment);
-			_create_and_write_attribute(dataset, "comment", comment);
-		}
+		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, value);
 	}
 
@@ -260,10 +261,7 @@ public:
 		H5::DataSpace dataSpace(1, &size);
 		H5::DataType dataType = _datatype<T>(values);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
-		if (not comment.empty()) {
-			dataset.setComment(comment);
-			_create_and_write_attribute(dataset, "comment", comment);
-		}
+		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, values);
 	}
 
@@ -276,10 +274,7 @@ public:
 		H5::DataSpace dataSpace(2, sizes);
 		H5::DataType dataType = _datatype<T>(values);
 		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
-		if (not comment.empty()) {
-			dataset.setComment(comment);
-			_create_and_write_attribute(dataset, "comment", comment);
-		}
+		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, values);
 	}
 

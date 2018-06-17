@@ -168,7 +168,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 
 }
 
-void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, double redshift, int snapshot, const molgas_per_galaxy &molgas){
+void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, SimulationParameters simulation_params, const std::vector<HaloPtr> &halos,
+		TotalBaryon &AllBaryons, int snapshot, const molgas_per_galaxy &molgas, double deltat){
 
 
 	BaryonBase mcold_total;
@@ -188,27 +189,35 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 
 	double total_baryons = 0;
 
+	double z1 = simulation_params.redshifts[snapshot];
+	double z2 = simulation_params.redshifts[snapshot+1];
+
+	double mean_age = 0.5 * (cosmology.convert_redshift_to_age(z1) + cosmology.convert_redshift_to_age(z2));
+
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
-		// accummulate dark matter mass
+		// accumulate dark matter mass
 		mDM_total.mass += halo->Mvir;
-
+        
 		for (auto &subhalo: halo->all_subhalos()){
-
-			// Accummulate subhalo baryons
+        
+			// Accumulate subhalo baryons
 			mhothalo_total.mass += subhalo->hot_halo_gas.mass;
 			mhothalo_total.mass_metals += subhalo->hot_halo_gas.mass_metals;
-
+        
 			mcoldhalo_total.mass += subhalo->cold_halo_gas.mass;
 			mcoldhalo_total.mass_metals += subhalo->cold_halo_gas.mass_metals;
-
+        
 			mejectedhalo_total.mass += subhalo->ejected_galaxy_gas.mass;
 			mejectedhalo_total.mass_metals += subhalo->ejected_galaxy_gas.mass_metals;
-
+        
 			for (auto &galaxy: subhalo->galaxies){
-
+        
 				if(execparams.output_sf_histories){
+        
+					galaxy->mean_stellar_age += (galaxy->sfr_disk + galaxy->sfr_bulge) * deltat * mean_age;
+					galaxy->total_stellar_mass_ever_formed += (galaxy->sfr_disk + galaxy->sfr_bulge) * deltat;
 					HistoryItem hist_galaxy;
 					hist_galaxy.sfr_disk    = galaxy->sfr_disk;
 					hist_galaxy.sfr_bulge   = galaxy->sfr_bulge;
@@ -217,19 +226,19 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 					hist_galaxy.snapshot    = snapshot;
 					galaxy->history.emplace_back(std::move(hist_galaxy));
 				}
-
+        
 				//Accumulate galaxy baryons
 				auto &molecular_gas = molgas.at(galaxy);
-
+        
 				mHI_total.mass += molecular_gas.m_atom + molecular_gas.m_atom_b;
 				mH2_total.mass += molecular_gas.m_mol + molecular_gas.m_mol_b;
-
+        
 				mcold_total.mass += galaxy->disk_gas.mass + galaxy->bulge_gas.mass;
 				mcold_total.mass_metals += galaxy->disk_gas.mass_metals + galaxy->bulge_gas.mass_metals;
-
+        
 				mstars_total.mass += galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
 				mstars_total.mass_metals += galaxy->disk_stars.mass_metals + galaxy->bulge_stars.mass_metals;
-
+        
 				mstars_bursts_galaxymergers.mass += galaxy->galaxymergers_burst_stars.mass;
 				mstars_bursts_galaxymergers.mass_metals += galaxy->galaxymergers_burst_stars.mass_metals;
 				mstars_bursts_diskinstabilities.mass += galaxy->diskinstabilities_burst_stars.mass;
@@ -237,9 +246,9 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 
 				SFR_total_disk  += galaxy->sfr_disk;
 				SFR_total_burst += galaxy->sfr_bulge;
-
+        
 				MBH_total.mass += galaxy->smbh.mass;
-
+        
 			}
 		}
 	}

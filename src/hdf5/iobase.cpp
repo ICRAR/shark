@@ -75,26 +75,32 @@ const string IOBase::get_filename() const
 	return hdf5_file.getFileName();
 }
 
-H5::DataSpace IOBase::get_1d_dataspace(const H5::DataSet &dataset) const {
+H5::DataSpace IOBase::get_nd_dataspace(const H5::DataSet &dataset, unsigned int expected_ndims) const
+{
 	H5::DataSpace space = dataset.getSpace();
 	int ndims = space.getSimpleExtentNdims();
-	if ( ndims != 1 ) {
+	if (ndims != expected_ndims) {
 		ostringstream os;
-		os << "More than one dimension found in dataset " << dataset.getObjName();
+		os << ndims << " dimensions found in dataset";
+#ifdef HDF5_NEWER_THAN_1_8_11
+		os << " " << dataset.getObjName();
+#endif // HDF5_NEWER_THAN_1_8_11
+		os << ", " << expected_ndims << " expected";
 		throw runtime_error(os.str());
 	}
 	return space;
 }
 
+H5::DataSpace IOBase::get_scalar_dataspace(const H5::DataSet &dataset) const {
+	return get_nd_dataspace(dataset, 0);
+}
+
+H5::DataSpace IOBase::get_1d_dataspace(const H5::DataSet &dataset) const {
+	return get_nd_dataspace(dataset, 1);
+}
+
 H5::DataSpace IOBase::get_2d_dataspace(const H5::DataSet &dataset) const {
-	H5::DataSpace space = dataset.getSpace();
-	int ndims = space.getSimpleExtentNdims();
-	if ( ndims != 2 ) {
-		ostringstream os;
-		os << "More than two dimensions found in dataset " << dataset.getObjName();
-		throw runtime_error(os.str());
-	}
-	return space;
+	return get_nd_dataspace(dataset, 2);
 }
 
 hsize_t IOBase::get_1d_dimsize(const H5::DataSpace &space) const {

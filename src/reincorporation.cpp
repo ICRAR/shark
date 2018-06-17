@@ -34,7 +34,7 @@ double Reincorporation::reincorporated_mass(HaloPtr halo, double z, double delta
 	//double reincor_rate = mgas * parameters.alpha_reheat/tdyn * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);
 
 	if(treinc == 0){
-		return 0;
+		return mgas;
 	}
 
 	return mgas / treinc * delta_t;

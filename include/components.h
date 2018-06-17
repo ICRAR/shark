@@ -199,6 +199,8 @@ public:
 	 * Initialize values in zero.
 	 */
 	Galaxy():
+		id(-1),
+		descendant_id(-1),
 		galaxy_type(),
 		bulge_stars(),
 		bulge_gas(),
@@ -211,6 +213,8 @@ public:
 		sfr_bulge(0),
 		sfr_z_disk(0),
 		sfr_z_bulge(0),
+		mean_stellar_age(0),
+		total_stellar_mass_ever_formed(0),
 		vmax(0),
 		history(),
 		tmerge(0),
@@ -232,6 +236,16 @@ public:
 		FLYBY
 	};
 
+
+	/**
+	 * The ID of this galaxy.
+	 */
+	id_t id;
+	/**
+	 * The ID of the descendant of this galaxy.
+	 */
+	id_t descendant_id;
+
 	/**
 	 * The type of galaxy
 	 */
@@ -250,6 +264,14 @@ public:
 	float sfr_bulge;
 	float sfr_z_disk;
 	float sfr_z_bulge;
+
+	/**
+	 * Keep track of mean stellar age using:
+	 *  mean_stellar_age: stellar mass formed times the mean age at which they formed.
+	 *  total_stellar_mass_ever_formed: total stellar mass ever formed (without including the effects of stellar populations).
+	 */
+	float mean_stellar_age;
+	float total_stellar_mass_ever_formed;
 
 	//save maximum circular velocity.
 	float vmax;

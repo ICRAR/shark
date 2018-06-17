@@ -23,6 +23,36 @@
 import numpy as np
 import scipy.optimize as so
 
+def wmedians_2sigma(x=None, y=None, xbins=None):
+
+    nbins = len(xbins)
+    #define size of bins, assuming bins are all equally spaced.
+    dx = xbins[1] - xbins[0]
+    result = np.zeros(shape = (3, nbins))
+
+    for i in range (0,nbins):
+        xlow = xbins[i]-dx/2.0
+        xup  = xbins[i]+dx/2.0
+        ind  = np.where((x > xlow) & (x< xup))
+        if(len(x[ind]) > 9):
+
+            obj_bin = len(x[ind])
+            ybin    = y[ind]
+            result[0, i] = np.median(ybin)
+            #sort array on 1/y because we want it to sort from the smallest to the largest item, and the default of argsort is to order from the largest to the smallest.
+            IDs = np.argsort(ybin,kind='quicksort')
+            ID16th = int(np.floor(obj_bin*0.025))+1   #take the lower edge.
+            ID84th = int(np.floor(obj_bin*0.975))-1   #take the upper edge.
+            result[1, i] = np.abs(result[0, i] - ybin[IDs[ID16th]])
+            result[2, i] = np.abs(ybin[IDs[ID84th]] - result[0, i])
+        elif(len(x[ind]) > 0 & len(x[ind]) < 9):
+            result[0, i] = np.median(y[ind])
+            result[1, i] = np.abs(result[0, i]-np.min(y[ind]))
+            result[2, i] = np.abs(np.max(y[ind])-result[0, i])
+
+    return result
+
+
 def wmedians(x=None, y=None, xbins=None):
 
     nbins = len(xbins)
@@ -63,7 +93,7 @@ def fractions(x=None, y=None, xbins=None, ythresh=None):
         xlow = xbins[i]-dx/2.0
         xup  = xbins[i]+dx/2.0
         ind  = np.where((x > xlow) & (x< xup))
-        if(len(x[ind]) > 4):
+        if(len(x[ind]) > 9):
             ngalaxies = len(x[ind])
             ybin      = y[ind]
             above     = np.where(ybin > ythresh)
@@ -147,3 +177,68 @@ def density_contour(xdata, ydata, nbins_x, nbins_y, ax=None):
         contour = ax.contourf(X, Y, Z, levels=levels, origin="lower", alpha=0.75,norm=col.Normalize(vmin=0,vmax=0.01),cmap=plt.get_cmap('viridis'))
 
     return contour
+
+
+
+def look_back_time(z, h=0.6751, omegam=0.3121, omegal=0.6879):
+
+	"""Calculates the look back time of an array of redshifts
+	Parameters
+	---------
+	z: array of redshifts
+	h: hubble parameter
+	omegam: omega matter
+	omegal: omega lambda
+	"""
+
+	#define some constants:
+	H0100=100.0
+	KM2M=1.0e3
+	GYR2S=3.15576e16
+	MPC2M=3.0856775807e22
+	H0100PGYR=H0100*KM2M*GYR2S/MPC2M
+
+	#calculate the expansion parameters
+	a = 1.0 / (1.0 + z)
+
+	#The Hubble time for H_0=100km/s/Mpc
+	Hubble_Time=1.0/H0100PGYR
+	t0= Hubble_Time*(2/(3*h*np.sqrt(1-omegam)))*np.arcsinh(np.sqrt((1.0/omegam-1.0)*1.0)*1.0)
+	t = Hubble_Time*(2/(3*h*np.sqrt(1-omegam)))*np.arcsinh(np.sqrt((1.0/omegam-1.0)*a)*a)
+
+	return t0-t
+
+
+def redshift(lbt, h=0.6751, omegam=0.3121, omegal=0.6879):
+
+	"""Calculates the look back time of an array of redshifts
+	Parameters
+	---------
+	z: array of redshifts
+	h: hubble parameter
+	omegam: omega matter
+	omegal: omega lambda
+	"""
+
+	#define some constants:
+	H0100=100.0
+	KM2M=1.0e3
+	GYR2S=3.15576e16
+	MPC2M=3.0856775807e22
+	H0100PGYR=H0100*KM2M*GYR2S/MPC2M
+
+	#calculate the expansion parameters
+	#a = 1.0 / (1.0 + z)
+
+	#The Hubble time for H_0=100km/s/Mpc
+	Hubble_Time=1.0/H0100PGYR
+	t0= Hubble_Time*(2/(3*h*np.sqrt(1-omegam)))*np.arcsinh(np.sqrt((1.0/omegam-1.0)*1.0)*1.0)
+	age = t0 - lbt
+
+	a = pow(np.sinh(age/(Hubble_Time*(2/(3*h*np.sqrt(1-omegam))))) / np.sqrt(1.0/omegam-1.0), 2.0/3.0)
+	
+	z = 1.0 / a - 1.0
+	for i in range (0,len(z)):
+		z[i] = round(z[i], 2)
+
+	return z

@@ -883,7 +883,7 @@ def main():
 
     plt = common.load_matplotlib()
     modeldir, outdir, subvols, obsdir, snapshot = common.parse_args()
-    fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'rdisk_star',
+    fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'rstar_disk',
                            'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mvir_hosthalo')}

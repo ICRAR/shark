@@ -63,10 +63,10 @@ def plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz):
         if plot_this_z:
             y = hist[idx,:]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'r', label ='HMF SHArk')
+            ax.plot(xmf[ind],y[ind],'r', label ='HMF Shark')
             y = histsh[idx,:]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='SHMF SHArk')
+            ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='SHMF Shark')
 
         common.prepare_legend(ax, ['b','r','r'])
 
