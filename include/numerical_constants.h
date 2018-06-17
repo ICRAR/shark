@@ -56,6 +56,7 @@ namespace constants {
 	constexpr float PI = 3.1415926536;
 	constexpr float PIO2 = PI / 2.0;
 	constexpr float PIO4 = PI / 4.0;
+	constexpr float SPI = 4.0 / 3.0 * PI;
 	constexpr float PI4 = 4.0 * PI;
 	constexpr float PI2 = 2.0 * PI;
 	constexpr float PISQ = pow<2>(PI);
@@ -75,10 +76,10 @@ namespace constants {
 	constexpr double EPS6=1.0e-6;
 
 	/*Unit conversions.*/
-	constexpr float J2ERG=1.0e7; /*Number of ergs in a Joule.*/
+	constexpr float J2ERG=1.0e7, logJ2ERG=7.0; /*Number of ergs in a Joule.*/
 	constexpr float GYR2S=3.15576e16; /*The number of seconds in a Gyr (based on the Julian year
 	                                   of exactly 365.25 days - Allen's Astrophysical Quantities, page 15)*/
-	constexpr float YR2S=GIGA/GYR2YR; /*The number of seconds in a year.*/
+	constexpr float YR2S=GYR2S/GIGA; /*The number of seconds in a year.*/
 	constexpr float MPC2M=3.0856775807e22, sqrtMPC2M=1.75660968365e11; /*The number of metres in a Mpc (Particle Data Book 2002,
 	                                                           page 6).*/
 	constexpr float KPC2M=MPC2M/KILO; /*The number of metres in a kpc (Particle Data Book 2002, page 6).*/
