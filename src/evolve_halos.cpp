@@ -235,7 +235,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 				mstars_bursts_diskinstabilities.mass += galaxy->diskinstabilities_burst_stars.mass;
 				mstars_bursts_diskinstabilities.mass_metals += galaxy->diskinstabilities_burst_stars.mass_metals;
 
-				SFR_total_disk += galaxy->sfr_disk;
+				SFR_total_disk  += galaxy->sfr_disk;
 				SFR_total_burst += galaxy->sfr_bulge;
 
 				MBH_total.mass += galaxy->smbh.mass;
