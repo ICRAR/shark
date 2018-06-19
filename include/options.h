@@ -83,6 +83,9 @@ public:
 	 */
 	template <typename T>
 	void load(const std::string &name, T &value_holder, bool mandatory = false) const {
+
+		check_valid_name(name);
+
 		if ( mandatory or options.find(name) != options.end() ) {
 
 			// Check that it's there and read it using the specialized
@@ -122,6 +125,8 @@ protected:
 
 private:
 	void store_option(const std::string &name, const std::string &value);
+
+	static void check_valid_name(const std::string &name);
 };
 
 }  // namespace shark

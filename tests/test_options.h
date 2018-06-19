@@ -94,4 +94,30 @@ public:
 		_test_load<std::set<int>>("a = 4-1 1 1", "a", {1, 2, 3, 4});
 	}
 
+	void test_valid_option_names()
+	{
+		// Just the fact that these run means we are find
+		auto _test_valid_option_name = [](const std::string &optspec) {
+			Options opts;
+			opts.add(optspec + " = value");
+		};
+		_test_valid_option_name("snake_case");
+		_test_valid_option_name("group1.snake_case");
+		_test_valid_option_name("group1_name.snake_case");
+		_test_valid_option_name("group1_name.3d_properties");
+	}
+
+	void test_invalid_option_names()
+	{
+		auto _test_invalid_option_name = [](const std::string &optspec) {
+			Options opt;
+			TS_ASSERT_THROWS(opt.add(optspec + " = value"), invalid_option);
+		};
+		_test_invalid_option_name("CamelCase");
+		_test_invalid_option_name("group.CamelCase");
+		_test_invalid_option_name("group.lowerCamelCase");
+		_test_invalid_option_name("group.lowerCamelCase");
+		_test_invalid_option_name("Group.snake_case");
+	}
+
 };

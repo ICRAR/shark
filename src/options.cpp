@@ -31,6 +31,7 @@
 #include <string>
 
 #include "logging.h"
+#include "naming_convention.h"
 #include "options.h"
 #include "utils.h"
 
@@ -101,8 +102,23 @@ void Options::add(const std::string &optspec)
 	store_option(name, value);
 }
 
+void Options::check_valid_name(const std::string &name)
+{
+	auto tokens = tokenize(name, ".");
+	for (auto &token: tokens) {
+		if (!follows_convention(token, naming_convention::SNAKE_CASE)) {
+			ostringstream os;
+			os << "A part of option " << name << " does not follow the ";
+			os << "snake_case naming convention: " << token;
+			throw invalid_option(os.str());
+		}
+	}
+
+}
+
 void Options::store_option(const std::string &name, const std::string &value)
 {
+	check_valid_name(name);
 	if (options.find(name) == options.end()) {
 		LOG(info) << "Loading new option: " << name << " = " << value;
 	}
