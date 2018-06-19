@@ -211,6 +211,7 @@ set(SHARKLIB_SRCS
    src/interpolator.cpp
    src/logging.cpp
    src/merger_tree_reader.cpp
+   src/naming_convention.cpp
    src/options.cpp
    src/ode_solver.cpp
    src/physical_model.cpp
