@@ -132,8 +132,8 @@ public:
 	void test_attribute_writes()
 	{
 		_test_attribute_writes(1);
-//		_test_attribute_writes(1.f);
-//		_test_attribute_writes(1.);
+		_test_attribute_writes(1.f);
+		_test_attribute_writes(1.);
 	}
 
 };
