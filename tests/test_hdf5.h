@@ -22,6 +22,8 @@
 // MA 02111-1307  USA
 //
 
+#include <utility>
+
 #include <cxxtest/TestSuite.h>
 
 #include <boost/filesystem.hpp>
@@ -34,9 +36,10 @@ namespace fs = boost::filesystem;
 class TestHDF5 : public CxxTest::TestSuite {
 
 private:
-	hdf5::Writer get_writer()
+	template <typename ... Ts>
+	hdf5::Writer get_writer(Ts&&...args)
 	{
-		return hdf5::Writer("test.hdf5");
+		return hdf5::Writer("test.hdf5", std::forward<Ts>(args)...);
 	}
 
 	hdf5::Reader get_reader()
@@ -44,13 +47,30 @@ private:
 		return hdf5::Reader("test.hdf5");
 	}
 
-public:
-
-	virtual void tearDown() {
+	void remove_file()
+	{
 		fs::path path("test.hdf5");
 		if (fs::exists(path)) {
 			fs::remove(path);
 		}
+	}
+
+	template <typename T>
+	void _assert_invalid_names(T assert_func)
+	{
+		assert_func("MyGroup", naming_convention::SNAKE_CASE);
+		assert_func("myGroup", naming_convention::SNAKE_CASE);
+		assert_func("3dPrinter", naming_convention::SNAKE_CASE);
+		assert_func("3DPrinter", naming_convention::SNAKE_CASE);
+		assert_func("snake_case_name", naming_convention::CAMEL_CASE);
+		assert_func("comment", naming_convention::CAMEL_CASE);
+		assert_func("3dprinter", naming_convention::CAMEL_CASE);
+	}
+
+public:
+
+	virtual void tearDown() {
+		remove_file();
 	}
 
 	void test_write_dataset_scalars()
@@ -135,5 +155,43 @@ public:
 		_test_attribute_writes(1.f);
 		_test_attribute_writes(1.);
 	}
+
+	void test_invalid_group_names()
+	{
+		_assert_invalid_names([this](const std::string &name, naming_convention convention) {
+			auto writer = get_writer(false, convention, naming_convention::SNAKE_CASE, naming_convention::SNAKE_CASE);
+			auto goodname = std::string(convention == naming_convention::CAMEL_CASE ? "Group" : "group");
+			auto basename = std::string("/") + name;
+			auto repeated = basename + std::string("/") + name;
+			auto tailname = goodname + "/" + goodname + "/" + name;
+			TS_ASSERT_THROWS(writer.write_attribute(basename + "/my_attribute", 1), invalid_argument);
+			TS_ASSERT_THROWS(writer.write_attribute(repeated + "/my_attribute", 1), invalid_argument);
+			TS_ASSERT_THROWS(writer.write_attribute(tailname + "/my_attribute", 1), invalid_argument);
+			remove_file();
+		});
+	}
+
+	void test_invalid_dataset_names()
+	{
+		_assert_invalid_names([this](const std::string &name, naming_convention convention) {
+			auto writer = get_writer(false, naming_convention::SNAKE_CASE, convention, naming_convention::SNAKE_CASE);
+			TS_ASSERT_THROWS(writer.write_dataset("/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
+			TS_ASSERT_THROWS(writer.write_dataset("/group/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
+			TS_ASSERT_THROWS(writer.write_dataset("/group1/group2/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
+			remove_file();
+		});
+	}
+
+	void test_invalid_attribute_names()
+	{
+		_assert_invalid_names([this](const std::string &name, naming_convention convention) {
+			auto writer = get_writer(false, naming_convention::SNAKE_CASE, naming_convention::SNAKE_CASE, convention);
+			writer.write_dataset("/group/integers", std::vector<int>{1, 2, 3, 4});
+			TS_ASSERT_THROWS(writer.write_attribute(std::string("/group/") + name, 1), invalid_argument);
+			TS_ASSERT_THROWS(writer.write_attribute(std::string("/group/integers") + name, 1), invalid_argument);
+			remove_file();
+		});
+	}
+
 
 };

@@ -36,6 +36,7 @@
 #include "hdf5/iobase.h"
 #include "hdf5/traits.h"
 #include "exceptions.h"
+#include "naming_convention.h"
 #include "utils.h"
 
 namespace shark {
@@ -206,8 +207,10 @@ public:
 	 * @param filename The name of the HDF5 file to write
 	 * @param overwrite Whether existing files should be overwritten or not
 	 */
-	Writer(const std::string &filename, bool overwrite = true) :
-		IOBase(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL) {}
+	Writer(const std::string &filename, bool overwrite = true,
+		naming_convention group_naming_convention = naming_convention::SNAKE_CASE,
+		naming_convention dataset_naming_convention = naming_convention::SNAKE_CASE,
+		naming_convention attr_naming_convention = naming_convention::SNAKE_CASE);
 
 	void set_comment(H5::DataSet &dataset, const std::string &comment)
 	{
@@ -217,7 +220,13 @@ public:
 #ifdef HDF5_NEWER_THAN_1_8_11
 		dataset.setComment(comment);
 #endif
-		_create_and_write_attribute(dataset, "comment", comment);
+
+		// Follow naming convention, "comment" works with snake_case and lowerCamelCase
+		auto comment_attr_name = "comment";
+		if (attr_naming_convention == naming_convention::CAMEL_CASE) {
+			comment_attr_name = "Comment";
+		}
+		_create_and_write_attribute(dataset, comment_attr_name, comment);
 	}
 
 	template<typename T>
@@ -232,16 +241,19 @@ public:
 			throw invalid_argument(os.str());
 		}
 
-		// Get the corresponding group/dataset and write the attribute there
 		std::vector<std::string> path(parts.begin(), parts.end()-1);
+		auto &attr_name = parts.back();
+		check_attr_name(attr_name);
+
+		// Get the corresponding group/dataset and write the attribute there
 		try {
 			auto group = ensure_group(path);
-			_create_and_write_attribute(group, parts.back(), value);
+			_create_and_write_attribute(group, attr_name, value);
 		} catch (const object_exists &e) {
 			// name doesn't point to a group but to an existing dataset
 			// if this one fails we give up
 			auto dataset = get_dataset(path);
-			_create_and_write_attribute(dataset, parts.back(), value);
+			_create_and_write_attribute(dataset, attr_name, value);
 		}
 
 	}
@@ -282,6 +294,14 @@ private:
 
 	H5::Group ensure_group(const std::vector<std::string> &path) const;
 	H5::DataSet ensure_dataset(const std::vector<std::string> &path, const H5::DataType &dataType, const H5::DataSpace &dataSpace) const;
+
+	naming_convention group_naming_convention;
+	naming_convention dataset_naming_convention;
+	naming_convention attr_naming_convention;
+
+	void check_group_name(const std::string &group_name) const;
+	void check_dataset_name(const std::string &dataset_name) const;
+	void check_attr_name(const std::string &attr_name) const;
 
 	static const std::string NO_COMMENT;
 };
