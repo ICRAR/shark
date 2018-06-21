@@ -216,7 +216,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	}
 	else {
 		subhalos.reserve(n_subhalos);
-		for (auto i = 0; i != threads; i++) {
+		for (auto i = 0u; i != threads; i++) {
 			subhalos.insert(subhalos.end(), t_subhalos[i].begin(), t_subhalos[i].end());
 		}
 	}
