@@ -29,14 +29,14 @@ StarFormationParameters::StarFormationParameters(const Options &options)
 	options.load("star_formation.nu_sf", nu_sf, true);
 	options.load("star_formation.angular_momentum_transfer", angular_momentum_transfer);
 
-	options.load("star_formation.Accuracy_SFeqs", Accuracy_SFeqs);
+	options.load("star_formation.accuracy_sf_eqs", Accuracy_SFeqs);
 	options.load("star_formation.boost_starburst", boost_starburst);
-	options.load("star_formation.Po", Po);
+	options.load("star_formation.po", Po);
 	options.load("star_formation.beta_press", beta_press);
 	options.load("star_formation.gas_velocity_dispersion", gas_velocity_dispersion);
-	options.load("star_formation.sigma_HI_crit", sigma_HI_crit);
+	options.load("star_formation.sigma_hi_crit", sigma_HI_crit);
 
-	options.load("star_formation.clump_factor_KMT09", clump_factor_KMT09);
+	options.load("star_formation.clump_factor_kmt09", clump_factor_KMT09);
 
 	// Convert surface density to internal code units.
 	sigma_HI_crit = sigma_HI_crit * std::pow(constants::MEGA,2.0);

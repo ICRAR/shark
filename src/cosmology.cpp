@@ -27,12 +27,12 @@ CosmologicalParameters::CosmologicalParameters(const Options &options)
 
 	std::string power_spec_file;
 
-	options.load("cosmology.OmegaM", OmegaM);
-	options.load("cosmology.OmegaB", OmegaB);
-	options.load("cosmology.OmegaL", OmegaL);
+	options.load("cosmology.omega_m", OmegaM);
+	options.load("cosmology.omega_b", OmegaB);
+	options.load("cosmology.omega_l", OmegaL);
 	options.load("cosmology.n_s", n_s);
 	options.load("cosmology.sigma8", sigma8);
-	options.load("cosmology.Hubble_h", Hubble_h);
+	options.load("cosmology.hubble_h", Hubble_h);
 	options.load("cosmology.power_spectrum_file", power_spec_file, true);
 
 	load_tables(power_spec_file);
