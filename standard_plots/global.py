@@ -664,11 +664,9 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     common.prepare_legend(ax, ['r','Crimson','Salmon','grey'])
     common.savefig(outdir, fig, "omega_HI.pdf")
 
-def main():
+def main(modeldir, outdir, subvols, obsdir, snapshot):
 
     plt = common.load_matplotlib()
-    modeldir, outdir, subvols, obsdir, snapshot = common.parse_args()
-
     fields = {'Global': ('redshifts', 'mHI', 'mH2', 'mcold', 'mcold_metals',
                          'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities', 
                          'mBH', 'SFR_quiescent', 'SFR_burst', 'mDM', 'mcold_halo')}
@@ -704,4 +702,4 @@ def main():
     plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI)
 
 if __name__ == '__main__':
-    main()
+    main(*common.parse_args())

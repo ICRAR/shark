@@ -221,14 +221,12 @@ def plot_BMHM_z(plt, outdir, massbar):
     common.savefig(outdir, fig, 'BMHM_z.pdf')
 
 
-def main():
+def main(modeldir, outdir, subvols):
 
     plt = common.load_matplotlib()
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mBH', 'mgas_disk',
                            'mgas_bulge', 'mhot', 'mreheated', 'mvir_hosthalo',
                            'type')}
-    
-    modeldir, outdir, subvols = common.parse_args(requires_snapshot=False, requires_observations=False)
 
     zlist = ["199", "174", "156", "131", "113", "99"]
     massgal = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -243,4 +241,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(*common.parse_args(requires_snapshot=False, requires_observations=False))

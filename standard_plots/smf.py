@@ -1152,7 +1152,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
 
     return mass
 
-def main():
+def main(modeldir, outdir, subvols, obsdir):
 
     zlist = ["199","174", "156", "131", "113", "99"]
 
@@ -1207,7 +1207,6 @@ def main():
                            'mgas_metals_disk', 'mgas_metals_bulge',
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type', 'mvir_hosthalo')}
 
-    modeldir, outdir, subvols, obsdir = common.parse_args(requires_snapshot=False)
     for index in range(0,len(zlist)):
         hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
         mass = prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen,
@@ -1268,4 +1267,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(*common.parse_args(requires_snapshot=False))

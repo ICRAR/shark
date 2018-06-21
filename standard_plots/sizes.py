@@ -609,7 +609,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
     common.savefig(outdir, fig, 'BTfractions.pdf')
 
 
-def main():
+def main(modeldir, outdir, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities','mBH',
@@ -618,8 +618,6 @@ def main():
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo')}
-
-    modeldir, outdir, subvols, obsdir = common.parse_args(requires_snapshot=False)
 
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -655,4 +653,4 @@ def main():
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
 
 if __name__ == '__main__':
-    main()
+    main(*common.parse_args(requires_snapshot=False))
