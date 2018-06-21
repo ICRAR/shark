@@ -237,7 +237,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
 def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
 
     hist_smf_modelvar = np.zeros(shape = (6, 315))
-    hist_smf_modelvar[0,:], hist_smf_modelvar[1,:],hist_smf_modelvar[2,:],hist_smf_modelvar[3,:],hist_smf_modelvar[4,:],hist_smf_modelvar[5,:] = common.load_observation('/group/pawsey0119/clagos/Data/', 'SMF_OtherModels.dat', [0,1,2,3,4,5])
+    hist_smf_modelvar[0,:], hist_smf_modelvar[1,:],hist_smf_modelvar[2,:],hist_smf_modelvar[3,:],hist_smf_modelvar[4,:],hist_smf_modelvar[5,:] = common.load_observation(obsdir, 'SMF_OtherModels.dat', [0,1,2,3,4,5])
 
     fig = plt.figure(figsize=(4.5,8))
     ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\rm star}}/{\\rm Mpc}^{-3} )$"
@@ -339,7 +339,7 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='satellites')
 
-    pHI_GD14 = common.load_observation('/group/pawsey0119/clagos/Data/', 'HIH2MassFunctions_OtherModels.dat', [0])
+    pHI_GD14 = common.load_observation(obsdir, 'HIH2MassFunctions_OtherModels.dat', [0])
 
     ind = np.where(pHI_GD14 < 0)
     ax.plot(xmf[ind],pHI_GD14[ind],'BurlyWood', linestyle='dashdot', label = 'GD14')
@@ -394,7 +394,7 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
 
-    pH2_GD14 = common.load_observation('/group/pawsey0119/clagos/Data/', 'HIH2MassFunctions_OtherModels.dat', [1])
+    pH2_GD14 = common.load_observation(obsdir, 'HIH2MassFunctions_OtherModels.dat', [1])
 
     ind = np.where(pH2_GD14 < 0)
     ax.plot(xmf[ind],pH2_GD14[ind],'BurlyWood', linestyle='dashdot') 
@@ -533,7 +533,7 @@ def plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat):
     common.savefig(outdir, fig, 'mzr.pdf')
 
 
-def plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainseqsf_1s, mainseqHI, mainseqH2):
+def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainseqsf_1s, mainseqHI, mainseqH2):
 
 
     fig = plt.figure(figsize=(4.5,9))
@@ -547,7 +547,7 @@ def plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainse
 
 
     mainseqsf_modelvar = np.zeros(shape = (5, 270))
-    mainseqsf_modelvar[0,:], mainseqsf_modelvar[1,:], mainseqsf_modelvar[2,:], mainseqsf_modelvar[3,:], mainseqsf_modelvar[4,:] = common.load_observation('/group/pawsey0119/clagos/Data/', 'SFRMstars_OtherModels.dat', [0,1,2,3,4])
+    mainseqsf_modelvar[0,:], mainseqsf_modelvar[1,:], mainseqsf_modelvar[2,:], mainseqsf_modelvar[3,:], mainseqsf_modelvar[4,:] = common.load_observation(obsdir, 'SFRMstars_OtherModels.dat', [0,1,2,3,4])
 
     mainseqsf_GD14  = np.zeros(shape = (2, 5, len(xmf)))
     mainseqsf_KMT09 = np.zeros(shape = (2, 5, len(xmf)))
@@ -636,7 +636,7 @@ def plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainse
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
     mainseqgas_modelvar = np.zeros(shape = (6, 135))
-    mainseqgas_modelvar[0,:], mainseqgas_modelvar[1,:], mainseqgas_modelvar[2,:], mainseqgas_modelvar[3,:], mainseqgas_modelvar[4,:], mainseqgas_modelvar[5,:] = common.load_observation('/group/pawsey0119/clagos/Data/', 'GasMstars_OtherModels.dat', [0,1,2,3,4,5])
+    mainseqgas_modelvar[0,:], mainseqgas_modelvar[1,:], mainseqgas_modelvar[2,:], mainseqgas_modelvar[3,:], mainseqgas_modelvar[4,:], mainseqgas_modelvar[5,:] = common.load_observation(obsdir, 'GasMstars_OtherModels.dat', [0,1,2,3,4,5])
 
     mainseqgas_GD14  = np.zeros(shape = (6, len(xmf)))
     mainseqgas_KMT09 = np.zeros(shape = (6, len(xmf)))
@@ -1259,7 +1259,7 @@ def main():
     plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat)
     plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat)
     plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat)
-    plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainseqsf_1s, mainseqHI, mainseqH2)
+    plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainseqsf_1s, mainseqHI, mainseqH2)
     plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat)
     plot_fmzr(plt, outdir, fmzr)
     plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)

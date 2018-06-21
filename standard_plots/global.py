@@ -148,7 +148,7 @@ def prepare_data(hdf5_data, redshifts):
      sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
      mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden)
 
-def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, mstarden, mcoldden, mhotden, mejeden):
+def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, meje, mstarden, mcoldden, mhotden, mejeden):
 
     fig = plt.figure(figsize=(5,12))
 
@@ -192,7 +192,7 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
 
-    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'EAGLE_BaryonGrowth.txt', [0,2,3,4,5,6])
+    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation(obsdir, 'EAGLE_BaryonGrowth.txt', [0,2,3,4,5,6])
     eaglesm  = np.log10(pow(10.0, eaglesm) + pow(10.0, eaglesmout))
     eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
     ind = np.where(eaglesm > 0)
@@ -205,7 +205,7 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     ax.plot(lbt[ind], eagleejec[ind] - 6.0 - np.log10(h0), 'g', linestyle='dotted')
 
 #
-#    lbt, galsm, galism, galhg = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,5,4,3])
+#    lbt, galsm, galism, galhg = common.load_observation(obsdir, 'global_Lacey16', [1,5,4,3])
 #    lbt = max(lbt) - lbt
 #    ind = np.where(galsm > 0)
 #    ax.plot(lbt[ind], np.log10(galsm[ind]) + 10, 'k', linestyle='dashed', label ='GALFORM')
@@ -230,7 +230,7 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
 
-    lbt, galhg, galejec, galsm, galism = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,2,3,4,5])
+    lbt, galhg, galejec, galsm, galism = common.load_observation(obsdir, 'global_Lacey16', [1,2,3,4,5])
     lbt = lbt[0]-lbt
     galtot  = np.log10(galsm + galism+ galhg + galejec)
     galsm   = np.log10(galsm)
@@ -249,7 +249,7 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     ind = np.where(galejec > 0)
     ax.plot(lbt[ind], galejec[ind] - vol - np.log10(h), 'g', linestyle='dashed', linewidth=1)
 
-    #lbt, eaglesm, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'for_claudia_galform.txt', [0,2,3,4,5])
+    #lbt, eaglesm, eagleism, eaglehg, eagleejec = common.load_observation(obsdir, 'for_claudia_galform.txt', [0,2,3,4,5])
     #eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
     #ind = np.where(eaglesm > 0)
     #ax.plot(lbt[ind], eaglesm[ind] - 6.0 - np.log10(h0), 'k', linestyle='dotted', label ='GALFORM Peter')
@@ -260,7 +260,7 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     #ind = np.where(eagleejec > 0)
     #ax.plot(lbt[ind], eagleejec[ind] - 6.0 - np.log10(h0), 'g', linestyle='dotted')
 
-#    lbt, galsm, galism, galhg = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,5,4,3])
+#    lbt, galsm, galism, galhg = common.load_observation(obsdir, 'global_Lacey16', [1,5,4,3])
 #    lbt = max(lbt) - lbt
 #    ind = np.where(galsm > 0)
 #    ax.plot(lbt[ind], np.log10(galsm[ind]) + 10, 'k', linestyle='dashed', label ='GALFORM')
@@ -351,7 +351,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ind = np.where(sfrb > 0)
     ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='dotted',  linewidth=1, label ='bursts')
 
-    sfr_modelvar = common.load_observation('/group/pawsey0119/clagos/Data/', 'Global_OtherModels.dat', [2])
+    sfr_modelvar = common.load_observation(obsdir, 'Global_OtherModels.dat', [2])
     sfr_modelvar_burst1 = sfr_modelvar[0:179]
     sfr_modelvar_nu0p5  = sfr_modelvar[181:360]
 
@@ -410,7 +410,7 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ax.plot(redshifts[ind],np.log10(mstarbden_diskins[ind]*pow(h0,2.0)), 'b', linestyle='dotted')
 
 
-    sm_modelvar = common.load_observation('/group/pawsey0119/clagos/Data/', 'Global_OtherModels.dat', [3])
+    sm_modelvar = common.load_observation(obsdir, 'Global_OtherModels.dat', [3])
     sm_modelvar_burst1 = sm_modelvar[0:179]
     sm_modelvar_nu0p5  = sm_modelvar[181:360]
 
@@ -523,7 +523,7 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ind = np.where(mH2den > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r', label='Shark')
 
-    h2_modelvar = common.load_observation('/group/pawsey0119/clagos/Data/', 'Global_OtherModels.dat', [1])
+    h2_modelvar = common.load_observation(obsdir, 'Global_OtherModels.dat', [1])
     h2_modelvar_burst1 = h2_modelvar[0:179]
     h2_modelvar_nu0p5  = h2_modelvar[181:360]
 
@@ -647,7 +647,7 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ind = np.where(omegaHI > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(omegaHI[ind]*pow(h0,2.0)) + np.log10(XH), 'r', label='Shark')
 
-    hi_modelvar = common.load_observation('/group/pawsey0119/clagos/Data/', 'Global_OtherModels.dat', [0])
+    hi_modelvar = common.load_observation(obsdir, 'Global_OtherModels.dat', [0])
     hi_modelvar_burst1 = hi_modelvar[0:179]
     hi_modelvar_nu0p5  = hi_modelvar[181:360]
 
@@ -693,7 +693,7 @@ def main():
      sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
      mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden) = prepare_data(hdf5_data, redshifts)
 
-    plot_mass_densities(plt, outdir, h0, redshifts, mstar_plot, mcold_plot, mhot_plot, meje_plot, mstarden, mcoldden, mhotden, mejeden)
+    plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar_plot, mcold_plot, mhot_plot, meje_plot, mstarden, mcoldden, mhotden, mejeden)
     plot_baryon_fractions(plt, outdir, redshifts, mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot)
     plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb)
     plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarden, mstarbden_mergers, mstarbden_diskins)
