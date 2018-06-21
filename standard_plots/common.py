@@ -96,14 +96,16 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     except OSError:
         pass
 
-    subvolumes = []
-    for r in filter(None, opts.subvolumes.split(',')):
+    # Having the replace(',', ' ') allows us to separate subvolumes by command
+    # and/or space
+    subvolumes = set()
+    for r in filter(None, opts.subvolumes.replace(',', ' ').split()):
         if '-' in r:
             x = [int(x) for x in r.split('-')]
-            subvolumes.extend(list(range(x[0], x[1])))
-            subvolumes.append(x[1])
+            subvolumes.update(range(x[0], x[1] + 1))
         else:
-            subvolumes.append(int(r))
+            subvolumes.add(int(r))
+    print("Considering the following subvolumes: %s" % ' '.join([str(x) for x in subvolumes]))
 
     ret = [model_dir, output_dir, tuple(subvolumes)]
     if requires_observations:
