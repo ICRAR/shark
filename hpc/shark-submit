@@ -137,7 +137,7 @@ submit_slurm() {
 
 	# Each SHArk instance uses one CPU
 	cmd="sbatch --ntasks $n_svols"
-	cmd="$cmd -o shark-run.out -e shark-run.err"
+	cmd="$cmd -o shark-run.log"
 
 	# Queueing accountability
 	if [ ! -z "$account" ]
