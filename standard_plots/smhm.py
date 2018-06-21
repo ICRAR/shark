@@ -80,7 +80,7 @@ def plot_SMHM_z(plt, outdir, massgal):
         
         # z=0 ##################################
         ax = fig.add_subplot(subplot)
-	common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
         ax.tick_params(labelsize=13)
         ax.text(xleg, yleg, 'z=%s' % str(z))

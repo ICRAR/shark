@@ -55,10 +55,10 @@ def prepare_data(hdf5_data, redshifts):
     for i,j,k,l in zip(mhot, meje, mstar, mcold):
         tot = i+j+k+l
         if(tot/(volh/pow(h0,2.0)) > maxden):
-		print "density exceeding maxden",tot/(volh/pow(h0,2.0))/maxden
-                #deltam = tot - maxden * (volh/pow(h0,2.0))
-                #print "change",i, i - deltam
-		#mhot[ind] = i - deltam
+            print("density exceeding maxden", tot/(volh/pow(h0,2.0))/maxden)
+            #deltam = tot - maxden * (volh/pow(h0,2.0))
+            #print "change",i, i - deltam
+            #mhot[ind] = i - deltam
         ind = ind +1
 
 

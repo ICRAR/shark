@@ -203,7 +203,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
         xplot = xmf[ind]
         yplot = bulge_size_diskins[0,0,ind]
         err   = bulge_size[0,1,ind]
-	err[:] = 0
+        err[:] = 0
         ax.errorbar(xplot,yplot[0],yerr=[err[0],err[0]], ls='None', mfc='None', ecolor = 'Orange', mec='Orange',marker='s', markersize=4, label="disk instability driven")
 
     ind = np.where((bulge_size_mergers[0,0,:] != 0) & (xmf > 10.2))
@@ -211,7 +211,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
         xplot = xmf[ind]
         yplot = bulge_size_mergers[0,0,ind]
         err   = bulge_size[0,1,ind]
-	err[:] = 0
+        err[:] = 0
         ax.errorbar(xplot,yplot[0],yerr=[err[0],err[0]], ls='None', mfc='None', ecolor = 'DarkCyan', mec='DarkCyan',marker='D',  markersize=4, label="merger driven")
 
     rb_nodissipation = common.load_observation('/group/pawsey0119/clagos/Data/', 'SizeBulges_OtherModels.dat', [0])

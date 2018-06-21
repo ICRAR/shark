@@ -128,9 +128,7 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1), fo
     ax.tick_params(labelsize=12)
 
 def prepare_legend(ax, colors, loc=None, **legend_kwargs):
-
-    if(loc == None):
-	loc = 3
+    loc = 3 if loc is None else loc
     leg = ax.legend(loc=loc, prop={'size': 12}, **legend_kwargs)
     for color,text in zip(colors,leg.get_texts()):
         text.set_color(color)

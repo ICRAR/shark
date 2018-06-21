@@ -252,9 +252,9 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
 
         ax = fig.add_subplot(subplot)
         if(idx != 3):
-		xtit = ""
+            xtit = ""
         else:
-		xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+            xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
         plt.subplots_adjust(left=0.2)
         ax.text(xleg, yleg, 'z=%s' % str(z))
@@ -286,7 +286,7 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
         colors = []
         if idx == 0:
             colors = ['k','r','Crimson','b','g','BurlyWood']
-	    common.prepare_legend(ax, colors)
+        common.prepare_legend(ax, colors)
 
     common.savefig(outdir, fig, 'stellarmf_z_modelcomparison.pdf')
 
@@ -554,22 +554,22 @@ def plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainse
     mainseqsf_K13   = np.zeros(shape = (2, 5, len(xmf)))
 
     for z in range(0,2):
-            st = len(xmf) * z
-	    for j in range(0,5):
-		    for i in range(0,len(xmf)):
-			    mainseqsf_GD14[z,j,i] = mainseqsf_modelvar[j,st+i]
+        st = len(xmf) * z
+        for j in range(0,5):
+            for i in range(0,len(xmf)):
+                mainseqsf_GD14[z,j,i] = mainseqsf_modelvar[j,st+i]
 
     for z in range(0,2):
-            st = len(xmf) * (z+2)
-	    for j in range(0,5):
-		    for i in range(0,len(xmf)):
-			    mainseqsf_KMT09[z,j,i] = mainseqsf_modelvar[j,st+i]
+        st = len(xmf) * (z+2)
+        for j in range(0,5):
+            for i in range(0,len(xmf)):
+                mainseqsf_KMT09[z,j,i] = mainseqsf_modelvar[j,st+i]
 
     for z in range(0,2):
-            st = len(xmf) * (z+4)
-	    for j in range(0,5):
-		    for i in range(0,len(xmf)):
-			    mainseqsf_K13[z,j,i] = mainseqsf_modelvar[j,st+i]
+        st = len(xmf) * (z+4)
+        for j in range(0,5):
+            for i in range(0,len(xmf)):
+                mainseqsf_K13[z,j,i] = mainseqsf_modelvar[j,st+i]
 
     idx = 0
     idx_modelvar = 0
@@ -644,18 +644,18 @@ def plot_SFR_Mstars(plt, outdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainse
 
     st = 0
     for j in range(0,6):
-	    for i in range(0,len(xmf)):
-		    mainseqgas_GD14[j,i] = mainseqgas_modelvar[j,st+i]
+        for i in range(0,len(xmf)):
+            mainseqgas_GD14[j,i] = mainseqgas_modelvar[j,st+i]
 
     st = len(xmf) 
     for j in range(0,6):
-	    for i in range(0,len(xmf)):
-		    mainseqgas_KMT09[j,i] = mainseqgas_modelvar[j,st+i]
+        for i in range(0,len(xmf)):
+            mainseqgas_KMT09[j,i] = mainseqgas_modelvar[j,st+i]
 
     st = len(xmf) * 2
     for j in range(0,6):
-	    for i in range(0,len(xmf)):
-		    mainseqgas_K13[j,i] = mainseqgas_modelvar[j,st+i]
+        for i in range(0,len(xmf)):
+            mainseqgas_K13[j,i] = mainseqgas_modelvar[j,st+i]
 
     #Predicted relation
     idx = 0
