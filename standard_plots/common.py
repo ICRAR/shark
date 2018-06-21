@@ -98,7 +98,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
         else:
             subvolumes.append(int(r))
 
-    ret = [model_dir, output_dir, subvolumes]
+    ret = [model_dir, output_dir, tuple(subvolumes)]
     if requires_observations:
         ret.append(opts.obs_dir)
     if requires_snapshot:
