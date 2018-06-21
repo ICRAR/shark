@@ -41,6 +41,17 @@ def load_matplotlib():
     plt.rcParams['legend.numpoints'] = 1
     return plt
 
+def get_output_dir(shark_dir, simu, model):
+    return os.path.join(shark_dir, 'Plots', simu, model)
+
+def read_configuration(config):
+    cparser = configparser.ConfigParser()
+    cparser.read(config)
+    shark_dir = cparser.get('execution', 'output_directory')
+    model = cparser.get('execution', 'name_model')
+    simu = cparser.get('simulation', 'sim_name')
+    return shark_dir, simu, model
+
 def parse_args(requires_snapshot=True, requires_observations=True):
 
     parser = argparse.ArgumentParser()
@@ -67,11 +78,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
         parser.error('-O is required')
 
     if opts.config:
-        cparser = configparser.ConfigParser()
-        cparser.read(opts.config)
-        model = cparser.get('execution', 'name_model')
-        simu = cparser.get('simulation', 'sim_name')
-        shark_dir = cparser.get('execution', 'output_directory')
+        shark_dir, simu, model = read_configuration(opts.config)
         print("Parsed configuration file %s" % (opts.config,))
     else:
         model = opts.model
@@ -81,7 +88,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
 
     output_dir = opts.output_dir
     if not output_dir:
-        output_dir = os.path.join(shark_dir, 'Plots', simu, model)
+        output_dir = get_output_dir(shark_dir, simu, model)
     print("Creating plots under %s" % (output_dir,))
 
     try:
@@ -182,3 +189,9 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
                     data[full_name] = l
 
     return list(data.values())
+
+# If called as a program, print information taken from a configuration file
+# This simple functionality is used by shark-submit to easily find out where
+# the plots have been produced, and save us the trouble to re-implement it
+if __name__ == '__main__':
+    print(get_output_dir(*read_configuration(sys.argv[1])))
