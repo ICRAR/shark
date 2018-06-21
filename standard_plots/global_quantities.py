@@ -721,9 +721,9 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
 def main(modeldir, outdir, subvols, obsdir, snapshot):
 
     plt = common.load_matplotlib()
-    fields = {'Global': ('redshifts', 'mHI', 'mH2', 'mcold', 'mcold_metals',
-                         'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities', 
-                         'mBH', 'SFR_quiescent', 'SFR_burst', 'mDM', 'mcold_halo')}
+    fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
+                         'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
+                         'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo')}
 
     # Read data from each subvolume at a time and add it up
     # rather than appending it all together

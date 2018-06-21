@@ -349,8 +349,8 @@ def plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_
 def main(model_dir, output_dir, subvols, obs_dir, snapshot):
 
     plt = common.load_matplotlib()
-    fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge',
-                           'rstar_disk', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
+    fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge',
+                           'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge')}
     hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
 

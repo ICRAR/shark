@@ -176,8 +176,8 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
         print('Reading data from %s' % fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0 and include_h0_volh:
-                data['h0'] = f['Cosmology/h'].value
-                data['vol'] = f['runInfo/EffectiveVolume'].value * len(subvolumes)
+                data['h0'] = f['cosmology/h'].value
+                data['vol'] = f['run_info/effective_volume'].value * len(subvolumes)
 
             for gname, dsnames in fields.items():
                 group = f[gname]

@@ -224,7 +224,7 @@ def plot_BMHM_z(plt, outdir, massbar):
 def main(modeldir, outdir, subvols):
 
     plt = common.load_matplotlib()
-    fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mBH', 'mgas_disk',
+    fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'm_bh', 'mgas_disk',
                            'mgas_bulge', 'mhot', 'mreheated', 'mvir_hosthalo',
                            'type')}
 

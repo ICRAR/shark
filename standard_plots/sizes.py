@@ -612,7 +612,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
 def main(modeldir, outdir, subvols, obsdir):
 
     plt = common.load_matplotlib()
-    fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities','mBH',
+    fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities','m_bh',
                            'rstar_disk', 'rstar_bulge', 'type', 
                            'specific_angular_momentum_disk_star', 'specific_angular_momentum_bulge_star',
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',

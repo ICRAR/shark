@@ -1201,8 +1201,8 @@ def main(modeldir, outdir, subvols, obsdir):
 
     hist_ssfr = np.zeros(shape = (len(zlist), len(ssfrbins)))
 
-    fields = {'Galaxies': ('sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge',
-                           'rstar_disk', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
+    fields = {'galaxies': ('sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge',
+                           'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mgas_metals_disk', 'mgas_metals_bulge',
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type', 'mvir_hosthalo')}

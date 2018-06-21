@@ -92,7 +92,7 @@ def main(model_dir, outdir, subvols, obsdir):
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
-    fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
+    fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
                            'mvir_subhalo', 'type')}
 
     # Create histogram
