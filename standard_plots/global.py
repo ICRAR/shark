@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from cmath import sqrt
 """Global plots"""
 
 import math
@@ -105,7 +104,7 @@ def prepare_data(hdf5_data, redshifts):
     h = np.zeros(shape = (len(redshifts)))
     omegaHI = np.zeros(shape = (len(redshifts)))
     for z in range(0,len(redshifts)):
-        h[z] = h0 * sqrt(OmegaM*pow(1.0+redshifts[z],3.0) + OmegaL)
+        h[z] = h0 * math.sqrt(OmegaM*pow(1.0+redshifts[z],3.0) + OmegaL)
         omegaHI[z]  = mHIden[z] / (rho_crit*pow(h0,2.0))
 
     #Assume a gas-dust mass ratio that scales with metallicity. We use the Remy-Ruyer et al. (2013) G/D ratio.
