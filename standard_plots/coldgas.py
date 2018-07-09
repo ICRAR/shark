@@ -346,12 +346,9 @@ def plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_
     common.savefig(output_dir, fig, "HIH2_gas_fraction.pdf")
 
 
-def main():
+def main(model_dir, output_dir, subvols, obs_dir, snapshot):
 
     plt = common.load_matplotlib()
-
-    model_dir, output_dir, subvols, obs_dir, snapshot = common.parse_args()
-
     fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge',
                            'rstar_disk', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge')}
@@ -370,4 +367,4 @@ def main():
     plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_relation_sat)
 
 if __name__ == '__main__':
-    main()
+    main(*common.parse_args())

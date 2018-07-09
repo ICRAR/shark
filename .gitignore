@@ -2,6 +2,7 @@
 /.cproject
 /.project
 /.pydevproject
+/.settings
 /bin/
 
 *.pyc

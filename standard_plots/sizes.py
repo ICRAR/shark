@@ -203,7 +203,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
         xplot = xmf[ind]
         yplot = bulge_size_diskins[0,0,ind]
         err   = bulge_size[0,1,ind]
-	err[:] = 0
+        err[:] = 0
         ax.errorbar(xplot,yplot[0],yerr=[err[0],err[0]], ls='None', mfc='None', ecolor = 'Orange', mec='Orange',marker='s', markersize=4, label="disk instability driven")
 
     ind = np.where((bulge_size_mergers[0,0,:] != 0) & (xmf > 10.2))
@@ -211,10 +211,10 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
         xplot = xmf[ind]
         yplot = bulge_size_mergers[0,0,ind]
         err   = bulge_size[0,1,ind]
-	err[:] = 0
+        err[:] = 0
         ax.errorbar(xplot,yplot[0],yerr=[err[0],err[0]], ls='None', mfc='None', ecolor = 'DarkCyan', mec='DarkCyan',marker='D',  markersize=4, label="merger driven")
 
-    rb_nodissipation = common.load_observation('/group/pawsey0119/clagos/Data/', 'SizeBulges_OtherModels.dat', [0])
+    rb_nodissipation = common.load_observation(obsdir, 'SizeBulges_OtherModels.dat', [0])
     ind = np.where(rb_nodissipation != 0)
     xplot = xmf[ind]
     yplot = rb_nodissipation[ind]
@@ -515,7 +515,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
 
-    MBH_othermodels = common.load_observation('/group/pawsey0119/clagos/Data/', 'BHBulgeRelation_OtherModels.dat', [0])
+    MBH_othermodels = common.load_observation(obsdir, 'BHBulgeRelation_OtherModels.dat', [0])
     MBH_f_smbh0p008   = MBH_othermodels[0:29]
     MBH_f_smbh0p00008 = MBH_othermodels[30:60]
     ind = np.where(MBH_f_smbh0p008 != 0)
@@ -585,7 +585,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
         yplot = BT_fractions_nodiskins[0,ind]
         ax.plot(xplot,yplot[0],'r', linestyle = 'dashed', label ='only by mergers')
 
-    BT_othermodels = common.load_observation('/group/pawsey0119/clagos/Data/', 'BTFractions_OtherModels.dat', [0])
+    BT_othermodels = common.load_observation(obsdir, 'BTFractions_OtherModels.dat', [0])
     BT_stable0   = BT_othermodels[0:29]
     BT_stable0p5 = BT_othermodels[30:60]
     BT_stable1   = BT_othermodels[91:120]
@@ -609,7 +609,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
     common.savefig(outdir, fig, 'BTfractions.pdf')
 
 
-def main():
+def main(modeldir, outdir, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities','mBH',
@@ -618,8 +618,6 @@ def main():
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo')}
-
-    modeldir, outdir, subvols, obsdir = common.parse_args(requires_snapshot=False)
 
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -655,4 +653,4 @@ def main():
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
 
 if __name__ == '__main__':
-    main()
+    main(*common.parse_args(requires_snapshot=False))

@@ -53,20 +53,18 @@ then
 	return
 fi
 
-# Otherwise this is a linux box
-# We use cmake, but in trusty we still have 2.8...
-curl -O https://cmake.org/files/v3.2/cmake-3.2.3-Linux-x86_64.tar.gz
-tar -xf cmake-3.2.3-Linux-x86_64.tar.gz
-export PATH=${TRAVIS_BUILD_DIR}/cmake-3.2.3-Linux-x86_64/bin:$PATH
-export CMAKE_MODULE_PATH=${TRAVIS_BUILD_DIR}/cmake-3.2.3-Linux-x86_64/share/cmake-3.2/Modules:${CMAKE_MODULE_PATH}
-
 # Ubuntu Travis still comes with GSL 1.X but we need >= 2
+# We cache the binary version through travis' cache, so let's
+# check first if it exists
 export GSL_ROOT_DIR=${TRAVIS_BUILD_DIR}/gsl/2.4
 export LD_LIBRARY_PATH=${GSL_ROOT_DIR}/lib:$LD_LIBRARY_PATH
-curl -O https://mirror.freedif.org/GNU/gsl/gsl-2.4.tar.gz
-tar xf gsl-2.4.tar.gz
-cd gsl-2.4
-./configure --prefix=${GSL_ROOT_DIR}
-make all -j2
-make install
-cd ..
+if [ ! -d "${GSL_ROOT_DIR}/lib" ]
+then
+	curl -O https://mirror.freedif.org/GNU/gsl/gsl-2.4.tar.gz
+	tar xf gsl-2.4.tar.gz
+	cd gsl-2.4
+	./configure --prefix=${GSL_ROOT_DIR}
+	make all -j2
+	make install
+	cd ..
+fi

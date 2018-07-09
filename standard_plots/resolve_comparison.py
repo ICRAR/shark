@@ -879,10 +879,9 @@ def plot_bmf_resolve_baryon_components(plt, outdir, obsdir, hist_bmf, hist_smf, 
     common.savefig(outdir, fig, 'bmf_resolve_baryon-components.pdf')
 
 
-def main():
+def main(modeldir, outdir, subvols, obsdir, snapshot):
 
     plt = common.load_matplotlib()
-    modeldir, outdir, subvols, obsdir, snapshot = common.parse_args()
     fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'rstar_disk',
                            'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
@@ -902,4 +901,4 @@ def main():
     plot_bmf_resolve_baryon_components(plt, outdir, obsdir, hist_bmf, hist_smf, hist_himf)
 
 if __name__ == '__main__':
-    main()
+    main(*common.parse_args())

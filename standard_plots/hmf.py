@@ -88,12 +88,10 @@ def prepare_data(hdf5_data, hist, histsh, index):
     H, bins_edges = np.histogram(masssh,bins=np.append(mbins,mupp))
     histsh[index,:] = histsh[index,:] + H
 
-def main():
-
-    plt = common.load_matplotlib()
-    model_dir, outdir, subvols, obsdir = common.parse_args(requires_snapshot=False)
+def main(model_dir, outdir, subvols, obsdir):
 
     # Loop over redshift and subvolumes
+    plt = common.load_matplotlib()
     fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
                            'mvir_subhalo', 'type')}
 
@@ -127,4 +125,4 @@ def main():
     plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz)
 
 if __name__ == '__main__':
-    main()
+    main(*common.parse_args(requires_snapshot=False))

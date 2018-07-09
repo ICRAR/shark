@@ -27,6 +27,11 @@
 language: cpp
 sudo: false
 
+# In Linux we cache the gsl binary version
+cache:
+ directories:
+  - gsl/2.4
+
 # We try with both GNU and LLVM
 # When running with gcc-6 we also collect coverage information
 # and upload it to coveralls
