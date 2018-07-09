@@ -41,7 +41,7 @@ class TreeBuilder {
 public:
 	TreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 	virtual ~TreeBuilder();
-	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons);
+	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons);
 
 protected:
 
@@ -58,7 +58,7 @@ private:
 	void spin_interpolated_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params);
 	void define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params);
 	SubhaloPtr define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo);
-	void define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, Cosmology &cosmology, TotalBaryon &AllBaryons);
+	void define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, GasCoolingParameters &gas_cooling_params, Cosmology &cosmology, TotalBaryon &AllBaryons);
 	void remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo);
 
 private:

@@ -50,7 +50,7 @@ def prepare_data(hdf5_data, redshifts):
 
     sfrall = sfrdisk + sfrburst
 
-    maxden = 6.0*pow(10.0,9.0)
+    maxden = 6.2863*pow(10.0,9.0)
     ind = 0
     for i,j,k,l in zip(mhot, meje, mstar, mcold):
         tot = i+j+k+l
@@ -151,12 +151,12 @@ def prepare_data(hdf5_data, redshifts):
 
 def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, mstarden, mcoldden, mhotden, mejeden):
 
-    fig = plt.figure(figsize=(5,12))
+    fig = plt.figure(figsize=(5,15))
 
     xtit="$\\rm Lookback\, time/Gyr$"
     ytit="$\\rm log_{10}(m/m_{\\rm bar,total})$"
 
-    ax = fig.add_subplot(311)
+    ax = fig.add_subplot(411)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, 0, 13.5, -5, 0.1, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
@@ -179,7 +179,7 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     xtit="$\\rm Lookback\, time/Gyr$"
     ytit="$\\rm log_{10}(\\rho_{\\rm bar} /\\rm M_{\odot} \\rm Mpc^{-3})$"
 
-    ax = fig.add_subplot(312)
+    ax = fig.add_subplot(412)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, 0, 13.5, 6, 10, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
@@ -193,17 +193,17 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
 
-    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'EAGLE_BaryonGrowth.txt', [0,2,3,4,5,6])
+    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'EAGLE_BaryonGrowthTotal.txt', [0,2,3,4,5,6])
     eaglesm  = np.log10(pow(10.0, eaglesm) + pow(10.0, eaglesmout))
     eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
     ind = np.where(eaglesm > 0)
-    ax.plot(lbt[ind], eaglesm[ind] - 6.0 - np.log10(h0), 'k', linestyle='dotted', label ='EAGLE')
+    ax.plot(lbt[ind], eaglesm[ind] - 6.0, 'k', linestyle='dotted', label ='EAGLE')
     ind = np.where(eagleism > 0)
-    ax.plot(lbt[ind], eagleism[ind]- 6.0 - np.log10(h0), 'b', linestyle='dotted')
+    ax.plot(lbt[ind], eagleism[ind]- 6.0, 'b', linestyle='dotted')
     ind = np.where(eaglehg > 0)
-    ax.plot(lbt[ind], eaglehg[ind] - 6.0 - np.log10(h0), 'r', linestyle='dotted')
+    ax.plot(lbt[ind], eaglehg[ind] - 6.0, 'r', linestyle='dotted')
     ind = np.where(eagleejec > 0)
-    ax.plot(lbt[ind], eagleejec[ind] - 6.0 - np.log10(h0), 'g', linestyle='dotted')
+    ax.plot(lbt[ind], eagleejec[ind] - 6.0, 'g', linestyle='dotted')
 
 #
 #    lbt, galsm, galism, galhg = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,5,4,3])
@@ -217,7 +217,7 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
 
     common.prepare_legend(ax, ['k','k','k'], fontsize=10)
 
-    ax = fig.add_subplot(313)
+    ax = fig.add_subplot(413)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, 0, 13.5, 6, 10, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
@@ -231,24 +231,24 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
 
-    lbt, galhg, galejec, galsm, galism = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,2,3,4,5])
-    lbt = lbt[0]-lbt
-    galtot  = np.log10(galsm + galism+ galhg + galejec)
-    galsm   = np.log10(galsm)
-    galism  = np.log10(galism)
-    galhg   = np.log10(galhg)
-    galejec = np.log10(galejec)
+    lbt, galsm, galism, galhg, galejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Mitchell18', [0,2,3,4,5])
+    #lbt = lbt[0]-lbt
+    galtot  = np.log10(pow(10.0, galsm) + pow(10.0, galism) + pow(10.0, galhg) + pow(10.0, galejec))
+    galsm   = (galsm)
+    galism  = (galism)
+    galhg   = (galhg)
+    galejec = (galejec)
 
     h = 0.704
-    vol = np.log10(1953125.0/pow(h,3.0))
+    vol = 6.0 #np.log10(1953125.0/pow(h,3.0))
     ind = np.where(galsm > 0)
-    ax.plot(lbt[ind], galsm[ind] - vol - np.log10(h), 'k', linestyle='dashed', label ='GALFORM GP14', linewidth=1)
+    ax.plot(lbt[ind], galsm[ind] - vol, 'k', linestyle='dashed', label ='GALFORM M18', linewidth=1)
     ind = np.where(galism > 0)
-    ax.plot(lbt[ind], galism[ind]- vol - np.log10(h), 'b', linestyle='dashed', linewidth=1)
+    ax.plot(lbt[ind], galism[ind]- vol, 'b', linestyle='dashed', linewidth=1)
     ind = np.where(galhg > 0)
-    ax.plot(lbt[ind], galhg[ind] - vol - np.log10(h), 'r', linestyle='dashed', linewidth=1)
+    ax.plot(lbt[ind], galhg[ind] - vol, 'r', linestyle='dashed', linewidth=1)
     ind = np.where(galejec > 0)
-    ax.plot(lbt[ind], galejec[ind] - vol - np.log10(h), 'g', linestyle='dashed', linewidth=1)
+    ax.plot(lbt[ind], galejec[ind] - vol, 'g', linestyle='dashed', linewidth=1)
 
     #lbt, eaglesm, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'for_claudia_galform.txt', [0,2,3,4,5])
     #eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
@@ -271,6 +271,61 @@ def plot_mass_densities(plt, outdir, h0, redshifts, mstar, mcold, mhot, meje, ms
 #    ax.plot(lbt[ind], np.log10(galhg[ind]) + 10, 'r', linestyle='dashed')
 
     common.prepare_legend(ax, ['k','k','k'], fontsize=10)
+
+    ax = fig.add_subplot(414)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, 0, 13.5, 6, 10, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
+
+    ind = np.where(mstarden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mstarden[ind]*pow(h0,2.0)),'k', label='Shark')
+    ind = np.where(mcoldden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mcoldden[ind]*pow(h0,2.0)),'b')
+    ind = np.where(mhotden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mhotden[ind]*pow(h0,2.0)),'r')
+    ind = np.where(mejeden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
+
+    zbt, galism, galsm, galhg, galejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'BaryonBudgetLgalaxies.dat', [1,2,3,4,5])
+    lbt = us.look_back_time(zbt)
+    galsm   = np.log10(galsm)+10.0
+    galism  = np.log10(galism)+10.0
+    galhg   = np.log10(galhg)+10.0
+    galejec = np.log10(galejec)+10.0
+
+    h = 0.673
+    vol = np.log10(125000000.0/pow(h,3.0))
+    ind = np.where(galsm > 0)
+    ax.plot(lbt[ind], galsm[ind] - vol - np.log10(h), 'k', linestyle='dashdot', label ='L-galaxies H15', linewidth=1)
+    ind = np.where(galism > 0)
+    ax.plot(lbt[ind], galism[ind]- vol - np.log10(h), 'b', linestyle='dashdot', linewidth=1)
+    ind = np.where(galhg > 0)
+    ax.plot(lbt[ind], galhg[ind] - vol - np.log10(h), 'r', linestyle='dashdot', linewidth=1)
+    ind = np.where(galejec > 0)
+    ax.plot(lbt[ind], galejec[ind] - vol - np.log10(h), 'g', linestyle='dashdot', linewidth=1)
+
+    #lbt, eaglesm, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'for_claudia_galform.txt', [0,2,3,4,5])
+    #eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
+    #ind = np.where(eaglesm > 0)
+    #ax.plot(lbt[ind], eaglesm[ind] - 6.0 - np.log10(h0), 'k', linestyle='dotted', label ='GALFORM Peter')
+    #ind = np.where(eagleism > 0)
+    #ax.plot(lbt[ind], eagleism[ind]- 6.0 - np.log10(h0), 'b', linestyle='dotted')
+    #ind = np.where(eaglehg > 0)
+    #ax.plot(lbt[ind], eaglehg[ind] - 6.0 - np.log10(h0), 'r', linestyle='dotted')
+    #ind = np.where(eagleejec > 0)
+    #ax.plot(lbt[ind], eagleejec[ind] - 6.0 - np.log10(h0), 'g', linestyle='dotted')
+
+#    lbt, galsm, galism, galhg = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,5,4,3])
+#    lbt = max(lbt) - lbt
+#    ind = np.where(galsm > 0)
+#    ax.plot(lbt[ind], np.log10(galsm[ind]) + 10, 'k', linestyle='dashed', label ='GALFORM')
+#    ind = np.where(galism > 0)
+#    ax.plot(lbt[ind], np.log10(galism[ind]) + 10, 'b', linestyle='dashed')
+#    ind = np.where(galhg > 0)
+#    ax.plot(lbt[ind], np.log10(galhg[ind]) + 10, 'r', linestyle='dashed')
+
+    common.prepare_legend(ax, ['k','k','k'], fontsize=10)
+
 
     common.savefig(outdir, fig, "global.pdf")
 

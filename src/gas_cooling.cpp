@@ -78,6 +78,7 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 	options.load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
 	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
 	options.load("gas_cooling.tau_cooling", tau_cooling);
+        options.load("gas_cooling.max_fractional_accreted_mass", max_fractional_accreted_mass);
 
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
 	load_tables(cooling_tables_dir, metallicity_tables);

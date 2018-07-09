@@ -66,6 +66,7 @@ public:
 	double rcore = 0;
 	double pre_enrich_z = 1e-7;
 	double tau_cooling = 0;
+	double max_fractional_accreted_mass = 1;
 
 	LambdaCoolingModel lambdamodel = CLOUDY;
 	CoolingModel model = CROTON06;

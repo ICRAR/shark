@@ -50,7 +50,7 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 	}
 }
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
 {
 
 	const auto &output_snaps = exec_params.output_snapshots;
@@ -109,7 +109,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 
 	// Define accretion rate from DM in case we want this.
 	LOG(info) << "Defining accretion rate using cosmology";
-	define_accretion_rate_from_dm(trees, sim_params, *cosmology, AllBaryons);
+	define_accretion_rate_from_dm(trees, sim_params, gas_cooling_params, *cosmology, AllBaryons);
 
 	return trees;
 }
@@ -350,7 +350,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 }
 
 
-void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, Cosmology &cosmology, TotalBaryon &AllBaryons){
+void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, GasCoolingParameters &gas_cooling_params, Cosmology &cosmology, TotalBaryon &AllBaryons){
 
 
 	//Loop over trees.
@@ -368,10 +368,10 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 					//Define accreted baryonic mass.
 					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * universal_baryon_fraction;
 
-					//TEST: apply maximum to accretion rate at z<1.
-					/*if(halo->central_subhalo->accreted_mass > 0.3*halo->Mvir * universal_baryon_fraction){
-						halo->central_subhalo->accreted_mass = 0.3*halo->Mvir * universal_baryon_fraction;
-					}*/
+					//TEST: apply maximum to accretion rate.
+					if(halo->central_subhalo->accreted_mass > gas_cooling_params.max_fractional_accreted_mass * halo->Mvir * universal_baryon_fraction){
+						halo->central_subhalo->accreted_mass = gas_cooling_params.max_fractional_accreted_mass * halo->Mvir * universal_baryon_fraction;
+					}
 
 					//Avoid negative numbers
 					if(halo->central_subhalo->accreted_mass < 0){
