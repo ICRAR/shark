@@ -171,7 +171,7 @@ submit_slurm() {
 		cmd="$cmd --mem-per-cpu $(($mem_per_task / 1024 / 1024))M"
 	fi
 
-	cmd="$cmd -D $shark_output_directory"
+	cmd="$cmd -D \"$shark_output_directory\""
 	cmd="$cmd shark-run -v $shark_verbosity"
 
 	# shark-run command-line options
