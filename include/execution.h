@@ -39,6 +39,7 @@ public:
 
 	bool skip_missing_descendants = true;
 	bool warn_on_missing_descendants = true;
+        bool ensure_mass_growth = true;
 
 	/**
 	 * Parameters of sf histories:

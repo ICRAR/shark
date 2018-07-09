@@ -96,9 +96,11 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	// Make sure merger trees are fully self-contained
 	ensure_trees_are_self_contained(trees);
 
-	// Ensure halos only grow in mass.
-	LOG(info) << "Making sure halos only grow in mass";
-	ensure_halo_mass_growth(trees, sim_params);
+	if(exec_params.ensure_mass_growth){
+		// Ensure halos only grow in mass.
+		LOG(info) << "Making sure halos only grow in mass";
+		ensure_halo_mass_growth(trees, sim_params);
+	}
 
 	// Redefine angular momentum in the case of interpolated halos.
 	// spin_interpolated_halos(trees, sim_params);
