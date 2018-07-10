@@ -192,7 +192,7 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
 
-    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation(obsdir, 'EAGLE_BaryonGrowthTotal.txt', [0,2,3,4,5,6])
+    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation(obsdir + 'Models/OtherModels/', 'EAGLE_BaryonGrowthTotal.txt', [0,2,3,4,5,6])
     eaglesm  = np.log10(pow(10.0, eaglesm) + pow(10.0, eaglesmout))
     eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
     ind = np.where(eaglesm > 0)
@@ -230,7 +230,7 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
 
-    lbt, galsm, galism, galhg, galejec = common.load_observation(obsdir, 'global_Mitchell18', [0,2,3,4,5])
+    lbt, galsm, galism, galhg, galejec = common.load_observation(obsdir + 'Models/OtherModels/', 'global_Mitchell18', [0,2,3,4,5])
     galtot  = np.log10(pow(10.0, galsm) + pow(10.0, galism) + pow(10.0, galhg) + pow(10.0, galejec))
     galsm   = (galsm)
     galism  = (galism)
@@ -284,7 +284,7 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
 
-    zbt, galism, galsm, galhg, galejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'BaryonBudgetLgalaxies.dat', [1,2,3,4,5])
+    zbt, galism, galsm, galhg, galejec = common.load_observation(obsdir + 'Models/OtherModels/', 'BaryonBudgetLgalaxies.dat', [1,2,3,4,5])
     lbt = us.look_back_time(zbt)
     galsm   = np.log10(galsm)+10.0
     galism  = np.log10(galism)+10.0
@@ -405,7 +405,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ind = np.where(sfrb > 0)
     ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='dotted',  linewidth=1, label ='bursts')
 
-    sfr_modelvar = common.load_observation(obsdir, 'Global_OtherModels.dat', [2])
+    sfr_modelvar = common.load_observation(obsdir + 'Models/SharkVariations', 'Global_OtherModels.dat', [2])
     sfr_modelvar_burst1 = sfr_modelvar[0:179]
     sfr_modelvar_nu0p5  = sfr_modelvar[181:360]
 
@@ -464,7 +464,7 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ax.plot(redshifts[ind],np.log10(mstarbden_diskins[ind]*pow(h0,2.0)), 'b', linestyle='dotted')
 
 
-    sm_modelvar = common.load_observation(obsdir, 'Global_OtherModels.dat', [3])
+    sm_modelvar = common.load_observation(obsdir + 'Models/SharkVariations', 'Global_OtherModels.dat', [3])
     sm_modelvar_burst1 = sm_modelvar[0:179]
     sm_modelvar_nu0p5  = sm_modelvar[181:360]
 
@@ -577,7 +577,7 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ind = np.where(mH2den > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r', label='Shark')
 
-    h2_modelvar = common.load_observation(obsdir, 'Global_OtherModels.dat', [1])
+    h2_modelvar = common.load_observation(obsdir + 'Models/SharkVariations', 'Global_OtherModels.dat', [1])
     h2_modelvar_burst1 = h2_modelvar[0:179]
     h2_modelvar_nu0p5  = h2_modelvar[181:360]
 
@@ -701,7 +701,7 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ind = np.where(omegaHI > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(omegaHI[ind]*pow(h0,2.0)) + np.log10(XH), 'r', label='Shark')
 
-    hi_modelvar = common.load_observation(obsdir, 'Global_OtherModels.dat', [0])
+    hi_modelvar = common.load_observation(obsdir + 'Models/SharkVariations', 'Global_OtherModels.dat', [0])
     hi_modelvar_burst1 = hi_modelvar[0:179]
     hi_modelvar_nu0p5  = hi_modelvar[181:360]
 
