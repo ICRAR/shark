@@ -68,7 +68,7 @@ print_usage() {
 	echo "Usage: $0 [-h] [-?] [-d] [-O output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-M modules] [-M mem] [-N num-nodes] [-v | -q]"
 	echo "       [-S shark_binary] [-V subvolumes] [-o opt1=val1 [-o opt2=val2...]]"
-	echo "       config_file"
+	echo "       [-p] [-D obsdata_dir] config_file"
 	echo
 	echo "This program calculates what is the best way to submit a series of jobs to"
 	echo "execute shark over a number of subvolumes, and performs such submission. The"
@@ -129,6 +129,14 @@ print_usage() {
 	echo "                 override those given in the configuration file. This parameter"
 	echo "                 can be given more than one time to pass down multiple options"
 	echo
+	echo " -p              After a *successful* run, produce all the standard plots with"
+	echo "                 the generated outputs from shark, and copy them to this job's"
+	echo "                 output directory. The default is to not produce plots"
+	echo
+	echo " -D              The directory where observational data can be found. Defaults"
+	echo "                 to the value of the SHARK_OBSDATA_DIR environment variable, if"
+	echo "                 set. A value is required if -p is given"
+	echo
 	echo " config_file:    The reference configuration file to use for this shark execution"
 	echo
 }
@@ -137,7 +145,7 @@ submit_slurm() {
 
 	# Each SHArk instance uses one CPU
 	cmd="sbatch --ntasks $n_svols"
-	cmd="$cmd -o shark-run.out -e shark-run.err"
+	cmd="$cmd -o shark-run.log"
 
 	# Queueing accountability
 	if [ ! -z "$account" ]
@@ -171,7 +179,7 @@ submit_slurm() {
 		cmd="$cmd --mem-per-cpu $(($mem_per_task / 1024 / 1024))M"
 	fi
 
-	cmd="$cmd -D $shark_output_directory"
+	cmd="$cmd -D \"$shark_output_directory\""
 	cmd="$cmd shark-run -v $shark_verbosity"
 
 	# shark-run command-line options
@@ -191,6 +199,12 @@ submit_slurm() {
 		cmd="$cmd -o \"$o\""
 	done
 
+	# Produce standard plots?
+	if [ -n "${shark_plot}" ]
+	then
+		cmd="$cmd -p -D \"${shark_obsdata_dir}\""
+	fi
+
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
 
 	if [ "$dry_run" = "1" ]
@@ -204,6 +218,7 @@ submit_slurm() {
 		info "Submitting shark job with command: $cmd"
 
 		# Go, go, go!
+		export SHARK_HPC_DIR="$shark_hpc_dir"
 		eval $cmd
 		if [ $? -ne 0 ]
 		then
@@ -212,6 +227,21 @@ submit_slurm() {
 		fi
 	fi
 }
+
+
+# Where does this script live?
+# We use its location later to deduce later on
+# where the python standard plotting scripts live
+# Follow symbolic links
+this=$0
+if [ -h $0 ]
+then
+	this=$(readlink -f $0)
+fi
+
+# Get the fully-qualified path to this script's parent directory
+p="`dirname $this`"
+shark_hpc_dir="`cd $p; echo $PWD; cd $OLDPWD`"
 
 # Default option values
 # These are global variables, so we don't need to pass them around all the time
@@ -230,9 +260,11 @@ shark_verbosity=3
 shark_binary=
 shark_subvolumes=
 shark_options=()
+shark_plot=
+shark_obsdata_dir=${SHARK_OBSDATA_DIR}
 
 # Parse command line options
-while getopts "h?dO:Q:a:w:n:M:m:N:vqS:V:o:" opt
+while getopts "h?dO:Q:a:w:n:M:m:N:vqS:V:o:pD:" opt
 do
 	case "$opt" in
 		[h?])
@@ -270,6 +302,12 @@ do
 			;;
 		o)
 			shark_options+=("$OPTARG")
+			;;
+		p)
+			shark_plot=yes
+			;;
+		D)
+			shark_obsdata_dir="${OPTARG}"
 			;;
 		O)
 			shark_output_directory="$OPTARG"
@@ -314,6 +352,31 @@ then
 	exit 1
 fi
 config_file=${@:$OPTIND:1}
+
+# If plotting is requested, an observation data directory must be specified
+if [ -n "${shark_plot}" ]
+then
+	if [ -z "${shark_obsdata_dir}" ]
+	then
+		error "No observations data directory specified."
+		error
+		error "One can be specified either using -D or with the"
+		error "SHARK_OBSDATA_DIR environment variable"
+		exit 1
+	fi
+
+	if [ ! -d "${shark_obsdata_dir}" ]
+	then
+		error "Observations data directory"
+		error
+		error "${shark_obsdata_dir}"
+		error
+		error "does not exist or is not a directory."
+		error "Make sure you are pointing to the correct directory,"
+		error "or do *not* request plots via -p"
+		exit 1
+	fi
+fi
 
 # Check which queueing system we are going to use from now on
 queue_system=
