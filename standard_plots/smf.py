@@ -283,10 +283,10 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],color= 'BurlyWood', linestyle='dashed', label='$\\kappa_{\\rm r} = 0.01$' if idx == 0 else None)
 
-        #colors = []
-        #if idx == 0:
-        #    colors = ['k','r','Crimson','b','g','BurlyWood']
-        #common.prepare_legend(ax, colors)
+        colors = []
+        if idx == 0:
+            colors = ['k','r','Crimson','b','g','BurlyWood']
+            common.prepare_legend(ax, colors)
 
     common.savefig(outdir, fig, 'stellarmf_z_modelcomparison.pdf')
 
