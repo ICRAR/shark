@@ -97,6 +97,31 @@ then
 	warning ""
 fi
 
+# The submit script should have told us where it lives,
+# which is needed later on to deduce where the standard
+# python plotting scripts live
+if [ -z "$SHARK_HPC_DIR" ]
+then
+	warning "SHARK_HPC_DIR environment variable not set"
+	warning
+	warning "This variable should have been set by the shark-submit script automatically"
+	warning "to properly support running the python standard plot scripts. If for some reason you"
+	warning "are running this script manually you will need to export this variable yourself"
+	warning "and point it to the hpc/ directory within the shark git repository."
+	warning
+	warning "Given that this is not the case, this variable will now be defaulted"
+	warning "to this script's parent directory, which might or might not be what you need."
+
+	# See shark-submit fot details on this
+	this=$0
+	if [ -h $0 ]
+	then
+		this=$(readlink -f $0)
+	fi
+	p="`dirname $this`"
+	SHARK_HPC_DIR="`cd $p; echo $PWD; cd $OLDPWD`"
+fi
+
 # Print queueing information for this job
 if [ ! -z "$SLURM_JOB_ID" ]
 then

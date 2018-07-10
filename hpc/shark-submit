@@ -204,6 +204,7 @@ submit_slurm() {
 		info "Submitting shark job with command: $cmd"
 
 		# Go, go, go!
+		export SHARK_HPC_DIR="$shark_hpc_dir"
 		eval $cmd
 		if [ $? -ne 0 ]
 		then
@@ -212,6 +213,21 @@ submit_slurm() {
 		fi
 	fi
 }
+
+
+# Where does this script live?
+# We use its location later to deduce later on
+# where the python standard plotting scripts live
+# Follow symbolic links
+this=$0
+if [ -h $0 ]
+then
+	this=$(readlink -f $0)
+fi
+
+# Get the fully-qualified path to this script's parent directory
+p="`dirname $this`"
+shark_hpc_dir="`cd $p; echo $PWD; cd $OLDPWD`"
 
 # Default option values
 # These are global variables, so we don't need to pass them around all the time
