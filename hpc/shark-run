@@ -29,7 +29,6 @@ info() {
 
 error() {
 	echo "shark-run: ERROR: $1" 1>&2
-	exit 1
 }
 
 warning() {
@@ -197,7 +196,7 @@ then
 	for m in $module_names
 	do
 		info "Loading module $m"
-		module load "$m" || error "Failed to load module $m"
+		module load "$m" || (error "Failed to load module $m" && exit 1)
 	done
 fi
 
@@ -212,6 +211,7 @@ then
 	if [ -z "$SLURM_MEM_PER_NODE" ]
 	then
 		error "Neither SLURM_MEM_PER_CPU nor SLURM_MEM_PER_NODE could be found, cannot calculate memory per shark instance"
+		exit 1
 	fi
 
 	mem_per_node=(`_slurm_quantity_as_list $SLURM_MEM_PER_NODE`)
