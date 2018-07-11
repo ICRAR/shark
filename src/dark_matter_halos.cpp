@@ -15,8 +15,9 @@
 #include "cosmology.h"
 #include "dark_matter_halos.h"
 #include "logging.h"
-#include "numerical_constants.h"
 #include "nfw_distribution.h"
+#include "numerical_constants.h"
+#include "utils.h"
 
 
 namespace shark {
@@ -32,10 +33,11 @@ DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 template <>
 DarkMatterHaloParameters::DarkMatterProfile
 Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &name, const std::string &value) const {
-	if ( value == "nfw" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "nfw") {
 		return DarkMatterHaloParameters::NFW;
 	}
-	else if ( value == "einasto" ) {
+	else if (lvalue == "einasto") {
 		return DarkMatterHaloParameters::EINASTO;
 	}
 	std::ostringstream os;
@@ -47,10 +49,11 @@ Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &nam
 template <>
 DarkMatterHaloParameters::SizeModel
 Options::get<DarkMatterHaloParameters::SizeModel>(const std::string &name, const std::string &value) const {
-	if ( value == "Mo98" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "mo98") {
 		return DarkMatterHaloParameters::MO98;
 	}
-	else if ( value == "Cole00" ) {
+	else if (lvalue == "cole00") {
 		return DarkMatterHaloParameters::COLE00;
 	}
 	std::ostringstream os;

@@ -24,8 +24,9 @@
 
 #include <cmath>
 
-#include "stellar_feedback.h"
 #include "numerical_constants.h"
+#include "stellar_feedback.h"
+#include "utils.h"
 
 namespace shark {
 
@@ -59,22 +60,23 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options)
 template <>
 StellarFeedbackParameters::StellarFeedbackModel
 Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string &name, const std::string &value) const {
-	if ( value == "Muratov15" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "muratov15") {
 		return StellarFeedbackParameters::MURATOV15;
 	}
-	else if ( value == "Lacey16" ) {
+	else if (lvalue == "lacey16") {
 		return StellarFeedbackParameters::LACEY16;
 	}
-	else if (value == "Guo11"){
+	else if (lvalue == "guo11") {
 		return StellarFeedbackParameters::GUO11;
 	}
-	else if (value == "Lagos13"){
+	else if (lvalue == "lagos13") {
 		return StellarFeedbackParameters::LAGOS13;
 	}
-	else if (value == "Lagos13Trunc"){
+	else if (lvalue == "lagos13trunc") {
 		return StellarFeedbackParameters::LAGOS13Trunc;
 	}
-	else if (value == "Lacey16RedDep"){
+	else if (lvalue == "lacey16reddep") {
 		return StellarFeedbackParameters::LACEY16FIRE;
 	}
 	std::ostringstream os;

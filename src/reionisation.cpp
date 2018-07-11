@@ -11,8 +11,9 @@
 #include <map>
 #include <tuple>
 
-#include "reionisation.h"
 #include "logging.h"
+#include "reionisation.h"
+#include "utils.h"
 
 namespace shark {
 
@@ -28,10 +29,11 @@ ReionisationParameters::ReionisationParameters(const Options &options)
 template <>
 ReionisationParameters::ReionisationModel
 Options::get<ReionisationParameters::ReionisationModel>(const std::string &name, const std::string &value) const {
-	if ( value == "Lacey16" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "lacey16") {
 		return ReionisationParameters::LACEY16;
 	}
-	else if ( value == "Sobacchi13" ) {
+	else if (lvalue == "sobacchi13") {
 		return ReionisationParameters::SOBACCHI13;
 	}
 

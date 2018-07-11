@@ -12,12 +12,13 @@
 #include <numeric>
 #include <tuple>
 
-#include "logging.h"
 #include "components.h"
 #include "cosmology.h"
 #include "gas_cooling.h"
+#include "logging.h"
 #include "numerical_constants.h"
 #include "reincorporation.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -167,10 +168,11 @@ void GasCoolingParameters::load_tables(
 template <>
 GasCoolingParameters::LambdaCoolingModel
 Options::get<GasCoolingParameters::LambdaCoolingModel>(const std::string &name, const std::string &value) const {
-	if ( value == "cloudy" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "cloudy") {
 		return GasCoolingParameters::CLOUDY;
 	}
-	else if ( value == "sutherland" ) {
+	else if (lvalue == "sutherland") {
 		return GasCoolingParameters::SUTHERLAND;
 	}
 	std::ostringstream os;
@@ -182,14 +184,15 @@ Options::get<GasCoolingParameters::LambdaCoolingModel>(const std::string &name, 
 template <>
 GasCoolingParameters::CoolingModel
 Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const std::string &value) const {
-	if ( value == "Croton06" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "croton06") {
 		return GasCoolingParameters::CROTON06;
 	}
-	else if ( value == "Benson10" ) {
+	else if (lvalue == "benson10") {
 		return GasCoolingParameters::BENSON10;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are Croton06 and Galform";
+	os << name << " option value invalid: " << value << ". Supported values are Croton06 and Benson10";
 	throw invalid_option(os.str());
 }
 

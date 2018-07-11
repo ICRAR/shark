@@ -9,8 +9,9 @@
 #include <gsl/gsl_errno.h>
 
 #include "logging.h"
-#include "star_formation.h"
 #include "numerical_constants.h"
+#include "star_formation.h"
+#include "utils.h"
 
 namespace shark {
 
@@ -49,16 +50,17 @@ StarFormationParameters::StarFormationParameters(const Options &options)
 template <>
 StarFormationParameters::StarFormationModel
 Options::get<StarFormationParameters::StarFormationModel>(const std::string &name, const std::string &value) const {
-	if ( value == "BR06" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "br06") {
 		return StarFormationParameters::BR06;
 	}
-	else if ( value == "GD14" ) {
+	else if (lvalue == "gd14") {
 		return StarFormationParameters::GD14;
 	}
-	else if (value == "K13"){
+	else if (lvalue == "k13") {
 		return StarFormationParameters::K13;
 	}
-	else if (value == "KMT09"){
+	else if (lvalue == "kmt09") {
 		return StarFormationParameters::KMT09;
 	}
 	std::ostringstream os;

@@ -8,8 +8,9 @@
 #include <cmath>
 #include <memory>
 
-#include "numerical_constants.h"
 #include "agn_feedback.h"
+#include "numerical_constants.h"
+#include "utils.h"
 
 namespace shark {
 
@@ -38,10 +39,11 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 template <>
 AGNFeedbackParameters::AGNFeedbackModel
 Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, const std::string &value) const {
-	if ( value == "Bower06" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "bower06") {
 		return AGNFeedbackParameters::BOWER06;
 	}
-	else if ( value == "Croton16" ) {
+	else if (lvalue == "croton16") {
 		return AGNFeedbackParameters::CROTON16;
 	}
 	std::ostringstream os;
