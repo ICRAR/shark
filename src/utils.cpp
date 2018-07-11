@@ -76,6 +76,13 @@ void lower(string &s)
 	transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
 
+std::string lower(const std::string &s)
+{
+	std::string low(s);
+	lower(low);
+	return low;
+}
+
 void upper(string &s)
 {
 	transform(s.begin(), s.end(), s.begin(), ::toupper);

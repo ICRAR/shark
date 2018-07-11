@@ -50,6 +50,14 @@ std::vector<std::string> tokenize(const std::string &s, const std::string &delim
 void lower(std::string &s);
 
 /**
+ * Like lower(std::string &), but returns the lowered string instead
+ *
+ * @param s A string
+ * @return the lower-cased string
+ */
+std::string lower(const std::string &s);
+
+/**
  * Changes string `s` to be all upper-case
  * @param s A string
  */
