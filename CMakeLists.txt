@@ -41,6 +41,11 @@ project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
 
+# If not specified, always build in Release mode
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 # Options users can give on the command line
 option(SHARK_TEST       "Include test compilation in the build" OFF)
 option(SHARK_NO_OPENMP  "Don't attempt to include OpenMP support in shark" OFF)
