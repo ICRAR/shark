@@ -21,7 +21,9 @@
 //
 
 /**
- * @file Stores the git revision of shark
+ * @file
+ *
+ * Stores the git revision of shark
  */
 
 #ifndef INCLUDE_GIT_REVISION_H_

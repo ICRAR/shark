@@ -1,12 +1,3 @@
-/*
- * star_formation.h
- *
- *  Created on: 17May,2017
- *      Author: clagos
- */
-
-//
-// star formation classes
 //
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
@@ -29,6 +20,11 @@
 // MA 02111-1307  USA
 //
 
+/**
+ * @file
+ *
+ * Star formation classes
+ */
 
 #ifndef INCLUDE_STAR_FORMATION_H_
 #define INCLUDE_STAR_FORMATION_H_

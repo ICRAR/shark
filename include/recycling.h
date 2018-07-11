@@ -1,6 +1,4 @@
 //
-// Recycling used as input for shark
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
@@ -21,6 +19,12 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 // MA 02111-1307  USA
 //
+
+/**
+ * @file
+ *
+ * Recycling used as input for shark
+ */
 
 #ifndef SHARK_RECYCLING_H_
 #define SHARK_RECYCLING_H_

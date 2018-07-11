@@ -1,6 +1,4 @@
 //
-// Stellar feedback classes
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
@@ -22,6 +20,11 @@
 // MA 02111-1307  USA
 //
 
+/**
+ * @file
+ *
+ * Stellar feedback classes
+ */
 
 #ifndef SHARK_STELLAR_FEEDBACK_H_
 #define SHARK_STELLAR_FEEDBACK_H_

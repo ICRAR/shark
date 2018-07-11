@@ -1,6 +1,4 @@
 //
-// Main shark runner class definition
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2018
 // Copyright by UWA (in the framework of the ICRAR)
@@ -21,6 +19,12 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 // MA 02111-1307  USA
 //
+
+/**
+ * @file
+ *
+ * Main shark runner class definition
+ */
 
 #ifndef SHARK_SHARK_RUNNER_H
 #define SHARK_SHARK_RUNNER_H

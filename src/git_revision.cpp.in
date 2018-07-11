@@ -21,7 +21,9 @@
 //
 
 /**
- * @file Stores the git revision information
+ * @file
+ *
+ * Stores the git revision information
  */
 
 #include <string>

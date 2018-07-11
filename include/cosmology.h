@@ -21,11 +21,9 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 // MA 02111-1307  USA
 //
-/*
- * Cosmology.h
- *
- *  Created on: 10Apr.,2017
- *      Author: clagos
+
+/**
+ * @file
  */
 
 #ifndef SHARK_COSMOLOGY_H_

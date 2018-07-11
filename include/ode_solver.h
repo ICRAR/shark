@@ -1,6 +1,4 @@
 //
-// ODE solver class definition
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
@@ -21,6 +19,12 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 // MA 02111-1307  USA
 //
+
+/**
+ * @file
+ *
+ * ODE solver class definition
+ */
 
 #ifndef SHARK_ODE_SOLVER_H_
 #define SHARK_ODE_SOLVER_H_

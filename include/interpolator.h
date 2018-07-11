@@ -1,6 +1,4 @@
 //
-// An 2D interpolation object
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
@@ -22,6 +20,10 @@
 // MA 02111-1307  USA
 //
 
+/**
+ * @file
+ */
+
 #include <memory>
 #include <vector>
 
@@ -33,6 +35,7 @@
 
 namespace shark {
 
+/// A 2D interpolation object
 class Interpolator {
 
 public:

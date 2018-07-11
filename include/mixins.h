@@ -1,6 +1,4 @@
 //
-// Useful mix-in classes
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
@@ -22,10 +20,16 @@
 // MA 02111-1307  USA
 //
 
+/**
+ * @file
+ *
+ * Useful mix-in classes
+ */
+
 #ifndef SHARK_MIXINS_H_
 #define SHARK_MIXINS_H_
 
-#include "cmath"
+#include <cmath>
 
 namespace shark {
 
@@ -55,15 +59,15 @@ public:
 	 */
 	T z;
 
-	T norm(){
-		T v2= std::pow(x,2)+std::pow(y,2)+std::pow(z,2);
-		return std::pow(v2,0.5);
+	T norm()
+	{
+		return std::sqrt(x * x + y * y + z * z);
 	}
 
 };
 
 /**
- * An object that has a position and a velocity.
+ * An object that has a 3D position and a velocity.
  *
  * @tparam T The type used to store the position and velocity
  */

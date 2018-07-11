@@ -1,6 +1,4 @@
 //
-// The NFW randon number distribution
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2018
 // Copyright by UWA (in the framework of the ICRAR)
@@ -21,6 +19,12 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 // MA 02111-1307  USA
 //
+
+/**
+ * @file
+ *
+ * The NFW randon number distribution
+ */
 
 #ifndef INCLUDE_NFW_DISTRIBUTION
 #define INCLUDE_NFW_DISTRIBUTION

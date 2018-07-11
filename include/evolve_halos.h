@@ -1,6 +1,4 @@
 //
-// Halo evolution routines
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
@@ -21,6 +19,13 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 // MA 02111-1307  USA
 //
+
+/**
+ * @file
+ *
+ * Halo evolution routines. Most of it now lives under the SharkRunner class,
+ * but some things have not been moved yet.
+ */
 
 #ifndef SHARK_EVOLVE_HALOS_H_
 #define SHARK_EVOLVE_HALOS_H_
