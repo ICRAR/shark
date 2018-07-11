@@ -196,12 +196,25 @@ endif()
 #
 configure_file(include/config.h.in include/config.h @ONLY)
 
+#
+# Add git revision information in a generated .cpp file, which we then include
+# as part of the shark library
+#
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+set(git_revision_cpp "${CMAKE_CURRENT_BINARY_DIR}/git_revision.cpp")
+configure_file("src/git_revision.cpp.in" "${git_revision_cpp}" @ONLY)
+list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
+
+
 # Our own include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS
+   "${git_revision_cpp}"
    src/agn_feedback.cpp
    src/cosmology.cpp
    src/execution.cpp
