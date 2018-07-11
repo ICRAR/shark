@@ -138,8 +138,8 @@ macro(find_hdf5)
 		message("-- Found HDF5 version ${HDF5_VERSION}")
 	endif()
 
-	# We support 1.8.12+
-	if (NOT HDF5_VERSION VERSION_GREATER "1.7")
+	# We support 1.8+
+	if (HDF5_VERSION VERSION_LESS "1.8")
 		message(FATAL_ERROR
 				  "\nHDF5 version ${HDF5_VERSION} found, "
 				  "but shark needs versions at least 1.8.0\n")
