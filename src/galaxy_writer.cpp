@@ -33,9 +33,11 @@
 
 #include "hdf5/writer.h"
 #include "components.h"
+#include "config.h"
 #include "cosmology.h"
 #include "exceptions.h"
 #include "galaxy_writer.h"
+#include "git_revision.h"
 #include "logging.h"
 #include "star_formation.h"
 #include "timer.h"
@@ -105,6 +107,11 @@ void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, To
 void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 
 	std::string comment;
+
+	comment = "the shark version";
+	file.write_dataset("run_info/shark_version", std::string(SHARK_VERSION));
+	comment = "the git revision of shark used to produce this data";
+	file.write_dataset("run_info/shark_git_revision", get_git_sha1());
 
 	comment = "number of batches analysed";
 	file.write_dataset("run_info/batches", exec_params.simulation_batches, comment);
