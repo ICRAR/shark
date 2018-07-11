@@ -39,6 +39,7 @@
 #include "logging.h"
 #include "options.h"
 #include "shark_runner.h"
+#include "git_revision.h"
 #include "timer.h"
 
 namespace shark {
@@ -96,6 +97,8 @@ void log_startup_information(int argc, char **argv)
 	char the_hostname[100];
 	gethostname(the_hostname, 100);
 	LOG(info) << "shark is starting in " << the_hostname;
+	LOG(info) << "shark version: " << SHARK_VERSION;
+	LOG(info) << "shark git version: " << get_git_sha1();
 	LOG(info) << "shark was built on " << __DATE__ << " " __TIME__;
 	LOG(info) << "shark running at: " << boost::filesystem::current_path().string();
 
@@ -151,6 +154,7 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 	else if (vm.count("version")) {
 		vm.clear();
 		std::cout << "SHArk version " << SHARK_VERSION << std::endl;
+		std::cout << "SHArk git revision " << get_git_sha1() << std::endl;
 		std::cout << "OpenMP support: ";
 #ifdef SHARK_OPENMP
 		std::cout << "Yes" << std::endl;
