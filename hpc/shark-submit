@@ -119,7 +119,9 @@ print_usage() {
 	echo
 	echo " -n job-name     Job name for this submission"
 	echo
-	echo " -M modules      Colon-separted list of modules to load before running shark"
+	echo " -M modules      Colon-separted list of modules to load before running shark."
+	echo "                 Defaults to the value of the SHARK_RUNTIME_MODULES environment"
+	echo "                 variable, if set."
 	echo
 	echo " -m mem          Amount of memory needed by each shark instance. It is used to"
 	echo "                 calculate the number of nodes required given a number of tasks."
@@ -256,7 +258,7 @@ queue=
 account=
 job_name=
 walltime="1:00:00"
-modules=
+modules=${SHARK_RUNTIME_MODULES}
 mem_per_task=
 num_nodes=
 shark_verbosity=3
