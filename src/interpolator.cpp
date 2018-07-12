@@ -94,6 +94,9 @@ Interpolator::~Interpolator()
 
 double Interpolator::get(double x, double y) const
 {
+	// Truncate x and y to min/max values in ranges
+	x = std::min(std::max(x, this->x.front()), this->x.back());
+	y = std::min(std::max(y, this->y.front()), this->y.back());
 	return gsl_interp2d_eval_extrap(interp2d.get(),
 			this->x.data(), this->y.data(), this->z.data(),
 			x, y, xacc.get(), yacc.get());
