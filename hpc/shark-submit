@@ -35,6 +35,23 @@ warning() {
 	echo "shark-submit: WARNING: $1" 1>&2
 }
 
+get_absolute_path() {
+	# Follow symbolic links
+	p="$1"
+	while [ -h "$p" ]
+	do
+		p=`readlink -f "$p"`
+	done
+
+	# Go to the parent directory and echo $PWD,
+	# it will yield an absolute route
+	dirname="`dirname $p`"
+	basename="`basename $p`"
+	cd $dirname
+	echo "$PWD/$basename"
+	cd $OLDPWD
+}
+
 to_bytes() {
 	x="$1"
 	if [[ "$x" =~ ^([0-9]+)([kKmMgGtT]?) ]]
@@ -228,23 +245,9 @@ submit_slurm() {
 	fi
 }
 
-
-# Where does this script live?
-# We use its location later to deduce later on
-# where the python standard plotting scripts live
-# Follow symbolic links
-this=$0
-if [ -h $0 ]
-then
-	this=$(readlink -f $0)
-fi
-
-# Get the fully-qualified path to this script's parent directory
-p="`dirname $this`"
-shark_hpc_dir="`cd $p; echo $PWD; cd $OLDPWD`"
-
 # Default option values
 # These are global variables, so we don't need to pass them around all the time
+shark_hpc_dir=$(dirname $(get_absolute_path "$0"))
 dry_run=
 verbose=
 quiet=
