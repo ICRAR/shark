@@ -211,7 +211,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
         err[:] = 0
         ax.errorbar(xplot,yplot[0],yerr=[err[0],err[0]], ls='None', mfc='None', ecolor = 'DarkCyan', mec='DarkCyan',marker='D',  markersize=4, label="merger driven")
 
-    rb_nodissipation = common.load_observation(obsdir + 'Models/SharkVariations', 'SizeBulges_OtherModels.dat', [0])
+    rb_nodissipation = common.load_observation(obsdir, 'Models/SharkVariations/SizeBulges_OtherModels.dat', [0])
     ind = np.where(rb_nodissipation != 0)
     xplot = xmf[ind]
     yplot = rb_nodissipation[ind]
@@ -512,7 +512,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
 
-    MBH_othermodels = common.load_observation(obsdir + 'Models/SharkVariations', 'BHBulgeRelation_OtherModels.dat', [0])
+    MBH_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BHBulgeRelation_OtherModels.dat', [0])
     MBH_f_smbh0p008   = MBH_othermodels[0:29]
     MBH_f_smbh0p00008 = MBH_othermodels[30:60]
     ind = np.where(MBH_f_smbh0p008 != 0)
@@ -582,7 +582,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
         yplot = BT_fractions_nodiskins[0,ind]
         ax.plot(xplot,yplot[0],'r', linestyle = 'dashed', label ='only by mergers')
 
-    BT_othermodels = common.load_observation(obsdir + 'Models/SharkVariations', 'BTFractions_OtherModels.dat', [0])
+    BT_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BTFractions_OtherModels.dat', [0])
     BT_stable0   = BT_othermodels[0:29]
     BT_stable0p5 = BT_othermodels[30:60]
     BT_stable1   = BT_othermodels[91:120]
