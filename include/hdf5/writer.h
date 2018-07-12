@@ -1,26 +1,27 @@
 //
-// Header file for the hdf5::Writer class
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
-// All rights reserved
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This library is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-// MA 02111-1307  USA
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
+
+/**
+ * @file
+ *
+ * Header file for the hdf5::Writer class
+ */
 
 #ifndef SHARK_HDF5_WRITER_H_
 #define SHARK_HDF5_WRITER_H_
@@ -36,6 +37,7 @@
 #include "hdf5/iobase.h"
 #include "hdf5/traits.h"
 #include "exceptions.h"
+#include "naming_convention.h"
 #include "utils.h"
 
 namespace shark {
@@ -206,8 +208,10 @@ public:
 	 * @param filename The name of the HDF5 file to write
 	 * @param overwrite Whether existing files should be overwritten or not
 	 */
-	Writer(const std::string &filename, bool overwrite = true) :
-		IOBase(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL) {}
+	Writer(const std::string &filename, bool overwrite = true,
+		naming_convention group_naming_convention = naming_convention::SNAKE_CASE,
+		naming_convention dataset_naming_convention = naming_convention::SNAKE_CASE,
+		naming_convention attr_naming_convention = naming_convention::SNAKE_CASE);
 
 	void set_comment(H5::DataSet &dataset, const std::string &comment)
 	{
@@ -217,7 +221,13 @@ public:
 #ifdef HDF5_NEWER_THAN_1_8_11
 		dataset.setComment(comment);
 #endif
-		_create_and_write_attribute(dataset, "comment", comment);
+
+		// Follow naming convention, "comment" works with snake_case and lowerCamelCase
+		auto comment_attr_name = "comment";
+		if (attr_naming_convention == naming_convention::CAMEL_CASE) {
+			comment_attr_name = "Comment";
+		}
+		_create_and_write_attribute(dataset, comment_attr_name, comment);
 	}
 
 	template<typename T>
@@ -232,16 +242,19 @@ public:
 			throw invalid_argument(os.str());
 		}
 
-		// Get the corresponding group/dataset and write the attribute there
 		std::vector<std::string> path(parts.begin(), parts.end()-1);
+		auto &attr_name = parts.back();
+		check_attr_name(attr_name);
+
+		// Get the corresponding group/dataset and write the attribute there
 		try {
 			auto group = ensure_group(path);
-			_create_and_write_attribute(group, parts.back(), value);
+			_create_and_write_attribute(group, attr_name, value);
 		} catch (const object_exists &e) {
 			// name doesn't point to a group but to an existing dataset
 			// if this one fails we give up
 			auto dataset = get_dataset(path);
-			_create_and_write_attribute(dataset, parts.back(), value);
+			_create_and_write_attribute(dataset, attr_name, value);
 		}
 
 	}
@@ -282,6 +295,14 @@ private:
 
 	H5::Group ensure_group(const std::vector<std::string> &path) const;
 	H5::DataSet ensure_dataset(const std::vector<std::string> &path, const H5::DataType &dataType, const H5::DataSpace &dataSpace) const;
+
+	naming_convention group_naming_convention;
+	naming_convention dataset_naming_convention;
+	naming_convention attr_naming_convention;
+
+	void check_group_name(const std::string &group_name) const;
+	void check_dataset_name(const std::string &dataset_name) const;
+	void check_attr_name(const std::string &attr_name) const;
 
 	static const std::string NO_COMMENT;
 };

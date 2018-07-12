@@ -1,16 +1,33 @@
-/*
- * star_formation.cpp
- *
- *  Created on: 17May,2017
- *      Author: clagos
+//
+// ICRAR - International Centre for Radio Astronomy Research
+// (c) UWA - The University of Western Australia, 2017
+// Copyright by UWA (in the framework of the ICRAR)
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+
+/**
+ * @file
  */
 
 #include <cmath>
 #include <gsl/gsl_errno.h>
 
 #include "logging.h"
-#include "star_formation.h"
 #include "numerical_constants.h"
+#include "star_formation.h"
+#include "utils.h"
 
 namespace shark {
 
@@ -29,14 +46,14 @@ StarFormationParameters::StarFormationParameters(const Options &options)
 	options.load("star_formation.nu_sf", nu_sf, true);
 	options.load("star_formation.angular_momentum_transfer", angular_momentum_transfer);
 
-	options.load("star_formation.Accuracy_SFeqs", Accuracy_SFeqs);
+	options.load("star_formation.accuracy_sf_eqs", Accuracy_SFeqs);
 	options.load("star_formation.boost_starburst", boost_starburst);
-	options.load("star_formation.Po", Po);
+	options.load("star_formation.po", Po);
 	options.load("star_formation.beta_press", beta_press);
 	options.load("star_formation.gas_velocity_dispersion", gas_velocity_dispersion);
-	options.load("star_formation.sigma_HI_crit", sigma_HI_crit);
+	options.load("star_formation.sigma_hi_crit", sigma_HI_crit);
 
-	options.load("star_formation.clump_factor_KMT09", clump_factor_KMT09);
+	options.load("star_formation.clump_factor_kmt09", clump_factor_KMT09);
 
 	// Convert surface density to internal code units.
 	sigma_HI_crit = sigma_HI_crit * std::pow(constants::MEGA,2.0);
@@ -49,20 +66,21 @@ StarFormationParameters::StarFormationParameters(const Options &options)
 template <>
 StarFormationParameters::StarFormationModel
 Options::get<StarFormationParameters::StarFormationModel>(const std::string &name, const std::string &value) const {
-	if ( value == "BR06" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "br06") {
 		return StarFormationParameters::BR06;
 	}
-	else if ( value == "GD14" ) {
+	else if (lvalue == "gd14") {
 		return StarFormationParameters::GD14;
 	}
-	else if (value == "K13"){
+	else if (lvalue == "k13") {
 		return StarFormationParameters::K13;
 	}
-	else if (value == "KMT09"){
+	else if (lvalue == "kmt09") {
 		return StarFormationParameters::KMT09;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are BR06, GK11, K13 or KMT09";
+	os << name << " option value invalid: " << value << ". Supported values are br06, gd11, k13 or kmt09";
 	throw invalid_option(os.str());
 }
 

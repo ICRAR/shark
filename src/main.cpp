@@ -1,26 +1,27 @@
 //
-// The main function for the shark executable
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
-// All rights reserved
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This library is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-// MA 02111-1307  USA
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
+
+/**
+ * @file
+ *
+ * The main function for the shark executable
+ */
 
 #include <algorithm>
 #include <iostream>
@@ -39,6 +40,7 @@
 #include "logging.h"
 #include "options.h"
 #include "shark_runner.h"
+#include "git_revision.h"
 #include "timer.h"
 
 namespace shark {
@@ -96,6 +98,8 @@ void log_startup_information(int argc, char **argv)
 	char the_hostname[100];
 	gethostname(the_hostname, 100);
 	LOG(info) << "shark is starting in " << the_hostname;
+	LOG(info) << "shark version: " << SHARK_VERSION;
+	LOG(info) << "shark git version: " << get_git_sha1();
 	LOG(info) << "shark was built on " << __DATE__ << " " __TIME__;
 	LOG(info) << "shark running at: " << boost::filesystem::current_path().string();
 
@@ -151,6 +155,7 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 	else if (vm.count("version")) {
 		vm.clear();
 		std::cout << "SHArk version " << SHARK_VERSION << std::endl;
+		std::cout << "SHArk git revision " << get_git_sha1() << std::endl;
 		std::cout << "OpenMP support: ";
 #ifdef SHARK_OPENMP
 		std::cout << "Yes" << std::endl;

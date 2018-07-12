@@ -4,22 +4,19 @@
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
-// All rights reserved
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This library is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-// MA 02111-1307  USA
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include <cxxtest/TestSuite.h>
@@ -92,6 +89,32 @@ public:
 		_test_load<std::set<int>>("a = 1-4", "a", {1, 2, 3, 4});
 		_test_load<std::set<int>>("a = 4-1 1 1", "a", {4, 3, 2, 1});
 		_test_load<std::set<int>>("a = 4-1 1 1", "a", {1, 2, 3, 4});
+	}
+
+	void test_valid_option_names()
+	{
+		// Just the fact that these run means we are find
+		auto _test_valid_option_name = [](const std::string &optspec) {
+			Options opts;
+			opts.add(optspec + " = value");
+		};
+		_test_valid_option_name("snake_case");
+		_test_valid_option_name("group1.snake_case");
+		_test_valid_option_name("group1_name.snake_case");
+		_test_valid_option_name("group1_name.3d_properties");
+	}
+
+	void test_invalid_option_names()
+	{
+		auto _test_invalid_option_name = [](const std::string &optspec) {
+			Options opt;
+			TS_ASSERT_THROWS(opt.add(optspec + " = value"), invalid_option);
+		};
+		_test_invalid_option_name("CamelCase");
+		_test_invalid_option_name("group.CamelCase");
+		_test_invalid_option_name("group.lowerCamelCase");
+		_test_invalid_option_name("group.lowerCamelCase");
+		_test_invalid_option_name("Group.snake_case");
 	}
 
 };

@@ -1,8 +1,24 @@
-/*
- * dark_matter_halos.cpp
- *
- *  Created on: 4Aug.,2017
- *      Author: clagos
+//
+// ICRAR - International Centre for Radio Astronomy Research
+// (c) UWA - The University of Western Australia, 2017
+// Copyright by UWA (in the framework of the ICRAR)
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+
+/**
+ * @file
  */
 
 #include <cmath>
@@ -15,8 +31,9 @@
 #include "cosmology.h"
 #include "dark_matter_halos.h"
 #include "logging.h"
-#include "numerical_constants.h"
 #include "nfw_distribution.h"
+#include "numerical_constants.h"
+#include "utils.h"
 
 
 namespace shark {
@@ -32,10 +49,11 @@ DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 template <>
 DarkMatterHaloParameters::DarkMatterProfile
 Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &name, const std::string &value) const {
-	if ( value == "nfw" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "nfw") {
 		return DarkMatterHaloParameters::NFW;
 	}
-	else if ( value == "einasto" ) {
+	else if (lvalue == "einasto") {
 		return DarkMatterHaloParameters::EINASTO;
 	}
 	std::ostringstream os;
@@ -47,10 +65,11 @@ Options::get<DarkMatterHaloParameters::DarkMatterProfile>(const std::string &nam
 template <>
 DarkMatterHaloParameters::SizeModel
 Options::get<DarkMatterHaloParameters::SizeModel>(const std::string &name, const std::string &value) const {
-	if ( value == "Mo98" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "mo98") {
 		return DarkMatterHaloParameters::MO98;
 	}
-	else if ( value == "Cole00" ) {
+	else if (lvalue == "cole00") {
 		return DarkMatterHaloParameters::COLE00;
 	}
 	std::ostringstream os;

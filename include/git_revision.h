@@ -1,6 +1,6 @@
 //
 // ICRAR - International Centre for Radio Astronomy Research
-// (c) UWA - The University of Western Australia, 2017
+// (c) UWA - The University of Western Australia, 2018
 // Copyright by UWA (in the framework of the ICRAR)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,21 +20,24 @@
 /**
  * @file
  *
- * Logging-related definitions
+ * Stores the git revision of shark
  */
 
-#ifndef SHARK_LOGGING_H_
-#define SHARK_LOGGING_H_
+#ifndef INCLUDE_GIT_REVISION_H_
+#define INCLUDE_GIT_REVISION_H_
 
-#define BOOST_LOG_DYN_LINK 1
-#include <boost/log/expressions/keyword.hpp>
-#include <boost/log/trivial.hpp>
+#include <string>
 
-#define LOG(lvl) BOOST_LOG_TRIVIAL(lvl)
+namespace shark
+{
 
-/// The logging level set on this application
-extern ::boost::log::trivial::severity_level logging_level;
+/**
+ * Returns the git SHA1 of the current source commit.
+ *
+ * @return The git SHA1 value for the current source code commit.
+ */
+std::string get_git_sha1();
 
-#define LOG_ENABLED(lvl) (::boost::log::trivial::severity_level::lvl >= logging_level)
+} // namespace shark
 
-#endif /* SHARK_LOGGING_H_ */
+#endif /* INCLUDE_GIT_REVISION_H_ */

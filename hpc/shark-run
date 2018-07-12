@@ -5,22 +5,19 @@
 # ICRAR - International Centre for Radio Astronomy Research
 # (c) UWA - The University of Western Australia, 2018
 # Copyright by UWA (in the framework of the ICRAR)
-# All rights reserved
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# This library is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307  USA
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
 info() {
@@ -29,7 +26,6 @@ info() {
 
 error() {
 	echo "shark-run: ERROR: $1" 1>&2
-	exit 1
 }
 
 warning() {
@@ -98,6 +94,31 @@ then
 	warning ""
 fi
 
+# The submit script should have told us where it lives,
+# which is needed later on to deduce where the standard
+# python plotting scripts live
+if [ -z "$SHARK_HPC_DIR" ]
+then
+	warning "SHARK_HPC_DIR environment variable not set"
+	warning
+	warning "This variable should have been set by the shark-submit script automatically"
+	warning "to properly support running the python standard plot scripts. If for some reason you"
+	warning "are running this script manually you will need to export this variable yourself"
+	warning "and point it to the hpc/ directory within the shark git repository."
+	warning
+	warning "Given that this is not the case, this variable will now be defaulted"
+	warning "to this script's parent directory, which might or might not be what you need."
+
+	# See shark-submit fot details on this
+	this=$0
+	if [ -h $0 ]
+	then
+		this=$(readlink -f $0)
+	fi
+	p="`dirname $this`"
+	SHARK_HPC_DIR="`cd $p; echo $PWD; cd $OLDPWD`"
+fi
+
 # Print queueing information for this job
 if [ ! -z "$SLURM_JOB_ID" ]
 then
@@ -130,9 +151,11 @@ shark_verbosity=3
 shark_binary=
 shark_subvolumes=
 shark_options=()
+shark_plot=
+shark_obsdata_dir=
 
 # Parse command line options
-while getopts "h?m:v:S:V:o:" opt
+while getopts "h?m:v:S:V:o:pD:" opt
 do
 	case "$opt" in
 		[h?])
@@ -153,6 +176,12 @@ do
 			;;
 		o)
 			shark_options+=("$OPTARG")
+			;;
+		p)
+			shark_plot=yes
+			;;
+		D)
+			shark_obsdata_dir="$OPTARG"
 			;;
 		*)
 			print_usage 1>&2
@@ -197,7 +226,7 @@ then
 	for m in $module_names
 	do
 		info "Loading module $m"
-		module load "$m" || error "Failed to load module $m"
+		module load "$m" || (error "Failed to load module $m" && exit 1)
 	done
 fi
 
@@ -207,11 +236,12 @@ info "CPUs per node: ${cpus_per_node[*]}"
 info "Tasks per node: ${tasks_per_node[*]}"
 
 mem_per_task=${SLURM_MEM_PER_CPU:-}
-if [ -z "$mem_per_task_per_node" ]
+if [ -z "$mem_per_task" ]
 then
 	if [ -z "$SLURM_MEM_PER_NODE" ]
 	then
 		error "Neither SLURM_MEM_PER_CPU nor SLURM_MEM_PER_NODE could be found, cannot calculate memory per shark instance"
+		exit 1
 	fi
 
 	mem_per_node=(`_slurm_quantity_as_list $SLURM_MEM_PER_NODE`)
@@ -277,6 +307,7 @@ info "Starting shark via srun with command-line:"
 info "$cmd -c <threads> --mem-per-cpu <mem> $post_cmd -o <subvol> -t <threads>"
 info "================================================================================"
 info ""
+pids=()
 for i in `eval echo {1..${#shark_subvolumes[*]}}`
 do
 	let "i = i - 1"
@@ -285,8 +316,49 @@ do
 	m=${mem_per_task[i]}
 	info "Spawning shark run for subvolume $s with $t threads and $m MB of memory"
 	$cmd -c $t --mem-per-cpu $(($m/$t)) $post_cmd -o "execution.simulation_batches=$s" -t $t &> "shark_subvol_${s}.log" &
+	pids+=($!)
 done
 
 info "Waiting for all instances to finish"
-wait
-info "Done! Check your results, and good luck!"
+all_good=1
+for pid in ${pids[*]}
+do
+	wait $pid
+	if [ $? -ne 0 ]
+	then
+		all_good=0
+	fi
+done
+
+if [ $all_good = 0 ]
+then
+	error "Some (or all) of the shark instances exited with an error"
+	error "Check the individual output files for details"
+	exit 1
+fi
+info "All shark instances exited cleanly! :)"
+
+# User requested a plot
+if [ -n "${shark_plot}" ]
+then
+
+	# For the time being we are assuming this script
+	# is alongside the rest of the shark sources
+	python "$SHARK_HPC_DIR/../standard_plots/all.py" \
+	    -c "${config_file}" -v "${shark_subvolumes[*]}" \
+	    -O "${shark_obsdata_dir}" ${shark_snapshot_for_plots} &> shark-plots.log
+	if [ $? -ne 0 ]
+	then
+		warning "An error occurred while producing the plots, please check the shark-plots.log file for details"
+	else
+		# Find where the plots were produced and copy them
+		# to a local plots/ folder for easy access
+		info "shark plots successfully produced"
+		plots_dir=`python "$SHARK_HPC_DIR/../standard_plots/common.py" "${config_file}"`
+		mkdir plots
+		cp ${plots_dir}/* plots
+		info "shark plots successfully copied into plots/"
+	fi
+fi
+
+info "Job done, bye-bye!"

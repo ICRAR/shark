@@ -1,23 +1,20 @@
 #
-#    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2018
-#    Copyright by UWA (in the framework of the ICRAR)
-#    All rights reserved
+# ICRAR - International Centre for Radio Astronomy Research
+# (c) UWA - The University of Western Australia, 2018
+# Copyright by UWA (in the framework of the ICRAR)
 #
-#    This library is free software; you can redistribute it and/or
-#    modify it under the terms of the GNU Lesser General Public
-#    License as published by the Free Software Foundation; either
-#    version 2.1 of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-#    This library is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    Lesser General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU Lesser General Public
-#    License along with this library; if not, write to the Free Software
-#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-#    MA 02111-1307  USA
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 """Size plots"""
 
@@ -214,7 +211,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
         err[:] = 0
         ax.errorbar(xplot,yplot[0],yerr=[err[0],err[0]], ls='None', mfc='None', ecolor = 'DarkCyan', mec='DarkCyan',marker='D',  markersize=4, label="merger driven")
 
-    rb_nodissipation = common.load_observation(obsdir + 'Models/SharkVariations', 'SizeBulges_OtherModels.dat', [0])
+    rb_nodissipation = common.load_observation(obsdir, 'Models/SharkVariations/SizeBulges_OtherModels.dat', [0])
     ind = np.where(rb_nodissipation != 0)
     xplot = xmf[ind]
     yplot = rb_nodissipation[ind]
@@ -515,7 +512,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
 
-    MBH_othermodels = common.load_observation(obsdir + 'Models/SharkVariations', 'BHBulgeRelation_OtherModels.dat', [0])
+    MBH_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BHBulgeRelation_OtherModels.dat', [0])
     MBH_f_smbh0p008   = MBH_othermodels[0:29]
     MBH_f_smbh0p00008 = MBH_othermodels[30:60]
     ind = np.where(MBH_f_smbh0p008 != 0)
@@ -585,7 +582,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
         yplot = BT_fractions_nodiskins[0,ind]
         ax.plot(xplot,yplot[0],'r', linestyle = 'dashed', label ='only by mergers')
 
-    BT_othermodels = common.load_observation(obsdir + 'Models/SharkVariations', 'BTFractions_OtherModels.dat', [0])
+    BT_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BTFractions_OtherModels.dat', [0])
     BT_stable0   = BT_othermodels[0:29]
     BT_stable0p5 = BT_othermodels[30:60]
     BT_stable1   = BT_othermodels[91:120]
@@ -612,7 +609,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
 def main(modeldir, outdir, subvols, obsdir):
 
     plt = common.load_matplotlib()
-    fields = {'Galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities','mBH',
+    fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities','m_bh',
                            'rstar_disk', 'rstar_bulge', 'type', 
                            'specific_angular_momentum_disk_star', 'specific_angular_momentum_bulge_star',
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',

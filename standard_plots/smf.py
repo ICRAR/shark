@@ -1,23 +1,20 @@
 #
-#    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2018
-#    Copyright by UWA (in the framework of the ICRAR)
-#    All rights reserved
+# ICRAR - International Centre for Radio Astronomy Research
+# (c) UWA - The University of Western Australia, 2018
+# Copyright by UWA (in the framework of the ICRAR)
 #
-#    This library is free software; you can redistribute it and/or
-#    modify it under the terms of the GNU Lesser General Public
-#    License as published by the Free Software Foundation; either
-#    version 2.1 of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-#    This library is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    Lesser General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU Lesser General Public
-#    License along with this library; if not, write to the Free Software
-#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-#    MA 02111-1307  USA
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 """SMF plots"""
 
@@ -237,7 +234,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
 def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
 
     hist_smf_modelvar = np.zeros(shape = (6, 315))
-    hist_smf_modelvar[0,:], hist_smf_modelvar[1,:],hist_smf_modelvar[2,:],hist_smf_modelvar[3,:],hist_smf_modelvar[4,:],hist_smf_modelvar[5,:] = common.load_observation(obsdir + 'Models/SharkVariations', 'SMF_OtherModels.dat', [0,1,2,3,4,5])
+    hist_smf_modelvar[0,:], hist_smf_modelvar[1,:],hist_smf_modelvar[2,:],hist_smf_modelvar[3,:],hist_smf_modelvar[4,:],hist_smf_modelvar[5,:] = common.load_observation(obsdir, 'Models/SharkVariations/SMF_OtherModels.dat', [0,1,2,3,4,5])
 
     fig = plt.figure(figsize=(4.5,8))
     ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\rm star}}/{\\rm Mpc}^{-3} )$"
@@ -283,10 +280,10 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],color= 'BurlyWood', linestyle='dashed', label='$\\kappa_{\\rm r} = 0.01$' if idx == 0 else None)
 
-        #colors = []
-        #if idx == 0:
-        #    colors = ['k','r','Crimson','b','g','BurlyWood']
-        #common.prepare_legend(ax, colors)
+        colors = []
+        if idx == 0:
+            colors = ['k','r','Crimson','b','g','BurlyWood']
+            common.prepare_legend(ax, colors)
 
     common.savefig(outdir, fig, 'stellarmf_z_modelcomparison.pdf')
 
@@ -339,7 +336,7 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='satellites')
 
-    pHI_GD14 = common.load_observation(obsdir + 'Models/SharkVariations', 'HIH2MassFunctions_OtherModels.dat', [0])
+    pHI_GD14 = common.load_observation(obsdir, 'Models/SharkVariations/HIH2MassFunctions_OtherModels.dat', [0])
 
     ind = np.where(pHI_GD14 < 0)
     ax.plot(xmf[ind],pHI_GD14[ind],'BurlyWood', linestyle='dashdot', label = 'GD14')
@@ -394,7 +391,7 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
 
-    pH2_GD14 = common.load_observation(obsdir + 'Models/SharkVariations', 'HIH2MassFunctions_OtherModels.dat', [1])
+    pH2_GD14 = common.load_observation(obsdir, 'Models/SharkVariations/HIH2MassFunctions_OtherModels.dat', [1])
 
     ind = np.where(pH2_GD14 < 0)
     ax.plot(xmf[ind],pH2_GD14[ind],'BurlyWood', linestyle='dashdot') 
@@ -547,7 +544,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
 
 
     mainseqsf_modelvar = np.zeros(shape = (5, 270))
-    mainseqsf_modelvar[0,:], mainseqsf_modelvar[1,:], mainseqsf_modelvar[2,:], mainseqsf_modelvar[3,:], mainseqsf_modelvar[4,:] = common.load_observation(obsdir + 'Models/SharkVariations', 'SFRMstars_OtherModels.dat', [0,1,2,3,4])
+    mainseqsf_modelvar[0,:], mainseqsf_modelvar[1,:], mainseqsf_modelvar[2,:], mainseqsf_modelvar[3,:], mainseqsf_modelvar[4,:] = common.load_observation(obsdir, 'Models/SharkVariations/SFRMstars_OtherModels.dat', [0,1,2,3,4])
 
     mainseqsf_GD14  = np.zeros(shape = (2, 5, len(xmf)))
     mainseqsf_KMT09 = np.zeros(shape = (2, 5, len(xmf)))
@@ -636,7 +633,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
     mainseqgas_modelvar = np.zeros(shape = (6, 135))
-    mainseqgas_modelvar[0,:], mainseqgas_modelvar[1,:], mainseqgas_modelvar[2,:], mainseqgas_modelvar[3,:], mainseqgas_modelvar[4,:], mainseqgas_modelvar[5,:] = common.load_observation(obsdir + 'Models/SharkVariations', 'GasMstars_OtherModels.dat', [0,1,2,3,4,5])
+    mainseqgas_modelvar[0,:], mainseqgas_modelvar[1,:], mainseqgas_modelvar[2,:], mainseqgas_modelvar[3,:], mainseqgas_modelvar[4,:], mainseqgas_modelvar[5,:] = common.load_observation(obsdir, 'Models/SharkVariations/GasMstars_OtherModels.dat', [0,1,2,3,4,5])
 
     mainseqgas_GD14  = np.zeros(shape = (6, len(xmf)))
     mainseqgas_KMT09 = np.zeros(shape = (6, len(xmf)))
@@ -1201,8 +1198,8 @@ def main(modeldir, outdir, subvols, obsdir):
 
     hist_ssfr = np.zeros(shape = (len(zlist), len(ssfrbins)))
 
-    fields = {'Galaxies': ('sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge',
-                           'rstar_disk', 'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
+    fields = {'galaxies': ('sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge',
+                           'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mgas_metals_disk', 'mgas_metals_bulge',
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type', 'mvir_hosthalo')}

@@ -1,23 +1,20 @@
 #
-#    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2018
-#    Copyright by UWA (in the framework of the ICRAR)
-#    All rights reserved
+# ICRAR - International Centre for Radio Astronomy Research
+# (c) UWA - The University of Western Australia, 2018
+# Copyright by UWA (in the framework of the ICRAR)
 #
-#    This library is free software; you can redistribute it and/or
-#    modify it under the terms of the GNU Lesser General Public
-#    License as published by the Free Software Foundation; either
-#    version 2.1 of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-#    This library is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    Lesser General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU Lesser General Public
-#    License along with this library; if not, write to the Free Software
-#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-#    MA 02111-1307  USA
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 """RESOLVE comparison plots"""
 
@@ -882,8 +879,8 @@ def plot_bmf_resolve_baryon_components(plt, outdir, obsdir, hist_bmf, hist_smf, 
 def main(modeldir, outdir, subvols, obsdir, snapshot):
 
     plt = common.load_matplotlib()
-    fields = {'Galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'rstar_disk',
-                           'mBH', 'matom_disk', 'mmol_disk', 'mgas_disk',
+    fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'rstar_disk',
+                           'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mvir_hosthalo')}
 

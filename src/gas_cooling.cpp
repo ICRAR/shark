@@ -1,8 +1,24 @@
-/*
- * gas_cooling.cpp
- *
- *  Created on: 17May,2017
- *      Author: clagos
+//
+// ICRAR - International Centre for Radio Astronomy Research
+// (c) UWA - The University of Western Australia, 2017
+// Copyright by UWA (in the framework of the ICRAR)
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+
+/**
+ * @file
  */
 
 #include <cmath>
@@ -12,12 +28,13 @@
 #include <numeric>
 #include <tuple>
 
-#include "logging.h"
 #include "components.h"
 #include "cosmology.h"
 #include "gas_cooling.h"
+#include "logging.h"
 #include "numerical_constants.h"
 #include "reincorporation.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -167,10 +184,11 @@ void GasCoolingParameters::load_tables(
 template <>
 GasCoolingParameters::LambdaCoolingModel
 Options::get<GasCoolingParameters::LambdaCoolingModel>(const std::string &name, const std::string &value) const {
-	if ( value == "cloudy" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "cloudy") {
 		return GasCoolingParameters::CLOUDY;
 	}
-	else if ( value == "sutherland" ) {
+	else if (lvalue == "sutherland") {
 		return GasCoolingParameters::SUTHERLAND;
 	}
 	std::ostringstream os;
@@ -182,14 +200,15 @@ Options::get<GasCoolingParameters::LambdaCoolingModel>(const std::string &name, 
 template <>
 GasCoolingParameters::CoolingModel
 Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const std::string &value) const {
-	if ( value == "Croton06" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "croton06") {
 		return GasCoolingParameters::CROTON06;
 	}
-	else if ( value == "Benson10" ) {
+	else if (lvalue == "benson10") {
 		return GasCoolingParameters::BENSON10;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are Croton06 and Galform";
+	os << name << " option value invalid: " << value << ". Supported values are croton06 and benson10";
 	throw invalid_option(os.str());
 }
 
@@ -424,7 +443,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of BOWER06 AGN feedback model.
 
-    else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 and halo->Mvir > agnfeedback->parameters.mass_thresh){
+    else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
     	//a pseudo cooling luminosity k*T/lambda(T,Z)
     	double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
    		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
@@ -444,7 +463,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
     	double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
-    	if(r_ratio > 1){
+    	if(r_ratio > agnfeedback->parameters.alpha_cool){
     		r_ratio = 1;
         	//Redefine mheatrate and macc_h accordingly.
         	mheatrate = r_ratio * coolingrate;

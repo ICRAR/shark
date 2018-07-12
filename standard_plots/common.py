@@ -1,24 +1,22 @@
 #
-#    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2018
-#    Copyright by UWA (in the framework of the ICRAR)
-#    All rights reserved
+# ICRAR - International Centre for Radio Astronomy Research
+# (c) UWA - The University of Western Australia, 2018
+# Copyright by UWA (in the framework of the ICRAR)
 #
-#    This library is free software; you can redistribute it and/or
-#    modify it under the terms of the GNU Lesser General Public
-#    License as published by the Free Software Foundation; either
-#    version 2.1 of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-#    This library is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    Lesser General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU Lesser General Public
-#    License along with this library; if not, write to the Free Software
-#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-#    MA 02111-1307  USA
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+
 """Common routines for shark plots"""
 
 import argparse
@@ -40,6 +38,17 @@ def load_matplotlib():
     import matplotlib.pyplot as plt
     plt.rcParams['legend.numpoints'] = 1
     return plt
+
+def get_output_dir(shark_dir, simu, model):
+    return os.path.join(shark_dir, 'Plots', simu, model)
+
+def read_configuration(config):
+    cparser = configparser.ConfigParser()
+    cparser.read(config)
+    shark_dir = cparser.get('execution', 'output_directory')
+    model = cparser.get('execution', 'name_model')
+    simu = cparser.get('simulation', 'sim_name')
+    return shark_dir, simu, model
 
 def parse_args(requires_snapshot=True, requires_observations=True):
 
@@ -67,11 +76,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
         parser.error('-O is required')
 
     if opts.config:
-        cparser = configparser.ConfigParser()
-        cparser.read(opts.config)
-        model = cparser.get('execution', 'name_model')
-        simu = cparser.get('simulation', 'sim_name')
-        shark_dir = cparser.get('execution', 'output_directory')
+        shark_dir, simu, model = read_configuration(opts.config)
         print("Parsed configuration file %s" % (opts.config,))
     else:
         model = opts.model
@@ -81,7 +86,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
 
     output_dir = opts.output_dir
     if not output_dir:
-        output_dir = os.path.join(shark_dir, 'Plots', simu, model)
+        output_dir = get_output_dir(shark_dir, simu, model)
     print("Creating plots under %s" % (output_dir,))
 
     try:
@@ -89,14 +94,16 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     except OSError:
         pass
 
-    subvolumes = []
-    for r in filter(None, opts.subvolumes.split(',')):
+    # Having the replace(',', ' ') allows us to separate subvolumes by command
+    # and/or space
+    subvolumes = set()
+    for r in filter(None, opts.subvolumes.replace(',', ' ').split()):
         if '-' in r:
             x = [int(x) for x in r.split('-')]
-            subvolumes.extend(list(range(x[0], x[1])))
-            subvolumes.append(x[1])
+            subvolumes.update(range(x[0], x[1] + 1))
         else:
-            subvolumes.append(int(r))
+            subvolumes.add(int(r))
+    print("Considering the following subvolumes: %s" % ' '.join([str(x) for x in subvolumes]))
 
     ret = [model_dir, output_dir, tuple(subvolumes)]
     if requires_observations:
@@ -167,8 +174,8 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
         print('Reading data from %s' % fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0 and include_h0_volh:
-                data['h0'] = f['Cosmology/h'].value
-                data['vol'] = f['runInfo/EffectiveVolume'].value * len(subvolumes)
+                data['h0'] = f['cosmology/h'].value
+                data['vol'] = f['run_info/effective_volume'].value * len(subvolumes)
 
             for gname, dsnames in fields.items():
                 group = f[gname]
@@ -182,3 +189,9 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
                     data[full_name] = l
 
     return list(data.values())
+
+# If called as a program, print information taken from a configuration file
+# This simple functionality is used by shark-submit to easily find out where
+# the plots have been produced, and save us the trouble to re-implement it
+if __name__ == '__main__':
+    print(get_output_dir(*read_configuration(sys.argv[1])))

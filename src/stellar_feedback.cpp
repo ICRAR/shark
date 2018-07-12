@@ -1,31 +1,33 @@
 //
-// Stellar feedback classes implementation
-//
 // ICRAR - International Centre for Radio Astronomy Research
 // (c) UWA - The University of Western Australia, 2017
 // Copyright by UWA (in the framework of the ICRAR)
-// All rights reserved
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This library is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-// MA 02111-1307  USA
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
+
+/**
+ * @file
+ *
+ * Stellar feedback classes implementation
+ */
 
 #include <cmath>
 
-#include "stellar_feedback.h"
 #include "numerical_constants.h"
+#include "stellar_feedback.h"
+#include "utils.h"
 
 namespace shark {
 
@@ -59,26 +61,27 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options)
 template <>
 StellarFeedbackParameters::StellarFeedbackModel
 Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string &name, const std::string &value) const {
-	if ( value == "Muratov15" ) {
+	auto lvalue = lower(value);
+	if (lvalue == "muratov15") {
 		return StellarFeedbackParameters::MURATOV15;
 	}
-	else if ( value == "Lacey16" ) {
+	else if (lvalue == "lacey16") {
 		return StellarFeedbackParameters::LACEY16;
 	}
-	else if (value == "Guo11"){
+	else if (lvalue == "guo11") {
 		return StellarFeedbackParameters::GUO11;
 	}
-	else if (value == "Lagos13"){
+	else if (lvalue == "lagos13") {
 		return StellarFeedbackParameters::LAGOS13;
 	}
-	else if (value == "Lagos13Trunc"){
+	else if (lvalue == "lagos13trunc") {
 		return StellarFeedbackParameters::LAGOS13Trunc;
 	}
-	else if (value == "Lacey16RedDep"){
+	else if (lvalue == "lacey16reddep") {
 		return StellarFeedbackParameters::LACEY16FIRE;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are Muratov14, Lacey16, Guo11, Lagos13, Lagos13Trunc and Lacey16RedDep";
+	os << name << " option value invalid: " << value << ". Supported values are muratov14, lacey16, guo11, lagos13, lagos13trunc and lacey16redrep";
 	throw invalid_option(os.str());
 }
 

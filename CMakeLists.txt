@@ -1,26 +1,22 @@
 # CMakeLists.txt
 #
 # ICRAR - International Centre for Radio Astronomy Research
-# (c) UWA - The University of Western Australia, 2016
+# (c) UWA - The University of Western Australia, 2017
 # Copyright by UWA (in the framework of the ICRAR)
-# All rights reserved
 #
-# Contributed by Rodrigo Tobar
-#
-# This file is part of SHArk.
-#
-# shark is free software: you can redistribute it and/or modify
+# This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# shark is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with shark.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 
 # cmake 3.2 comes with FindGSL.cmake
 cmake_minimum_required(VERSION 3.2)
@@ -40,6 +36,11 @@ endif()
 project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
+
+# If not specified, always build in Release mode
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 # Options users can give on the command line
 option(SHARK_TEST       "Include test compilation in the build" OFF)
@@ -133,8 +134,8 @@ macro(find_hdf5)
 		message("-- Found HDF5 version ${HDF5_VERSION}")
 	endif()
 
-	# We support 1.8.12+
-	if (NOT HDF5_VERSION VERSION_GREATER "1.7")
+	# We support 1.8+
+	if (HDF5_VERSION VERSION_LESS "1.8")
 		message(FATAL_ERROR
 				  "\nHDF5 version ${HDF5_VERSION} found, "
 				  "but shark needs versions at least 1.8.0\n")
@@ -191,12 +192,25 @@ endif()
 #
 configure_file(include/config.h.in include/config.h @ONLY)
 
+#
+# Add git revision information in a generated .cpp file, which we then include
+# as part of the shark library
+#
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+set(git_revision_cpp "${CMAKE_CURRENT_BINARY_DIR}/git_revision.cpp")
+configure_file("src/git_revision.cpp.in" "${git_revision_cpp}" @ONLY)
+list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
+
+
 # Our own include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS
+   "${git_revision_cpp}"
    src/agn_feedback.cpp
    src/cosmology.cpp
    src/execution.cpp
@@ -211,6 +225,7 @@ set(SHARKLIB_SRCS
    src/interpolator.cpp
    src/logging.cpp
    src/merger_tree_reader.cpp
+   src/naming_convention.cpp
    src/options.cpp
    src/ode_solver.cpp
    src/physical_model.cpp
