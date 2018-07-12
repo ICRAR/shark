@@ -381,6 +381,23 @@ then
 	fi
 fi
 
+#
+# If a shark binary is indicated, make sure we get an absolute path
+# to it to avoid errors with relative paths later during the execution
+# of shark-run, which is probably running somewhere else than this
+# directory
+#
+if [ -n "$shark_binary" ]
+then
+	if [ ! -e "$shark_binary" ]
+	then
+		error "$shark_binary does not exist, check the -S option"
+		exit 1
+	fi
+	shark_binary=`get_absolute_path "$shark_binary"`
+fi
+
+
 # Check which queueing system we are going to use from now on
 queue_system=
 if [ ! -z "$(command -v sbatch 2> /dev/null)" ]
