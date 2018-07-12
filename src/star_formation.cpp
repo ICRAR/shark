@@ -80,7 +80,7 @@ Options::get<StarFormationParameters::StarFormationModel>(const std::string &nam
 		return StarFormationParameters::KMT09;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are BR06, GK11, K13 or KMT09";
+	os << name << " option value invalid: " << value << ". Supported values are br06, gd11, k13 or kmt09";
 	throw invalid_option(os.str());
 }
 

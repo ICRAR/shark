@@ -81,7 +81,7 @@ Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string 
 		return StellarFeedbackParameters::LACEY16FIRE;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are Muratov14, Lacey16, Guo11, Lagos13, Lagos13Trunc and Lacey16RedDep";
+	os << name << " option value invalid: " << value << ". Supported values are muratov14, lacey16, guo11, lagos13, lagos13trunc and lacey16redrep";
 	throw invalid_option(os.str());
 }
 

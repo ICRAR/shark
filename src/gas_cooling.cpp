@@ -208,7 +208,7 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 		return GasCoolingParameters::BENSON10;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are Croton06 and Benson10";
+	os << name << " option value invalid: " << value << ". Supported values are croton06 and benson10";
 	throw invalid_option(os.str());
 }
 
@@ -443,7 +443,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of BOWER06 AGN feedback model.
 
-    else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 and halo->Mvir > agnfeedback->parameters.mass_thresh){
+    else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
     	//a pseudo cooling luminosity k*T/lambda(T,Z)
     	double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
    		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
@@ -463,7 +463,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
     	double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
-    	if(r_ratio > 1){
+    	if(r_ratio > agnfeedback->parameters.alpha_cool){
     		r_ratio = 1;
         	//Redefine mheatrate and macc_h accordingly.
         	mheatrate = r_ratio * coolingrate;
