@@ -152,10 +152,11 @@ shark_binary=
 shark_subvolumes=
 shark_options=()
 shark_plot=
+shark_python_exec=python
 shark_obsdata_dir=
 
 # Parse command line options
-while getopts "h?m:v:S:V:o:pD:" opt
+while getopts "h?m:v:S:V:o:pP:D:" opt
 do
 	case "$opt" in
 		[h?])
@@ -179,6 +180,9 @@ do
 			;;
 		p)
 			shark_plot=yes
+			;;
+		P)
+			shark_python_exec="${OPTARG}"
 			;;
 		D)
 			shark_obsdata_dir="$OPTARG"
@@ -344,7 +348,7 @@ then
 
 	# For the time being we are assuming this script
 	# is alongside the rest of the shark sources
-	python "$SHARK_HPC_DIR/../standard_plots/all.py" \
+	"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/all.py" \
 	    -c "${config_file}" -v "${shark_subvolumes[*]}" \
 	    -O "${shark_obsdata_dir}" 199 &> shark-plots.log
 	if [ $? -ne 0 ]
@@ -354,7 +358,7 @@ then
 		# Find where the plots were produced and copy them
 		# to a local plots/ folder for easy access
 		info "shark plots successfully produced"
-		plots_dir=`python "$SHARK_HPC_DIR/../standard_plots/common.py" "${config_file}"`
+		plots_dir=`"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/common.py" "${config_file}"`
 		mkdir plots
 		cp ${plots_dir}/* plots
 		info "shark plots successfully copied into plots/"

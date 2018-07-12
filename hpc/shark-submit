@@ -82,7 +82,7 @@ print_usage() {
 	echo "Usage: $0 [-h] [-?] [-d] [-O output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-M modules] [-M mem] [-N num-nodes] [-v | -q]"
 	echo "       [-S shark_binary] [-V subvolumes] [-o opt1=val1 [-o opt2=val2...]]"
-	echo "       [-p] [-D obsdata_dir] config_file"
+	echo "       [-p] [-P python-exec] [-D obsdata_dir] config_file"
 	echo
 	echo "This program calculates what is the best way to submit a series of jobs to"
 	echo "execute shark over a number of subvolumes, and performs such submission. The"
@@ -148,6 +148,9 @@ print_usage() {
 	echo " -p              After a *successful* run, produce all the standard plots with"
 	echo "                 the generated outputs from shark, and copy them to this job's"
 	echo "                 output directory. The default is to not produce plots"
+	echo
+	echo " -P python-exec  Use the given python executable to run the plot scripts. Useful"
+	echo "                 when using a Python virtual environment."
 	echo
 	echo " -D              The directory where observational data can be found. Defaults"
 	echo "                 to the value of the SHARK_OBSDATA_DIR environment variable, if"
@@ -218,7 +221,7 @@ submit_slurm() {
 	# Produce standard plots?
 	if [ -n "${shark_plot}" ]
 	then
-		cmd="$cmd -p -D \"${shark_obsdata_dir}\""
+		cmd="$cmd -p -D \"${shark_obsdata_dir}\" -P \"${shark_python_exec}\""
 	fi
 
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
@@ -263,10 +266,11 @@ shark_binary=
 shark_subvolumes=
 shark_options=()
 shark_plot=
+shark_python_exec=python
 shark_obsdata_dir=${SHARK_OBSDATA_DIR}
 
 # Parse command line options
-while getopts "h?dO:Q:a:w:n:M:m:N:vqS:V:o:pD:" opt
+while getopts "h?dO:Q:a:w:n:M:m:N:vqS:V:o:pP:D:" opt
 do
 	case "$opt" in
 		[h?])
@@ -307,6 +311,9 @@ do
 			;;
 		p)
 			shark_plot=yes
+			;;
+		P)
+			shark_python_exec="${OPTARG}"
 			;;
 		D)
 			shark_obsdata_dir="${OPTARG}"
@@ -355,9 +362,13 @@ then
 fi
 config_file=${@:$OPTIND:1}
 
-# If plotting is requested, an observation data directory must be specified
+#
+# Check that everything is in place if plotting is requested
+#
 if [ -n "${shark_plot}" ]
 then
+
+	# An observation data directory must be specified
 	if [ -z "${shark_obsdata_dir}" ]
 	then
 		error "No observations data directory specified."
@@ -365,9 +376,7 @@ then
 		error "One can be specified either using -D or with the"
 		error "SHARK_OBSDATA_DIR environment variable"
 		exit 1
-	fi
-
-	if [ ! -d "${shark_obsdata_dir}" ]
+	elif [ ! -d "${shark_obsdata_dir}" ]
 	then
 		error "Observations data directory"
 		error
@@ -377,6 +386,18 @@ then
 		error "Make sure you are pointing to the correct directory,"
 		error "or do *not* request plots via -p"
 		exit 1
+	fi
+	shark_obsdata_dir=`get_absolute_path "$shark_obsdata_dir"`
+
+	# The python binary must be there
+	if [ "${shark_python_exec}" != "python" ]
+	then
+		if [ ! -f "${shark_python_exec}" ]
+		then
+			error "Python executable ${shark_python_exec} does not exist, please check the -P option"
+			exit 1
+		fi
+		shark_python_exec=`get_absolute_path "${shark_python_exec}"`
 	fi
 fi
 
