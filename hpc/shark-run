@@ -239,7 +239,7 @@ info "CPUs per node: ${cpus_per_node[*]}"
 info "Tasks per node: ${tasks_per_node[*]}"
 
 mem_per_task=${SLURM_MEM_PER_CPU:-}
-if [ -z "$mem_per_task_per_node" ]
+if [ -z "$mem_per_task" ]
 then
 	if [ -z "$SLURM_MEM_PER_NODE" ]
 	then
