@@ -60,23 +60,14 @@ class BaryonBase {
 public:
 
 	/**
-	 * Initialize values in zero.
-	 */
-	BaryonBase():
-		mass(0),
-		mass_metals(0)
-	{
-		// no-op
-	}
-	/**
 	 * Mass content of the baryon component
 	 */
-	float mass;
+	float mass = 0;
 
 	/**
 	 * Metallicity of the baryon component
 	 */
-	float mass_metals;
+	float mass_metals = 0;
 
 	BaryonBase &operator+=(const BaryonBase &b) {
 		mass += b.mass;
@@ -102,24 +93,16 @@ public:
  */
 class Baryon : public BaryonBase {
 public:
-	/**
-	 * Initialize values in zero.
-	 */
-	Baryon():
-		rscale(0),
-		sAM(0)
-	{
-		// no-op
-	}
+
 	/**
 	 * A scale radius
 	 */
-	float rscale;
+	float rscale = 0;
 
 	/**
 	 * Specific angular momentum
 	 */
-	float sAM;
+	float sAM = 0;
 
 	friend Baryon operator+(Baryon &lhs, const Baryon &rhs) {
 		lhs += rhs;
@@ -150,22 +133,11 @@ class BlackHole : public BaryonBase {
 
 public:
 
-	/**
-	 * Initialize values in zero.
-	 */
-	BlackHole():
-		macc_hh(0),
-		macc_sb(0)
-	{
-		// no-op
-	}
-	/**
-	 * macc_hh: accretion rate onto the black hole during hot halo mode.
-	 * macc_sb: accretion rate onto the black hole during starbursts.
-	 */
+	/** accretion rate onto the black hole during hot halo mode. */
+	float macc_hh = 0;
 
-	float macc_hh;
-	float macc_sb;
+	/** macc_sb: accretion rate onto the black hole during starbursts. */
+	float macc_sb = 0;
 };
 
 
@@ -196,36 +168,7 @@ struct HistoryItem {
 class Galaxy : public Identifiable<int> {
 public:
 
-	/**
-	 * Initialize values in zero.
-	 */
-	Galaxy():
-		id(-1),
-		descendant_id(-1),
-		galaxy_type(),
-		bulge_stars(),
-		bulge_gas(),
-		disk_stars(),
-		disk_gas(),
-		galaxymergers_burst_stars(),
-		diskinstabilities_burst_stars(),
-		smbh(),
-		sfr_disk(0),
-		sfr_bulge(0),
-		sfr_z_disk(0),
-		sfr_z_bulge(0),
-		mean_stellar_age(0),
-		total_stellar_mass_ever_formed(0),
-		vmax(0),
-		history(),
-		tmerge(0),
-        concentration_type2(0),
-        msubhalo_type2(0),
-        vvir_type2(0),
-        lambda_type2(0)
-	{
-		//no-op
-	}
+	using Identifiable::Identifiable;
 
 	/**
 	 * An enumeration of types of galaxies
@@ -239,46 +182,42 @@ public:
 
 
 	/**
-	 * The ID of this galaxy.
-	 */
-	id_t id;
-	/**
 	 * The ID of the descendant of this galaxy.
 	 */
-	id_t descendant_id;
+	id_t descendant_id = -1;
 
 	/**
 	 * The type of galaxy
 	 */
-	galaxy_type_t galaxy_type;
+	galaxy_type_t galaxy_type = CENTRAL;
 
-	Baryon bulge_stars;
-	Baryon bulge_gas;
-	Baryon disk_stars;
-	Baryon disk_gas;
-	Baryon galaxymergers_burst_stars;
-	Baryon diskinstabilities_burst_stars;
-	BlackHole smbh;
+	Baryon bulge_stars {};
+	Baryon bulge_gas {};
+	Baryon disk_stars {};
+	Baryon disk_gas {};
+	Baryon galaxymergers_burst_stars {};
+	Baryon diskinstabilities_burst_stars {};
+	BlackHole smbh {};
 
 	//save average star formation rates and metallicities of the newly formed stars.
-	float sfr_disk;
-	float sfr_bulge;
-	float sfr_z_disk;
-	float sfr_z_bulge;
+	float sfr_disk = 0;
+	float sfr_bulge = 0;
+	float sfr_z_disk = 0;
+	float sfr_z_bulge = 0;
 
 	/**
 	 * Keep track of mean stellar age using:
 	 *  mean_stellar_age: stellar mass formed times the mean age at which they formed.
 	 *  total_stellar_mass_ever_formed: total stellar mass ever formed (without including the effects of stellar populations).
 	 */
-	float mean_stellar_age;
-	float total_stellar_mass_ever_formed;
+	float mean_stellar_age = 0;
+	float total_stellar_mass_ever_formed = 0;
 
 	//save maximum circular velocity.
-	float vmax;
+	float vmax = 0;
 
 	//save star formation and gas history
-	std::vector<HistoryItem>  history;
+	std::vector<HistoryItem>  history {};
 
 	/**
 	 * tmerge: dynamical friction timescale, which is defined only if galaxy is satellite.
@@ -287,12 +226,11 @@ public:
 	 * vvir_type2: subhalo virial velocity of this galaxy before it became type 2 (only relevant for type 2 galaxies).
 	 * lambda_type2: subhalo spin parameter of this galaxy before it became type 2 (only relevant for type 2 galaxies).
 	 */
-	float tmerge;
-	float concentration_type2;
-	float msubhalo_type2;
-	float vvir_type2;
-	float lambda_type2;
-
+	float tmerge = 0;
+	float concentration_type2 = 0;
+	float msubhalo_type2 = 0;
+	float vvir_type2 = 0;
+	float lambda_type2 = 0;
 
 	/**
 	 * Define functions to calculate total mass and metals of various components.
@@ -453,32 +391,10 @@ public:
 	/**
 	 * Initialize values in zero.
 	 */
-	Subhalo():
-		snapshot(-1),
-		has_descendant(false),
-		main_progenitor(false),
-		IsInterpolated(false),
-		descendant_id(0),
-		descendant_halo_id(0),
-		descendant_snapshot(-1),
-		last_snapshot_identified(-1),
-		descendant(0),
-		galaxies(),
-		subhalo_type(),
-		haloID(0),
-		Vvir(0),
-		Mvir(0),
-		L{0, 0, 0},
-		Vcirc(0),
-		concentration(0),
-		lambda(0),
-		cooling_subhalo_tracking(),
-		hot_halo_gas(),
-		cold_halo_gas(),
-		ejected_galaxy_gas(),
-		ascendants(),
-		accreted_mass(0),
-		host_halo()
+	Subhalo(long id, int snapshot):
+		Identifiable(id),
+		Spatial(),
+		snapshot(snapshot)
 	{
 		//no-op
 	}
@@ -500,64 +416,63 @@ public:
 	/**
 	 * Whether this subhalo has a descendant or not
 	 */
-	bool has_descendant;
+	bool has_descendant = false;
 
 	/**
 	 * Boolean property indicating if subhalo is a main progenitor of its descendant.
 	 */
-	bool main_progenitor;
+	bool main_progenitor = false;
 
 	/**
 	 * Boolean property indicating if subhalo is the result of an interpolation in snapshots were descendants were missing. In this case Dhalos puts a subhalo in those snapshots
 	 * to ensure continuation of the merger tree.
 	 */
-	bool IsInterpolated;
-
+	bool IsInterpolated = false;
 
 	/**
 	 * The ID of the descendant of this subhalo.
 	 * Valid only if has_descendant is \code{true}
 	 */
-	id_t descendant_id;
+	id_t descendant_id = 0;
 
 	/**
 	 * The ID of the Halo containing the descendant of this subhalo
 	 */
-	id_t descendant_halo_id;
+	id_t descendant_halo_id = 0;
 
 	/**
 	 * The snapshot at which the descendant of this subhalo can be found
 	 */
-	int descendant_snapshot;
+	int descendant_snapshot = -1;
 
     /**
      * Integer that shows if this subhalo will disappear from the tree in the next snapshot.
      * last_snapshot_identified = 1 if disappears in the next snapshot, =0 otherwise.
      */
 
-    int last_snapshot_identified;
+    int last_snapshot_identified = -1;
 
 	/**
 	 * A pointer to the descendant of this subhalo.
 	 * If this pointer is set then descendant_id and descendant_subhalo are
 	 * meaningless.
 	 */
-	SubhaloPtr descendant;
+	SubhaloPtr descendant {};
 
 	/**
 	 * The list of galaxies in this subhalo.
 	 */
-	std::vector<GalaxyPtr> galaxies;
+	std::vector<GalaxyPtr> galaxies {};
 
 	/**
 	 * The subhalo type
 	 */
-	subhalo_type_t subhalo_type;
+	subhalo_type_t subhalo_type = CENTRAL;
 
 	/**
 	 * haloID: ID of the Halo this Subhalo belong to
 	 */
-	id_t haloID;
+	id_t haloID = 0;
 
 	/** Vvir: virial velocity of the subhalo [km/s]
 	 * Mvir: virial mass of the subhalo [Msun/h]
@@ -566,54 +481,53 @@ public:
 	 * concentration: NFW concentration parameter of subhalo
 	 * lambda: spin parameter of subhalo
 	 *  */
-	float Vvir;
-	float Mvir;
-	xyz<float> L;
-	float Vcirc;
-	float concentration;
-	float lambda;
+	float Vvir = 0;
+	float Mvir = 0;
+	xyz<float> L {0, 0, 0};
+	float Vcirc = 0;
+	float concentration = 0;
+	float lambda = 0;
 
 	/**
 	 * cooling_subhalo_tracking: saves que information of the virial temperature, total halo gas and cooling time history.
 	 */
-	CoolingSubhaloTracking cooling_subhalo_tracking;
+	CoolingSubhaloTracking cooling_subhalo_tracking {};
 
 
 	/**
 	 * Hot gas component of the halo and outside the galaxies that is
 	 * allowed to cool down and/or fall onto the galaxy.
 	 */
-	Baryon hot_halo_gas;
+	Baryon hot_halo_gas {};
 
 	/**
 	 * Cold gas component of the halo and outside the galaxies that has
 	 * cooled down.
 	 */
-	Baryon cold_halo_gas;
+	Baryon cold_halo_gas {};
 
 	/**
 	 * Hot gas component of the halo and outside galaxies that tracks
 	 * the ejected outflowing gas from the galaxy and that is not
 	 * available for cooling yet.
 	 */
-	Baryon ejected_galaxy_gas;
-
+	Baryon ejected_galaxy_gas {};
 
 	/**
 	 * A list of pointers to the ascendants of this subhalo, sorted by mass in
 	 * descending order
 	 */
-	std::vector<SubhaloPtr> ascendants;
+	std::vector<SubhaloPtr> ascendants {};
 
 	/**
 	 * The accreted baryonic mass onto the subhalo. This information comes from the merger tree.
 	 */
-	float accreted_mass;
+	float accreted_mass = 0;
 
 	/**
 	 * The halo that holds this subhalo.
 	 */
-	HaloPtr host_halo;
+	HaloPtr host_halo {};
 
 	/// Returns main progenitor subhalo.
 	SubhaloPtr main(){
@@ -734,31 +648,23 @@ class Halo : public Identifiable<long>, public Spatial<float> {
 
 public:
 
-	Halo(Halo::id_t halo_id, int snapshot) :
-		central_subhalo(),
-		satellite_subhalos(),
-		mass_fraction_subhalos(-1),
-		Vvir(0),
-		Mvir(0),
-		concentration(0),
-		lambda(0),
-		cooling_rate(0),
-		snapshot(snapshot),
-		main_progenitor(false)
+	Halo(id_t halo_id, int snapshot) :
+		Identifiable(halo_id),
+		Spatial(),
+		snapshot(snapshot)
 	{
 		// no-op
-		id = halo_id;
 	}
 
 	/**
 	 * The central subhalo
 	 */
-	SubhaloPtr central_subhalo;
+	SubhaloPtr central_subhalo {};
 
 	/**
 	 * The subhalos contained in this halo
 	 */
-	std::vector<SubhaloPtr> satellite_subhalos;
+	std::vector<SubhaloPtr> satellite_subhalos {};
 
 	///
 	/// Returns the total number of subhalos contained in this halo
@@ -813,29 +719,29 @@ public:
 	 * This quantity should be =1 for classic SAMs, but with Rodrigo Canas work
 	 * on VELOCIraptor, this quantity could be less than 1.
 	 */
-	float mass_fraction_subhalos;
+	float mass_fraction_subhalos = -1;
 
 	/** TODO: document these */
-	float Vvir;
-	float Mvir;
-	float concentration;
-	float lambda;
-
-	float cooling_rate;
+	float Vvir = 0;
+	float Mvir = 0;
+	float concentration = 0;
+	float lambda = 0;
+	float cooling_rate = 0;
 
 	/**
 	 * The snapshot at which this halo is found
 	 */
 	int snapshot;
-	bool main_progenitor;
 
-	HaloPtr descendant;
-	std::set<HaloPtr> ascendants;
+	bool main_progenitor = false;
+
+	HaloPtr descendant {};
+	std::set<HaloPtr> ascendants {};
 
 	/**
 	 * The merger tree that holds this halo.
 	 */
-	MergerTreePtr merger_tree;
+	MergerTreePtr merger_tree {};
 
 	void add_subhalo(const SubhaloPtr &&subhalo) {
 
@@ -893,6 +799,8 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const HaloPtr &
  */
 class MergerTree : public Identifiable<long> {
 public:
+
+	using Identifiable::Identifiable;
 
 	/**
 	 * All halos contained in this merger tree, indexed by snapshot number

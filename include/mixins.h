@@ -86,6 +86,8 @@ template <typename T>
 class Identifiable {
 public:
 
+	Identifiable(T id) : id(id) {}
+
 	typedef T id_t;
 
 	/**
