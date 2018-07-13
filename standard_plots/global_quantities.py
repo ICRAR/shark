@@ -150,7 +150,7 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     fig = plt.figure(figsize=(5,15))
 
     xtit="$\\rm Lookback\, time/Gyr$"
-    ytit="$\\rm log_{10}(m/m_{\\rm bar,total})$"
+    ytit="$\\rm log_{10}(\\rho/\\rho_{\\rm bar,halos})$"
 
     ax = fig.add_subplot(411)
     plt.subplots_adjust(bottom=0.15, left=0.15)
@@ -707,10 +707,21 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ind = np.where(hi_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
+    xcgm = np.zeros(shape = 2)
+    ycgm = np.zeros(shape = 2)
+
+    xcgm[:] = 2.0
+    ycgm[0] = -5.0
+    ycgm[1] = -2.0
+    ax.plot(us.look_back_time(xcgm),ycgm, 'k', linestyle='dotted', linewidth=0.85)
+    ax.arrow(us.look_back_time(2.0), -2.5, 0.75, 0, head_width=0.05, head_length=0.1, fc='k', ec='k')
+    ax.text(10.55, -2.4, 'CGM?', fontsize=12)
+
     # Rhee+18 compilation
     redR18,reddR18,reduR18,omegaR18,errdnR18,errupR18 = common.load_observation(obsdir, 'Gas/HI_density_for_Claudia.dat', [1,2,3,7,8,9])
 
     ax.errorbar(us.look_back_time(redR18),np.log10(omegaR18*1e-3), xerr=[reddR18,reduR18],yerr=[errdnR18,errupR18], ls='None', mfc='None', ecolor = 'grey', mec='grey', marker='o', label="Rhee+18 (comp)")
+
 
     common.prepare_legend(ax, ['r','Crimson','Salmon','grey'])
     common.savefig(outdir, fig, "omega_HI.pdf")

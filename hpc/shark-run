@@ -346,7 +346,7 @@ then
 	# is alongside the rest of the shark sources
 	python "$SHARK_HPC_DIR/../standard_plots/all.py" \
 	    -c "${config_file}" -v "${shark_subvolumes[*]}" \
-	    -O "${shark_obsdata_dir}" ${shark_snapshot_for_plots} &> shark-plots.log
+	    -O "${shark_obsdata_dir}" 199 &> shark-plots.log
 	if [ $? -ne 0 ]
 	then
 		warning "An error occurred while producing the plots, please check the shark-plots.log file for details"
