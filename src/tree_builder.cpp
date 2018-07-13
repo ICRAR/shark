@@ -482,7 +482,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
 
 		int ignored = 0;
-		for(const auto &halo: halos_by_snapshot[snapshot]) {
+		for(auto &halo: halos_by_snapshot[snapshot]) {
 
 			bool halo_linked = false;
 			for(const auto &subhalo: halo->all_subhalos()) {

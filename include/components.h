@@ -26,16 +26,13 @@
 #ifndef SHARK_COMPONENTS_H_
 #define SHARK_COMPONENTS_H_
 
-#include <algorithm>
 #include <cassert>
 #include <map>
 #include <memory>
-#include <numeric>
 #include <ostream>
 #include <set>
 #include <vector>
 
-#include "logging.h"
 #include "mixins.h"
 
 namespace shark {
@@ -146,14 +143,11 @@ public:
  * Structure that saves the history of relevant baryon components needed for SED calculation later on.
  */
 struct HistoryItem {
-
 	float sfr_disk;
 	float sfr_bulge;
 	float sfr_z_disk;
 	float sfr_z_bulge;
-
 	int snapshot;
-
 };
 
 
@@ -273,7 +267,6 @@ public:
 	}
 
 	double disk_size(){
-
 
 		double rgas  = 0;
 		double rstar = 0;
@@ -529,95 +522,46 @@ public:
 	 */
 	HaloPtr host_halo {};
 
-	/// Returns main progenitor subhalo.
-	SubhaloPtr main(){
-		for (auto &sub: ascendants) {
-			if (sub->main_progenitor) {
-				return sub;
-			}
-		}
-		return SubhaloPtr();
-
-	}
+	/**
+	 * @return The main progenitor of this Subhalo
+	 */
+	SubhaloPtr main() const;
 
 	/// Returns a pointer to the central galaxy. If no central galaxy is found
 	/// in this Subhalo, then an empty pointer is returned.
-	GalaxyPtr central_galaxy(){
-		for (auto galaxy: galaxies){
-			if(galaxy->galaxy_type == Galaxy::CENTRAL){
-				return galaxy;
-			}
-		}
-		return GalaxyPtr();
-	}
+	GalaxyPtr central_galaxy() const;
 
-	/// Copies the galaxies from this Subhalo into `target`
-	void copy_galaxies_to(SubhaloPtr &target) {
-		target->galaxies.insert(target->galaxies.end(), galaxies.begin(), galaxies.end());
-	}
+	/**
+	 * Copies the galaxies from this Subhalo into @a target
+	 *
+	 * @param target The subhalo where galaxies will be copied to
+	 */
+	void copy_galaxies_to(SubhaloPtr &target) const;
 
-	/// Transfers (i.e., moves) the galaxies from this Subhalo into `target`
-	void transfer_galaxies_to(SubhaloPtr &target) {
+	/**
+	 * Transfers (i.e., moves) the galaxies from this Subhalo into @a target
+	 *
+	 * @param target The subhalo where galaxies will be transferred to
+	 */
+	void transfer_galaxies_to(SubhaloPtr &target);
 
-		auto gals_before = target->galaxy_count();
-		auto our_gals = galaxies.size();
-		LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	/**
+	 * Removes galaxies from this Subhalo
+	 *
+	 * @param to_remove A vector of galaxies to remove.
+	 */
+	void remove_galaxies(const std::vector<GalaxyPtr> &to_remove);
 
-		copy_galaxies_to(target);
-		galaxies.clear();
-
-		assert(gals_before + our_gals == target->galaxy_count());
-	}
-
-	void remove_galaxies(const std::vector<GalaxyPtr> &to_remove) {
-		// TODO: Maybe not most efficiently, but it will do for now
-		for(auto &galaxy: to_remove) {
-			auto it = std::find(galaxies.begin(), galaxies.end(), galaxy);
-			if (it == galaxies.end()) {
-				LOG(warning) << "Trying to remove galaxy " << galaxy << " which is not in subhalo " << *this << ", ignoring";
-				continue;
-			}
-			LOG(debug) << "Removing galaxy " << galaxy << " from subhalo " << *this;
-			galaxies.erase(it);
-		}
-	}
-	///
 	/// Returns the number of galaxies contained in this Halo
-	///
-	unsigned long galaxy_count() {
+	unsigned long galaxy_count() const
+	{
 		return galaxies.size();
 	}
 
-	// Sort galaxies by baryon mass.
-	std::vector<GalaxyPtr> ordered_galaxies(){
-
-		if(galaxies.size()==0){
-			return std::vector<GalaxyPtr>();
-		}
-		else if(galaxies.size()>1){
-			std::sort(galaxies.begin(), galaxies.end(), [](const GalaxyPtr &lhs, const GalaxyPtr &rhs) {
-			return lhs->baryon_mass() > rhs->baryon_mass();
-			});
-		}
-
-		return galaxies;
-
-	}
-
-	double total_baryon_mass(){
-
-		double mass= 0.0;
-
-		// add halo components.
-		mass += hot_halo_gas.mass + cold_halo_gas.mass + ejected_galaxy_gas.mass;
-
-		for (auto &galaxy: galaxies){
-			mass += galaxy->baryon_mass() + galaxy->smbh.mass;
-		}
-
-		return mass;
-	}
-
+	/**
+	 * @return The total baryon mass contained in this Subhalo
+	 */
+	double total_baryon_mass() const;
 };
 
 template <typename T>
@@ -666,53 +610,30 @@ public:
 	 */
 	std::vector<SubhaloPtr> satellite_subhalos {};
 
-	///
-	/// Returns the total number of subhalos contained in this halo
-	///
-	unsigned long subhalo_count() {
+	/**
+	 * @return the total number of subhalos contained in this halo
+	 */
+	unsigned long subhalo_count() const
+	{
 		unsigned int count = (central_subhalo ? 1 : 0);
 		return count + satellite_subhalos.size();
 	}
 
-	///
-	/// Returns a new vector containing pointers to all subhalos contained in
-	/// this halo (i.e., the central and satellite subhalos).
-	///
-	/// @return A vector with all subhalos
-	///
-	std::vector<SubhaloPtr> all_subhalos() {
+	/**
+	 * Returns a new vector containing pointers to all subhalos contained in
+	 * this halo (i.e., the central and satellite subhalos).
+	 *
+	 * @return A vector with all subhalos
+	 */
+	std::vector<SubhaloPtr> all_subhalos() const;
 
-		std::vector<SubhaloPtr> all;
-
-		if (central_subhalo) {
-			all.push_back(central_subhalo);
-		}
-		all.insert(all.end(), satellite_subhalos.begin(), satellite_subhalos.end());
-
-		// If there are more than one subhalo, then return them ordered by mass in decreasing order.
-		if(all.size() > 1){
-			std::sort(all.begin(), all.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
-				return lhs->Mvir > rhs->Mvir;
-			});
-		}
-
-		return all;
-	}
-
-	void remove_subhalo(SubhaloPtr subhalo) {
-
-		if (subhalo == central_subhalo) {
-			central_subhalo.reset();
-			return;
-		}
-
-		auto it = std::find(satellite_subhalos.begin(), satellite_subhalos.end(), subhalo);
-		if (it == satellite_subhalos.end()) {
-			throw "subhalo not in satellites";
-		}
-		satellite_subhalos.erase(it);
-
-	}
+	/**
+	 * Removes @a subhalo from this Halo. If the subhalo is not part of this
+	 * Halo, a subhalo_not_found exception is thrown.
+	 *
+	 * @param subhalo The subhalo to remove
+	 */
+	void remove_subhalo(const SubhaloPtr &subhalo);
 
 	/**
 	 * The mass contained in the subhalos.
@@ -743,33 +664,17 @@ public:
 	 */
 	MergerTreePtr merger_tree {};
 
-	void add_subhalo(const SubhaloPtr &&subhalo) {
-
-		// Assign subhalo to proper member
-		if (subhalo->subhalo_type == Subhalo::CENTRAL) {
-			central_subhalo = subhalo;
-		}
-		else {
-			satellite_subhalos.emplace_back(subhalo);
-		}
-
-		// Add subhalo mass to halo
-		Mvir += subhalo->Mvir;
-	}
+	/**
+	 * Adds @a subhalo to this Halo.
+	 *
+	 * @param subhalo The subhalo to add
+	 */
+	void add_subhalo(const SubhaloPtr &&subhalo);
 
 	///
 	/// Returns the number of galaxies contained in this Halo
 	///
-	unsigned long galaxy_count() {
-		unsigned long count = 0;
-		if (central_subhalo) {
-			count = central_subhalo->galaxy_count();
-		}
-		return std::accumulate(satellite_subhalos.begin(), satellite_subhalos.end(), count,
-		[](unsigned long galaxy_count, const SubhaloPtr &subhalo) {
-			return galaxy_count + subhalo->galaxy_count();
-		});
-	}
+	unsigned long galaxy_count() const;
 
 };
 
@@ -813,7 +718,6 @@ public:
 };
 
 class TotalBaryon {
-
 
 public:
 
@@ -862,25 +766,8 @@ public:
 	std::map<int,double> baryon_total_created;
 	std::map<int,double> baryon_total_lost;
 
-	std::vector<double> get_masses (const std::vector<BaryonBase> &B){
-
-		std::vector<double> masses(B.size());
-		std::transform(B.begin(), B.end(), masses.begin(), [](const BaryonBase &b) {
-			return b.mass;
-		});
-
-		return masses;
-	}
-
-	std::vector<double> get_metals (const std::vector<BaryonBase> &B){
-
-		std::vector<double> masses(B.size());
-		std::transform(B.begin(), B.end(), masses.begin(), [](const BaryonBase &b) {
-			return b.mass_metals;
-		});
-
-		return masses;
-	}
+	std::vector<double> get_masses (const std::vector<BaryonBase> &B) const;
+	std::vector<double> get_metals (const std::vector<BaryonBase> &B) const;
 
 };
 
