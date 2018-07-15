@@ -463,7 +463,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
     	double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
-    	if(r_ratio > agnfeedback->parameters.alpha_cool){
+    	if(r_ratio > 1){
     		r_ratio = 1;
         	//Redefine mheatrate and macc_h accordingly.
         	mheatrate = r_ratio * coolingrate;
