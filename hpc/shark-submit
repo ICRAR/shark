@@ -91,7 +91,8 @@ print_usage() {
 	echo "(-m option). An additional -N option allows users to manually specify a minimum"
 	echo "number of nodes to be requested."
 	echo
-	echo "General options:"
+	echo "General options"
+	echo "---------------"
 	echo
 	echo " -h, -?          Show this help"
 	echo
@@ -99,6 +100,7 @@ print_usage() {
 	echo
 	echo
 	echo "Queueing options"
+	echo "----------------"
 	echo
 	echo " -O output_dir   Directory where shark output will be written into. Defaults to"
 	echo "                 a rolling shark_run_<xxxx> name. The SHARK_OUTPUT_DIR_BASE"
@@ -129,7 +131,23 @@ print_usage() {
 	echo "                 calculated based on the number of subvolumes (-V option)"
 	echo
 	echo
-	echo "SHArk-specific options"
+	echo "Plotting options"
+	echo "----------------"
+	echo
+	echo " -p              After a *successful* run, produce all the standard plots with"
+	echo "                 the generated outputs from shark, and copy them to this job's"
+	echo "                 output directory. The default is to not produce plots"
+	echo
+	echo " -P python-exec  Use the given python executable to run the plot scripts. Useful"
+	echo "                 when using a Python virtual environment."
+	echo
+	echo " -D              The directory where observational data can be found. Defaults"
+	echo "                 to the value of the SHARK_OBSDATA_DIR environment variable, if"
+	echo "                 set. A value is required if -p is given"
+	echo
+	echo
+	echo "shark options"
+	echo "-------------"
 	echo
 	echo " -v              Run shark in verbose mode"
 	echo
@@ -145,18 +163,40 @@ print_usage() {
 	echo "                 override those given in the configuration file. This parameter"
 	echo "                 can be given more than one time to pass down multiple options"
 	echo
-	echo " -p              After a *successful* run, produce all the standard plots with"
-	echo "                 the generated outputs from shark, and copy them to this job's"
-	echo "                 output directory. The default is to not produce plots"
-	echo
-	echo " -P python-exec  Use the given python executable to run the plot scripts. Useful"
-	echo "                 when using a Python virtual environment."
-	echo
-	echo " -D              The directory where observational data can be found. Defaults"
-	echo "                 to the value of the SHARK_OBSDATA_DIR environment variable, if"
-	echo "                 set. A value is required if -p is given"
-	echo
 	echo " config_file:    The reference configuration file to use for this shark execution"
+	echo
+	echo
+	echo "Environment variables"
+	echo "====================="
+	echo
+	echo " * SHARK_OBSDATA_DIR      Default value for the -D option"
+	echo " * SHARK_OUTPUT_DIR_BASE  Default prefix where shark_run_<xxx> dirs are created"
+	echo " * SHARK_RUNTIME_MODULES  Default value for the -M option"
+	echo
+	echo
+	echo "Examples"
+	echo "========"
+	echo
+	echo "$> shark-submit -q debug -S ../build/shark -V 0-9 myconfig.cfg"
+	echo
+	echo "   Creates a job submission that will submit the execution of 10 shark instances"
+	echo "   for subvolumes from 0 to 9 using the common configuration file 'myconfig.cfg'"
+	echo "   and the shark binary '../build/shark'. The submission is performed to the "
+	echo "  'debug' queue"
+	echo
+	echo "$> shark-submit -m 7g -M gsl/2.3:hdf5/1.10.2:gcc/6.3 -p -D /opt/shark-obsdata"
+	echo "   -N 10 -V '0-32 34-63' -q debug myconfig.cfg"
+	echo
+	echo "   Like above, but executing for subvolumes from 0 to 63 (excluding 33), each"
+	echo "   instance needing 7 [GB] of memory, requesting 10 computing nodes, loading "
+	echo "   the gsl/2.3, hdf5/1.10.2 and gcc/6.3 modules before launching shark, and"
+	echo "   producing all standard plots using the observational data found in"
+	echo "   /opt/shark-obsdata"
+	echo
+	echo "$> shark-submit -q debug -m 7g -p -N 10 -V '0-32 34-63' myconfig.cfg"
+	echo
+	echo "   Like above, but assuming that SHARK_OBSDATA_DIR and SHARK_RUNTIME_MODULES"
+	echo "   are already set, in which case their values do not need to be specified"
 	echo
 }
 
