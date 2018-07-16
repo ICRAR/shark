@@ -47,7 +47,7 @@ xmf_obs = mbins_obs + dmobs/2.0
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
                  disk_vel, sam_stars_disk, sam_gas_disk_atom, 
-                 sam_gas_disk_mol, sam_halo):
+                 sam_gas_disk_mol, sam_halo, BT_fractions_centrals, BT_fractions_satellites):
 
     h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s = hdf5_data
     
@@ -77,6 +77,10 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
 
     BT_fractions_nodiskins[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),y=(mbulge[ind]-mburst_diskins[ind])/(mdisk[ind]+mbulge[ind]), xbins=xmf)
 
+    ind = np.where((mdisk+mbulge > 0) & (typeg == 0))
+    BT_fractions_centrals[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),y=mbulge[ind]/(mdisk[ind]+mbulge[ind]), xbins=xmf)
+    ind = np.where((mdisk+mbulge > 0) & (typeg > 0))
+    BT_fractions_satellites[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),y=mbulge[ind]/(mdisk[ind]+mbulge[ind]), xbins=xmf)
 
     ind = np.where((mdisk > 0)  & (mdisk/(mdisk+mbulge) > 0.5))
     disk_size[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
@@ -556,7 +560,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
     common.savefig(outdir, fig, 'bulge-BH.pdf')
 
 
-def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins):
+def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites):
 
     fig = plt.figure(figsize=(5,4.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
@@ -581,6 +585,17 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
         xplot = xmf[ind]
         yplot = BT_fractions_nodiskins[0,ind]
         ax.plot(xplot,yplot[0],'r', linestyle = 'dashed', label ='only by mergers')
+
+    #ind = np.where(BT_fractions_centrals[0,:] >= 0)
+    #if(len(xmf[ind]) > 0):
+    #    xplot = xmf[ind]
+    #    yplot = BT_fractions_centrals[0,ind]
+    #    ax.plot(xplot,yplot[0],'k', linestyle = 'dotted', label ='centrals')
+    #ind = np.where(BT_fractions_satellites[0,:] >= 0)
+    #if(len(xmf[ind]) > 0):
+    #    xplot = xmf[ind]
+    #    yplot = BT_fractions_satellites[0,ind]
+    #    ax.plot(xplot,yplot[0],'k', linestyle = 'dashed', label ='satellites')
 
     BT_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BTFractions_OtherModels.dat', [0])
     BT_stable0   = BT_othermodels[0:29]
@@ -628,6 +643,8 @@ def main(modeldir, outdir, subvols, obsdir):
     disk_size_cen = np.zeros(shape = (len(zlist), 3, len(xmf)))
     BT_fractions = np.zeros(shape = (len(zlist), len(xmf)))
     BT_fractions_nodiskins = np.zeros(shape = (len(zlist), len(xmf)))
+    BT_fractions_centrals = np.zeros(shape = (len(zlist), len(xmf)))
+    BT_fractions_satellites = np.zeros(shape = (len(zlist), len(xmf)))
     disk_vel =  np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_vel =  np.zeros(shape = (len(zlist), 3, len(xmf)))
     sam_stars_disk    = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -640,14 +657,15 @@ def main(modeldir, outdir, subvols, obsdir):
         hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo)
+                     sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, BT_fractions_centrals, 
+		     BT_fractions_satellites)
 
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins)
     plot_velocities(plt, outdir, disk_vel, bulge_vel)
     plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo)
     plot_sizes_combined(plt, outdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH)
-    plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins)
+    plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
 
 if __name__ == '__main__':
     main(*common.parse_args(requires_snapshot=False))
