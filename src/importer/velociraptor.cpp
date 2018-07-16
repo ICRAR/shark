@@ -114,9 +114,7 @@ const vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int 
 	vector<Subhalo> subhalos;
 	for(unsigned int i=0; i!=n_subhalos; i++) {
 
-		Subhalo subhalo;
-		subhalo.id = inhalo[i];
-		subhalo.snapshot = snapshot;
+		Subhalo subhalo(inhalo[i], snapshot);
 
 		//
 		// TODO: here we assign properties, etc

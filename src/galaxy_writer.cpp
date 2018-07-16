@@ -288,7 +288,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 			// assign properties of host subhalo
 			auto msubhalo = subhalo->Mvir;
-			auto vsubhalo = subhalo->Vcirc;
 			auto cnfw = subhalo->concentration;
 			auto lambda = subhalo->lambda;
 			auto subhalo_position = subhalo->position;
@@ -389,7 +388,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mvir_hosthalo.push_back(mhalo);
 
 				double mvir_gal = 0 ;
-				double vmax_sub = 0;
 				double c_sub = 0;
 				double l_sub = 0;
 				xyz<float> pos;
@@ -398,7 +396,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 				if(galaxy->galaxy_type == Galaxy::CENTRAL || galaxy->galaxy_type == Galaxy::TYPE1){
 					mvir_gal = msubhalo;
-					vmax_sub = vsubhalo;
 					c_sub    = cnfw;
 					l_sub    = lambda;
 					pos      = subhalo_position;

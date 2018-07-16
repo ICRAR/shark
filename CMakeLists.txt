@@ -212,6 +212,7 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 set(SHARKLIB_SRCS
    "${git_revision_cpp}"
    src/agn_feedback.cpp
+   src/components.cpp
    src/cosmology.cpp
    src/execution.cpp
    src/dark_matter_halos.cpp

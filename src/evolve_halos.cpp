@@ -79,8 +79,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 					}
 				}
 				if(i==0){
-					auto order_galaxies = subhalo->ordered_galaxies();
-					if(order_galaxies.size() > 0){
+					if (subhalo->galaxy_count() > 0) {
 						std::ostringstream os;
 						os << "Central Subhalo " << subhalo << " has no central galaxy";
 						throw invalid_data(os.str());
@@ -161,8 +160,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 					}
 				}
 				if(i==0){
-					auto order_galaxies = descendant_subhalo->ordered_galaxies();
-					if(order_galaxies.size() > 0){
+					if (descendant_subhalo->galaxy_count() > 0) {
 						std::ostringstream os;
 						os << "Central Subhalo " << descendant_subhalo << " has no central galaxy";
 						throw invalid_data(os.str());

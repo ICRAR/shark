@@ -75,6 +75,13 @@ to_bytes() {
 	echo "$amount"
 }
 
+print_usage_summary() {
+	echo
+	echo "usage: $0 [options...] config_file"
+	echo
+	echo "For more comprehensive help use -h or -?"
+}
+
 print_usage() {
 	echo
 	echo "$0: Submits shark for execution in a queueing system like SLURM or PBS/Torque"
@@ -82,7 +89,7 @@ print_usage() {
 	echo "Usage: $0 [-h] [-?] [-d] [-O output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-M modules] [-M mem] [-N num-nodes] [-v | -q]"
 	echo "       [-S shark_binary] [-V subvolumes] [-o opt1=val1 [-o opt2=val2...]]"
-	echo "       [-p] [-D obsdata_dir] config_file"
+	echo "       [-p] [-P python-exec] [-D obsdata_dir] config_file"
 	echo
 	echo "This program calculates what is the best way to submit a series of jobs to"
 	echo "execute shark over a number of subvolumes, and performs such submission. The"
@@ -91,7 +98,8 @@ print_usage() {
 	echo "(-m option). An additional -N option allows users to manually specify a minimum"
 	echo "number of nodes to be requested."
 	echo
-	echo "General options:"
+	echo "General options"
+	echo "---------------"
 	echo
 	echo " -h, -?          Show this help"
 	echo
@@ -99,6 +107,7 @@ print_usage() {
 	echo
 	echo
 	echo "Queueing options"
+	echo "----------------"
 	echo
 	echo " -O output_dir   Directory where shark output will be written into. Defaults to"
 	echo "                 a rolling shark_run_<xxxx> name. The SHARK_OUTPUT_DIR_BASE"
@@ -129,7 +138,23 @@ print_usage() {
 	echo "                 calculated based on the number of subvolumes (-V option)"
 	echo
 	echo
-	echo "SHArk-specific options"
+	echo "Plotting options"
+	echo "----------------"
+	echo
+	echo " -p              After a *successful* run, produce all the standard plots with"
+	echo "                 the generated outputs from shark, and copy them to this job's"
+	echo "                 output directory. The default is to not produce plots"
+	echo
+	echo " -P python-exec  Use the given python executable to run the plot scripts. Useful"
+	echo "                 when using a Python virtual environment."
+	echo
+	echo " -D              The directory where observational data can be found. Defaults"
+	echo "                 to the value of the SHARK_OBSDATA_DIR environment variable, if"
+	echo "                 set. A value is required if -p is given"
+	echo
+	echo
+	echo "shark options"
+	echo "-------------"
 	echo
 	echo " -v              Run shark in verbose mode"
 	echo
@@ -145,15 +170,40 @@ print_usage() {
 	echo "                 override those given in the configuration file. This parameter"
 	echo "                 can be given more than one time to pass down multiple options"
 	echo
-	echo " -p              After a *successful* run, produce all the standard plots with"
-	echo "                 the generated outputs from shark, and copy them to this job's"
-	echo "                 output directory. The default is to not produce plots"
-	echo
-	echo " -D              The directory where observational data can be found. Defaults"
-	echo "                 to the value of the SHARK_OBSDATA_DIR environment variable, if"
-	echo "                 set. A value is required if -p is given"
-	echo
 	echo " config_file:    The reference configuration file to use for this shark execution"
+	echo
+	echo
+	echo "Environment variables"
+	echo "====================="
+	echo
+	echo " * SHARK_OBSDATA_DIR      Default value for the -D option"
+	echo " * SHARK_OUTPUT_DIR_BASE  Default prefix where shark_run_<xxx> dirs are created"
+	echo " * SHARK_RUNTIME_MODULES  Default value for the -M option"
+	echo
+	echo
+	echo "Examples"
+	echo "========"
+	echo
+	echo "$> shark-submit -q debug -S ../build/shark -V 0-9 myconfig.cfg"
+	echo
+	echo "   Creates a job submission that will submit the execution of 10 shark instances"
+	echo "   for subvolumes from 0 to 9 using the common configuration file 'myconfig.cfg'"
+	echo "   and the shark binary '../build/shark'. The submission is performed to the "
+	echo "  'debug' queue"
+	echo
+	echo "$> shark-submit -m 7g -M gsl/2.3:hdf5/1.10.2:gcc/6.3 -p -D /opt/shark-obsdata"
+	echo "   -N 10 -V '0-32 34-63' -q debug myconfig.cfg"
+	echo
+	echo "   Like above, but executing for subvolumes from 0 to 63 (excluding 33), each"
+	echo "   instance needing 7 [GB] of memory, requesting 10 computing nodes, loading "
+	echo "   the gsl/2.3, hdf5/1.10.2 and gcc/6.3 modules before launching shark, and"
+	echo "   producing all standard plots using the observational data found in"
+	echo "   /opt/shark-obsdata"
+	echo
+	echo "$> shark-submit -q debug -m 7g -p -N 10 -V '0-32 34-63' myconfig.cfg"
+	echo
+	echo "   Like above, but assuming that SHARK_OBSDATA_DIR and SHARK_RUNTIME_MODULES"
+	echo "   are already set, in which case their values do not need to be specified"
 	echo
 }
 
@@ -218,7 +268,7 @@ submit_slurm() {
 	# Produce standard plots?
 	if [ -n "${shark_plot}" ]
 	then
-		cmd="$cmd -p -D \"${shark_obsdata_dir}\""
+		cmd="$cmd -p -D \"${shark_obsdata_dir}\" -P \"${shark_python_exec}\""
 	fi
 
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
@@ -263,10 +313,11 @@ shark_binary=
 shark_subvolumes=
 shark_options=()
 shark_plot=
+shark_python_exec=python
 shark_obsdata_dir=${SHARK_OBSDATA_DIR}
 
 # Parse command line options
-while getopts "h?dO:Q:a:w:n:M:m:N:vqS:V:o:pD:" opt
+while getopts "h?dO:Q:a:w:n:M:m:N:vqS:V:o:pP:D:" opt
 do
 	case "$opt" in
 		[h?])
@@ -280,7 +331,7 @@ do
 			if [ ! -z "$quiet" ]
 			then
 				error "-v and -q cannot be specified together"
-				print_usage 1>&2
+				print_usage_summary 1>&2
 				exit 1
 			fi
 			verbose=1
@@ -290,7 +341,7 @@ do
 			if [ ! -z "$verbose" ]
 			then
 				error "-v and -q cannot be specified together"
-				print_usage 1>&2
+				print_usage_summary 1>&2
 				exit 1
 			fi
 			quiet=1
@@ -307,6 +358,9 @@ do
 			;;
 		p)
 			shark_plot=yes
+			;;
+		P)
+			shark_python_exec="${OPTARG}"
 			;;
 		D)
 			shark_obsdata_dir="${OPTARG}"
@@ -340,7 +394,7 @@ do
 			num_nodes="$OPTARG"
 			;;
 		*)
-			print_usage 1>&2
+			print_usage_summary 1>&2
 			exit 1
 			;;
 	esac
@@ -350,14 +404,18 @@ done
 if [ $(($# - $OPTIND)) -lt 0 ]
 then
 	error "Missing config_file option"
-	print_usage 1>&2
+	print_usage_summary 1>&2
 	exit 1
 fi
 config_file=${@:$OPTIND:1}
 
-# If plotting is requested, an observation data directory must be specified
+#
+# Check that everything is in place if plotting is requested
+#
 if [ -n "${shark_plot}" ]
 then
+
+	# An observation data directory must be specified
 	if [ -z "${shark_obsdata_dir}" ]
 	then
 		error "No observations data directory specified."
@@ -365,9 +423,7 @@ then
 		error "One can be specified either using -D or with the"
 		error "SHARK_OBSDATA_DIR environment variable"
 		exit 1
-	fi
-
-	if [ ! -d "${shark_obsdata_dir}" ]
+	elif [ ! -d "${shark_obsdata_dir}" ]
 	then
 		error "Observations data directory"
 		error
@@ -377,6 +433,18 @@ then
 		error "Make sure you are pointing to the correct directory,"
 		error "or do *not* request plots via -p"
 		exit 1
+	fi
+	shark_obsdata_dir=`get_absolute_path "$shark_obsdata_dir"`
+
+	# The python binary must be there
+	if [ "${shark_python_exec}" != "python" ]
+	then
+		if [ ! -f "${shark_python_exec}" ]
+		then
+			error "Python executable ${shark_python_exec} does not exist, please check the -P option"
+			exit 1
+		fi
+		shark_python_exec=`get_absolute_path "${shark_python_exec}"`
 	fi
 fi
 

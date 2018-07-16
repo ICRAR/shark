@@ -154,12 +154,10 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 			continue;
 		}
 
-		auto subhalo = std::make_shared<Subhalo>();
+		auto subhalo = std::make_shared<Subhalo>(nodeIndex[i], snap[i]);
 
 		// Subhalo and Halo index, snapshot
-		subhalo->id = nodeIndex[i];
 		subhalo->haloID = hostIndex[i];
-		subhalo->snapshot = snap[i];
 
 		// Descendant information. -1 means that the Subhalo has no descendant
 		auto descendant_id = descIndex[i];
