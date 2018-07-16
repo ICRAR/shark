@@ -139,14 +139,14 @@ def plot_SMHM_z(plt, outdir, massgal):
 
 def plot_BMHM_z(plt, outdir, massbar):
 
-    fig = plt.figure(figsize=(9.5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm halo, DM}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm M_{\\rm bar}(\\Omega_{\\rm DM}/\\Omega_{\\rm b})/M_{\odot})$"
+    fig = plt.figure(figsize=(5,6))
+    xtit = ""
+    ytit = ""
     xmin, xmax, ymin, ymax = 10, 15, 10, 15
     xleg = xmax - 0.2 * (xmax - xmin)
-    yleg = ymax - 0.1 * (ymax - ymin)
+    yleg = ymin + 0.15 * (ymax - ymin)
 
-    ax = fig.add_subplot(221)
+    ax = fig.add_subplot(311)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg, yleg, 'z=0')
 
@@ -163,25 +163,28 @@ def plot_BMHM_z(plt, outdir, massbar):
     ax.plot(xmf,xmf,'r', linestyle='dashed')
 
     # z=0.5 ##################################
-    ax = fig.add_subplot(222)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-    ax.text(xleg,yleg, 'z=0.5')
+    #ax = fig.add_subplot(222)
+    #common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    #ax.text(xleg,yleg, 'z=0.5')
 
     #Predicted SMHM
-    ind = np.where(massbar[1,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = massbar[1,0,ind]
-    errdn = massbar[1,1,ind]
-    errup = massbar[1,2,ind]
+    #ind = np.where(massbar[1,0,:] != 0)
+    #xplot = xmf[ind]
+    #yplot = massbar[1,0,ind]
+    #errdn = massbar[1,1,ind]
+    #errup = massbar[1,2,ind]
 
-    ax.errorbar(xplot,yplot[0],color='k', label="Shark")
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
+    #ax.errorbar(xplot,yplot[0],color='k', label="Shark")
+    #ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
 
-    ax.plot(xmf,xmf,'r', linestyle='dashed')
+    #ax.plot(xmf,xmf,'r', linestyle='dashed')
 
 
     # z=1 ##################################
-    ax = fig.add_subplot(223)
+    ax = fig.add_subplot(312)
+    xtit = ""
+    ytit = "$\\rm log_{10} (\\rm M_{\\rm bar}(\\Omega_{\\rm DM}/\\Omega_{\\rm b})/M_{\odot})$"
+
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg, yleg, 'z=1')
 
@@ -199,7 +202,10 @@ def plot_BMHM_z(plt, outdir, massbar):
 
 
     # z=1 ##################################
-    ax = fig.add_subplot(224)
+    ax = fig.add_subplot(313)
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm halo, DM}/M_{\odot})$"
+    ytit = ""
+
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg,yleg, 'z=2')
 

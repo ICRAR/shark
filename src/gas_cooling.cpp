@@ -406,8 +406,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		coolingrate = 0.5*(r_cool/Rvir)*(mhot/tcool); //in Msun/Gyr.
    	}
    	else {
-   		//cooling radius larger than virial radius
+   		//cooling radius larger than virial radius, and set cooling radius to virial radius.
    		coolingrate = mhot/tcool;
+                r_cool = Rvir;
    	}
 
    	if(agnfeedback->parameters.model == AGNFeedbackParameters::BOWER06){
@@ -446,10 +447,10 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
     	//a pseudo cooling luminosity k*T/lambda(T,Z)
     	double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
-   		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
+   	central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
 
-		//now convert mass accretion rate to comoving units.
-		central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
+	//now convert mass accretion rate to comoving units.
+	central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 
     	//Mass heating rate from AGN in units of Msun/Gyr.
     	double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
@@ -463,7 +464,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
     	double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
-    	if(r_ratio > 1){
+    	if(r_ratio > agnfeedback->parameters.alpha_cool){
     		r_ratio = 1;
         	//Redefine mheatrate and macc_h accordingly.
         	mheatrate = r_ratio * coolingrate;
@@ -471,7 +472,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     	}
 
     	//modify cooling rate according to heating rate.
-    	coolingrate = (1 - r_ratio)*coolingrate;
+    	coolingrate = (1 - r_ratio) * coolingrate;
     	if(coolingrate < 0){
     		coolingrate = 0;
     	}
