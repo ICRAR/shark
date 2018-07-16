@@ -75,6 +75,13 @@ to_bytes() {
 	echo "$amount"
 }
 
+print_usage_summary() {
+	echo
+	echo "usage: $0 [options...] config_file"
+	echo
+	echo "For more comprehensive help use -h or -?"
+}
+
 print_usage() {
 	echo
 	echo "$0: Submits shark for execution in a queueing system like SLURM or PBS/Torque"
@@ -324,7 +331,7 @@ do
 			if [ ! -z "$quiet" ]
 			then
 				error "-v and -q cannot be specified together"
-				print_usage 1>&2
+				print_usage_summary 1>&2
 				exit 1
 			fi
 			verbose=1
@@ -334,7 +341,7 @@ do
 			if [ ! -z "$verbose" ]
 			then
 				error "-v and -q cannot be specified together"
-				print_usage 1>&2
+				print_usage_summary 1>&2
 				exit 1
 			fi
 			quiet=1
@@ -387,7 +394,7 @@ do
 			num_nodes="$OPTARG"
 			;;
 		*)
-			print_usage 1>&2
+			print_usage_summary 1>&2
 			exit 1
 			;;
 	esac
@@ -397,7 +404,7 @@ done
 if [ $(($# - $OPTIND)) -lt 0 ]
 then
 	error "Missing config_file option"
-	print_usage 1>&2
+	print_usage_summary 1>&2
 	exit 1
 fi
 config_file=${@:$OPTIND:1}
