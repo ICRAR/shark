@@ -348,6 +348,7 @@ then
 
 	# For the time being we are assuming this script
 	# is alongside the rest of the shark sources
+	export MPLBACKEND=agg
 	"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/all.py" \
 	    -c "${config_file}" -v "${shark_subvolumes[*]}" \
 	    -O "${shark_obsdata_dir}" 199 &> shark-plots.log
