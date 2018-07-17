@@ -516,6 +516,10 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
 
+    for i in zip(BH[0,0,:]):
+	print i
+
+
     MBH_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BHBulgeRelation_OtherModels.dat', [0])
     MBH_f_smbh0p008   = MBH_othermodels[0:29]
     MBH_f_smbh0p00008 = MBH_othermodels[30:60]
@@ -564,7 +568,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
 
     fig = plt.figure(figsize=(5,4.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
-    ytit = "$\\rm f_{\\rm bulges}$"
+    ytit = "$\\rm f_{\\rm bulge}$"
     xmin, xmax, ymin, ymax = 8, 12, -0.1, 1.05
 
     # LTG ##################################
@@ -666,6 +670,7 @@ def main(modeldir, outdir, subvols, obsdir):
     plot_sizes_combined(plt, outdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
+
 
 if __name__ == '__main__':
     main(*common.parse_args(requires_snapshot=False))

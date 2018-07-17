@@ -676,6 +676,11 @@ public:
 	///
 	unsigned long galaxy_count() const;
 
+	/**
+	 * @return The total baryon mass contained in this Halo
+	 */
+	double total_baryon_mass() const;
+
 };
 
 template <typename T>

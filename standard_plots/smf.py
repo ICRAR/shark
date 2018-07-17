@@ -272,13 +272,13 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
             #ax.plot(xmf[ind],y[ind],'b', linestyle='dashed', label='$f_{\\rm df} = 1$' if idx == 0 else None)
             y = hist_smf_modelvar[idx,91:135]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'b', linestyle='dotted', label='$f_{\\rm df} = 0$' if idx == 0 else None)
+            ax.plot(xmf[ind],y[ind],'b', linestyle='dashdot', label='$f_{\\rm df} = 0$' if idx == 0 else None)
             y = hist_smf_modelvar[idx,181:225]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'g', linestyle='dashed', label='$\\tau_{\\rm reinc} = 0$' if idx == 0 else None)
             y = hist_smf_modelvar[idx,271:315]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],color= 'BurlyWood', linestyle='dashed', label='$\\kappa_{\\rm r} = 0.01$' if idx == 0 else None)
+            ax.plot(xmf[ind],y[ind],color= 'BurlyWood', linestyle='dashed', label='$\\kappa_{\\rm r} = 0.00025$' if idx == 0 else None)
 
         colors = []
         if idx == 0:
@@ -1248,6 +1248,10 @@ def main(modeldir, outdir, subvols, obsdir):
     hist_H2mf_cen[ind] = np.log10(hist_H2mf_cen[ind])
     ind = np.where(hist_H2mf_sat > 0.)
     hist_H2mf_sat[ind] = np.log10(hist_H2mf_sat[ind])
+
+    #for i,j,p,q,x,y in zip(hist_smf[0,:],hist_smf[1,:],hist_smf[2,:],hist_smf[3,:],hist_smf[4,:],hist_smf[5,:]):
+    #    print i,j,p,q,x,y 
+
 
     plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err)
     plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf)

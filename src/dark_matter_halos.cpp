@@ -154,6 +154,7 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo, double z){
 	}
 	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
 		//TODO
+		return 0;
 	}
 }
 

@@ -242,9 +242,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
   	halo->cooling_rate = 0;
 
-    // Add up accreted mass and metals.
-   	subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
-   	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;
 
     /**
      * For now assume that gas can cool only in central subhalos and to central galaxies.
@@ -272,6 +269,10 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     if(galaxy.galaxy_type != Galaxy::CENTRAL){
     	return 0;
     }
+
+    // Add up accreted mass and metals.
+   	subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
+   	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;
 
    	auto central_galaxy = subhalo.central_galaxy();
 
@@ -325,9 +326,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	/**
    	 * We need to convert masses and velocities to physical units before proceeding with calculation.
    	 */
-   	double mhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass+subhalo.cold_halo_gas.mass);
+   	double mhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass + subhalo.cold_halo_gas.mass);
    	double mhot_ejec = cosmology->comoving_to_physical_mass(subhalo.ejected_galaxy_gas.mass);
-   	double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals+subhalo.cold_halo_gas.mass_metals);
+   	double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals + subhalo.cold_halo_gas.mass_metals);
 
    	double vvir = subhalo.Vvir;
 
@@ -396,8 +397,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    		}
    		tcharac = integral/(Tvir*mhot/tcool) *constants::GYR2S; //available time for cooling in seconds.
    	}
-
-   	//TODO: I STILL NEED TO ADD A LIMIT TO THE TOTAL RADIATED ENERGY TO THE TOTAL THERMAL ENERGY OF THE HALO. SEE EQ. 18 AND 19 IN BENSON ET AL. (2010).
 
    	double r_cool = cooling_radius(mhot, Rvir, tcharac, logl, Tvir); //in physical Mpc.
 

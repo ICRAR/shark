@@ -133,11 +133,22 @@ double Subhalo::total_baryon_mass() const
 {
 	double mass= 0.0;
 
-	// add halo components.
+	// add subhalo components.
 	mass += hot_halo_gas.mass + cold_halo_gas.mass + ejected_galaxy_gas.mass;
 
 	for (auto &galaxy: galaxies){
 		mass += galaxy->baryon_mass() + galaxy->smbh.mass;
+	}
+
+	return mass;
+}
+
+double Halo::total_baryon_mass() const
+{
+	double mass= 0.0;
+
+	for (auto &subhalo: all_subhalos()){
+		mass += subhalo->total_baryon_mass();
 	}
 
 	return mass;

@@ -52,17 +52,10 @@ def prepare_data(hdf5_data, redshifts):
         tot = i+j+k+l
         if(tot/(volh/pow(h0,2.0)) > maxden):
             print("density exceeding maxden", tot/(volh/pow(h0,2.0))/maxden)
-            #deltam = tot - maxden * (volh/pow(h0,2.0))
-            #print "change",i, i - deltam
-            #mhot[ind] = i - deltam
         ind = ind +1
-
 
     #Add up cold halo component to hot gas.
     mhot = mhot + mcold_halo
-
-
-    
 
     massbar = mcold+mhot+meje+mstar+mBH
     sfr  = sfrall / volh / GyrToYr
@@ -139,6 +132,10 @@ def prepare_data(hdf5_data, redshifts):
     mbar_dm_plot[ind] = np.log10(massbar[ind]/(mDM[ind]+massbar[ind]))
     mHI_dm_plot[ind] = np.log10(mHI[ind]/(mDM[ind]+massbar[ind]))
     mH2_dm_plot[ind] = np.log10(mH2[ind]/(mDM[ind]+massbar[ind]))
+
+    #print "HI, H2, sfr, stellar mass"
+    #for i,j,p,q in zip(omegaHI,mH2den,sfr,mstarden):
+    #	print np.log10(i*pow(h0,2.0)) + np.log10(XH), np.log10(j*pow(h0,2.0)) + np.log10(XH), np.log10(p*pow(h0,2.0)), np.log10(q*pow(h0,2.0)) 
 
     return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
@@ -397,6 +394,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfr > 0)
     ax.plot(redshifts[ind], np.log10(sfr[ind]*pow(h0,2.0)), 'k', linewidth=1, label ='total')
+
     ind = np.where(sfrd > 0)
     ax.plot(redshifts[ind], np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='dashed', linewidth=1, label ='quiescent')
     ind = np.where(sfrb > 0)
@@ -407,7 +405,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     sfr_modelvar_nu0p5  = sfr_modelvar[181:360]
 
     ind = np.where(sfr_modelvar_burst1 > -10)
-    ax.plot(redshifts[ind], sfr_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=1$')
+    ax.plot(redshifts[ind], sfr_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(sfr_modelvar_nu0p5 > -10)
     ax.plot(redshifts[ind], sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
@@ -424,6 +422,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
 
     ind = np.where(sfr > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), 'k',  linewidth=1)
+
     ind = np.where(sfrd > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='dashed', linewidth=1)
     ind = np.where(sfrb > 0)
@@ -455,6 +454,7 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mstarden > 0)
     ax.plot(redshifts[ind],np.log10(mstarden[ind]*pow(h0,2.0)), 'k')
+
     ind = np.where(mstarbden_mergers > 0)
     ax.plot(redshifts[ind],np.log10(mstarbden_mergers[ind]*pow(h0,2.0)), 'r', linestyle='dashed')
     ind = np.where(mstarbden_diskins > 0)
@@ -492,6 +492,7 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mstarden > 0)
     ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarden[ind]*pow(h0,2.0)), 'k', label='Shark all galaxies')
+
     ind = np.where(mstarbden_mergers > 0)
     ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarbden_mergers[ind]*pow(h0,2.0)), 'r', linestyle='dashed', label='formed in galaxy mergers')
     ind = np.where(mstarbden_diskins > 0)
