@@ -59,7 +59,7 @@ def prepare_data(hdf5_data):
     morpho_type = np.zeros(shape = (n_typeg))
 
     # Early-type galaxies criterion of Khochfar et al. (2011).
-    ind = np.where(mbulge/(mdisk+mbulge) > 0.5)
+    ind = np.where((mbulge + mgas_bulge)/(mdisk + mbulge + mgas + mgas_bulge) > 0.5)
     morpho_type[ind] = 1.0
     #ind = np.where((mbulge/(mdisk+mbulge) <= 0.5) & ((mgas + mgas_bulge)/(mdisk + mbulge) < 0.001))
     #morpho_type[ind] = 1.0
@@ -144,8 +144,8 @@ def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relatio
     #   Plots global mass densities
     fig = plt.figure(figsize=(5,4.5))
 
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
-    ytit="$\\rm log_{10}(M_{\\rm cold}/M_{\\rm star})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit="$\\rm log_{10}(M_{\\rm cold}/M_{\\star})$"
 
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
@@ -190,8 +190,8 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ax = fig.add_subplot(321)
     plt.subplots_adjust(left=0.15)
 
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
-    ytit="$\\rm log_{10}(M_{\\rm HI+H_2}/M_{\\rm star})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit="$\\rm log_{10}(M_{\\rm HI+H_2}/M_{\\star})$"
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
     #Predicted relation for all galaxies
@@ -243,8 +243,8 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ax = fig.add_subplot(323)
     plt.subplots_adjust(left=0.15)
 
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
-    ytit="$\\rm log_{10}(M_{\\rm HI}/M_{\\rm star})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit="$\\rm log_{10}(M_{\\rm HI}/M_{\\star})$"
     xmin, xmax, ymin, ymax = 9, 12, -3, 1
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
@@ -286,8 +286,8 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ax = fig.add_subplot(325)
     plt.subplots_adjust(left=0.15)
 
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
-    ytit="$\\rm log_{10}(M_{\\rm H_2}/M_{\\rm star})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit="$\\rm log_{10}(M_{\\rm H_2}/M_{\\star})$"
     xmin, xmax, ymin, ymax = 9, 12, -3, 1
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
@@ -325,7 +325,7 @@ def plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_
     fig = plt.figure(figsize=(5,4.5))
 
     ax = fig.add_subplot(111)
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10}(M_{\\rm H_2}/M_{\\rm HI})$"
     prepare_ax(ax, 8, 12, -3, 1.0, xtit, ytit)
 

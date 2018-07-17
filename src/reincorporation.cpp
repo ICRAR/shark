@@ -29,7 +29,7 @@ namespace shark {
 
 ReincorporationParameters::ReincorporationParameters(const Options &options)
 {
-	options.load("reincorporation.alpha_reheat",alpha_reheat);
+	options.load("reincorporation.tau_reinc",tau_reinc);
 	options.load("reincorporation.mhalo_norm",mhalo_norm);
 	options.load("reincorporation.halo_mass_power",halo_mass_power);
 }
@@ -46,8 +46,8 @@ double Reincorporation::reincorporated_mass(HaloPtr halo, double z, double delta
 	double mvir = halo->Mvir;
 	double mgas = halo->central_subhalo->ejected_galaxy_gas.mass;
 
-	double treinc = parameters.alpha_reheat * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);
-	//double reincor_rate = mgas * parameters.alpha_reheat/tdyn * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);
+	double treinc = parameters.tau_reinc * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);
+	//double reincor_rate = mgas * parameters.tau_reinc/tdyn * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);
 
 	if(treinc == 0){
 		return mgas;

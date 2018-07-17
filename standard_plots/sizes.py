@@ -137,8 +137,8 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
 def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins):
 
     fig = plt.figure(figsize=(5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm stars,disk}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm r_{\\rm 50, disk}/kpc)$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star,disk}/M_{\odot})$"
+    ytit = "$\\rm log_{10} (\\rm r_{\\star,disk}/kpc)$"
     xmin, xmax, ymin, ymax = 8, 12, -0.1, 2
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
@@ -181,8 +181,8 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
     common.prepare_legend(ax, ['b','b','k','r'], loc=2)
 
     # ETGs ##################################
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm stars, bulge}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm r_{\\rm 50, bulge}/kpc)$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star,bulge}/M_{\odot})$"
+    ytit = "$\\rm log_{10} (\\rm r_{\\star,bulge}/kpc)$"
     xmin, xmax, ymin, ymax = 8, 12, -0.35, 2
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
@@ -234,12 +234,12 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
     ind = np.where(xmf <= 10.3)
 
     rL16 = np.log10(a*pow((pow(10.0,xmf[ind])/1e10),b))
-    ax.plot(xmf[ind],rL16,'r', linestyle='solid', label ='L16 $M_{\\rm stars}<2\\times 10^{10}\\rm M_{\odot}$')
+    ax.plot(xmf[ind],rL16,'r', linestyle='solid', label ='L16 $M_{\\star}<2\\times 10^{10}\\rm M_{\odot}$')
 
     ind = np.where((xmf >= 10.3) & (xmf < 11.5))
     rL16_2 = np.log10(a2*pow((pow(10.0,xmf[ind])/1e10),b2))
 
-    ax.plot(xmf[ind],rL16_2,'m', linestyle='solid', label ='L16 $M_{\\rm stars}>2\\times 10^{10}\\rm M_{\odot}$')
+    ax.plot(xmf[ind],rL16_2,'m', linestyle='solid', label ='L16 $M_{\\star}>2\\times 10^{10}\\rm M_{\odot}$')
     
     m,r = common.load_observation(obsdir, 'rbulge_L16.dat', [0,1])
     ax.plot(m[0:39], r[0:39], linestyle='dotted',color='r')
@@ -253,7 +253,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
 def plot_velocities(plt, outdir, disk_vel, bulge_vel):
 
     fig = plt.figure(figsize=(5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm v_{\\rm 50, disk}/km s^{-1})$"
     xmin, xmax, ymin, ymax = 8, 12, 1, 3
     xleg = xmax - 0.2 * (xmax - xmin)
@@ -275,7 +275,7 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel):
     common.prepare_legend(ax, ['k'], loc=2)
 
     # ETGs ##################################
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm v_{\\rm 50, bulge}/km s^{-1})$"
     xmin, xmax, ymin, ymax = 8, 12, 1, 3
     xleg = xmax - 0.2 * (xmax - xmin)
@@ -301,7 +301,7 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel):
 def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo):
 
     fig = plt.figure(figsize=(5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm j_{\\rm disk}/kpc\\, km s^{-1})$"
     xmin, xmax, ymin, ymax = 7, 11.5, 1.5, 5
     xleg = xmax - 0.2 * (xmax - xmin)
@@ -563,7 +563,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
 def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites):
 
     fig = plt.figure(figsize=(5,4.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm f_{\\rm bulges}$"
     xmin, xmax, ymin, ymax = 8, 12, -0.1, 1.05
 

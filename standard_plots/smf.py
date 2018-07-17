@@ -180,8 +180,8 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     z4obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
 
     fig = plt.figure(figsize=(9.7,11.7))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
-    ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\rm star}}/{\\rm Mpc}^{-3} )$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\star}}/{\\rm Mpc}^{-3} )$"
     xmin, xmax, ymin, ymax = 8, 13, -6, -1
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
@@ -237,7 +237,7 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
     hist_smf_modelvar[0,:], hist_smf_modelvar[1,:],hist_smf_modelvar[2,:],hist_smf_modelvar[3,:],hist_smf_modelvar[4,:],hist_smf_modelvar[5,:] = common.load_observation(obsdir, 'Models/SharkVariations/SMF_OtherModels.dat', [0,1,2,3,4,5])
 
     fig = plt.figure(figsize=(4.5,8))
-    ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\rm star}}/{\\rm Mpc}^{-3} )$"
+    ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\star}}/{\\rm Mpc}^{-3} )$"
     xmin, xmax, ymin, ymax = 8, 12.4, -5, -1
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
@@ -251,7 +251,7 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
         if(idx != 3):
             xtit = ""
         else:
-            xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+            xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
         plt.subplots_adjust(left=0.2)
         ax.text(xleg, yleg, 'z=%s' % str(z))
@@ -403,7 +403,7 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
 def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):
 
     fig = plt.figure(figsize=(9.5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10}(\\rm SSFR/Gyr^{-1})$"
     xmin, xmax, ymin, ymax = 7.1, 12, -3, 2
     xleg = xmax - 0.2 * (xmax - xmin)
@@ -463,7 +463,7 @@ def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):
 def plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat):
 
     fig = plt.figure(figsize=(9.5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10}(\\rm Z_{\\rm gas}/Z_{\odot})$"
     xmin, xmax, ymin, ymax = 7.1, 12, -3, 1
     xleg = xmax - 0.2 * (xmax - xmin)
@@ -623,7 +623,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
  
     #HI gas fraction plots
     xtit = "" #$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
-    ytit = "$\\rm log_{10}(\\rm M_{\\rm HI}/M_{\\rm star})$"
+    ytit = "$\\rm log_{10}(\\rm M_{\\rm HI}/M_{\\star})$"
     xmin, xmax, ymin, ymax = 8, 12, -3, 2
     xleg = xmax - 0.3 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
@@ -695,8 +695,8 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ax.plot(xplot,yplot[0],'gold', linestyle='dotted')
 
     #HI gas fraction plots
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
-    ytit = "$\\rm log_{10}(\\rm M_{\\rm H_2}/M_{\\rm star})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit = "$\\rm log_{10}(\\rm M_{\\rm H_2}/M_{\\star})$"
 
     xmin, xmax, ymin, ymax = 8., 12, -3, 0.5
     xleg = xmax - 0.3 * (xmax - xmin)
@@ -752,7 +752,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
 def plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat):
 
     fig = plt.figure(figsize=(9.5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10}(\\tau_{H_2}/Gyr)$"
     xmin, xmax, ymin, ymax = 7.1, 12, -1, 1
     xleg = xmax - 0.2 * (xmax - xmin)
@@ -799,7 +799,7 @@ def plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat):
 def plot_fmzr(plt, outdir, fmzr):
 
     fig = plt.figure(figsize=(5,4.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot}) - 0.66 log_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot}) - 0.66 log_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
     ytit = "$\\rm log_{10}(\\rm Z_{\\rm gas}/Z_{\odot})$"
     xmin, xmax, ymin, ymax = 7.1, 12, -3, 1
     xleg = xmax - 0.2 * (xmax - xmin)
@@ -835,7 +835,7 @@ def plot_fmzr(plt, outdir, fmzr):
 def plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat):
 
     fig = plt.figure(figsize=(4.5,8))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10}(\\rm Z_{\\rm gas}/Z_{\odot})$"
     xmin, xmax, ymin, ymax = 8, 12, -2, 1
 
@@ -884,8 +884,8 @@ def plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)
     common.prepare_legend(ax, ['grey','grey','grey'], loc=4)
 
 
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
-    ytit = "$\\rm log_{10}(\\rm Z_{\\rm star}/Z_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit = "$\\rm log_{10}(\\rm Z_{\\star}/Z_{\odot})$"
     xmin, xmax, ymin, ymax = 8, 12, -2, 1
 
     ax = fig.add_subplot(212)
@@ -924,7 +924,7 @@ def plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)
 def plot_sfr_mstars_z0(plt, outdir, obsdir, sfr_seq, mainseqsf):
 
     fig = plt.figure(figsize=(5,5))
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
 
     xmin, xmax, ymin, ymax = 8, 12, -5, 3
@@ -946,9 +946,9 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, sfr_seq, mainseqsf):
 
     #SFR relation z=0
     lm, SFR = common.load_observation(obsdir, 'Brinchmann04.dat', (0, 1))
-    ax.plot(lm[0:35], SFR[0:35], color='k', linewidth = 3, linestyle='dashed', label='Brinchmann+04')
-    ax.plot(lm[36:70], SFR[36:70], color='k',linewidth = 5, linestyle='dotted')
-    ax.plot(lm[71:len(SFR)], SFR[71:len(SFR)], color='k',linewidth = 5, linestyle='dotted')
+    ax.plot(lm[0:35], SFR[0:35], color='PaleVioletRed', linewidth = 3, linestyle='dashed', label='Brinchmann+04')
+    ax.plot(lm[36:70], SFR[36:70], color='PaleVioletRed',linewidth = 5, linestyle='dotted')
+    ax.plot(lm[71:len(SFR)], SFR[71:len(SFR)], color='PaleVioletRed',linewidth = 5, linestyle='dotted')
 
     xdataD16 = [9.3, 10.6]
     ydataD16 = [-0.39, 0.477]
@@ -957,13 +957,13 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, sfr_seq, mainseqsf):
     ax.plot(xdataD16,ydataD16, color='b',linestyle='dashdot',linewidth = 4, label='Davies+16')
 
     # Legend
-    common.prepare_legend(ax, ['k','k', 'b'], loc=2)
+    common.prepare_legend(ax, ['k','PaleVioletRed', 'b'], loc=2)
     common.savefig(outdir, fig, 'SFR_Mstars_z0.pdf')
 
 def plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr):
 
     fig = plt.figure(figsize=(5,4.5))
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm passive\,fraction$"
 
     xmin, xmax, ymin, ymax = 8, 12, 0, 1

@@ -38,7 +38,7 @@ class ReincorporationParameters{
 public:
 	ReincorporationParameters(const Options &options);
 
-	double alpha_reheat = 0;
+	double tau_reinc = 0;
 	double mhalo_norm = 0;
 	double halo_mass_power = 0;
 

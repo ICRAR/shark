@@ -28,7 +28,7 @@ dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
 
-def prepare_data(hdf5_data, index, massgal, massbar):
+def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside):
 
     Omegab = 0.0491
     OmegaM = 0.3121
@@ -41,7 +41,10 @@ def prepare_data(hdf5_data, index, massgal, massbar):
                                    y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                    xbins=xmf)
     massbar[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
-                                   y=np.log10(mdisk[ind]+mbulge[ind]+mBH[ind]+mgas[ind]+mgas_bulge[ind]+mhot[ind]+mreheated[ind]) - np.log10(float(h0)) - np.log10(Omegab/(OmegaM-Omegab)),
+                                   y=np.log10(mdisk[ind]+mbulge[ind]+mBH[ind]+mgas[ind]+mgas_bulge[ind]+mhot[ind]+mreheated[ind]) - np.log10(mhalo[ind]) - np.log10(Omegab/(OmegaM-Omegab)),
+                                   xbins=xmf)
+    massbar_inside[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
+                                   y=np.log10(mdisk[ind]+mbulge[ind]+mBH[ind]+mgas[ind]+mgas_bulge[ind]+mhot[ind]) - np.log10(mhalo[ind]) - np.log10(Omegab/(OmegaM-Omegab)),
                                    xbins=xmf)
 
 
@@ -49,7 +52,7 @@ def plot_SMHM_z(plt, outdir, massgal):
 
     fig = plt.figure(figsize=(9.7,11.7))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm halo, DM}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm M_{\\rm stars}/M_{\odot})$"
+    ytit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     xmin, xmax, ymin, ymax = 10.5, 15, 7, 13
     xleg = xmin + 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
@@ -137,16 +140,18 @@ def plot_SMHM_z(plt, outdir, massgal):
 
 
 
-def plot_BMHM_z(plt, outdir, massbar):
+def plot_BMHM_z(plt, outdir, massbar, massbar_inside):
 
     fig = plt.figure(figsize=(5,6))
     xtit = ""
     ytit = ""
-    xmin, xmax, ymin, ymax = 10, 15, 10, 15
+    xmin, xmax, ymin, ymax = 10, 15, -1, 1
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymin + 0.15 * (ymax - ymin)
 
     ax = fig.add_subplot(311)
+    plt.subplots_adjust(left=0.17)
+
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg, yleg, 'z=0')
 
@@ -157,10 +162,22 @@ def plot_BMHM_z(plt, outdir, massbar):
     errdn = massbar[0,1,ind]
     errup = massbar[0,2,ind]
 
-    ax.errorbar(xplot,yplot[0],color='k', label="Shark")
+    ax.errorbar(xplot,yplot[0],color='k', label="all baryons")
     ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
 
-    ax.plot(xmf,xmf,'r', linestyle='dashed')
+    ind = np.where(massbar_inside[0,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = massbar_inside[0,0,ind]
+    errdn = massbar_inside[0,1,ind]
+    errup = massbar_inside[0,2,ind]
+
+    ax.plot(xplot,yplot[0],color='b', linestyle='dotted', label="inside halos")
+   
+    xline = [10.0, 15.0]
+    yline = [0.0, 0.0]
+    ax.plot(xline,yline,'r', linestyle='dashed')
+
+    common.prepare_legend(ax, ['b','k'], loc=2)
 
     # z=0.5 ##################################
     #ax = fig.add_subplot(222)
@@ -183,7 +200,7 @@ def plot_BMHM_z(plt, outdir, massbar):
     # z=1 ##################################
     ax = fig.add_subplot(312)
     xtit = ""
-    ytit = "$\\rm log_{10} (\\rm M_{\\rm bar}(\\Omega_{\\rm DM}/\\Omega_{\\rm b})/M_{\odot})$"
+    ytit = "$\\rm log_{10} (\\rm M_{\\rm bar}(\\Omega_{\\rm DM}/\\Omega_{\\rm b})/\\rm M_{\\rm halo, DM})$"
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg, yleg, 'z=1')
@@ -198,7 +215,15 @@ def plot_BMHM_z(plt, outdir, massbar):
     ax.errorbar(xplot,yplot[0],color='k', label="Shark")
     ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
 
-    ax.plot(xmf,xmf,'r', linestyle='dashed')
+    ind = np.where(massbar_inside[2,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = massbar_inside[2,0,ind]
+    errdn = massbar_inside[2,1,ind]
+    errup = massbar_inside[2,2,ind]
+
+    ax.plot(xplot,yplot[0],color='b', linestyle='dotted')
+
+    ax.plot(xline,yline,'r', linestyle='dashed')
 
 
     # z=1 ##################################
@@ -219,7 +244,15 @@ def plot_BMHM_z(plt, outdir, massbar):
     ax.errorbar(xplot,yplot[0],color='k', label="Shark")
     ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='+',markersize=2)
 
-    ax.plot(xmf,xmf,'r', linestyle='dashed')
+    ind = np.where(massbar_inside[3,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = massbar_inside[3,0,ind]
+    errdn = massbar_inside[3,1,ind]
+    errup = massbar_inside[3,2,ind]
+
+    ax.plot(xplot,yplot[0],color='b', linestyle='dotted')
+
+    ax.plot(xline,yline,'r', linestyle='dashed')
 
     common.savefig(outdir, fig, 'BMHM_z.pdf')
 
@@ -234,13 +267,14 @@ def main(modeldir, outdir, subvols):
     zlist = ["199", "174", "156", "131", "113", "99"]
     massgal = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massbar = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    massbar_inside =  np.zeros(shape = (len(zlist), 3, len(xmf)))
 
     for idx in range(len(zlist)):
         hdf5_data = common.read_data(modeldir, zlist[idx], fields, subvols)
-        prepare_data(hdf5_data, idx, massgal, massbar)
+        prepare_data(hdf5_data, idx, massgal, massbar, massbar_inside)
 
     plot_SMHM_z(plt, outdir, massgal)
-    plot_BMHM_z(plt, outdir, massbar)
+    plot_BMHM_z(plt, outdir, massbar, massbar_inside)
 
 
 if __name__ == '__main__':

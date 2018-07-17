@@ -234,7 +234,7 @@ def plot_smf_resolve(plt, outdir, obsdir, hist_smf, hist_smf_sat):
 
 #   Plots global mass densities
     fig = plt.figure(figsize=(9.5,10.5))
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10}(\\rm dn/dM / Mpc^{-3} dex^{-1})$"
     xmin, xmax, ymin, ymax = 9, 12, -6, -1
 
@@ -514,7 +514,7 @@ def plot_mHI_mstar_resolve(plt, outdir, obsdir, mHIms, mHIms_true):
     resolve_obs_as_errorbars = functools.partial(_resolve_obs_as_errorbars, obsdir)
 
     fig = plt.figure(figsize=(5,9))
-    xtit="$\\rm log_{10} (\\rm M_{\\rm star}/M_{\odot})$"
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10}(\\rm M_{\\rm HI}/M_{\odot})$"
     
     xmin, xmax, ymin, ymax = 7.5, 12, 7, 12
