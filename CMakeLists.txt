@@ -199,9 +199,9 @@ configure_file(include/config.h.in include/config.h @ONLY)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+git_local_changes(GIT_HAS_LOCAL_CHANGES)
 set(git_revision_cpp "${CMAKE_CURRENT_BINARY_DIR}/git_revision.cpp")
 configure_file("src/git_revision.cpp.in" "${git_revision_cpp}" @ONLY)
-list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
 
 # Our own include directories

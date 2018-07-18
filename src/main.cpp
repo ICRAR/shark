@@ -24,6 +24,7 @@
  */
 
 #include <algorithm>
+#include <ios>
 #include <iostream>
 #include <vector>
 
@@ -99,7 +100,8 @@ void log_startup_information(int argc, char **argv)
 	gethostname(the_hostname, 100);
 	LOG(info) << "shark is starting in " << the_hostname;
 	LOG(info) << "shark version: " << SHARK_VERSION;
-	LOG(info) << "shark git version: " << get_git_sha1();
+	LOG(info) << "shark git version: " << git_sha1();
+	LOG(info) << "shark has local changes: " << std::boolalpha << git_has_local_changes() << std::noboolalpha;
 	LOG(info) << "shark was built on " << __DATE__ << " " __TIME__;
 	LOG(info) << "shark running at: " << boost::filesystem::current_path().string();
 
@@ -155,7 +157,8 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 	else if (vm.count("version")) {
 		vm.clear();
 		std::cout << "SHArk version " << SHARK_VERSION << std::endl;
-		std::cout << "SHArk git revision " << get_git_sha1() << std::endl;
+		std::cout << "SHArk git revision " << git_sha1() << std::endl;
+		std::cout << "SHArk has local changes: " << std::boolalpha << git_has_local_changes() << std::noboolalpha << std::endl;
 		std::cout << "OpenMP support: ";
 #ifdef SHARK_OPENMP
 		std::cout << "Yes" << std::endl;

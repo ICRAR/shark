@@ -28,9 +28,14 @@
 namespace shark
 {
 
-std::string get_git_sha1()
+std::string git_sha1()
 {
 	return "@GIT_SHA1@";
+}
+
+bool git_has_local_changes()
+{
+	return std::string("@GIT_HAS_LOCAL_CHANGES@") == "DIRTY";
 }
 
 } // namespace shark

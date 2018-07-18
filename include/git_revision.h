@@ -20,7 +20,7 @@
 /**
  * @file
  *
- * Stores the git revision of shark
+ * Stores git-related shark information
  */
 
 #ifndef INCLUDE_GIT_REVISION_H_
@@ -32,11 +32,15 @@ namespace shark
 {
 
 /**
- * Returns the git SHA1 of the current source commit.
- *
  * @return The git SHA1 value for the current source code commit.
  */
-std::string get_git_sha1();
+std::string git_sha1();
+
+/**
+ * @return Whether the local clone of the repository has uncommitted changes.
+ * This does not include files
+ */
+bool git_has_local_changes();
 
 } // namespace shark
 
