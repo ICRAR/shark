@@ -87,7 +87,7 @@ print_usage() {
 	echo "$0: Submits shark for execution in a queueing system like SLURM or PBS/Torque"
 	echo
 	echo "Usage: $0 [-h] [-?] [-d] [-O output_dir] [-Q queue] [-a account] [-w walltime]"
-	echo "       [-n job-name] [-M modules] [-M mem] [-N num-nodes] [-v | -q]"
+	echo "       [-n job-name] [-M modules] [-m mem] [-c cpus] [-N num-nodes] [-v | -q]"
 	echo "       [-S shark_binary] [-V subvolumes] [-o opt1=val1 [-o opt2=val2...]]"
 	echo "       [-p] [-P python-exec] [-D obsdata_dir] config_file"
 	echo
@@ -133,6 +133,8 @@ print_usage() {
 	echo "                 calculate the number of nodes required given a number of tasks."
 	echo "                 If unspecified, the -N option can be used to manually specify a"
 	echo "                 number of nodes"
+	echo
+	echo " -c cpus         Number of CPUs to allocate to each shark instance."
 	echo
 	echo " -N num-nodes    Number of nodes to request. If unspecified it is automatically"
 	echo "                 calculated based on the number of subvolumes (-V option)"
@@ -209,7 +211,7 @@ print_usage() {
 
 submit_slurm() {
 
-	# Each SHArk instance uses one CPU
+	# Each SHArk instance will be ran as a task
 	cmd="sbatch --ntasks $n_svols"
 	cmd="$cmd -o shark-run.log"
 
@@ -243,6 +245,11 @@ submit_slurm() {
 	if [ -n "$mem_per_task" ]
 	then
 		cmd="$cmd --mem-per-cpu $(($mem_per_task / 1024 / 1024))M"
+	fi
+
+	if [ -n "$cpus_per_task" ]
+	then
+		cmd="$cmd --cpus-per-task $cpus_per_task"
 	fi
 
 	cmd="$cmd -D \"$shark_output_directory\""
@@ -307,6 +314,7 @@ job_name=
 walltime="1:00:00"
 modules=${SHARK_RUNTIME_MODULES}
 mem_per_task=
+cpus_per_task=
 num_nodes=
 shark_verbosity=3
 shark_binary=
@@ -317,7 +325,7 @@ shark_python_exec=python
 shark_obsdata_dir=${SHARK_OBSDATA_DIR}
 
 # Parse command line options
-while getopts "h?dO:Q:a:w:n:M:m:N:vqS:V:o:pP:D:" opt
+while getopts "h?dO:Q:a:w:n:M:m:c:N:vqS:V:o:pP:D:" opt
 do
 	case "$opt" in
 		[h?])
@@ -389,6 +397,9 @@ do
 			then
 				exit 1
 			fi
+			;;
+		c)
+			cpus_per_task="$OPTARG"
 			;;
 		N)
 			num_nodes="$OPTARG"
