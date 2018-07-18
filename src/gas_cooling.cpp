@@ -270,11 +270,21 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     	return 0;
     }
 
-    // Add up accreted mass and metals.
-   	subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
-   	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;
+    // Calculate maximum accreted mass allowed by the universal baryon fraction.
+    float max_allowed_baryon_accreted = halo->Mvir * cosmology->universal_baryon_fraction() - halo->total_baryon_mass();
+
+    if(max_allowed_baryon_accreted > 0){
+    	// Add up accreted mass and metals.
+    	auto accreted_mass = std::min(subhalo.accreted_mass, max_allowed_baryon_accreted);
+    	subhalo.hot_halo_gas.mass += accreted_mass;
+    	subhalo.hot_halo_gas.mass_metals += accreted_mass * parameters.pre_enrich_z;
+    }
+
+	/*subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
+	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;*/
 
    	auto central_galaxy = subhalo.central_galaxy();
+
 
     /**
      * Plant black hole seed if necessary.

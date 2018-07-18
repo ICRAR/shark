@@ -291,11 +291,11 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 			//std::abs(total_baryons / mDM_total.mass /  cosmology.universal_baryon_fraction() - 1.0);
 
 	// If more than 1% of baryons have been lost, then stop the code.
-	if(frac > 0.01){
+	/*if(frac > 0.01){
 		std::ostringstream os;
 		os << "Accumulated baryon mass differs by " << frac << " with the total baryons that have been created by this snapshot.";
 		throw invalid_data(os.str());
-	}
+	}*/
 
 }
 
