@@ -95,8 +95,31 @@ public:
 
 	double merging_timescale_orbital();
 
+	/**
+	 * Calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary,
+	 * or of the satellite galaxies type 2 of the satellite subhalo.
+	 * This should be calculated only in the snapshot before the secondary mergers onto the primary (i.e. disappears from merger tree).
+	 *
+	 * @param primary the primary subhalo, which must contain the central galaxy
+	 * @param secondary the secondary subhalo
+	 * @param z redshift
+	 * @param transfer_types2 whether we are merging a satellite subhalo or transfering type 2 galaxies.
+	 */
 	void merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, bool transfer_types2);
 
+	/**
+	 * Evaluates whether subhalos in each timestep are disappearing from the merger tree, and if they are
+	 * it passes that satellite galaxy onto the central subhalo and calculates a dynamical friction timescale that the
+	 * galaxy will save in case it's a satellite.
+	 *
+	 * In the case of satellite subhalos that will continue to exist, we transfer
+	 * any existing type2 galaxies to the central subhalo, after recalculating
+	 * their dynamical friction timescale with respect to the central galaxy
+	 * of the central subhalo.
+	 *
+	 * @param halo the halo where subhalos are going to be possibly merged
+	 * @param z the redshift
+	 */
 	void merging_subhalos(HaloPtr &halo, double z);
 
 	void merging_galaxies(HaloPtr &halo, int snapshot, double delta_t);

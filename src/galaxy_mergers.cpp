@@ -127,17 +127,8 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return 0.3722 * mass_ratio/std::log(1+mass_ratio);
 }
 
-void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, bool transfer_types2){
-
-	/**
-	 * Function calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary.
-	 * This should be calculated only in the snapshot before the secondary mergers onto the primary (i.e. disappears from merger tree).
-	 * Inputs:
-	 * a primary and secondary galaxy. The primary is the central galaxy.
-	 * z: redshift.
-	 * transfer_types2: indicates whether we are merging a satellite subhalo or transfering type 2 galaxies.
-	 */
-
+void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, bool transfer_types2)
+{
 	auto satellites = secondary->galaxies;
 	if(transfer_types2){
 		satellites = secondary->all_type2_galaxies();
@@ -178,16 +169,8 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 }
 
-void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
-
-	/**
-	 * This function evaluates whether subhalos in each timestep are disappearing from the merger tree, and if they are
-	 * it passes that satellite galaxy onto the central subhalo and calculates a dynamical friction timescale that the
-	 * galaxy will save in case it's a satellite.
-	 *
-	 * Function receives as input a halo.
-	 */
-
+void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
+{
 	auto central_subhalo = halo->central_subhalo;
 
 	if (!central_subhalo) {
@@ -202,20 +185,17 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 		throw invalid_argument(os.str());
 	}
 
-	bool transfer_types2;
-
 	for(auto &satellite_subhalo: halo->satellite_subhalos) {
 
 		//Identify which subhalos will disappear in the next snapshot
-		if(satellite_subhalo->last_snapshot_identified == satellite_subhalo->snapshot){
+		if (satellite_subhalo->last_snapshot_identified == satellite_subhalo->snapshot) {
 
 			LOG(debug) << "Merging satellite subhalo " << satellite_subhalo
 			           << " into central subhalo " << central_subhalo
 			           << " because this is its last snapshot";
 
-			transfer_types2 = false;
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
-			merging_timescale(central_subhalo, satellite_subhalo, z, transfer_types2);
+			merging_timescale(central_subhalo, satellite_subhalo, z, false);
 
 			//transfer all mass from the satellite_subhalo to the central_subhalo. Note that this implies a horizontal transfer of information.
 			transfer_baryon_mass(central_subhalo, satellite_subhalo);
@@ -223,12 +203,11 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_galaxies_to(central_subhalo);
 		}
-		else{
-			//In cases where the halo does not disappear, we search for type=2 galaxies and transfer them to the central subhalo,
+		else {
+			//In cases where the subhalo does not disappear, we search for type=2 galaxies and transfer them to the central subhalo,
 			//recalculating its merging timescale.
-			transfer_types2 = true;
 
-			merging_timescale(central_subhalo, satellite_subhalo, z, transfer_types2);
+			merging_timescale(central_subhalo, satellite_subhalo, z, true);
 			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_type2galaxies_to(central_subhalo);
 		}
@@ -268,10 +247,8 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 			throw invalid_argument(os.str());
 		}
 
-		transfer_types2 = false;
-
 		//Calculate dynamical friction timescale for all galaxies disappearing in the primary subhalo of the merger in the next snapshot.
-		merging_timescale(primary_subhalo, central_subhalo, z, transfer_types2);
+		merging_timescale(primary_subhalo, central_subhalo, z, false);
 
 	}
 
