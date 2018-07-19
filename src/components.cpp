@@ -53,6 +53,16 @@ GalaxyPtr Subhalo::central_galaxy() const
 	return GalaxyPtr();
 }
 
+GalaxyPtr Subhalo::type1_galaxy() const
+{
+	for (auto galaxy: galaxies){
+		if(galaxy->galaxy_type == Galaxy::TYPE1){
+			return galaxy;
+		}
+	}
+	return GalaxyPtr();
+}
+
 void Subhalo::check_subhalo_galaxy_composition() const
 {
 	if (subhalo_type == Subhalo::SATELLITE) {

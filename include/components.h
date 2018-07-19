@@ -462,6 +462,11 @@ public:
 	 */
 	GalaxyPtr central_galaxy() const;
 
+	/** Returns a pointer to the type1 galaxy. If no type1 galaxy is found
+	 in this Subhalo, then an empty pointer is returned.
+	 */
+	GalaxyPtr type1_galaxy() const;
+
 	/**
 	 * Returns all the type 2 satellites of this subhalo.
 	 */
