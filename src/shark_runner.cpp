@@ -377,7 +377,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 
 	/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 	LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
-	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, *cosmology, all_baryons, snapshot);
+	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, snapshot, all_baryons);
 
 }
 

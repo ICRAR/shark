@@ -225,6 +225,7 @@ std::vector<SubhaloPtr> Halo::all_subhalos() const
 		});
 	}
 
+	assert(all.size() == satellite_subhalos.size() + (central_subhalo ? 1 : 0));
 	return all;
 }
 

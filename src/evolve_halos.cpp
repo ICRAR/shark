@@ -60,15 +60,14 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 	}
 }
 
-void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology, TotalBaryon &AllBaryons, int snapshot){
+void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons)
+{
+	unsigned int subhalos_without_descendant = 0;
+	double baryon_mass_loss = 0;
 
-	/**
-	 * This function transfer galaxies of the subhalos of this snapshot into the subhalos of the next snapshot, and baryon components from subhalo to subhalo.
-	 */
-
-	// First make sure central subhalos at this snapshot have only one central galaxy.
 	for(auto &halo: halos){
-		for(SubhaloPtr &subhalo: halo->all_subhalos()) {
+		for(auto &subhalo: halo->all_subhalos()) {
+
 			// Make sure all SFRs (in mass and metals) are set to 0 for the next snapshot
 			for (GalaxyPtr & galaxy: subhalo->galaxies){
 				galaxy->sfr_bulge  = 0;
@@ -76,21 +75,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				galaxy->sfr_z_disk = 0;
 				galaxy->sfr_disk   = 0;
 			}
-
-			// Check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
-			if(subhalo->last_snapshot_identified == subhalo->snapshot){
-				continue;
-			}
-
-			subhalo->check_subhalo_galaxy_composition();
-		}
-	}
-
-	unsigned int subhalos_without_descendant = 0;
-	double baryon_mass_loss = 0;
-
-	for(auto &halo: halos){
-		for(auto &subhalo: halo->all_subhalos()) {
 
 			if(subhalo->last_snapshot_identified == subhalo->snapshot) {
 				continue;
@@ -104,17 +88,23 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				continue;
 			}
 
-			// Adjust the type of galaxy for the main galaxy of this subhalo
-			// and then fully transfer galaxies to descendant subhalo
-			adjust_main_galaxy(subhalo, descendant_subhalo);
-			assert(descendant_subhalo->galaxy_count() == 0);
-			subhalo->transfer_galaxies_to(descendant_subhalo);
-
 			if(subhalo->snapshot != descendant_subhalo->snapshot-1){
 				std::ostringstream os;
 				os << "Descendant subhalo is not in the subsequent snapshot";
 				throw invalid_argument(os.str());
 			}
+
+			// Perform the transfer of galaxies
+			// We check that the subhalo and the descendant have a proper
+			// galaxy composition before and after the transfer of galaxies
+			// The transfer itself consists on adjusting the type of the main
+			// galaxy of this subhalo and then transfer ownership of galaxies
+			// over to the descendant
+			subhalo->check_subhalo_galaxy_composition();
+			adjust_main_galaxy(subhalo, descendant_subhalo);
+			assert(descendant_subhalo->galaxy_count() == 0);
+			subhalo->transfer_galaxies_to(descendant_subhalo);
+			descendant_subhalo->check_subhalo_galaxy_composition();
 
 			// Transfer subhalo baryon components.
 			descendant_subhalo->cold_halo_gas += subhalo->cold_halo_gas;
@@ -123,17 +113,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 			if (subhalo->main_progenitor) {
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
 			}
-		}
-	}
 
-	// Make sure there is only one central galaxy per halo/central in the descendant subhalos.
-	for(auto &halo: halos){
-		for(SubhaloPtr &subhalo: halo->all_subhalos()) {
-			auto descendant_subhalo = subhalo->descendant;
-			if(!descendant_subhalo){
-				continue;
-			}
-			descendant_subhalo->check_subhalo_galaxy_composition();
 		}
 	}
 

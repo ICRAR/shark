@@ -39,7 +39,15 @@
 
 namespace shark {
 
-void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology, TotalBaryon &AllBaryons, int snapshot);
+/**
+ * Transfers galaxies of the subhalos of this snapshot into the corresponding
+ * subhalos of the next snapshot, and baryon components from subhalo to subhalo.
+ *
+ * @param halos The halos whose subhalos need to be transferred to the next snapshot
+ * @param snapshot This snapshot
+ * @param AllBaryons The TotalBaryon accummulation object
+ */
+void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons);
 
 void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, SimulationParameters simulation_params, const std::vector<HaloPtr> &halos,
 		TotalBaryon &AllBaryons, int snapshot, const molgas_per_galaxy &molgas, double deltat);
