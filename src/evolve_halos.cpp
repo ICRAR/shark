@@ -60,38 +60,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				continue;
 			}
 
-			vector<float> mbaryon;
-			if(subhalo->subhalo_type == Subhalo::SATELLITE){
-				for (auto &galaxy: subhalo->galaxies){
-					if(galaxy->galaxy_type == Galaxy::CENTRAL){
-						std::ostringstream os;
-						os << "Satellite subhalo " << subhalo << " has at least 1 central galaxy";
-						throw invalid_argument(os.str());
-					}
-				}
-			}
-			else{
-				int i = 0;
-				for (auto &galaxy: subhalo->galaxies){
-					if(galaxy->galaxy_type == Galaxy::CENTRAL){
-						i++;
-						mbaryon.push_back(galaxy->baryon_mass());
-					}
-				}
-				if(i==0){
-					if (subhalo->galaxy_count() > 0) {
-						std::ostringstream os;
-						os << "Central Subhalo " << subhalo << " has no central galaxy";
-						throw invalid_data(os.str());
-					}
-				}
-				if(i>1){
-					std::ostringstream os;
-					os << "Central Subhalo " << subhalo << " has " << i <<" central galaxies";
-					os << "Baryon masses:" << mbaryon[0] << " " << mbaryon[1];
-					throw invalid_argument(os.str());
-				}
-			}
+			subhalo->check_subhalo_galaxy_composition();
 		}
 	}
 
@@ -152,56 +121,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 			if(!descendant_subhalo){
 				continue;
 			}
-			if(descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
-				int i = 0;
-				for (auto &galaxy: descendant_subhalo->galaxies){
-					if(galaxy->galaxy_type == Galaxy::CENTRAL){
-						std::ostringstream os;
-						os << "Satellite subhalo " << descendant_subhalo << " has at least 1 central galaxy";
-						throw invalid_argument(os.str());
-					}
-					if(galaxy->galaxy_type == Galaxy::TYPE1){
-						i++;
-					}
-				}
-				if(i>1){
-					std::ostringstream os;
-					os << "Satellite Subhalo " << descendant_subhalo << " has " << i <<" type 1 galaxies";
-					throw invalid_argument(os.str());
-				}
-			}
-			else{ // subhalo is central.
-				int i = 0;
-				for (auto &galaxy: descendant_subhalo->galaxies){
-					if(galaxy->galaxy_type == Galaxy::CENTRAL){
-						i++;
-					}
-				}
-				if(i==0){
-					if (descendant_subhalo->galaxy_count() > 0) {
-						std::ostringstream os;
-						os << "Central Subhalo " << descendant_subhalo << " has no central galaxy";
-						throw invalid_data(os.str());
-					}
-				}
-				if(i>1){
-					std::ostringstream os;
-					os << "Central Subhalo " << descendant_subhalo << " has " << i <<" central galaxies";
-					throw invalid_argument(os.str());
-				}
-				//Now check that there are no type=1 satellites in this halo.
-				i = 0;
-				for (auto &galaxy: descendant_subhalo->galaxies){
-					if(galaxy->galaxy_type == Galaxy::TYPE1){
-						i++;
-					}
-				}
-				if(i>=1){
-					std::ostringstream os;
-					os << "Central Subhalo " << descendant_subhalo << " has " << i <<" type=1 galaxies";
-					throw invalid_argument(os.str());
-				}
-			}
+			descendant_subhalo->check_subhalo_galaxy_composition();
 		}
 	}
 

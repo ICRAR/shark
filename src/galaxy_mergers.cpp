@@ -232,6 +232,8 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_type2galaxies_to(central_subhalo);
 		}
+
+		satellite_subhalo->check_satellite_subhalo_galaxy_composition();
 	}
 
 	//Now evaluate cases where central subhalo disappears in the next snapshot.

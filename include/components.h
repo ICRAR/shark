@@ -575,6 +575,29 @@ public:
 	 * @return The total baryon mass contained in this Subhalo
 	 */
 	double total_baryon_mass() const;
+
+	/**
+	 * Checks whether this subhalo has the correct composition of galaxies
+	 * depending on its type
+	 */
+	void check_subhalo_galaxy_composition() const;
+
+	/**
+	 * Like check_subhalo_galaxy_composition, but fails if this subhalo is not
+	 * a central subhalo
+	 */
+	void check_central_subhalo_galaxy_composition() const;
+
+	/**
+	 * Like check_subhalo_galaxy_composition, but fails if this subhalo is not
+	 * a satellite subhalo
+	 */
+	void check_satellite_subhalo_galaxy_composition() const;
+
+private:
+	void do_check_satellite_subhalo_galaxy_composition() const;
+	void do_check_central_subhalo_galaxy_composition() const;
+
 };
 
 template <typename T>

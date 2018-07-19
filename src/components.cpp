@@ -22,7 +22,10 @@
  */
 
 #include <algorithm>
+#include <functional>
+#include <iterator>
 #include <numeric>
+#include <sstream>
 
 #include "components.h"
 #include "exceptions.h"
@@ -48,6 +51,92 @@ GalaxyPtr Subhalo::central_galaxy() const
 		}
 	}
 	return GalaxyPtr();
+}
+
+void Subhalo::check_subhalo_galaxy_composition() const
+{
+	if (subhalo_type == Subhalo::SATELLITE) {
+		do_check_satellite_subhalo_galaxy_composition();
+	}
+	else {
+		do_check_central_subhalo_galaxy_composition();
+	}
+}
+
+void Subhalo::check_central_subhalo_galaxy_composition() const
+{
+	if (subhalo_type != Subhalo::CENTRAL) {
+		std::ostringstream os;
+		os << *this << " was expected to be of type central, but has type " << subhalo_type;
+		throw invalid_argument(os.str());
+	}
+	do_check_central_subhalo_galaxy_composition();
+}
+
+void Subhalo::check_satellite_subhalo_galaxy_composition() const
+{
+	if (subhalo_type != Subhalo::SATELLITE) {
+		std::ostringstream os;
+		os << *this << " was expected to be of type satellite, but has type " << subhalo_type;
+		throw invalid_argument(os.str());
+	}
+	do_check_satellite_subhalo_galaxy_composition();
+}
+
+void Subhalo::do_check_satellite_subhalo_galaxy_composition() const
+{
+	// If satellite subhalos have one or more galaxies, exactly one must be of
+	// type TYPE1, and no TYPE1 galaxies at all
+
+	auto i = 0;
+	for (auto &g: galaxies){
+		if (g->galaxy_type == Galaxy::CENTRAL) {
+			std::ostringstream os;
+			os << "Satellite subhalo " << *this << " has at least one central galaxy";
+			throw invalid_argument(os.str());
+		}
+		if (g->galaxy_type == Galaxy::TYPE1) {
+			i++;
+		}
+	}
+	if (i > 1) {
+		std::ostringstream os;
+		os << "Satellite Subhalo " << *this << " has " << i <<" type 1 galaxies (should be <= 1)";
+		throw invalid_argument(os.str());
+	}
+}
+
+void Subhalo::do_check_central_subhalo_galaxy_composition() const
+{
+	// If central subhalos have one or more galaxies, exactly one must be of
+	// type CENTRAL, and no TYPE1 galaxies at all
+
+	auto n_central = 0;
+	for(auto &g: galaxies) {
+		if (g->galaxy_type == Galaxy::TYPE1) {
+			std::ostringstream os;
+			os << "Central subhalo " << *this << " has at least one type 1 galaxy";
+			throw invalid_argument(os.str());
+		}
+		else if (g->galaxy_type == Galaxy::CENTRAL) {
+			n_central++;
+		}
+	}
+
+	if (n_central == 0 && galaxy_count() > 0) {
+		std::ostringstream os;
+		os << "Central Subhalo " << *this << " has no central galaxy";
+		throw invalid_data(os.str());
+	}
+	else if (n_central > 1) {
+		std::vector<float> mbaryon(galaxies.size());
+		std::transform(galaxies.begin(), galaxies.end(), mbaryon.begin(), std::mem_fn(&Galaxy::baryon_mass));
+		std::ostringstream os;
+		os << "Central Subhalo " << *this << " has " << n_central <<" central galaxies";
+		os << "Baryon masses of galaxies: ";
+		std::copy(mbaryon.begin(), mbaryon.end(), std::ostream_iterator<float>(os, ", "));
+		throw invalid_argument(os.str());
+	}
 }
 
 std::vector<GalaxyPtr> Subhalo::all_type2_galaxies() const
