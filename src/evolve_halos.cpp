@@ -50,9 +50,9 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 			// Make sure all SFRs (in mass and metals) are set to 0 for the next snapshot
 			for (GalaxyPtr & galaxy: subhalo->galaxies){
 				galaxy->sfr_bulge  = 0;
+				galaxy->sfr_z_bulge= 0;
 				galaxy->sfr_z_disk = 0;
 				galaxy->sfr_disk   = 0;
-				galaxy->sfr_z_bulge= 0;
 			}
 
 			// Check if this is the last snapshot this subhalo is identified. If so, galaxies have already been transferred in galaxy_mergers.cpp
@@ -109,12 +109,21 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				continue;
 			}
 
-			// If the current subhalo is not a main progenitor, then make its central galaxy type 1. The other ones should already be type 1 or 2.
-			if(!subhalo->main_progenitor or descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
-				auto central = subhalo->central_galaxy();
+			// If the current subhalo is not a main progenitor, then make its central galaxy is changed to a type 1. The other ones should already be type 1 or 2.
+			if(descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
+				for (auto &galaxy: subhalo->galaxies){
+					if(galaxy->galaxy_type == Galaxy::CENTRAL){
+						galaxy->galaxy_type = Galaxy::TYPE1;
+					}
+					else{
+						galaxy->galaxy_type = Galaxy::TYPE2;
+					}
+				}
+				/*auto central = subhalo->central_galaxy();
 				if(central){
 					central->galaxy_type = Galaxy::TYPE1;
-				}
+				}*/
+
 			}
 
 			// Transfer galaxies to descendant subhalo.
@@ -144,12 +153,21 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				continue;
 			}
 			if(descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
+				int i = 0;
 				for (auto &galaxy: descendant_subhalo->galaxies){
 					if(galaxy->galaxy_type == Galaxy::CENTRAL){
 						std::ostringstream os;
 						os << "Satellite subhalo " << descendant_subhalo << " has at least 1 central galaxy";
 						throw invalid_argument(os.str());
 					}
+					if(galaxy->galaxy_type == Galaxy::TYPE1){
+						i++;
+					}
+				}
+				if(i>1){
+					std::ostringstream os;
+					os << "Satellite Subhalo " << descendant_subhalo << " has " << i <<" type 1 galaxies";
+					throw invalid_argument(os.str());
 				}
 			}
 			else{ // subhalo is central.
@@ -169,6 +187,18 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				if(i>1){
 					std::ostringstream os;
 					os << "Central Subhalo " << descendant_subhalo << " has " << i <<" central galaxies";
+					throw invalid_argument(os.str());
+				}
+				//Now check that there are no type=1 satellites in this halo.
+				i = 0;
+				for (auto &galaxy: descendant_subhalo->galaxies){
+					if(galaxy->galaxy_type == Galaxy::TYPE1){
+						i++;
+					}
+				}
+				if(i>=1){
+					std::ostringstream os;
+					os << "Central Subhalo " << descendant_subhalo << " has " << i <<" type=1 galaxies";
 					throw invalid_argument(os.str());
 				}
 			}

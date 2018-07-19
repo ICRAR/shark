@@ -127,14 +127,21 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return 0.3722 * mass_ratio/std::log(1+mass_ratio);
 }
 
-void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z){
+void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, bool transfer_types2){
 
 	/**
 	 * Function calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary.
 	 * This should be calculated only in the snapshot before the secondary mergers onto the primary (i.e. disappears from merger tree).
 	 * Inputs:
 	 * a primary and secondary galaxy. The primary is the central galaxy.
+	 * z: redshift.
+	 * transfer_types2: indicates whether we are merging a satellite subhalo or transfering type 2 galaxies.
 	 */
+
+	auto satellites = secondary->galaxies;
+	if(transfer_types2){
+		satellites = secondary->all_type2_galaxies();
+	}
 
 	auto halo = primary->host_halo;
 
@@ -142,13 +149,15 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 	double mp = primary->Mvir + primary->central_galaxy()->baryon_mass();
 
-	for (auto &galaxy: secondary->galaxies){
+	for (auto &galaxy: satellites){
 
 		// Define merging timescale and redefine type of galaxy.
-
 		if(parameters.tau_delay > 0){
 			double mgal = galaxy->baryon_mass();
 			double ms = secondary->Mvir + mgal;
+			if(transfer_types2){
+				ms = galaxy->msubhalo_type2 + mgal;
+			}
 			double tau_mass = merging_timescale_mass(mp, ms);
 			double tau_orbits = merging_timescale_orbital();
 
@@ -158,11 +167,13 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 			galaxy->tmerge = parameters.tau_delay;
 		}
 
-		galaxy->galaxy_type = Galaxy::TYPE2;
-		galaxy->concentration_type2 = secondary->concentration;
-		galaxy->msubhalo_type2 = secondary->Mvir;
-		galaxy->lambda_type2 = secondary->lambda;
-
+		//Only define the following parameters if the galaxies were not type=2.
+		if(!transfer_types2){
+			galaxy->galaxy_type = Galaxy::TYPE2;
+			galaxy->concentration_type2 = secondary->concentration;
+			galaxy->msubhalo_type2 = secondary->Mvir;
+			galaxy->lambda_type2 = secondary->lambda;
+		}
 	}
 
 }
@@ -191,6 +202,8 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 		throw invalid_argument(os.str());
 	}
 
+	bool transfer_types2;
+
 	for(auto &satellite_subhalo: halo->satellite_subhalos) {
 
 		//Identify which subhalos will disappear in the next snapshot
@@ -200,14 +213,24 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 			           << " into central subhalo " << central_subhalo
 			           << " because this is its last snapshot";
 
+			transfer_types2 = false;
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
-			merging_timescale(central_subhalo, satellite_subhalo, z);
+			merging_timescale(central_subhalo, satellite_subhalo, z, transfer_types2);
 
 			//transfer all mass from the satellite_subhalo to the central_subhalo. Note that this implies a horizontal transfer of information.
 			transfer_baryon_mass(central_subhalo, satellite_subhalo);
 
 			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_galaxies_to(central_subhalo);
+		}
+		else{
+			//In cases where the halo does not disappear, we search for type=2 galaxies and transfer them to the central subhalo,
+			//recalculating its merging timescale.
+			transfer_types2 = true;
+
+			merging_timescale(central_subhalo, satellite_subhalo, z, transfer_types2);
+			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
+			satellite_subhalo->transfer_type2galaxies_to(central_subhalo);
 		}
 	}
 
@@ -243,8 +266,10 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z){
 			throw invalid_argument(os.str());
 		}
 
+		transfer_types2 = false;
+
 		//Calculate dynamical friction timescale for all galaxies disappearing in the primary subhalo of the merger in the next snapshot.
-		merging_timescale(primary_subhalo, central_subhalo, z);
+		merging_timescale(primary_subhalo, central_subhalo, z, transfer_types2);
 
 	}
 

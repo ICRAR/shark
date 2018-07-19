@@ -457,6 +457,16 @@ public:
 	 */
 	std::vector<GalaxyPtr> galaxies {};
 
+	/** Returns a pointer to the central galaxy. If no central galaxy is found
+	 in this Subhalo, then an empty pointer is returned.
+	 */
+	GalaxyPtr central_galaxy() const;
+
+	/**
+	 * Returns all the type 2 satellites of this subhalo.
+	 */
+	std::vector<GalaxyPtr> all_type2_galaxies() const;
+
 	/**
 	 * The subhalo type
 	 */
@@ -527,16 +537,12 @@ public:
 	 */
 	SubhaloPtr main() const;
 
-	/// Returns a pointer to the central galaxy. If no central galaxy is found
-	/// in this Subhalo, then an empty pointer is returned.
-	GalaxyPtr central_galaxy() const;
-
 	/**
 	 * Copies the galaxies from this Subhalo into @a target
 	 *
 	 * @param target The subhalo where galaxies will be copied to
 	 */
-	void copy_galaxies_to(SubhaloPtr &target) const;
+	void copy_galaxies_to(SubhaloPtr &target, bool onlytype2) const;
 
 	/**
 	 * Transfers (i.e., moves) the galaxies from this Subhalo into @a target
@@ -544,6 +550,13 @@ public:
 	 * @param target The subhalo where galaxies will be transferred to
 	 */
 	void transfer_galaxies_to(SubhaloPtr &target);
+
+	/**
+	 * Transfers (i.e., moves) the galaxies that are type=2 from this Subhalo into @a target
+	 *
+	 * @param target The subhalo where type 2 galaxies will be transferred to
+	 */
+	void transfer_type2galaxies_to(SubhaloPtr &target);
 
 	/**
 	 * Removes galaxies from this Subhalo
