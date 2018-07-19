@@ -38,6 +38,28 @@ using namespace std;
 
 namespace shark {
 
+void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
+{
+	// A subhalo that is not main progenitor of its descendant cannot
+	// contribute its central galaxy (CENTRAL or TYPE1, depending on the
+	// subhalo's type) as the central galaxy of the descendant.
+
+	auto parent_is_central = parent->subhalo_type == Subhalo::CENTRAL;
+	auto desc_is_central = descendant->subhalo_type == Subhalo::CENTRAL;
+	auto is_main_progenitor = parent->main_progenitor;
+	auto main_galaxy = (parent_is_central ? parent->central_galaxy() : parent->type1_galaxy());
+
+	if (!main_galaxy) {
+		return;
+	}
+	if (desc_is_central) {
+		main_galaxy->galaxy_type = (is_main_progenitor ? Galaxy::CENTRAL : Galaxy::TYPE2);
+	}
+	else {
+		main_galaxy->galaxy_type = (is_main_progenitor ? Galaxy::TYPE1 : Galaxy::TYPE2);
+	}
+}
+
 void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmology cosmology, TotalBaryon &AllBaryons, int snapshot){
 
 	/**
@@ -70,6 +92,10 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
 
+			if(subhalo->last_snapshot_identified == subhalo->snapshot) {
+				continue;
+			}
+
 			auto descendant_subhalo = subhalo->descendant;
 
 			if (!descendant_subhalo) {
@@ -78,24 +104,10 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, Cosmo
 				continue;
 			}
 
-			// If the current subhalo is not a main progenitor, then make its central galaxy is changed to a type 1. The other ones should already be type 1 or 2.
-			if(descendant_subhalo->subhalo_type == Subhalo::SATELLITE){
-				for (auto &galaxy: subhalo->galaxies){
-					if(galaxy->galaxy_type == Galaxy::CENTRAL){
-						galaxy->galaxy_type = Galaxy::TYPE1;
-					}
-					else{
-						galaxy->galaxy_type = Galaxy::TYPE2;
-					}
-				}
-				/*auto central = subhalo->central_galaxy();
-				if(central){
-					central->galaxy_type = Galaxy::TYPE1;
-				}*/
-
-			}
-
-			// Transfer galaxies to descendant subhalo.
+			// Adjust the type of galaxy for the main galaxy of this subhalo
+			// and then fully transfer galaxies to descendant subhalo
+			adjust_main_galaxy(subhalo, descendant_subhalo);
+			assert(descendant_subhalo->galaxy_count() == 0);
 			subhalo->transfer_galaxies_to(descendant_subhalo);
 
 			if(subhalo->snapshot != descendant_subhalo->snapshot-1){
