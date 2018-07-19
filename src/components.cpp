@@ -153,24 +153,18 @@ std::vector<GalaxyPtr> Subhalo::all_type2_galaxies() const
 	return all;
 }
 
-void Subhalo::copy_galaxies_to(SubhaloPtr &target, bool onlytype2) const
+void Subhalo::copy_galaxies_to(SubhaloPtr &target, const std::vector<GalaxyPtr> &gals) const
 {
-	auto gals_to_tranfer = galaxies;
-	if(onlytype2){
-		gals_to_tranfer = all_type2_galaxies();
-	}
-	target->galaxies.insert(target->galaxies.end(), gals_to_tranfer.begin(), gals_to_tranfer.end());
+	target->galaxies.insert(target->galaxies.end(), gals.begin(), gals.end());
 }
 
 void Subhalo::transfer_galaxies_to(SubhaloPtr &target)
 {
-	bool onlytype2 = false;
-
 	auto gals_before = target->galaxy_count();
 	auto our_gals = galaxies.size();
 	LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
 
-	copy_galaxies_to(target, onlytype2);
+	copy_galaxies_to(target, galaxies);
 	galaxies.clear();
 
 	assert(gals_before + our_gals == target->galaxy_count());
@@ -178,14 +172,13 @@ void Subhalo::transfer_galaxies_to(SubhaloPtr &target)
 
 void Subhalo::transfer_type2galaxies_to(SubhaloPtr &target)
 {
-
-	bool onlytype2 = true;
+	auto type2_gals = all_type2_galaxies();
 	auto gals_before = target->galaxy_count();
-	auto our_gals = all_type2_galaxies().size();
+	auto our_gals = type2_gals.size();
 	LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
 
-	copy_galaxies_to(target, onlytype2);
-	all_type2_galaxies().clear();
+	copy_galaxies_to(target, type2_gals);
+	remove_galaxies(type2_gals);
 
 	assert(gals_before + our_gals == target->galaxy_count());
 }

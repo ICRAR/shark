@@ -541,8 +541,9 @@ public:
 	 * Copies the galaxies from this Subhalo into @a target
 	 *
 	 * @param target The subhalo where galaxies will be copied to
+	 * @param gals The galaxies to copy to the target subhalo; defaults to all our galaxies
 	 */
-	void copy_galaxies_to(SubhaloPtr &target, bool onlytype2) const;
+	void copy_galaxies_to(SubhaloPtr &target, const std::vector<GalaxyPtr> &gals) const;
 
 	/**
 	 * Transfers (i.e., moves) the galaxies from this Subhalo into @a target
