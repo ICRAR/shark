@@ -58,6 +58,14 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 	else {
 		main_galaxy->galaxy_type = (is_main_progenitor ? Galaxy::TYPE1 : Galaxy::TYPE2);
 	}
+
+	// If main_galaxy is type 2, then define subhalo properties of types 2.
+	if (main_galaxy->galaxy_type == Galaxy::TYPE2) {
+                main_galaxy->concentration_type2 = parent->concentration;
+                main_galaxy->msubhalo_type2 = parent->Mvir;
+                main_galaxy->lambda_type2 = parent->lambda;
+	}
+
 }
 
 void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons)

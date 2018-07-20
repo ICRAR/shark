@@ -133,9 +133,9 @@ def prepare_data(hdf5_data, redshifts):
     mHI_dm_plot[ind] = np.log10(mHI[ind]/(mDM[ind]+massbar[ind]))
     mH2_dm_plot[ind] = np.log10(mH2[ind]/(mDM[ind]+massbar[ind]))
 
-    #print "HI, H2, sfr, stellar mass"
-    #for i,j,p,q in zip(omegaHI,mH2den,sfr,mstarden):
-    #	print np.log10(i*pow(h0,2.0)) + np.log10(XH), np.log10(j*pow(h0,2.0)) + np.log10(XH), np.log10(p*pow(h0,2.0)), np.log10(q*pow(h0,2.0)) 
+    print "HI, H2, sfr, stellar mass"
+    for i,j,p,q in zip(omegaHI,mH2den,sfr,mstarden):
+    	print np.log10(i*pow(h0,2.0)) + np.log10(XH), np.log10(j*pow(h0,2.0)) + np.log10(XH), np.log10(p*pow(h0,2.0)), np.log10(q*pow(h0,2.0)) 
 
     return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
@@ -402,7 +402,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
 
     sfr_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [2])
     sfr_modelvar_burst1 = sfr_modelvar[0:179]
-    sfr_modelvar_nu0p5  = sfr_modelvar[181:360]
+    sfr_modelvar_nu0p5  = sfr_modelvar[179:359]
 
     ind = np.where(sfr_modelvar_burst1 > -10)
     ax.plot(redshifts[ind], sfr_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')

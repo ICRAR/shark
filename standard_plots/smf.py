@@ -234,15 +234,15 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
 def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
 
 
-    for i,j,p,q,x,y in zip(hist_smf[0,:],hist_smf[1,:],hist_smf[2,:],hist_smf[3,:],hist_smf[4,:],hist_smf[5,:]):
-        print i,j,p,q,x,y 
+    #for i,j,p,q,x,y in zip(hist_smf[0,:],hist_smf[1,:],hist_smf[2,:],hist_smf[3,:],hist_smf[4,:],hist_smf[5,:]):
+    #    print i,j,p,q,x,y 
 
-    hist_smf_modelvar = np.zeros(shape = (6, 322))
+    hist_smf_modelvar = np.zeros(shape = (6, 315))
     hist_smf_modelvar[0,:], hist_smf_modelvar[1,:],hist_smf_modelvar[2,:],hist_smf_modelvar[3,:],hist_smf_modelvar[4,:],hist_smf_modelvar[5,:] = common.load_observation(obsdir, 'Models/SharkVariations/SMF_OtherModels.dat', [0,1,2,3,4,5])
 
     fig = plt.figure(figsize=(4.5,8))
     ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\star}}/{\\rm Mpc}^{-3} )$"
-    xmin, xmax, ymin, ymax = 8, 12.4, -5, -1
+    xmin, xmax, ymin, ymax = 8, 12.8, -5, -1
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -265,22 +265,22 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
             y = hist_smf[idx,:]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'k', label='Shark' if idx == 0 else None)
-            y = hist_smf_modelvar[idx,0:45]
+            y = hist_smf_modelvar[idx,0:44]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'r', linestyle='dotted', label='$z_{\\rm P} = 0$ (SN)' if idx == 0 else None)
-            y = hist_smf_modelvar[idx,139:183]
+            y = hist_smf_modelvar[idx,135:179]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],color='Crimson', linestyle='dashed', label='$\\beta = 2$ (SN)' if idx == 0 else None)
             #y = hist_smf_modelvar[idx,45:90]
             #ind = np.where(y < 0.)
             #ax.plot(xmf[ind],y[ind],'b', linestyle='dashed', label='$f_{\\rm df} = 1$' if idx == 0 else None)
-            y = hist_smf_modelvar[idx,93:137]
+            y = hist_smf_modelvar[idx,90:134]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'b', linestyle='dashdot', label='$f_{\\rm df} = 0$' if idx == 0 else None)
-            y = hist_smf_modelvar[idx,185:230]
+            y = hist_smf_modelvar[idx,180:225]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'g', linestyle='dashed', label='$\\tau_{\\rm reinc} = 0$' if idx == 0 else None)
-            y = hist_smf_modelvar[idx,278:322]
+            y = hist_smf_modelvar[idx,270:314]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],color= 'BurlyWood', linestyle='dashed', label='$\\kappa_{\\rm r} = 0.00025$' if idx == 0 else None)
 
@@ -1253,6 +1253,8 @@ def main(modeldir, outdir, subvols, obsdir):
     ind = np.where(hist_H2mf_sat > 0.)
     hist_H2mf_sat[ind] = np.log10(hist_H2mf_sat[ind])
 
+    #for i,j in zip(hist_HImf[0,:],hist_H2mf[0,:]):
+    #    print i,j
 
 
     plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err)
