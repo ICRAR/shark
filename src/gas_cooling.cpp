@@ -217,7 +217,8 @@ GasCooling::GasCooling(GasCoolingParameters parameters,
 		const CosmologyPtr &cosmology,
 		const AGNFeedbackPtr &agnfeedback,
 		const DarkMatterHalosPtr &darkmatterhalos,
-		const ReincorporationPtr &reincorporation) :
+		const ReincorporationPtr &reincorporation,
+		const EnvironmentPtr &environment) :
 	parameters(parameters),
 	params_sf(params_sf),
 	reionisation(reionisation),
@@ -225,6 +226,7 @@ GasCooling::GasCooling(GasCoolingParameters parameters,
 	agnfeedback(agnfeedback),
 	darkmatterhalos(darkmatterhalos),
 	reincorporation(reincorporation),
+	environment(environment),
 	cooling_lambda_interpolator(parameters.cooling_table.get_temperatures(), parameters.cooling_table.get_metallicities(), parameters.cooling_table.get_lambda())
 {
 	//no-opt

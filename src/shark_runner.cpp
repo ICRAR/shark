@@ -37,6 +37,7 @@
 #include "evolve_halos.h"
 #include "execution.h"
 #include "disk_instability.h"
+#include "environment.h"
 #include "galaxy_creator.h"
 #include "galaxy_mergers.h"
 #include "galaxy_writer.h"
@@ -74,8 +75,8 @@ public:
 	impl(const Options &options, unsigned int threads) :
 	    options(options), threads(threads),
 	    cosmo_params(options), dark_matter_halo_params(options),
-	    exec_params(options), gas_cooling_params(options),
-	    recycling_params(options), reincorporation_params(options),
+	    environment_params(options), exec_params(options),
+	    gas_cooling_params(options),recycling_params(options), reincorporation_params(options),
 	    simulation_params(options), star_formation_params(options),
 	    cosmology(make_cosmology(cosmo_params)),
 	    dark_matter_halos(make_dark_matter_halos(dark_matter_halo_params, cosmology, simulation_params)),
@@ -94,6 +95,7 @@ private:
 	unsigned int threads;
 	CosmologicalParameters cosmo_params;
 	DarkMatterHaloParameters dark_matter_halo_params;
+	EnvironmentParameters environment_params;
 	ExecutionParameters exec_params;
 	GasCoolingParameters gas_cooling_params;
 	RecyclingParameters recycling_params;
@@ -183,16 +185,18 @@ void SharkRunner::impl::create_per_thread_objects()
 {
 	AGNFeedbackParameters agn_params(options);
 	DiskInstabilityParameters disk_instability_params(options);
+	EnvironmentParameters environment_params(options);
 	GalaxyMergerParameters merger_parameters(options);
 	ReionisationParameters reio_params(options);
 	ReincorporationParameters reinc_params(options);
 	StellarFeedbackParameters stellar_feedback_params(options);
 
 	auto agnfeedback = make_agn_feedback(agn_params, cosmology);
+	auto environment = make_environment(environment_params);
 	auto reionisation = make_reionisation(reio_params);
 	auto reincorporation = make_reincorporation(reinc_params, dark_matter_halos);
 	StellarFeedback stellar_feedback {stellar_feedback_params};
-	GasCooling gas_cooling {gas_cooling_params, star_formation_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation};
+	GasCooling gas_cooling {gas_cooling_params, star_formation_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation, environment};
 
 	for(unsigned int i = 0; i != threads; i++) {
 		auto physical_model = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_params, gas_cooling_params);

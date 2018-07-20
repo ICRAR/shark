@@ -37,6 +37,7 @@
 #include "agn_feedback.h"
 #include "components.h"
 #include "dark_matter_halos.h"
+#include "environment.h"
 #include "interpolator.h"
 #include "options.h"
 #include "reincorporation.h"
@@ -105,7 +106,8 @@ public:
 			const CosmologyPtr &cosmology,
 			const AGNFeedbackPtr &agnfeedback,
 			const DarkMatterHalosPtr &darkmatterhalos,
-			const ReincorporationPtr &reincorporation);
+			const ReincorporationPtr &reincorporation,
+			const EnvironmentPtr &environment);
 
 	double cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, double deltat);
 	double cooling_time(double Tvir, double logl, double nh_density);
@@ -124,6 +126,7 @@ private:
 	AGNFeedbackPtr agnfeedback;
 	DarkMatterHalosPtr darkmatterhalos;
 	ReincorporationPtr reincorporation;
+	EnvironmentPtr environment;
 	Interpolator cooling_lambda_interpolator;
 
 };
