@@ -258,7 +258,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     }
 
     // Define main galaxy, which would accrete the cooled gas if any.
-    GalaxyPtr central_galaxy(&galaxy);
+    Galaxy *central_galaxy = &galaxy;
 
     // If subhalo does not have a main galaxy (which could happen in satellite subhalos), or subhalo does not have a hot halo, return 0.
     if(subhalo.hot_halo_gas.mass <= 0){
