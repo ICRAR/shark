@@ -217,6 +217,7 @@ set(SHARKLIB_SRCS
    src/execution.cpp
    src/dark_matter_halos.cpp
    src/disk_instability.cpp
+   src/environment.cpp
    src/evolve_halos.cpp
    src/galaxy_creator.cpp
    src/galaxy_mergers.cpp
