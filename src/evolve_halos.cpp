@@ -61,9 +61,9 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 
 	// If main_galaxy is type 2, then define subhalo properties of types 2.
 	if (main_galaxy->galaxy_type == Galaxy::TYPE2) {
-                main_galaxy->concentration_type2 = parent->concentration;
-                main_galaxy->msubhalo_type2 = parent->Mvir;
-                main_galaxy->lambda_type2 = parent->lambda;
+		main_galaxy->concentration_type2 = parent->concentration;
+		main_galaxy->msubhalo_type2 = parent->Mvir;
+		main_galaxy->lambda_type2 = parent->lambda;
 	}
 
 }
@@ -72,6 +72,16 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 {
 	unsigned int subhalos_without_descendant = 0;
 	double baryon_mass_loss = 0;
+
+	// Make sure descendants are completely empty
+	for(auto &halo: halos){
+		for(auto &subhalo: halo->all_subhalos()) {
+			if (!subhalo->descendant) {
+				continue;
+			}
+			assert(subhalo->descendant->galaxy_count() == 0);
+		}
+	}
 
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
@@ -84,7 +94,10 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 				galaxy->sfr_disk   = 0;
 			}
 
-			if(subhalo->last_snapshot_identified == subhalo->snapshot) {
+			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
+			// In that case, the transfer of galaxies has already been done in merging_subhalos.
+			// In any other case, we need to do the transfer.
+			if(subhalo->subhalo_type == Subhalo::SATELLITE and subhalo->last_snapshot_identified == subhalo->snapshot) {
 				continue;
 			}
 
@@ -110,9 +123,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			// over to the descendant
 			subhalo->check_subhalo_galaxy_composition();
 			adjust_main_galaxy(subhalo, descendant_subhalo);
-			assert(descendant_subhalo->galaxy_count() == 0);
 			subhalo->transfer_galaxies_to(descendant_subhalo);
-			descendant_subhalo->check_subhalo_galaxy_composition();
 
 			// Transfer subhalo baryon components.
 			descendant_subhalo->cold_halo_gas += subhalo->cold_halo_gas;
@@ -122,6 +133,16 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
 			}
 
+		}
+	}
+
+	// Now that descendants have been fully populated they should be correctly composed
+	for(auto &halo: halos){
+		for(auto &subhalo: halo->all_subhalos()) {
+			if (!subhalo->descendant) {
+				continue;
+			}
+			subhalo->descendant->check_subhalo_galaxy_composition();
 		}
 	}
 
