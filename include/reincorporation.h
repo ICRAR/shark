@@ -49,7 +49,7 @@ class Reincorporation{
 public:
 	Reincorporation(const ReincorporationParameters &parameters, const DarkMatterHalosPtr &darkmatterhalo);
 
-	double reincorporated_mass (HaloPtr halo, double z, double delta_t);
+	double reincorporated_mass (Halo &halo, Subhalo &subhalo, double z, double delta_t);
 
 private:
 

@@ -243,49 +243,40 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
   	halo->cooling_rate = 0;
 
-
     /**
      * For now assume that gas can cool only in central subhalos and to central galaxies.
      */
 
     if(subhalo.subhalo_type == Subhalo::SATELLITE){
-    	//Assume satellite subhalos have 0 cooling rate, and give any hot mass to the central subhalo.
-    	//TODO: add gradual ram pressure stripping.
+    	//Compute how much hot gas there is in this satellite_subhalo based on the environmental processes applied to it.
+    	environment->process_satellite_subhalo_environment(subhalo, *subhalo.host_halo->central_subhalo);
+    }
 
-    	if(subhalo.hot_halo_gas.mass > 0 or subhalo.ejected_galaxy_gas.mass > 0 or subhalo.cold_halo_gas.mass){
+    // If galaxy is type 2, then they don't have a hot halo.
+    if ( galaxy.galaxy_type == Galaxy::TYPE2) {
+    	return 0;
+    }
 
-    		subhalo.host_halo->central_subhalo->hot_halo_gas += subhalo.hot_halo_gas;
-    		subhalo.host_halo->central_subhalo->hot_halo_gas += subhalo.cold_halo_gas;
-    		subhalo.host_halo->central_subhalo->ejected_galaxy_gas += subhalo.ejected_galaxy_gas;
+    // Define main galaxy, which would accrete the cooled gas if any.
+    GalaxyPtr central_galaxy(&galaxy);
 
-    		subhalo.hot_halo_gas.restore_baryon();
-    		subhalo.ejected_galaxy_gas.restore_baryon();
-        	subhalo.cold_halo_gas.restore_baryon();
+    // If subhalo does not have a main galaxy (which could happen in satellite subhalos), or subhalo does not have a hot halo, return 0.
+    if(subhalo.hot_halo_gas.mass <= 0){
+    	return 0;
+    }
 
+    // Include accreted gas only if the subhalo is central.
+    if (subhalo.subhalo_type == Subhalo::CENTRAL) {
+    	// Calculate maximum accreted mass allowed by the universal baryon fraction.
+    	float max_allowed_baryon_accreted = halo->Mvir * cosmology->universal_baryon_fraction() - halo->total_baryon_mass();
+
+    	if (max_allowed_baryon_accreted > 0) {
+    		// Add up accreted mass and metals.
+    		auto accreted_mass = std::min(subhalo.accreted_mass, max_allowed_baryon_accreted);
+    		subhalo.hot_halo_gas.mass += accreted_mass;
+    		subhalo.hot_halo_gas.mass_metals += accreted_mass * parameters.pre_enrich_z;
     	}
-
-    	return 0;
     }
-
-    if(galaxy.galaxy_type != Galaxy::CENTRAL){
-    	return 0;
-    }
-
-    // Calculate maximum accreted mass allowed by the universal baryon fraction.
-    float max_allowed_baryon_accreted = halo->Mvir * cosmology->universal_baryon_fraction() - halo->total_baryon_mass();
-
-    if(max_allowed_baryon_accreted > 0){
-    	// Add up accreted mass and metals.
-    	auto accreted_mass = std::min(subhalo.accreted_mass, max_allowed_baryon_accreted);
-    	subhalo.hot_halo_gas.mass += accreted_mass;
-    	subhalo.hot_halo_gas.mass_metals += accreted_mass * parameters.pre_enrich_z;
-    }
-
-	/*subhalo.hot_halo_gas.mass += subhalo.accreted_mass;
-	subhalo.hot_halo_gas.mass_metals += subhalo.accreted_mass * parameters.pre_enrich_z;*/
-
-   	auto central_galaxy = subhalo.central_galaxy();
-
 
     /**
      * Plant black hole seed if necessary.
@@ -306,7 +297,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     }
 
     // Calculate reincorporated mass and metals.
-	double mreinc_mass = reincorporation->reincorporated_mass(halo, z, deltat);
+	double mreinc_mass = reincorporation->reincorporated_mass(*halo, subhalo, z, deltat);
 
    	if(mreinc_mass > subhalo.ejected_galaxy_gas.mass){
    		mreinc_mass = subhalo.ejected_galaxy_gas.mass;
@@ -379,7 +370,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	 */
    	if(parameters.model == GasCoolingParameters::CROTON06)
    	{
-		tcool = parameters.tau_cooling * darkmatterhalos->halo_dynamical_time(halo, z); //in Gyr.
+		tcool = parameters.tau_cooling * darkmatterhalos->subhalo_dynamical_time(subhalo, z); //in Gyr.
 		tcharac = tcool*constants::GYR2S; //in seconds.
 	}
 
@@ -457,10 +448,10 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
     else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
     	//a pseudo cooling luminosity k*T/lambda(T,Z)
     	double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
-   	central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
+    	central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
 
-	//now convert mass accretion rate to comoving units.
-	central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
+    	//now convert mass accretion rate to comoving units.
+    	central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 
     	//Mass heating rate from AGN in units of Msun/Gyr.
     	double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;

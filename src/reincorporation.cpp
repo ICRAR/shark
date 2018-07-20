@@ -41,10 +41,14 @@ Reincorporation::Reincorporation(const ReincorporationParameters &parameters, co
 	//no-opt
 }
 
-double Reincorporation::reincorporated_mass(HaloPtr halo, double z, double delta_t){
+double Reincorporation::reincorporated_mass(Halo &halo, Subhalo &subhalo, double z, double delta_t){
 
-	double mvir = halo->Mvir;
-	double mgas = halo->central_subhalo->ejected_galaxy_gas.mass;
+	if(subhalo.subhalo_type == Subhalo::SATELLITE){
+		return 0;
+	}
+
+	double mvir = halo.Mvir;
+	double mgas = subhalo.ejected_galaxy_gas.mass;
 
 	double treinc = parameters.tau_reinc * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);
 	//double reincor_rate = mgas * parameters.tau_reinc/tdyn * std::pow( (mvir / parameters.mhalo_norm), parameters.halo_mass_power);
