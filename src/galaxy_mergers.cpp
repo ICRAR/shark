@@ -160,7 +160,6 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 		//Only define the following parameters if the galaxies were not type=2.
 		if(!transfer_types2){
-			galaxy->galaxy_type = Galaxy::TYPE2;
 			galaxy->concentration_type2 = secondary->concentration;
 			galaxy->msubhalo_type2 = secondary->Mvir;
 			galaxy->lambda_type2 = secondary->lambda;
@@ -196,6 +195,11 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
 			merging_timescale(central_subhalo, satellite_subhalo, z, false);
+
+			// Change type of galaxies to type=2 before transferring them to the central_subhalo.
+			for (auto &galaxy: satellite_subhalo->galaxies){
+				galaxy->galaxy_type = Galaxy::TYPE2;
+			}
 
 			//transfer all mass from the satellite_subhalo to the central_subhalo. Note that this implies a horizontal transfer of information.
 			transfer_baryon_mass(central_subhalo, satellite_subhalo);
