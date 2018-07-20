@@ -75,6 +75,8 @@ public:
 
 	double halo_dynamical_time (HaloPtr &halo, double z);
 
+	double subhalo_dynamical_time (Subhalo &subhalo, double z);
+
 	double halo_virial_radius(Subhalo &subhalo);
 
 	double halo_virial_velocity (double mvir, double redshift);

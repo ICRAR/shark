@@ -103,13 +103,16 @@ double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
 	return vvir;
 }
 
-double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo, double z){
+double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo, double z)
+{
+	return subhalo_dynamical_time(*halo->central_subhalo, z);
+}
 
-	auto subhalo_central = halo->central_subhalo;
+double DarkMatterHalos::subhalo_dynamical_time (Subhalo &subhalo, double z){
 
-	double r = halo_virial_radius(*subhalo_central);
+	double r = halo_virial_radius(subhalo);
 
-	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / subhalo_central->Vvir;
+	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / subhalo.Vvir;
 }
 
 double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
