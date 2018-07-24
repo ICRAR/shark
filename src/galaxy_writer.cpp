@@ -110,11 +110,11 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 	std::string comment;
 
 	comment = "the shark version";
-	file.write_dataset("run_info/shark_version", std::string(SHARK_VERSION));
+	file.write_dataset("run_info/shark_version", std::string(SHARK_VERSION), comment);
 	comment = "the git revision of shark used to produce this data";
-	file.write_dataset("run_info/shark_git_revision", git_sha1());
+	file.write_dataset("run_info/shark_git_revision", git_sha1(), comment);
 	comment = "whether this shark instance had uncommitted local changes";
-	file.write_dataset("run_info/shark_git_has_local_changes", git_has_local_changes());
+	file.write_dataset("run_info/shark_git_has_local_changes", git_has_local_changes(), comment);
 
 	comment = "number of batches analysed";
 	file.write_dataset("run_info/batches", exec_params.simulation_batches, comment);
