@@ -191,6 +191,7 @@ public:
 	Baryon disk_gas {};
 	Baryon galaxymergers_burst_stars {};
 	Baryon diskinstabilities_burst_stars {};
+	Baryon galaxymergers_assembly_stars {};
 	BlackHole smbh {};
 
 	//save average star formation rates and metallicities of the newly formed stars.

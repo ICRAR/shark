@@ -383,6 +383,10 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	//satellite stellar mass is always transferred to the bulge.
 	transfer_history_satellite_to_bulge(central, satellite, snapshot);
 
+	//transfer mass that was created in starbursts/disk instabilities.
+	central->galaxymergers_burst_stars += satellite->galaxymergers_burst_stars;
+	central->diskinstabilities_burst_stars += satellite->diskinstabilities_burst_stars;
+
 	/**
 	 * Depending on the mass ratio, the baryonic components of the satellite and the disk of the major galaxy are going to be transferred differently.
 	 */
@@ -396,6 +400,11 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 		central->bulge_stars.mass += central->disk_stars.mass + satellite->stellar_mass();
 		central->bulge_stars.mass_metals += central->disk_stars.mass_metals + satellite->stellar_mass_metals();
+
+		// Keep track of stars being transfered to the bulge via assembly.
+		central->galaxymergers_assembly_stars.mass += central->disk_stars.mass + satellite->stellar_mass();
+		central->galaxymergers_assembly_stars.mass_metals += central->disk_stars.mass_metals + satellite->stellar_mass_metals();
+
 		central->bulge_gas.mass += central->disk_gas.mass + satellite->gas_mass();
 		central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals + satellite->gas_mass_metals();
 
@@ -417,6 +426,10 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		// Transfer mass to bulge.
 		central->bulge_stars.mass += satellite->stellar_mass();
 		central->bulge_stars.mass_metals += satellite->stellar_mass_metals();
+
+		// Keep track of stars being transfered to the bulge via assembly.
+		central->galaxymergers_assembly_stars.mass += satellite->stellar_mass();
+		central->galaxymergers_assembly_stars.mass_metals += satellite->stellar_mass_metals();
 
 		// Calculate new angular momentum by adding up the two galaxies.
 		double tot_am = satellite->disk_gas.angular_momentum() + satellite->bulge_gas.angular_momentum();
