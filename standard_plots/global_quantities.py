@@ -133,9 +133,9 @@ def prepare_data(hdf5_data, redshifts):
     mHI_dm_plot[ind] = np.log10(mHI[ind]/(mDM[ind]+massbar[ind]))
     mH2_dm_plot[ind] = np.log10(mH2[ind]/(mDM[ind]+massbar[ind]))
 
-    print "HI, H2, sfr, stellar mass"
-    for i,j,p,q in zip(omegaHI,mH2den,sfr,mstarden):
-    	print np.log10(i*pow(h0,2.0)) + np.log10(XH), np.log10(j*pow(h0,2.0)) + np.log10(XH), np.log10(p*pow(h0,2.0)), np.log10(q*pow(h0,2.0)) 
+    #print "HI, H2, sfr, stellar mass"
+    #for i,j,p,q in zip(omegaHI,mH2den,sfr,mstarden):
+    #	print np.log10(i*pow(h0,2.0)) + np.log10(XH), np.log10(j*pow(h0,2.0)) + np.log10(XH), np.log10(p*pow(h0,2.0)), np.log10(q*pow(h0,2.0)) 
 
     return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
@@ -176,7 +176,8 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, 0, 13.5, 6, 10, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
-
+    
+    msharktot = mstarden + mcoldden + mhotden + mejeden
     ind = np.where(mstarden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mstarden[ind]*pow(h0,2.0)),'k', label='Shark')
     ind = np.where(mcoldden > 0)
@@ -185,6 +186,9 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ax.plot(us.look_back_time(redshifts), np.log10(mhotden[ind]*pow(h0,2.0)),'r')
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
+    ind = np.where(msharktot > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(msharktot[ind]*pow(h0,2.0)),'DarkMagenta')
+
 
     lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation(obsdir, 'Models/OtherModels/EAGLE_BaryonGrowthTotal.txt', [0,2,3,4,5,6])
     eaglesm  = np.log10(pow(10.0, eaglesm) + pow(10.0, eaglesmout))
@@ -197,16 +201,8 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ax.plot(lbt[ind], eaglehg[ind] - 6.0, 'r', linestyle='dotted')
     ind = np.where(eagleejec > 0)
     ax.plot(lbt[ind], eagleejec[ind] - 6.0, 'g', linestyle='dotted')
-
-#
-#    lbt, galsm, galism, galhg = common.load_observation(obsdir, 'global_Lacey16', [1,5,4,3])
-#    lbt = max(lbt) - lbt
-#    ind = np.where(galsm > 0)
-#    ax.plot(lbt[ind], np.log10(galsm[ind]) + 10, 'k', linestyle='dashed', label ='GALFORM')
-#    ind = np.where(galism > 0)
-#    ax.plot(lbt[ind], np.log10(galism[ind]) + 10, 'b', linestyle='dashed')
-#    ind = np.where(galhg > 0)
-#    ax.plot(lbt[ind], np.log10(galhg[ind]) + 10, 'r', linestyle='dashed')
+    ind = np.where(eagletot > 0)
+    ax.plot(lbt[ind], eagletot[ind] - 6.0, 'DarkMagenta', linestyle='dotted')
 
     common.prepare_legend(ax, ['k','k','k'], fontsize=10)
 
@@ -223,6 +219,8 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ax.plot(us.look_back_time(redshifts), np.log10(mhotden[ind]*pow(h0,2.0)),'r')
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
+    ind = np.where(msharktot > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(msharktot[ind]*pow(h0,2.0)),'DarkMagenta')
 
     lbt, galsm, galism, galhg, galejec = common.load_observation(obsdir, 'Models/OtherModels/global_Mitchell18', [0,2,3,4,5])
     galtot  = np.log10(pow(10.0, galsm) + pow(10.0, galism) + pow(10.0, galhg) + pow(10.0, galejec))
@@ -241,26 +239,9 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ax.plot(lbt[ind], galhg[ind] - vol, 'r', linestyle='dashed', linewidth=1)
     ind = np.where(galejec > 0)
     ax.plot(lbt[ind], galejec[ind] - vol, 'g', linestyle='dashed', linewidth=1)
+    ind = np.where(galtot > 0)
+    ax.plot(lbt[ind], galtot[ind] - vol, 'DarkMagenta', linestyle='dashed', linewidth=1)
 
-    #lbt, eaglesm, eagleism, eaglehg, eagleejec = common.load_observation(obsdir, 'for_claudia_galform.txt', [0,2,3,4,5])
-    #eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
-    #ind = np.where(eaglesm > 0)
-    #ax.plot(lbt[ind], eaglesm[ind] - 6.0 - np.log10(h0), 'k', linestyle='dotted', label ='GALFORM Peter')
-    #ind = np.where(eagleism > 0)
-    #ax.plot(lbt[ind], eagleism[ind]- 6.0 - np.log10(h0), 'b', linestyle='dotted')
-    #ind = np.where(eaglehg > 0)
-    #ax.plot(lbt[ind], eaglehg[ind] - 6.0 - np.log10(h0), 'r', linestyle='dotted')
-    #ind = np.where(eagleejec > 0)
-    #ax.plot(lbt[ind], eagleejec[ind] - 6.0 - np.log10(h0), 'g', linestyle='dotted')
-
-#    lbt, galsm, galism, galhg = common.load_observation(obsdir, 'global_Lacey16', [1,5,4,3])
-#    lbt = max(lbt) - lbt
-#    ind = np.where(galsm > 0)
-#    ax.plot(lbt[ind], np.log10(galsm[ind]) + 10, 'k', linestyle='dashed', label ='GALFORM')
-#    ind = np.where(galism > 0)
-#    ax.plot(lbt[ind], np.log10(galism[ind]) + 10, 'b', linestyle='dashed')
-#    ind = np.where(galhg > 0)
-#    ax.plot(lbt[ind], np.log10(galhg[ind]) + 10, 'r', linestyle='dashed')
 
     common.prepare_legend(ax, ['k','k','k'], fontsize=10)
 
@@ -277,9 +258,12 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ax.plot(us.look_back_time(redshifts), np.log10(mhotden[ind]*pow(h0,2.0)),'r')
     ind = np.where(mejeden > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(mejeden[ind]*pow(h0,2.0)),'g')
+    ind = np.where(msharktot > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(msharktot[ind]*pow(h0,2.0)),'DarkMagenta')
 
     zbt, galism, galsm, galhg, galejec = common.load_observation(obsdir, 'Models/OtherModels/BaryonBudgetLgalaxies.dat', [1,2,3,4,5])
     lbt = us.look_back_time(zbt)
+    galtot  = np.log10(galsm + galism + galhg + galejec) + 10.0
     galsm   = np.log10(galsm)+10.0
     galism  = np.log10(galism)+10.0
     galhg   = np.log10(galhg)+10.0
@@ -295,26 +279,8 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ax.plot(lbt[ind], galhg[ind] - vol - np.log10(h), 'r', linestyle='dashdot', linewidth=1)
     ind = np.where(galejec > 0)
     ax.plot(lbt[ind], galejec[ind] - vol - np.log10(h), 'g', linestyle='dashdot', linewidth=1)
-
-    #lbt, eaglesm, eagleism, eaglehg, eagleejec = common.load_observation('/group/pawsey0119/clagos/Data/', 'for_claudia_galform.txt', [0,2,3,4,5])
-    #eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
-    #ind = np.where(eaglesm > 0)
-    #ax.plot(lbt[ind], eaglesm[ind] - 6.0 - np.log10(h0), 'k', linestyle='dotted', label ='GALFORM Peter')
-    #ind = np.where(eagleism > 0)
-    #ax.plot(lbt[ind], eagleism[ind]- 6.0 - np.log10(h0), 'b', linestyle='dotted')
-    #ind = np.where(eaglehg > 0)
-    #ax.plot(lbt[ind], eaglehg[ind] - 6.0 - np.log10(h0), 'r', linestyle='dotted')
-    #ind = np.where(eagleejec > 0)
-    #ax.plot(lbt[ind], eagleejec[ind] - 6.0 - np.log10(h0), 'g', linestyle='dotted')
-
-#    lbt, galsm, galism, galhg = common.load_observation('/group/pawsey0119/clagos/Data/', 'global_Lacey16', [1,5,4,3])
-#    lbt = max(lbt) - lbt
-#    ind = np.where(galsm > 0)
-#    ax.plot(lbt[ind], np.log10(galsm[ind]) + 10, 'k', linestyle='dashed', label ='GALFORM')
-#    ind = np.where(galism > 0)
-#    ax.plot(lbt[ind], np.log10(galism[ind]) + 10, 'b', linestyle='dashed')
-#    ind = np.where(galhg > 0)
-#    ax.plot(lbt[ind], np.log10(galhg[ind]) + 10, 'r', linestyle='dashed')
+    ind = np.where(galtot > 0)
+    ax.plot(lbt[ind], galtot[ind] - vol - np.log10(h), 'DarkMagenta', linestyle='dashdot', linewidth=1)
 
     common.prepare_legend(ax, ['k','k','k'], fontsize=10)
 
@@ -403,13 +369,16 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     sfr_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [2])
     sfr_modelvar_burst1 = sfr_modelvar[0:179]
     sfr_modelvar_nu0p5  = sfr_modelvar[179:359]
+    sfr_modelvar_burst20= sfr_modelvar[360:539]
 
+    ind = np.where(sfr_modelvar_burst20 > -10)
+    ax.plot(redshifts[ind], sfr_modelvar_burst20[ind], 'Sienna', linestyle='dotted', label ='$\\eta_{\\rm burst}=20$')
     ind = np.where(sfr_modelvar_burst1 > -10)
     ax.plot(redshifts[ind], sfr_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(sfr_modelvar_nu0p5 > -10)
     ax.plot(redshifts[ind], sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
-    common.prepare_legend(ax, ['k','b','r','DarkSlateGray','SlateGray','grey','grey','grey'], loc=1)
+    common.prepare_legend(ax, ['k','b','r','Sienna','DarkSlateGray','SlateGray','grey','grey','grey'], bbox_to_anchor=(0.52, 0.47))
 
     xtit="$\\rm Lookback\, time/Gyr$"
     ax = fig.add_subplot(212)
@@ -428,6 +397,8 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ind = np.where(sfrb > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='dotted',  linewidth=1)
 
+    ind = np.where(sfr_modelvar_burst20 > -10)
+    ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
     ind = np.where(sfr_modelvar_burst1 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot')
     ind = np.where(sfr_modelvar_nu0p5 > -10)
@@ -462,9 +433,12 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
 
 
     sm_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [3])
-    sm_modelvar_burst1 = sm_modelvar[0:179]
-    sm_modelvar_nu0p5  = sm_modelvar[181:360]
+    sm_modelvar_burst1  = sm_modelvar[0:179]
+    sm_modelvar_nu0p5   = sm_modelvar[181:360]
+    sm_modelvar_burst20 = sm_modelvar[360:539]
 
+    ind = np.where(sm_modelvar_burst20 > -10)
+    ax.plot(redshifts[ind], sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
     ind = np.where(sm_modelvar_burst1 > -10)
     ax.plot(redshifts[ind], sm_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot')
     ind = np.where(sm_modelvar_nu0p5 > -10)
@@ -498,14 +472,16 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ind = np.where(mstarbden_diskins > 0)
     ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarbden_diskins[ind]*pow(h0,2.0)), 'b', linestyle='dotted', label='formed in disk instabilities')
 
+    ind = np.where(sm_modelvar_burst20 > -10)
+    ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted',  label ='$\\eta_{\\rm burst}=20$')
     ind = np.where(sm_modelvar_burst1 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=1$')
+    ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(sm_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
     ax.errorbar(us.look_back_time(xobs), yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
 
-    common.prepare_legend(ax, ['k','r','b', 'DarkSlateGray','SlateGray'], loc=3)
+    common.prepare_legend(ax, ['k','r','b', 'Sienna','DarkSlateGray','SlateGray'], loc=3)
 
     common.savefig(outdir, fig, "cosmic_smd.pdf")
 
@@ -573,16 +549,19 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mH2den > 0)
-    ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r', label='Shark')
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r')
 
     h2_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [1])
     h2_modelvar_burst1 = h2_modelvar[0:179]
     h2_modelvar_nu0p5  = h2_modelvar[181:360]
+    h2_modelvar_burst20= h2_modelvar[360:539]
 
+    ind = np.where(h2_modelvar_burst20 > -10)
+    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
     ind = np.where(h2_modelvar_burst1 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_burst1[ind], 'Crimson', linestyle='dashdot', label ='$\\eta_{\\rm burst}=1$')
+    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_burst1[ind], 'Crimson', linestyle='dashdot')
     ind = np.where(h2_modelvar_nu0p5 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
+    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'SFR/Walter17_H2.dat', [0,1,2,3,4,5])
@@ -600,7 +579,7 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ax.errorbar(us.look_back_time(xobs[0:1]), yobs[0:1], xerr=[errxlow[0:1],errxup[0:1]], yerr=[errylow[0:1],erryup[0:1]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Boselli+14")
 
     # Legend
-    common.prepare_legend(ax, ['r','Crimson','Salmon','grey','grey','grey'], loc=0)
+    common.prepare_legend(ax, ['grey','grey','grey'], loc=0)
 
     common.savefig(outdir, fig, "omega_H2.pdf")
 
@@ -702,9 +681,12 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     hi_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0])
     hi_modelvar_burst1 = hi_modelvar[0:179]
     hi_modelvar_nu0p5  = hi_modelvar[181:360]
+    hi_modelvar_burst20= hi_modelvar[360:539]
 
+    ind = np.where(hi_modelvar_burst20 > -10)
+    ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_burst20[ind], 'Sienna', linestyle='dotted', label ='$\\eta_{\\rm burst}=20$')
     ind = np.where(hi_modelvar_burst1 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_burst1[ind], 'Crimson', linestyle='dashdot', label ='$\\eta_{\\rm burst}=1$')
+    ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_burst1[ind], 'Crimson', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(hi_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
@@ -724,7 +706,7 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ax.errorbar(us.look_back_time(redR18),np.log10(omegaR18*1e-3), xerr=[reddR18,reduR18],yerr=[errdnR18,errupR18], ls='None', mfc='None', ecolor = 'grey', mec='grey', marker='o', label="Rhee+18 (comp)")
 
 
-    common.prepare_legend(ax, ['r','Crimson','Salmon','grey'])
+    common.prepare_legend(ax, ['r','Sienna','Crimson','Salmon','grey'])
     common.savefig(outdir, fig, "omega_HI.pdf")
 
 def main(modeldir, outdir, subvols, obsdir, snapshot):

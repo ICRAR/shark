@@ -57,13 +57,15 @@ def prepare_data(hdf5_data):
 
     n_typeg = len(typeg)
     morpho_type = np.zeros(shape = (n_typeg))
+    morpho_type_stellar = np.zeros(shape = (n_typeg))
 
     # Early-type galaxies criterion of Khochfar et al. (2011).
     ind = np.where((mbulge + mgas_bulge)/(mdisk + mbulge + mgas + mgas_bulge) > 0.5)
     morpho_type[ind] = 1.0
-    #ind = np.where((mbulge/(mdisk+mbulge) <= 0.5) & ((mgas + mgas_bulge)/(mdisk + mbulge) < 0.001))
-    #morpho_type[ind] = 1.0
 
+    # Early-type galaxies criterion based on stellar mass alone.
+    ind = np.where((mbulge)/(mdisk + mbulge) > 0.5)
+    morpho_type_stellar[ind] = 1.0
 
     mh2_gals = np.zeros(shape = (2, n_typeg))
     mh1_gals = np.zeros(shape = (2, n_typeg))
@@ -77,6 +79,7 @@ def prepare_data(hdf5_data):
     mh1_gals_etg = np.zeros(shape = (2, n_typeg))
     mgas_gals_etg = np.zeros(shape = (2, n_typeg))
 
+    #Gas scaling relations based on morphological criterion calculated using total baryon mass of disk and bulge
     ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0) & (morpho_type == 0))
     # Data we'll use later
     mass = mdisk[ind] + mbulge[ind]
@@ -100,6 +103,34 @@ def prepare_data(hdf5_data):
     mgas_relation_etg = bin_it(x=mgas_gals_etg[0, ind], y=mgas_gals_etg[1, ind])
     mh1_relation_etg = bin_it(x=mh1_gals_etg[0, ind], y=mh1_gals_etg[1, ind])
     mh2_relation_etg = bin_it(x=mh2_gals_etg[0, ind], y=mh2_gals_etg[1, ind])
+
+    #Gas scaling relations based on morphological criterion calculated using stellar mass of disk and bulge
+    ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0) & (morpho_type_stellar == 0))
+    # Data we'll use later
+    mass = mdisk[ind] + mbulge[ind]
+    mgas_gals_ltg[0,ind] = mh1_gals_ltg[0,ind] = mh2_gals_ltg[0,ind] = np.log10(mass) - h0log
+    mgas_gals_ltg[1,ind] = np.log10(XH * (mgas[ind] + mgas_bulge[ind]) / mass)
+    mh1_gals_ltg[1,ind] = np.log10(XH * (mHI[ind] + mHI_bulge[ind]) / mass)
+    mh2_gals_ltg[1,ind] = np.log10(XH * (mH2[ind] + mH2_bulge[ind]) / (mass))
+
+    mgas_ms_relation_ltg = bin_it(x=mgas_gals_ltg[0, ind], y=mgas_gals_ltg[1, ind])
+    mh1_ms_relation_ltg = bin_it(x=mh1_gals_ltg[0, ind], y=mh1_gals_ltg[1, ind])
+    mh2_ms_relation_ltg = bin_it(x=mh2_gals_ltg[0, ind], y=mh2_gals_ltg[1, ind])
+
+    ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0) & (morpho_type_stellar == 1))
+    # Data we'll use later
+    mass = mdisk[ind] + mbulge[ind]
+    mgas_gals_etg[0,ind] = mh1_gals_etg[0,ind] = mh2_gals_etg[0,ind] = np.log10(mass) - h0log
+    mgas_gals_etg[1,ind] = np.log10(XH * (mgas[ind] + mgas_bulge[ind]) / mass)
+    mh1_gals_etg[1,ind] = np.log10(XH * (mHI[ind] + mHI_bulge[ind]) / mass)
+    mh2_gals_etg[1,ind] = np.log10(XH * (mH2[ind] + mH2_bulge[ind]) / (mass))
+
+    mgas_ms_relation_etg = bin_it(x=mgas_gals_etg[0, ind], y=mgas_gals_etg[1, ind])
+    mh1_ms_relation_etg = bin_it(x=mh1_gals_etg[0, ind], y=mh1_gals_etg[1, ind])
+    mh2_ms_relation_etg = bin_it(x=mh2_gals_etg[0, ind], y=mh2_gals_etg[1, ind])
+
+
+
 
     # Constrains
     ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0))
@@ -136,7 +167,8 @@ def prepare_data(hdf5_data):
             mh2_gals, mh1_gals, mgas_gals,
             mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat, 
             mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, 
-	    mh1_relation_etg)
+	    mh1_relation_etg, mgas_ms_relation_ltg, mh2_ms_relation_ltg, mh1_ms_relation_ltg, 
+	    mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg)
 
 def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relation_cen, mgas_relation_sat):
 
@@ -181,7 +213,9 @@ def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relatio
 
 
 def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, 
-    mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg):
+    mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg, 
+    mgas_ms_relation_ltg, mh2_ms_relation_ltg, mh1_ms_relation_ltg, mgas_ms_relation_etg, mh2_ms_relation_etg, 
+    mh1_ms_relation_etg):
 
     xmin, xmax, ymin, ymax = 9, 12, -3, 1
     fig = plt.figure(figsize=(11,11))
@@ -228,16 +262,17 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
 
     # Second subplot
     ax = fig.add_subplot(322)
-    xmin, xmax, ymin, ymax = 9, 12, -4, 1
+    xmin, xmax, ymin, ymax = 9, 12, -4.5, 1
 
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
-    plot_mrelation_fill(mgas_relation_ltg, 'b', 'b',label="Shark LTGs",linestyle='dashed')
-    plot_mrelation_fill(mgas_relation_etg, 'r', 'r',label="Shark ETGs",linestyle='dotted')
-
+    plot_mrelation_fill(mgas_relation_ltg, 'b', 'b',label="Shark LTGs $(\\rm B/T)_{\\rm bar}$",linestyle='solid')
+    plot_mrelation_fill(mgas_relation_etg, 'r', 'r',label="Shark ETGs $(\\rm B/T)_{\\rm bar}$",linestyle='solid')
+    plot_mrelation(mgas_ms_relation_ltg, 'b',label="Shark LTGs $(\\rm B/T)_{\star}$",linestyle='dotted')
+    plot_mrelation(mgas_ms_relation_etg, 'r',label="Shark ETGs $(\\rm B/T)_{\star}$",linestyle='dotted')
 
     # Legend
-    common.prepare_legend(ax, ['b','r','k'],loc=1)
+    common.prepare_legend(ax, ['b','r','b','r','k'],loc=3)
 
     # Third subplot
     ax = fig.add_subplot(323)
@@ -270,11 +305,13 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
 
     # Fourth subplot
     ax = fig.add_subplot(324)
-    xmin, xmax, ymin, ymax = 9, 12, -4, 1
+    xmin, xmax, ymin, ymax = 9, 12, -4.5, 1
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
-    plot_mrelation_fill(mh1_relation_ltg, 'b', 'b',linestyle='dashed')
-    plot_mrelation_fill(mh1_relation_etg, 'r', 'r',linestyle='dotted')
+    plot_mrelation_fill(mh1_relation_ltg, 'b', 'b',linestyle='solid')
+    plot_mrelation_fill(mh1_relation_etg, 'r', 'r',linestyle='solid')
+    plot_mrelation(mh1_ms_relation_ltg,  'b',linestyle='dotted')
+    plot_mrelation(mh1_ms_relation_etg,  'r',linestyle='dotted')
 
     add_observations_to_plot(obs_dir, 'RHI-Mstars_Callette18-LTGs.csv', ax, 's', "Calette+18 LTGs", color='grey', err_absolute=True)
     add_observations_to_plot(obs_dir, 'RHI-Mstars_Callette18-ETGs.csv', ax, 'o', "Calette+18 ETGs", color='grey', err_absolute=True)
@@ -306,11 +343,13 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
 
     # Fourth subplot
     ax = fig.add_subplot(326)
-    xmin, xmax, ymin, ymax = 9, 12, -4, 1
+    xmin, xmax, ymin, ymax = 9, 12, -4.5, 1
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
-    plot_mrelation_fill(mh2_relation_ltg, 'b', 'b',linestyle='dashed')
-    plot_mrelation_fill(mh2_relation_etg, 'r', 'r',linestyle='dotted')
+    plot_mrelation_fill(mh2_relation_ltg, 'b', 'b',linestyle='solid')
+    plot_mrelation_fill(mh2_relation_etg, 'r', 'r',linestyle='solid')
+    plot_mrelation(mh2_ms_relation_ltg, 'b',linestyle='dotted')
+    plot_mrelation(mh2_ms_relation_etg, 'r',linestyle='dotted')
 
     add_observations_to_plot(obs_dir, 'RH2-Mstars_Callette18-LTGs.csv', ax, 's', "Calette+18 LTGs",color='grey', err_absolute=True)
     add_observations_to_plot(obs_dir, 'RH2-Mstars_Callette18-ETGs.csv', ax, 'o', "Calette+18 ETGs",color='grey', err_absolute=True)
@@ -365,11 +404,15 @@ def main(model_dir, output_dir, subvols, obs_dir, snapshot):
      mh2_gals, mh1_gals, mgas_gals,
      mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat,
      mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg,
-     mgas_relation_etg, mh2_relation_etg, mh1_relation_etg) = prepare_data(hdf5_data)
+     mgas_relation_etg, mh2_relation_etg, mh1_relation_etg,
+     mgas_ms_relation_ltg, mh2_ms_relation_ltg, mh1_ms_relation_ltg,
+     mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg) = prepare_data(hdf5_data)
 
     plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relation_cen, mgas_relation_sat)
 
-    plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg)
+    plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, mgas_relation_ltg, 
+	mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg, mgas_ms_relation_ltg, mh2_ms_relation_ltg, 
+	mh1_ms_relation_ltg, mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg)
 
     plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_relation_sat)
 

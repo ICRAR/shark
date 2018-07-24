@@ -35,6 +35,7 @@ observation = collections.namedtuple('observation', 'label x y yerrup yerrdn err
 GyrToYr = 1e9
 Zsun = 0.0127
 XH = 0.72
+MpcToKpc = 1e3
 
 ##################################
 # Mass function initialization
@@ -58,7 +59,7 @@ ssfrbins = np.arange(ssfrlow,ssfrupp,dssfr)
 xssfr    = ssfrbins + dssfr/2.0
 
 
-def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err):
+def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err, hist_smf_30kpc):
 
     # z0 obs
     z0obs = []
@@ -70,18 +71,18 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     yup = np.log10(p[indx]+dpup[indx]) - yobs
     z0obs.append((observation("Wright+2017", xobs[indx], yobs, ydn, yup, err_absolute=False), 'o'))
 
-    lm, p3, dp3 = common.load_observation(obsdir, 'mf/SMF_Bernardi2013_SerExp.data', [0,1,2])
-    if imf == 'ken':
-        lm = lm - 0.09
-    xobs = lm
-    yobs = np.full(xobs.shape, -999.)
-    lerr = np.full(xobs.shape, -999.)
-    herr = np.full(xobs.shape, 999.)
-    indx = np.where( p3 < 1)
-    yobs[indx] = p3[indx]
-    lerr[indx] = dp3[indx]
-    herr[indx] = dp3[indx]
-    z0obs.append((observation("Bernardi+2013", xobs, yobs, lerr, herr, err_absolute=False), 'x'))
+    #lm, p3, dp3 = common.load_observation(obsdir, 'mf/SMF_Bernardi2013_SerExp.data', [0,1,2])
+    #if imf == 'ken':
+    #    lm = lm - 0.09
+    #xobs = lm
+    #yobs = np.full(xobs.shape, -999.)
+    #lerr = np.full(xobs.shape, -999.)
+    #herr = np.full(xobs.shape, 999.)
+    #indx = np.where( p3 < 1)
+    #yobs[indx] = p3[indx]
+    #lerr[indx] = dp3[indx]
+    #herr[indx] = dp3[indx]
+    #z0obs.append((observation("Bernardi+2013", xobs, yobs, lerr, herr, err_absolute=False), 'x'))
 
     # Moustakas (Chabrier IMF), ['Moustakas+2013, several redshifts']
     zdnM13, lmM13, pM13, dp_dn_M13, dp_up_M13 = common.load_observation(obsdir, 'mf/SMF_Moustakas2013.data', [0,3,5,6,7])
@@ -213,6 +214,10 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'g', linestyle='dashed', label ='satellites' if idx == 0 else None)
 
+            if z < 1:
+		y = hist_smf_30kpc[idx,:]
+                ind = np.where(y < 0.)
+                ax.plot(xmf[ind],y[ind],'k', linestyle='dotted', linewidth=1, label ='30kpc')
             if z >= 1:
                 y = hist_smf_err[idx,:]
                 ind = np.where(y < 0.)
@@ -221,6 +226,8 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
         colors = []
         if idx == 0:
             colors = ['r','b','g']
+        if z < 1:
+	    colors += ['k']
         if z >= 1:
             colors = ['r']
         colors += ['grey', 'grey','grey']
@@ -240,6 +247,10 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
     hist_smf_modelvar = np.zeros(shape = (6, 315))
     hist_smf_modelvar[0,:], hist_smf_modelvar[1,:],hist_smf_modelvar[2,:],hist_smf_modelvar[3,:],hist_smf_modelvar[4,:],hist_smf_modelvar[5,:] = common.load_observation(obsdir, 'Models/SharkVariations/SMF_OtherModels.dat', [0,1,2,3,4,5])
 
+    hist_smf_resolution = np.zeros(shape = (6, 135))
+    hist_smf_resolution[0,:], hist_smf_resolution[1,:],hist_smf_resolution[2,:],hist_smf_resolution[3,:],hist_smf_resolution[4,:],hist_smf_resolution[5,:] = common.load_observation(obsdir, 'Models/SharkVariations/SMF_Resolution.dat', [0,1,2,3,4,5])
+
+    #Model comparison plot
     fig = plt.figure(figsize=(4.5,8))
     ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\star}}/{\\rm Mpc}^{-3} )$"
     xmin, xmax, ymin, ymax = 8, 12.8, -5, -1
@@ -291,6 +302,43 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
 
     common.savefig(outdir, fig, 'stellarmf_z_modelcomparison.pdf')
 
+    #Resolution test plot
+    fig = plt.figure(figsize=(4.5,8))
+    subplots = (211, 212)
+    indeces = (0, 3)
+    zs = (0, 2)
+    for subplot, idx, z in zip(subplots, indeces, zs):
+
+        ax = fig.add_subplot(subplot)
+        if(idx != 3):
+            xtit = ""
+        else:
+            xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+        plt.subplots_adjust(left=0.2)
+        ax.text(xleg, yleg, 'z=%s' % str(z))
+
+        # Predicted SMF
+        if plotz[idx]:
+            y = hist_smf[idx,:]
+            ind = np.where(y < 0.)
+            ax.plot(xmf[ind],y[ind],'k', label='L210N1536' if idx == 0 else None)
+            y = hist_smf_resolution[idx,0:44]
+            ind = np.where(y < 0.)
+            ax.plot(xmf[ind],y[ind],'r', linestyle='dotted', label='L210N512' if idx == 0 else None)
+            y = hist_smf_resolution[idx,45:89]
+            ind = np.where(y < 0.)
+            ax.plot(xmf[ind],y[ind],color='g', linestyle='dashed', label='L40N512' if idx == 0 else None)
+            y = hist_smf_resolution[idx,90:134]
+            ind = np.where(y < 0.)
+            ax.plot(xmf[ind],y[ind],'b', linestyle='dashdot', label='L210N1024' if idx == 0 else None)
+
+        colors = []
+        if idx == 0:
+            colors = ['k','r','g','b']
+            common.prepare_legend(ax, colors)
+
+    common.savefig(outdir, fig, 'stellarmf_z_resolutioncomparison.pdf')
 
 def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat):
 
@@ -429,13 +477,13 @@ def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):
         ax.text(xleg, yleg, 'z=%s' % str(z))
 
         #Predicted relation
-        ind = np.where(mainseq[idx,0,:] != 0)
-        xplot = xmf[ind]
-        yplot = mainseq[idx,0,ind]
-        errdn = mainseq[idx,1,ind]
-        errup = mainseq[idx,2,ind]
+        #ind = np.where(mainseq[idx,0,:] != 0)
+        #xplot = xmf[ind]
+        #yplot = mainseq[idx,0,ind]
+        #errdn = mainseq[idx,1,ind]
+        #errup = mainseq[idx,2,ind]
 
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='o',label="all galaxies")
+        #ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='o',label="all galaxies")
 
         ind = np.where(mainseq_cen[idx,0,:] != 0)
         xplot = xmf[ind]
@@ -444,19 +492,19 @@ def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):
         errup = mainseq_cen[idx,2,ind]
 
         ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'g', mec='g',marker='o',markersize=2,label="centrals")
-        ind = np.where(mainseq_sat[idx,0,:] != 0)
-        xplot = xmf[ind]
-        yplot = mainseq_sat[idx,0,ind]
-        errdn = mainseq_sat[idx,1,ind]
-        errup = mainseq_sat[idx,2,ind]
+        #ind = np.where(mainseq_sat[idx,0,:] != 0)
+        #xplot = xmf[ind]
+        #yplot = mainseq_sat[idx,0,ind]
+        #errdn = mainseq_sat[idx,1,ind]
+        #errup = mainseq_sat[idx,2,ind]
 
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='o',markersize=2,label="satellites")
+        #ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='o',markersize=2,label="satellites")
 
         # observations approximate of Gilbank et al. (2010)
         if obs:
             ax.plot(obs.x, obs.y, 'k', label=obs.label)
 
-        colors = ['b', 'g', 'r']
+        colors = ['g']
         if obs:
             colors.insert(0, 'k')
         common.prepare_legend(ax, colors)
@@ -1000,22 +1048,25 @@ def plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr):
     common.savefig(outdir, fig, 'passive_fraction_z0.pdf')
 
 
-def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_smf_sat,
-                 hist_HImf, hist_HImf_cen, hist_HImf_sat, hist_H2mf, hist_H2mf_cen,
-                 hist_H2mf_sat, mainseq, mainseqsf, sfe, mainseq_cen, mainseqsf_cen,
-                 sfe_cen, mainseq_sat, mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen,
-                 mzr_sat, plotz, plotz_HImf, passive_fractions, hist_ssfr, mszr, 
-		 mszr_cen, mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2):
+def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_smf_sat, 
+                 hist_smf_30kpc, hist_HImf, hist_HImf_cen, hist_HImf_sat, hist_H2mf, 
+                 hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf, sfe, mainseq_cen, 
+                 mainseqsf_cen, sfe_cen, mainseq_sat, mainseqsf_sat, sfe_sat, mzr, 
+                 fmzr, mzr_cen, mzr_sat, plotz, plotz_HImf, passive_fractions, hist_ssfr, 
+                 mszr, mszr_cen, mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2):
 
-    (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rstar_disk, mBH, mHI, mH2,
-     mgas_disk, mHI_bulge, mH2_bulge, mgas_bulge, mgas_metals_disk,
-     mgas_metals_bulge, mstars_metals_disk, mstars_metals_bulge, typeg, mvir_hosthalo) = hdf5_data
+    (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rstar_disk, mBH, mHI, mH2, 
+     mgas_disk, mHI_bulge, mH2_bulge, mgas_bulge, mgas_metals_disk, mgas_metals_bulge, 
+     mstars_metals_disk, mstars_metals_bulge, typeg, mvir_hosthalo, rstar_bulge) = hdf5_data
 
     mgas = mgas_disk+mgas_bulge
     mgas_metals = mgas_metals_disk+mgas_metals_bulge
 
-    mass = np.zeros(shape = len(mdisk))
-    mass_atom = np.zeros(shape = len(mdisk))
+    mass          = np.zeros(shape = len(mdisk))
+    mass_30kpc    = np.zeros(shape = len(mdisk))
+    massd_30kpc   = np.zeros(shape = len(mdisk))
+    massb_30kpc   = np.zeros(shape = len(mdisk))
+    mass_atom     = np.zeros(shape = len(mdisk))
     mass_atom_cen = np.zeros(shape = len(mdisk))
     mass_atom_sat = np.zeros(shape = len(mdisk))
 
@@ -1024,8 +1075,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
     mass_mol_sat = np.zeros(shape = len(mdisk))
 
     ind = np.where((mdisk+mbulge) > 0.0)
-    mass[ind] = np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0))
-
+    mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
     print('number of galaxies with mstars>0 and max mass: %d, %d' % (len(mass[ind]), max(mass[ind])))
 
     H, _ = np.histogram(mass,bins=np.append(mbins,mupp))
@@ -1034,6 +1084,18 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
     mass_err = mass + ran_err
     H, _ = np.histogram(mass_err,bins=np.append(mbins,mupp))
     hist_smf_err[index,:] = hist_smf_err[index,:] + H
+
+    #Calculate the stellar mass contained in 30pkpc, assuming an exponential profile for the disk and a Plummer profile for the bulge.
+    ind = np.where((mdisk > 0.0)  & (rstar_disk > 0))
+    massd_30kpc[ind] = mdisk[ind] * (1.0 - (1.0 + 30.0/(rstar_disk[ind]/1.67/h0 * MpcToKpc)) * np.exp(-30.0/(rstar_disk[ind]/1.67/h0 * MpcToKpc)))
+    ind = np.where((mbulge > 0.0)  & (rstar_bulge > 0))
+    massb_30kpc[ind] = mbulge[ind] * pow(30.0, 3.0) / pow((pow(30.0, 2.0) + pow(rstar_bulge[ind]/1.3/h0 * MpcToKpc, 2.0)), 3.0/2.0)
+
+    ind = np.where((massd_30kpc + massb_30kpc) > 0)
+    mass_30kpc[ind] = np.log10(massd_30kpc[ind] + massb_30kpc[ind]) - np.log10(float(h0))
+    H, _ = np.histogram(mass_30kpc,bins=np.append(mbins,mupp))
+    hist_smf_30kpc[index,:] = hist_smf_30kpc[index,:] + H
+
 
     ind = np.where(typeg == 0)
     H, _ = np.histogram(mass[ind],bins=np.append(mbins,mupp))
@@ -1133,6 +1195,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
     if volh > 0:
         vol = volh/pow(h0,3.)  # In Mpc^3
         hist_smf[index,:]  = hist_smf[index,:]/vol/dm
+        hist_smf_30kpc[index,:]= hist_smf_30kpc[index,:]/vol/dm
         hist_smf_err[index,:]  = hist_smf_err[index,:]/vol/dm
         hist_smf_cen[index,:]  = hist_smf_cen[index,:]/vol/dm
         hist_smf_sat[index,:]  = hist_smf_sat[index,:]/vol/dm
@@ -1186,10 +1249,11 @@ def main(modeldir, outdir, subvols, obsdir):
     passive_fractions = np.zeros(shape = (len(zlist), 3, len(xmf2)))
 
     # Histograms
-    hist_smf = np.zeros(shape = (len(zlist), len(mbins)))
-    hist_smf_err = np.zeros(shape = (len(zlist), len(mbins)))
-    hist_smf_cen = np.zeros(shape = (len(zlist), len(mbins)))
-    hist_smf_sat = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf       = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf_30kpc = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf_err   = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf_cen   = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf_sat   = np.zeros(shape = (len(zlist), len(mbins)))
 
     plotz = np.empty(shape=(len(zlist)), dtype=np.bool_)
     hist_HImf = np.zeros(shape = (len(zlist), len(mbins)))
@@ -1206,12 +1270,13 @@ def main(modeldir, outdir, subvols, obsdir):
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mgas_metals_disk', 'mgas_metals_bulge',
-                           'mstars_metals_disk', 'mstars_metals_bulge', 'type', 'mvir_hosthalo')}
+                           'mstars_metals_disk', 'mstars_metals_bulge', 'type', 
+			   'mvir_hosthalo', 'rstar_bulge')}
 
     for index in range(0,len(zlist)):
         hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
         mass = prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen,
-                             hist_smf_sat, hist_HImf, hist_HImf_cen, hist_HImf_sat,
+                             hist_smf_sat, hist_smf_30kpc, hist_HImf, hist_HImf_cen, hist_HImf_sat,
                              hist_H2mf, hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf,
                              sfe, mainseq_cen, mainseqsf_cen, sfe_cen, mainseq_sat,
                              mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen, mzr_sat, plotz,
@@ -1232,6 +1297,8 @@ def main(modeldir, outdir, subvols, obsdir):
     # Take logs
     ind = np.where(hist_smf > 0.)
     hist_smf[ind] = np.log10(hist_smf[ind])
+    ind = np.where(hist_smf_30kpc > 0.)
+    hist_smf_30kpc[ind] = np.log10(hist_smf_30kpc[ind])
     ind = np.where(hist_smf_cen > 0.)
     hist_smf_cen[ind] = np.log10(hist_smf_cen[ind])
     ind = np.where(hist_smf_sat > 0.)
@@ -1257,7 +1324,7 @@ def main(modeldir, outdir, subvols, obsdir):
     #    print i,j
 
 
-    plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err)
+    plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err, hist_smf_30kpc)
     plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf)
     plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat)
     plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat)

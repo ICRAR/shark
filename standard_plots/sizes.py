@@ -516,9 +516,6 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
 
-    for i in zip(BH[0,0,:]):
-	print i
-
 
     MBH_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BHBulgeRelation_OtherModels.dat', [0])
     MBH_f_smbh0p008   = MBH_othermodels[0:29]
@@ -670,6 +667,9 @@ def main(modeldir, outdir, subvols, obsdir):
     plot_sizes_combined(plt, outdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
+
+    #for i in zip(BT_fractions[0,:]):
+	#print i
 
 
 if __name__ == '__main__':

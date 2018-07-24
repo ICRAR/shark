@@ -39,7 +39,7 @@ def plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz):
     xleg = xmax - 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
 
-    fig = plt.figure(figsize=(9.5,9.5))
+    fig = plt.figure(figsize=(7,7))
 
     subplots = (221, 222, 223, 224)
     idx = (0, 1, 2, 3)
@@ -47,25 +47,40 @@ def plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz):
     for subplot, idx, z, plot_this_z in zip(subplots, idx, z, plotz):
 
         ax = fig.add_subplot(subplot)
-        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+        if (idx == 0 or idx == 2):
+            ytitplot = ytit
+        else:
+	    ytitplot = ' ' 
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitplot, locators=(0.1, 1, 0.1))
         ax.text(xleg,yleg, 'z=%s' % (str(z)))
 
         #HMF calc HMF calculated by Sheth & Tormen (2001)
         lmp, dp = common.load_observation(obsdir, 'mf/HMF/mVector_PLANCK-SMT_z%s.txt' % str(z).replace('.', ''), [0, 7])
         lmp_plot = np.log10(lmp) - np.log10(h0)
         dp_plot = np.log10(dp) + np.log10(pow(h0,3.))
-        ax.plot(lmp_plot,dp_plot,'b', label = 'z=%s HMF calc' % str(z))
+        if idx == 0:
+	        ax.plot(lmp_plot,dp_plot,'b', label = 'HMF calc')
+	if idx > 0:
+                ax.plot(lmp_plot,dp_plot,'b')
+
 
         #Predicted HMF
         if plot_this_z:
             y = hist[idx,:]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'r', label ='HMF Shark')
+	    if idx == 0:
+                ax.plot(xmf[ind],y[ind],'r', label ='HMF Shark')
+            if idx > 0:
+		ax.plot(xmf[ind],y[ind],'r')
             y = histsh[idx,:]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='SHMF Shark')
+            if idx == 0:
+                ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='SHMF Shark')
+            if idx > 0:
+		ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
 
-        common.prepare_legend(ax, ['b','r','r'])
+        if idx == 0:
+		common.prepare_legend(ax, ['b','r','r'])
 
     common.savefig(outdir, fig, "halomf_z.pdf")
 
