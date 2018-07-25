@@ -40,7 +40,7 @@ std::string get_static_data_filepath(const std::string &fname)
 	namespace fs = boost::filesystem;
 	for(auto &dir: lookup_dirs) {
 		fs::path p(dir);
-		p = p.append(fname);
+		p /= fname;
 		if (fs::exists(p)) {
 			return p.string();
 		}
