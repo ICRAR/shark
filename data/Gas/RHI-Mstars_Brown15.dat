@@ -1,0 +1,8 @@
+#HI stacking from Brown et al. (2015, MNRAS, 452, 2479).
+#stellar masses assume Chabrier IMF.
+#Log(Mstars/Msun) mean (MHI/Mstars) err_fraction 
+ 9.21  1.511  0.011 
+ 9.64  0.643  0.011
+ 10.14 0.232  0.005
+ 10.62 0.096  0.002
+ 11.07 0.039  0.001

@@ -1,0 +1,11 @@
+#From Parkash et al. (2018, ArXiv:1807.06246)
+#stellar mass assume an IMf of Chabrier. HI is from HIPASS.
+#Columns:
+#1 - log(Mstars/Msun) 
+#2 - log(MHI/Msun[median]) 
+#3 - log(MHI/Msun[1sigma_low]) 
+#4 - log(MHI/Msun[1sigma_high])
+9.18009 9.11173 8.63128 9.59218 
+9.65678 9.37989 9.12290 9.62570 
+10.1716 9.46927 9.08939 9.86034 
+10.6674 9.03352 8.11732 9.94972 

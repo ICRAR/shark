@@ -1,0 +1,25 @@
+#passive fraction vs log(Mstar/Msun)
+#From Davies et al. (2016)
+#log(Mstar/Msun) passive fraction
+#total passive fraction
+8.29631 0.0235294 
+8.78949 0.00882353 
+9.25625 0.0323529 
+9.75824 0.100000 
+10.2514 0.267647 
+10.7710 0.382353 
+11.2290 0.532353 
+#passive fraction in isolated galaxies.
+8.30511 0 
+8.80710 0 
+9.23864 0.0176471 
+9.77585 0.0558824 
+10.2866 0.223529 
+10.7886 0.344118 
+11.2290 0.450000 
+#passive fraction in galaxies in pairs/groups.
+9.28267 0.0735294 
+9.79347 0.185294 
+10.2514 0.311765 
+10.7710 0.426471 
+11.2290 0.558824 

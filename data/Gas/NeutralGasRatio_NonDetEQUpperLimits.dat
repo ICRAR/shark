@@ -1,0 +1,20 @@
+#Median and 1sigma scatter relation between HI and stellar mass 
+#calculated from the combined datasets of xGASS (Catinella et al., 2018, MNRAS, 476, 875)
+#and xCOLDGASS (Saintonge et al. 2017, ApJS, 233, 22).
+#IMF adopted for stellar masses, Chabrier IMF.
+#Non-detections assumed to have a MHI=upper limit and/or MH2=upper limit.
+#Values computed by Claudia Lagos.
+#columns: 
+#1 - stellar mass log10(Msun)
+#2 - log(MHI/Mstar) median
+#3 - 16th percentile log(MHI/Mstar)
+#4 - 84th percentile log(MHI/Mstar)
+      8.95000    -0.139975     0.384873     0.167850
+      9.25000    -0.131627     0.854514     0.409929
+      9.55000    -0.662055     0.731878     0.523095
+      9.85000    -0.865785     0.595782     0.420792
+      10.1500    -0.877555     0.501033     0.412069
+      10.4500     -1.07479     0.517753     0.397969
+      10.7500     -1.28486     0.385494     0.449377
+      11.0500     -1.52064     0.170618     0.430471
+      11.3500     -1.65009     0.139935     0.271482

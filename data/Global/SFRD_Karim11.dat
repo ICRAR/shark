@@ -1,0 +1,53 @@
+# radio-based SFRD at 0.2<z<3 from Karim et al. (2011) ApJ 730, 61
+# based on stacking of star-forming galaxies in stellar mass selected samples in COSMOS field
+# data supplied by Claudia (17/12/13), from Table 7
+#
+# assume H0=70, Omega_m=0.3, Omega_Lambda=0.7
+#
+# IMF adopted: Chabrier IMF (0.1<m<100 Msun)
+#
+# derive SFRs from L(1.4 GHz) using Bell etal (2003) calibration, 
+# rescaled down by factor 1.74 to convert from Salpeter to Chabrier IMF (eq.6)
+# SFR = 3.18e-22 L   for L > Lc
+# SFR = 3.18e-22 /(0.1 + 0.9(L/Lc)^0.3)   for L < Lc
+# where SFR in Msun/yr, L is L(1.4 GHz) in W/Hz, Lc=6.4e21 W/Hz
+# in practice, most of galaxies in sample have L>Lc
+#
+# SFRD in Msun/yr/Mpc^3
+# error is on SFRD
+#
+# Directly measured SFRD (after correcting SMF at low masses using Ilbert 2010)
+# z  SFRD err_up err_dn
+0.3  0.011 0.001 0.001 
+0.5  0.015 0.001 0.001 
+0.7  0.025 0.002 0.002 
+0.9  0.043 0.003 0.003 
+1.1  0.048 0.003 0.004 
+1.4  0.048 0.004 0.004 
+1.8  0.070 0.007 0.008 
+2.25 0.066 0.007 0.006 
+2.75 0.077 0.009 0.011
+#
+# Extrapolated SFRD to low mass galaxies: by assuming a maximum SSFR
+# z  SFRD err_up err_dn
+0.3  0.018 0.002 0.006 
+0.5  0.023 0.002 0.006 
+0.7  0.039 0.003 0.009 
+0.9  0.055 0.002 0.008 
+1.1  0.061 0.003 0.005 
+1.4  0.063 0.004 0.007 
+1.8  0.095 0.014 0.014 
+2.25 0.098 0.011 0.009 
+2.75 0.121 0.017 0.017 
+#
+# Extrapolated SFRD to low mass galaxies: by using the Schechter fit with no maximum SSFR
+# z  SFRD err_up err_dn
+0.3   0.019 0.004 0.007  
+0.5   0.025 0.004 0.008   
+0.7   0.043 0.007 0.015
+0.9   0.058 0.005 0.010
+1.1   0.730 0.010 0.016
+1.4   0.700 0.008 0.018
+1.8   0.119 0.040 0.048
+2.25  0.115 0.043 0.046
+2.75  0.175 0.236 0.099

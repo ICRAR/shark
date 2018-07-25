@@ -1,0 +1,10 @@
+# Cloudy computed cooling tables
+# Metallicity  File name
+0.000000      C08.00_mzero.cie
+0.001000      C08.00_m-30.cie
+0.010000      C08.00_m-20.cie
+0.031623      C08.00_m-15.cie
+0.100000      C08.00_m-10.cie
+0.316228      C08.00_m-05.cie
+1.000000      C08.00_msol.cie
+3.162278      C08.00_m+05.cie

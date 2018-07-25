@@ -1,0 +1,10 @@
+#log(Mstars/Msun) log(MH2/Mstars)
+#log(MH2/Mstars) vs. log(Mstars/Msun) for early-type galaxies
+#MH2-to-Mstellar from Calette et al. (2018, ArXiv:1803.07692)
+#stellar masses homogeneized to a Chabrier IMF.
+#log(Mstars/Msun) log(MH2/Mstars)
+9.41558 -2.14846 -2.88055 -1.37201 
+10.0390 -2.90273 -3.63481 -2.12628 
+10.3506 -3.16894 -3.98976 -2.28157 
+10.7403 -3.56826 -4.50000 -2.59215 
+11.2597 -3.72355 -4.47782 -2.61433 

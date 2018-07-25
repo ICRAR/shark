@@ -1,0 +1,10 @@
+# Standard set of cooling tables
+# Metallicity  File name
+0.0            S93_mzero.cie
+0.001          S93_m-30.cie
+0.01           S93_m-20.cie
+0.0316228      S93_m-15.cie
+0.1            S93_m-10.cie
+0.316228       S93_m-05.cie
+1.0            S93_msol.cie
+3.16228        S93_m+05.cie
