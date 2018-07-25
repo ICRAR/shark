@@ -26,7 +26,6 @@ import coldgas
 import global_quantities
 import hmf
 import hothalo
-import resolve_comparison
 import sizes
 import smf
 import smhm
@@ -44,7 +43,7 @@ def main():
         args_minimal: (smhm,),
         args_with_obsdir: (hmf, sizes, smf),
         args_with_snapshot: (hothalo,),
-        args_all: (coldgas, global_quantities, resolve_comparison),
+        args_all: (coldgas, global_quantities),
     }
 
     n_mods = functools.reduce(lambda x, y: x + y, [len(l) for l in args_and_mods.values()])

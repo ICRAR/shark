@@ -61,9 +61,9 @@ xssfr    = ssfrbins + dssfr/2.0
 
 def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err, hist_smf_30kpc):
 
-    # z0 obs
+    # Wright et al. (2017, z=0). Chabrier IMF
     z0obs = []
-    lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/GAMAII_BBD_GSMFs.data', [0,1,2,3])
+    lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/GAMAII_BBD_GSMFs.dat', [0,1,2,3])
     xobs = lm
     indx = np.where(p > 0)
     yobs = np.log10(p[indx])
@@ -71,24 +71,9 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     yup = np.log10(p[indx]+dpup[indx]) - yobs
     z0obs.append((observation("Wright+2017", xobs[indx], yobs, ydn, yup, err_absolute=False), 'o'))
 
-    #lm, p3, dp3 = common.load_observation(obsdir, 'mf/SMF_Bernardi2013_SerExp.data', [0,1,2])
-    #if imf == 'ken':
-    #    lm = lm - 0.09
-    #xobs = lm
-    #yobs = np.full(xobs.shape, -999.)
-    #lerr = np.full(xobs.shape, -999.)
-    #herr = np.full(xobs.shape, 999.)
-    #indx = np.where( p3 < 1)
-    #yobs[indx] = p3[indx]
-    #lerr[indx] = dp3[indx]
-    #herr[indx] = dp3[indx]
-    #z0obs.append((observation("Bernardi+2013", xobs, yobs, lerr, herr, err_absolute=False), 'x'))
-
     # Moustakas (Chabrier IMF), ['Moustakas+2013, several redshifts']
-    zdnM13, lmM13, pM13, dp_dn_M13, dp_up_M13 = common.load_observation(obsdir, 'mf/SMF_Moustakas2013.data', [0,3,5,6,7])
-    if imf == 'ken':
-        lmM13 = lmM13 - 0.09
-    xobsM13 = lmM13
+    zdnM13, lmM13, pM13, dp_dn_M13, dp_up_M13 = common.load_observation(obsdir, 'mf/SMF/SMF_Moustakas2013.dat', [0,3,5,6,7])
+    xobsM13 = lmM13 
 
     yobsM13 = np.full(xobsM13.shape, -999.)
     lerrM13 = np.full(xobsM13.shape, -999.)
@@ -100,12 +85,10 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     indx = np.where( dp_up_M13 > 0)
     herrM13[indx]  = dp_up_M13[indx]
 
-    # Muzzin (Chabrier IMF), ['Moustakas+2013, several redshifts']
-    zdnMu13,zupMu13,lmMu13,pMu13,dp_dn_Mu13,dp_up_Mu13 = common.load_observation(obsdir, 'mf/SMF_Muzzin2013.data', [0,1,2,4,5,5])
-    if(imf == 'ken'):
-        lmMu13 = lmMu13 - 0.09
-    xobsMu13 = lmMu13
-
+    # Muzzin (Kroupa IMF), ['Moustakas+2013, several redshifts']
+    zdnMu13,zupMu13,lmMu13,pMu13,dp_dn_Mu13,dp_up_Mu13 = common.load_observation(obsdir, 'mf/SMF/SMF_Muzzin2013.dat', [0,1,2,4,5,5])
+    # -0.09 corresponds to the IMF correction
+    xobsMu13 = lmMu13 - 0.09
     yobsMu13 = np.full(xobsMu13.shape, -999.)
     lerrMu13 = np.full(xobsMu13.shape, -999.)
     herrMu13 = np.full(xobsMu13.shape, 999.)
@@ -116,9 +99,10 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     indx = np.where( dp_up_Mu13 > 0)
     herrMu13[indx]  = dp_up_Mu13[indx]
 
-    # Santini 2012
-    zdnS12, lmS12, pS12, dp_dn_S12, dp_up_S12 = common.load_observation(obsdir, 'mf/SMF_Santini2012.data', [0,2,3,4,5])
+    # Santini 2012 (Salpeter IMF)
+    zdnS12, lmS12, pS12, dp_dn_S12, dp_up_S12 = common.load_observation(obsdir, 'mf/SMF/SMF_Santini2012.dat', [0,2,3,4,5])
     hobs = 0.7
+    # factor 0.24 corresponds to the IMF correction.
     xobsS12 = lmS12 - 0.24 +  np.log10(hobs/h0)
     yobsS12 = np.full(xobsS12.shape, -999.)
     lerrS12 = np.full(xobsS12.shape, -999.)
@@ -130,7 +114,8 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     indx = np.where( dp_up_S12 > 0)
     herrS12[indx]  = dp_up_S12[indx]
 
-    zD17, lmD17, pD17, dp_dn_D17, dp_up_D17 = common.load_observation(obsdir, 'mf/Driver17/Combined.dat', [0,1,2,3,4])
+    # Wright et al. (2018, several reshifts). Assumes Chabrier IMF.
+    zD17, lmD17, pD17, dp_dn_D17, dp_up_D17 = common.load_observation(obsdir, 'mf/SMF/Wright18_CombinedSMF.dat', [0,1,2,3,4])
     hobs = 0.7
     pD17 = pD17 - 3.0*np.log10(hobs) 
     lmD17= lmD17 - np.log10(hobs)
@@ -282,9 +267,6 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
             y = hist_smf_modelvar[idx,135:179]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],color='Crimson', linestyle='dashed', label='$\\beta = 2$ (SN)' if idx == 0 else None)
-            #y = hist_smf_modelvar[idx,45:90]
-            #ind = np.where(y < 0.)
-            #ax.plot(xmf[ind],y[ind],'b', linestyle='dashed', label='$f_{\\rm df} = 1$' if idx == 0 else None)
             y = hist_smf_modelvar[idx,90:134]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'b', linestyle='dashdot', label='$f_{\\rm df} = 0$' if idx == 0 else None)
@@ -355,7 +337,7 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #HIPASS
-    lmHI, pHI, dpHIdn, dpHIup = common.load_observation(obsdir, 'mf/HIMF/HIMF_Zwaan2005.data', [0,1,2,3])
+    lmHI, pHI, dpHIdn, dpHIup = common.load_observation(obsdir, 'mf/GasMF/HIMF_Zwaan2005.dat', [0,1,2,3])
 
     #correct data for their choice of cosmology
     hobs = 0.75
@@ -364,7 +346,7 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
     ax.errorbar(xobs, yobs, yerr=[dpHIdn,dpHIup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Zwaan+2005")
 
     #ALFALFA.40
-    lmHI, pHI, pdnHI, pduHI = common.load_observation(obsdir, 'mf/HIMF/HIMF_Jones18.dat', [0,1,2,3])
+    lmHI, pHI, pdnHI, pduHI = common.load_observation(obsdir, 'mf/GasMF/HIMF_Jones18.dat', [0,1,2,3])
 
     #correct data for their choice of cosmology
     dpdnHI = pHI - pdnHI
@@ -447,24 +429,29 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     # H2 mass function
-    lmCO, pCO, dpCOdn, dpCOup = common.load_observation(obsdir, 'Keres03_LCOLF60m.dat', [0,1,2,3])
+    lmCO, pCO, dpCOdn, dpCOup = common.load_observation(obsdir, 'mf/GasMF/Keres03_LCOLF60m.dat', [0,1,2,3])
 
     # correct data for their choice of cosmology
-    hobs = 0.7
+    hobs = 0.75
     dpCOdn = np.abs(dpCOdn-pCO)
     dpCOup = np.abs(dpCOup-pCO)
     xobs = lmCO + np.log10(pow(hobs,2)/pow(h0,2))
     yobs = pCO + np.log10(pow(h0,3)/pow(hobs,3))
 
+    # apply a constant MW conversion factor.
     X = 2.0
     corr_fac_H2 = np.log10(580.*X)+2.*np.log10(2.6)-np.log10(4.*math.pi)
     ax.errorbar(xobs+corr_fac_H2, yobs, yerr=[dpCOdn,dpCOup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Keres+03")
 
     #H2 mass function
-    lm,p,dpdn,dpup = common.load_observation(obsdir, 'mf/B14_MH2MF.dat', [0,1,2,3])
+    lm,p,dpdn,dpup = common.load_observation(obsdir, 'mf/GasMF/B14_MH2MF.dat', [0,1,2,3])
     #correct data for their choice of cosmology
+    #add bin to the data.
+    hobs = 0.7
     logbin = np.log10(0.4)
-    ax.errorbar(lm[2:8],p[2:8]-logbin,yerr=[p[2:8]-dpdn[2:8],dpup[2:8]-p[2:8]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Boselli+14")
+    xobs = lm[2:8] + np.log10(pow(hobs,2)/pow(h0,2))
+    yobs = p[2:8] - logbin + np.log10(pow(h0,3)/pow(hobs,3))
+    ax.errorbar(xobs, yobs, yerr=[p[2:8]-dpdn[2:8],dpup[2:8]-p[2:8]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Boselli+14")
 
     #Predicted H2MF
     if plotz_HImf[0]:
@@ -547,7 +534,7 @@ def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):
     common.savefig(outdir, fig, 'SSFR_Mstars.pdf')
 
 
-def plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat):
+def plot_mzr(plt, outdir, obsdir, h0, mzr, mzr_cen, mzr_sat):
 
     fig = plt.figure(figsize=(9.5,9.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -556,11 +543,13 @@ def plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat):
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
-    # Observations at z = 0
-    # Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MMAdrews13.dat', [0,1,2,3])
+    # Observations at z=0
+    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/MMAdrews13.dat', [0,1,2,3])
     corrzsun = 8.69
-    z0obs = observation('Andrews & Martini (2013)', lm, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, True)
+    hobs = 0.7
+    #add cosmology correction plus IMF correction that goes into the stellar mass.
+    corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) - 0.09
+    z0obs = observation('Andrews & Martini (2013)', lm + corr_cos, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, True)
 
     # observations approximate of Maiolino et al. (2008)
     z05obs = observation('Maiolino+08', [8.25,10.5,11.5], [-0.59,0.26,0.36], None, None, None)
@@ -667,14 +656,10 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ind = np.where(mainseqsf[idx,0,:] != 0)
     xplot = xmf[ind]
     yplot = mainseqsf[idx,0,ind]
-    #errdn = mainseqsf[idx,1,ind]
-    #errup = mainseqsf[idx,2,ind]
     errdn = mainseqsf_1s[idx,1,ind]
     errup = mainseqsf_1s[idx,2,ind]
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', alpha=1,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', alpha=1,interpolate=True)
-    #ax.fill_between(xplot,yplot[0],yplot[0]-errdn_1s[0], facecolor='b', alpha=0.4,interpolate=True)
-    #ax.fill_between(xplot,yplot[0],yplot[0]+errup_1s[0], facecolor='b', alpha=0.4,interpolate=True)
     ax.plot(xplot,yplot[0],'k', linestyle='solid', label="Shark")
  
     ind = np.where(mainseqsf_GD14[idx_modelvar,0,:] != 0)
@@ -919,7 +904,7 @@ def plot_fmzr(plt, outdir, fmzr):
     common.savefig(outdir, fig, 'fmzr.pdf')
 
 
-def plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat):
+def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat):
 
     fig = plt.figure(figsize=(4.5,8))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -931,23 +916,24 @@ def plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
     #MZR z=0
-    corrzsun = 8.69
-    lm, mz  = common.load_observation(obsdir, 'MMR-Kewley08.dat', [0,1])
-    ax.plot(lm[0:11],mz[0:11]- corrzsun,'grey', linestyle='solid', linewidth = 0.8, label='Kewley & Ellison 08')
-    ax.plot(lm[13:27],mz[13:27]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    #ax.plot(lm[29:39],mz[29:39]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    #ax.plot(lm[41:55],mz[41:55]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    #ax.plot(lm[57:69],mz[57:69]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    #ax.plot(lm[71:84],mz[71:84]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    #ax.plot(lm[86:100],mz[86:100]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    #ax.plot(lm[102:117],mz[102:117]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    ax.plot(lm[119:134],mz[119:134]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    ax.plot(lm[136:148],mz[136:148]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
+    corrzsun = 8.69 #solar oxygen abundance in units of 12 + log(O/H)
+    hobs = 0.72
+    #add cosmology correction plus IMF correction that goes into the stellar mass.
+    corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) - 0.09
+    lm, mz  = common.load_observation(obsdir, 'MZR/MMR-Kewley08.dat', [0,1])
+    ax.plot(lm[0:11] + corr_cos,mz[0:11]- corrzsun,'grey', linestyle='solid', linewidth = 0.8, label='Kewley & Ellison 08')
+    ax.plot(lm[13:27] + corr_cos,mz[13:27]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
+    ax.plot(lm[119:134] + corr_cos,mz[119:134]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
+    ax.plot(lm[136:148] + corr_cos,mz[136:148]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
 
-    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MMAdrews13.dat', [0,1,2,3])
-    common.errorbars(ax, lm, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 's', label='Andrews+13')
-    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'Tremonti04.dat', [0,1,2,3])
-    common.errorbars(ax, lm, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 'o', label="Tremonti+04")
+    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/MMAdrews13.dat', [0,1,2,3])
+    hobs = 0.7
+    #add cosmology correction plus IMF correction that goes into the stellar mass.
+    corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) - 0.09
+    common.errorbars(ax, lm+ corr_cos, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 's', label='Andrews+13')
+    #correction for Tremonti is the same.
+    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/Tremonti04.dat', [0,1,2,3])
+    common.errorbars(ax, lm+ corr_cos, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 'o', label="Tremonti+04")
 
     ind = np.where(mzr_cen[0,0,:] != 0)
     yplot = (mzr_cen[0,0,ind])
@@ -980,8 +966,7 @@ def plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
     #MZR z=0
-
-    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MSZR-Gallazzi05.dat', [0,1,2,3])
+    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/MSZR-Gallazzi05.dat', [0,1,2,3])
     common.errorbars(ax, lm[0:7], mz[0:7], mzdn[0:7], mzup[0:7], 'grey', 'D', label='Kirby+13')
     common.errorbars(ax, lm[7:22], mz[7:22], mzdn[7:22], mzup[7:22], 'grey', 'o', label='Gallazzi+05')
 
@@ -1008,7 +993,7 @@ def plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)
     common.savefig(outdir, fig, 'mzr_z0.pdf')
 
 
-def plot_sfr_mstars_z0(plt, outdir, obsdir, sfr_seq, mainseqsf):
+def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
 
     fig = plt.figure(figsize=(5,5))
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -1032,15 +1017,17 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, sfr_seq, mainseqsf):
     ax.plot(xplot,yplot[0],color='k',linestyle='solid', linewidth = 1, label="Shark all galaxies")
 
     #SFR relation z=0
-    lm, SFR = common.load_observation(obsdir, 'Brinchmann04.dat', (0, 1))
-    ax.plot(lm[0:35], SFR[0:35], color='PaleVioletRed', linewidth = 3, linestyle='dashed', label='Brinchmann+04')
-    ax.plot(lm[36:70], SFR[36:70], color='PaleVioletRed',linewidth = 5, linestyle='dotted')
-    ax.plot(lm[71:len(SFR)], SFR[71:len(SFR)], color='PaleVioletRed',linewidth = 5, linestyle='dotted')
+    lm, SFR = common.load_observation(obsdir, 'SFR/Brinchmann04.dat', (0, 1))
+    hobs = 0.7
+    #add cosmology correction plus IMF correction that goes into the stellar mass.
+    corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) - 0.09
+    # apply correction to both stellar mass and SFRs.
+    ax.plot(lm[0:35] + corr_cos, SFR[0:35] + corr_cos, color='PaleVioletRed', linewidth = 3, linestyle='dashed', label='Brinchmann+04')
+    ax.plot(lm[36:70] + corr_cos, SFR[36:70] + corr_cos, color='PaleVioletRed',linewidth = 5, linestyle='dotted')
+    ax.plot(lm[71:len(SFR)] + corr_cos, SFR[71:len(SFR)] + corr_cos, color='PaleVioletRed',linewidth = 5, linestyle='dotted')
 
     xdataD16 = [9.3, 10.6]
     ydataD16 = [-0.39, 0.477]
-#     yrrupD16 = [-0.19, 0.677]
-#     yrrdnD16 = [-0.59, 0.277]
     ax.plot(xdataD16,ydataD16, color='b',linestyle='dashdot',linewidth = 4, label='Davies+16')
 
     # Legend
@@ -1073,7 +1060,7 @@ def plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr):
     ax.plot(xplot,yplot[0],color='r',linestyle='solid', linewidth = 1, label="$\\rm M_{\\rm halo}> 10^{12}\,M_{\odot}$")
 
     #passive fraction z=0
-    lm, frac = common.load_observation(obsdir, 'PassiveFraction_Halpha_Davies16.dat', (0, 1))
+    lm, frac = common.load_observation(obsdir, 'SFR/PassiveFraction_Halpha_Davies16.dat', (0, 1))
     ax.plot(lm[0:6], frac[0:6], color='k', linewidth = 2, linestyle='dotted', label='Davies+16 all galaxies')
     ax.plot(lm[8:14], frac[8:14], color='b',linewidth = 2, linestyle='dotted', label='Davies+16 isolated')
     ax.plot(lm[16:20], frac[16:20], color='r',linewidth = 2, linestyle='dotted', label='Davies+16 groups')
@@ -1364,12 +1351,12 @@ def main(modeldir, outdir, subvols, obsdir):
     plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat)
     plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat)
     plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat)
-    plot_mzr(plt, outdir, obsdir, mzr, mzr_cen, mzr_sat)
+    plot_mzr(plt, outdir, obsdir, h0, mzr, mzr_cen, mzr_sat)
     plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainseqsf_1s, mainseqHI, mainseqH2)
     plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat)
     plot_fmzr(plt, outdir, fmzr)
-    plot_mzr_z0(plt, outdir, obsdir, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)
-    plot_sfr_mstars_z0(plt, outdir, obsdir, sfr_seq, mainseqsf)
+    plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)
+    plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf)
     plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr) 
 
 

@@ -189,8 +189,7 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ind = np.where(msharktot > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(msharktot[ind]*pow(h0,2.0)),'DarkMagenta')
 
-
-    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation(obsdir, 'Models/OtherModels/EAGLE_BaryonGrowthTotal.txt', [0,2,3,4,5,6])
+    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation(obsdir, 'Models/OtherModels/EAGLE_BaryonGrowthTotal.dat', [0,2,3,4,5,6])
     eaglesm  = np.log10(pow(10.0, eaglesm) + pow(10.0, eaglesmout))
     eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
     ind = np.where(eaglesm > 0)
@@ -222,7 +221,7 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     ind = np.where(msharktot > 0)
     ax.plot(us.look_back_time(redshifts), np.log10(msharktot[ind]*pow(h0,2.0)),'DarkMagenta')
 
-    lbt, galsm, galism, galhg, galejec = common.load_observation(obsdir, 'Models/OtherModels/global_Mitchell18', [0,2,3,4,5])
+    lbt, galsm, galism, galhg, galejec = common.load_observation(obsdir, 'Models/OtherModels/global_Mitchell18.dat', [0,2,3,4,5])
     galtot  = np.log10(pow(10.0, galsm) + pow(10.0, galism) + pow(10.0, galhg) + pow(10.0, galejec))
     galsm   = (galsm)
     galism  = (galism)
@@ -326,7 +325,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     common.prepare_ax(ax, 0, 10, -3, -0.5, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    redK11, SFRK11, err_upK11, err_dnK11 = common.load_observation(obsdir, 'SFR/SFRD_Karim11.data', [0,1,2,3])
+    redK11, SFRK11, err_upK11, err_dnK11 = common.load_observation(obsdir, 'Global/SFRD_Karim11.dat', [0,1,2,3])
 
     hobs = 0.7
     xobs = redK11
@@ -347,7 +346,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ax.errorbar(xobs[9:17], yobs[9:17], yerr=[yobs[9:17]-lerr[9:17],herr[9:17]-yobs[9:17]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='x')
 
     #Driver (Chabrier IMF), ['Baldry+2012, z<0.06']
-    redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'SFR/Driver17_sfr.dat', [0,1,2,3,4,5,6])
+    redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_sfr.dat', [0,1,2,3,4,5,6])
 
     hobs = 0.7
     xobsD17 = (redD17d+redD17u)/2.0
@@ -367,14 +366,14 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='dotted',  linewidth=1, label ='bursts')
 
     sfr_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [2])
-    sfr_modelvar_burst1 = sfr_modelvar[0:179]
+    sfr_modelvar_burst3 = sfr_modelvar[0:179]
     sfr_modelvar_nu0p5  = sfr_modelvar[179:359]
     sfr_modelvar_burst20= sfr_modelvar[360:539]
 
     ind = np.where(sfr_modelvar_burst20 > -10)
     ax.plot(redshifts[ind], sfr_modelvar_burst20[ind], 'Sienna', linestyle='dotted', label ='$\\eta_{\\rm burst}=20$')
-    ind = np.where(sfr_modelvar_burst1 > -10)
-    ax.plot(redshifts[ind], sfr_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
+    ind = np.where(sfr_modelvar_burst3 > -10)
+    ax.plot(redshifts[ind], sfr_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(sfr_modelvar_nu0p5 > -10)
     ax.plot(redshifts[ind], sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
@@ -399,8 +398,8 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
 
     ind = np.where(sfr_modelvar_burst20 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
-    ind = np.where(sfr_modelvar_burst1 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot')
+    ind = np.where(sfr_modelvar_burst3 > -10)
+    ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot')
     ind = np.where(sfr_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted')
 
@@ -433,19 +432,19 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
 
 
     sm_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [3])
-    sm_modelvar_burst1  = sm_modelvar[0:179]
+    sm_modelvar_burst3  = sm_modelvar[0:179]
     sm_modelvar_nu0p5   = sm_modelvar[181:360]
     sm_modelvar_burst20 = sm_modelvar[360:539]
 
     ind = np.where(sm_modelvar_burst20 > -10)
     ax.plot(redshifts[ind], sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
-    ind = np.where(sm_modelvar_burst1 > -10)
-    ax.plot(redshifts[ind], sm_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot')
+    ind = np.where(sm_modelvar_burst3 > -10)
+    ax.plot(redshifts[ind], sm_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot')
     ind = np.where(sm_modelvar_nu0p5 > -10)
     ax.plot(redshifts[ind], sm_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    redD17d, redD17u, smdD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'SFR/Driver17_smd.dat', [1,2,3,4,5,6,7])
+    redD17d, redD17u, smdD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_smd.dat', [1,2,3,4,5,6,7])
 
     hobs = 0.7
     xobs = (redD17d+redD17u)/2.0
@@ -474,8 +473,8 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
 
     ind = np.where(sm_modelvar_burst20 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted',  label ='$\\eta_{\\rm burst}=20$')
-    ind = np.where(sm_modelvar_burst1 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_burst1[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
+    ind = np.where(sm_modelvar_burst3 > -10)
+    ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(sm_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
@@ -552,19 +551,19 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r')
 
     h2_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [1])
-    h2_modelvar_burst1 = h2_modelvar[0:179]
+    h2_modelvar_burst3 = h2_modelvar[0:179]
     h2_modelvar_nu0p5  = h2_modelvar[181:360]
     h2_modelvar_burst20= h2_modelvar[360:539]
 
     ind = np.where(h2_modelvar_burst20 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
-    ind = np.where(h2_modelvar_burst1 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_burst1[ind], 'Crimson', linestyle='dashdot')
+    ind = np.where(h2_modelvar_burst3 > -10)
+    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_burst3[ind], 'Crimson', linestyle='dashdot')
     ind = np.where(h2_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'SFR/Walter17_H2.dat', [0,1,2,3,4,5])
+    zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Walter17_H2.dat', [0,1,2,3,4,5])
 
     hobs = 0.7
 
@@ -639,7 +638,7 @@ def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol)
     ax.plot(us.look_back_time(redshifts[ind]),np.log10(mdustden_mol[ind]*pow(h0,2.0)),'r', linestyle = 'dashed', label ='Shark metals in molecular gas')
     
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    redD17d,redD17u,smdD17,err1,err2,err3,err4 = common.load_observation(obsdir, 'SFR/Driver17_dust.dat', [1,2,3,4,5,6,7])
+    redD17d,redD17u,smdD17,err1,err2,err3,err4 = common.load_observation(obsdir, 'Global/Driver18_dust.dat', [1,2,3,4,5,6,7])
 
     hobs = 0.7
     xobs = (redD17d+redD17u)/2.0
@@ -679,14 +678,14 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(omegaHI[ind]*pow(h0,2.0)) + np.log10(XH), 'r', label='Shark')
 
     hi_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0])
-    hi_modelvar_burst1 = hi_modelvar[0:179]
+    hi_modelvar_burst3 = hi_modelvar[0:179]
     hi_modelvar_nu0p5  = hi_modelvar[181:360]
     hi_modelvar_burst20= hi_modelvar[360:539]
 
     ind = np.where(hi_modelvar_burst20 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_burst20[ind], 'Sienna', linestyle='dotted', label ='$\\eta_{\\rm burst}=20$')
-    ind = np.where(hi_modelvar_burst1 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_burst1[ind], 'Crimson', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
+    ind = np.where(hi_modelvar_burst3 > -10)
+    ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_burst3[ind], 'Crimson', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(hi_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
@@ -701,7 +700,7 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ax.text(10.55, -2.4, 'CGM?', fontsize=12)
 
     # Rhee+18 compilation
-    redR18,reddR18,reduR18,omegaR18,errdnR18,errupR18 = common.load_observation(obsdir, 'Gas/HI_density_for_Claudia.dat', [1,2,3,7,8,9])
+    redR18,reddR18,reduR18,omegaR18,errdnR18,errupR18 = common.load_observation(obsdir, 'Global/HI_density_Rhee18.dat', [1,2,3,7,8,9])
 
     ax.errorbar(us.look_back_time(redR18),np.log10(omegaR18*1e-3), xerr=[reddR18,reduR18],yerr=[errdnR18,errupR18], ls='None', mfc='None', ecolor = 'grey', mec='grey', marker='o', label="Rhee+18 (comp)")
 

@@ -173,7 +173,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
     ax.plot(xmf[ind],rL16[ind],'b', linestyle='solid', label ='L16 disks')
 
 
-    m,r = common.load_observation(obsdir, 'rdisk_L16.dat', [0,1])
+    m,r = common.load_observation(obsdir, 'SizesAndAM/rdisk_L16.dat', [0,1])
     ax.plot(m[0:36], r[0:36], linestyle='dotted',color='b',label="50th, 68th, 90th")
     ax.plot(m[38:83], r[38:83], linestyle='dotted',color='b')
     ax.plot(m[85:128], r[85:129], linestyle='dotted',color='b')
@@ -241,7 +241,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
 
     ax.plot(xmf[ind],rL16_2,'m', linestyle='solid', label ='L16 $M_{\\star}>2\\times 10^{10}\\rm M_{\odot}$')
     
-    m,r = common.load_observation(obsdir, 'rbulge_L16.dat', [0,1])
+    m,r = common.load_observation(obsdir, 'SizesAndAM/rbulge_L16.dat', [0,1])
     ax.plot(m[0:39], r[0:39], linestyle='dotted',color='r')
     ax.plot(m[41:76], r[41:76], linestyle='dotted',color='r')
     ax.plot(m[78:115], r[78:115], linestyle='dotted',color='r')
@@ -367,7 +367,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
 
     bin_it = functools.partial(us.wmedians, xbins=xmf_obs)
     
-    bt, ms, mg, js, jg, jmol = common.load_observation(obsdir, 'Obreschkow14_FP.dat', [2,7,8,12,14,15])
+    bt, ms, mg, js, jg, jmol = common.load_observation(obsdir, 'SizesAndAM/Obreschkow14_FP.dat', [2,7,8,12,14,15])
     
     jobs_sm  = np.zeros(shape = (3, len(xmf_obs)))
     jobs_hi  = np.zeros(shape = (3, len(xmf_obs)))
@@ -397,7 +397,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     ax.plot(xmf_obs[ind], yplot[0], 'go',fillstyle='full')
     ax.plot(xmf_obs[ind], yplot[0], 'g', linestyle='dotted')
     
-    mg, ms, jg, js = common.load_observation(obsdir, 'LITTLETHINGS_Butler16.dat', [1,3,7,9])
+    mg, ms, jg, js = common.load_observation(obsdir, 'SizesAndAM/LITTLETHINGS_Butler16.dat', [1,3,7,9])
     jobs_sm = bin_it(x=ms, y=js)
     jobs_hi = bin_it(x=ms, y=jg)
     
@@ -530,7 +530,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
     ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$f_{\\rm smbh}=8 \\times 10^{-5}$')
 
     #BH-bulge relation
-    mBH_M13, errup_M13, errdn_M13, mBH_power, mbulge_M13 = common.load_observation(obsdir, 'MBH_sigma_Mbulge_McConnelMa2013.data', [0,1,2,3,7])
+    mBH_M13, errup_M13, errdn_M13, mBH_power, mbulge_M13 = common.load_observation(obsdir, 'BHs/MBH_sigma_Mbulge_McConnelMa2013.dat', [0,1,2,3,7])
 
     ind = np.where((mBH_M13 > 0) & (mbulge_M13 > 0))
     xobs = np.log10(mbulge_M13[ind])
@@ -540,7 +540,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
     ax.errorbar(xobs, yobs, yerr=[yobs-lerr,herr-yobs], ls='None', mfc='None', ecolor = 'r', mec='r',marker='^',label="McConnell & Ma 2013")
 
     #BH-bulge relation
-    mBH_H04, errup_H04, errdn_H04, mbulge_H04 = common.load_observation(obsdir, 'MBH_sigma_Mbulge_HaeringRix2004.data', [0,1,2,4])
+    mBH_H04, errup_H04, errdn_H04, mbulge_H04 = common.load_observation(obsdir, 'BHs/MBH_sigma_Mbulge_HaeringRix2004.dat', [0,1,2,4])
 
     xobs = np.log10(mbulge_H04)
 
@@ -613,7 +613,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
     ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=0.5$')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    mM16, fM16, errdnfM16, errupfM16 = common.load_observation(obsdir, 'Moffet16.dat', [0,1,2,3])
+    mM16, fM16, errdnfM16, errupfM16 = common.load_observation(obsdir, 'Morph/Moffet16.dat', [0,1,2,3])
     errdnfM16 = np.abs(errdnfM16-fM16)
     errupfM16 = np.abs(errupfM16-fM16)
     ax.errorbar(mM16,fM16,yerr=[errdnfM16,errupfM16], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Moffett+16")

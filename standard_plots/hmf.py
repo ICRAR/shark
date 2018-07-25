@@ -55,7 +55,7 @@ def plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz):
         ax.text(xleg,yleg, 'z=%s' % (str(z)))
 
         #HMF calc HMF calculated by Sheth & Tormen (2001)
-        lmp, dp = common.load_observation(obsdir, 'mf/HMF/mVector_PLANCK-SMT_z%s.txt' % str(z).replace('.', ''), [0, 7])
+        lmp, dp = common.load_observation(obsdir, 'mf/HMF/mVector_PLANCK-SMT_z%s.dat' % str(z).replace('.', ''), [0, 7])
         lmp_plot = np.log10(lmp) - np.log10(h0)
         dp_plot = np.log10(dp) + np.log10(pow(h0,3.))
         if idx == 0:

@@ -315,8 +315,8 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     plot_mrelation(mh1_ms_relation_ltg,  'b',linestyle='dotted')
     plot_mrelation(mh1_ms_relation_etg,  'r',linestyle='dotted')
 
-    add_observations_to_plot(obs_dir, 'RHI-Mstars_Callette18-LTGs.csv', ax, 's', "Calette+18 LTGs", color='grey', err_absolute=True)
-    add_observations_to_plot(obs_dir, 'RHI-Mstars_Callette18-ETGs.csv', ax, 'o', "Calette+18 ETGs", color='grey', err_absolute=True)
+    add_observations_to_plot(obs_dir, 'RHI-Mstars_Callette18-LTGs.dat', ax, 's', "Calette+18 LTGs", color='grey', err_absolute=True)
+    add_observations_to_plot(obs_dir, 'RHI-Mstars_Callette18-ETGs.dat', ax, 'o', "Calette+18 ETGs", color='grey', err_absolute=True)
 
     # Legend
     common.prepare_legend(ax, ['grey','grey','grey'],loc=1)
@@ -353,8 +353,8 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     plot_mrelation(mh2_ms_relation_ltg, 'b',linestyle='dotted')
     plot_mrelation(mh2_ms_relation_etg, 'r',linestyle='dotted')
 
-    add_observations_to_plot(obs_dir, 'RH2-Mstars_Callette18-LTGs.csv', ax, 's', "Calette+18 LTGs",color='grey', err_absolute=True)
-    add_observations_to_plot(obs_dir, 'RH2-Mstars_Callette18-ETGs.csv', ax, 'o', "Calette+18 ETGs",color='grey', err_absolute=True)
+    add_observations_to_plot(obs_dir, 'RH2-Mstars_Callette18-LTGs.dat', ax, 's', "Calette+18 LTGs",color='grey', err_absolute=True)
+    add_observations_to_plot(obs_dir, 'RH2-Mstars_Callette18-ETGs.dat', ax, 'o', "Calette+18 ETGs",color='grey', err_absolute=True)
 
     # Legend
     common.prepare_legend(ax, ['grey','grey','grey'],loc=1)
