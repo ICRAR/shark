@@ -266,14 +266,14 @@ set(SHARK_SRCS
 add_executable(shark ${SHARK_SRCS})
 target_link_libraries(shark sharklib)
 
-# Installing stuff
+# Installing stuff: programs, scripts, static data
 install(TARGETS sharklib shark shark-importer
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
-install(PROGRAMS
-       ${CMAKE_SOURCE_DIR}/hpc/shark-run
-       ${CMAKE_SOURCE_DIR}/hpc/shark-submit
-       DESTINATION bin)
+install(PROGRAMS hpc/shark-run hpc/shark-submit
+        DESTINATION bin)
+install(DIRECTORY data
+        DESTINATION share/shark)
 
 #
 # Unit tests
