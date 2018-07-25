@@ -193,6 +193,14 @@ endif()
 configure_file(include/config.h.in include/config.h @ONLY)
 
 #
+# We use the source code directory and the installation prefix to lookup data
+# files distributed with shark itself, so users don't need to worry about their
+# location
+#
+set(data_cpp "${CMAKE_CURRENT_BINARY_DIR}/data.cpp")
+configure_file(src/data.cpp.in "${data_cpp}" @ONLY)
+
+#
 # Add git revision information in a generated .cpp file, which we then include
 # as part of the shark library
 #
@@ -210,6 +218,7 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS
+   "${data_cpp}"
    "${git_revision_cpp}"
    src/agn_feedback.cpp
    src/components.cpp
