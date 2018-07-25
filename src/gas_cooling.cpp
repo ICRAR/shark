@@ -30,6 +30,7 @@
 
 #include "components.h"
 #include "cosmology.h"
+#include "data.h"
 #include "gas_cooling.h"
 #include "logging.h"
 #include "numerical_constants.h"
@@ -88,14 +89,13 @@ std::vector<double> CoolingTable::get_lambda()
 
 GasCoolingParameters::GasCoolingParameters(const Options &options)
 {
-	string cooling_tables_dir;
 	options.load("gas_cooling.model", model, true);
 	options.load("gas_cooling.rcore", rcore);
 	options.load("gas_cooling.lambdamodel", lambdamodel, true);
-	options.load("gas_cooling.cooling_tables_dir", cooling_tables_dir, true);
 	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
 	options.load("gas_cooling.tau_cooling", tau_cooling);
 
+	auto cooling_tables_dir = get_static_data_filepath("cooling");
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
 	load_tables(cooling_tables_dir, metallicity_tables);
 

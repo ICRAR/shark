@@ -30,6 +30,7 @@
 #include <stdexcept>
 
 #include "cosmology.h"
+#include "data.h"
 #include "logging.h"
 #include "numerical_constants.h"
 #include "components.h"
@@ -37,20 +38,61 @@
 
 namespace shark {
 
+enum power_spectrum_type
+{
+	MILLENIUM = 0,
+	MILLENIUM_GAS,
+	PLANCK14,
+	PLANCK15,
+	WDM_DOVE
+};
+
+
+template <>
+power_spectrum_type Options::get<power_spectrum_type>(const std::string &name, const std::string &value) const
+{
+	auto lvalue = lower(value);
+	if (lvalue == "millenium") {
+		return power_spectrum_type::MILLENIUM;
+	}
+	else if (lvalue == "millenium_gas") {
+		return power_spectrum_type::MILLENIUM_GAS;
+	}
+	else if (lvalue == "planck14") {
+		return power_spectrum_type::PLANCK14;
+	}
+	else if (lvalue == "planck15") {
+		return power_spectrum_type::PLANCK15;
+	}
+	else if (lvalue == "wdm_dove") {
+		return power_spectrum_type::WDM_DOVE;
+	}
+	std::ostringstream os;
+	os << name << " option value invalid: " << value << ". ";
+	os << "Supported values are millenium, millenium_gas, planck14, planck15 and wdm_dove";
+	throw invalid_option(os.str());
+}
+
+static
+std::map<power_spectrum_type, std::string> power_spectrum_files {
+	{MILLENIUM, "pk_Mill.dat"},
+	{MILLENIUM_GAS, "pk_MillGas_norm.dat"},
+	{PLANCK14, "pk_Planck_norm.dat"},
+	{PLANCK15, "pk_Planck_SURFS_norm.dat"},
+	{WDM_DOVE, "pk_WDMDove.dat"}
+};
+
 CosmologicalParameters::CosmologicalParameters(const Options &options)
 {
-
-	std::string power_spec_file;
-
+	power_spectrum_type ps_type = PLANCK15;
 	options.load("cosmology.omega_m", OmegaM);
 	options.load("cosmology.omega_b", OmegaB);
 	options.load("cosmology.omega_l", OmegaL);
 	options.load("cosmology.n_s", n_s);
 	options.load("cosmology.sigma8", sigma8);
 	options.load("cosmology.hubble_h", Hubble_h);
-	options.load("cosmology.power_spectrum_file", power_spec_file, true);
-
-	load_tables(power_spec_file);
+	options.load("cosmology.power_spectrum", ps_type);
+	load_tables(get_static_data_filepath(std::string("Power_Spec/") + power_spectrum_files[ps_type]));
 }
 
 void CosmologicalParameters::load_tables(const std::string &power_spec_file)
