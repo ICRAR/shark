@@ -78,7 +78,7 @@ void Subhalo::check_central_subhalo_galaxy_composition() const
 	if (subhalo_type != Subhalo::CENTRAL) {
 		std::ostringstream os;
 		os << *this << " was expected to be of type central, but has type " << subhalo_type;
-		throw invalid_argument(os.str());
+		throw invalid_data(os.str());
 	}
 	do_check_central_subhalo_galaxy_composition();
 }
@@ -88,7 +88,7 @@ void Subhalo::check_satellite_subhalo_galaxy_composition() const
 	if (subhalo_type != Subhalo::SATELLITE) {
 		std::ostringstream os;
 		os << *this << " was expected to be of type satellite, but has type " << subhalo_type;
-		throw invalid_argument(os.str());
+		throw invalid_data(os.str());
 	}
 	do_check_satellite_subhalo_galaxy_composition();
 }
@@ -103,7 +103,7 @@ void Subhalo::do_check_satellite_subhalo_galaxy_composition() const
 		if (g->galaxy_type == Galaxy::CENTRAL) {
 			std::ostringstream os;
 			os << "Satellite subhalo " << *this << " has at least one central galaxy";
-			throw invalid_argument(os.str());
+			throw invalid_data(os.str());
 		}
 		if (g->galaxy_type == Galaxy::TYPE1) {
 			i++;
@@ -112,7 +112,7 @@ void Subhalo::do_check_satellite_subhalo_galaxy_composition() const
 	if (i > 1) {
 		std::ostringstream os;
 		os << "Satellite Subhalo " << *this << " has " << i <<" type 1 galaxies (should be <= 1)";
-		throw invalid_argument(os.str());
+		throw invalid_data(os.str());
 	}
 }
 
@@ -126,7 +126,7 @@ void Subhalo::do_check_central_subhalo_galaxy_composition() const
 		if (g->galaxy_type == Galaxy::TYPE1) {
 			std::ostringstream os;
 			os << "Central subhalo " << *this << " has at least one type 1 galaxy";
-			throw invalid_argument(os.str());
+			throw invalid_data(os.str());
 		}
 		else if (g->galaxy_type == Galaxy::CENTRAL) {
 			n_central++;
@@ -145,7 +145,7 @@ void Subhalo::do_check_central_subhalo_galaxy_composition() const
 		os << "Central Subhalo " << *this << " has " << n_central <<" central galaxies";
 		os << "Baryon masses of galaxies: ";
 		std::copy(mbaryon.begin(), mbaryon.end(), std::ostream_iterator<float>(os, ", "));
-		throw invalid_argument(os.str());
+		throw invalid_data(os.str());
 	}
 }
 
