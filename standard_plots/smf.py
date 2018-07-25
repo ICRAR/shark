@@ -293,7 +293,7 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
             ax.plot(xmf[ind],y[ind],'g', linestyle='dashed', label='$\\tau_{\\rm reinc} = 0$' if idx == 0 else None)
             y = hist_smf_modelvar[idx,270:314]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],color= 'BurlyWood', linestyle='dashed', label='$\\kappa_{\\rm r} = 0.00025$' if idx == 0 else None)
+            ax.plot(xmf[ind],y[ind],color= 'BurlyWood', linestyle='dashed', label='$\\kappa_{\\rm r} = 0.0002$' if idx == 0 else None)
 
         colors = []
         if idx == 0:
@@ -395,6 +395,41 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
 
     common.prepare_legend(ax, ['k','b','r','BurlyWood','grey','grey'])
     common.savefig(outdir, fig, 'HImf_z0.pdf')
+
+    # Plot different resolutions
+    fig = plt.figure(figsize=(5,4.5))
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+    xmin = 6
+    ymax = -0.5
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    # Predicted HIMF
+    if plotz_HImf[0]:
+        y = hist_HImf[0,:]
+        ind = np.where(y < 0.)
+        ax.plot(xmf[ind],y[ind],'k',  label ='L210N1536')
+
+    hist_hi_resolution = common.load_observation(obsdir, 'Models/SharkVariations/HIH2MassFunctions_Resolution.dat', [0])
+
+    y = hist_hi_resolution[0:44]
+    ind = np.where(y < 0.)
+    ax.plot(xmf[ind],y[ind],'r', linestyle='dotted', label='L210N512')
+    y = hist_hi_resolution[45:89]
+    ind = np.where(y < 0.)
+    ax.plot(xmf[ind],y[ind],color='g', linestyle='dashed', label='L40N512')
+    y = hist_hi_resolution[90:134]
+    ind = np.where(y < 0.)
+    ax.plot(xmf[ind],y[ind],'b', linestyle='dashdot', label='L210N1024')
+    y = hist_hi_resolution[135:178]
+    ind = np.where(y < 0.)
+    ax.plot(xmf[ind],y[ind],'MediumAquamarine', linestyle='dotted', label='L40N512, $v_{\\rm cut}=30\\rm km\\ s^{-1}$')
+    ax.text(8.4, -5.9, '$\\alpha_{\\rm V}=-0.85$', fontsize=12, color='MediumAquamarine')
+
+    common.prepare_legend(ax, ['k','r','g','b','MediumAquamarine'])
+
+    common.savefig(outdir, fig, 'HImf_z0_resolution.pdf')
 
 
 def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat):

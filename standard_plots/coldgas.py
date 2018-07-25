@@ -294,6 +294,8 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xGASS")
     add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQZero.dat', ax, '^', "xGASS")
 
+    x, y, yerr_down, yerr_up = common.load_observation(obs_dir, 'Gas/Parkash18.dat', (0, 1, 2, 3))
+    ax.errorbar(x,y-x,yerr=[(y-x) - (yerr_down-x),(yerr_up-x) - (y-x)], ls='None', mfc='r', fillstyle='full', ecolor = 'r', mec='r',marker='s',markersize=7, label="Parkash+18")
 
     m, mrat, merr = common.load_observation(obs_dir, 'Gas/RHI-Mstars_Brown15.dat', [0,1,2])
     errdn = np.log10(mrat) - np.log10(mrat - merr) 
@@ -301,7 +303,7 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ax.errorbar(m,np.log10(mrat),yerr=[errdn,errup], ls='None', mfc='Salmon', fillstyle='full', ecolor = 'Salmon', mec='Salmon',marker='o',markersize=7, label="Brown+15")
 
     # Legend
-    common.prepare_legend(ax, ['k','k','Salmon'], loc=1)
+    common.prepare_legend(ax, ['k','k','r','Salmon'], loc=1)
 
     # Fourth subplot
     ax = fig.add_subplot(324)
