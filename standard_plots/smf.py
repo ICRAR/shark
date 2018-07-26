@@ -1009,7 +1009,7 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
     ind = np.where((sfr_seq[0,:] > 0) & (sfr_seq[1,:] != 0) )
     xdata = sfr_seq[0,ind]
     ydata = sfr_seq[1,ind]
-    us.density_contour(xdata[0], ydata[0], 30, 30, ax=ax) #, **contour_kwargs)
+    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
 
     ind = np.where(mainseqsf[0,0,:] != 0)
     xplot = xmf[ind]
