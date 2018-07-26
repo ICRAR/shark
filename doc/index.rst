@@ -11,3 +11,4 @@ shark
    configuration
    running
    hpc
+   output_files
