@@ -200,7 +200,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
             ax.plot(xmf[ind],y[ind],'g', linestyle='dashed', label ='satellites' if idx == 0 else None)
 
             if z < 1:
-		y = hist_smf_30kpc[idx,:]
+                y = hist_smf_30kpc[idx,:]
                 ind = np.where(y < 0.)
                 ax.plot(xmf[ind],y[ind],'k', linestyle='dotted', linewidth=1, label ='30kpc')
             if z >= 1:
@@ -212,7 +212,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
         if idx == 0:
             colors = ['r','b','g']
         if z < 1:
-	    colors += ['k']
+            colors += ['k']
         if z >= 1:
             colors = ['r']
         colors += ['grey', 'grey','grey']
