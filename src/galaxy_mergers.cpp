@@ -383,10 +383,6 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	//satellite stellar mass is always transferred to the bulge.
 	transfer_history_satellite_to_bulge(central, satellite, snapshot);
 
-	//transfer mass that was created in starbursts/disk instabilities.
-	central->galaxymergers_burst_stars += satellite->galaxymergers_burst_stars;
-	central->diskinstabilities_burst_stars += satellite->diskinstabilities_burst_stars;
-
 	/**
 	 * Depending on the mass ratio, the baryonic components of the satellite and the disk of the major galaxy are going to be transferred differently.
 	 */
