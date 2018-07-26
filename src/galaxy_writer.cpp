@@ -206,14 +206,16 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> mstars_bulge;
 	vector<float> mstars_burst_mergers;
 	vector<float> mstars_burst_diskinstabilities;
-	vector<float> mstars_bulge_assembly;
+	vector<float> mstars_bulge_mergers_assembly;
+       	vector<float> mstars_bulge_diskins_assembly;
 	vector<float> mgas_disk;
 	vector<float> mgas_bulge;
 	vector<float> mstars_metals_disk;
 	vector<float> mstars_metals_bulge;
 	vector<float> mstars_metals_burst_mergers;
 	vector<float> mstars_metals_burst_diskinstabilities;
-	vector<float> mstars_metals_bulge_assembly;
+	vector<float> mstars_metals_bulge_mergers_assembly;
+	vector<float> mstars_metals_bulge_diskins_assembly;
 	vector<float> mgas_metals_disk;
 	vector<float> mgas_metals_bulge;
 	vector<float> mmol_disk;
@@ -327,8 +329,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mstars_disk.push_back(galaxy->disk_stars.mass);
 				mstars_bulge.push_back(galaxy->bulge_stars.mass);
 				mstars_burst_mergers.push_back(galaxy->galaxymergers_burst_stars.mass);
+				mstars_bulge_mergers_assembly.push_back(galaxy->galaxymergers_assembly_stars.mass);
 				mstars_burst_diskinstabilities.push_back(galaxy->diskinstabilities_burst_stars.mass);
-				mstars_bulge_assembly.push_back(galaxy->galaxymergers_assembly_stars.mass);
+				mstars_bulge_diskins_assembly.push_back(galaxy->diskinstabilities_assembly_stars.mass);
+
 				mean_stellar_age.push_back(galaxy->mean_stellar_age / galaxy->total_stellar_mass_ever_formed);
 
 				// Gas components
@@ -339,8 +343,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mstars_metals_disk.push_back(galaxy->disk_stars.mass_metals);
 				mstars_metals_bulge.push_back(galaxy->bulge_stars.mass_metals);
 				mstars_metals_burst_mergers.push_back(galaxy->galaxymergers_burst_stars.mass_metals);
+				mstars_metals_bulge_mergers_assembly.push_back(galaxy->galaxymergers_assembly_stars.mass_metals);
 				mstars_metals_burst_diskinstabilities.push_back(galaxy->diskinstabilities_burst_stars.mass);
-				mstars_metals_bulge_assembly.push_back(galaxy->galaxymergers_assembly_stars.mass_metals);
+				mstars_metals_bulge_diskins_assembly.push_back(galaxy->diskinstabilities_burst_stars.mass_metals);
 
 				// Metals of the gas components.
 				mgas_metals_disk.push_back(galaxy->disk_gas.mass_metals);
@@ -486,14 +491,16 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mstars_bulge);
 	REPORT(mstars_burst_mergers);
 	REPORT(mstars_burst_diskinstabilities);
-	REPORT(mstars_bulge_assembly);
+	REPORT(mstars_bulge_mergers_assembly);
+	REPORT(mstars_bulge_diskins_assembly);
 	REPORT(mgas_disk);
 	REPORT(mgas_bulge);
 	REPORT(mstars_metals_disk);
 	REPORT(mstars_metals_bulge);
 	REPORT(mstars_metals_burst_mergers);
 	REPORT(mstars_metals_burst_diskinstabilities);
-	REPORT(mstars_metals_bulge_assembly);
+	REPORT(mstars_metals_bulge_mergers_assembly);
+	REPORT(mstars_metals_bulge_diskins_assembly);
 	REPORT(mean_stellar_age);
 	REPORT(mgas_metals_disk);
 	REPORT(mgas_metals_bulge);
@@ -574,7 +581,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("galaxies/mstars_burst_diskinstabilities", mstars_burst_diskinstabilities, comment);
 
 	comment = "stellar mass in the bulge brought via galaxy mergers (but that formed in disks) [Msun/h]";
-	file.write_dataset("galaxies/mstars_bulge_assembly", mstars_bulge_assembly, comment);
+	file.write_dataset("galaxies/mstars_bulge_mergers_assembly", mstars_bulge_mergers_assembly, comment);
+
+	comment = "stellar mass in the bulge brought via disk instabilities from the disk [Msun/h]";
+	file.write_dataset("galaxies/mstars_bulge_diskins_assembly", mstars_bulge_diskins_assembly, comment);
 
 	comment = "total gas mass in the disk [Msun/h]";
 	file.write_dataset("galaxies/mgas_disk", mgas_disk, comment);
@@ -595,7 +605,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("galaxies/mstars_metals_burst_diskinstabilities", mstars_metals_burst_diskinstabilities, comment);
 
 	comment = "mass of metals locked in stars in the bulge that was brought via galaxy mergers (but that formed in disks) [Msun/h]";
-	file.write_dataset("galaxies/mstars_metals_bulge_assembly", mstars_metals_bulge_assembly, comment);
+	file.write_dataset("galaxies/mstars_metals_bulge_mergers_assembly", mstars_metals_bulge_mergers_assembly, comment);
+
+	comment = "mass of metals locked in stars in the bulge that was brought via disk instabilities from the disk [Msun/h]";
+	file.write_dataset("galaxies/mstars_metals_bulge_diskins_assembly", mstars_metals_bulge_diskins_assembly, comment);
 
 	comment = "stellar mass-weighted stellar age [Gyr]";
 	file.write_dataset("galaxies/mean_stellar_age", mean_stellar_age, comment);

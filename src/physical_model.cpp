@@ -210,8 +210,8 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	galaxy.disk_stars.mass 					= y[0];
 	galaxy.disk_gas.mass   					= y[1];
 	subhalo.cold_halo_gas.mass 				= y[2];
-	subhalo.hot_halo_gas.mass               = y[3];
-	subhalo.ejected_galaxy_gas.mass 		= y[4];
+	subhalo.hot_halo_gas.mass                               = y[3];
+	subhalo.ejected_galaxy_gas.mass 		        = y[4];
 
 	// Assign new mass in metals.
 	galaxy.disk_stars.mass_metals 			= y[5];
