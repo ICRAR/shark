@@ -153,10 +153,9 @@ shark_subvolumes=
 shark_options=()
 shark_plot=
 shark_python_exec=python
-shark_obsdata_dir=
 
 # Parse command line options
-while getopts "h?m:v:S:V:o:pP:D:" opt
+while getopts "h?m:v:S:V:o:pP:" opt
 do
 	case "$opt" in
 		[h?])
@@ -183,9 +182,6 @@ do
 			;;
 		P)
 			shark_python_exec="${OPTARG}"
-			;;
-		D)
-			shark_obsdata_dir="$OPTARG"
 			;;
 		*)
 			print_usage 1>&2
@@ -351,7 +347,7 @@ then
 	export MPLBACKEND=agg
 	"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/all.py" \
 	    -c "${config_file}" -v "${shark_subvolumes[*]}" \
-	    -O "${shark_obsdata_dir}" 199 &> shark-plots.log
+	    199 &> shark-plots.log
 	if [ $? -ne 0 ]
 	then
 		warning "An error occurred while producing the plots, please check the shark-plots.log file for details"

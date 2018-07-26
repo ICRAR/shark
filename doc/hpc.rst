@@ -156,8 +156,7 @@ which are roughly grouped into the following categories:
   how many resources are needed (memory, CPUs and/or nodes),
   and more.
 * *Plotting*: these control whether to produce
-  the standard plots, where the observational data is,
-  among others.
+  the standard plots.
 * *Shark*: these are |s|-specific options, like
   which particular |s| binary to use,
   and which sub-volumes to process and the configuration file to use.

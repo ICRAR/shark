@@ -89,7 +89,7 @@ print_usage() {
 	echo "Usage: $0 [-h] [-?] [-d] [-O output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-M modules] [-m mem] [-c cpus] [-N num-nodes] [-v | -q]"
 	echo "       [-S shark_binary] [-V subvolumes] [-o opt1=val1 [-o opt2=val2...]]"
-	echo "       [-p] [-P python-exec] [-D obsdata_dir] config_file"
+	echo "       [-p] [-P python-exec] config_file"
 	echo
 	echo "This program calculates what is the best way to submit a series of jobs to"
 	echo "execute shark over a number of subvolumes, and performs such submission. The"
@@ -150,10 +150,6 @@ print_usage() {
 	echo " -P python-exec  Use the given python executable to run the plot scripts. Useful"
 	echo "                 when using a Python virtual environment."
 	echo
-	echo " -D              The directory where observational data can be found. Defaults"
-	echo "                 to the value of the SHARK_OBSDATA_DIR environment variable, if"
-	echo "                 set. A value is required if -p is given"
-	echo
 	echo
 	echo "shark options"
 	echo "-------------"
@@ -178,7 +174,6 @@ print_usage() {
 	echo "Environment variables"
 	echo "====================="
 	echo
-	echo " * SHARK_OBSDATA_DIR      Default value for the -D option"
 	echo " * SHARK_OUTPUT_DIR_BASE  Default prefix where shark_run_<xxx> dirs are created"
 	echo " * SHARK_RUNTIME_MODULES  Default value for the -M option"
 	echo
@@ -193,19 +188,18 @@ print_usage() {
 	echo "   and the shark binary '../build/shark'. The submission is performed to the "
 	echo "  'debug' queue"
 	echo
-	echo "$> shark-submit -m 7g -M gsl/2.3:hdf5/1.10.2:gcc/6.3 -p -D /opt/shark-obsdata"
-	echo "   -N 10 -V '0-32 34-63' -q debug myconfig.cfg"
+	echo "$> shark-submit -m 7g -M gsl/2.3:hdf5/1.10.2:gcc/6.3 -p -N 10 -V '0-32 34-63'"
+	echo "   -q debug myconfig.cfg"
 	echo
 	echo "   Like above, but executing for subvolumes from 0 to 63 (excluding 33), each"
 	echo "   instance needing 7 [GB] of memory, requesting 10 computing nodes, loading "
 	echo "   the gsl/2.3, hdf5/1.10.2 and gcc/6.3 modules before launching shark, and"
-	echo "   producing all standard plots using the observational data found in"
-	echo "   /opt/shark-obsdata"
+	echo "   producing all standard plots"
 	echo
 	echo "$> shark-submit -q debug -m 7g -p -N 10 -V '0-32 34-63' myconfig.cfg"
 	echo
-	echo "   Like above, but assuming that SHARK_OBSDATA_DIR and SHARK_RUNTIME_MODULES"
-	echo "   are already set, in which case their values do not need to be specified"
+	echo "   Like above, but assuming that SHARK_RUNTIME_MODULES is already set, in which"
+	echo "   case its value does not need to be specified"
 	echo
 }
 
@@ -275,7 +269,7 @@ submit_slurm() {
 	# Produce standard plots?
 	if [ -n "${shark_plot}" ]
 	then
-		cmd="$cmd -p -D \"${shark_obsdata_dir}\" -P \"${shark_python_exec}\""
+		cmd="$cmd -p -P \"${shark_python_exec}\""
 	fi
 
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
@@ -322,10 +316,9 @@ shark_subvolumes=
 shark_options=()
 shark_plot=
 shark_python_exec=python
-shark_obsdata_dir=${SHARK_OBSDATA_DIR}
 
 # Parse command line options
-while getopts "h?dO:Q:a:w:n:M:m:c:N:vqS:V:o:pP:D:" opt
+while getopts "h?dO:Q:a:w:n:M:m:c:N:vqS:V:o:pP:" opt
 do
 	case "$opt" in
 		[h?])
@@ -369,9 +362,6 @@ do
 			;;
 		P)
 			shark_python_exec="${OPTARG}"
-			;;
-		D)
-			shark_obsdata_dir="${OPTARG}"
 			;;
 		O)
 			shark_output_directory="$OPTARG"
@@ -425,28 +415,6 @@ config_file=${@:$OPTIND:1}
 #
 if [ -n "${shark_plot}" ]
 then
-
-	# An observation data directory must be specified
-	if [ -z "${shark_obsdata_dir}" ]
-	then
-		error "No observations data directory specified."
-		error
-		error "One can be specified either using -D or with the"
-		error "SHARK_OBSDATA_DIR environment variable"
-		exit 1
-	elif [ ! -d "${shark_obsdata_dir}" ]
-	then
-		error "Observations data directory"
-		error
-		error "${shark_obsdata_dir}"
-		error
-		error "does not exist or is not a directory."
-		error "Make sure you are pointing to the correct directory,"
-		error "or do *not* request plots via -p"
-		exit 1
-	fi
-	shark_obsdata_dir=`get_absolute_path "$shark_obsdata_dir"`
-
 	# The python binary must be there
 	if [ "${shark_python_exec}" != "python" ]
 	then
