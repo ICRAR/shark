@@ -232,12 +232,13 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ind = np.where((mgas_gals[0,:] > 0) & (mgas_gals[1,:] != 0) )
     xdata = mgas_gals[0,ind]
     ydata = mgas_gals[1,ind]
-    us.density_contour(xdata[0], ydata[0], 30, 30, ax=ax) #, **contour_kwargs)
+    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
 
     def plot_mrelation(mrelation, color, label=None, linestyle=None):
         ind = np.where(mrelation[0,:] != 0)
         xplot = xmf[ind]
         yplot = mrelation[0,ind]
+        linestyle = linestyle or ''
         ax.plot(xplot,yplot[0], color=color, label=label, linestyle=linestyle)
 
     def plot_mrelation_fill(mrelation, color, colorfill, label=None, linestyle=None):
@@ -287,7 +288,7 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ind = np.where((mh1_gals[0,:] > 0) & (mh1_gals[1,:] != 0) )
     xdata = mh1_gals[0,ind]
     ydata = mh1_gals[1,ind]
-    us.density_contour(xdata[0], ydata[0], 30, 30, ax=ax) #, **contour_kwargs)
+    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
     plot_mrelation(mh1_relation, 'k')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
@@ -334,7 +335,7 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     ind = np.where((mh2_gals[0,:] > 0) & (mh2_gals[1,:] != 0) )
     xdata = mh2_gals[0,ind]
     ydata = mh2_gals[1,ind]
-    us.density_contour(xdata[0], ydata[0], 30, 30, ax=ax) #, **contour_kwargs)
+    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
     plot_mrelation(mh2_relation, 'k')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']

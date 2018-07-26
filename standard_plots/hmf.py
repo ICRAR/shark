@@ -50,7 +50,7 @@ def plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz):
         if (idx == 0 or idx == 2):
             ytitplot = ytit
         else:
-	    ytitplot = ' ' 
+            ytitplot = ' '
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitplot, locators=(0.1, 1, 0.1))
         ax.text(xleg,yleg, 'z=%s' % (str(z)))
 
@@ -59,28 +59,27 @@ def plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz):
         lmp_plot = np.log10(lmp) - np.log10(h0)
         dp_plot = np.log10(dp) + np.log10(pow(h0,3.))
         if idx == 0:
-	        ax.plot(lmp_plot,dp_plot,'b', label = 'HMF calc')
-	if idx > 0:
-                ax.plot(lmp_plot,dp_plot,'b')
-
+            ax.plot(lmp_plot,dp_plot,'b', label = 'HMF calc')
+        elif idx > 0:
+            ax.plot(lmp_plot,dp_plot,'b')
 
         #Predicted HMF
         if plot_this_z:
             y = hist[idx,:]
             ind = np.where(y < 0.)
-	    if idx == 0:
+            if idx == 0:
                 ax.plot(xmf[ind],y[ind],'r', label ='HMF Shark')
             if idx > 0:
-		ax.plot(xmf[ind],y[ind],'r')
+                ax.plot(xmf[ind],y[ind],'r')
             y = histsh[idx,:]
             ind = np.where(y < 0.)
             if idx == 0:
                 ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='SHMF Shark')
             if idx > 0:
-		ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
+                ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
 
         if idx == 0:
-		common.prepare_legend(ax, ['b','r','r'])
+            common.prepare_legend(ax, ['b','r','r'])
 
     common.savefig(outdir, fig, "halomf_z.pdf")
 

@@ -46,11 +46,20 @@ xmf_obs = mbins_obs + dmobs/2.0
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
-                 disk_vel, sam_stars_disk, sam_gas_disk_atom, 
-                 sam_gas_disk_mol, sam_halo, BT_fractions_centrals, BT_fractions_satellites):
+                 disk_vel, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, 
+                 BT_fractions_centrals, BT_fractions_satellites):
 
-    h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s = hdf5_data
-    
+    (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
+     mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
+     specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
+     specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s) = hdf5_data
+  
+    #print len(mstars_bulge_mergers_assembly), len(mstars_bulge_diskins_assembly) 
+    #print mbulge[0] 
+    #print mburst_mergers[0]+mburst_diskins[0]+mstars_bulge_mergers_assembly[0]+mstars_bulge_diskins_assembly[0] 
+
+    mbulge_mergers = mburst_mergers + mstars_bulge_mergers_assembly
+    print mbulge[0], mbulge_mergers[0], mbulge[0]/mbulge_mergers[0]
     zero_bulge = np.where(rbulge <= 0)
     if(len(rbulge) == len(rbulge[zero_bulge])):
             #case where there is zero bulge build up.
@@ -65,17 +74,13 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     vdisk = specific_angular_momentum_disk_star / rdisk / 2.0 #in km/s
     vbulge = specific_angular_momentum_bulge_star / rbulge / 2.0 #in km/s
    
-    #make sure mass in bulges is >=0 when subtracting the disk instabilities bulge mass.
-    ind = np.where(mburst_diskins > mbulge)
-    mburst_diskins[ind] = mbulge[ind]
- 
-
     ind = np.where(mdisk+mbulge > 0)
     rcomb[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                             y=np.log10((mdisk[ind]*rdisk[ind]  + mbulge[ind]*rbulge[ind])*MpcToKpc / (mdisk[ind]+mbulge[ind])))
     BT_fractions[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),y=mbulge[ind]/(mdisk[ind]+mbulge[ind]), xbins=xmf)
 
-    BT_fractions_nodiskins[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),y=(mbulge[ind]-mburst_diskins[ind])/(mdisk[ind]+mbulge[ind]), xbins=xmf)
+    BT_fractions_nodiskins[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+		                    y=(mbulge_mergers[ind])/(mdisk[ind]+mbulge[ind]), xbins=xmf)
 
     ind = np.where((mdisk+mbulge > 0) & (typeg == 0))
     BT_fractions_centrals[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),y=mbulge[ind]/(mdisk[ind]+mbulge[ind]), xbins=xmf)
@@ -118,11 +123,11 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     bulge_size[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where((mbulge > 0) & (mbulge/(mbulge+mdisk) > 0.5) & (rbulge > 1e-6) & (mburst_mergers/mburst_diskins > 1))
+    ind = np.where((mbulge > 0) & (mbulge/(mbulge+mdisk) > 0.5) & (rbulge > 1e-6) & (mbulge_mergers/mbulge > 0.5))
     bulge_size_mergers[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where((mbulge > 0) & (mbulge/(mbulge+mdisk) > 0.5) & (rbulge > 1e-6) & (mburst_diskins/mburst_mergers > 1))
+    ind = np.where((mbulge > 0) & (mbulge/(mbulge+mdisk) > 0.5) & (rbulge > 1e-6) & ((mbulge - mbulge_mergers) / mbulge > 0.5))
     bulge_size_diskins[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
@@ -161,7 +166,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
     yplot = disk_size_sat[0,0,ind]
     errdn = disk_size_sat[0,1,ind]
     errup = disk_size_sat[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='v',markersize='5',label="Shark satellites")
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='v',markersize=5, label="Shark satellites")
 
     #Lange et al. (2016)
     a = 5.56
@@ -625,8 +630,8 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
 def main(modeldir, outdir, subvols, obsdir):
 
     plt = common.load_matplotlib()
-    fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities','m_bh',
-                           'rstar_disk', 'rstar_bulge', 'type', 
+    fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities',
+                           'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly', 'm_bh', 'rstar_disk', 'rstar_bulge', 'type', 
                            'specific_angular_momentum_disk_star', 'specific_angular_momentum_bulge_star',
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
@@ -668,8 +673,8 @@ def main(modeldir, outdir, subvols, obsdir):
     plot_bulge_BH(plt, outdir, obsdir, BH)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
 
-    #for i in zip(BT_fractions[0,:]):
-	#print i
+    for i in zip(bulge_size[0,0,:]):
+	print i
 
 
 if __name__ == '__main__':

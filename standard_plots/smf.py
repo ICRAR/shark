@@ -200,7 +200,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
             ax.plot(xmf[ind],y[ind],'g', linestyle='dashed', label ='satellites' if idx == 0 else None)
 
             if z < 1:
-		y = hist_smf_30kpc[idx,:]
+                y = hist_smf_30kpc[idx,:]
                 ind = np.where(y < 0.)
                 ax.plot(xmf[ind],y[ind],'k', linestyle='dotted', linewidth=1, label ='30kpc')
             if z >= 1:
@@ -212,7 +212,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
         if idx == 0:
             colors = ['r','b','g']
         if z < 1:
-	    colors += ['k']
+            colors += ['k']
         if z >= 1:
             colors = ['r']
         colors += ['grey', 'grey','grey']
@@ -1009,7 +1009,7 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
     ind = np.where((sfr_seq[0,:] > 0) & (sfr_seq[1,:] != 0) )
     xdata = sfr_seq[0,ind]
     ydata = sfr_seq[1,ind]
-    us.density_contour(xdata[0], ydata[0], 30, 30, ax=ax) #, **contour_kwargs)
+    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
 
     ind = np.where(mainseqsf[0,0,:] != 0)
     xplot = xmf[ind]

@@ -128,18 +128,18 @@ def find_confidence_interval(x, pdf, confidence_level):
 
 
 
-def density_contour(xdata, ydata, nbins_x, nbins_y, ax=None):
+def density_contour(ax, xdata, ydata, nbins_x, nbins_y):
     """ Create a density contour plot.
     Parameters
     ----------
+    ax : matplotlib.Axes
+        Plot the contour to this axis
     xdata : numpy.ndarray
     ydata : numpy.ndarray
     nbins_x : int
         Number of bins along x dimension
     nbins_y : int
         Number of bins along y dimension
-    ax : matplotlib.Axes (optional)
-        If supplied, plot the contour to this axis. Otherwise, open a new figure
     contour_kwargs : dict
         kwargs to be passed to pyplot.contour()
     """
@@ -165,15 +165,17 @@ def density_contour(xdata, ydata, nbins_x, nbins_y, ax=None):
     X, Y = 0.5*(xedges[1:]+xedges[:-1]), 0.5*(yedges[1:]+yedges[:-1])
     Z = pdf.T
 
+    import matplotlib as mpl
     import matplotlib.pyplot as plt
     import matplotlib.colors as col
 
-    if ax == None:
-        contour = plt.contour(X, Y, Z, levels=levels, origin="lower")
-    else:
-        contour = ax.contourf(X, Y, Z, levels=levels, origin="lower", alpha=0.75,norm=col.Normalize(vmin=0,vmax=0.01),cmap=plt.get_cmap('viridis'))
+    # The viridis colormap is only available since mpl 1.5
+    extra_args = {}
+    if tuple(mpl.__version__.split('.')) >= ('1', '5'):
+        extra_args['cmap'] = plt.get_cmap('viridis')
 
-    return contour
+    return ax.contour(X, Y, Z, levels=levels, origin="lower", alpha=0.75,
+                      norm=col.Normalize(vmin=0, vmax=0.01), **extra_args)
 
 
 

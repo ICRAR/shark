@@ -78,6 +78,10 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 				galaxy->bulge_gas.mass += galaxy->disk_gas.mass;
 				galaxy->bulge_gas.mass_metals +=  galaxy->disk_gas.mass_metals;
 
+				// Keep track of bulge mass that comes from the transfer of stars from the disk to the bulge.
+				galaxy->diskinstabilities_assembly_stars.mass += galaxy->disk_stars.mass;
+				galaxy->diskinstabilities_assembly_stars.mass_metals += galaxy->disk_stars.mass_metals;
+
 				/**Assume both stars and gas mix up well during mergers.
 				 * And calculate a pseudo specific AM as in mergers.*/
 				//

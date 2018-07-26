@@ -60,9 +60,6 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
     parser.add_argument('-o', '--output-dir', help='Output directory for plots. Defaults to <shark-dir>/Plots/<simu>/<model>')
 
-    if requires_observations:
-        parser.add_argument('-O ', '--obs-dir', help='Observations directory')
-
     if requires_snapshot:
         parser.add_argument('snapshot', help='Snapshot output to process', type=int)
 
@@ -70,6 +67,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     if not opts.config and (not opts.model or not opts.simu or not opts.shark_dir):
         parser.error('Either -c or -m/-s/-S must be given')
 
+    opts.obs_dir = os.path.normpath(os.path.abspath(os.path.join(__file__, '..', '..', 'data')))
     if requires_snapshot and opts.snapshot is None:
         parser.error('snapshot option is required')
     if requires_observations and opts.obs_dir is None:
