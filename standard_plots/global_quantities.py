@@ -365,17 +365,17 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ind = np.where(sfrb > 0)
     ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='dotted',  linewidth=1, label ='bursts')
 
-    sfr_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [2])
+    z, sfr_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 3])
     sfr_modelvar_burst3 = sfr_modelvar[0:179]
     sfr_modelvar_nu0p5  = sfr_modelvar[179:359]
     sfr_modelvar_burst20= sfr_modelvar[360:539]
 
     ind = np.where(sfr_modelvar_burst20 > -10)
-    ax.plot(redshifts[ind], sfr_modelvar_burst20[ind], 'Sienna', linestyle='dotted', label ='$\\eta_{\\rm burst}=20$')
+    ax.plot(z[ind], sfr_modelvar_burst20[ind], 'Sienna', linestyle='dotted', label ='$\\eta_{\\rm burst}=20$')
     ind = np.where(sfr_modelvar_burst3 > -10)
-    ax.plot(redshifts[ind], sfr_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
+    ax.plot(z[ind], sfr_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(sfr_modelvar_nu0p5 > -10)
-    ax.plot(redshifts[ind], sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
+    ax.plot(z[ind], sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
     common.prepare_legend(ax, ['k','b','r','Sienna','DarkSlateGray','SlateGray','grey','grey','grey'], bbox_to_anchor=(0.52, 0.47))
 
@@ -397,11 +397,11 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='dotted',  linewidth=1)
 
     ind = np.where(sfr_modelvar_burst20 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
+    ax.plot(us.look_back_time(z[ind]), sfr_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
     ind = np.where(sfr_modelvar_burst3 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot')
+    ax.plot(us.look_back_time(z[ind]), sfr_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot')
     ind = np.where(sfr_modelvar_nu0p5 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted')
+    ax.plot(us.look_back_time(z[ind]), sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted')
 
     common.prepare_legend(ax, ['grey','grey','grey'], loc=2)
 
@@ -431,17 +431,17 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ax.plot(redshifts[ind],np.log10(mstarbden_diskins[ind]*pow(h0,2.0)), 'b', linestyle='dotted')
 
 
-    sm_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [3])
+    z, sm_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 4])
     sm_modelvar_burst3  = sm_modelvar[0:179]
     sm_modelvar_nu0p5   = sm_modelvar[181:360]
     sm_modelvar_burst20 = sm_modelvar[360:539]
 
     ind = np.where(sm_modelvar_burst20 > -10)
-    ax.plot(redshifts[ind], sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
+    ax.plot(z[ind], sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
     ind = np.where(sm_modelvar_burst3 > -10)
-    ax.plot(redshifts[ind], sm_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot')
+    ax.plot(z[ind], sm_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot')
     ind = np.where(sm_modelvar_nu0p5 > -10)
-    ax.plot(redshifts[ind], sm_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted')
+    ax.plot(z[ind], sm_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     redD17d, redD17u, smdD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_smd.dat', [1,2,3,4,5,6,7])
@@ -472,11 +472,11 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarbden_diskins[ind]*pow(h0,2.0)), 'b', linestyle='dotted', label='formed in disk instabilities')
 
     ind = np.where(sm_modelvar_burst20 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted',  label ='$\\eta_{\\rm burst}=20$')
+    ax.plot(us.look_back_time(z[ind]), sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted',  label ='$\\eta_{\\rm burst}=20$')
     ind = np.where(sm_modelvar_burst3 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
+    ax.plot(us.look_back_time(z[ind]), sm_modelvar_burst3[ind], 'DarkSlateGray', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(sm_modelvar_nu0p5 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), sm_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
+    ax.plot(us.look_back_time(z[ind]), sm_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
     ax.errorbar(us.look_back_time(xobs), yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
 
@@ -550,19 +550,19 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ind = np.where(mH2den > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r')
 
-    h2_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [1])
+    z, h2_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 2])
     h2_modelvar_burst3 = h2_modelvar[0:179]
     h2_modelvar_nu0p5  = h2_modelvar[181:360]
     h2_modelvar_burst20= h2_modelvar[360:539]
 
     ind = np.where(h2_modelvar_burst20 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
+    ax.plot(us.look_back_time(z[ind]), h2_modelvar_burst20[ind], 'Sienna', linestyle='dotted')
     ind = np.where(h2_modelvar_burst3 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_burst3[ind], 'Crimson', linestyle='dashdot')
+    ax.plot(us.look_back_time(z[ind]), h2_modelvar_burst3[ind], 'Crimson', linestyle='dashdot')
     ind = np.where(h2_modelvar_nu0p5 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), h2_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted')
+    ax.plot(us.look_back_time(z[ind]), h2_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted')
 
-    #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
+    #Walter ASPECS ALMA program
     zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Walter17_H2.dat', [0,1,2,3,4,5])
 
     hobs = 0.7
@@ -677,17 +677,17 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     ind = np.where(omegaHI > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(omegaHI[ind]*pow(h0,2.0)) + np.log10(XH), 'r', label='Shark')
 
-    hi_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0])
+    z, hi_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 1])
     hi_modelvar_burst3 = hi_modelvar[0:179]
     hi_modelvar_nu0p5  = hi_modelvar[181:360]
     hi_modelvar_burst20= hi_modelvar[360:539]
 
     ind = np.where(hi_modelvar_burst20 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_burst20[ind], 'Sienna', linestyle='dotted', label ='$\\eta_{\\rm burst}=20$')
+    ax.plot(us.look_back_time(z[ind]), hi_modelvar_burst20[ind], 'Sienna', linestyle='dotted', label ='$\\eta_{\\rm burst}=20$')
     ind = np.where(hi_modelvar_burst3 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_burst3[ind], 'Crimson', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
+    ax.plot(us.look_back_time(z[ind]), hi_modelvar_burst3[ind], 'Crimson', linestyle='dashdot', label ='$\\eta_{\\rm burst}=3$')
     ind = np.where(hi_modelvar_nu0p5 > -10)
-    ax.plot(us.look_back_time(redshifts[ind]), hi_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
+    ax.plot(us.look_back_time(z[ind]), hi_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted', label ='$\\nu_{\\rm SF}=0.5 \\rm Gyr^{-1}$')
 
     xcgm = np.zeros(shape = 2)
     ycgm = np.zeros(shape = 2)
