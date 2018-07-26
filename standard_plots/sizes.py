@@ -166,7 +166,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
     yplot = disk_size_sat[0,0,ind]
     errdn = disk_size_sat[0,1,ind]
     errup = disk_size_sat[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='v',markersize='5',label="Shark satellites")
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='v',markersize=5, label="Shark satellites")
 
     #Lange et al. (2016)
     a = 5.56
