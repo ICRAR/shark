@@ -25,6 +25,11 @@
 # MA 02111-1307  USA
 #
 
+fail() {
+	echo $1 1>&2
+	exit 1
+}
+
 cd ${TRAVIS_BUILD_DIR}
 
 # In MacOS we simply need to brew install some things
@@ -34,22 +39,41 @@ then
 	# The xcode7.3 osx image needs an update
 	if [ "${XCODE}" = "7.3" ]
 	then
-		brew update
+		brew update || fail "cannot update brew"
 	fi
 
 	# The xcode 8.1 and 9.1 images need oclint to be uninstalled
 	# (see travis-ci issue #8826)
 	if [ "${XCODE}" = "8.1" -o "${XCODE}" = "9.1" ]
 	then
-		brew cask uninstall oclint
+		brew cask uninstall oclint || fail "cannot uninstall oclint"
 	fi
 
 	# cxxtest pulls python@2, so we need to unlink
 	# the pre-installed python first
-	brew unlink python
+	brew unlink python || fail "cannot unlink python"
 
 	# Minimal dependencies for testing
-	brew install gsl hdf5 cxxtest
+	pkgs="gsl hdf5 cxxtest"
+	if [ "$PYTHON" = "venv" ]
+	then
+		pkgs="$pkgs python3"
+	fi
+
+	brew install $pkgs || fail "cannot install packages: $pkgs"
+
+	# PYTHON==venv means that we are going to use a virtualenv'd python
+	# to run the standard plot scripts; therefore we will be testing
+	# against the latest version of all python packages
+	if [ "$PYTHON" = "venv" ]
+	then
+		python3 -mvenv "${TRAVIS_BUILD_DIR}/shark-venv" || fail "cannot create virtualenv"
+		source "${TRAVIS_BUILD_DIR}/shark-venv/bin/activate"
+		pip install -U pip wheel setuptools h5py matplotlib scipy || fail "cannot install python packages in virtualenv"
+		deactivate
+		PYTHON="${TRAVIS_BUILD_DIR}/shark-venv/bin/python3"
+	fi
+
 	return
 fi
 

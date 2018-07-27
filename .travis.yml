@@ -47,14 +47,14 @@ matrix:
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-6, libhdf5-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest]
-    env: COMPILER=g++-6
+      packages: [g++-6, libhdf5-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, python-matplotlib, python-scipy, python-h5py, python-tk]
+    env: COMPILER=g++-6 PYTHON=python
   - compiler: gcc
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libhdf5-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest]
-    env: COMPILER=g++-7
+      packages: [g++-7, libhdf5-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, python3-matplotlib, python3-scipy, python3-h5py, python3-tk]
+    env: COMPILER=g++-7 PYTHON=python3
   - compiler: clang
     addons:
      apt:
@@ -69,7 +69,7 @@ matrix:
     env: XCODE=8.1
   - os: osx
     osx_image: xcode9.1 # OSX 10.12
-    env: XCODE=9.1
+    env: XCODE=9.1 PYTHON=venv
 
 # We "source" it because it exports variables
 before_install:
@@ -79,5 +79,4 @@ install:
  - source .travis/install.sh
 
 script:
- - cd ${TRAVIS_BUILD_DIR}/build
- - make CTEST_OUTPUT_ON_FAILURE=1 test
+ - source .travis/test.sh
