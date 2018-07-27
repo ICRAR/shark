@@ -1,5 +1,5 @@
-Configuration
-=============
+Specifying configuration values
+===============================
 
 .. _config.file:
 
@@ -33,6 +33,10 @@ For example, this is a small sample configuration file::
  [cosmology]
  omega_m = 0.3121
 
+For a more worked example,
+see the :doc:`sample configuration file <sample>`
+distributed with |s|.
+
 |s| allows more than one configuration file
 to be used at the same time.
 If options appear in more than one configuration file,
@@ -55,12 +59,12 @@ Note how configuration item name has the form ``<group>.<name>``.
 More than one ``-o`` option can be given to pass down
 more than one configuration value.
 For further information on how to run |s|
-see :doc:`running`.
+see :doc:`../running`.
 
 Configuration values given on the command line
 take precedence over values specified
 on any configuration file.
 In the example above,
-and if using the sample configuration shown in `config.file`,
+and if using the sample configuration shown in :ref:`config.file`,
 |s| will effectively run with a value of ``0.4``
 for ``cosmology.omega_m``.

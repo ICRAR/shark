@@ -8,7 +8,7 @@ shark
    :caption: Contents:
 
    building
-   configuration
+   configuration/index
    running
    hpc
    output_files
