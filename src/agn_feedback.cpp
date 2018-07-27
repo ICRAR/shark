@@ -48,8 +48,6 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
-	options.load("agn_feedback.mass_thresh", mass_thresh);
-
 }
 
 template <>
