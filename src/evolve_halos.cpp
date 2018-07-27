@@ -172,8 +172,6 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	double SFR_total_disk = 0;
 	double SFR_total_burst = 0;
 
-	double total_baryons = 0;
-
 	double z1 = simulation_params.redshifts[snapshot];
 	double z2 = simulation_params.redshifts[snapshot+1];
 
@@ -238,8 +236,6 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 		}
 	}
 
-	total_baryons = mstars_total.mass + mcold_total.mass + MBH_total.mass + mhothalo_total.mass + mcoldhalo_total.mass + mejectedhalo_total.mass;
-
 	AllBaryons.mstars.push_back(mstars_total);
 	AllBaryons.mstars_burst_galaxymergers.push_back(mstars_bursts_galaxymergers);
 	AllBaryons.mstars_burst_diskinstabilities.push_back(mstars_bursts_diskinstabilities);
@@ -255,19 +251,6 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	AllBaryons.mejected_halo.push_back(mejectedhalo_total);
 
 	AllBaryons.mDM.push_back(mDM_total);
-
-	// Test for mass conservation.
-	double all_bar = AllBaryons.baryon_total_created[snapshot] - AllBaryons.baryon_total_lost[snapshot];
-	double frac = std::abs((total_baryons-all_bar)/all_bar);
-			//std::abs(total_baryons / mDM_total.mass /  cosmology.universal_baryon_fraction() - 1.0);
-
-	// If more than 1% of baryons have been lost, then stop the code.
-	/*if(frac > 0.01){
-		std::ostringstream os;
-		os << "Accumulated baryon mass differs by " << frac << " with the total baryons that have been created by this snapshot.";
-		throw invalid_data(os.str());
-	}*/
-
 }
 
 }
