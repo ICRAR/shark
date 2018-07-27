@@ -53,13 +53,8 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s) = hdf5_data
-  
-    #print len(mstars_bulge_mergers_assembly), len(mstars_bulge_diskins_assembly) 
-    #print mbulge[0] 
-    #print mburst_mergers[0]+mburst_diskins[0]+mstars_bulge_mergers_assembly[0]+mstars_bulge_diskins_assembly[0] 
 
     mbulge_mergers = mburst_mergers + mstars_bulge_mergers_assembly
-    print mbulge[0], mbulge_mergers[0], mbulge[0]/mbulge_mergers[0]
     zero_bulge = np.where(rbulge <= 0)
     if(len(rbulge) == len(rbulge[zero_bulge])):
             #case where there is zero bulge build up.
@@ -672,9 +667,6 @@ def main(modeldir, outdir, subvols, obsdir):
     plot_sizes_combined(plt, outdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
-
-    for i in zip(bulge_size[0,0,:]):
-	print i
 
 
 if __name__ == '__main__':
