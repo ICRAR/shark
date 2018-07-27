@@ -42,10 +42,6 @@ def wmedians_2sigma(x=None, y=None, xbins=None):
             ID84th = int(np.floor(obj_bin*0.975))-1   #take the upper edge.
             result[1, i] = np.abs(result[0, i] - ybin[IDs[ID16th]])
             result[2, i] = np.abs(ybin[IDs[ID84th]] - result[0, i])
-        elif(len(x[ind]) > 0 & len(x[ind]) < 9):
-            result[0, i] = np.median(y[ind])
-            result[1, i] = np.abs(result[0, i]-np.min(y[ind]))
-            result[2, i] = np.abs(np.max(y[ind])-result[0, i])
 
     return result
 
@@ -72,10 +68,6 @@ def wmedians(x=None, y=None, xbins=None):
             ID84th = int(np.floor(obj_bin*0.84))-1   #take the upper edge.
             result[1, i] = np.abs(result[0, i] - ybin[IDs[ID16th]])
             result[2, i] = np.abs(ybin[IDs[ID84th]] - result[0, i])
-        elif(len(x[ind]) > 0 & len(x[ind]) < 9):
-            result[0, i] = np.median(y[ind])
-            result[1, i] = np.abs(result[0, i]-np.min(y[ind]))
-            result[2, i] = np.abs(np.max(y[ind])-result[0, i])
 
     return result
 
