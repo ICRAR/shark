@@ -30,7 +30,7 @@ if required, assumed initial mass function.
 
 ## Models data
 
-## Models
+### Models
 
 * OtherModels: Directory containing the baryon growth evolution of EAGLE, GALFORM and L-galaxies, shown in Fig. 4 of Lagos et al. (2018, submitted to MNRAS).
 
