@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Travis CI install script
+# Travis CI test script
 #
 # ICRAR - International Centre for Radio Astronomy Research
 # (c) UWA - The University of Western Australia, 2018
@@ -30,13 +30,22 @@ fail() {
 	exit 1
 }
 
-cd ${TRAVIS_BUILD_DIR}
-mkdir build
-cd build
+cd ${TRAVIS_BUILD_DIR}/build
 
-SHARK_CMAKE_OPTIONS="-DCMAKE_CXX_COMPILER=$COMPILER -DSHARK_TEST=ON -DGSL_ROOT_DIR=${GSL_ROOT_DIR}"
+# Run unit tests first
+make CTEST_OUTPUT_ON_FAILURE=1 test || fail "unit tests failed"
 
-# Go, go, go!
-cmake .. ${SHARK_CMAKE_OPTIONS} || fail "cmake failed"
-make all -j2 || fail "make failed"
-cd ..
+# Run shark as a whole using the test data and the sample config file
+mkdir input || fail "failed to create input/ directory"
+curl -L -o input/redshifts.txt 'https://docs.google.com/uc?export=download&id=1xvNmJB_KmoBHuQz-QzdPnY0HFs7smkUB' || fail "failed to download redshifts file"
+curl -L -o input/tree_199.0.hdf5 'https://docs.google.com/uc?export=download&id=1JDK8ak13bEhzg9H9xt0uE8Fh_2LD3KpZ' || fail "failed to download test hdf5 file"
+
+./shark ../sample.cfg \
+    -o simulation.redshift_file=input/redshifts.txt \
+    -o simulation.tree_files_prefix=input/tree_199 || fail "failure during execution of shark"
+
+# Make sure the standard plotting scripts run correctly
+if [ -n "$PYTHON" ]; then
+	echo "backend: Agg" >> matplotlibrc
+	"$PYTHON" ../standard_plots/all.py -c ../sample.cfg 199 || fail "failure during execution of python plotting scripts"
+fi

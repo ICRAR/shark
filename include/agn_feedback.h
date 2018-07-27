@@ -48,7 +48,6 @@ public:
 	double accretion_eff_cooling = 0;
 	double kappa_agn = 0;
 	double nu_smbh = 0;
-	double mass_thresh = 0;
 
 	enum AGNFeedbackModel {
 		CROTON16 = 0,

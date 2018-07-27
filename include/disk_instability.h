@@ -38,7 +38,7 @@ public:
 	DiskInstabilityParameters(const Options &options);
 
 	float stable = 0;
-	float fint = 0;
+	float fint = 2;
 };
 
 class DiskInstability{

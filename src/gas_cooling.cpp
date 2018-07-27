@@ -90,7 +90,6 @@ std::vector<double> CoolingTable::get_lambda()
 GasCoolingParameters::GasCoolingParameters(const Options &options)
 {
 	options.load("gas_cooling.model", model, true);
-	options.load("gas_cooling.rcore", rcore);
 	options.load("gas_cooling.lambdamodel", lambdamodel, true);
 	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
 	options.load("gas_cooling.tau_cooling", tau_cooling);

@@ -32,12 +32,12 @@ about how to run |s|.
    If |s| is compiled without OpenMP support
    this option is ignored.
  * ``-o <option>`` specifies additional configuration values
-   to use. See :doc:`configuration` for details.
+   to use. See :doc:`configuration/specifying` for details.
 
 Any other argument is interpreted
 as the name of a configuration file to load.
 At least one configuration file is required for |s| to run.
-See :doc:`configuration` for details on how configuration works.
+See :doc:`configuration/specifying` for details on how configuration works.
 
 
 Exit code

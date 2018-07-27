@@ -43,13 +43,6 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 	options.load("galaxy_mergers.minor_merger_burst_ratio", minor_merger_burst_ratio, true);
 	options.load("galaxy_mergers.gas_fraction_burst_ratio", gas_fraction_burst_ratio, true);
 
-	options.load("galaxy_mergers.merger_random_seed", merger_random_seed);
-
-	options.load("galaxy_mergers.jiang08_a", jiang08[0]);
-	options.load("galaxy_mergers.jiang08_b", jiang08[1]);
-	options.load("galaxy_mergers.jiang08_c", jiang08[2]);
-	options.load("galaxy_mergers.jiang08_d", jiang08[3]);
-
 	options.load("galaxy_mergers.tau_delay", tau_delay);
 	options.load("galaxy_mergers.mass_min", mass_min);
 
