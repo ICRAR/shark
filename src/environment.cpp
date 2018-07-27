@@ -27,8 +27,7 @@ namespace shark {
 EnvironmentParameters::EnvironmentParameters(const Options &options)
 {
 	options.load("environment.gradual_stripping", gradual_stripping);
-	options.load("environment.stripping", stripping);
-
+	options.load("environment.stripping", stripping, true);
 }
 
 Environment::Environment(const EnvironmentParameters &parameters):

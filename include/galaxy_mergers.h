@@ -58,7 +58,7 @@ class GalaxyMergerParameters {
 		int merger_random_seed = -1;
 		float tau_delay = 0.05;
 		std::vector<double> jiang08 = std::vector<double>(4);
-		float mass_min = 0;
+		float mass_min = 1e5;
 
 		/**
 		 * Sizes parameters:

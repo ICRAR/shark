@@ -35,7 +35,7 @@ namespace shark {
 
 DiskInstabilityParameters::DiskInstabilityParameters(const Options &options)
 {
-	options.load("disk_instability.stable", stable);
+	options.load("disk_instability.stable", stable, true);
 	options.load("disk_instability.fint", fint);
 }
 
