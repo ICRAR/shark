@@ -95,7 +95,7 @@ or run ``cmake --help-variable-list``:
 * ``CMAKE_CXX_COMPILER``: the C++ compiler to use.
   It is usually automatically detected, but you can force
   it to be a particular one.
-* ``CMAKE_CXX_COMPILER``: additional C++ flags used to compile.
+* ``CMAKE_CXX_FLAGS``: additional C++ flags used to compile.
   These are applied on top of those defined by the ``CMAKE_BUILD_TYPE``.
 
 |s| defines its own ``cmake`` flags:
