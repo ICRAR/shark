@@ -34,12 +34,14 @@ sed_cmd='
 # and underline it with ^ characters
 /.*GROUP "[^\/.]*/ {
   h
-  s/.*GROUP "\(.*\)".*/\n\n``\1``/
+  s/.*GROUP "\(.*\)".*/\
+\
+``\1``/
   p
   x
   s/.*GROUP "\(.*\)".*/\1/
   s/./^/g
-  s/.*/^^\0^^/g
+  s/.*/^^&^^/g
   p
 }
 
