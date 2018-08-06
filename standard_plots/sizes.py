@@ -46,8 +46,7 @@ xmf_obs = mbins_obs + dmobs/2.0
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
-                 disk_vel, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, 
-                 BT_fractions_centrals, BT_fractions_satellites):
+                 disk_vel, BT_fractions_centrals, BT_fractions_satellites):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
@@ -63,8 +62,6 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
             mbulge[zero_bulge] = 10.0
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
-
-    sam_subhalo = 1.41421356237 * G**0.66 * lambda_sub * mvir_s**0.66 / (h0*100.0)**0.33;
 
     vdisk = specific_angular_momentum_disk_star / rdisk / 2.0 #in km/s
     vbulge = specific_angular_momentum_bulge_star / rbulge / 2.0 #in km/s
@@ -85,22 +82,6 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     ind = np.where((mdisk > 0)  & (mdisk/(mdisk+mbulge) > 0.5))
     disk_size[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                 y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
-
-    ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.5) & (typeg == 0))
-    sam_stars_disk[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
-                                y=np.log10(specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
-    
-    ind = np.where((specific_angular_momentum_disk_gas > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.5) & (typeg == 0))
-    sam_gas_disk_atom[index,:]   = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
-                                y=np.log10(specific_angular_momentum_disk_gas[ind]) - np.log10(float(h0)))
-    
-    ind = np.where((specific_angular_momentum_disk_gas_mol > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.5) & (typeg == 0))
-    sam_gas_disk_mol[index,:]   = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
-                                y=np.log10(specific_angular_momentum_disk_gas_mol[ind]) - np.log10(float(h0)))
-    
-    ind = np.where((sam_subhalo > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.5) & (typeg == 0))
-    sam_halo[index,:]       = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
-                                y=np.log10(sam_subhalo[ind]) - np.log10(float(h0)))
 
     ind = np.where((mdisk > 0) & (typeg == 0) & (mbulge/mdisk < 0.5))
     disk_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
@@ -298,171 +279,6 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel):
 
     common.savefig(outdir, fig, 'velocities.pdf')
  
-def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo):
-
-    fig = plt.figure(figsize=(5,9.5))
-    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm j_{\\rm disk}/kpc\\, km s^{-1})$"
-    xmin, xmax, ymin, ymax = 7, 11.5, 1.5, 5
-    xleg = xmax - 0.2 * (xmax - xmin)
-    yleg = ymax - 0.1 * (ymax - ymin)
-
-    # LTG ##################################
-    ax = fig.add_subplot(211)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.text(xleg, yleg, 'z=0')
-
-    #Romanowsky and Fall (2012)
-    
-    #a = 0.67
-    #b = -4.029
-    #berr = 0.2
-    #ind = np.where(xmf < 11)
-    #rRF12 = a * xmf[ind] + b
-    #rRF12Low  = a * xmf[ind] + b - berr
-    #rRF12High = a * xmf[ind] + b + berr
-
-    #ax.plot(xmf[ind],rRF12,'g', linestyle='solid', label ='R&F')
-    #ax.plot(xmf[ind],rRF12Low,'g', linestyle='dotted')
-    #ax.plot(xmf[ind],rRF12High,'g', linestyle='dotted')
-
-    ind = np.where(sam_halo[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = sam_halo[0,0,ind] + 3.0
-    errdn = sam_halo[0,1,ind]
-    errup = sam_halo[0,2,ind]
-    ax.plot(xplot,yplot[0],color='k',label="DM")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='k', alpha=0.2,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='k', alpha=0.2,interpolate=True)
-
-    #Predicted sAM-mass for disks in disk=dominated galaxies
-    ind = np.where(sam_stars_disk[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = sam_stars_disk[0,0,ind]+ 3.0
-    errdn = sam_stars_disk[0,1,ind]
-    errup = sam_stars_disk[0,2,ind]
-    ax.plot(xplot,yplot[0],color='r',label="stars")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.5,interpolate=True)
-
-    #Predicted size-mass for disks in disk=dominated galaxies
-    ind = np.where(sam_gas_disk_atom[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = sam_gas_disk_atom[0,0,ind] + 3.0
-    errdn = sam_gas_disk_atom[0,1,ind]
-    errup = sam_gas_disk_atom[0,2,ind]
-    ax.plot(xplot,yplot[0],color='b',label="atomic ISM")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.5,interpolate=True)
-    
-    #Predicted size-mass for disks in disk=dominated galaxies
-    ind = np.where(sam_gas_disk_mol[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = sam_gas_disk_mol[0,0,ind] + 3.0
-    errdn = sam_gas_disk_mol[0,1,ind]
-    errup = sam_gas_disk_mol[0,2,ind]
-    ax.plot(xplot,yplot[0],color='g',label="molecular ISM")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='g', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='g', alpha=0.5,interpolate=True)
-
-    bin_it = functools.partial(us.wmedians, xbins=xmf_obs)
-    
-    bt, ms, mg, js, jg, jmol = common.load_observation(obsdir, 'SizesAndAM/Obreschkow14_FP.dat', [2,7,8,12,14,15])
-    
-    jobs_sm  = np.zeros(shape = (3, len(xmf_obs)))
-    jobs_hi  = np.zeros(shape = (3, len(xmf_obs)))
-    jobs_h2  = np.zeros(shape = (3, len(xmf_obs)))
-    
-    ind = np.where((bt < 0.5) & (ms > 9.7) )
-    jobs_sm = bin_it(x=ms[ind], y=js[ind])
-    jobs_hi = bin_it(x=ms[ind], y=jg[ind])
-    jobs_h2 = bin_it(x=ms[ind], y=jmol[ind])
-    
-    #ax.plot(ms[ind], js[ind], 'ro',fillstyle='none', label="Obreschkow+14")
-    #ax.plot(ms[ind], jg[ind], 'bo',fillstyle='none')
-    #ax.plot(ms[ind], jmol[ind], 'go',fillstyle='none')
-    
-    ind = np.where(jobs_sm[0,:] != 0)
-    yplot = jobs_sm[0,ind]
-    ax.plot(xmf_obs[ind], yplot[0], 'ro',fillstyle='full', label="Obreschkow+14 (med)")
-    ax.plot(xmf_obs[ind], yplot[0], 'r', linestyle='dotted')
-    
-    ind = np.where(jobs_hi[0,:] != 0)
-    yplot = jobs_hi[0,ind]
-    ax.plot(xmf_obs[ind],  yplot[0], 'bo',fillstyle='full')
-    ax.plot(xmf_obs[ind],  yplot[0], 'b', linestyle='dotted')
-    
-    ind = np.where(jobs_h2[0,:] != 0)
-    yplot = jobs_h2[0,ind]
-    ax.plot(xmf_obs[ind], yplot[0], 'go',fillstyle='full')
-    ax.plot(xmf_obs[ind], yplot[0], 'g', linestyle='dotted')
-    
-    mg, ms, jg, js = common.load_observation(obsdir, 'SizesAndAM/LITTLETHINGS_Butler16.dat', [1,3,7,9])
-    jobs_sm = bin_it(x=ms, y=js)
-    jobs_hi = bin_it(x=ms, y=jg)
-    
-    ax.plot(ms, js, 'rs',fillstyle='none',label="Butler+16 (indiv)")
-    ax.plot(ms, jg, 'bs',fillstyle='none')
-    
-    ind = np.where(jobs_sm[0,:] != 0)
-    yplot = jobs_sm[0,ind]
-    #ax.plot(xmf_obs[ind], yplot[0], 'rs',fillstyle='full')
-    #ax.plot(xmf_obs[ind], yplot[0], 'r', linestyle='dotted')
-    
-    ind = np.where(jobs_hi[0,:] != 0)
-    yplot = jobs_hi[0,ind]
-    #ax.plot(xmf_obs[ind], yplot[0], 'bs',fillstyle='full')
-    #ax.plot(xmf_obs[ind], yplot[0], 'b', linestyle='dotted')
-
-    common.prepare_legend(ax, ['k'], loc=2)
-
-    ###################################
-    ax = fig.add_subplot(212)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.text(xleg, yleg, 'z=2')
-
-    ind = np.where(sam_halo[3,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = sam_halo[3,0,ind] + 3.0
-    errdn = sam_halo[3,1,ind]
-    errup = sam_halo[3,2,ind]
-    ax.plot(xplot,yplot[0],color='k',label="DM")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='k', alpha=0.2,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='k', alpha=0.2,interpolate=True)
-
-    #Predicted sAM-mass for disks in disk=dominated galaxies
-    ind = np.where(sam_stars_disk[3,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = sam_stars_disk[3,0,ind]+ 3.0
-    errdn = sam_stars_disk[3,1,ind]
-    errup = sam_stars_disk[3,2,ind]
-    ax.plot(xplot,yplot[0],color='r',label="stars")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.5,interpolate=True)
-
-    #Predicted size-mass for disks in disk=dominated galaxies
-    ind = np.where(sam_gas_disk_atom[3,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = sam_gas_disk_atom[3,0,ind] + 3.0
-    errdn = sam_gas_disk_atom[3,1,ind]
-    errup = sam_gas_disk_atom[3,2,ind]
-    ax.plot(xplot,yplot[0],color='b',label="atomic ISM")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.5,interpolate=True)
-
-    ind = np.where(sam_gas_disk_mol[3,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = sam_gas_disk_mol[3,0,ind] + 3.0
-    errdn = sam_gas_disk_mol[3,1,ind]
-    errup = sam_gas_disk_mol[3,2,ind]
-    ax.plot(xplot,yplot[0],color='g',label="molecular ISM")
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='g', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='g', alpha=0.5,interpolate=True)
-
-    common.prepare_legend(ax, ['k'], loc=2)
-
-    common.savefig(outdir, fig, 'specific_am.pdf')
-    
 def plot_sizes_combined(plt, outdir, rcomb):
 
     fig = plt.figure(figsize=(5,4.5))
@@ -648,22 +464,15 @@ def main(modeldir, outdir, subvols, obsdir):
     BT_fractions_satellites = np.zeros(shape = (len(zlist), len(xmf)))
     disk_vel =  np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_vel =  np.zeros(shape = (len(zlist), 3, len(xmf)))
-    sam_stars_disk    = np.zeros(shape = (len(zlist), 3, len(xmf)))
-    sam_gas_disk_atom = np.zeros(shape = (len(zlist), 3, len(xmf)))
-    sam_gas_disk_mol  = np.zeros(shape = (len(zlist), 3, len(xmf)))
     
-    sam_halo       = np.zeros(shape = (len(zlist), 3, len(xmf)))
-
     for index in range(0,4):
         hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, BT_fractions_centrals, 
-		     BT_fractions_satellites)
+                     BT_fractions_centrals, BT_fractions_satellites)
 
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins)
     plot_velocities(plt, outdir, disk_vel, bulge_vel)
-    plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo)
     plot_sizes_combined(plt, outdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
