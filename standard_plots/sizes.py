@@ -86,15 +86,15 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     disk_size[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                 y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.4) & (typeg == 0))
+    ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.5) & (typeg == 0))
     sam_stars_disk[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
     
-    ind = np.where((specific_angular_momentum_disk_gas > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.4) & (typeg == 0))
+    ind = np.where((specific_angular_momentum_disk_gas > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.5) & (typeg == 0))
     sam_gas_disk_atom[index,:]   = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_gas[ind]) - np.log10(float(h0)))
     
-    ind = np.where((specific_angular_momentum_disk_gas_mol > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.4) & (typeg == 0))
+    ind = np.where((specific_angular_momentum_disk_gas_mol > 0) & (mdisk+mbulge > 0) & (mbulge/(mdisk+mbulge) < 0.5) & (typeg == 0))
     sam_gas_disk_mol[index,:]   = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(specific_angular_momentum_disk_gas_mol[ind]) - np.log10(float(h0)))
     
