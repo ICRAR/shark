@@ -353,7 +353,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 				// SFRs in disks and bulges.
 				sfr_disk.push_back(galaxy->sfr_disk);
-				sfr_burst.push_back(galaxy->sfr_bulge);
+				sfr_burst.push_back(galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins);
 
 				// Black hole properties.
 				mBH.push_back(galaxy->smbh.mass);
@@ -867,14 +867,14 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			vector<vector<float>> sfhs_disk;
 			vector<vector<float>> stellar_mass_disk;
 			vector<vector<float>> stellar_metals_disk;
-			vector<vector<float>> gas_hs_disk;
-			vector<vector<float>> gas_metals_hs_disk;
 
-			vector<vector<float>> sfhs_bulge;
-			vector<vector<float>> stellar_mass_bulge;
-			vector<vector<float>> stellar_metals_bulge;
-			vector<vector<float>> gas_hs_bulge;
-			vector<vector<float>> gas_metals_hs_bulge;
+			vector<vector<float>> sfhs_bulge_mergers;
+			vector<vector<float>> stellar_mass_bulge_mergers;
+			vector<vector<float>> stellar_metals_bulge_mergers;
+
+			vector<vector<float>> sfhs_bulge_diskins;
+			vector<vector<float>> stellar_mass_bulge_diskins;
+			vector<vector<float>> stellar_metals_bulge_diskins;
 
 			vector<long> id_galaxy;
 
@@ -886,8 +886,10 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 
 						vector<float> sfh_gal_disk;
 						vector<float> star_metals_gal_disk;
-						vector<float> sfh_gal_bulge;
-						vector<float> star_metals_gal_bulge;
+						vector<float> sfh_gal_bulge_mergers;
+						vector<float> star_metals_gal_bulge_mergers;
+						vector<float> sfh_gal_bulge_diskins;
+						vector<float> star_metals_gal_bulge_diskins;
 
 						bool star_gal_bulge_exists = false;
 						for(int s=sim_params.min_snapshot+1; s <= snapshot; s++) {
@@ -918,8 +920,11 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 								sfh_gal_disk.push_back(defl_value);
 								star_metals_gal_disk.push_back(defl_value);
 
-								sfh_gal_bulge.push_back(defl_value);
-								star_metals_gal_bulge.push_back(defl_value);
+								sfh_gal_bulge_mergers.push_back(defl_value);
+								star_metals_gal_bulge_mergers.push_back(defl_value);
+
+								sfh_gal_bulge_diskins.push_back(defl_value);
+								star_metals_gal_bulge_diskins.push_back(defl_value);
 							}
 							else {
 								star_gal_bulge_exists = true;
@@ -933,13 +938,22 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 									star_metals_gal_disk.push_back(0);
 								}
 
-								// assign bulge properties
-								sfh_gal_bulge.push_back(item.sfr_bulge/constants::GIGA);
-								if(item.sfr_bulge > 0){
-									star_metals_gal_bulge.push_back(item.sfr_z_bulge/item.sfr_bulge);
+								// assign bulge properties driven by mergers
+								sfh_gal_bulge_mergers.push_back(item.sfr_bulge_mergers/constants::GIGA);
+								if(item.sfr_bulge_mergers > 0){
+									star_metals_gal_bulge_mergers.push_back(item.sfr_z_bulge_mergers/item.sfr_bulge_mergers);
 								}
 								else{
-									star_metals_gal_bulge.push_back(0);
+									star_metals_gal_bulge_mergers.push_back(0);
+								}
+
+								// assign bulge properties driven by disk instabilities
+								sfh_gal_bulge_diskins.push_back(item.sfr_bulge_diskins/constants::GIGA);
+								if(item.sfr_bulge_diskins > 0){
+									star_metals_gal_bulge_diskins.push_back(item.sfr_z_bulge_diskins/item.sfr_bulge_diskins);
+								}
+								else{
+									star_metals_gal_bulge_diskins.push_back(0);
 								}
 							}
 						}
@@ -949,8 +963,11 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 							sfhs_disk.emplace_back(std::move(sfh_gal_disk));
 							stellar_metals_disk.emplace_back(std::move(star_metals_gal_disk));
 
-							sfhs_bulge.emplace_back(std::move(sfh_gal_bulge));
-							stellar_metals_bulge.emplace_back(std::move(star_metals_gal_bulge));
+							sfhs_bulge_mergers.emplace_back(std::move(sfh_gal_bulge_mergers));
+							stellar_metals_bulge_mergers.emplace_back(std::move(star_metals_gal_bulge_mergers));
+
+							sfhs_bulge_diskins.emplace_back(std::move(sfh_gal_bulge_diskins));
+							stellar_metals_bulge_diskins.emplace_back(std::move(star_metals_gal_bulge_diskins));
 
 							id_galaxy.push_back(galaxy->id);
 						}
@@ -984,12 +1001,19 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			comment = "Stellar metallicity of the stars formed in a timestep that by this output time ends up in the disk";
 			file_sfh.write_dataset("disks/metallicity_histories", stellar_metals_disk, comment);
 
-			//Write bulge component history.
-			comment = "Star formation history of stars formed that by this output time end up in the bulge [Msun/yr/h]";
-			file_sfh.write_dataset("bulges/star_formation_rate_histories", sfhs_bulge, comment);
+			//Write bulge component history, for the mass build up due to galaxy mergers.
+			comment = "Star formation history of stars formed that by this output time end up in the bulge formed via galaxy mergers [Msun/yr/h]";
+			file_sfh.write_dataset("bulges_mergers/star_formation_rate_histories", sfhs_bulge_mergers, comment);
 
-			comment = "Stellar metallicity of the stars formed in a timestep that by this output time ends up in the disk";
-			file_sfh.write_dataset("bulges/metallicity_histories", stellar_metals_bulge, comment);
+			comment = "Stellar metallicity of the stars formed in a timestep that by this output time ends up in the bulge formed via galaxy mergers";
+			file_sfh.write_dataset("bulges_mergers/metallicity_histories", stellar_metals_bulge_mergers, comment);
+
+			//Write bulge component history.
+			comment = "Star formation history of stars formed that by this output time end up in the bulge formed via disk instabilities [Msun/yr/h]";
+			file_sfh.write_dataset("bulges_diskins/star_formation_rate_histories", sfhs_bulge_diskins, comment);
+
+			comment = "Stellar metallicity of the stars formed in a timestep that by this output time ends up in the bulge formed via disk instabilities";
+			file_sfh.write_dataset("bulges_diskins/metallicity_histories", stellar_metals_bulge_diskins, comment);
 
 			comment = "Redshifts of the history outputs";
 			file_sfh.write_dataset("redshifts", redshifts, comment);

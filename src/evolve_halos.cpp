@@ -88,10 +88,12 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 
 			// Make sure all SFRs (in mass and metals) are set to 0 for the next snapshot
 			for (GalaxyPtr & galaxy: subhalo->galaxies){
-				galaxy->sfr_bulge  = 0;
-				galaxy->sfr_z_bulge= 0;
-				galaxy->sfr_z_disk = 0;
-				galaxy->sfr_disk   = 0;
+				galaxy->sfr_bulge_mergers  = 0;
+				galaxy->sfr_z_bulge_mergers= 0;
+				galaxy->sfr_bulge_diskins  = 0;
+				galaxy->sfr_z_bulge_diskins= 0;
+				galaxy->sfr_z_disk         = 0;
+				galaxy->sfr_disk           = 0;
 			}
 
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
@@ -199,14 +201,17 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
         
 				if(execparams.output_sf_histories){
         
-					galaxy->mean_stellar_age += (galaxy->sfr_disk + galaxy->sfr_bulge) * deltat * mean_age;
-					galaxy->total_stellar_mass_ever_formed += (galaxy->sfr_disk + galaxy->sfr_bulge) * deltat;
+					galaxy->mean_stellar_age += (galaxy->sfr_disk + galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins) * deltat * mean_age;
+					galaxy->total_stellar_mass_ever_formed += (galaxy->sfr_disk + galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins) * deltat;
+
 					HistoryItem hist_galaxy;
-					hist_galaxy.sfr_disk    = galaxy->sfr_disk;
-					hist_galaxy.sfr_bulge   = galaxy->sfr_bulge;
-					hist_galaxy.sfr_z_disk  = galaxy->sfr_z_disk;
-					hist_galaxy.sfr_z_bulge = galaxy->sfr_z_bulge;
-					hist_galaxy.snapshot    = snapshot;
+					hist_galaxy.sfr_disk            = galaxy->sfr_disk;
+					hist_galaxy.sfr_bulge_mergers   = galaxy->sfr_bulge_mergers;
+					hist_galaxy.sfr_bulge_diskins   = galaxy->sfr_bulge_diskins;
+					hist_galaxy.sfr_z_disk          = galaxy->sfr_z_disk;
+					hist_galaxy.sfr_z_bulge_mergers = galaxy->sfr_z_bulge_mergers;
+					hist_galaxy.sfr_z_bulge_diskins = galaxy->sfr_z_bulge_diskins;
+					hist_galaxy.snapshot            = snapshot;
 					galaxy->history.emplace_back(std::move(hist_galaxy));
 				}
         
@@ -228,7 +233,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 				mstars_bursts_diskinstabilities.mass_metals += galaxy->diskinstabilities_burst_stars.mass_metals;
 
 				SFR_total_disk  += galaxy->sfr_disk;
-				SFR_total_burst += galaxy->sfr_bulge;
+				SFR_total_burst += galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins;
         
 				MBH_total.mass += galaxy->smbh.mass;
         

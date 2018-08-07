@@ -234,9 +234,9 @@ void DiskInstability::transfer_history_disk_to_bulge(GalaxyPtr &galaxy, int snap
 		else { // both galaxies exist at this snapshot
 			auto &hist = *it;
 
-			//transfer disk information to bulge.
-			hist.sfr_bulge   += hist.sfr_disk;
-			hist.sfr_z_bulge += hist.sfr_z_disk;
+			//transfer disk information to bulge formed via disk instabilites
+			hist.sfr_bulge_diskins   += hist.sfr_disk;
+			hist.sfr_z_bulge_diskins += hist.sfr_z_disk;
 
 			//make disk properties = 0;
 			hist.sfr_disk   = 0;

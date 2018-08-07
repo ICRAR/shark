@@ -144,9 +144,11 @@ public:
  */
 struct HistoryItem {
 	float sfr_disk;
-	float sfr_bulge;
+	float sfr_bulge_mergers;
+	float sfr_bulge_diskins;
 	float sfr_z_disk;
-	float sfr_z_bulge;
+	float sfr_z_bulge_mergers;
+	float sfr_z_bulge_diskins;
 	int snapshot;
 };
 
@@ -192,14 +194,16 @@ public:
 	Baryon galaxymergers_burst_stars {};
 	Baryon galaxymergers_assembly_stars {};
 	Baryon diskinstabilities_burst_stars {};
-        Baryon diskinstabilities_assembly_stars {};
+    Baryon diskinstabilities_assembly_stars {};
 	BlackHole smbh {};
 
 	//save average star formation rates and metallicities of the newly formed stars.
 	float sfr_disk = 0;
-	float sfr_bulge = 0;
+	float sfr_bulge_mergers = 0;
+	float sfr_bulge_diskins = 0;
 	float sfr_z_disk = 0;
-	float sfr_z_bulge = 0;
+	float sfr_z_bulge_mergers = 0;
+	float sfr_z_bulge_diskins = 0;
 
 	/**
 	 * Keep track of mean stellar age using:

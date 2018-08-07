@@ -210,8 +210,8 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	galaxy.disk_stars.mass 					= y[0];
 	galaxy.disk_gas.mass   					= y[1];
 	subhalo.cold_halo_gas.mass 				= y[2];
-	subhalo.hot_halo_gas.mass                               = y[3];
-	subhalo.ejected_galaxy_gas.mass 		        = y[4];
+	subhalo.hot_halo_gas.mass               = y[3];
+	subhalo.ejected_galaxy_gas.mass 		= y[4];
 
 	// Assign new mass in metals.
 	galaxy.disk_stars.mass_metals 			= y[5];
@@ -369,10 +369,16 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	if(from_galaxy_merger){
 		galaxy.galaxymergers_burst_stars.mass                 += y[0] -  galaxy.bulge_stars.mass;
 		galaxy.galaxymergers_burst_stars.mass_metals          += y[5] -  galaxy.bulge_stars.mass_metals;
+		// Calculate average SFR and metallicity of newly formed stars.
+		galaxy.sfr_bulge_mergers                              += y[10]/delta_t;
+		galaxy.sfr_z_bulge_mergers                            += y[11]/delta_t;
 	}
 	else{
 		galaxy.diskinstabilities_burst_stars.mass             += y[0] -  galaxy.bulge_stars.mass;
 		galaxy.diskinstabilities_burst_stars.mass_metals      += y[5] -  galaxy.bulge_stars.mass_metals;
+		// Calculate average SFR and metallicity of newly formed stars.
+		galaxy.sfr_bulge_diskins                              += y[10]/delta_t;
+		galaxy.sfr_z_bulge_diskins                            += y[11]/delta_t;
 	}
 
 	// Assign new masses.
@@ -386,10 +392,6 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	galaxy.bulge_gas.mass_metals 			= y[6];
 	subhalo.hot_halo_gas.mass_metals        = y[8];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[9];
-
-	// Calculate average SFR and metallicity of newly formed stars.
-	galaxy.sfr_bulge                        += y[10]/delta_t;
-	galaxy.sfr_z_bulge                      += y[11]/delta_t;
 
 	// Equations of angular momentum exchange are ignored in the case of starbursts.
 

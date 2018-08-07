@@ -725,13 +725,17 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 		else if (it_sat != satellite->history.end() and it_cen == central->history.end()){ // central didn't exist but satellite did.
 			auto hist_item = *it_sat;
 
-			//transfer all data to the bulge, which is where all of this mass ends up being at.
-			hist_item.sfr_bulge   += hist_item.sfr_disk;
-			hist_item.sfr_z_bulge += hist_item.sfr_z_disk;
+			//transfer all data to the bulge formed via mergers, which is where all of this mass ends up being at.
+			hist_item.sfr_bulge_mergers   += hist_item.sfr_disk + hist_item.sfr_bulge_diskins;
+			hist_item.sfr_z_bulge_mergers += hist_item.sfr_z_disk + hist_item.sfr_z_bulge_diskins;
 
 			//Make disk properties = 0.
 			hist_item.sfr_disk   = 0;
 			hist_item.sfr_z_disk = 0;
+
+			//Make bulge properties formed via disk instabilities = 0.
+			hist_item.sfr_bulge_diskins = 0;
+			hist_item.sfr_z_bulge_diskins = 0;
 
 			central->history.push_back(hist_item);
 		}
@@ -739,8 +743,8 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 			auto hist_sat = *it_sat;
 			auto &hist_cen = *it_cen;
 
-			hist_cen.sfr_bulge   += hist_sat.sfr_bulge + hist_sat.sfr_disk;
-			hist_cen.sfr_z_bulge += hist_sat.sfr_z_bulge + hist_sat.sfr_z_disk;
+			hist_cen.sfr_bulge_mergers   += hist_sat.sfr_bulge_mergers + hist_sat.sfr_bulge_diskins + hist_sat.sfr_disk;
+			hist_cen.sfr_z_bulge_mergers += hist_sat.sfr_z_bulge_mergers + hist_sat.sfr_z_bulge_diskins + hist_sat.sfr_z_disk;
 
 		}
 	}
@@ -766,13 +770,17 @@ void GalaxyMergers::transfer_history_disk_to_bulge(GalaxyPtr &central, int snaps
 		else { // both galaxies exist at this snapshot
 			auto &hist_cen = *it_cen;
 
-			//tranfer disk information to bulge.
-			hist_cen.sfr_bulge   += hist_cen.sfr_disk;
-			hist_cen.sfr_z_bulge += hist_cen.sfr_z_disk;
+			//transfer disk information to bulge.
+			hist_cen.sfr_bulge_mergers   += hist_cen.sfr_disk + hist_cen.sfr_bulge_diskins;
+			hist_cen.sfr_z_bulge_mergers += hist_cen.sfr_z_disk + hist_cen.sfr_z_bulge_diskins;
 
 			//make disk properties = 0;
 			hist_cen.sfr_disk = 0;
 			hist_cen.sfr_z_disk = 0;
+
+			//make bulge formed via disk instabilities properties =0.
+			hist_cen.sfr_bulge_diskins = 0;
+			hist_cen.sfr_z_bulge_diskins = 0;
 		}
 	}
 
