@@ -24,11 +24,6 @@
 #include <cmath>
 #include <memory>
 
-#include "config.h"
-#ifdef SHARK_OPENMP
-#include <omp.h>
-#endif // SHARK_OPENMP
-
 #include "components.h"
 #include "evolve_halos.h"
 #include "logging.h"

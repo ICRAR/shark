@@ -28,10 +28,10 @@
 #include <numeric>
 #include <vector>
 
-#include "config.h"
 #include "cosmology.h"
 #include "exceptions.h"
 #include "logging.h"
+#include "omp_utils.h"
 #include "timer.h"
 #include "tree_builder.h"
 
@@ -56,11 +56,7 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 
 void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const
 {
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for (auto &snapshot_and_halos: tree->halos) {
 			for (auto &halo: snapshot_and_halos.second) {
 				if (halo->merger_tree != tree) {
@@ -70,7 +66,7 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 				}
 			}
 		}
-	}
+	});
 }
 
 std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
@@ -214,12 +210,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 	//This function loops over merger trees and halos to define central galaxies in a self-consistent way. The loop starts at z=0.
 
 	//Loop over trees.
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
-
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 
 				for(auto &halo: tree->halos[snapshot]){
@@ -281,15 +272,10 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 					}
 				}
 			}
-		}
+		});
 
 		//Make sure each halo has only one central subhalo and that the rest are satellites.
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
-
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 			for(int snapshot=sim_params.min_snapshot; snapshot >= sim_params.max_snapshot; snapshot++) {
 
 				for(auto &halo: tree->halos[snapshot]){
@@ -311,20 +297,13 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 					}
 				}
 			}
-		}
+		});
 }
 
 void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
 
 	//This function loops over merger trees and halos to make sure that descendant halos are at least as massive as their progenitors.
-
-	//Loop over trees.
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
-
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
 
 			for(auto &halo: tree->halos[snapshot]){
@@ -334,7 +313,7 @@ void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &tree
 				}
 			}
 		}
-	}
+	});
 }
 
 void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
@@ -343,12 +322,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 	// This has to be done starting from the first snapshot forward so that the angular momentum and concentration are propagated correctly if subhalo is interpolated over many snapshots.
 
 	//Loop over trees.
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
-
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 			for(int snapshot=sim_params.max_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
 
 				for(auto &halo: tree->halos[snapshot]){
@@ -370,7 +344,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 					}
 				}
 			}
-		}
+		});
 }
 
 
