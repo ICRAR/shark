@@ -172,7 +172,7 @@ def density_contour(ax, xdata, ydata, nbins_x, nbins_y):
     if tuple(mpl.__version__.split('.')) >= ('1', '5'):
         extra_args['cmap'] = plt.get_cmap('viridis')
 
-    return ax.contour(X, Y, Z, levels=levels, origin="lower", alpha=0.75,
+    return ax.contourf(X, Y, Z, levels=levels, origin="lower", alpha=0.75,
                       norm=col.Normalize(vmin=0, vmax=0.01), **extra_args)
 
 
