@@ -252,12 +252,11 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=colorfill, alpha=0.2,interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colorfill, alpha=0.2,interpolate=True)
 
-
-    plot_mrelation(mgas_relation, 'k', label="Shark all galaxies")
+    plot_mrelation(mgas_relation, 'k', linestyle='solid', label="Shark all galaxies")
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xCOLDGAS+xGASS")
-    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGAS+xGASS")
+    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGAS+xGASS(0)", color='grey')
+    add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xCOLDGAS+xGASS(UL)")
 
     common.prepare_legend(ax, ['k','k','k'])
 
@@ -289,11 +288,11 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     xdata = mh1_gals[0,ind]
     ydata = mh1_gals[1,ind]
     us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
-    plot_mrelation(mh1_relation, 'k')
+    plot_mrelation(mh1_relation, 'k', linestyle='solid')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xGASS")
-    add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQZero.dat', ax, '^', "xGASS")
+    add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQZero.dat', ax, '^', "xGASS(0)", color='grey')
+    add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xGASS(UL)")
 
     x, y, yerr_down, yerr_up = common.load_observation(obs_dir, 'Gas/Parkash18.dat', (0, 1, 2, 3))
     ax.errorbar(x,y-x,yerr=[(y-x) - (yerr_down-x),(yerr_up-x) - (y-x)], ls='None', mfc='r', fillstyle='full', ecolor = 'r', mec='r',marker='s',markersize=7, label="Parkash+18")
@@ -336,11 +335,11 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     xdata = mh2_gals[0,ind]
     ydata = mh2_gals[1,ind]
     us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
-    plot_mrelation(mh2_relation, 'k')
+    plot_mrelation(mh2_relation, 'k', linestyle='solid')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xCOLDGASS")
-    add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGASS")
+    add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGASS(0)", color='grey')
+    add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQUpperLimits.dat', ax, 'v', "xCOLDGASS(UL)")
 
     common.prepare_legend(ax, ['k','k','k'], loc = 1)
 
