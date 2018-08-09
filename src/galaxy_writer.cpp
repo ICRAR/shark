@@ -827,8 +827,18 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot
 	comment = "total star formation rate taking place in bulges in the simulated box [Msun/Gyr/h]";
 	file.write_dataset("global/sfr_burst",AllBaryons.SFR_bulge, comment);
 
+        comment = "number of major mergers taking place in the simulated box at this snapshot.";
+        file.write_dataset("global/number_major_mergers", AllBaryons.major_mergers, comment);
+
+        comment = "number of minor mergers taking place in the simulated box at this snapshot.";
+        file.write_dataset("global/number_minor_mergers", AllBaryons.minor_mergers, comment);
+
+        comment = "number of disk instability episodes taking place in the simulated box at this snapshot.";
+        file.write_dataset("global/number_disk_instabilities", AllBaryons.disk_instabil, comment);
+
 	comment = "total hot gas mass in halos in the simulated box [Msun/h]";
 	file.write_dataset("global/mhot_halo",AllBaryons.get_masses(AllBaryons.mhot_halo),comment);
+
 	comment = "total mass of metals in the hot gas mass in halos in the simulated box [Msun/h]";
 	file.write_dataset("global/mhot_metals",AllBaryons.get_metals(AllBaryons.mhot_halo), comment);
 
@@ -839,6 +849,7 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot
 
 	comment = "total gas mass ejected from halos (and that has not yet been reincorporated) in the simulated box [Msun/h]";
 	file.write_dataset("global/mejected_halo",AllBaryons.get_masses(AllBaryons.mejected_halo), comment);
+
 	comment = "total mass of metals in the ejected gas reservoir in the simulated box [Msun/h]";
 	file.write_dataset("global/mejected_halo_metals",AllBaryons.get_metals(AllBaryons.mejected_halo), comment);
 
@@ -847,6 +858,7 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot
 
 	comment = "total baryon mass in the simulated box [Msun/h]";
 	file.write_dataset("global/mbar_created",baryons_ever_created, comment);
+
 	comment = "total baryons lost in the simulated box [Msun/h] (ideally this should be =0)";
 	file.write_dataset("global/mbar_lost", baryons_ever_lost, comment);
 }

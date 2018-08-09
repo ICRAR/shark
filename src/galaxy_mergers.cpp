@@ -384,6 +384,11 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	if(mass_ratio >= parameters.major_merger_ratio){
 
 		/**
+ 		* Count number of major mergers.
+ 		*/ 
+		central->interaction.major_mergers += 1;
+
+		/**
 		 * Transfer mass. In the case of major mergers, transfer all stars and gas to the bulge.
 		 */
 
@@ -405,6 +410,11 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 	}
 	else{//minor mergers
+
+		/**
+ 		* Count number of minor mergers.
+ 		*/ 
+		central->interaction.minor_mergers += 1;
 
 		/**
 		 * Transfer mass. In the case of minor mergers, transfer the satellite' stars to the central bulge, and the satellite' gas to the central's disk.

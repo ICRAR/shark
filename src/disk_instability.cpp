@@ -63,6 +63,10 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 		for (auto &galaxy: subhalo->galaxies){
 			double f = toomre_parameter(galaxy);
 			if(f < parameters.stable){
+				/**
+ 				* Count number of disk instability episodes.
+		 		*/ 
+				galaxy->interaction.disk_instabilities += 1;
 
 				/**
 				 * Estimate new bulge size.

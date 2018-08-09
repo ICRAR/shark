@@ -152,6 +152,18 @@ struct HistoryItem {
 	int snapshot;
 };
 
+struct InteractionItem{
+	int major_mergers = 0;
+	int minor_mergers = 0;
+	int disk_instabilities = 0;
+
+        void restore_interaction_item(){
+                major_mergers = 0;
+                minor_mergers = 0;
+		disk_instabilities = 0;
+        }
+
+};
 
 /**
  * A basic galaxy.
@@ -194,7 +206,7 @@ public:
 	Baryon galaxymergers_burst_stars {};
 	Baryon galaxymergers_assembly_stars {};
 	Baryon diskinstabilities_burst_stars {};
-    Baryon diskinstabilities_assembly_stars {};
+	Baryon diskinstabilities_assembly_stars {};
 	BlackHole smbh {};
 
 	//save average star formation rates and metallicities of the newly formed stars.
@@ -218,6 +230,9 @@ public:
 
 	//save star formation and gas history
 	std::vector<HistoryItem>  history {};
+
+	//save interactions of this galaxy during this snapshot.
+	InteractionItem interaction {};
 
 	/**
 	 * tmerge: dynamical friction timescale, which is defined only if galaxy is satellite.
@@ -815,6 +830,16 @@ public:
 
 	std::vector<double> SFR_disk;
 	std::vector<double> SFR_bulge;
+
+	/**
+	 * Vectors of integers that keep track of number of mergers of galaxies and disk instability episodes in each snapshot.
+	 * major_mergers: counts number of major mergers per snapshot.
+	 * minor_mergers: counts number of minor mergers per snapshot.
+	 * disk_instabil: counts number of disk instability episodes per snapshot.
+ 	*/ 
+	std::vector<int> major_mergers;
+	std::vector<int> minor_mergers;
+	std::vector<int> disk_instabil;
 
 	std::map<int,double> baryon_total_created;
 	std::map<int,double> baryon_total_lost;

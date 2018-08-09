@@ -94,6 +94,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 				galaxy->sfr_z_bulge_diskins= 0;
 				galaxy->sfr_z_disk         = 0;
 				galaxy->sfr_disk           = 0;
+				//restart counter of mergers and disk instabilities.
+				galaxy->interaction.restore_interaction_item();
 			}
 
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
@@ -174,6 +176,10 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	double SFR_total_disk = 0;
 	double SFR_total_burst = 0;
 
+	int number_major_mergers = 0;
+	int number_minor_mergers = 0;
+	int number_disk_instabil = 0;
+
 	double z1 = simulation_params.redshifts[snapshot];
 	double z2 = simulation_params.redshifts[snapshot+1];
 
@@ -198,7 +204,11 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 			mejectedhalo_total.mass_metals += subhalo->ejected_galaxy_gas.mass_metals;
         
 			for (auto &galaxy: subhalo->galaxies){
-        
+       
+				number_major_mergers += galaxy->interaction.major_mergers;
+ 				number_minor_mergers += galaxy->interaction.minor_mergers;
+				number_disk_instabil += galaxy->interaction.disk_instabilities;
+
 				if(execparams.output_sf_histories){
         
 					galaxy->mean_stellar_age += (galaxy->sfr_disk + galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins) * deltat * mean_age;
@@ -250,6 +260,10 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	AllBaryons.mBH.push_back(MBH_total);
 	AllBaryons.SFR_disk.push_back(SFR_total_disk);
 	AllBaryons.SFR_bulge.push_back(SFR_total_burst);
+
+	AllBaryons.major_mergers.push_back(number_major_mergers);
+	AllBaryons.minor_mergers.push_back(number_minor_mergers);
+	AllBaryons.disk_instabil.push_back(number_disk_instabil);
 
 	AllBaryons.mhot_halo.push_back(mhothalo_total);
 	AllBaryons.mcold_halo.push_back(mcoldhalo_total);
