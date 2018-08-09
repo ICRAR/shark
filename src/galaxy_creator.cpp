@@ -91,7 +91,9 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 	galaxy->galaxy_type = Galaxy::CENTRAL;
 
 	central_subhalo->galaxies.push_back(galaxy);
-	LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
+	if (LOG_ENABLED(debug)) {
+		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
+	}
 
 	central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology->universal_baryon_fraction();
 

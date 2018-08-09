@@ -182,9 +182,11 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 		//Identify which subhalos will disappear in the next snapshot
 		if (satellite_subhalo->last_snapshot_identified == satellite_subhalo->snapshot) {
 
-			LOG(debug) << "Merging satellite subhalo " << satellite_subhalo
-			           << " into central subhalo " << central_subhalo
-			           << " because this is its last snapshot";
+			if (LOG_ENABLED(debug)) {
+				LOG(debug) << "Merging satellite subhalo " << satellite_subhalo
+				           << " into central subhalo " << central_subhalo
+				           << " because this is its last snapshot";
+			}
 
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
 			merging_timescale(central_subhalo, satellite_subhalo, z, false);
@@ -223,9 +225,11 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 		// the galaxies should be transferred to (rather than the descendant subhalo, which by chance could be a satellite subhalo).
 		auto desc_subhalo = central_subhalo->descendant->host_halo->central_subhalo;
 
-		LOG(debug) << "Merging central subhalo " << central_subhalo
-		           << " into " << desc_subhalo << " (the central subhalo of its descendant halo)"
-		           << " because this is its last snapshot";
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << "Merging central subhalo " << central_subhalo
+			           << " into " << desc_subhalo << " (the central subhalo of its descendant halo)"
+			           << " because this is its last snapshot";
+		}
 
 		// Find main progenitor subhalo of the descendant subhalo and use that to calculate merging timescales.
 		auto primary_subhalo = desc_subhalo->main();

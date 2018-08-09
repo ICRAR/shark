@@ -85,7 +85,9 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	for(const auto &halo: halos) {
 		if (halo->snapshot == last_snapshot_to_consider) {
 			auto tree = std::make_shared<MergerTree>(tree_counter++);
-			LOG(debug) << "Creating MergerTree at " << halo;
+			if (LOG_ENABLED(debug)) {
+				LOG(debug) << "Creating MergerTree at " << halo;
+			}
 			halo->merger_tree = tree;
 			halo->merger_tree->add_halo(halo);
 			trees.emplace_back(std::move(tree));

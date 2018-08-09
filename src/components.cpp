@@ -203,7 +203,9 @@ void Subhalo::remove_galaxies(const std::vector<GalaxyPtr> &to_remove)
 			LOG(warning) << "Trying to remove galaxy " << galaxy << " which is not in subhalo " << *this << ", ignoring";
 			continue;
 		}
-		LOG(debug) << "Removing galaxy " << galaxy << " from subhalo " << *this;
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << "Removing galaxy " << galaxy << " from subhalo " << *this;
+		}
 		galaxies.erase(it);
 	}
 }
