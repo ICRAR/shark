@@ -107,8 +107,8 @@ def plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking):
     ind = np.where((mHI_halos_stacking > 0) & (xmf > 10.3))
     xplot = xmf[ind]
     yplot = mHI_halos_stacking[ind]-xmf[ind]
-    for i,j in zip (xplot,yplot):
-    	print i,j
+    #for i,j in zip (xplot,yplot):
+    #	print i,j
 
     ax.plot(xplot,yplot, color='k', linestyle='solid', label='Shark')
 
