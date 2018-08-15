@@ -232,6 +232,10 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 					auto central_subhalo = halo->all_subhalos()[0];
 					auto subhalo = define_central_subhalo(halo, central_subhalo);
 
+                                        // save value of lambda to make sure that all main progenitors of this subhalo have the same lambda value. This is done for consistency 
+                                        // throughout time.
+                                        auto lambda = subhalo->lambda;
+
 					// Now walk backwards through the main progenitor branch until subhalo has no more progenitors. This is done only in the case the ascendant
 					// halo does not have a central already.
 
@@ -265,6 +269,9 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 						if (ascendant_halo->central_subhalo) {
 							break;
 						}
+
+                                                // Redefine lambda of main progenitor to have the same one as its descendant.
+                                                main_prog->lambda = lambda;
 
 						subhalo = define_central_subhalo(ascendant_halo, main_prog);
 
