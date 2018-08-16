@@ -45,7 +45,7 @@ SubhaloPtr Subhalo::main() const
 
 GalaxyPtr Subhalo::central_galaxy() const
 {
-	for (auto galaxy: galaxies){
+	for (auto &galaxy: galaxies){
 		if(galaxy->galaxy_type == Galaxy::CENTRAL){
 			return galaxy;
 		}
@@ -55,7 +55,7 @@ GalaxyPtr Subhalo::central_galaxy() const
 
 GalaxyPtr Subhalo::type1_galaxy() const
 {
-	for (auto galaxy: galaxies){
+	for (auto &galaxy: galaxies){
 		if(galaxy->galaxy_type == Galaxy::TYPE1){
 			return galaxy;
 		}
@@ -154,7 +154,7 @@ std::vector<GalaxyPtr> Subhalo::all_type2_galaxies() const
 
 	std::vector<GalaxyPtr> all;
 
-	for (auto galaxy: galaxies){
+	for (auto &galaxy: galaxies){
 		if(galaxy->galaxy_type == Galaxy::TYPE2){
 			all.push_back(std::move(galaxy));
 		}

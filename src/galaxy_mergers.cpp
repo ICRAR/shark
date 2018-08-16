@@ -244,7 +244,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 			auto ascendants = primary_subhalo->ascendants;
 			std::copy(ascendants.begin(), ascendants.end(), std::ostream_iterator<SubhaloPtr>(os, " "));
 			os << ". Galaxies are: ";
-			auto galaxies = primary_subhalo->galaxies;
+			auto &galaxies = primary_subhalo->galaxies;
 			std::copy(galaxies.begin(), galaxies.end(), std::ostream_iterator<GalaxyPtr>(os, " "));
 			throw invalid_argument(os.str());
 		}
