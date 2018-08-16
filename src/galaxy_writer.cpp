@@ -296,8 +296,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto msubhalo = subhalo->Mvir;
 			auto cnfw = subhalo->concentration;
 			auto lambda = subhalo->lambda;
-			auto subhalo_position = subhalo->position;
-			auto subhalo_velocity = subhalo->velocity;
 
 			// Assign baryon properties of subhalo
 			auto hot_subhalo = subhalo->hot_halo_gas;
@@ -409,11 +407,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					mvir_gal = msubhalo;
 					c_sub    = cnfw;
 					l_sub    = lambda;
-					pos      = subhalo_position;
-					vel      = subhalo_velocity;
-					L.x      = (subhalo->L.x/subhalo->L.norm()) * galaxy->angular_momentum();
-					L.y      = (subhalo->L.y/subhalo->L.norm()) * galaxy->angular_momentum();
-					L.z      = (subhalo->L.z/subhalo->L.norm()) * galaxy->angular_momentum();
+					pos      = subhalo->position;
+					vel      = subhalo->velocity;
+					L        = subhalo->L.unit() * galaxy->angular_momentum();
 					mvir_subhalo.push_back(mvir_gal);
 					cnfw_subhalo.push_back(c_sub);
 					vvir_hosthalo.push_back(vhalo);
