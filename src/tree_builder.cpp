@@ -207,6 +207,11 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	return subhalo;
 }
 
+bool compare_subhalo_masses(const SubhaloPtr &s1, const SubhaloPtr &s2)
+{
+	return s1->Mvir < s2->Mvir;
+}
+
 void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
 
 	//This function loops over merger trees and halos to define central galaxies in a self-consistent way. The loop starts at z=0.
@@ -222,7 +227,9 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 					continue;
 				}
 
-				auto central_subhalo = halo->all_subhalos()[0];
+				// Most massive subhalo is the central subhalo
+				auto subhalos = halo->all_subhalos();
+				auto central_subhalo = *std::max_element(subhalos.begin(), subhalos.end(), compare_subhalo_masses);
 				auto subhalo = define_central_subhalo(halo, central_subhalo);
 
 				// save value of lambda to make sure that all main progenitors of this subhalo have the same lambda value. This is done for consistency 
@@ -246,9 +253,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 					// ascendant to be the main progenitor
 					auto main_prog = subhalo->main();
 					if (!main_prog) {
-						auto it = std::max_element(ascendants.begin(), ascendants.end(), [](const SubhaloPtr &s1, const SubhaloPtr &s2) {
-							return s1->Mvir < s2->Mvir;
-						});
+						auto it = std::max_element(ascendants.begin(), ascendants.end(), compare_subhalo_masses);
 						main_prog = *it;
 						main_prog->main_progenitor = true;
 						LOG(warning) << "No main progenitor defined for " << subhalo << ", defined "
@@ -466,8 +471,12 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		int ignored = 0;
 		for(auto &halo: halos_by_snapshot[snapshot]) {
 
+			// We iterate over a copy of the all_subhalos because internally
+			// we remove subhalos from the Halo (and modifying a list while
+			// iterating invalidates iterators)
 			bool halo_linked = false;
-			for(const auto &subhalo: halo->all_subhalos()) {
+			std::vector<SubhaloPtr> all_subhalos_copy(halo->all_subhalos().begin(), halo->all_subhalos().end());
+			for(const auto &subhalo: all_subhalos_copy) {
 
 				// this subhalo has no descendants, let's not even try
 				if (!subhalo->has_descendant) {

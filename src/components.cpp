@@ -210,27 +210,6 @@ void Subhalo::remove_galaxies(const std::vector<GalaxyPtr> &to_remove)
 	}
 }
 
-std::vector<SubhaloPtr> Halo::all_subhalos() const
-{
-
-	std::vector<SubhaloPtr> all;
-
-	if (central_subhalo) {
-		all.push_back(central_subhalo);
-	}
-	all.insert(all.end(), satellite_subhalos.begin(), satellite_subhalos.end());
-
-	// If there are more than one subhalo, then return them ordered by mass in decreasing order.
-	if(all.size() > 1){
-		std::sort(all.begin(), all.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
-			return lhs->Mvir > rhs->Mvir;
-		});
-	}
-
-	assert(all.size() == satellite_subhalos.size() + (central_subhalo ? 1 : 0));
-	return all;
-}
-
 void Halo::add_subhalo(const SubhaloPtr &&subhalo)
 {
 	// Add subhalo mass to halo
@@ -277,7 +256,7 @@ double Halo::total_baryon_mass() const
 {
 	double mass= 0.0;
 
-	for (auto &subhalo: all_subhalos()){
+	for (const auto &subhalo: all_subhalos()){
 		mass += subhalo->total_baryon_mass();
 	}
 

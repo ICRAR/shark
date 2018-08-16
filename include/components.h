@@ -817,7 +817,21 @@ public:
 	 *
 	 * @return A vector with all subhalos
 	 */
-	std::vector<SubhaloPtr> all_subhalos() const;
+	const subhalos_view<const Halo> all_subhalos() const
+	{
+		return subhalos_view<const Halo>(*this);
+	}
+
+	/**
+	 * Returns a new vector containing pointers to all subhalos contained in
+	 * this halo (i.e., the central and satellite subhalos).
+	 *
+	 * @return A vector with all subhalos
+	 */
+	subhalos_view<Halo> all_subhalos()
+	{
+		return subhalos_view<Halo>(*this);
+	}
 
 	/**
 	 * Removes @a subhalo from this Halo. If the subhalo is not part of this
