@@ -416,9 +416,9 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	// drawn random angles again
 	theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
 	phi   = flat_distribution(generator)*constants::PI2; //flat between 0 and 2PI.
-	L.x   = total_am *  std::sin(theta) * std::cos(phi);
-	L.y   = total_am *  std::sin(theta) * std::sin(phi);
-	L.z   = total_am *  std::cos(theta);
+	L.x   = total_am *  std::cos(theta) * std::cos(phi);
+	L.y   = total_am *  std::cos(theta) * std::sin(phi);
+	L.z   = total_am *  std::sin(theta);
 
 
 }
