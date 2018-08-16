@@ -27,6 +27,7 @@
 #define SHARK_COMPONENTS_H_
 
 #include <cassert>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <ostream>
@@ -647,6 +648,32 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const SubhaloPt
 	return stream;
 }
 
+namespace detail {
+
+template <bool constant>
+struct subhalos_iterator_traits {
+};
+
+template <>
+struct subhalos_iterator_traits<false> {
+	typedef Halo * halo_pointer;
+	typedef Halo & halo_reference;
+	typedef SubhaloPtr & subhalo_reference;
+	typedef SubhaloPtr * subhalo_pointer;
+	typedef std::vector<SubhaloPtr>::iterator satellite_iterator;
+};
+
+template <>
+struct subhalos_iterator_traits<true> {
+	typedef const Halo * halo_pointer;
+	typedef const Halo & halo_reference;
+	typedef const SubhaloPtr & subhalo_reference;
+	typedef const SubhaloPtr * subhalo_pointer;
+	typedef std::vector<SubhaloPtr>::const_iterator satellite_iterator;
+};
+
+}  // namespace detail
+
 /**
  * A halo.
  *
@@ -656,6 +683,106 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const SubhaloPt
 class Halo : public Identifiable<long>, public Spatial<float> {
 
 public:
+
+	template <bool constant>
+	class subhalos_iterator {
+
+	private:
+		bool central;
+		typename detail::subhalos_iterator_traits<constant>::halo_pointer halo;
+		typename detail::subhalos_iterator_traits<constant>::satellite_iterator satellite_it {};
+
+	public:
+		typedef ptrdiff_t difference_type;
+		typedef SubhaloPtr value_type;
+		typedef std::forward_iterator_tag iterator_category;
+		typedef typename detail::subhalos_iterator_traits<constant>::subhalo_pointer pointer;
+		typedef typename detail::subhalos_iterator_traits<constant>::subhalo_reference reference;
+		typedef typename detail::subhalos_iterator_traits<constant>::halo_reference halo_reference;
+
+		subhalos_iterator(halo_reference halo) : central(false), halo(&halo)
+		{
+			if (!halo.central_subhalo && halo.satellite_subhalos.empty()) {
+				this->halo = nullptr;
+			}
+			else if (halo.central_subhalo) {
+				central = true;
+			}
+			else {
+				satellite_it = halo.satellite_subhalos.begin();
+			}
+		}
+		subhalos_iterator() : central(false), halo(nullptr) {};
+
+		reference operator*() const
+		{
+			if (central)
+				return halo->central_subhalo;
+			return *satellite_it;
+		}
+
+		subhalos_iterator &operator++()
+		{
+			if (central) {
+				central = false;
+				satellite_it = halo->satellite_subhalos.begin();
+			}
+			else {
+				satellite_it++;
+			}
+			if (satellite_it == halo->satellite_subhalos.end()) {
+				halo = nullptr;
+			}
+			return *this;
+		}
+
+		bool operator ==(const subhalos_iterator &lhs) const
+		{
+			if (bool(halo) == bool(lhs.halo))
+				return true;
+			if (central && lhs.central)
+				return true;
+			return central == lhs.central && satellite_it == lhs.satellite_it;
+		}
+
+		bool operator !=(const subhalos_iterator &lhs) const
+		{
+			return !(*this == lhs);
+		}
+	};
+
+	template <typename HaloT>
+	class subhalos_view {
+
+	public:
+		typedef subhalos_iterator<false> iterator;
+		typedef subhalos_iterator<true> const_iterator;
+
+		subhalos_view(HaloT &halo) : halo(halo) {};
+
+		const_iterator begin() const
+		{
+			return const_iterator(halo);
+		}
+
+		iterator begin()
+		{
+			return iterator(halo);
+		}
+
+		const_iterator end() const
+		{
+			return const_iterator();
+		}
+
+		iterator end()
+		{
+			return iterator();
+		}
+
+	private:
+		HaloT &halo;
+	};
 
 	Halo(id_t halo_id, int snapshot) :
 		Identifiable(halo_id),

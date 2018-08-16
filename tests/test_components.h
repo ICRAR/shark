@@ -156,3 +156,84 @@ public:
 	}
 
 };
+
+class TestHalo : public CxxTest::TestSuite
+{
+
+public:
+
+	template <typename Iterator>
+	void _assert_different(const Iterator &it1, const Iterator &it2)
+	{
+		TS_ASSERT(it1 != it2);
+		TS_ASSERT(!(it1 == it2));
+	}
+
+	template <typename Iterator>
+	void _assert_equals(const Iterator &it1, const Iterator &it2)
+	{
+		TS_ASSERT(it1 == it2);
+		TS_ASSERT(!(it1 != it2));
+	}
+
+	void test_subhalos_view_empty_halo()
+	{
+		// Empty Halo
+		Halo h(1, 1);
+		auto all = Halo::subhalos_view<Halo>(h);
+		_assert_equals(all.begin(), all.end());
+	}
+
+	void test_subhalos_view_only_central_subhalo_halo()
+	{
+		// A halo only with a central subhalo
+		Halo h(1, 1);
+		h.central_subhalo = std::make_shared<Subhalo>(0, 1);
+		auto all = Halo::subhalos_view<Halo>(h);
+		auto it = all.begin();
+		_assert_different(it, all.end());
+		_assert_equals(++it, all.end());
+	}
+
+	void test_subhalos_view_only_satellite_subhalos_halo()
+	{
+		// Only satellites
+		int n_satellites = 10;
+		Halo h(1, 1);
+		for (int i = 0; i != n_satellites; i++) {
+			auto subhalo = std::make_shared<Subhalo>(i, 1);
+			subhalo->subhalo_type = Subhalo::SATELLITE;
+			h.add_subhalo(std::move(subhalo));
+		}
+
+		auto all = Halo::subhalos_view<Halo>(h);
+		auto it = all.begin();
+		for (int i = 0; i != n_satellites - 1; i++) {
+			_assert_different(it, all.end());
+			++it;
+		}
+		_assert_equals(++it, all.end());
+	}
+
+	void test_subhalos_view_normal_halo()
+	{
+		// Central subhalo and satellites
+		int n_satellites = 10;
+		Halo h(1, 1);
+		h.central_subhalo = std::make_shared<Subhalo>(0, 1);
+		for (int i = 0; i != n_satellites; i++) {
+			auto subhalo = std::make_shared<Subhalo>(i, 1);
+			subhalo->subhalo_type = Subhalo::SATELLITE;
+			h.add_subhalo(std::move(subhalo));
+		}
+
+		auto all = Halo::subhalos_view<Halo>(h);
+		auto it = all.begin();
+		for (int i = 0; i != n_satellites; i++) {
+			_assert_different(it, all.end());
+			++it;
+		}
+		_assert_equals(++it, all.end());
+	}
+
+};
