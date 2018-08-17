@@ -60,7 +60,6 @@ private:
 	void define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params);
 	SubhaloPtr define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo);
 	void define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, GasCoolingParameters &gas_cooling_params, Cosmology &cosmology, TotalBaryon &AllBaryons);
-	void remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo);
 
 private:
 	ExecutionParameters exec_params;

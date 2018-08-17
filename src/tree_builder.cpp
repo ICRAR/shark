@@ -184,7 +184,10 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo)
 {
 	// point central subhalo to this subhalo.
+	halo->remove_subhalo(subhalo);
+	subhalo->subhalo_type = Subhalo::CENTRAL;
 	halo->central_subhalo = subhalo;
+
 	halo->position = subhalo->position;
 	halo->velocity = subhalo->velocity;
 
@@ -197,12 +200,6 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	if(halo->Vvir < subhalo->Vvir){
 		halo->Vvir = subhalo->Vvir;
 	}
-
-	//remove subhalo from satellite list.
-	remove_satellite(halo, subhalo);
-
-	//define subhalo as central.
-	subhalo->subhalo_type = Subhalo::CENTRAL;
 
 	return subhalo;
 }
@@ -404,21 +401,6 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 		// Keep track of the integral of the baryons mass accreted.
 		AllBaryons.baryon_total_created[snapshot] = total_baryon_accreted;
 	}
-
-}
-
-
-void TreeBuilder::remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo){
-
-	auto it = std::find(halo->satellite_subhalos.begin(), halo->satellite_subhalos.end(), subhalo);
-
-	if (it == halo->satellite_subhalos.end()){
-		std::ostringstream os;
-		os << "Halo " << halo << " does not have satellite subhalos.";
-		throw invalid_data(os.str());
-	}
-
-	halo->satellite_subhalos.erase(it);
 
 }
 
