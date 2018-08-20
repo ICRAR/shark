@@ -58,7 +58,7 @@ IOBase::~IOBase()
 
 void IOBase::close()
 {
-	if (not opened) {
+	if (!opened) {
 		return;
 	}
 

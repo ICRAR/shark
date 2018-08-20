@@ -158,7 +158,7 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 	auto halos_linked = std::get<1>(result);
 
 	// Fail if a halo has more than one descendant
-	if (parent_halo->descendant and parent_halo->descendant->id != desc_halo->id) {
+	if (parent_halo->descendant && parent_halo->descendant->id != desc_halo->id) {
 		std::ostringstream os;
 		os << parent_halo << " already has a descendant " << parent_halo->descendant;
 		os << " but " << desc_halo << " is claiming to be its descendant as well";
@@ -233,13 +233,13 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 				//  * Repeat
 				auto ascendants = subhalo->ascendants;
 
-				while (not ascendants.empty()) {
+				while (!ascendants.empty()) {
 
 					// Check that there is a main progenitor first
 					// If none is formally defined, we declare the most massive
 					// ascendant to be the main progenitor
 					auto main_prog = subhalo->main();
-					if (not main_prog) {
+					if (!main_prog) {
 						auto it = std::max_element(ascendants.begin(), ascendants.end(), [](const SubhaloPtr &s1, const SubhaloPtr &s2) {
 							return s1->Mvir < s2->Mvir;
 						});

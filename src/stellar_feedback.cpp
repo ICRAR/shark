@@ -95,7 +95,7 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 
 
 	double v = vsubh;
-	if(parameters.galaxy_scaling and vgal > 0){
+	if(parameters.galaxy_scaling && vgal > 0){
 		v  = vgal;
 	}
 

@@ -262,7 +262,7 @@ void DarkMatterHalos::disk_sAM(Subhalo &subhalo, Galaxy &galaxy){
 
 	galaxy.disk_gas.sAM = 2.0 * rdisk / constants::RDISK_HALF_SCALE * std::sqrt(v2tot_d);
 
-	if (std::isnan(galaxy.disk_gas.sAM) or std::isnan(galaxy.disk_gas.rscale)) {
+	if (std::isnan(galaxy.disk_gas.sAM) || std::isnan(galaxy.disk_gas.rscale)) {
 		throw invalid_argument("rgas or sAM are NaN, cannot continue at disk_sAM in dark_matter_halos");
 	}
 

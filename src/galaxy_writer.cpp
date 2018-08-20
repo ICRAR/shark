@@ -439,7 +439,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					//Check whether this type 2 galaxy will merge on the next snapshot. this is done by
 					//checking if their descendant_id has been defined (which would happen in galaxy_mergers
 					//if this galaxy merges on the next snapshot.
-					if(galaxy->descendant_id < 0 and snapshot < sim_params.max_snapshot){
+					if(galaxy->descendant_id < 0 && snapshot < sim_params.max_snapshot){
 						galaxy->descendant_id = galaxy->id;
 					}
 				}

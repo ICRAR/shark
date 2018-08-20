@@ -100,13 +100,13 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		throw invalid_argument("rgas is NaN, cannot calculate star formation rate");
 	}
 
-	if (mcold <= constants::EPS3 or rgas <= constants::tolerance) {
-		if(mcold > constants::EPS3 and rgas <= 0){
+	if (mcold <= constants::EPS3 || rgas <= constants::tolerance) {
+		if(mcold > constants::EPS3 && rgas <= 0){
 			std::ostringstream os;
 			os << "Galaxy mcold > 0 and rgas <0";
 			throw invalid_argument(os.str());
 		}
-		if(mcold > constants::EPS3 and rgas <= constants::tolerance){
+		if(mcold > constants::EPS3 && rgas <= constants::tolerance){
 			std::ostringstream os;
 			os << "Galaxy with extremely small size, rgas < 1e-10";
 			//throw invalid_argument(os.str());
@@ -124,7 +124,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 	double Sigma_gas = cosmology->comoving_to_physical_mass(mcold) / constants::PI2 / (re * re);
 	double Sigma_star = 0;
-	if(mstar > 0 and rstar > 0){
+	if(mstar > 0 && rstar > 0){
 		Sigma_star = cosmology->comoving_to_physical_mass(mstar) / constants::PI2 / (rse * rse) ;
 	}
 
@@ -219,7 +219,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 			double effecj = jrate / result;
 
 			//Assign maximum value to be jgas.
-			if(effecj > jgas and jgas > 0){
+			if(effecj > jgas && jgas > 0){
 				jrate = result * jgas;
 			}
 		}
@@ -260,7 +260,7 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 	double Sigma_stars = 0;
 
 	// Define Sigma_stars only if stellar mass and radius are positive.
-	if(props->rse > 0 and props->sigma_star0 > 0){
+	if(props->rse > 0 && props->sigma_star0 > 0){
 		Sigma_stars = props->sigma_star0 * std::exp(-r / props->rse);
 	}
 
@@ -268,10 +268,10 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 
 	double sfr_density = 0;
 
-	if(parameters.model == StarFormationParameters::BR06 or parameters.model == StarFormationParameters::GD14){
+	if(parameters.model == StarFormationParameters::BR06 || parameters.model == StarFormationParameters::GD14){
 		sfr_density = PI2 * parameters.nu_sf * fracmol * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
 	}
-	else if (parameters.model == StarFormationParameters::KMT09 or parameters.model == StarFormationParameters::K13){
+	else if (parameters.model == StarFormationParameters::KMT09 || parameters.model == StarFormationParameters::K13){
 		double sfr_ff = 0;
 
 		if(Sigma_gas < parameters.sigma_crit_KMT09){
@@ -289,7 +289,7 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 		sfr_density = sfr_density * parameters.boost_starburst;
 	}
 
-	if((props->sigma_gas0 > 0 and fracmol > 0) and sfr_density <= 0){
+	if((props->sigma_gas0 > 0 && fracmol > 0) && sfr_density <= 0){
 		std::ostringstream os;
 		os << "Galaxy with SFR surface density =0, cold gas surface density " << props->sigma_gas0 << " and fmol > 0";
 		throw invalid_argument(os.str());
@@ -365,7 +365,7 @@ double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double zgas, do
 	if(fmol > 1){
 		return 1;
 	}
-	else if(fmol > 0 and fmol < 1){
+	else if(fmol > 0 && fmol < 1){
 		return fmol;
 	}
 	else{
@@ -386,7 +386,7 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 
 	double star_comp = 0;
 
-	if (Sigma_stars > 0 and veldisp_star > 0) {
+	if (Sigma_stars > 0 && veldisp_star > 0) {
 		star_comp = (parameters.gas_velocity_dispersion / veldisp_star) * Sigma_stars;
 	}
 
@@ -444,7 +444,7 @@ double StarFormation::k13_fmol(double zgas, double sigma_gas){
 double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
 		double &jmol, double jgas, double vgal, bool bulge, bool jcalc) {
 
-	if (mcold <= 0 or rgas <= 0) {
+	if (mcold <= 0 || rgas <= 0) {
 		return 0;
 	}
 
@@ -458,7 +458,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 
 	double Sigma_gas = cosmology->comoving_to_physical_mass(mcold) / constants::PI2 / (re * re);
 	double Sigma_star = 0;
-	if(mstar > 0 and rstar > 0){
+	if(mstar > 0 && rstar > 0){
 		Sigma_star = cosmology->comoving_to_physical_mass(mstar) / constants::PI2 / (rse * rse) ;
 	}
 
@@ -511,7 +511,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	result = cosmology->physical_to_comoving_mass(result);
 
 	//Avoid AM calculation in the case of starbursts.
-	if(!bulge and jcalc){
+	if(!bulge && jcalc){
 		// Check whether user wishes to calculate angular momentum transfer from gas to stars.
 		if(parameters.angular_momentum_transfer){
 
@@ -553,7 +553,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 			jmol = jmol / result;
 
 			//Assign maximum value to be jgas.
-			if(jmol > jgas and jgas > 0){
+			if(jmol > jgas && jgas > 0){
 				jmol = jgas;
 			}
 		}
