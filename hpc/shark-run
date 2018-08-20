@@ -211,7 +211,7 @@ config_file=${@:$OPTIND:1}
 # Which shark binary should be used
 shark_binary=${shark_binary:-shark}
 
-# Make sure the configuration file exists before submitting
+# Make sure the configuration file exists before running
 if [ ! -f ${config_file} ]
 then
 	error "File ${config_file} is not an existing (or accessible) file"
