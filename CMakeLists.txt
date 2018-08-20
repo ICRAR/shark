@@ -98,7 +98,13 @@ endmacro()
 # which is a hard requirement -- if it's not there we fail misserably
 #
 macro(find_hdf5)
-	find_package(HDF5 REQUIRED COMPONENTS CXX)
+
+	# The CONFIG mode is needed at least when using vcpkg's hdf5
+	if (SHARK_HDF5_USE_CONFIG)
+		find_package(HDF5 REQUIRED COMPONENTS CXX CONFIG)
+	else()
+		find_package(HDF5 REQUIRED COMPONENTS CXX)
+	endif()
 
 	#
 	# HDF5_VERSION is defined only in cmake 3.3+
@@ -148,12 +154,17 @@ macro(find_hdf5)
 	list(GET VERSION_LIST 0 HDF5_VERSION_MAJOR)
 	list(GET VERSION_LIST 1 HDF5_VERSION_MINOR)
 	list(GET VERSION_LIST 2 HDF5_VERSION_PATCH)
-	set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
 	include_directories(${HDF5_INCLUDE_DIRS})
 	add_definitions(${HDF5_DEFINITIONS})
 	add_definitions("-DHDF5_VERSION_MAJOR=${HDF5_VERSION_MAJOR}"
 	                "-DHDF5_VERSION_MINOR=${HDF5_VERSION_MINOR}"
 	                "-DHDF5_VERSION_PATCH=${HDF5_VERSION_PATCH}")
+
+	if (SHARK_HDF5_USE_CONFIG)
+		set(SHARK_LIBS ${SHARK_LIBS} hdf5::hdf5_cpp-shared)
+	else()
+		set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
+	endif()
 endmacro()
 
 #
