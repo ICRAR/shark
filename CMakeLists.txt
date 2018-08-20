@@ -143,12 +143,14 @@ macro(find_hdf5)
 
 	# We need to pass down the information about the HDF5 version to shark
 	message("-- Using HDF5 version ${HDF5_VERSION}")
+	message("-- HDF5 libraries / C++ libraries:  ${HDF5_LIBRARIES} / ${HDF5_CXX_LIBRARIES}")
 	string(REPLACE "." ";" VERSION_LIST ${HDF5_VERSION})
 	list(GET VERSION_LIST 0 HDF5_VERSION_MAJOR)
 	list(GET VERSION_LIST 1 HDF5_VERSION_MINOR)
 	list(GET VERSION_LIST 2 HDF5_VERSION_PATCH)
 	set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
 	include_directories(${HDF5_INCLUDE_DIRS})
+	add_definitions(${HDF5_DEFINITIONS})
 	add_definitions("-DHDF5_VERSION_MAJOR=${HDF5_VERSION_MAJOR}"
 	                "-DHDF5_VERSION_MINOR=${HDF5_VERSION_MINOR}"
 	                "-DHDF5_VERSION_PATCH=${HDF5_VERSION_PATCH}")
