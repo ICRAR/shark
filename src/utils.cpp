@@ -33,6 +33,13 @@
 #include <errno.h>
 #include <string.h>
 
+// gethostname
+#ifdef _WIN32
+# include <winsock.h>
+#else
+# include <unistd.h>
+#endif // _WIN32
+
 #include "utils.h"
 
 using namespace std;
@@ -103,5 +110,14 @@ ifstream open_file(const string &name)
 bool empty_or_comment(const std::string &s) {
 	return s.size() == 0 || s[0] == '#';
 }
+
+std::string gethostname()
+{
+	/* is wrong to fix this to 100, but who cares (for now...) */
+	char the_hostname[100];
+	::gethostname(the_hostname, 100);
+	return std::string(the_hostname);
+}
+
 
 }  // namespace shark
