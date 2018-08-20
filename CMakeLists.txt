@@ -284,7 +284,13 @@ set(SHARKLIB_SRCS
    src/hdf5/traits.cpp
    src/hdf5/writer.cpp
 )
-add_library(sharklib SHARED ${SHARKLIB_SRCS})
+
+if (WIN32)
+	set(SHARLIB_MODE STATIC)
+else()
+	set(SHARLIB_MODE SHARED)
+endif()
+add_library(sharklib ${SHARLIB_MODE} ${SHARKLIB_SRCS})
 target_link_libraries(sharklib ${SHARK_LIBS})
 set_target_properties(sharklib PROPERTIES LIBRARY_OUTPUT_NAME shark)
 
@@ -308,7 +314,8 @@ target_link_libraries(shark sharklib)
 # Installing stuff: programs, scripts, static data
 install(TARGETS sharklib shark shark-importer
         RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib)
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
 install(PROGRAMS hpc/shark-run hpc/shark-submit
         DESTINATION bin)
 install(DIRECTORY data
