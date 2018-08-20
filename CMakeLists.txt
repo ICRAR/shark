@@ -212,6 +212,11 @@ if (NOT SHARK_NO_OPENMP)
 	find_openmp()
 endif()
 
+# Windows builds need to link to ws2_32 (due to usage of gethostname)
+if (WIN32)
+	set(SHARK_LIBS ${SHARK_LIBS} ws2_32)
+endif()
+
 #
 # Save all compile-time options here
 #
