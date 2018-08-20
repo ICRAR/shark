@@ -171,8 +171,33 @@ endmacro()
 macro(find_openmp)
 	find_package(OpenMP)
 	if (OPENMP_FOUND)
+
+		# We require at least OpenMP 2.0, so let's double check
+		# we have that at least
+		set(OPENMP_VERSION_CHECK_SOURCE "
+#include <stdio.h>
+int main(int argc, char *argv[]) {
+#if _OPENMP >= 200203
+	return 0;
+#else
+	fail to compile please
+#endif
+}")
+		set(WORK_DIR ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/OpenMPVersionCheck)
+		set(SRC_FILE ${WORK_DIR}/ompver.cpp)
+		file(WRITE ${SRC_FILE} "${OPENMP_VERSION_CHECK_SOURCE}")
+		try_compile(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${SRC_FILE}
+		            COMPILE_DEFINITIONS ${OpenMP_CXX_FLAGS})
+
+		if (COMPILE_RESULT)
+			set(SHARK_OPENMP ON)
+		else()
+			message("-- OpenMP found, but is <= 2.0. Compiling without OpenMP support")
+		endif()
+	endif()
+
+	if (SHARK_OPENMP)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		set(SHARK_OPENMP ON)
 	endif()
 endmacro()
 

@@ -23,7 +23,7 @@ Requirements
 
 Optional requirements are:
 
-* An `OpenMP <http://www.openmp.org/>`_-enabled compiler
+* An `OpenMP <http://www.openmp.org/>`_-enabled compiler (with OpenMP >= 2.0)
 * `CxxTest <https://cxxtest.com/>`_, required only to compile the unit tests
 
 These libraries are usually available as packages
