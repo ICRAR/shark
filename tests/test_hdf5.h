@@ -164,6 +164,7 @@ public:
 			TS_ASSERT_THROWS(writer.write_attribute(basename + "/my_attribute", 1), invalid_argument);
 			TS_ASSERT_THROWS(writer.write_attribute(repeated + "/my_attribute", 1), invalid_argument);
 			TS_ASSERT_THROWS(writer.write_attribute(tailname + "/my_attribute", 1), invalid_argument);
+			writer.close();
 			remove_file();
 		});
 	}
@@ -175,6 +176,7 @@ public:
 			TS_ASSERT_THROWS(writer.write_dataset("/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
 			TS_ASSERT_THROWS(writer.write_dataset("/group/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
 			TS_ASSERT_THROWS(writer.write_dataset("/group1/group2/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
+			writer.close();
 			remove_file();
 		});
 	}
@@ -186,6 +188,7 @@ public:
 			writer.write_dataset("/group/integers", std::vector<int>{1, 2, 3, 4});
 			TS_ASSERT_THROWS(writer.write_attribute(std::string("/group/") + name, 1), invalid_argument);
 			TS_ASSERT_THROWS(writer.write_attribute(std::string("/group/integers") + name, 1), invalid_argument);
+			writer.close();
 			remove_file();
 		});
 	}
