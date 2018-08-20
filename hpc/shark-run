@@ -63,6 +63,74 @@ _slurm_quantity_as_list() {
 	echo "${_all_vals## }"
 }
 
+# Returns a list with the number of CPUs that each task will use
+#
+# CPUs is given explicitly (via -c in shark-submit); otherwise we
+# take what we are given on each node
+_slurm_cpus_per_task() {
+	cpus_per_node=(`_slurm_quantity_as_list $SLURM_JOB_CPUS_PER_NODE`)
+	info "CPUs per node: ${cpus_per_node[*]}" >&2
+	cpus_per_task=""
+	for i in `eval echo {1..${#cpus_per_node[*]}}`
+	do
+		let "i = i - 1"
+		c=${cpus_per_node[i]}
+		t=${tasks_per_node[i]}
+		div=$(( $c / $t ))
+		rem=$(( $c % $t ))
+
+		# Distribute CPUs within a node in round-robin fashion
+		if [ $rem = 0 ]
+		then
+			cpus_per_task="$cpus_per_task `repeat $div $t`"
+		else
+			cpus_per_task="$cpus_per_task `repeat $div $(($t - $rem))` `repeat $(( $div + 1 )) $rem`"
+		fi
+	done
+	echo "${cpus_per_task}"
+}
+
+# Returns a list with the amount of memory that each task will use
+#
+# Memory is given either per CPU or per node
+# In the former case, mem/task = mem/cpu * cpus/task
+# In the latter, mem/task = (mem/node) / (task/node)
+_slurm_mem_per_task() {
+	if [ -z "$SLURM_MEM_PER_CPU" ]
+	then
+		if [ -z "$SLURM_MEM_PER_NODE" ]
+		then
+			error "Neither SLURM_MEM_PER_CPU nor SLURM_MEM_PER_NODE could be found, cannot calculate memory per shark instance"
+			exit 1
+		fi
+
+		mem_per_node=(`_slurm_quantity_as_list $SLURM_MEM_PER_NODE`)
+		if [ ${#mem_per_node[*]} = 1 ]
+		then
+			mem_per_node=(`repeat $mem_per_node $SLURM_JOB_NUM_NODES`)
+		fi
+		info "Memory per node: ${mem_per_node[*]}" >&2
+
+		for i in `eval echo {1..${#mem_per_node[*]}}`
+		do
+			let "i = i - 1"
+			t=${tasks_per_node[i]}
+			m=${mem_per_node[i]}
+			mem_per_task="$mem_per_task `repeat $(($m / $t)) $t`"
+		done
+	else
+		mem_per_cpu=(`repeat $SLURM_MEM_PER_CPU ${#shark_subvolumes[*]}`)
+		for i in `eval echo {1..${#mem_per_cpu[*]}}`
+		do
+			let "i = i - 1"
+			m=${mem_per_cpu[i]}
+			c=${cpus_per_task[i]}
+			mem_per_task="$mem_per_task $(($m * $c))"
+		done
+	fi
+	echo "${mem_per_task}"
+}
+
 print_usage() {
 	echo
 	echo "$0: Runs shark under a queueing environment"
@@ -230,71 +298,16 @@ then
 	done
 fi
 
+# Calculate which tasks run where, and how many CPUs and how much memory
+# of each them can consume based on the requested resources
+#
+# Because mem_per_task might depend on cpus_per_task we need to
+# get the latter first, then the former.
 tasks_per_node=(`_slurm_quantity_as_list $SLURM_TASKS_PER_NODE`)
 info "Tasks per node: ${tasks_per_node[*]}"
-
-# CPUs can be given explicitly (via --cpus-per-task);
-# otherwise we take what we are given on each node
-cpus_per_node=(`_slurm_quantity_as_list $SLURM_JOB_CPUS_PER_NODE`)
-info "CPUs per node: ${cpus_per_node[*]}"
-cpus_per_task=""
-for i in `eval echo {1..${#cpus_per_node[*]}}`
-do
-	let "i = i - 1"
-	c=${cpus_per_node[i]}
-	t=${tasks_per_node[i]}
-	div=$(( $c / $t ))
-	rem=$(( $c % $t ))
-
-	# Distribute CPUs within a node in round-robin fashion
-	if [ $rem = 0 ]
-	then
-		cpus_per_task="$cpus_per_task `repeat $div $t`"
-	else
-		cpus_per_task="$cpus_per_task `repeat $div $(($t - $rem))` `repeat $(( $div + 1 )) $rem`"
-	fi
-done
-cpus_per_task=($cpus_per_task)
+cpus_per_task=(`_slurm_cpus_per_task`)
 info "CPUs per task: ${cpus_per_task[*]}"
-
-
-# Memory is given either per CPU or per node
-# In the former case, mem/task = mem/cpu * cpus/task
-# In the latter, mem/task = (mem/node) / (task/node)
-if [ -z "$SLURM_MEM_PER_CPU" ]
-then
-	if [ -z "$SLURM_MEM_PER_NODE" ]
-	then
-		error "Neither SLURM_MEM_PER_CPU nor SLURM_MEM_PER_NODE could be found, cannot calculate memory per shark instance"
-		exit 1
-	fi
-
-	mem_per_node=(`_slurm_quantity_as_list $SLURM_MEM_PER_NODE`)
-	if [ ${#mem_per_node[*]} = 1 ]
-	then
-		mem_per_node=(`repeat $mem_per_node $SLURM_JOB_NUM_NODES`)
-	fi
-	info "Memory per node: ${mem_per_node[*]}"
-
-	mem_per_task=""
-	for i in `eval echo {1..${#mem_per_node[*]}}`
-	do
-		let "i = i - 1"
-		t=${tasks_per_node[i]}
-		m=${mem_per_node[i]}
-		mem_per_task="$mem_per_task `repeat $(($m / $t)) $t`"
-	done
-else
-	mem_per_cpu=(`repeat $SLURM_MEM_PER_CPU ${#shark_subvolumes[*]}`)
-	for i in `eval echo {1..${#mem_per_cpu[*]}}`
-	do
-		let "i = i - 1"
-		m=${mem_per_cpu[i]}
-		c=${cpus_per_task[i]}
-		mem_per_task="$mem_per_task $(($m * $c))"
-	done
-fi
-mem_per_task=($mem_per_task)
+mem_per_task=(`_slurm_mem_per_task`)
 info "Memory per task: ${mem_per_task[*]}"
 
 # Calculate the command to run
