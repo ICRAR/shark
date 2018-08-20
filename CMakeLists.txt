@@ -305,7 +305,9 @@ else()
 endif()
 add_library(sharklib ${SHARLIB_MODE} ${SHARKLIB_SRCS})
 target_link_libraries(sharklib ${SHARK_LIBS})
-set_target_properties(sharklib PROPERTIES LIBRARY_OUTPUT_NAME shark)
+set_target_properties(sharklib PROPERTIES
+    LIBRARY_OUTPUT_NAME shark
+    RUNTIME_OUTPUT_NAME shark)
 
 # The shark-importer executable
 set(SHARK_IMPORTER_SRCS
