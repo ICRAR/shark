@@ -375,57 +375,51 @@ struct lambert_w0<double>
 	}
 };
 
+xyz<float> DarkMatterHalos::random_point_in_sphere(float r)
+{
+	// We distribute cos_theta flatly instead of theta itself to end up with a
+	// more uniform distribution of points in the sphere
+	float cos_theta = flat_distribution(generator) * 2.0 - 1; //flat between -1 and 1.
+	float theta = std::acos(cos_theta);
+	float sin_theta = std::sin(theta);
+	float phi = flat_distribution(generator) * constants::PI2; //flat between 0 and 2PI.
+	return {
+		sin_theta * std::cos(phi) * r,
+		sin_theta * std::sin(phi) * r,
+		cos_theta * r
+	};
+}
+
 void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo){
 
 	double c = halo->concentration;
 
-	auto   subhalo = halo->central_subhalo;
+	auto &subhalo = halo->central_subhalo;
 	double rvir = halo_virial_radius(*subhalo);
-
-	auto   pos_halo = subhalo->position;
 
 	// Assign positions based on an NFW halo of concentration c.
 	nfw_distribution<double> r(c);
 	double rproj = r(generator);
-	double theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
-	double phi   = flat_distribution(generator)*constants::PI2; //flat between 0 and 2PI.
-
-	pos.x = rproj * std::cos(theta) * std::cos(phi) * rvir + pos_halo.x;
-	pos.y = rproj * std::cos(theta) * std::sin(phi) * rvir + pos_halo.y;
-	pos.z = rproj * std::sin(theta) * rvir + pos_halo.z;
+	pos = subhalo->position + random_point_in_sphere(rvir * rproj);
 
 	// Assign velocities using NFW velocity dispersion and assuming isotropy.
 	// f_c equation from Manera et al. (2013; eq. 23).
+	// Negative values happen if c <<~ 2.6, and thus we set the minimum value to f_c evaluated in c = 2.6.
 	double f_c = c * (0.5 * c / (c + 1) - std::log(1 + c) / (1 + c))/ std::pow(std::log(1 + c) - c / (1 + c), 2.0);
-
-	if(f_c < 0){
-		//Negative values happen if c <<~ 2.6, and thus we set the minimum value to f_c evaluated in c = 2.6.
+	if (f_c < 0) {
 		f_c = 0.04411218227;
 	}
 
 	// 1D velocity dispersion.
-	double sigma = std::pow(0.333  * constants::G * halo->Mvir / rvir * f_c, 0.5);
-
-	std::normal_distribution<double> normal_distribution(0,sigma);
-
-	v.x = normal_distribution(generator) + halo->velocity.x;
-	v.y = normal_distribution(generator) + halo->velocity.y;
-	v.z = normal_distribution(generator) + halo->velocity.z;
+	double sigma = std::sqrt(0.333 * constants::G * halo->Mvir / rvir * f_c);
+	std::normal_distribution<double> normal_distribution(0, sigma);
+	xyz<double> delta_v {normal_distribution(generator), normal_distribution(generator), normal_distribution(generator)};
+	v = halo->velocity + delta_v;
 
 	// Assign angular momentum based on random angles,
-	// drawn random angles again
-	theta = std::acos(flat_distribution(generator)*2.0 - 1); //flat between -1 and 1.
-	phi   = flat_distribution(generator)*constants::PI2; //flat between 0 and 2PI.
-	L.x   = total_am *  std::sin(theta) * std::cos(phi);
-	L.y   = total_am *  std::sin(theta) * std::sin(phi);
-	L.z   = total_am *  std::cos(theta);
-
+	L = random_point_in_sphere(total_am);
 
 }
-
-
-
-
 
 } // namespace shark
 

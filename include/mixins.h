@@ -41,6 +41,14 @@ class xyz {
 
 public:
 
+	xyz(T x=0, T y=0, T z=0) : x(x), y(y), z(z) {};
+
+	template <typename U>
+	xyz(U x=0, U y=0, U z=0) : x(x), y(y), z(z) {};
+
+	template <typename U>
+	xyz(xyz<U> other) : x(other.x), y(other.y), z(other.z) {};
+
 	/**
 	 * The value in the X coordinate
 	 */
@@ -56,9 +64,76 @@ public:
 	 */
 	T z;
 
-	T norm()
+	xyz &operator+=(T scalar)
+	{
+		x += scalar;
+		y += scalar;
+		z += scalar;
+		return *this;
+	}
+
+	xyz operator+(T scalar) const
+	{
+		xyz sum(*this);
+		sum += scalar;
+		return sum;
+	}
+
+	template <typename U>
+	xyz &operator+=(const xyz<U> &lhs)
+	{
+		x += lhs.x;
+		y += lhs.y;
+		z += lhs.z;
+		return *this;
+	}
+
+	template <typename U>
+	xyz operator+(const xyz<U> &lhs) const
+	{
+		xyz<U> sum(*this);
+		sum += lhs;
+		return sum;
+	}
+
+	xyz &operator*=(T scalar)
+	{
+		x *= scalar;
+		y *= scalar;
+		z *= scalar;
+		return *this;
+	}
+
+	xyz operator*(T scalar) const
+	{
+		xyz multiplied(*this);
+		multiplied *= scalar;
+		return multiplied;
+	}
+
+	xyz &operator/=(T scalar)
+	{
+		x /= scalar;
+		y /= scalar;
+		z /= scalar;
+		return *this;
+	}
+
+	xyz operator/(T scalar) const
+	{
+		xyz divided(*this);
+		divided /= scalar;
+		return divided;
+	}
+
+	T norm() const
 	{
 		return std::sqrt(x * x + y * y + z * z);
+	}
+
+	xyz unit() const
+	{
+		return *this / norm();
 	}
 
 };
