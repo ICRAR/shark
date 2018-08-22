@@ -41,6 +41,8 @@ class Timer {
 
 public:
 
+	typedef typename std::chrono::milliseconds::rep duration;
+
 	/**
 	 * Creates the timer and starts measuring time
 	 */
@@ -54,7 +56,7 @@ public:
 	 * @return The time elapsed since the creation of the timer, in [ms]
 	 */
 	inline
-	unsigned long get() const {
+	duration get() const {
 		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count();
 	}
 
