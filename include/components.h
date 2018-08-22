@@ -48,6 +48,8 @@ typedef std::shared_ptr<Subhalo> SubhaloPtr;
 typedef std::shared_ptr<Halo> HaloPtr;
 typedef std::shared_ptr<MergerTree> MergerTreePtr;
 
+/// Type used by galaxy_count() methods
+typedef typename std::vector<GalaxyPtr>::size_type galaxies_size_type;
 
 /**
  * The common base for all baryon component types.
@@ -593,7 +595,7 @@ public:
 	void remove_galaxies(const std::vector<GalaxyPtr> &to_remove);
 
 	/// Returns the number of galaxies contained in this Halo
-	unsigned long galaxy_count() const
+	galaxies_size_type galaxy_count() const
 	{
 		return galaxies.size();
 	}
@@ -737,7 +739,7 @@ public:
 	///
 	/// Returns the number of galaxies contained in this Halo
 	///
-	unsigned long galaxy_count() const;
+	galaxies_size_type galaxy_count() const;
 
 	/**
 	 * @return The total baryon mass contained in this Halo
