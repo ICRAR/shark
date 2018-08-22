@@ -135,7 +135,7 @@ struct SnapshotStatistics {
 	unsigned long n_halos;
 	unsigned long n_subhalos;
 	unsigned long n_galaxies;
-	unsigned long duration_millis;
+	Timer::duration duration_millis;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
 		if (n_galaxies == 0) {

@@ -75,7 +75,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const Timer &t) {
 		return os;
 	}
 
-	float ftime = time / 1000.;
+	float ftime = time / 1000.f;
 	const char *prefix = " [s]";
 	if (ftime > 60) {
 		ftime /= 60;
