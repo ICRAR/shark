@@ -79,30 +79,13 @@ std::string GalaxyWriter::get_output_directory(int snapshot)
 	return output_dir;
 }
 
-void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal){
-
-	using std::string;
-	using std::vector;
-
-	//Write output with the number of the coming snapshot. This is because we evolved galaxies to the end of the current snapshot.
-	int snap_to_write = snapshot + 1;
-
-	string comment;
-
-	hdf5::Writer file(get_output_directory(snap_to_write) + "/galaxies.hdf5");
-
-	//Write header
-	write_header(file, snap_to_write);
-
-	//Write galaxies
-	write_galaxies(file, snap_to_write, halos, molgas_per_gal);
-
-	//Write total baryon components
-	write_global_properties(file, snap_to_write, AllBaryons);
-
-	// Write star formation histories.
-	write_histories(snap_to_write, halos);
-
+void HDF5GalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal)
+{
+	hdf5::Writer file(get_output_directory(snapshot) + "/galaxies.hdf5");
+	write_header(file, snapshot);
+	write_galaxies(file, snapshot, halos, molgas_per_gal);
+	write_global_properties(file, snapshot, AllBaryons);
+	write_histories(snapshot, halos);
 }
 
 void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
