@@ -118,7 +118,7 @@ double DiskInstability::toomre_parameter(GalaxyPtr &galaxy){
 	//double rd = galaxy->disk_gas.rscale;
 	double rd = galaxy->disk_size();
 
-	if(md <= 0 or rd <= 0){
+	if(md <= 0 || rd <= 0){
 		return 100;
 	}
 
@@ -144,7 +144,7 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 	double c = merger_params.cgal;
 
 	double bc = 0;
-	if(mb > 0 and rb > 0){
+	if(mb > 0 && rb > 0){
 		bc = c * std::pow(mb,2.0)/rb;
 	}
 
@@ -155,7 +155,7 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 	double rnew = c * std::pow((md + mb),2.0) / (bc + dc + combined_c);
 
 
-	if(std::isnan(rnew) or rnew <= 0 or rnew > 3){
+	if(std::isnan(rnew) || rnew <= 0 || rnew > 3){
 		std::ostringstream os;
 		os << galaxy << " has a bulge size not well defined in disk instabilities.";
 		throw invalid_data(os.str());
@@ -200,7 +200,7 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 		physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t, false);
 
 		// Check for small gas reservoirs left in the bulge.
-		if(galaxy->bulge_gas.mass > 0 and galaxy->bulge_gas.mass < merger_params.mass_min){
+		if(galaxy->bulge_gas.mass > 0 && galaxy->bulge_gas.mass < merger_params.mass_min){
 
 			galaxy->disk_gas        += galaxy->bulge_gas;
 
@@ -208,7 +208,7 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 				galaxy->disk_gas.rscale = galaxy->bulge_gas.rscale;
 				galaxy->disk_gas.sAM    = galaxy->bulge_gas.sAM;
 
-				if (std::isnan(galaxy->disk_gas.sAM) or std::isnan(galaxy->disk_gas.rscale)) {
+				if (std::isnan(galaxy->disk_gas.sAM) || std::isnan(galaxy->disk_gas.rscale)) {
 					throw invalid_argument("rgas or sAM are NaN, cannot continue at disk_instabilities");
 				}
 			}

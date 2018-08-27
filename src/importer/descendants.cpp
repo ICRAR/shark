@@ -124,10 +124,10 @@ vector<descendants_data_t> HDF5DescendantReader::read_whole()
 	descendants.reserve(size);
 	for(unsigned int i=0; i!=size; i++) {
 		descendants_data_t desc = {
-			.halo_id = halo_ids[i],
-			.halo_snapshot = halo_snaps[i],
-			.descendant_id = desc_ids[i],
-			.descendant_snapshot = desc_snaps[i]
+			halo_ids[i],
+			halo_snaps[i],
+			desc_ids[i],
+			desc_snaps[i]
 		};
 		descendants.push_back(move(desc));
 	}

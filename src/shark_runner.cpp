@@ -28,11 +28,6 @@
 #include <ostream>
 #include <vector>
 
-#include "config.h"
-#ifdef SHARK_OPENMP
-#include <omp.h>
-#endif // SHARK_OPENMP
-
 #include "components.h"
 #include "evolve_halos.h"
 #include "execution.h"
@@ -43,6 +38,7 @@
 #include "galaxy_writer.h"
 #include "logging.h"
 #include "merger_tree_reader.h"
+#include "omp_utils.h"
 #include "options.h"
 #include "physical_model.h"
 #include "shark_runner.h"
@@ -113,7 +109,7 @@ private:
 	void create_per_thread_objects();
 	std::vector<MergerTreePtr> import_trees();
 	void evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot);
-	void evolve_merger_tree(const MergerTreePtr &tree, int snapshot, double z, double delta_t);
+	void evolve_merger_tree(const MergerTreePtr &tree, int thread_idx, int snapshot, double z, double delta_t);
 	molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, double x, bool calc_j);
 };
 
@@ -139,7 +135,7 @@ struct SnapshotStatistics {
 	unsigned long n_halos;
 	unsigned long n_subhalos;
 	unsigned long n_galaxies;
-	unsigned long duration_millis;
+	Timer::duration duration_millis;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
 		if (n_galaxies == 0) {
@@ -232,19 +228,9 @@ molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr
 	std::vector<StarFormation> star_formations(threads, star_formation);
 	std::vector<molgas_per_galaxy> local_molgas(threads);
 
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif // SHARK_OPENMP
-	for (auto it = halos.begin(); it < halos.end(); it++) {
-
-#ifdef SHARK_OPENMP
-		auto idx = omp_get_thread_num();
-#else
-		auto idx = 0;
-#endif // SHARK_OPENMP
-
-		_get_molecular_gas(*it, local_molgas[idx], star_formations[idx], z, calc_j);
-	}
+	omp_static_for(halos, threads, [&](const HaloPtr &halo, int idx){
+		_get_molecular_gas(halo, local_molgas[idx], star_formations[idx], z, calc_j);
+	});
 
 	if (threads == 1) {
 		return local_molgas[0];
@@ -257,16 +243,11 @@ molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr
 
 }
 
-void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int snapshot, double z, double delta_t)
+void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread_idx, int snapshot, double z, double delta_t)
 {
 	// Get the thread-specific objects needed to run the evolution
 	// In the non-OpenMP case we simply have one
-#ifdef SHARK_OPENMP
-	auto which = omp_get_thread_num();
-#else
-	auto which = 0;
-#endif // SHARK_OPENMP
-	auto &objs = thread_objects[which];
+	auto &objs = thread_objects[thread_idx];
 	auto &physical_model = objs.physical_model;
 	auto &galaxy_mergers = objs.galaxy_mergers;
 	auto &disk_instability = objs.disk_instability;
@@ -320,12 +301,9 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 	auto delta_t = tf - ti;
 
 	Timer evolution_t;
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif // SHARK_OPENMP
-	for (auto it = merger_trees.begin(); it < merger_trees.end(); it++) {
-		evolve_merger_tree(*it, snapshot, simulation_params.redshifts[snapshot], delta_t);
-	}
+	omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, int thread_idx) {
+		evolve_merger_tree(merger_tree, thread_idx, snapshot, simulation_params.redshifts[snapshot], delta_t);
+	});
 	LOG(info) << "Evolved galaxies in " << evolution_t;
 
 	std::vector<HaloPtr> all_halos_this_snapshot;

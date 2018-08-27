@@ -203,7 +203,9 @@ void Subhalo::remove_galaxies(const std::vector<GalaxyPtr> &to_remove)
 			LOG(warning) << "Trying to remove galaxy " << galaxy << " which is not in subhalo " << *this << ", ignoring";
 			continue;
 		}
-		LOG(debug) << "Removing galaxy " << galaxy << " from subhalo " << *this;
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << "Removing galaxy " << galaxy << " from subhalo " << *this;
+		}
 		galaxies.erase(it);
 	}
 }
@@ -282,9 +284,9 @@ double Halo::total_baryon_mass() const
 	return mass;
 }
 
-unsigned long Halo::galaxy_count() const
+galaxies_size_type Halo::galaxy_count() const
 {
-	unsigned long count = 0;
+	galaxies_size_type count = 0;
 	if (central_subhalo) {
 		count = central_subhalo->galaxy_count();
 	}

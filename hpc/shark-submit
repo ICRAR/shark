@@ -238,7 +238,12 @@ submit_slurm() {
 
 	if [ -n "$mem_per_task" ]
 	then
-		cmd="$cmd --mem-per-cpu $(($mem_per_task / 1024 / 1024))M"
+		# Scale memory-per-task to memory-per-CPU
+		mem=$(($mem_per_task / 1024 / 1024))
+		if [ -n "$cpus_per_task" ]; then
+			mem=$((mem / $cpus_per_task))
+		fi
+		cmd="$cmd --mem-per-cpu ${mem}M"
 	fi
 
 	if [ -n "$cpus_per_task" ]

@@ -68,7 +68,7 @@ def wmedians(x=None, y=None, xbins=None, low_numbers=False):
             ID84th = int(np.floor(obj_bin*0.84))-1   #take the upper edge.
             result[1, i] = np.abs(result[0, i] - ybin[IDs[ID16th]])
             result[2, i] = np.abs(ybin[IDs[ID84th]] - result[0, i])
-	elif(low_numbers and len(x[ind]) > 0):
+        elif(low_numbers and len(x[ind]) > 0):
             ybin    = y[ind]
             result[0, i] = np.median(ybin)
             result[1, i] = np.abs(result[0, i] - np.min(y[ind]))
