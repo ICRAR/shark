@@ -257,6 +257,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> mvir_subhalo;
 	vector<float> vmax_subhalo;
 	vector<float> vvir_hosthalo;
+	vector<float> vvir_subhalo;
 
 	vector<float> cnfw_subhalo;
 	vector<float> lambda_subhalo;
@@ -286,6 +287,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 		// assign properties of host halo
 		auto mhalo = halo->Mvir;
 		auto vhalo = halo->Vvir;
+
 		long i=1;
 
 		for (auto &subhalo: halo->all_subhalos()){
@@ -294,8 +296,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 			// assign properties of host subhalo
 			auto msubhalo = subhalo->Mvir;
-			auto cnfw = subhalo->concentration;
-			auto lambda = subhalo->lambda;
+			auto cnfw     = subhalo->concentration;
+			auto lambda   = subhalo->lambda;
+			auto vvir_sh  = subhalo->Vvir;
 
 			// Assign baryon properties of subhalo
 			auto hot_subhalo = subhalo->hot_halo_gas;
@@ -395,6 +398,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mreheated_metals.push_back(mzreheat);
 
 				mvir_hosthalo.push_back(mhalo);
+				vvir_hosthalo.push_back(vhalo);
 
 				double mvir_gal = 0 ;
 				double c_sub = 0;
@@ -410,9 +414,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					pos      = subhalo->position;
 					vel      = subhalo->velocity;
 					L        = subhalo->L.unit() * galaxy->angular_momentum();
+					vvir_subhalo.push_back(vvir_sh);
 					mvir_subhalo.push_back(mvir_gal);
 					cnfw_subhalo.push_back(c_sub);
-					vvir_hosthalo.push_back(vhalo);
 					lambda_subhalo.push_back(l_sub);
 					redshift_of_merger.push_back(-1);
 					if(snapshot < sim_params.max_snapshot){
@@ -424,8 +428,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy->angular_momentum(), halo);
 					mvir_subhalo.push_back(galaxy->msubhalo_type2);
 					cnfw_subhalo.push_back(galaxy->concentration_type2);
-					vvir_hosthalo.push_back(galaxy->vvir_type2);
 					lambda_subhalo.push_back(galaxy->lambda_type2);
+					vvir_subhalo.push_back(galaxy->vvir_type2);
 
 					// calculate the age of the universe by the time this galaxy will merge.
 					double tmerge  = cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot-1]) + galaxy->tmerge;
@@ -528,6 +532,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mvir_subhalo);
 	REPORT(vmax_subhalo);
 	REPORT(vvir_hosthalo);
+	REPORT(vvir_subhalo);
 	REPORT(cnfw_subhalo);
 	REPORT(lambda_subhalo);
 	REPORT(position_x);
@@ -699,7 +704,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "Maximum circular velocity of this galaxy [km/s]";
 	file.write_dataset("galaxies/vmax_subhalo", vmax_subhalo, comment);
 
-	comment = "Virial velocity of the dark matter halo in which this galaxy resides [km/s]. In the case of type 2 satellites, this corresponds to the virial velocity its subhalo had before disappearing from the subhalo catalogs.";
+	comment = "Virial velocity of the dark matter subhalo in which this galaxy resides [km/s]. In the case of type 2 satellites, this corresponds to the virial velocity its subhalo had before disappearing from the subhalo catalogs.";
+	file.write_dataset("galaxies/vvir_subhalo", vvir_subhalo, comment);
+
+	comment = "Virial velocity of the dark matter host halo in which this galaxy resides [km/s].";
 	file.write_dataset("galaxies/vvir_hosthalo", vvir_hosthalo, comment);
 
 	comment = "NFW concentration parameter of the dark matter subhalo in which this galaxy resides [dimensionless]. In the case of type 2 satellites, this corresponds to the concentration its subhalo had before disappearing from the subhalo catalogs.";
