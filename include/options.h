@@ -87,7 +87,7 @@ public:
 
 		check_valid_name(name);
 
-		if ( mandatory or options.find(name) != options.end() ) {
+		if ( mandatory || options.find(name) != options.end() ) {
 
 			// Check that it's there and read it using the specialized
 			// get<T> template

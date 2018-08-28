@@ -24,11 +24,6 @@
 #include <cmath>
 #include <memory>
 
-#include "config.h"
-#ifdef SHARK_OPENMP
-#include <omp.h>
-#endif // SHARK_OPENMP
-
 #include "components.h"
 #include "evolve_halos.h"
 #include "logging.h"
@@ -101,7 +96,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
 			// In that case, the transfer of galaxies has already been done in merging_subhalos.
 			// In any other case, we need to do the transfer.
-			if(subhalo->subhalo_type == Subhalo::SATELLITE and subhalo->last_snapshot_identified == subhalo->snapshot) {
+			if(subhalo->subhalo_type == Subhalo::SATELLITE && subhalo->last_snapshot_identified == subhalo->snapshot) {
 				continue;
 			}
 

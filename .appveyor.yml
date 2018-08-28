@@ -1,0 +1,57 @@
+#
+# Appveyor CI configuration file
+#
+# ICRAR - International Centre for Radio Astronomy Research
+# (c) UWA - The University of Western Australia, 2018
+# Copyright by UWA (in the framework of the ICRAR)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+version: '1.0.{build}'
+
+image: Visual Studio 2017
+
+platform:
+  - x64
+
+cache: c:\tools\vcpkg\installed\
+
+configuration:
+  - Release
+
+install:
+  - cmd: git submodule update --init --recursive
+  - cmd: git clone https://github.com/CxxTest/cxxtest
+  - cmd: cd c:\tools\vcpkg
+  - cmd: git pull
+  - cmd: vcpkg update
+  - cmd: vcpkg integrate install
+  - cmd: vcpkg install boost-filesystem:x64-windows
+  - cmd: vcpkg install boost-log:x64-windows
+  - cmd: vcpkg install boost-program-options:x64-windows
+  - cmd: vcpkg install boost-system:x64-windows
+  - cmd: vcpkg install gsl:x64-windows
+  - cmd: vcpkg install hdf5[cpp]:x64-windows
+  - cmd: cd "%APPVEYOR_BUILD_FOLDER%"
+
+before_build:
+  - cmd: cmake -G "Visual Studio 15 2017 Win64" . -DSHARK_TEST=ON -DCMAKE_INCLUDE_PATH='%APPVEYOR_BUILD_FOLDER%\cxxtest' -DCMAKE_PROGRAM_PATH="%APPVEYOR_BUILD_FOLDER%\cxxtest\bin" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DSHARK_HDF5_USE_CONFIG=ON
+
+build:
+  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+
+test_script:
+  - cmd: set "PATH=%APPVEYOR_BUILD_FOLDER%\Release;%PATH%"
+  - cmd: ctest --output-on-failure -V

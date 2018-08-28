@@ -117,8 +117,10 @@ protected:
 	SimulationParameters sim_params;
 	std::default_random_engine generator;
 	std::lognormal_distribution<double> distribution;
-	std::uniform_real_distribution<double> flat_distribution;
+	std::uniform_real_distribution<float> flat_distribution;
 
+private:
+	xyz<float> random_point_in_sphere(float r);
 };
 
 /// Type used by users to keep track o

@@ -182,9 +182,11 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 		//Identify which subhalos will disappear in the next snapshot
 		if (satellite_subhalo->last_snapshot_identified == satellite_subhalo->snapshot) {
 
-			LOG(debug) << "Merging satellite subhalo " << satellite_subhalo
-			           << " into central subhalo " << central_subhalo
-			           << " because this is its last snapshot";
+			if (LOG_ENABLED(debug)) {
+				LOG(debug) << "Merging satellite subhalo " << satellite_subhalo
+				           << " into central subhalo " << central_subhalo
+				           << " because this is its last snapshot";
+			}
 
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
 			merging_timescale(central_subhalo, satellite_subhalo, z, false);
@@ -223,9 +225,11 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 		// the galaxies should be transferred to (rather than the descendant subhalo, which by chance could be a satellite subhalo).
 		auto desc_subhalo = central_subhalo->descendant->host_halo->central_subhalo;
 
-		LOG(debug) << "Merging central subhalo " << central_subhalo
-		           << " into " << desc_subhalo << " (the central subhalo of its descendant halo)"
-		           << " because this is its last snapshot";
+		if (LOG_ENABLED(debug)) {
+			LOG(debug) << "Merging central subhalo " << central_subhalo
+			           << " into " << desc_subhalo << " (the central subhalo of its descendant halo)"
+			           << " because this is its last snapshot";
+		}
 
 		// Find main progenitor subhalo of the descendant subhalo and use that to calculate merging timescales.
 		auto primary_subhalo = desc_subhalo->main();
@@ -344,7 +348,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	double mbar_satellite = satellite->baryon_mass();
 
 	//Create merger only if the galaxies have a baryon_mass > 0.
-	if(mbar_central <= 0 and mbar_satellite <=0 ){
+	if(mbar_central <= 0 && mbar_satellite <=0 ){
 		return;
 	}
 
@@ -441,7 +445,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 			central->disk_gas.sAM = new_disk_sAM;
 			central->disk_gas.rscale =  central->disk_gas.sAM / (2.0 * central->vmax) * constants::RDISK_HALF_SCALE;
 
-			if (std::isnan(central->disk_gas.sAM) or std::isnan(central->disk_gas.rscale)) {
+			if (std::isnan(central->disk_gas.sAM) || std::isnan(central->disk_gas.rscale)) {
 				throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - in create_merger gas-rich minor merger");
 			}
 		}
@@ -450,7 +454,7 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		central->disk_gas.mass += satellite->gas_mass();
 		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
 
-		if(mass_ratio >= parameters.minor_merger_burst_ratio and mgas_ratio > parameters.gas_fraction_burst_ratio){
+		if(mass_ratio >= parameters.minor_merger_burst_ratio && mgas_ratio > parameters.gas_fraction_burst_ratio){
 
 			central->bulge_gas += central->disk_gas;
 
@@ -459,12 +463,12 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		}
 		else{
 			//Check cases where there is no disk in the central but the satellite is bringing gas.
-			if(satellite->gas_mass() > 0 and mgas_old_central <= 0){
+			if(satellite->gas_mass() > 0 && mgas_old_central <= 0){
 				double tot_am = satellite->disk_gas.angular_momentum() + satellite->bulge_gas.angular_momentum();
 				central->disk_gas.sAM = tot_am / satellite->gas_mass();
 				central->disk_gas.rscale = central->disk_gas.sAM / (2.0 * central->vmax) * constants::RDISK_HALF_SCALE;
 
-				if (std::isnan(central->disk_gas.sAM) or std::isnan(central->disk_gas.rscale)) {
+				if (std::isnan(central->disk_gas.sAM) || std::isnan(central->disk_gas.rscale)) {
 					throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - in create_merger gas-poor minor merger");
 				}
 			}
@@ -521,7 +525,7 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t, true);
 
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
-				if(galaxy->bulge_gas.mass > 0 and galaxy->bulge_gas.mass < parameters.mass_min){
+				if(galaxy->bulge_gas.mass > 0 && galaxy->bulge_gas.mass < parameters.mass_min){
 					transfer_bulge_gas(subhalo, galaxy, z);
 				}
 			}
@@ -572,7 +576,7 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 	else{
 		// In this case use the same equations as in major mergers, but changing the total mass of the central that will end up in the
 		// bulge and an effective size (as in Lacey+16).
-		if(mass_ratio >= parameters.minor_merger_burst_ratio and mgas_ratio > parameters.gas_fraction_burst_ratio){
+		if(mass_ratio >= parameters.minor_merger_burst_ratio && mgas_ratio > parameters.gas_fraction_burst_ratio){
 
 			mtotal_central = central->bulge_mass() + central->disk_gas.mass;
 			rcentral = (central->bulge_size() * central->bulge_mass() + central->disk_gas.mass * central->disk_gas.rscale) / mtotal_central;
@@ -587,7 +591,7 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
 	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
 
-	if((std::isnan(r) or r <= 0 or r > 3) and (mtotal_central > 0 or mbar_satellite > 0)){
+	if((std::isnan(r) || r <= 0 || r > 3) && (mtotal_central > 0 || mbar_satellite > 0)){
 		std::ostringstream os;
 		os << central << " has a bulge size not well defined in galaxy mergers.";
 		throw invalid_data(os.str());
@@ -595,13 +599,13 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
 	/**Shrink the sizes depending on the gas fraction of the merger as in Hopkins et al. (2009) and above some mass ratio
 	set by the user.**/
-	if(parameters.fgas_dissipation > 0 and mass_ratio > parameters.merger_ratio_dissipation){
+	if(parameters.fgas_dissipation > 0 && mass_ratio > parameters.merger_ratio_dissipation){
 
 		double mstars = central->stellar_mass() + satellite->stellar_mass();
 		double mgas = central->gas_mass() + satellite->gas_mass();
 		double rnew = r;
 
-		if(mgas > 0 and mstars > 0){
+		if(mgas > 0 && mstars > 0){
 			double rgas_gal = mgas / mstars;
 			double denom = (1.0 + rgas_gal/parameters.fgas_dissipation);
 			if(denom > 3){
@@ -609,7 +613,7 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 			}
 			rnew  = r / denom;
 		}
-		else if (mstars == 0 and mgas > 0){
+		else if (mstars == 0 && mgas > 0){
 			//allow a maximum change of a factor of 10.
 			rnew  = r / 3.0;
 		}
@@ -647,18 +651,18 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 
 	double factor1 = 0;
 
-	if(rc > 0 and mc >0){
+	if(rc > 0 && mc >0){
 		factor1  = std::pow(mc,2.0)/rc;
 	}
 	double factor2 = 0;
 
-	if(rs > 0 and ms > 0){
+	if(rs > 0 && ms > 0){
 		factor2 = std::pow(ms,2.0)/rs;
 	}
 
 	double factor3 = 0;
 
-	if(rc > 0 or rs > 0){
+	if(rc > 0 || rs > 0){
 		factor3 = parameters.f_orbit/parameters.cgal *  mc * ms / (rc + rs);
 	}
 
@@ -694,7 +698,7 @@ void GalaxyMergers::transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 		galaxy->disk_gas.rscale = galaxy->bulge_gas.rscale;
 		galaxy->disk_gas.sAM    = galaxy->bulge_gas.sAM;
 
-		if (std::isnan(galaxy->disk_gas.sAM) or std::isnan(galaxy->disk_gas.rscale)) {
+		if (std::isnan(galaxy->disk_gas.sAM) || std::isnan(galaxy->disk_gas.rscale)) {
 			throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - transfer_bulge_gas");
 		}
 	}
@@ -726,13 +730,13 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 			3) that the central didn't exist but the satellite did. In this create a new entry for the history of the central with the data of the satellite.
 			4) none of the galaxies existed. In this case do nothing.
 		**/
-		if (it_sat == satellite->history.end() and it_cen == central->history.end()){ //neither satellite or central existed.
+		if (it_sat == satellite->history.end() && it_cen == central->history.end()){ //neither satellite or central existed.
 			//no-opt.
 		}
-		else if (it_sat == satellite->history.end() and it_cen != central->history.end()){ // satellite didn't exist but central did.
+		else if (it_sat == satellite->history.end() && it_cen != central->history.end()){ // satellite didn't exist but central did.
 			//no-opt.
 		}
-		else if (it_sat != satellite->history.end() and it_cen == central->history.end()){ // central didn't exist but satellite did.
+		else if (it_sat != satellite->history.end() && it_cen == central->history.end()){ // central didn't exist but satellite did.
 			auto hist_item = *it_sat;
 
 			//transfer all data to the bulge formed via mergers, which is where all of this mass ends up being at.

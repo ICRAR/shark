@@ -28,10 +28,10 @@
 #include <numeric>
 #include <vector>
 
-#include "config.h"
 #include "cosmology.h"
 #include "exceptions.h"
 #include "logging.h"
+#include "omp_utils.h"
 #include "timer.h"
 #include "tree_builder.h"
 
@@ -56,11 +56,7 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 
 void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const
 {
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for (auto &snapshot_and_halos: tree->halos) {
 			for (auto &halo: snapshot_and_halos.second) {
 				if (halo->merger_tree != tree) {
@@ -70,7 +66,7 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 				}
 			}
 		}
-	}
+	});
 }
 
 std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
@@ -85,7 +81,9 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	for(const auto &halo: halos) {
 		if (halo->snapshot == last_snapshot_to_consider) {
 			auto tree = std::make_shared<MergerTree>(tree_counter++);
-			LOG(debug) << "Creating MergerTree at " << halo;
+			if (LOG_ENABLED(debug)) {
+				LOG(debug) << "Creating MergerTree at " << halo;
+			}
 			halo->merger_tree = tree;
 			halo->merger_tree->add_halo(halo);
 			trees.emplace_back(std::move(tree));
@@ -162,7 +160,7 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 	auto halos_linked = std::get<1>(result);
 
 	// Fail if a halo has more than one descendant
-	if (parent_halo->descendant and parent_halo->descendant->id != desc_halo->id) {
+	if (parent_halo->descendant && parent_halo->descendant->id != desc_halo->id) {
 		std::ostringstream os;
 		os << parent_halo << " already has a descendant " << parent_halo->descendant;
 		os << " but " << desc_halo << " is claiming to be its descendant as well";
@@ -214,117 +212,106 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 	//This function loops over merger trees and halos to define central galaxies in a self-consistent way. The loop starts at z=0.
 
 	//Loop over trees.
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
+		for (int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 
-			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
+			for (auto &halo: tree->halos[snapshot]) {
 
-				for(auto &halo: tree->halos[snapshot]){
+				// First check in halo has a central subhalo, if yes, then continue with loop.
+				if (halo->central_subhalo) {
+					continue;
+				}
 
-					//First check in halo has a central subhalo, if yes, then continue with loop.
-					if(halo->central_subhalo){
-						continue;
+				auto central_subhalo = halo->all_subhalos()[0];
+				auto subhalo = define_central_subhalo(halo, central_subhalo);
+
+				// save value of lambda to make sure that all main progenitors of this subhalo have the same lambda value. This is done for consistency 
+				// throughout time.
+				auto lambda = subhalo->lambda;
+
+				// Now walk backwards through the main progenitor branch until subhalo has no more progenitors. This is done only in the case the ascendant
+				// halo does not have a central already.
+
+				// Loop going backwards through history:
+				//  * Find the main progenitor of this subhalo and its host Halo.
+				//  * Define that main progenitor as the central subhalo for the Halo (if none defined).
+				//  * Define last_snapshot_identified for non-central ascendants.
+				//  * Repeat
+				auto ascendants = subhalo->ascendants;
+
+				while (!ascendants.empty()) {
+
+					// Check that there is a main progenitor first
+					// If none is formally defined, we declare the most massive
+					// ascendant to be the main progenitor
+					auto main_prog = subhalo->main();
+					if (!main_prog) {
+						auto it = std::max_element(ascendants.begin(), ascendants.end(), [](const SubhaloPtr &s1, const SubhaloPtr &s2) {
+							return s1->Mvir < s2->Mvir;
+						});
+						main_prog = *it;
+						main_prog->main_progenitor = true;
+						LOG(warning) << "No main progenitor defined for " << subhalo << ", defined "
+									 << main_prog << " based on its Mvir";
 					}
 
-					auto central_subhalo = halo->all_subhalos()[0];
-					auto subhalo = define_central_subhalo(halo, central_subhalo);
+					auto ascendant_halo = main_prog->host_halo;
 
-					// Now walk backwards through the main progenitor branch until subhalo has no more progenitors. This is done only in the case the ascendant
-					// halo does not have a central already.
-
-					// Loop going backwards through history:
-					//  * Find the main progenitor of this subhalo and its host Halo.
-					//  * Define that main progenitor as the central subhalo for the Halo (if none defined).
-					//  * Define last_snapshot_identified for non-central ascendants.
-					//  * Repeat
-					auto ascendants = subhalo->ascendants;
-
-					while(not ascendants.empty()){
-
-						// Check that there is a main progenitor first
-						// If none is formally defined, we declare the most massive
-						// ascendant to be the main progenitor
-						auto main_prog = subhalo->main();
-						if (not main_prog) {
-							auto it = std::max_element(ascendants.begin(), ascendants.end(), [](const SubhaloPtr &s1, const SubhaloPtr &s2) {
-								return s1->Mvir < s2->Mvir;
-							});
-							main_prog = *it;
-							main_prog->main_progenitor = true;
-							LOG(warning) << "No main progenitor defined for " << subhalo << ", defined "
-							             << main_prog << " based on its Mvir";
-						}
-
-						auto ascendant_halo = main_prog->host_halo;
-
-						// If a central subhalo has been defined, then its whole branch
-						// has been processed, so there's no point on continuing.
-						if (ascendant_halo->central_subhalo) {
-							break;
-						}
-
-						subhalo = define_central_subhalo(ascendant_halo, main_prog);
-
-						// Define property last_identified_snapshot for all the ascendants that are not the main progenitor of the subhalo.
-						for (auto &sub: ascendants){
-							if(!sub->main_progenitor){
-								sub->last_snapshot_identified = sub->snapshot;
-							}
-						}
-
-						// Now move to the ascendants of the main progenitor subhalo and repeat process.
-						ascendants = subhalo->ascendants;
-
+					// If a central subhalo has been defined, then its whole branch
+					// has been processed, so there's no point on continuing.
+					if (ascendant_halo->central_subhalo) {
+						break;
 					}
+
+					// Redefine lambda of main progenitor to have the same one as its descendant.
+					main_prog->lambda = lambda;
+					subhalo = define_central_subhalo(ascendant_halo, main_prog);
+
+					// Define property last_identified_snapshot for all the ascendants that are not the main progenitor of the subhalo.
+					for (auto &sub: ascendants) {
+						if(!sub->main_progenitor){
+							sub->last_snapshot_identified = sub->snapshot;
+						}
+					}
+
+					// Now move to the ascendants of the main progenitor subhalo and repeat process.
+					ascendants = subhalo->ascendants;
+
 				}
 			}
 		}
+	});
 
-		//Make sure each halo has only one central subhalo and that the rest are satellites.
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
+	// Make sure each halo has only one central subhalo and that the rest are satellites.
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
+		for (int snapshot=sim_params.min_snapshot; snapshot >= sim_params.max_snapshot; snapshot++) {
 
-			for(int snapshot=sim_params.min_snapshot; snapshot >= sim_params.max_snapshot; snapshot++) {
-
-				for(auto &halo: tree->halos[snapshot]){
-					int i = 0;
-					for (auto &subhalo: halo->all_subhalos()){
-						if(subhalo->subhalo_type == Subhalo::CENTRAL){
-							i++;
-							if(i > 1){
-								std::ostringstream os;
-								os << "Halo " << halo << " has more than 1 central subhalo at snapshot " << snapshot;
-								throw invalid_argument(os.str());
-							}
+			for (auto &halo: tree->halos[snapshot]) {
+				int i = 0;
+				for (auto &subhalo: halo->all_subhalos()) {
+					if(subhalo->subhalo_type == Subhalo::CENTRAL){
+						i++;
+						if (i > 1) {
+							std::ostringstream os;
+							os << "Halo " << halo << " has more than 1 central subhalo at snapshot " << snapshot;
+							throw invalid_argument(os.str());
 						}
 					}
-					if(i == 0){
-						std::ostringstream os;
-						os << "Halo " << halo << " has no central subhalo at snapshot " << snapshot;
-						throw invalid_argument(os.str());
-					}
+				}
+				if (i == 0) {
+					std::ostringstream os;
+					os << "Halo " << halo << " has no central subhalo at snapshot " << snapshot;
+					throw invalid_argument(os.str());
 				}
 			}
 		}
+	});
 }
 
 void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
 
 	//This function loops over merger trees and halos to make sure that descendant halos are at least as massive as their progenitors.
-
-	//Loop over trees.
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
-
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
 
 			for(auto &halo: tree->halos[snapshot]){
@@ -334,7 +321,7 @@ void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &tree
 				}
 			}
 		}
-	}
+	});
 }
 
 void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
@@ -343,34 +330,29 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 	// This has to be done starting from the first snapshot forward so that the angular momentum and concentration are propagated correctly if subhalo is interpolated over many snapshots.
 
 	//Loop over trees.
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for (auto it = trees.begin(); it < trees.cend(); it++) {
-		const auto &tree = *it;
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
+		for (int snapshot=sim_params.max_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
 
-			for(int snapshot=sim_params.max_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
+			for (auto &halo: tree->halos[snapshot]) {
 
-				for(auto &halo: tree->halos[snapshot]){
+				for (auto &subhalo: halo->all_subhalos()) {
+					//Check if subhalo is there because of interpolation. If so, redefine its angular momentum and concentration to that of its progenitor.
+					if (subhalo->IsInterpolated) {
+						auto main_progenitor = subhalo->main();
+						subhalo->L = main_progenitor->L;
+						subhalo->concentration = main_progenitor->concentration;
+						subhalo->host_halo->concentration = main_progenitor->concentration;
 
-					for (auto &subhalo: halo->all_subhalos()){
-						//Check if subhalo is there because of interpolation. If so, redefine its angular momentum and concentration to that of its progenitor.
-						if(subhalo->IsInterpolated){
-							auto main_progenitor = subhalo->main();
-							subhalo->L = main_progenitor->L;
-							subhalo->concentration = main_progenitor->concentration;
-							subhalo->host_halo->concentration = main_progenitor->concentration;
-
-							if(subhalo->concentration <= 0){
-								std::ostringstream os;
-								os << "subhalo " << subhalo << " has concentration =0";
-								throw invalid_argument(os.str());
-							}
+						if (subhalo->concentration <= 0) {
+							std::ostringstream os;
+							os << "subhalo " << subhalo << " has concentration =0";
+							throw invalid_argument(os.str());
 						}
 					}
 				}
 			}
 		}
+	});
 }
 
 

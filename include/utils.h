@@ -213,6 +213,9 @@ detail::_memory_amount memory_amount(std::size_t amount) {
 	return {amount};
 }
 
+/// Returns the name of the computer executing this program
+std::string gethostname();
+
 }  // namespace shark
 
 #endif // SHARK_UTILS

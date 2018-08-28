@@ -26,6 +26,7 @@
 #ifndef INCLUDE_HDF5_IOBASE_H_
 #define INCLUDE_HDF5_IOBASE_H_
 
+#include <string>
 #include <vector>
 
 #include <H5Cpp.h>

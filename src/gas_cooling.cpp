@@ -339,7 +339,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
  	}
 
  	// Check for undefined cases.
- 	if(mhot < 0 or mhot >1e17 or std::isnan(mhot)){
+ 	if(mhot < 0 || mhot >1e17 || std::isnan(mhot)){
 		std::ostringstream os;
 		os << halo << " has hot halo gas mass not well defined";
 		throw invalid_data(os.str());
@@ -536,14 +536,14 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
    	}
 
    	// check for undefined values.
- 	if(subhalo.cold_halo_gas.mass < 0 or subhalo.cold_halo_gas.mass >1e17 or std::isnan(subhalo.cold_halo_gas.mass)){
+ 	if(subhalo.cold_halo_gas.mass < 0 || subhalo.cold_halo_gas.mass >1e17 || std::isnan(subhalo.cold_halo_gas.mass)){
 		std::ostringstream os;
 		os << halo << " has cold halo gas mass not well defined";
 		throw invalid_data(os.str());
  	}
 
    	// check for undefined values.
- 	if(subhalo.hot_halo_gas.mass < 0 or subhalo.hot_halo_gas.mass >1e17 or std::isnan(subhalo.hot_halo_gas.mass)){
+ 	if(subhalo.hot_halo_gas.mass < 0 || subhalo.hot_halo_gas.mass >1e17 || std::isnan(subhalo.hot_halo_gas.mass)){
 		std::ostringstream os;
 		os << halo << " has hot halo gas mass not well defined";
 		throw invalid_data(os.str());

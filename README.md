@@ -1,6 +1,7 @@
 # shark
 
 [![Build Status](https://travis-ci.org/ICRAR/shark.svg?branch=master)](https://travis-ci.org/ICRAR/shark)
+[![Build Status](https://ci.appveyor.com/api/projects/status/4vy02t8q4h4xpr7k/branch/master?svg=true)](https://ci.appveyor.com/project/rtobar/shark/branch/master)
 [![Documentation Status](https://readthedocs.org/projects/shark-sam/badge/?version=latest)](https://shark-sam.readthedocs.io/en/latest/?badge=latest)
 
 shark is a new, flexible semi-analytic model of galaxy formation.

@@ -226,7 +226,7 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 
 	// Equations of angular momentum exchange. Input total angular momentum.
 	// Redefine angular momentum ONLY if the new value is > 0.
-	if(y[12] > 0 and y[13] > 0){
+	if(y[12] > 0 && y[13] > 0){
 
 		// Assign new specific angular momenta.
 		galaxy.disk_stars.sAM          = y[12] / galaxy.disk_stars.mass;
@@ -240,13 +240,13 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 		galaxy.disk_gas.rscale   = galaxy.disk_gas.sAM   / galaxy.vmax * constants::EAGLEJconv;
 
 		// check for unrealistic cases.
-		if(galaxy.disk_stars.rscale <= constants::tolerance and galaxy.disk_stars.mass > 0){
+		if(galaxy.disk_stars.rscale <= constants::tolerance && galaxy.disk_stars.mass > 0){
 			std::ostringstream os;
 			os << "Galaxy with extremely small size, rdisk_stars < 1e-10, in physical model";
 			throw invalid_argument(os.str());
 		}
 
-		if (std::isnan(galaxy.disk_gas.sAM) or std::isnan(galaxy.disk_gas.rscale)) {
+		if (std::isnan(galaxy.disk_gas.sAM) || std::isnan(galaxy.disk_gas.rscale)) {
 			throw invalid_argument("rgas or sAM are NaN, cannot continue at physical model");
 		}
 

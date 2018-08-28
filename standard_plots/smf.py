@@ -229,7 +229,7 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
     #for i,j,p,q,x,y in zip(hist_smf[0,:],hist_smf[1,:],hist_smf[2,:],hist_smf[3,:],hist_smf[4,:],hist_smf[5,:]):
     #    print i,j,p,q,x,y 
 
-    hist_smf_modelvar = np.zeros(shape = (6, 315))
+    hist_smf_modelvar = np.zeros(shape = (6, 360))
     hist_smf_modelvar[0,:], hist_smf_modelvar[1,:],hist_smf_modelvar[2,:],hist_smf_modelvar[3,:],hist_smf_modelvar[4,:],hist_smf_modelvar[5,:] = common.load_observation(obsdir, 'Models/SharkVariations/SMF_OtherModels.dat', [0,1,2,3,4,5])
 
     hist_smf_resolution = np.zeros(shape = (6, 135))
