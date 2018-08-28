@@ -43,6 +43,7 @@ DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 	options.load("dark_matter_halo.halo_profile", haloprofile);
 	options.load("dark_matter_halo.size_model", sizemodel);
 	options.load("dark_matter_halo.lambda_random", random_lambda);
+        options.load("dark_matter_halo.concentration_model", concentrationmodel);
 
 }
 
@@ -76,6 +77,22 @@ Options::get<DarkMatterHaloParameters::SizeModel>(const std::string &name, const
 	os << name << " option value invalid: " << value << ". Supported values are Mo98 and Cole00";
 	throw invalid_option(os.str());
 }
+
+template <>
+DarkMatterHaloParameters::ConcentrationModel
+Options::get<DarkMatterHaloParameters::ConcentrationModel>(const std::string &name, const std::string &value) const {
+	auto lvalue = lower(value);
+	if (lvalue == "duffy08") {
+		return DarkMatterHaloParameters::DUFFY08;
+	}
+	else if (lvalue == "dutton14") {
+		return DarkMatterHaloParameters::DUTTON14;
+	}
+	std::ostringstream os;
+	os << name << " option value invalid: " << value << ". Supported values are Duffy08 and Dutton14";
+	throw invalid_option(os.str());
+}
+
 
 DarkMatterHalos::DarkMatterHalos(const DarkMatterHaloParameters &params, const CosmologyPtr &cosmology, SimulationParameters &sim_params) :
 	params(params),
@@ -360,9 +377,16 @@ double DarkMatterHalos::v2bulge (double x, double m, double c, double r){
 
 double DarkMatterHalos::nfw_concentration(double mvir, double z){
 
-	// From Duffy et al. (2008). Full sample from z=0-2 for Virial masses.
-
-	return 7.85 * std::pow(1.0+z, -0.71) * std::pow(mvir/2.0e12,-0.081);
+	if(params.concentrationmodel == DarkMatterHaloParameters::DUFFY08){ 
+		// From Duffy et al. (2008). Full sample from z=0-2 for Virial masses.
+		return 7.85 * std::pow(1.0+z, -0.71) * std::pow(mvir/2.0e12,-0.081);
+	}
+	else if(params.concentrationmodel == DarkMatterHaloParameters::DUTTON14){
+		//From Dutton & Maccio (2014) for virial masses.
+		double b = -0.097 + 0.024 * z;
+		double a = 0.537 + (1.025 - 0.537) * std::exp(-0.718 * std::pow(z,1.08));
+		return std::pow(10.0, a + b * std::log10(mvir/1e12));
+	}
 
 }
 

@@ -55,8 +55,14 @@ public:
 		COLE00
 	};
 
+	enum ConcentrationModel{
+        	DUFFY08 = 0,
+		DUTTON14 
+	};
+
 	DarkMatterProfile haloprofile = NFW;
 	SizeModel sizemodel = MO98;
+        ConcentrationModel concentrationmodel = DUFFY08;
 	bool random_lambda = false;
 
 };
