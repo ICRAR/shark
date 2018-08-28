@@ -203,7 +203,9 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 			throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
 		}
 
-		subhalo->lambda = dark_matter_halos->halo_lambda(lambda[i], z);
+		double npart = Mvir[i]/simulation_params.particle_mass;
+
+		subhalo->lambda = dark_matter_halos->halo_lambda(lambda[i], z, npart);
 
 		// Calculate virial velocity from the virial mass and redshift.
 		subhalo->Vvir = dark_matter_halos->halo_virial_velocity(subhalo->Mvir, z);
