@@ -47,5 +47,5 @@ curl -L -o input/tree_199.0.hdf5 'https://docs.google.com/uc?export=download&id=
 # Make sure the standard plotting scripts run correctly
 if [ -n "$PYTHON" ]; then
 	echo "backend: Agg" >> matplotlibrc
-	"$PYTHON" ../standard_plots/all.py -c ../sample.cfg || fail "failure during execution of python plotting scripts"
+	"$PYTHON" ../standard_plots/all.py -c ../sample.cfg -z input/redshifts.txt || fail "failure during execution of python plotting scripts"
 fi
