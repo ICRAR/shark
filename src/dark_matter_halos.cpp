@@ -152,10 +152,10 @@ float DarkMatterHalos::halo_lambda (float lambda, double z, double npart){
 
 	auto lambda_random = distribution(generator);
 
-	if(params.random_lambda and !params.use_converged_lambda_catalog){
+	if(params.random_lambda && !params.use_converged_lambda_catalog){
 		return lambda_random;
 	}
-	else if (params.random_lambda and params.use_converged_lambda_catalog and npart < params.min_part_convergence){
+	else if (params.random_lambda && params.use_converged_lambda_catalog && npart < params.min_part_convergence){
 		return lambda_random;
 	} 
 	else {
