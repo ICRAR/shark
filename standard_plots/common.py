@@ -104,6 +104,9 @@ def parse_args(requires_observations=True):
     parser.add_argument('-o', '--output-dir', help='Output directory for plots. Defaults to <shark-dir>/Plots/<simu>/<model>')
 
     opts = parser.parse_args()
+
+    # If a configuration file is not passed, then we need to have all the
+    # individual options given to us
     if not opts.config and (not opts.model or not opts.simu or not opts.shark_dir or not opts.redshift_file):
         parser.error('Either -c or -m/-s/-S/-z must be given')
 
@@ -111,13 +114,19 @@ def parse_args(requires_observations=True):
     if requires_observations and opts.obs_dir is None:
         parser.error('-O is required')
 
+    # The following allows using opts.config to set all these preferences,
+    # but also allows users to override any of them with the individual values
+    # given via the command-line.
     if opts.config:
         shark_dir, simu, model, redshift_file = read_configuration(opts.config)
         print("Parsed configuration file %s" % (opts.config,))
-    else:
+    if opts.model:
         model = opts.model
-        simu  = opts.simu
+    if opts.simu:
+        simu = opts.simu
+    if opts.shark_dir:
         shark_dir = opts.shark_dir
+    if opts.redshift_file:
         redshift_file = opts.redshift_file
     model_dir = os.path.join(shark_dir, simu, model)
 
