@@ -1238,7 +1238,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
 
     return mass
 
-def main(modeldir, outdir, subvols, obsdir):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     zlist = ["199","174", "156", "131", "113", "99"]
 

@@ -257,7 +257,7 @@ def plot_BMHM_z(plt, outdir, massbar, massbar_inside):
     common.savefig(outdir, fig, 'BMHM_z.pdf')
 
 
-def main(modeldir, outdir, subvols):
+def main(modeldir, outdir, redshift_table, subvols):
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'm_bh', 'mgas_disk',

@@ -438,7 +438,7 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
     common.savefig(outdir, fig, 'BTfractions.pdf')
 
 
-def main(modeldir, outdir, subvols, obsdir):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities',

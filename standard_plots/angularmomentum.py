@@ -788,7 +788,7 @@ def plot_lambda(plt, outdir, obsdir, lambdaH,  lambda_jiang, lambda_mass, bt, ms
     common.savefig(outdir, fig, 'lambda_relation.pdf')
 
 
-def main(modeldir, outdir, subvols, obsdir):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities',

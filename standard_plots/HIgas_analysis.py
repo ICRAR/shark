@@ -117,7 +117,7 @@ def plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking):
     common.savefig(output_dir, fig, "HI_groups_stacking.pdf")
 
 
-def main(model_dir, output_dir, subvols, obs_dir, snapshot):
+def main(model_dir, output_dir, redshift_table, subvols, obs_dir, snapshot):
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge',

@@ -394,7 +394,7 @@ def plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_
     common.savefig(output_dir, fig, "HIH2_gas_fraction.pdf")
 
 
-def main(model_dir, output_dir, subvols, obs_dir, snapshot):
+def main(model_dir, output_dir, redshift_table, subvols, obs_dir, snapshot):
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge',

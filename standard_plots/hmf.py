@@ -99,7 +99,7 @@ def prepare_data(hdf5_data, hist, histsh, index):
     H, bins_edges = np.histogram(masssh,bins=np.append(mbins,mupp))
     histsh[index,:] = histsh[index,:] + H
 
-def main(model_dir, outdir, subvols, obsdir):
+def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()

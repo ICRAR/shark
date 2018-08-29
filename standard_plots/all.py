@@ -32,8 +32,8 @@ import smhm
 
 def main():
 
-    model_dir, output_dir, subvolumes, obs_dir, snapshot = common.parse_args()
-    args_minimal = (model_dir, output_dir, subvolumes)
+    model_dir, output_dir, redshift_table, subvolumes, obs_dir, snapshot = common.parse_args()
+    args_minimal = (model_dir, output_dir, redshift_table, subvolumes)
     args_with_obsdir = args_minimal + (obs_dir,)
     args_with_snapshot = args_minimal + (snapshot,)
     args_all = args_minimal + (obs_dir, snapshot)

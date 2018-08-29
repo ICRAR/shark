@@ -89,7 +89,8 @@ def read_configuration(config):
     shark_dir = cparser.get('execution', 'output_directory')
     model = cparser.get('execution', 'name_model')
     simu = cparser.get('simulation', 'sim_name')
-    return shark_dir, simu, model
+    redshift_file = cparser.get('simulation', 'redshift_file')
+    return shark_dir, simu, model, redshift_file
 
 def parse_args(requires_snapshot=True, requires_observations=True):
 
@@ -98,6 +99,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     parser.add_argument('-m', '--model', help='Model name')
     parser.add_argument('-s', '--simu', help='Simulation name')
     parser.add_argument('-S', '--shark-dir', help='SHArk base output directory')
+    parser.add_argument('-z', '--redshift-file', help='Redshift table file for the simulation')
     parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
     parser.add_argument('-o', '--output-dir', help='Output directory for plots. Defaults to <shark-dir>/Plots/<simu>/<model>')
 
@@ -105,8 +107,8 @@ def parse_args(requires_snapshot=True, requires_observations=True):
         parser.add_argument('snapshot', help='Snapshot output to process', type=int)
 
     opts = parser.parse_args()
-    if not opts.config and (not opts.model or not opts.simu or not opts.shark_dir):
-        parser.error('Either -c or -m/-s/-S must be given')
+    if not opts.config and (not opts.model or not opts.simu or not opts.shark_dir or not opts.redshift_file):
+        parser.error('Either -c or -m/-s/-S/-z must be given')
 
     opts.obs_dir = os.path.normpath(os.path.abspath(os.path.join(__file__, '..', '..', 'data')))
     if requires_snapshot and opts.snapshot is None:
@@ -115,12 +117,13 @@ def parse_args(requires_snapshot=True, requires_observations=True):
         parser.error('-O is required')
 
     if opts.config:
-        shark_dir, simu, model = read_configuration(opts.config)
+        shark_dir, simu, model, redshift_file = read_configuration(opts.config)
         print("Parsed configuration file %s" % (opts.config,))
     else:
         model = opts.model
         simu  = opts.simu
         shark_dir = opts.shark_dir
+        redshift_file = opts.redshift_file
     model_dir = os.path.join(shark_dir, simu, model)
 
     output_dir = opts.output_dir
@@ -144,7 +147,7 @@ def parse_args(requires_snapshot=True, requires_observations=True):
             subvolumes.add(int(r))
     print("Considering the following subvolumes: %s" % ' '.join([str(x) for x in subvolumes]))
 
-    ret = [model_dir, output_dir, tuple(subvolumes)]
+    ret = [model_dir, output_dir, _redshift_table(redshift_file), tuple(subvolumes)]
     if requires_observations:
         ret.append(opts.obs_dir)
     if requires_snapshot:
@@ -233,4 +236,5 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
 # This simple functionality is used by shark-submit to easily find out where
 # the plots have been produced, and save us the trouble to re-implement it
 if __name__ == '__main__':
-    print(get_output_dir(*read_configuration(sys.argv[1])))
+    shark_dir, simu, model, _ = read_configuration(sys.argv[1])
+    print(get_output_dir(shark_dir, simu, model))
