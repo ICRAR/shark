@@ -287,18 +287,23 @@ void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread
 
 void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot)
 {
-	auto z = simulation_params.redshifts[snapshot];
 	Timer t;
-	LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< z;
 
 	for(auto &o: thread_objects) {
 		o.physical_model->reset_ode_evaluations();
 	}
 
-	//Calculate the initial and final time of this snapshot.
+	// Calculate the initial and final time for the evolution start at this snapshot.
+	auto z = simulation_params.redshifts[snapshot];
+	auto z_end = simulation_params.redshifts[snapshot + 1];
 	double ti = simulation.convert_snapshot_to_age(snapshot);
 	double tf = simulation.convert_snapshot_to_age(snapshot + 1);
 	auto delta_t = tf - ti;
+
+	std::ostringstream os;
+	os << "Will evolve galaxies from snapshot " << snapshot << " to " << snapshot + 1;
+	os << ". Redshift: " << z << " -> " << z_end << ", time: " << ti << " -> " << tf;
+	LOG(info) << os.str();
 
 	Timer evolution_t;
 	omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, int thread_idx) {
@@ -325,11 +330,14 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 	/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 	//do_stuff_at_halo_level(all_halos_this_snapshot);
 
-	/*write snapshots only if the user wants outputs at this time (note that what matters here is snapshot+1).*/
 	if (write_galaxies)
 	{
-		LOG(info) << "Will write output file for snapshot " << snapshot+1;
-		writer->write(snapshot, all_halos_this_snapshot, all_baryons, molgas_per_gal);
+		// Note that the output is being done at "snapshot + 1". This is because
+		// we don't evolve galaxies AT snapshot "i" but FROM snapshot "i" TO
+		// snapshot "i+1", and therefore at this point in time (after the actual
+		// evolution) we consider our galaxies to be at snapshot "i+1"
+		LOG(info) << "Write output files for evolution from snapshot " << snapshot << " to " << snapshot + 1;
+		writer->write(snapshot + 1, all_halos_this_snapshot, all_baryons, molgas_per_gal);
 	}
 
 	auto duration_millis = t.get();
@@ -373,7 +381,10 @@ void SharkRunner::impl::run() {
 	galaxy_creator.create_galaxies(merger_trees, all_baryons);
 
 	// Go, go, go!
-	for(int snapshot = simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot-1; snapshot++) {
+	// Note that we evolve galaxies in merger tress in the snapshot range [min, max)
+	// This is because at snapshot "i" we don't evolve galaxies AT snapshot "i",
+	// but rather FROM snapshot "i" TO snapshot "i+1".
+	for(int snapshot = simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot - 1; snapshot++) {
 		evolve_merger_trees(merger_trees, snapshot);
 	}
 }

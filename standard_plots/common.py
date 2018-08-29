@@ -33,6 +33,47 @@ if PY2:
 else:
     import configparser
 
+def _select_closest(i1, i2, z, redshifts):
+    i1 = min(i1, len(redshifts) - 1)
+    i2 = min(i2, len(redshifts) - 1)
+    _z1 = redshifts[i1]
+    _z2 = redshifts[i2]
+    if abs(_z1 - z) < abs(_z2 - z):
+        return i1
+    return i2
+_select_closest = np.vectorize(_select_closest, excluded={3})
+
+class _redshift_table(object):
+    """A class holding a redshift table. It calculates the snapshot for a given z"""
+
+    def __init__(self, fname):
+
+        table = np.loadtxt(fname, dtype={'formats': ('i4', 'f8'), 'names': ('snapshot', 'z')})
+        snapshots = table['snapshot']
+        z = table['z']
+
+        # ensure snapshots are increasing, and redshifts decreasing
+        if not np.all(snapshots[:-1] < snapshots[1:]):
+            raise ValueError('Snapshots are not always increasing')
+        if not np.all(z[:-1] > z[1:]):
+            raise ValueError('Redshifts are not always decreasing')
+
+        # Revert both; we want redshifts to be in ascending order
+        self.z = z[::-1]
+        self.snapshots = snapshots[::-1]
+
+    def __getitem__(self, z):
+        """Get the corresponding snapshots for the given redshift"""
+
+        # We find the upper bound index using searchsorted, but then verify
+        # which end of the range [z[i-1], z[i]] is closest to the requested z
+        # value and use the corresponding index
+        if not np.isscalar(z) and len(z) == 0:
+            return []
+        idx = np.searchsorted(self.z, z)
+        prev_idx = np.maximum(idx - 1, 0)
+        idx = _select_closest(idx, prev_idx, z, self.z)
+        return self.snapshots[idx]
 
 def load_matplotlib():
     import matplotlib.pyplot as plt
@@ -48,38 +89,45 @@ def read_configuration(config):
     shark_dir = cparser.get('execution', 'output_directory')
     model = cparser.get('execution', 'name_model')
     simu = cparser.get('simulation', 'sim_name')
-    return shark_dir, simu, model
+    redshift_file = cparser.get('simulation', 'redshift_file')
+    return shark_dir, simu, model, redshift_file
 
-def parse_args(requires_snapshot=True, requires_observations=True):
+def parse_args(requires_observations=True):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', help='SHArk configuration file')
     parser.add_argument('-m', '--model', help='Model name')
     parser.add_argument('-s', '--simu', help='Simulation name')
     parser.add_argument('-S', '--shark-dir', help='SHArk base output directory')
+    parser.add_argument('-z', '--redshift-file', help='Redshift table file for the simulation')
     parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
     parser.add_argument('-o', '--output-dir', help='Output directory for plots. Defaults to <shark-dir>/Plots/<simu>/<model>')
 
-    if requires_snapshot:
-        parser.add_argument('snapshot', help='Snapshot output to process', type=int)
-
     opts = parser.parse_args()
-    if not opts.config and (not opts.model or not opts.simu or not opts.shark_dir):
-        parser.error('Either -c or -m/-s/-S must be given')
+
+    # If a configuration file is not passed, then we need to have all the
+    # individual options given to us
+    if not opts.config and (not opts.model or not opts.simu or not opts.shark_dir or not opts.redshift_file):
+        parser.error('Either -c or -m/-s/-S/-z must be given')
 
     opts.obs_dir = os.path.normpath(os.path.abspath(os.path.join(__file__, '..', '..', 'data')))
-    if requires_snapshot and opts.snapshot is None:
-        parser.error('snapshot option is required')
     if requires_observations and opts.obs_dir is None:
         parser.error('-O is required')
 
+    # The following allows using opts.config to set all these preferences,
+    # but also allows users to override any of them with the individual values
+    # given via the command-line.
     if opts.config:
-        shark_dir, simu, model = read_configuration(opts.config)
+        shark_dir, simu, model, redshift_file = read_configuration(opts.config)
         print("Parsed configuration file %s" % (opts.config,))
-    else:
+    if opts.model:
         model = opts.model
-        simu  = opts.simu
+    if opts.simu:
+        simu = opts.simu
+    if opts.shark_dir:
         shark_dir = opts.shark_dir
+    if opts.redshift_file:
+        redshift_file = opts.redshift_file
     model_dir = os.path.join(shark_dir, simu, model)
 
     output_dir = opts.output_dir
@@ -103,11 +151,9 @@ def parse_args(requires_snapshot=True, requires_observations=True):
             subvolumes.add(int(r))
     print("Considering the following subvolumes: %s" % ' '.join([str(x) for x in subvolumes]))
 
-    ret = [model_dir, output_dir, tuple(subvolumes)]
+    ret = [model_dir, output_dir, _redshift_table(redshift_file), tuple(subvolumes)]
     if requires_observations:
         ret.append(opts.obs_dir)
-    if requires_snapshot:
-        ret.append(opts.snapshot)
     return ret
 
 def load_observation(obsdir, fname, cols):
@@ -192,4 +238,11 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
 # This simple functionality is used by shark-submit to easily find out where
 # the plots have been produced, and save us the trouble to re-implement it
 if __name__ == '__main__':
-    print(get_output_dir(*read_configuration(sys.argv[1])))
+    action = sys.argv[1]
+    shark_dir, simu, model, redshift_file = read_configuration(sys.argv[2])
+    if action == 'output_dir':
+        print(get_output_dir(shark_dir, simu, model))
+    elif action == 'snapshots':
+        z = list(map(float, ' '.join(sys.argv[3:]).split()))
+        table = _redshift_table(redshift_file)
+        print(' '.join(map(str, table[z])))

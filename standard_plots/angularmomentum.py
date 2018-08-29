@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = ["199","174", "156", "131"]
+zlist = (0, 0.5, 1, 2)
 
 ##################################
 #Constants
@@ -176,10 +176,21 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     bulge_size[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
+
     return (lh, lj, lm, bt, ms, ssfr)
 
 
 def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
+
+    #print 'sizes disk centrals'
+    #for i,j,p in zip(disk_size_cen[0,0,:],disk_size_cen[0,1,:],disk_size_cen[0,2,:]):
+    #    print i,j,p
+    #print 'disk sizes satellites'
+    #for i,j,p in zip(disk_size_sat[0,0,:],disk_size_sat[0,1,:],disk_size_sat[0,2,:]):
+    #    print i,j,p
+    #print 'sizes bulges'
+    #for i,j,p in zip(bulge_size[0,0,:],bulge_size[0,1,:],bulge_size[0,2,:]):
+    #    print i,j,p
 
     rb, r16, r84 = common.load_observation(obsdir, 'Models/SharkVariations/SizeDisksAndBulges_OtherModels.dat', [0,1,2])
     
@@ -201,7 +212,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
     yplot = disk_size_cen[0,0,ind]
     errdn = disk_size_cen[0,1,ind]
     errup = disk_size_cen[0,2,ind]
-    ax.plot(xplot,yplot[0],color='b',linestyle='dashed',label="Lagos+18")
+    ax.plot(xplot,yplot[0],color='b',linestyle='solid',label="ISM/stars AM transfer")
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.3,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.3,interpolate=True)
 
@@ -213,9 +224,9 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
     yplot = rdisk_am[ind]
     errdn = rdisk_am16[ind]
     errup = rdisk_am84[ind]
-    ax.plot(xplot,yplot,color='b',linestyle='solid', label="ISM/stars AM transfer")
-    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='b', linestyle='solid', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot,yplot+errup, facecolor='b', linestyle='solid', alpha=0.5,interpolate=True)
+    ax.plot(xplot,yplot,color='b',linestyle='dashed', label="Lagos+18")
+    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='b', linestyle='solid', alpha=0.4,interpolate=True)
+    ax.fill_between(xplot,yplot,yplot+errup, facecolor='b', linestyle='solid', alpha=0.4,interpolate=True)
 
     #Lange et al. (2016)
     m,r = common.load_observation(obsdir, 'SizesAndAM/rdisk_L16.dat', [0,1])
@@ -235,7 +246,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
     yplot = disk_size_sat[0,0,ind]
     errdn = disk_size_sat[0,1,ind]
     errup = disk_size_sat[0,2,ind]
-    ax.plot(xplot,yplot[0],color='g',linestyle='dashed')
+    ax.plot(xplot,yplot[0],color='g',linestyle='solid')
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='g', alpha=0.3,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='g', alpha=0.3,interpolate=True)
 
@@ -248,9 +259,9 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
     yplot = rdisk_am[ind]
     errdn = rdisk_am16[ind]
     errup = rdisk_am84[ind]
-    ax.plot(xplot,yplot,color='g',linestyle='solid')
-    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='g', linestyle='solid', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot,yplot+errup, facecolor='g', linestyle='solid', alpha=0.5,interpolate=True)
+    ax.plot(xplot,yplot,color='g',linestyle='dashed')
+    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='g', linestyle='solid', alpha=0.4,interpolate=True)
+    ax.fill_between(xplot,yplot,yplot+errup, facecolor='g', linestyle='solid', alpha=0.4,interpolate=True)
 
     #Lange et al. (2016)
     m,r = common.load_observation(obsdir, 'SizesAndAM/rdisk_L16.dat', [0,1])
@@ -278,7 +289,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
         yplot = bulge_size[0,0,ind]
         errdn = bulge_size[0,1,ind]
         errup = bulge_size[0,2,ind]
-        ax.plot(xplot,yplot[0],color='r',linestyle='dashed')
+        ax.plot(xplot,yplot[0],color='r',linestyle='solid')
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.3,interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.3,interpolate=True)
 
@@ -291,9 +302,9 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size):
     yplot = rdisk_am[ind]
     errdn = rdisk_am16[ind]
     errup = rdisk_am84[ind]
-    ax.plot(xplot,yplot,color='r',linestyle='solid')
-    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='LightCoral', linestyle='solid', alpha=0.5,interpolate=True)
-    ax.fill_between(xplot,yplot,yplot+errup, facecolor='LightCoral', linestyle='solid', alpha=0.5,interpolate=True)
+    ax.plot(xplot,yplot,color='r',linestyle='dashed')
+    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='LightCoral', linestyle='solid', alpha=0.4,interpolate=True)
+    ax.fill_between(xplot,yplot,yplot+errup, facecolor='LightCoral', linestyle='solid', alpha=0.4,interpolate=True)
 
     #Lange et al. (2016)
     m,r = common.load_observation(obsdir, 'SizesAndAM/rbulge_L16.dat', [0,1])
@@ -315,12 +326,11 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
 
     subplots = (221, 222, 223, 224)
     indz = (0, 1, 2, 3)
-    zinplot = (0, 0.5, 1, 2) 
 
     # choose type of selection:
     selec = 1 #disk-dominated galaxies
     # LTG ##################################
-    for z,s,p in zip(zinplot, indz, subplots):
+    for z,s,p in zip(zlist, indz, subplots):
 	    ax = fig.add_subplot(p)
 	    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
             ax.text(xleg, yleg, 'z=%s' % str(z))
@@ -426,8 +436,12 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', linestyle='dashed', alpha=0.2,interpolate=True)
 
     #Read observational data.
-    ms, js = common.load_observation(obsdir, 'SizesAndAM/Posti18.dat', [0,1])
-    ax.plot(ms, js, 'r+',fillstyle='none', label="Posti+18")
+    ms, mserr, js, jserr  = common.load_observation(obsdir, 'SizesAndAM/Posti18_AMdata.dat', [3,5,6,8])
+    errmdn = np.log10(ms) - np.log10(ms - mserr)
+    errmup = np.log10(ms + mserr) - np.log10(ms)
+    errjdn = np.log10(js) - np.log10(js - jserr)
+    errjup = np.log10(js + jserr) - np.log10(js) 
+    ax.errorbar(np.log10(ms), np.log10(js), yerr=[errjdn,errjup], xerr=[errmdn,errmup],ls='None', mfc='None', ecolor = 'r', mec='r',marker='+',label="Posti+18")
 
     bt, mbO14, msO14, mgO14, jbO14, jsO14, jgO14, jmolO14 = common.load_observation(obsdir, 'SizesAndAM/Obreschkow14_FP.dat', [2,6,7,8,11,12,14,15])
     ax.plot(msO14, jsO14, 'ro',fillstyle='none', label="Obreschkow+14")
@@ -561,13 +575,12 @@ def plot_specific_am_ratio(plt, outdir, obsdir, sam_ratio_halo_disk, sam_ratio_h
 
     subplots = (221, 222, 223, 224)
     indz = (0, 1, 2, 3)
-    zinplot = (0, 0.5, 1, 2) 
 
     # choose type of selection:
     selec = 1 #disk-dominated galaxies
 
     # LTG ##################################
-    for z,s,p in zip(zinplot, indz, subplots):
+    for z,s,p in zip(zlist, indz, subplots):
 	    ax = fig.add_subplot(p)
 	    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
             ax.text(xleg, yleg, 'z=%s' % str(z))
@@ -773,7 +786,7 @@ def plot_lambda(plt, outdir, obsdir, lambdaH,  lambda_jiang, lambda_mass, bt, ms
     common.savefig(outdir, fig, 'lambda_relation.pdf')
 
 
-def main(modeldir, outdir, subvols, obsdir):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities',
@@ -804,8 +817,8 @@ def main(modeldir, outdir, subvols, obsdir):
     disk_size_cen = np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_size    = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
-    for index in range(0,4):
-        hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
+    for index, snapshot in enumerate(redshift_table[zlist]):
+        hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         (lh, lj, lm, bt, ms, ssfr)  = prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, sam_ratio_halo_disk, 
                      sam_ratio_halo_gal, sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
                      sam_vs_sam_halo_disk_gas, sam_bar, sam_stars)
@@ -824,4 +837,4 @@ def main(modeldir, outdir, subvols, obsdir):
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size)
 
 if __name__ == '__main__':
-    main(*common.parse_args(requires_snapshot=False))
+    main(*common.parse_args())

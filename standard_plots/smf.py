@@ -1238,9 +1238,9 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
 
     return mass
 
-def main(modeldir, outdir, subvols, obsdir):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
-    zlist = ["199","174", "156", "131", "113", "99"]
+    zlist = (0, 0.5, 1, 2, 3, 4)
 
     plt = common.load_matplotlib()
 
@@ -1295,8 +1295,8 @@ def main(modeldir, outdir, subvols, obsdir):
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type', 
 			   'mvir_hosthalo', 'rstar_bulge')}
 
-    for index in range(0,len(zlist)):
-        hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
+    for index, snapshot in enumerate(redshift_table[zlist]):
+        hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         mass = prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen,
                              hist_smf_sat, hist_smf_30kpc, hist_HImf, hist_HImf_cen, hist_HImf_sat,
                              hist_H2mf, hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf,
@@ -1361,4 +1361,4 @@ def main(modeldir, outdir, subvols, obsdir):
 
 
 if __name__ == '__main__':
-    main(*common.parse_args(requires_snapshot=False))
+    main(*common.parse_args())

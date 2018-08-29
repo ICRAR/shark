@@ -44,6 +44,8 @@ DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 	options.load("dark_matter_halo.size_model", sizemodel);
 	options.load("dark_matter_halo.lambda_random", random_lambda);
         options.load("dark_matter_halo.concentration_model", concentrationmodel);
+	options.load("dark_matter_halo.use_converged_lambda_catalog", use_converged_lambda_catalog);
+	options.load("dark_matter_halo.min_part_convergence", min_part_convergence);
 
 }
 
@@ -140,21 +142,27 @@ double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
 	return constants::G * subhalo.Mvir / std::pow(subhalo.Vvir,2);
 }
 
-float DarkMatterHalos::halo_lambda (float lambda, double z){
+float DarkMatterHalos::halo_lambda (float lambda, double z, double npart){
 
 	//Spin parameter either read from the DM files or assumed a random distribution.
 
-	if(params.random_lambda){
-		return distribution(generator);
+        if(lambda > 1){
+                lambda = 1;
+        }
+
+	auto lambda_random = distribution(generator);
+
+	if(params.random_lambda && !params.use_converged_lambda_catalog){
+		return lambda_random;
 	}
-	else{
-		//take the value read from the DM merger trees, but limit it to a maximum of 1.
-		if(lambda > 1){
-			lambda = 1;
-		}
+	else if (params.random_lambda && params.use_converged_lambda_catalog && npart < params.min_part_convergence){
+		return lambda_random;
+	} 
+	else {
+		//take the value read from the DM merger trees, that has been limited to a maximum of 1.
 		return lambda;
 	}
-
+ 
 }
 
 double DarkMatterHalos::disk_size_theory (Subhalo &subhalo, double z){

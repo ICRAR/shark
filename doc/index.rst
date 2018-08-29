@@ -12,3 +12,4 @@ shark
    running
    hpc
    output_files
+   changelog
