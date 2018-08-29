@@ -236,5 +236,11 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
 # This simple functionality is used by shark-submit to easily find out where
 # the plots have been produced, and save us the trouble to re-implement it
 if __name__ == '__main__':
-    shark_dir, simu, model, _ = read_configuration(sys.argv[1])
-    print(get_output_dir(shark_dir, simu, model))
+    action = sys.argv[1]
+    shark_dir, simu, model, redshift_file = read_configuration(sys.argv[2])
+    if action == 'output_dir':
+        print(get_output_dir(shark_dir, simu, model))
+    elif action == 'snapshots':
+        z = list(map(float, ' '.join(sys.argv[3:]).split()))
+        table = _redshift_table(redshift_file)
+        print(' '.join(map(str, table[z])))

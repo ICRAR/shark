@@ -381,7 +381,7 @@ then
 		# Find where the plots were produced and copy them
 		# to a local plots/ folder for easy access
 		info "shark plots successfully produced"
-		plots_dir=`"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/common.py" "${config_file}"`
+		plots_dir=`"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/common.py" output_dir "${config_file}"`
 		mkdir plots
 		cp ${plots_dir}/* plots
 		info "shark plots successfully copied into plots/"
