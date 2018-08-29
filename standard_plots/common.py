@@ -33,6 +33,47 @@ if PY2:
 else:
     import configparser
 
+def _select_closest(i1, i2, z, redshifts):
+    i1 = min(i1, len(redshifts) - 1)
+    i2 = min(i2, len(redshifts) - 1)
+    _z1 = redshifts[i1]
+    _z2 = redshifts[i2]
+    if abs(_z1 - z) < abs(_z2 - z):
+        return i1
+    return i2
+_select_closest = np.vectorize(_select_closest, excluded={3})
+
+class _redshift_table(object):
+    """A class holding a redshift table. It calculates the snapshot for a given z"""
+
+    def __init__(self, fname):
+
+        table = np.loadtxt(fname, dtype={'formats': ('i4', 'f8'), 'names': ('snapshot', 'z')})
+        snapshots = table['snapshot']
+        z = table['z']
+
+        # ensure snapshots are increasing, and redshifts decreasing
+        if not np.all(snapshots[:-1] < snapshots[1:]):
+            raise ValueError('Snapshots are not always increasing')
+        if not np.all(z[:-1] > z[1:]):
+            raise ValueError('Redshifts are not always decreasing')
+
+        # Revert both; we want redshifts to be in ascending order
+        self.z = z[::-1]
+        self.snapshots = snapshots[::-1]
+
+    def __getitem__(self, z):
+        """Get the corresponding snapshots for the given redshift"""
+
+        # We find the upper bound index using searchsorted, but then verify
+        # which end of the range [z[i-1], z[i]] is closest to the requested z
+        # value and use the corresponding index
+        if not np.isscalar(z) and len(z) == 0:
+            return []
+        idx = np.searchsorted(self.z, z)
+        prev_idx = np.maximum(idx - 1, 0)
+        idx = _select_closest(idx, prev_idx, z, self.z)
+        return self.snapshots[idx]
 
 def load_matplotlib():
     import matplotlib.pyplot as plt
