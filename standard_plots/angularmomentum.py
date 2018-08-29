@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = ["199","174", "156", "131"]
+zlist = (0, 0.5, 1, 2)
 
 ##################################
 #Constants
@@ -326,12 +326,11 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
 
     subplots = (221, 222, 223, 224)
     indz = (0, 1, 2, 3)
-    zinplot = (0, 0.5, 1, 2) 
 
     # choose type of selection:
     selec = 1 #disk-dominated galaxies
     # LTG ##################################
-    for z,s,p in zip(zinplot, indz, subplots):
+    for z,s,p in zip(zlist, indz, subplots):
 	    ax = fig.add_subplot(p)
 	    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
             ax.text(xleg, yleg, 'z=%s' % str(z))
@@ -576,13 +575,12 @@ def plot_specific_am_ratio(plt, outdir, obsdir, sam_ratio_halo_disk, sam_ratio_h
 
     subplots = (221, 222, 223, 224)
     indz = (0, 1, 2, 3)
-    zinplot = (0, 0.5, 1, 2) 
 
     # choose type of selection:
     selec = 1 #disk-dominated galaxies
 
     # LTG ##################################
-    for z,s,p in zip(zinplot, indz, subplots):
+    for z,s,p in zip(zlist, indz, subplots):
 	    ax = fig.add_subplot(p)
 	    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
             ax.text(xleg, yleg, 'z=%s' % str(z))
@@ -819,8 +817,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     disk_size_cen = np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_size    = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
-    for index in range(0,4):
-        hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
+    for index, snapshot in enumerate(redshift_table[zlist]):
+        hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         (lh, lj, lm, bt, ms, ssfr)  = prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, sam_ratio_halo_disk, 
                      sam_ratio_halo_gal, sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
                      sam_vs_sam_halo_disk_gas, sam_bar, sam_stars)
@@ -839,4 +837,4 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size)
 
 if __name__ == '__main__':
-    main(*common.parse_args(requires_snapshot=False))
+    main(*common.parse_args())

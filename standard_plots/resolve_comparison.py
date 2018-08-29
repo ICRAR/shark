@@ -876,7 +876,7 @@ def plot_bmf_resolve_baryon_components(plt, outdir, obsdir, hist_bmf, hist_smf, 
     common.savefig(outdir, fig, 'bmf_resolve_baryon-components.pdf')
 
 
-def main(modeldir, outdir, redshift_table, subvols, obsdir, snapshot):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'rstar_disk',
@@ -884,7 +884,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir, snapshot):
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mvir_hosthalo')}
 
-    hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
+    hdf5_data = common.read_data(modeldir, redshift_table[0], fields, subvols)
 
     (hist_smf, hist_smf_sat, hist_bmf, hist_bmf_sat,
      mHIms, mHIms_true, mHImhalo, mHImhalo_true,

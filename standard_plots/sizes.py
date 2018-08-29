@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = ["199","174", "156", "131"]
+zlist = (0, 0.5, 1, 2)
 
 ##################################
 #Constants
@@ -465,8 +465,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     disk_vel =  np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_vel =  np.zeros(shape = (len(zlist), 3, len(xmf)))
     
-    for index in range(0,4):
-        hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
+    for index, snapshot in enumerate(redshift_table[zlist]):
+        hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
                      BT_fractions_centrals, BT_fractions_satellites)
@@ -479,4 +479,4 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
 
 if __name__ == '__main__':
-    main(*common.parse_args(requires_snapshot=False))
+    main(*common.parse_args())

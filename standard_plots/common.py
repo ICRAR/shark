@@ -92,7 +92,7 @@ def read_configuration(config):
     redshift_file = cparser.get('simulation', 'redshift_file')
     return shark_dir, simu, model, redshift_file
 
-def parse_args(requires_snapshot=True, requires_observations=True):
+def parse_args(requires_observations=True):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', help='SHArk configuration file')
@@ -103,16 +103,11 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
     parser.add_argument('-o', '--output-dir', help='Output directory for plots. Defaults to <shark-dir>/Plots/<simu>/<model>')
 
-    if requires_snapshot:
-        parser.add_argument('snapshot', help='Snapshot output to process', type=int)
-
     opts = parser.parse_args()
     if not opts.config and (not opts.model or not opts.simu or not opts.shark_dir or not opts.redshift_file):
         parser.error('Either -c or -m/-s/-S/-z must be given')
 
     opts.obs_dir = os.path.normpath(os.path.abspath(os.path.join(__file__, '..', '..', 'data')))
-    if requires_snapshot and opts.snapshot is None:
-        parser.error('snapshot option is required')
     if requires_observations and opts.obs_dir is None:
         parser.error('-O is required')
 
@@ -150,8 +145,6 @@ def parse_args(requires_snapshot=True, requires_observations=True):
     ret = [model_dir, output_dir, _redshift_table(redshift_file), tuple(subvolumes)]
     if requires_observations:
         ret.append(opts.obs_dir)
-    if requires_snapshot:
-        ret.append(opts.snapshot)
     return ret
 
 def load_observation(obsdir, fname, cols):

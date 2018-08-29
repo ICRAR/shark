@@ -372,8 +372,7 @@ then
 	# is alongside the rest of the shark sources
 	export MPLBACKEND=agg
 	"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/all.py" \
-	    -c "${config_file}" -v "${shark_subvolumes[*]}" \
-	    199 &> shark-plots.log
+	    -c "${config_file}" -v "${shark_subvolumes[*]}" &> shark-plots.log
 	if [ $? -ne 0 ]
 	then
 		warning "An error occurred while producing the plots, please check the shark-plots.log file for details"

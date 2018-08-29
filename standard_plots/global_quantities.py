@@ -764,7 +764,7 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     common.prepare_legend(ax, ['r','Sienna','Crimson','Salmon','grey'])
     common.savefig(outdir, fig, "omega_HI.pdf")
 
-def main(modeldir, outdir, redshift_table, subvols, obsdir, snapshot):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
@@ -775,7 +775,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir, snapshot):
     # Read data from each subvolume at a time and add it up
     # rather than appending it all together
     for idx, subvol in enumerate(subvols):
-        subvol_data = common.read_data(modeldir, snapshot, fields, [subvol])
+        subvol_data = common.read_data(modeldir, redshift_table[0], fields, [subvol])
         if idx == 0:
             hdf5_data = subvol_data
         else:

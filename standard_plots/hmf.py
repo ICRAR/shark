@@ -31,7 +31,7 @@ dm = 0.3
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0 
 
-def plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz):
+def plot_halomf_z(plt, outdir, obsdir, z, h0, hist, histsh, plotz):
 
     xtit="$\\rm log_{10} (\\rm M_{\\rm halo}/M_{\odot})$"
     ytit="$\\rm log_{10}(\Phi/dlog{\\rm M_{\\rm halo}}/{\\rm Mpc}^{-3} )$"
@@ -43,7 +43,6 @@ def plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz):
 
     subplots = (221, 222, 223, 224)
     idx = (0, 1, 2, 3)
-    z = (0, 0.5, 1, 2)
     for subplot, idx, z, plot_this_z in zip(subplots, idx, z, plotz):
 
         ax = fig.add_subplot(subplot)
@@ -106,15 +105,17 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
                            'mvir_subhalo', 'type')}
 
+    z = (0, 0.5, 1, 2)
+    snapshots = redshift_table[z]
+
     # Create histogram
-    zlist = ["199","174", "156", "131"]
-    hist = np.zeros(shape = (len(zlist), len(mbins)))
-    histsh = np.zeros(shape = (len(zlist), len(mbins)))
-    plotz = np.empty(shape=(len(zlist)), dtype=np.bool_)
+    hist = np.zeros(shape = (len(z), len(mbins)))
+    histsh = np.zeros(shape = (len(z), len(mbins)))
+    plotz = np.empty(shape=(len(z)), dtype=np.bool_)
 
-    for index in range(0,4):
+    for index, snapshot in enumerate(snapshots):
 
-        hdf5_data = common.read_data(model_dir, zlist[index], fields, subvols)
+        hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
         prepare_data(hdf5_data, hist, histsh, index)
 
         h0, volh = hdf5_data[0], hdf5_data[1]
@@ -133,7 +134,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     ind = np.where(histsh > 0.)
     histsh[ind] = np.log10(histsh[ind])
 
-    plot_halomf_z(plt, outdir, obsdir, h0, hist, histsh, plotz)
+    plot_halomf_z(plt, outdir, obsdir, z, h0, hist, histsh, plotz)
 
 if __name__ == '__main__':
-    main(*common.parse_args(requires_snapshot=False))
+    main(*common.parse_args())

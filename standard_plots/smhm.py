@@ -48,7 +48,7 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside):
                                    xbins=xmf)
 
 
-def plot_SMHM_z(plt, outdir, massgal):
+def plot_SMHM_z(plt, outdir, z, massgal):
 
     fig = plt.figure(figsize=(9.7,11.7))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm halo, DM}/M_{\odot})$"
@@ -68,14 +68,9 @@ def plot_SMHM_z(plt, outdir, massgal):
     gamma11 = 0.329
 
     subplots = (321, 322, 323, 324, 325, 326)
-    zs = (0, 0.5, 1, 2, 3, 4)
-    indexes = (0, 1, 2, 3, 4, 5)
     all_labels = (('Shark', 'Moster+13', 'Behroozi+13'), )
 
-    for i in range(0,6):
-        subplot = subplots[i]
-        z = zs[i]
-        idx = indexes[i]
+    for i, (z, subplot) in enumerate(zip(z, subplots)):
         labels = all_labels[0]
         
         # z=0 ##################################
@@ -264,18 +259,19 @@ def main(modeldir, outdir, redshift_table, subvols):
                            'mgas_bulge', 'mhot', 'mreheated', 'mvir_hosthalo',
                            'type')}
 
-    zlist = ["199", "174", "156", "131", "113", "99"]
+    zlist = (0, 0.5, 1, 2, 3, 4)
+    snapshots = redshift_table[zlist]
     massgal = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massbar = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massbar_inside =  np.zeros(shape = (len(zlist), 3, len(xmf)))
 
-    for idx in range(len(zlist)):
-        hdf5_data = common.read_data(modeldir, zlist[idx], fields, subvols)
+    for idx, snapshot in enumerate(snapshots):
+        hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         prepare_data(hdf5_data, idx, massgal, massbar, massbar_inside)
 
-    plot_SMHM_z(plt, outdir, massgal)
+    plot_SMHM_z(plt, outdir, zlist, massgal)
     plot_BMHM_z(plt, outdir, massbar, massbar_inside)
 
 
 if __name__ == '__main__':
-    main(*common.parse_args(requires_snapshot=False, requires_observations=False))
+    main(*common.parse_args(requires_observations=False))

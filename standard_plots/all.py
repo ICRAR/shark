@@ -32,18 +32,14 @@ import smhm
 
 def main():
 
-    model_dir, output_dir, redshift_table, subvolumes, obs_dir, snapshot = common.parse_args()
+    model_dir, output_dir, redshift_table, subvolumes, obs_dir = common.parse_args()
     args_minimal = (model_dir, output_dir, redshift_table, subvolumes)
     args_with_obsdir = args_minimal + (obs_dir,)
-    args_with_snapshot = args_minimal + (snapshot,)
-    args_all = args_minimal + (obs_dir, snapshot)
 
     # Modules and which arguments they take
     args_and_mods = {
-        args_minimal: (smhm,),
-        args_with_obsdir: (hmf, sizes, smf),
-        args_with_snapshot: (hothalo,),
-        args_all: (coldgas, global_quantities),
+        args_minimal: (hothalo, smhm),
+        args_with_obsdir: (coldgas, global_quantities, hmf, sizes, smf),
     }
 
     n_mods = functools.reduce(lambda x, y: x + y, [len(l) for l in args_and_mods.values()])
