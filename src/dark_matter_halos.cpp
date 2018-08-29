@@ -135,7 +135,7 @@ double DarkMatterHalos::subhalo_dynamical_time (Subhalo &subhalo, double z){
 double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
 
 	/**
-	 * Function to calculate the halo virial radius. Returns virial radius in Mpc/h.
+	 * Function to calculate the halo virial radius. Returns virial radius in physical Mpc/h.
 	 */
 	return constants::G * subhalo.Mvir / std::pow(subhalo.Vvir,2);
 }
@@ -205,12 +205,18 @@ double NFWDarkMatterHalos::grav_potential_halo(double r, double c) const
 
 double NFWDarkMatterHalos::enclosed_mass(double r, double c) const
 {
-	double fa = std::log(1+1/c)-1.0/(1.0+c);
-	double r_c = r/c;
-	if(r < constants::tolerance * c){
-		return  fa* (std::pow(r_c,2)) * (0.5+r_c * (-0.6666667+r_c * (0.75-0.8*r_c) ) );
+	// r is normalized by the virial radius.
+
+	double nom = 1.0 / (1.0 + c * r) - 1.0 + std::log(1.0 + c*r);
+	double denom = .0 / (1.0 + c) - 1.0 + std::log(1.0 + c);
+
+	double frac = nom/denom;
+
+	if(frac > 1){
+		frac =1;
 	}
-	return fa*(std::log(1.0+r/c)-r/(r+c));
+	return frac ;
+
 }
 
 double EinastoDarkMatterHalos::grav_potential_halo(double r, double c) const
@@ -418,26 +424,32 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 
 	double c = halo->concentration;
 
-	auto &subhalo = halo->central_subhalo;
-	double rvir = halo_virial_radius(*subhalo);
+	double rvir = constants::G * halo->Mvir / std::pow(halo->Vvir,2);
+	double vvir = halo->Vvir;
 
 	// Assign positions based on an NFW halo of concentration c.
 	nfw_distribution<double> r(c);
 	double rproj = r(generator);
-	pos = subhalo->position + random_point_in_sphere(rvir * rproj);
+	pos = halo->position + random_point_in_sphere(rvir * rproj);
 
-	// Assign velocities using NFW velocity dispersion and assuming isotropy.
-	// f_c equation from Manera et al. (2013; eq. 23).
-	// Negative values happen if c <<~ 2.6, and thus we set the minimum value to f_c evaluated in c = 2.6.
-	double f_c = c * (0.5 * c / (c + 1) - std::log(1 + c) / (1 + c))/ std::pow(std::log(1 + c) - c / (1 + c), 2.0);
-	if (f_c < 0) {
-		f_c = 0.04411218227;
-	}
+	// Assign velocities using NFW velocity dispersion at the radius in which the galaxy is and assuming isotropy.
+	double sigma = std::sqrt(0.333 * constants::G * halo->Mvir * enclosed_mass(rproj, c) / (rvir * rproj));
 
-	// 1D velocity dispersion.
-	double sigma = std::sqrt(0.333 * constants::G * halo->Mvir / rvir * f_c);
+	//maximum 3D velocity before the galaxies escapes the potential well.
+	double vmax  = 2.0 * sigma/std::sqrt(0.333);
+
 	std::normal_distribution<double> normal_distribution(0, sigma);
 	xyz<double> delta_v {normal_distribution(generator), normal_distribution(generator), normal_distribution(generator)};
+
+	//Do not allow the type 2 galaxy to have a 3D velocity higher than the escape velocity at its radius.
+	if(delta_v.norm() > vmax){
+		double escale = delta_v.norm() / vmax;
+		delta_v.x = delta_v.x / escale;
+		delta_v.y = delta_v.y / escale;
+		delta_v.z = delta_v.z / escale;
+	}
+
+	//delta_v and velocity are in physical km/s.
 	v = halo->velocity + delta_v;
 
 	// Assign angular momentum based on random angles,

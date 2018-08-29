@@ -134,6 +134,8 @@ double Cosmology::comoving_to_physical_angularmomentum(double L, double z) const
 }
 
 double Cosmology::comoving_to_physical_size(double r, double z) const {
+	// We DO NOT need to divide by (1+z) because the sizes of galaxies and halos are calculated
+	// from their mass and velocity, and the latter is in physical units from the VELOCIraptor catalogue.
 	return r/parameters.Hubble_h; ////(1+z);
 }
 
