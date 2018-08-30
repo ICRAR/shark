@@ -26,6 +26,11 @@ import utilities_statistics as us
 
 ##################################
 # Constants
+
+G        = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
+
+
+
 mlow = 10.0
 mupp = 15.0
 dm = 0.3
@@ -50,7 +55,8 @@ def prepare_data(hdf5_data):
 
     # Unpack data
     (h0, _, typeg, mdisk, mbulge, _, _, mHI, mH2, mgas,
-     mHI_bulge, mH2_bulge, mgas_bulge, mhalo, id_halo, mhot) = hdf5_data
+     mHI_bulge, mH2_bulge, mgas_bulge, mhalo, id_halo, 
+     mhot, x, y, z, vx, vy, vz, vvir) = hdf5_data
 
     XH = 0.72
     h0log = np.log10(float(h0))
@@ -61,23 +67,46 @@ def prepare_data(hdf5_data):
 
     mHI_halos_stacking = np.zeros(shape = (len(xmf))) 
 
-    idmax = max(id_halo)
-    print('number of halos: %d' % (idmax))
- 
-    mHI_halo   = np.zeros(shape = idmax)
-    mmass_halo = np.zeros(shape = idmax)
+    (unique_elements, counts_elements) = np.unique(id_halo, return_counts=True)
+
+    idmax = max(unique_elements)
+    print('number of halos: %d', len(unique_elements))
+    ind = np.where(typeg == 0)
+    print('number of central galaxies: %d', len(typeg[ind]))
+
+  
+    mHI_halo   = np.zeros(shape = len(counts_elements))
+    mmass_halo = np.zeros(shape = len(counts_elements))
+    rvir_halo  = np.zeros(shape = len(counts_elements))
+    vvir_halo  = np.zeros(shape = len(counts_elements))
+    id_unique_halo = np.zeros(shape = len(counts_elements))
+    xyz_halo       = np.zeros(shape = (3,len(counts_elements)))
+    v_xyz_halo     = np.zeros(shape = (3,len(counts_elements)))
 
     print("will create vectors of halo mass and HI mass of individual groups")
     #create vector with halo masses and total HI masses in halos.
-    for i in range(0, idmax):
+    for i in range(0, len(counts_elements)):
 	#select galaxies that belong to this halo
-        ind = np.where(id_halo == i)
+        ind = np.where(id_halo == unique_elements[i])
         if(len(mhalo[ind]) > 0):
                 total_bar_mass = sum(mdisk[ind]) + sum(mbulge[ind]) + sum(mgas[ind]) + sum(mgas_bulge[ind]) + sum(mhot[ind])
                 mhalo_all      = mhalo[ind]
+                vvir_all       = vvir[ind]
 	        mmass_halo[i]  = mhalo_all[0] + total_bar_mass
-	        mHI_halo[i]    = (sum(mHI[ind]) * XH) #only HI 
-
+	        mHI_halo[i]    = (sum(mHI[ind]) * XH) #only HI
+                vvir_halo[i]   = vvir[0]
+                rvir_halo[i]   = G * mmass_halo[i] / pow(vvir_halo[i], 2.0) 
+                id_unique_halo[i] = unique_elements[i]
+        #select central galaxy of this hal to assign positions and velocities to this halo.
+        ind = np.where((typeg == 0) & (id_halo == unique_elements[i]))
+        if(len(mhalo[ind]) > 0):
+           xyz_halo[0,i] = x[ind]
+           xyz_halo[1,i] = y[ind]
+           xyz_halo[2,i] = z[ind]
+           v_xyz_halo[0,i] = vx[ind]
+           v_xyz_halo[1,i] = vy[ind]
+           v_xyz_halo[2,i] = vz[ind]
+ 
     print("will calculate total HI mass in groups")
     for i in range(0,len(xmf)):
 	mlow_r  = xmf[i] - dm/2.0
@@ -87,7 +116,33 @@ def prepare_data(hdf5_data):
         if(len(mmass_halo[ind]) > 0):
 		mHI_halos_stacking[i] = np.log10(np.mean(mHI_halo[ind]))
 
-    return (mHI_halos_stacking)
+    #select all satellite galaxies in halos with masses > 10^13.
+    ind = np.where((mhalo > 1e13) & (typeg > 0))
+    sats_type = typeg[ind]
+    sats_x = x[ind]
+    sats_y = y[ind]
+    sats_z = z[ind]
+    sats_vx = vx[ind]
+    sats_vy = vy[ind]
+    sats_vz = vz[ind]
+    sats_halo_id = id_halo[ind]
+    sats_vproj = np.zeros(shape = len(sats_x))
+    sats_rproj = np.zeros(shape = len(sats_x))
+
+    (unique_elements, counts_elements) = np.unique(sats_halo_id, return_counts=True)
+    for i in range(0, len(counts_elements)):
+        #select galaxies that belong to this halo
+        ind_gal = np.where(sats_halo_id == unique_elements[i])
+        ind_halo = np.where(id_unique_halo == unique_elements[i])
+        rthis_halo = rvir_halo[ind_halo]
+        vthis_halo = vvir_halo[ind_halo]
+        sats_vproj[ind_gal] = (sats_vz[ind_gal] - v_xyz_halo[2,ind_halo])/vthis_halo
+        sats_rproj[ind_gal] = (np.sqrt(pow(sats_x[ind_gal]-xyz_halo[0,ind_halo],2.0) + pow(sats_y[ind_gal]-xyz_halo[1,ind_halo],2.0)))/rthis_halo
+
+    print sats_vproj[0:100] 
+    print sats_rproj[0:100]
+    print rvir_halo[0:10]
+    return (mHI_halos_stacking, sats_vproj, sats_rproj, sats_type)
 
 def plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking):
 
@@ -107,8 +162,8 @@ def plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking):
     ind = np.where((mHI_halos_stacking > 0) & (xmf > 10.3))
     xplot = xmf[ind]
     yplot = mHI_halos_stacking[ind]-xmf[ind]
-    #for i,j in zip (xplot,yplot):
-    #	print i,j
+    for i,j in zip (xplot,yplot):
+    	print i,j
 
     ax.plot(xplot,yplot, color='k', linestyle='solid', label='Shark')
 
@@ -116,6 +171,29 @@ def plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking):
     common.prepare_legend(ax, ['k'])
     common.savefig(output_dir, fig, "HI_groups_stacking.pdf")
 
+def plot_caustic_halos(plt, outdir, sats_vproj, sats_rproj, sats_type):
+
+    fig = plt.figure(figsize=(5,5))
+    xtit = "$r_{\\rm proj}/r_{\\rm vir}$"
+    ytit = "$v_{\\rm r}/v_{\\rm vir}$"
+    xmin, xmax, ymin, ymax = 0, 1, -5, 5
+    xleg = xmin + 0.02 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ax = fig.add_subplot(111)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    ind = np.where((sats_vproj != 0) & (sats_rproj != 0) & (sats_type == 2))
+    xdata = sats_rproj[ind]
+    ydata = sats_vproj[ind]
+    us.density_contour(ax, xdata, ydata, 30, 30) #, **contour_kwargs)
+
+    ind = np.where((sats_vproj != 0) & (sats_rproj != 0) & (sats_type == 1))
+    xdata = sats_rproj[ind]
+    ydata = sats_vproj[ind]
+    ax.plot(xdata,ydata,'ko',markersize=0.7) #, **contour_kwargs)
+
+    common.savefig(outdir, fig, 'caustic_groups.pdf')
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
@@ -123,12 +201,14 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge',
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge', 'mvir_hosthalo',
-                           'id_halo', 'mhot')}
+                           'id_halo_tree', 'mhot', 'position_x', 'position_y', 'position_z', 
+                           'velocity_x', 'velocity_y', 'velocity_z', 'vvir_hosthalo')}
     hdf5_data = common.read_data(model_dir, redshift_table[0], fields, subvols)
 
-    (mHI_halos_stacking) = prepare_data(hdf5_data)
+    (mHI_halos_stacking, sats_vproj, sats_rproj, sats_type) = prepare_data(hdf5_data)
 
     plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking)
+    plot_caustic_halos(plt, output_dir, sats_vproj, sats_rproj, sats_type)
 
 if __name__ == '__main__':
     main(*common.parse_args())
