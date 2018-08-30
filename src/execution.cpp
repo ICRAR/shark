@@ -39,7 +39,7 @@ ExecutionParameters::ExecutionParameters(const Options &options)
 	options.load("execution.simulation_batches", simulation_batches, true);
 	options.load("execution.skip_missing_descendants", skip_missing_descendants);
 	options.load("execution.warn_on_missing_descendants", warn_on_missing_descendants);
-        options.load("execution.ensure_mass_growth", ensure_mass_growth);
+	options.load("execution.ensure_mass_growth", ensure_mass_growth);
 
 	options.load("execution.ode_solver_precision", ode_solver_precision, true);
 	options.load("execution.name_model", name_model, true);
