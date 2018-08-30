@@ -449,14 +449,6 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	std::normal_distribution<double> normal_distribution(0, sigma);
 	xyz<double> delta_v {normal_distribution(generator), normal_distribution(generator), normal_distribution(generator)};
 
-	//Do not allow the type 2 galaxy to have a 3D velocity higher than the escape velocity at its radius.
-	if(delta_v.norm() > vmax){
-		double escale = delta_v.norm() / vmax;
-		delta_v.x = delta_v.x / escale;
-		delta_v.y = delta_v.y / escale;
-		delta_v.z = delta_v.z / escale;
-	}
-
 	//delta_v and velocity are in physical km/s.
 	v = halo->velocity + delta_v;
 
