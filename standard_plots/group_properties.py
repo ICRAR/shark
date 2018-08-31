@@ -95,7 +95,7 @@ def prepare_data(hdf5_data):
 	        mmass_halo[i]  = mhalo_all[0] + total_bar_mass
 	        mHI_halo[i]    = (sum(mHI[ind]) * XH) #only HI
                 vvir_halo[i]   = vvir[0]
-                rvir_halo[i]   = G * mmass_halo[i] / pow(vvir_halo[i], 2.0) 
+                rvir_halo[i]   = G * mmass_halo[i] / pow(vvir_halo[i], 2.0)
                 id_unique_halo[i] = unique_elements[i]
         #select central galaxy of this hal to assign positions and velocities to this halo.
         ind = np.where((typeg == 0) & (id_halo == unique_elements[i]))
@@ -117,7 +117,7 @@ def prepare_data(hdf5_data):
 		mHI_halos_stacking[i] = np.log10(np.mean(mHI_halo[ind]))
 
     #select all satellite galaxies in halos with masses > 10^13.
-    ind = np.where((mhalo > 1e13) & (typeg > 0))
+    ind = np.where((mhalo > 1e12) & (typeg > 0))
     sats_type = typeg[ind]
     sats_x = x[ind]
     sats_y = y[ind]
@@ -134,14 +134,12 @@ def prepare_data(hdf5_data):
         #select galaxies that belong to this halo
         ind_gal = np.where(sats_halo_id == unique_elements[i])
         ind_halo = np.where(id_unique_halo == unique_elements[i])
-        rthis_halo = rvir_halo[ind_halo]
-        vthis_halo = vvir_halo[ind_halo]
-        sats_vproj[ind_gal] = (sats_vz[ind_gal] - v_xyz_halo[2,ind_halo])/vthis_halo
-        sats_rproj[ind_gal] = (np.sqrt(pow(sats_x[ind_gal]-xyz_halo[0,ind_halo],2.0) + pow(sats_y[ind_gal]-xyz_halo[1,ind_halo],2.0)))/rthis_halo
+        if(len(sats_vx[ind_gal]) > 0):
+           rthis_halo = rvir_halo[ind_halo]
+           vthis_halo = vvir_halo[ind_halo]
+           sats_vproj[ind_gal] = (sats_vx[ind_gal] - v_xyz_halo[0,ind_halo])/vthis_halo
+           sats_rproj[ind_gal] = (np.sqrt(pow(sats_x[ind_gal]-xyz_halo[0,ind_halo],2.0) + pow(sats_z[ind_gal]-xyz_halo[2,ind_halo],2.0) + pow(sats_y[ind_gal]-xyz_halo[1,ind_halo],2.0)))/rthis_halo
 
-    print sats_vproj[0:100] 
-    print sats_rproj[0:100]
-    print rvir_halo[0:10]
     return (mHI_halos_stacking, sats_vproj, sats_rproj, sats_type)
 
 def plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking):
@@ -173,22 +171,27 @@ def plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking):
 
 def plot_caustic_halos(plt, outdir, sats_vproj, sats_rproj, sats_type):
 
-    fig = plt.figure(figsize=(5,5))
-    xtit = "$r_{\\rm proj}/r_{\\rm vir}$"
+    fig = plt.figure(figsize=(9,9))
+    xtit = "$r/r_{\\rm vir}$"
     ytit = "$v_{\\rm r}/v_{\\rm vir}$"
-    xmin, xmax, ymin, ymax = 0, 1, -5, 5
+    xmin, xmax, ymin, ymax = 0, 1.2, -5, 5
     xleg = xmin + 0.02 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
     ax = fig.add_subplot(111)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
-    ind = np.where((sats_vproj != 0) & (sats_rproj != 0) & (sats_type == 2))
+    #ind = np.where(sats_type == 2)
+    #xdata = sats_rproj[ind]
+    #ydata = sats_vproj[ind]
+    #us.density_contour(ax, xdata, ydata, 30, 30) #, **contour_kwargs)
+
+    ind = np.where(sats_type == 2)
     xdata = sats_rproj[ind]
     ydata = sats_vproj[ind]
-    us.density_contour(ax, xdata, ydata, 30, 30) #, **contour_kwargs)
+    ax.plot(xdata,ydata,'ro',markersize=0.7) #, **contour_kwargs)
 
-    ind = np.where((sats_vproj != 0) & (sats_rproj != 0) & (sats_type == 1))
+    ind = np.where(sats_type == 1)
     xdata = sats_rproj[ind]
     ydata = sats_vproj[ind]
     ax.plot(xdata,ydata,'ko',markersize=0.7) #, **contour_kwargs)
