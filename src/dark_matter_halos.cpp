@@ -43,7 +43,7 @@ DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 	options.load("dark_matter_halo.halo_profile", haloprofile);
 	options.load("dark_matter_halo.size_model", sizemodel);
 	options.load("dark_matter_halo.lambda_random", random_lambda);
-        options.load("dark_matter_halo.concentration_model", concentrationmodel);
+	options.load("dark_matter_halo.concentration_model", concentrationmodel);
 	options.load("dark_matter_halo.use_converged_lambda_catalog", use_converged_lambda_catalog);
 	options.load("dark_matter_halo.min_part_convergence", min_part_convergence);
 
@@ -146,11 +146,16 @@ float DarkMatterHalos::halo_lambda (float lambda, double z, double npart){
 
 	//Spin parameter either read from the DM files or assumed a random distribution.
 
-        if(lambda > 1){
-                lambda = 1;
-        }
+	if(lambda > 1){
+			lambda = 1;
+	}
 
 	auto lambda_random = distribution(generator);
+
+	// Avoid zero values. In that case assume small lambda value.
+	if(lambda_random == 0){
+		lambda_random = 1e-3;
+	}
 
 	if(params.random_lambda && !params.use_converged_lambda_catalog){
 		return lambda_random;
@@ -216,7 +221,7 @@ double NFWDarkMatterHalos::enclosed_mass(double r, double c) const
 	// r is normalized by the virial radius.
 
 	double nom = 1.0 / (1.0 + c * r) - 1.0 + std::log(1.0 + c*r);
-	double denom = .0 / (1.0 + c) - 1.0 + std::log(1.0 + c);
+	double denom = 1.0 / (1.0 + c) - 1.0 + std::log(1.0 + c);
 
 	double frac = nom/denom;
 
