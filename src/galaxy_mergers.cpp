@@ -594,7 +594,8 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 
 	if((std::isnan(r) || r <= 0 || r > 3) && (mtotal_central > 0 || mbar_satellite > 0)){
 		std::ostringstream os;
-		os << central << " has a bulge size not well defined in galaxy mergers.";
+		os << central << " has a bulge size not well defined in galaxy mergers: " << r << " central and satellite radii " <<
+				rcentral << " and " << rsatellite << " and masses central satellite " << mtotal_central << " " << mbar_satellite;
 		throw invalid_data(os.str());
 	}
 
