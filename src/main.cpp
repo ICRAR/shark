@@ -96,9 +96,7 @@ void install_gsl_error_handler() {
 
 void log_startup_information(int argc, char **argv)
 {
-	char the_hostname[100];
-	gethostname(the_hostname, 100);
-	LOG(info) << "shark is starting in " << the_hostname;
+	LOG(info) << "shark is starting in " << gethostname();
 	LOG(info) << "shark version: " << SHARK_VERSION;
 	LOG(info) << "shark git version: " << git_sha1();
 	LOG(info) << "shark has local changes: " << std::boolalpha << git_has_local_changes() << std::noboolalpha;

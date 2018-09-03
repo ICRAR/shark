@@ -42,7 +42,15 @@ XH = 0.72
 def prepare_data(hdf5_data, redshifts):
 
     (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mstar,
-     mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst, mDM, mcold_halo) = hdf5_data
+     mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst, 
+     mDM, mcold_halo, number_major_mergers, number_minor_mergers, 
+     number_disk_instabil) = hdf5_data
+
+
+    history_interactions = np.zeros(shape = (3, len(redshifts)))
+    history_interactions[0,:] = number_major_mergers[:]/volh
+    history_interactions[1,:] = number_minor_mergers[:]/volh
+    history_interactions[2,:] = number_disk_instabil[:]/volh
 
     sfrall = sfrdisk + sfrburst
 
@@ -83,14 +91,13 @@ def prepare_data(hdf5_data, redshifts):
     mcoldden  = mcold / volh
     mhotden   = mhot / volh
     mejeden   = meje / volh
-
+    mDMden    = mDM / volh
     mstarbden_mergers = mstar_burst_mergers / volh
     mstarbden_diskins = mstar_burst_diskins / volh
 
     mH2den    = mH2 / volh
-
-
     mHIden   = mHI / volh
+
     h = np.zeros(shape = (len(redshifts)))
     omegaHI = np.zeros(shape = (len(redshifts)))
     for z in range(0,len(redshifts)):
@@ -140,7 +147,8 @@ def prepare_data(hdf5_data, redshifts):
     return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
      sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
-     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden)
+     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden,
+     history_interactions, mDMden)
 
 def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, meje, mstarden, mcoldden, mhotden, mejeden):
 
@@ -312,7 +320,7 @@ def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, m
     common.savefig(outdir, fig, "baryon_frac.pdf")
 
 
-def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
+def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history_interactions, mDMden):
 
     fig = plt.figure(figsize=(5,9))
 
@@ -404,9 +412,57 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb):
     ax.plot(us.look_back_time(z[ind]), sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted')
 
     common.prepare_legend(ax, ['grey','grey','grey'], loc=2)
-
-
     common.savefig(outdir, fig, "cosmic_sfr.pdf")
+
+
+    #create plot with interaction history
+    fig = plt.figure(figsize=(5,4))
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm log_{10}(density\,rate/Mpc^{-3} h^{-3} Gyr^{-1})$"
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 10, -4, 0, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    delta_time = np.zeros(shape = (len(redshifts))) 
+    for i in range (0,len(redshifts)):
+        if(i == 0):
+               delta_time[i] = 13.7969 - us.look_back_time(redshifts[i])
+        if(i < len(redshifts)):
+               delta_time[i] = us.look_back_time(redshifts[i-1])-us.look_back_time(redshifts[i])
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ind = np.where(history_interactions[0,:]+history_interactions[1,:] > 0)
+    yplot = np.log10((history_interactions[0,ind]+history_interactions[1,ind])/delta_time[ind])
+    ax.plot(redshifts[ind], yplot[0], 'k', linewidth=1, label ='mergers')
+    ind = np.where(history_interactions[2,:] > 0)
+    yplot = np.log10(history_interactions[2,ind]/delta_time[ind])
+    ax.plot(redshifts[ind], yplot[0], 'b', linewidth=1, label ='disk instabilities')
+
+    ind = np.where(mDMden[:] > 0)
+    yplot = np.log10(mDMden[ind])-11.0
+    ax.plot(redshifts[ind], yplot, 'r', linewidth=1, label ='DM mass(-11dex)')
+
+    common.prepare_legend(ax, ['k','b','r'], loc=3)
+
+    common.savefig(outdir, fig, "interaction_history.pdf")
+
+    #create plot with interaction history
+    fig = plt.figure(figsize=(5,4))
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm delta\, time/Gyr$"
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 10, 0, 0.3, xtit, ytit, locators=(0.1, 1, 0.1, 0.1))
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ax.plot(redshifts, delta_time, 'k', linewidth=1)
+
+    common.savefig(outdir, fig, "delta_time_history.pdf")
 
 
 def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarden, mstarbden_mergers, mstarbden_diskins):
@@ -708,17 +764,18 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     common.prepare_legend(ax, ['r','Sienna','Crimson','Salmon','grey'])
     common.savefig(outdir, fig, "omega_HI.pdf")
 
-def main(modeldir, outdir, subvols, obsdir, snapshot):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
                          'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
-                         'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo')}
+                         'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo', 'number_major_mergers', 
+                         'number_minor_mergers', 'number_disk_instabilities')}
 
     # Read data from each subvolume at a time and add it up
     # rather than appending it all together
     for idx, subvol in enumerate(subvols):
-        subvol_data = common.read_data(modeldir, snapshot, fields, [subvol])
+        subvol_data = common.read_data(modeldir, redshift_table[0], fields, [subvol])
         if idx == 0:
             hdf5_data = subvol_data
         else:
@@ -733,11 +790,12 @@ def main(modeldir, outdir, subvols, obsdir, snapshot):
     (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
      sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
-     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden) = prepare_data(hdf5_data, redshifts)
+     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, 
+     mejeden, history_interactions, mDMden) = prepare_data(hdf5_data, redshifts)
 
     plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar_plot, mcold_plot, mhot_plot, meje_plot, mstarden, mcoldden, mhotden, mejeden)
     plot_baryon_fractions(plt, outdir, redshifts, mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot)
-    plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb)
+    plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history_interactions, mDMden)
     plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarden, mstarbden_mergers, mstarbden_diskins)
     plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat)
     plot_mass_cosmic_density(plt, outdir, redshifts, mcold_plot, mHI_plot, mH2_plot)

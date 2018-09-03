@@ -98,7 +98,13 @@ endmacro()
 # which is a hard requirement -- if it's not there we fail misserably
 #
 macro(find_hdf5)
-	find_package(HDF5 REQUIRED COMPONENTS CXX)
+
+	# The CONFIG mode is needed at least when using vcpkg's hdf5
+	if (SHARK_HDF5_USE_CONFIG)
+		find_package(HDF5 REQUIRED COMPONENTS CXX CONFIG)
+	else()
+		find_package(HDF5 REQUIRED COMPONENTS CXX)
+	endif()
 
 	#
 	# HDF5_VERSION is defined only in cmake 3.3+
@@ -143,15 +149,22 @@ macro(find_hdf5)
 
 	# We need to pass down the information about the HDF5 version to shark
 	message("-- Using HDF5 version ${HDF5_VERSION}")
+	message("-- HDF5 libraries / C++ libraries:  ${HDF5_LIBRARIES} / ${HDF5_CXX_LIBRARIES}")
 	string(REPLACE "." ";" VERSION_LIST ${HDF5_VERSION})
 	list(GET VERSION_LIST 0 HDF5_VERSION_MAJOR)
 	list(GET VERSION_LIST 1 HDF5_VERSION_MINOR)
 	list(GET VERSION_LIST 2 HDF5_VERSION_PATCH)
-	set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
 	include_directories(${HDF5_INCLUDE_DIRS})
+	add_definitions(${HDF5_DEFINITIONS})
 	add_definitions("-DHDF5_VERSION_MAJOR=${HDF5_VERSION_MAJOR}"
 	                "-DHDF5_VERSION_MINOR=${HDF5_VERSION_MINOR}"
 	                "-DHDF5_VERSION_PATCH=${HDF5_VERSION_PATCH}")
+
+	if (SHARK_HDF5_USE_CONFIG)
+		set(SHARK_LIBS ${SHARK_LIBS} hdf5::hdf5_cpp-shared)
+	else()
+		set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
+	endif()
 endmacro()
 
 #
@@ -171,8 +184,33 @@ endmacro()
 macro(find_openmp)
 	find_package(OpenMP)
 	if (OPENMP_FOUND)
+
+		# We require at least OpenMP 2.0, so let's double check
+		# we have that at least
+		set(OPENMP_VERSION_CHECK_SOURCE "
+#include <stdio.h>
+int main(int argc, char *argv[]) {
+#if _OPENMP >= 200203
+	return 0;
+#else
+	fail to compile please
+#endif
+}")
+		set(WORK_DIR ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/OpenMPVersionCheck)
+		set(SRC_FILE ${WORK_DIR}/ompver.cpp)
+		file(WRITE ${SRC_FILE} "${OPENMP_VERSION_CHECK_SOURCE}")
+		try_compile(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${SRC_FILE}
+		            COMPILE_DEFINITIONS ${OpenMP_CXX_FLAGS})
+
+		if (COMPILE_RESULT)
+			set(SHARK_OPENMP ON)
+		else()
+			message("-- OpenMP found, but is <= 2.0. Compiling without OpenMP support")
+		endif()
+	endif()
+
+	if (SHARK_OPENMP)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		set(SHARK_OPENMP ON)
 	endif()
 endmacro()
 
@@ -185,6 +223,11 @@ find_hdf5()
 find_boost()
 if (NOT SHARK_NO_OPENMP)
 	find_openmp()
+endif()
+
+# Windows builds need to link to ws2_32 (due to usage of gethostname)
+if (WIN32)
+	set(SHARK_LIBS ${SHARK_LIBS} ws2_32)
 endif()
 
 #
@@ -254,9 +297,17 @@ set(SHARKLIB_SRCS
    src/hdf5/traits.cpp
    src/hdf5/writer.cpp
 )
-add_library(sharklib SHARED ${SHARKLIB_SRCS})
+
+if (WIN32)
+	set(SHARLIB_MODE STATIC)
+else()
+	set(SHARLIB_MODE SHARED)
+endif()
+add_library(sharklib ${SHARLIB_MODE} ${SHARKLIB_SRCS})
 target_link_libraries(sharklib ${SHARK_LIBS})
-set_target_properties(sharklib PROPERTIES LIBRARY_OUTPUT_NAME shark)
+set_target_properties(sharklib PROPERTIES
+    LIBRARY_OUTPUT_NAME shark
+    RUNTIME_OUTPUT_NAME shark)
 
 # The shark-importer executable
 set(SHARK_IMPORTER_SRCS
@@ -278,7 +329,8 @@ target_link_libraries(shark sharklib)
 # Installing stuff: programs, scripts, static data
 install(TARGETS sharklib shark shark-importer
         RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib)
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
 install(PROGRAMS hpc/shark-run hpc/shark-submit
         DESTINATION bin)
 install(DIRECTORY data

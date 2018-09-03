@@ -48,6 +48,8 @@ typedef std::shared_ptr<Subhalo> SubhaloPtr;
 typedef std::shared_ptr<Halo> HaloPtr;
 typedef std::shared_ptr<MergerTree> MergerTreePtr;
 
+/// Type used by galaxy_count() methods
+typedef typename std::vector<GalaxyPtr>::size_type galaxies_size_type;
 
 /**
  * The common base for all baryon component types.
@@ -144,12 +146,26 @@ public:
  */
 struct HistoryItem {
 	float sfr_disk;
-	float sfr_bulge;
+	float sfr_bulge_mergers;
+	float sfr_bulge_diskins;
 	float sfr_z_disk;
-	float sfr_z_bulge;
+	float sfr_z_bulge_mergers;
+	float sfr_z_bulge_diskins;
 	int snapshot;
 };
 
+struct InteractionItem{
+	int major_mergers = 0;
+	int minor_mergers = 0;
+	int disk_instabilities = 0;
+
+        void restore_interaction_item(){
+                major_mergers = 0;
+                minor_mergers = 0;
+		disk_instabilities = 0;
+        }
+
+};
 
 /**
  * A basic galaxy.
@@ -192,14 +208,16 @@ public:
 	Baryon galaxymergers_burst_stars {};
 	Baryon galaxymergers_assembly_stars {};
 	Baryon diskinstabilities_burst_stars {};
-        Baryon diskinstabilities_assembly_stars {};
+	Baryon diskinstabilities_assembly_stars {};
 	BlackHole smbh {};
 
 	//save average star formation rates and metallicities of the newly formed stars.
 	float sfr_disk = 0;
-	float sfr_bulge = 0;
+	float sfr_bulge_mergers = 0;
+	float sfr_bulge_diskins = 0;
 	float sfr_z_disk = 0;
-	float sfr_z_bulge = 0;
+	float sfr_z_bulge_mergers = 0;
+	float sfr_z_bulge_diskins = 0;
 
 	/**
 	 * Keep track of mean stellar age using:
@@ -214,6 +232,9 @@ public:
 
 	//save star formation and gas history
 	std::vector<HistoryItem>  history {};
+
+	//save interactions of this galaxy during this snapshot.
+	InteractionItem interaction {};
 
 	/**
 	 * tmerge: dynamical friction timescale, which is defined only if galaxy is satellite.
@@ -574,7 +595,7 @@ public:
 	void remove_galaxies(const std::vector<GalaxyPtr> &to_remove);
 
 	/// Returns the number of galaxies contained in this Halo
-	unsigned long galaxy_count() const
+	galaxies_size_type galaxy_count() const
 	{
 		return galaxies.size();
 	}
@@ -718,7 +739,7 @@ public:
 	///
 	/// Returns the number of galaxies contained in this Halo
 	///
-	unsigned long galaxy_count() const;
+	galaxies_size_type galaxy_count() const;
 
 	/**
 	 * @return The total baryon mass contained in this Halo
@@ -811,6 +832,16 @@ public:
 
 	std::vector<double> SFR_disk;
 	std::vector<double> SFR_bulge;
+
+	/**
+	 * Vectors of integers that keep track of number of mergers of galaxies and disk instability episodes in each snapshot.
+	 * major_mergers: counts number of major mergers per snapshot.
+	 * minor_mergers: counts number of minor mergers per snapshot.
+	 * disk_instabil: counts number of disk instability episodes per snapshot.
+ 	*/ 
+	std::vector<int> major_mergers;
+	std::vector<int> minor_mergers;
+	std::vector<int> disk_instabil;
 
 	std::map<int,double> baryon_total_created;
 	std::map<int,double> baryon_total_lost;

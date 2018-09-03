@@ -28,11 +28,6 @@
 #include <ostream>
 #include <vector>
 
-#include "config.h"
-#ifdef SHARK_OPENMP
-#include <omp.h>
-#endif // SHARK_OPENMP
-
 #include "components.h"
 #include "evolve_halos.h"
 #include "execution.h"
@@ -43,6 +38,7 @@
 #include "galaxy_writer.h"
 #include "logging.h"
 #include "merger_tree_reader.h"
+#include "omp_utils.h"
 #include "options.h"
 #include "physical_model.h"
 #include "shark_runner.h"
@@ -113,7 +109,7 @@ private:
 	void create_per_thread_objects();
 	std::vector<MergerTreePtr> import_trees();
 	void evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot);
-	void evolve_merger_tree(const MergerTreePtr &tree, int snapshot, double z, double delta_t);
+	void evolve_merger_tree(const MergerTreePtr &tree, int thread_idx, int snapshot, double z, double delta_t);
 	molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, double x, bool calc_j);
 };
 
@@ -139,7 +135,7 @@ struct SnapshotStatistics {
 	unsigned long n_halos;
 	unsigned long n_subhalos;
 	unsigned long n_galaxies;
-	unsigned long duration_millis;
+	Timer::duration duration_millis;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
 		if (n_galaxies == 0) {
@@ -232,19 +228,9 @@ molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr
 	std::vector<StarFormation> star_formations(threads, star_formation);
 	std::vector<molgas_per_galaxy> local_molgas(threads);
 
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif // SHARK_OPENMP
-	for (auto it = halos.begin(); it < halos.end(); it++) {
-
-#ifdef SHARK_OPENMP
-		auto idx = omp_get_thread_num();
-#else
-		auto idx = 0;
-#endif // SHARK_OPENMP
-
-		_get_molecular_gas(*it, local_molgas[idx], star_formations[idx], z, calc_j);
-	}
+	omp_static_for(halos, threads, [&](const HaloPtr &halo, int idx){
+		_get_molecular_gas(halo, local_molgas[idx], star_formations[idx], z, calc_j);
+	});
 
 	if (threads == 1) {
 		return local_molgas[0];
@@ -257,16 +243,11 @@ molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr
 
 }
 
-void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int snapshot, double z, double delta_t)
+void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread_idx, int snapshot, double z, double delta_t)
 {
 	// Get the thread-specific objects needed to run the evolution
 	// In the non-OpenMP case we simply have one
-#ifdef SHARK_OPENMP
-	auto which = omp_get_thread_num();
-#else
-	auto which = 0;
-#endif // SHARK_OPENMP
-	auto &objs = thread_objects[which];
+	auto &objs = thread_objects[thread_idx];
 	auto &physical_model = objs.physical_model;
 	auto &galaxy_mergers = objs.galaxy_mergers;
 	auto &disk_instability = objs.disk_instability;
@@ -306,26 +287,28 @@ void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int snapsh
 
 void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot)
 {
-	auto z = simulation_params.redshifts[snapshot];
 	Timer t;
-	LOG(info) << "Will evolve galaxies in snapshot " << snapshot << " corresponding to redshift "<< z;
 
 	for(auto &o: thread_objects) {
 		o.physical_model->reset_ode_evaluations();
 	}
 
-	//Calculate the initial and final time of this snapshot.
+	// Calculate the initial and final time for the evolution start at this snapshot.
+	auto z = simulation_params.redshifts[snapshot];
+	auto z_end = simulation_params.redshifts[snapshot + 1];
 	double ti = simulation.convert_snapshot_to_age(snapshot);
 	double tf = simulation.convert_snapshot_to_age(snapshot + 1);
 	auto delta_t = tf - ti;
 
+	std::ostringstream os;
+	os << "Will evolve galaxies from snapshot " << snapshot << " to " << snapshot + 1;
+	os << ". Redshift: " << z << " -> " << z_end << ", time: " << ti << " -> " << tf;
+	LOG(info) << os.str();
+
 	Timer evolution_t;
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif // SHARK_OPENMP
-	for (auto it = merger_trees.begin(); it < merger_trees.end(); it++) {
-		evolve_merger_tree(*it, snapshot, simulation_params.redshifts[snapshot], delta_t);
-	}
+	omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, int thread_idx) {
+		evolve_merger_tree(merger_tree, thread_idx, snapshot, simulation_params.redshifts[snapshot], delta_t);
+	});
 	LOG(info) << "Evolved galaxies in " << evolution_t;
 
 	std::vector<HaloPtr> all_halos_this_snapshot;
@@ -347,11 +330,14 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 	/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 	//do_stuff_at_halo_level(all_halos_this_snapshot);
 
-	/*write snapshots only if the user wants outputs at this time (note that what matters here is snapshot+1).*/
 	if (write_galaxies)
 	{
-		LOG(info) << "Will write output file for snapshot " << snapshot+1;
-		writer->write(snapshot, all_halos_this_snapshot, all_baryons, molgas_per_gal);
+		// Note that the output is being done at "snapshot + 1". This is because
+		// we don't evolve galaxies AT snapshot "i" but FROM snapshot "i" TO
+		// snapshot "i+1", and therefore at this point in time (after the actual
+		// evolution) we consider our galaxies to be at snapshot "i+1"
+		LOG(info) << "Write output files for evolution from snapshot " << snapshot << " to " << snapshot + 1;
+		writer->write(snapshot + 1, all_halos_this_snapshot, all_baryons, molgas_per_gal);
 	}
 
 	auto duration_millis = t.get();
@@ -395,7 +381,10 @@ void SharkRunner::impl::run() {
 	galaxy_creator.create_galaxies(merger_trees, all_baryons);
 
 	// Go, go, go!
-	for(int snapshot = simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot-1; snapshot++) {
+	// Note that we evolve galaxies in merger tress in the snapshot range [min, max)
+	// This is because at snapshot "i" we don't evolve galaxies AT snapshot "i",
+	// but rather FROM snapshot "i" TO snapshot "i+1".
+	for(int snapshot = simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot - 1; snapshot++) {
 		evolve_merger_trees(merger_trees, snapshot);
 	}
 }

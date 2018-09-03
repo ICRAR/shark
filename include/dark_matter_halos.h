@@ -55,9 +55,22 @@ public:
 		COLE00
 	};
 
+	enum ConcentrationModel{
+        	DUFFY08 = 0,
+		DUTTON14 
+	};
+
 	DarkMatterProfile haloprofile = NFW;
 	SizeModel sizemodel = MO98;
+        ConcentrationModel concentrationmodel = DUFFY08;
+
+	/**
+	Note that if random_lambda = true, the values of lambda will be drawn from a log-normal distribution randomly. However, if at the same time 
+	use_converged_lambda_catalog = true, the latter will be done only for halos that have a number of particles below min_part_convergence.
+	**/
 	bool random_lambda = false;
+	bool use_converged_lambda_catalog = false; 
+	int  min_part_convergence = 100;
 
 };
 
@@ -81,7 +94,7 @@ public:
 
 	double halo_virial_velocity (double mvir, double redshift);
 
-	float halo_lambda (float lambda, double z);
+	float halo_lambda (float lambda, double z, double npart);
 
 	double disk_size_theory (Subhalo &subhalo, double z);
 

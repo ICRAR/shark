@@ -41,10 +41,9 @@ class xyz {
 
 public:
 
-	xyz(T x=0, T y=0, T z=0) : x(x), y(y), z(z) {};
+	xyz() : x(0), y(0), z(0) {};
 
-	template <typename U>
-	xyz(U x=0, U y=0, U z=0) : x(x), y(y), z(z) {};
+	xyz(T x, T y, T z) : x(x), y(y), z(z) {};
 
 	template <typename U>
 	xyz(xyz<U> other) : x(other.x), y(other.y), z(other.z) {};

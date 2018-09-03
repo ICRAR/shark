@@ -24,11 +24,6 @@
 #include <cmath>
 #include <memory>
 
-#include "config.h"
-#ifdef SHARK_OPENMP
-#include <omp.h>
-#endif // SHARK_OPENMP
-
 #include "components.h"
 #include "evolve_halos.h"
 #include "logging.h"
@@ -88,16 +83,20 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 
 			// Make sure all SFRs (in mass and metals) are set to 0 for the next snapshot
 			for (GalaxyPtr & galaxy: subhalo->galaxies){
-				galaxy->sfr_bulge  = 0;
-				galaxy->sfr_z_bulge= 0;
-				galaxy->sfr_z_disk = 0;
-				galaxy->sfr_disk   = 0;
+				galaxy->sfr_bulge_mergers  = 0;
+				galaxy->sfr_z_bulge_mergers= 0;
+				galaxy->sfr_bulge_diskins  = 0;
+				galaxy->sfr_z_bulge_diskins= 0;
+				galaxy->sfr_z_disk         = 0;
+				galaxy->sfr_disk           = 0;
+				//restart counter of mergers and disk instabilities.
+				galaxy->interaction.restore_interaction_item();
 			}
 
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
 			// In that case, the transfer of galaxies has already been done in merging_subhalos.
 			// In any other case, we need to do the transfer.
-			if(subhalo->subhalo_type == Subhalo::SATELLITE and subhalo->last_snapshot_identified == subhalo->snapshot) {
+			if(subhalo->subhalo_type == Subhalo::SATELLITE && subhalo->last_snapshot_identified == subhalo->snapshot) {
 				continue;
 			}
 
@@ -172,6 +171,10 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	double SFR_total_disk = 0;
 	double SFR_total_burst = 0;
 
+	int number_major_mergers = 0;
+	int number_minor_mergers = 0;
+	int number_disk_instabil = 0;
+
 	double z1 = simulation_params.redshifts[snapshot];
 	double z2 = simulation_params.redshifts[snapshot+1];
 
@@ -196,17 +199,24 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 			mejectedhalo_total.mass_metals += subhalo->ejected_galaxy_gas.mass_metals;
         
 			for (auto &galaxy: subhalo->galaxies){
-        
+       
+				number_major_mergers += galaxy->interaction.major_mergers;
+ 				number_minor_mergers += galaxy->interaction.minor_mergers;
+				number_disk_instabil += galaxy->interaction.disk_instabilities;
+
 				if(execparams.output_sf_histories){
         
-					galaxy->mean_stellar_age += (galaxy->sfr_disk + galaxy->sfr_bulge) * deltat * mean_age;
-					galaxy->total_stellar_mass_ever_formed += (galaxy->sfr_disk + galaxy->sfr_bulge) * deltat;
+					galaxy->mean_stellar_age += (galaxy->sfr_disk + galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins) * deltat * mean_age;
+					galaxy->total_stellar_mass_ever_formed += (galaxy->sfr_disk + galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins) * deltat;
+
 					HistoryItem hist_galaxy;
-					hist_galaxy.sfr_disk    = galaxy->sfr_disk;
-					hist_galaxy.sfr_bulge   = galaxy->sfr_bulge;
-					hist_galaxy.sfr_z_disk  = galaxy->sfr_z_disk;
-					hist_galaxy.sfr_z_bulge = galaxy->sfr_z_bulge;
-					hist_galaxy.snapshot    = snapshot;
+					hist_galaxy.sfr_disk            = galaxy->sfr_disk;
+					hist_galaxy.sfr_bulge_mergers   = galaxy->sfr_bulge_mergers;
+					hist_galaxy.sfr_bulge_diskins   = galaxy->sfr_bulge_diskins;
+					hist_galaxy.sfr_z_disk          = galaxy->sfr_z_disk;
+					hist_galaxy.sfr_z_bulge_mergers = galaxy->sfr_z_bulge_mergers;
+					hist_galaxy.sfr_z_bulge_diskins = galaxy->sfr_z_bulge_diskins;
+					hist_galaxy.snapshot            = snapshot;
 					galaxy->history.emplace_back(std::move(hist_galaxy));
 				}
         
@@ -228,7 +238,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 				mstars_bursts_diskinstabilities.mass_metals += galaxy->diskinstabilities_burst_stars.mass_metals;
 
 				SFR_total_disk  += galaxy->sfr_disk;
-				SFR_total_burst += galaxy->sfr_bulge;
+				SFR_total_burst += galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins;
         
 				MBH_total.mass += galaxy->smbh.mass;
         
@@ -245,6 +255,10 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	AllBaryons.mBH.push_back(MBH_total);
 	AllBaryons.SFR_disk.push_back(SFR_total_disk);
 	AllBaryons.SFR_bulge.push_back(SFR_total_burst);
+
+	AllBaryons.major_mergers.push_back(number_major_mergers);
+	AllBaryons.minor_mergers.push_back(number_minor_mergers);
+	AllBaryons.disk_instabil.push_back(number_disk_instabil);
 
 	AllBaryons.mhot_halo.push_back(mhothalo_total);
 	AllBaryons.mcold_halo.push_back(mcoldhalo_total);

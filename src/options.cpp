@@ -224,7 +224,7 @@ _read_ranges(const std::string &name, const std::string &value, const std::strin
 		// a dash found neither at the beginning, nor at the end
 		// means that we have a range specification
 		auto pos = value_or_range.find_last_of('-');
-		if (pos != 0 and pos != value_or_range.size() and pos != std::string::npos) {
+		if (pos != 0 && pos != value_or_range.size() && pos != std::string::npos) {
 			auto first_s = value_or_range.substr(0, pos);
 			auto last_s = value_or_range.substr(pos + 1);
 

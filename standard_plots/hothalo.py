@@ -72,11 +72,11 @@ def plot_cooling_rate(plt, outdir, med_tvir):
     common.prepare_legend(ax, ['r','k'], loc=2)
     common.savefig(outdir, fig, 'cooling_rate.pdf')
 
-def main(modeldir, outdir, subvols, snapshot):
+def main(modeldir, outdir, redshift_table, subvols):
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('type', 'vvir_hosthalo', 'cooling_rate')}
-    hdf5_data = common.read_data(modeldir, snapshot, fields, subvols, include_h0_volh=False)
+    hdf5_data = common.read_data(modeldir, redshift_table[0], fields, subvols, include_h0_volh=False)
     med_tvir = prepare_data(hdf5_data)
 
     plot_cooling_rate(plt, outdir, med_tvir)

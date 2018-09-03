@@ -76,7 +76,7 @@ void AGNFeedback::plant_seed_smbh(Halo &halo){
 
 	if (halo.Mvir > parameters.mhalo_seed) {
 		auto central = halo.central_subhalo->central_galaxy();
-		if (central and central->smbh.mass == 0) {
+		if (central && central->smbh.mass == 0) {
 			central->smbh.mass = parameters.mseed;
 			central->smbh.mass_metals = 0;
 		}

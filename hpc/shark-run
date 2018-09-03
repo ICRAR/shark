@@ -372,8 +372,7 @@ then
 	# is alongside the rest of the shark sources
 	export MPLBACKEND=agg
 	"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/all.py" \
-	    -c "${config_file}" -v "${shark_subvolumes[*]}" \
-	    199 &> shark-plots.log
+	    -c "${config_file}" -v "${shark_subvolumes[*]}" &> shark-plots.log
 	if [ $? -ne 0 ]
 	then
 		warning "An error occurred while producing the plots, please check the shark-plots.log file for details"
@@ -381,7 +380,7 @@ then
 		# Find where the plots were produced and copy them
 		# to a local plots/ folder for easy access
 		info "shark plots successfully produced"
-		plots_dir=`"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/common.py" "${config_file}"`
+		plots_dir=`"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/common.py" output_dir "${config_file}"`
 		mkdir plots
 		cp ${plots_dir}/* plots
 		info "shark plots successfully copied into plots/"

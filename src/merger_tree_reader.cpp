@@ -31,19 +31,15 @@
 #include <vector>
 #include <tuple>
 
-#include "config.h"
 #include "dark_matter_halos.h"
 #include "exceptions.h"
 #include "logging.h"
 #include "merger_tree_reader.h"
+#include "omp_utils.h"
 #include "simulation.h"
 #include "timer.h"
 #include "utils.h"
 #include "hdf5/reader.h"
-
-#ifdef SHARK_OPENMP
-#include <omp.h>
-#endif
 
 
 using namespace std;
@@ -128,7 +124,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
 	vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
 
-	auto n_subhalos = Mvir.size();
+	unsigned long n_subhalos = Mvir.size();
 	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
 	if ( !n_subhalos ) {
 		return {};
@@ -145,13 +141,10 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		subhalos.reserve(n_subhalos / threads);
 	}
 
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(static)
-#endif
-	for(unsigned int i=0; i < n_subhalos; i++) {
+	omp_static_for(0ul, n_subhalos, threads, [&](unsigned long i, int thread_idx) {
 
 		if (snap[i] < simulation_params.min_snapshot) {
-			continue;
+			return;
 		}
 
 		auto subhalo = std::make_shared<Subhalo>(nodeIndex[i], snap[i]);
@@ -210,19 +203,16 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 			throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
 		}
 
-		subhalo->lambda = dark_matter_halos->halo_lambda(lambda[i], z);
+		double npart = Mvir[i]/simulation_params.particle_mass;
+
+		subhalo->lambda = dark_matter_halos->halo_lambda(lambda[i], z, npart);
 
 		// Calculate virial velocity from the virial mass and redshift.
 		subhalo->Vvir = dark_matter_halos->halo_virial_velocity(subhalo->Mvir, z);
 
 		// Done, save it now
-#ifdef SHARK_OPENMP
-		auto idx = omp_get_thread_num();
-#else
-		auto idx = 0;
-#endif // SHARK_OPENMP
-		t_subhalos[idx].emplace_back(std::move(subhalo));
-	}
+		t_subhalos[thread_idx].emplace_back(std::move(subhalo));
+	});
 
 	vector<SubhaloPtr> subhalos;
 	if (threads == 0) {
@@ -282,15 +272,11 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 
 	// Calculate halos' vvir and concentration
 	t = Timer();
-#ifdef SHARK_OPENMP
-	#pragma omp parallel for num_threads(threads) schedule(dynamic, 10000)
-#endif
-	for(auto it = halos.begin(); it < halos.end(); it++) {
-		const auto &halo = *it;
+	omp_dynamic_for(halos, threads, 10000, [&](const HaloPtr &halo, int thread_idx) {
 		auto z = simulation_params.redshifts[halo->snapshot];
 		halo->Vvir = dark_matter_halos->halo_virial_velocity(halo->Mvir, z);
 		halo->concentration = dark_matter_halos->nfw_concentration(halo->Mvir,z);
-	}
+	});
 	LOG(info) << "Calculated Vvir and concentration for new Halos in " << t;
 
 	return halos;
