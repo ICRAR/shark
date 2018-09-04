@@ -48,4 +48,13 @@ ExecutionParameters::ExecutionParameters(const Options &options)
 	options.load("execution.snapshots_sf_histories", snapshots_sf_histories);
 }
 
+bool ExecutionParameters::output_snapshot(int snapshot)
+{
+	return output_snapshots.find(snapshot) != output_snapshots.end();
+}
+
+int ExecutionParameters::last_output_snapshot()
+{
+	return *output_snapshots.rbegin();
+}
 }

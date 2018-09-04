@@ -316,7 +316,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 		all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), tree->halos[snapshot].begin(), tree->halos[snapshot].end());
 	}
 
-	bool write_galaxies = std::find(exec_params.output_snapshots.begin(), exec_params.output_snapshots.end(), snapshot+1) != exec_params.output_snapshots.end();
+	bool write_galaxies = exec_params.output_snapshot(snapshot + 1);
 
 	Timer molgas_t;
 	auto molgas_per_gal = get_molecular_gas(all_halos_this_snapshot, z, write_galaxies);
