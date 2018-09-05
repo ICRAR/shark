@@ -72,8 +72,7 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
 {
 
-	const auto &output_snaps = exec_params.output_snapshots;
-	auto last_snapshot_to_consider = *std::begin(output_snaps);
+	auto last_snapshot_to_consider = exec_params.last_output_snapshot();
 
 	// Find roots and create Trees for each of them
 	std::vector<MergerTreePtr> trees;
@@ -106,6 +105,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 		os << std::endl;
 
 		os << "Considering these snapshots during this run: ";
+		auto &output_snaps = exec_params.output_snapshots;
 		std::copy(output_snaps.begin(), output_snaps.end(), std::ostream_iterator<int>(os, " "));
 
 		throw invalid_data(os.str());
