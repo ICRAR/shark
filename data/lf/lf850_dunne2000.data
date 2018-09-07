@@ -1,0 +1,25 @@
+# 850 mu LF at z approx 0 from Dunne etal (2000), astro-ph/0002234 (Table 7)
+#
+# H0=75 assumed
+# phi is dn/dlog10L in Mpc^-3 dex^-1
+# L850 is L_nu/(4*pi) in W/Hz/ster
+#
+# log(L850) 	phi		err
+# for combined pair fluxes, from Table 7 in paper
+21.04		2.43e-3		7.69e-4
+21.28		1.33e-3		3.32e-4
+21.52		7.00e-4		1.37e-4
+21.76		2.13e-4		4.65e-5
+22.00		6.02e-5		1.38e-5
+22.24		2.34e-5		7.8e-6
+22.48		1.60e-6		9.2e-7
+#
+# for resolved pairs separated, as in Fig.6 (by email from Loretta Dunne 3/5/00)
+   21.03983      0.2753121E-02  0.8300971E-03
+   21.27920      0.1226804E-02  0.3167595E-03
+   21.51858      0.7872457E-03  0.1487755E-03
+   21.75795      0.1382746E-03  0.3172238E-04
+   21.99732      0.6388010E-04  0.1465510E-04
+   22.23670      0.1347112E-04  0.5091601E-05
+   22.47607      0.2618958E-06  0.1851882E-06
+ 
