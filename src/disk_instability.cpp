@@ -155,15 +155,15 @@ double DiskInstability::bulge_size(GalaxyPtr &galaxy){
 	double rnew = c * std::pow((md + mb),2.0) / (bc + dc + combined_c);
 
 
-	if(std::isnan(rnew) || rnew <= 0 || rnew > 3){
+	if(std::isnan(rnew) || rnew <= 0 || rnew >= 3){
 		std::ostringstream os;
-		os << galaxy << " has a bulge size not well defined in disk instabilities.";
+		os << galaxy << " has a bulge size not well defined in disk instabilities: " << rnew;
 		throw invalid_data(os.str());
 	}
 
 	if(rnew <= constants::EPS6){
 		std::ostringstream os;
-		os << "Galaxy with extremely small size, rbulge_gas < 1-6, in disk instabilities";
+		os << "Galaxy with extremely small size, rbulge_gas < 1e-6, in disk instabilities";
 		//throw invalid_argument(os.str());
 	}
 

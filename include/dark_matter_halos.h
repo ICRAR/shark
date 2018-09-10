@@ -94,7 +94,7 @@ public:
 
 	double halo_virial_velocity (double mvir, double redshift);
 
-	float halo_lambda (float lambda, double z, double npart);
+	float halo_lambda (xyz<float> L, float m, double z, double npart);
 
 	double disk_size_theory (Subhalo &subhalo, double z);
 
