@@ -107,6 +107,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     bulge_size_diskins[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
+    ind = np.where(mbulge > 0)
     BH[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
     
@@ -179,6 +180,8 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
         errdn = bulge_size[0,1,ind]
         errup = bulge_size[0,2,ind]
         ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark bulges")
+        #for i in zip(bulge_size[0,0,:]):
+        #    print i
 
     ind = np.where((bulge_size_diskins[0,0,:] != 0) & (xmf > 10.2))
     if(len(xmf[ind]) > 0):
