@@ -196,7 +196,8 @@ namespace constants {
 	constexpr double tolerance = 1e-10;
 
 	/** Conversion between j/v and the half-mass radius from EAGLE */
-	constexpr double EAGLEJconv = 0.67714285714;
+	constexpr double EAGLEJconv = 0.835;
+	//0.67714285714;
 	// @}
 
 };
