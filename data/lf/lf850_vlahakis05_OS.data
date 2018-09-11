@@ -1,0 +1,16 @@
+# 850 mu LF at z=0 derived from optically-selected sample in Vlahakis et al (2005, MN 364, 1253, Table 5)
+# based on sample of 52 galaxies selected from CfA catalogue & detected at 850 mu
+# 
+# assume H0=75, Omega0=0.3, Lambda0=0.7
+#
+# L850 in W Hz^-1 ster^-1
+# phi is dn/dlog10(L850) in Mpc^-3 dex^-1
+# err is Poisson error on phi
+#
+# logL850	phi		err
+20.75		9.17E-3		3.47E-3	 
+21.01		3.83E-3		1.15E-3	 
+21.27		2.10E-3		6.32E-4	 
+21.52		1.20E-3		3.10E-4	 
+21.78		6.03E-4		2.46E-4	 
+22.04		9.14E-5		5.28E-5
