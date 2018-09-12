@@ -1345,7 +1345,6 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     #for i,j in zip(hist_HImf[0,:],hist_H2mf[0,:]):
     #    print i,j
 
-
     plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err, hist_smf_30kpc)
     plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf)
     plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat)
