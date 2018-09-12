@@ -399,6 +399,8 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
         xplot = xmf[ind]
         yplot = BT_fractions[0,ind]
         ax.plot(xplot,yplot[0],'k', label ='bulges built by all processes')
+        #for i in zip(BT_fractions[0,:]):
+        #    print i
 
     ind = np.where(BT_fractions_nodiskins[0,:] >= 0)
     if(len(xmf[ind]) > 0):
@@ -426,10 +428,10 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
     xplot = xmf[ind]
     yplot = BT_stable0[ind]
     ax.plot(xplot,yplot,color='Goldenrod',linestyle='dashdot',label='$\\epsilon_{\\rm disk}=0$')
-    ind = np.where(BT_stable0p5 >= 0)
+    ind = np.where(BT_stable1 >= 0)
     xplot = xmf[ind]
-    yplot = BT_stable0p5[ind]
-    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=0.5$')
+    yplot = BT_stable1[ind]
+    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=1$')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     mM16, fM16, errdnfM16, errupfM16 = common.load_observation(obsdir, 'Morph/Moffet16.dat', [0,1,2,3])
