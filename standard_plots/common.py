@@ -242,14 +242,15 @@ def read_photometry_data(model_dir, snapshot, subvolumes):
     ids = None
     for subv in subvolumes:
 
-        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'SharkSED.csv')
+        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED.csv')
         print('Reading photometry data from %s' % fname)
         my_data = np.genfromtxt(fname, delimiter=',', skip_header=1)
 
         # Make sure all files come with the same number of bands
-        _nbands = (len(my_data[0])-2)/5/2/2
+        _nbands = (len(my_data[0])-1)/5/2/2
         if nbands is None:
             nbands = _nbands
+            print('Number of bands %s' % nbands)
         elif nbands != _nbands:
             raise ValueError('inconsistent number of bands found: %d / %d' % (nbands, _nbands))
         
@@ -258,8 +259,8 @@ def read_photometry_data(model_dir, snapshot, subvolumes):
         # 2: no dust and dust.
         # 5: bulge disk-instabilities, bulge mergers, bulge, disk and total; 
         # nbands: each of the bands
-        _seds = my_data[:,2:].reshape((len(my_data), 2, 2, 5, nbands))
-        _ids = my_data[:,1]
+        _seds = my_data[:,1:].reshape((len(my_data), 2, 2, 5, nbands))
+        _ids = my_data[:,0]
 
         # Append values to global lists
         if seds is None:
@@ -267,7 +268,7 @@ def read_photometry_data(model_dir, snapshot, subvolumes):
         else:
             seds = np.concatenate([seds, _seds])
         if ids is None:
-            ids = _seds
+            ids = _ids
         else:
             ids = np.concatenate([ids, _ids])
 

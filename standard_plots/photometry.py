@@ -49,7 +49,6 @@ xc    = cbins + dc/2.0
 
 magbins = [-17.13,-17.88,-18.63,-19.38,-20.13,-20.88,-21.63]
 
-
 def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
     hcorr = 5.0*np.log10(h0)
@@ -58,7 +57,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     xtit="$\\rm mag-5log(h) (AB)$"
     ytit="$\\rm log_{10}(\Phi/(0.5\\, {\\rm mag})/h^3 {\\rm Mpc}^{-3})$"
 
-    xmin, xmax, ymin, ymax = -25, -13, -6, -1
+    xmin, xmax, ymin, ymax = -25, -13, -5, -1
     xleg = xmin + 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
 
@@ -67,7 +66,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     subplots = (331, 332, 334, 335, 336, 337, 338)
     idx = (0, 1, 2, 3, 4, 5, 6, 7)
     bands = (0, 1, 2, 3, 4, 5, 6)
-    labels= ('GALEX FUV', 'GALEX NUV', 'SDSS u', 'SDSS g', 'SDSS r', 'SDSS i', 'SDSS z')
+    labels= ('GALEX FUV', 'GALEX NUV', 'SDSS u', 'SDSS g', 'SDSS r', 'SDSS i', 'VISTA Z')
     obs = ('lf1500', 'lf2300','lfu','lfg','lfr', 'lfi', 'lfz')
    
     for subplot, idx, b in zip(subplots, idx, bands):
@@ -108,11 +107,11 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ind = np.where(LFs_dust[0,3,b,:] < 0.)
             y = LFs_dust[0,3,b,ind]
             ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted', label ='disks')
-            ind = np.where(LFs_dust[0,0,b,:] < 0.)
-            y = LFs_dust[0,0,b,ind]
-            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='merger-driven bulges')
             ind = np.where(LFs_dust[0,1,b,:] < 0.)
             y = LFs_dust[0,1,b,ind]
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='merger-driven bulges')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]
             ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot', label='disk-ins-driven bulges')
         else:
             ind = np.where(LFs_dust[0,4,b,:] < 0.)
@@ -125,11 +124,11 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ind = np.where(LFs_dust[0,3,b,:] < 0.)
             y = LFs_dust[0,3,b,ind]
             ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
-            ind = np.where(LFs_dust[0,0,b,:] < 0.)
-            y = LFs_dust[0,0,b,ind]
-            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
             ind = np.where(LFs_dust[0,1,b,:] < 0.)
             y = LFs_dust[0,1,b,ind]
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]
             ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot')
 
         if idx == 6:
@@ -142,7 +141,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     subplots = (231, 232, 234, 235)
     idx = (0, 1, 2, 3)
     bands = (7, 8, 9, 10)
-    labels= ('UKIDSS Y', 'UKIDSS J', 'UKIDSS H', 'UKIDSS K')
+    labels= ('VISTA Y', 'VISTA J', 'VISTA H', 'VISTA K')
     obs = ('lfy', 'lfj','lfh','lfk')
     
     for subplot, idx, b in zip(subplots, idx, bands):
@@ -183,11 +182,11 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ind = np.where(LFs_dust[0,3,b,:] < 0.)
             y = LFs_dust[0,3,b,ind]
             ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted', label ='disks')
-            ind = np.where(LFs_dust[0,0,b,:] < 0.)
-            y = LFs_dust[0,0,b,ind]
-            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='merger-driven bulges')
             ind = np.where(LFs_dust[0,1,b,:] < 0.)
             y = LFs_dust[0,1,b,ind]
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='merger-driven bulges')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]
             ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot', label='disk-ins-driven bulges')
         else:
             ind = np.where(LFs_dust[0,4,b,:] < 0.)
@@ -200,17 +199,17 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ind = np.where(LFs_dust[0,3,b,:] < 0.)
             y = LFs_dust[0,3,b,ind]
             ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
-            ind = np.where(LFs_dust[0,0,b,:] < 0.)
-            y = LFs_dust[0,0,b,ind]
-            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
             ind = np.where(LFs_dust[0,1,b,:] < 0.)
             y = LFs_dust[0,1,b,ind]
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]
             ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot')
 
         if idx == 0:
             common.prepare_legend(ax, ['k','k','b','r','LightSalmon','grey','grey'], bbox_to_anchor=[2.2,-0.3])
 
-    common.savefig(outdir, fig, "UKIDSS_luminosity_functions.pdf")
+    common.savefig(outdir, fig, "VISTA_luminosity_functions.pdf")
 
 
     xtit="$\\rm mag-5log(h) (AB)$"
@@ -245,17 +244,30 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
         if(idx == 7):
             ind = np.where(LFs_dust[0,4,b,:] < 0.)
             y = LFs_dust[0,4,b,ind]-np.log10(dm)
-            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3, label ='Shark')
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3, label ='Shark z=0')
+
+            #plot same line to get the right labels
+            ind = np.where(LFs_dust[1,4,b,:] < 0.)
+            y = LFs_dust[1,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'SlateGray', linewidth=2, label ='Shark z=0.25')
+
+            ind = np.where(LFs_dust[2,4,b,:] < 0.)
+            y = LFs_dust[2,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'Gray', linewidth=2, label ='Shark z=0.5')
+
+            ind = np.where(LFs_dust[0,4,b,:] < 0.)
+            y = LFs_dust[0,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=1, label ='Shark intrinsic z=0')
 
             ind = np.where(LFs_dust[0,3,b,:] < 0.)
             y = LFs_dust[0,3,b,ind]-np.log10(dm)
-            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted', label ='disks')
-            ind = np.where(LFs_dust[0,0,b,:] < 0.)
-            y = LFs_dust[0,0,b,ind]-np.log10(dm)
-            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='merger-driven bulges')
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted', label ='disks z=0')
             ind = np.where(LFs_dust[0,1,b,:] < 0.)
             y = LFs_dust[0,1,b,ind]-np.log10(dm)
-            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot', label='disk-ins-driven bulges')
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='merger-driven bulges z=0')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot', label='disk-ins-driven bulges z=0')
         else:
             ind = np.where(LFs_dust[0,4,b,:] < 0.)
             y = LFs_dust[0,4,b,ind]-np.log10(dm)
@@ -264,15 +276,22 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
                ind = np.where(LFs_nodust[0,4,b,:] < 0.)
                y = LFs_nodust[0,4,b,ind]-np.log10(dm)
                ax.plot(xlf_obs[ind],y[0],'k', linewidth=1)
-   
+            if(idx >= 3):
+               ind = np.where(LFs_dust[1,4,b,:] < 0.)
+               y = LFs_dust[1,4,b,ind]-np.log10(dm)
+               ax.plot(xlf_obs[ind],y[0],'SlateGray', linewidth=2)
+               ind = np.where(LFs_dust[2,4,b,:] < 0.)
+               y = LFs_dust[2,4,b,ind]-np.log10(dm)
+               ax.plot(xlf_obs[ind],y[0],'Grey', linewidth=2)
+ 
             ind = np.where(LFs_dust[0,3,b,:] < 0.)
             y = LFs_dust[0,3,b,ind]-np.log10(dm)
             ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
-            ind = np.where(LFs_dust[0,0,b,:] < 0.)
-            y = LFs_dust[0,0,b,ind]-np.log10(dm)
-            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
             ind = np.where(LFs_dust[0,1,b,:] < 0.)
             y = LFs_dust[0,1,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]-np.log10(dm)
             ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot')
 
 
@@ -412,7 +431,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Dye+2010")
 
         if idx == 7:
-            common.prepare_legend(ax, ['k','k','b','r','LightSalmon','grey','grey','grey','grey'], bbox_to_anchor=[1.1,0.1])
+            common.prepare_legend(ax, ['k','SlateGray','Gray','k','b','r','LightSalmon','grey','grey','grey','grey'], bbox_to_anchor=[1.1,-0.1])
 
     common.savefig(outdir, fig, "IR_luminosity_functions.pdf")
 
@@ -553,7 +572,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
                            'mvir_subhalo', 'type', 'mean_stellar_age', 
                            'sfr_disk', 'sfr_burst', 'id_galaxy')}
 
-    z = (0 , 0)#, 0.25, 0.5)
+    z = (0, 0.25, 0.5)
     snapshots = redshift_table[z]
 
     # Create histogram
