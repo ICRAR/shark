@@ -298,6 +298,25 @@ then
 	done
 fi
 
+# If the user requested to plot things at the end of the execution
+# we make sure that our shark instances output the required snapshots;
+# otherwise the plots are almost doomed to fail. We do this by calculating the
+# required snapshots for a given set of redshifts, and appending those
+# snapshots to the output_snapshots parameter of the execution group in the
+# configuration file. shark can deal with repeated values for that preference,
+# so even if the snapshots were listed already there is no harm done
+#
+# For the time being we "just know" that the plots will require the snapshots
+# corresponding to z=[0, 0.5, 1, 2, 3, 4], so we hardcode that list here. In
+# the future we could probably embed that information the the plotting modules
+# themselves so it isn't required here
+if [ -n "${shark_plot}" ]
+then
+	output_snapshots=`"${shark_python_exec}" "$SHARK_HPC_DIR/../standard_plots/common.py" snapshots "${config_file}" 0 0.5 1 2 3 4`
+	info "Ensuring that shark produces snapshots $output_snapshots"
+	sed -i "s/^output_snapshots.*/& $output_snapshots/" "${config_file}"
+fi
+
 # Calculate which tasks run where, and how many CPUs and how much memory
 # of each them can consume based on the requested resources
 #

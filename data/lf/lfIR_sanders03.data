@@ -1,0 +1,21 @@
+# total IR luminosity function at z=0 from Sanders etal (2003, AJ 126, 1607)
+# based on IRAS Revised Bright Galaxy Sample, using 1/Vmax method
+# L_IR is L(8-1000 mu), computed using all 4 IRAS bands
+#
+# assume cosmology Omega0=0.3, Lambda0=0.7, H0=75
+# distances corrected using large-scale flow model
+#
+# L_IR in Lsun
+# phi is dn/dMag(L_IR)  in Mpc^-3 Mag^-1
+# 
+#log(L_IR) Ngal	V/Vmax err	phi	 err
+7.75	   3	0.16  0.03	11.2e-2  6.5e-2  
+8.25	   3	0.28  0.05	14.0e-3  8.1e-3  
+8.75	   9	0.39  0.04	13.2e-3  4.3e-3  
+9.25	   24	0.37  0.02	6.7e-3   1.3e-3  
+9.75	   69	0.56  0.02	32.9e-4  4.0e-4  
+10.25	   168	0.44  0.01	17.0e-4  1.3e-4  
+10.75	   157	0.45  0.01	26.5e-5  2.1e-5  
+11.25	   122	0.53  0.02	38.6e-6  3.5e-6  
+11.75	   56	0.50  0.02	30.1e-7  4.0e-7  
+12.25	   18	0.44  0.03	14.5e-8  3.4e-8  

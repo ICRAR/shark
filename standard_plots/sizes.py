@@ -107,6 +107,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     bulge_size_diskins[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
+    ind = np.where(mbulge > 0)
     BH[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
     
@@ -179,6 +180,8 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
         errdn = bulge_size[0,1,ind]
         errup = bulge_size[0,2,ind]
         ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark bulges")
+        #for i in zip(bulge_size[0,0,:]):
+        #    print i
 
     ind = np.where((bulge_size_diskins[0,0,:] != 0) & (xmf > 10.2))
     if(len(xmf[ind]) > 0):
@@ -396,6 +399,8 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
         xplot = xmf[ind]
         yplot = BT_fractions[0,ind]
         ax.plot(xplot,yplot[0],'k', label ='bulges built by all processes')
+        #for i in zip(BT_fractions[0,:]):
+        #    print i
 
     ind = np.where(BT_fractions_nodiskins[0,:] >= 0)
     if(len(xmf[ind]) > 0):
@@ -423,10 +428,10 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
     xplot = xmf[ind]
     yplot = BT_stable0[ind]
     ax.plot(xplot,yplot,color='Goldenrod',linestyle='dashdot',label='$\\epsilon_{\\rm disk}=0$')
-    ind = np.where(BT_stable0p5 >= 0)
+    ind = np.where(BT_stable1 >= 0)
     xplot = xmf[ind]
-    yplot = BT_stable0p5[ind]
-    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=0.5$')
+    yplot = BT_stable1[ind]
+    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$\\epsilon_{\\rm disk}=1$')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     mM16, fM16, errdnfM16, errupfM16 = common.load_observation(obsdir, 'Morph/Moffet16.dat', [0,1,2,3])

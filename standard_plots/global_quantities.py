@@ -95,8 +95,8 @@ def prepare_data(hdf5_data, redshifts):
     mstarbden_mergers = mstar_burst_mergers / volh
     mstarbden_diskins = mstar_burst_diskins / volh
 
-    mH2den    = mH2 / volh
-    mHIden   = mHI / volh
+    mH2den    = mH2 / volh 
+    mHIden    = mHI / volh / XH
 
     h = np.zeros(shape = (len(redshifts)))
     omegaHI = np.zeros(shape = (len(redshifts)))
@@ -659,9 +659,9 @@ def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
     ax2.set_xlabel("redshift",fontsize=13)
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
-    ax.plot(us.look_back_time(redshifts), mcold + np.log10(Omegab), 'k', label='total neutral ISM')
-    ax.plot(us.look_back_time(redshifts), mHI + np.log10(Omegab), 'b', linestyle = 'dotted', label='atomic')
-    ax.plot(us.look_back_time(redshifts), mH2 + np.log10(Omegab), 'r', linestyle = 'dashed',label='molecular')
+    ax.plot(us.look_back_time(redshifts), mcold + np.log10(Omegab) - np.log10(XH), 'k', label='total neutral ISM')
+    ax.plot(us.look_back_time(redshifts), mHI + np.log10(Omegab) - np.log10(XH), 'b', linestyle = 'dotted', label='atomic')
+    ax.plot(us.look_back_time(redshifts), mH2 + np.log10(Omegab) - np.log10(XH), 'r', linestyle = 'dashed',label='molecular')
 
     common.prepare_legend(ax, ['k','b','r'], loc=1)
     common.savefig(outdir, fig, "omega_neutral.pdf")

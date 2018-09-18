@@ -453,8 +453,8 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	// Assign velocities using NFW velocity dispersion at the radius in which the galaxy is and assuming isotropy.
 	double sigma = std::sqrt(0.333 * constants::G * halo->Mvir * enclosed_mass(rproj, c) / (rvir * rproj));
 
-	//maximum 3D velocity before the galaxies escapes the potential well.
-	double vmax  = 2.0 * sigma/std::sqrt(0.333);
+	// Add the velocity bias of Dieman et al. (2005) found between subhalos and DM particles.
+	sigma = sigma * 1.12 * std::pow(rproj, -0.1);
 
 	std::normal_distribution<double> normal_distribution(0, sigma);
 	xyz<double> delta_v {normal_distribution(generator), normal_distribution(generator), normal_distribution(generator)};
