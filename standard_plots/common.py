@@ -234,6 +234,32 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
 
     return list(data.values())
 
+def read_sfh(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
+    """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
+
+    data = collections.OrderedDict()
+    for idx, subv in enumerate(subvolumes):
+
+        fname = os.path.join(model_dir, str(snapshot), str(subv), 'star_formation_histories.hdf5')
+        print('Reading SFH data from %s' % fname)
+        with h5py.File(fname, 'r') as f:
+            if idx == 0:
+                delta_t = f['delta_t'].value
+                LBT     = f['lbt_mean'].value
+
+            for gnames, dsname in fields.items():
+                group = f[gnames]
+                full_name = '%s/%s' % (gnames, dsname)
+                l = data.get(full_name, None)
+                if l is None:
+                    l = group[dsname].value
+                else:
+                    l = np.concatenate([l, group[dsname].value])
+                data[full_name] = l
+
+    return list(data.values()), delta_t, LBT
+
+
 def read_photometry_data(model_dir, snapshot, subvolumes):
     """Read the SharkSED.csv file for the given model/snapshot/subvolume"""
 

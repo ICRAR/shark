@@ -31,6 +31,7 @@ Zsun = 0.0127
 XH = 0.72
 PI = 3.141592654
 MpcToKpc = 1e3
+c_light = 299792458.0 #m/s
 
 # Mass function initialization
 
@@ -511,19 +512,71 @@ def plot_colours(plt, outdir, obsdir, h0, colours_dist):
         common.prepare_legend(ax, ['grey','r'], loc = 2)
     
     common.savefig(outdir, fig, 'gr_colour_z0.pdf')
+  
+def plot_individual_seds(plt, outdir, obsdir, h0, SEDs_dust_z0, total_sfh_z0, gal_props_z0, LBT):
+
+    #wavelength in angstroms.
+    file = obsdir+'/Models/Shark_SED_bands.dat'
+    lambda_bands = np.loadtxt(file,usecols=[0],unpack=True)
+    freq_bands   = c_light / (lambda_bands * 1e-10) #in Hz
+
+    print lambda_bands, freq_bands
+    xtit="$\\rm log_{10}(\lambda/Ang)$"
+    ytit="$\\rm log_{10}(Flux/ erg\, s^{-1}\, cm^{-2}\, Ang^{-1})$"
+
+    xmin, xmax, ymin, ymax = 3.0, 6.0, -20.0, -14.0
+    xleg = xmin + 0.2 * (xmax-xmin)
+    yleg = ymax - 0.1 * (ymax-ymin)
+
+    fig = plt.figure(figsize=(12,12))
+
+    subplots = (331, 332, 334, 335, 336, 337, 338, 339)
+    idx = (0, 1, 2, 3, 4, 5, 6, 7, 8)
+    ages= (11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0)
+ 
+    for subplot, idx in zip(subplots, idx):
+
+        ax = fig.add_subplot(subplot)
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(2, 2, 1, 1))
+        ax.text(xleg,yleg, 'age=%s' % str(ages[idx]))
+
+        ax2 = ax.twiny()
+        ax2.set_xlim(ax.get_xlim())
+        ax2.set_ylim(ax.get_ylim())
+        new_tick_locations  = np.array([3,3.5,4.0,4.5,5.0,5.5,6.0])
+        new_ytick_locations = np.array([-20,-19,-18,-17,-16,-15,-14])
+   
+        ax2.set_xticks(new_tick_locations)
+        ax2.set_xticklabels(4.533*new_tick_locations-13.6, fontsize=12)
+        ax2.set_xlabel("$\\rm LBT/Gyr$",fontsize=12)
+
+        ax2.set_yticks(new_ytick_locations)
+        ax2.set_yticklabels(1.5*new_ytick_locations-18.5, fontsize=12)
+        ax2.set_ylabel("$\\rm log_{10}(\\rm SFR/M_{\odot}\,yr^{-1})$",fontsize=12)
+
+        ind = np.where((gal_props_z0[:,0] > ages[idx]-0.2) & (gal_props_z0[:,0] < ages[idx]+0.2))
+        #choose first galaxy
+        yplot = np.log10(pow(10.0, (SEDs_dust_z0[ind[0],4,:] + 48.6)/(-2.5)) * freq_bands / lambda_bands)
+        xplot = np.log10(lambda_bands) 
+
+        ax.plot(xplot, yplot, 'kx')
+        lowsfr = np.where(total_sfh_z0[ind[0],:] < 0.1)
+        total_sfh_z0[ind[0],lowsfr] = 0.01
+        ax.plot(0.22*LBT + 3.0, 0.666 * np.log10(total_sfh_z0[ind[0],:]) + 12.3324, 'r') 
+
+    common.savefig(outdir, fig, "SEDs_ages.pdf")
+
     
-def prepare_data(hdf5_data, phot_data, LFs_dust, LFs_nodust, colours_dist, index, nbands):
-    
+  
+def prepare_data(hdf5_data, sfh, phot_data, ids_sed, LFs_dust, LFs_nodust, colours_dist, index, nbands, delta_t):
+   
+    #star_formation_histories and SharkSED have the same number of galaxies in the same order, and so we can safely assume that to be the case.
+    #to select the same galaxies in galaxies.hdf5 we need to ask for all of those that have a stellar mass > 0, and then assume that they are in the same order.
+
     (h0, _, mdisk, mbulge, mhalo, mshalo, typeg, age, 
      sfr_disk, sfr_burst, id_gal) = hdf5_data
-    
-    mass   = np.zeros(shape = len(mhalo))
-    masssh = np.zeros(shape = len(mhalo))
-
-    ind = np.where((typeg <= 0) & (mdisk+mbulge > 1e5))
-    mass[ind] = np.log10(mhalo[ind]) - np.log10(float(h0))
-    ind = np.where((typeg <= 1) & (mdisk+mbulge > 1e5))
-    masssh[ind] = np.log10(mshalo[ind]) - np.log10(float(h0))
+   
+    (bulge_diskins_hist, bulge_mergers_hist, disk_hist) = sfh
 
     #components:
     #(len(my_data), 2, 2, 5, nbands)
@@ -532,9 +585,13 @@ def prepare_data(hdf5_data, phot_data, LFs_dust, LFs_nodust, colours_dist, index
     #2: total bulge
     #3: disk
     #4: total
-    SEDs_dust = phot_data[:,1,0,:,:]
+    SEDs_dust   = phot_data[:,1,0,:,:]
     SEDs_nodust = phot_data[:,0,0,:,:]
-    
+    ngals       = len(SEDs_dust[:,0,0])
+    nsnap       = len(bulge_diskins_hist[0,:])
+    total_sfh = np.zeros(shape = (ngals, nsnap))
+    gal_props = np.zeros(shape = (ngals, 4))
+
     for i in range(0,nbands):
         for c in range(0,5):
             #calculate LF with bands with dust
@@ -563,6 +620,18 @@ def prepare_data(hdf5_data, phot_data, LFs_dust, LFs_nodust, colours_dist, index
         H, bins_edges  = np.histogram(gbandl[ind] - rbandl[ind],bins=np.append(cbins,cupp))
         colours_dist[index,mag,1,:] = colours_dist[index,mag,1,:] + H
         colours_dist[index,mag,1,:] = colours_dist[index,mag,1,:] / (len(gbandl[ind]) * dc)
+ 
+    for s in range(0,nsnap):
+        total_sfh[:,s] = bulge_diskins_hist[:,s] + bulge_mergers_hist[:,s] + disk_hist[:,s]
+        total_sfh[:,s] = total_sfh[:,s]/delta_t[s]
+
+    ind = np.where((mdisk+mbulge) > 0)
+    gal_props[:,0] = age[ind]
+    gal_props[:,1] = mdisk[ind] + mbulge[ind]
+    gal_props[:,2] = mbulge[ind] / (mdisk[ind] + mbulge[ind])
+    gal_props[:,3] = sfr_burst[ind] + sfr_disk[ind]
+
+    return (SEDs_dust, total_sfh, gal_props)
 
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
@@ -572,13 +641,18 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
                            'mvir_subhalo', 'type', 'mean_stellar_age', 
                            'sfr_disk', 'sfr_burst', 'id_galaxy')}
 
-    z = (0, 0.25, 0.5)
+    sfh_fields = {'bulges_diskins': ('star_formation_rate_histories'),
+                  'bulges_mergers': ('star_formation_rate_histories'),
+                  'disks': ('star_formation_rate_histories')}
+
+    z = (0, 0, 0)#0.25, 0.5)
     snapshots = redshift_table[z]
 
     # Create histogram
     for index, snapshot in enumerate(snapshots):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
+        sfh, delta_t, LBT = common.read_sfh(model_dir, snapshot, sfh_fields, subvols)
         seds, ids, nbands = common.read_photometry_data(model_dir, snapshot, subvols)
         
         if(index == 0):
@@ -586,12 +660,17 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
             LFs_nodust   = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
             colours_dist = np.zeros(shape = (len(z), len(magbins)-1, 2, len(cbins)))
 
-        prepare_data(hdf5_data, seds, LFs_dust, LFs_nodust, colours_dist, index, nbands)
+        (SEDs_dust, total_sfh, gal_props) = prepare_data(hdf5_data, sfh, seds, ids, LFs_dust, LFs_nodust, colours_dist, index, nbands, delta_t)
 
         h0, volh = hdf5_data[0], hdf5_data[1]
         if(volh > 0.):
             LFs_dust[index,:]   = LFs_dust[index,:]/volh
             LFs_nodust[index,:] = LFs_nodust[index,:]/volh
+        if(index == 0):
+            SEDs_dust_z0 = SEDs_dust
+            total_sfh_z0 = total_sfh
+            gal_props_z0 = gal_props
+            LBT_z0 = LBT
 
     # Take logs
     ind = np.where(LFs_dust > 0.)
@@ -602,6 +681,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_colours(plt, outdir, obsdir, h0, colours_dist)
+    plot_individual_seds(plt, outdir, obsdir, h0, SEDs_dust_z0, total_sfh_z0, gal_props_z0, LBT_z0)
    
 if __name__ == '__main__':
     main(*common.parse_args())
