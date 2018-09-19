@@ -35,39 +35,43 @@ c_light = 299792458.0 #m/s
 
 def plot_individual_seds_z2(plt, outdir, obsdir, h0, SEDs_dust_z2, total_sfh_z2, disk_sfh_z2, sb_sfh_z2, gal_props_z2, LBT_z2):
 
+    #wavelength in angstroms.
+    file = obsdir+'/Models/Shark_SED_bands.dat'
+    lambda_bands = np.loadtxt(file,usecols=[0],unpack=True)
+    freq_bands   = c_light / (lambda_bands * 1e-10) #in Hz
+
     xtit="$\\rm log_{10}(\lambda/Ang\, (rest-frame))$"
     ytit="$\\rm log_{10}(\\nu f/ erg\, s^{-1}\, cm^{-2})$"
 
-    xmin, xmax, ymin, ymax = 3.0, 7.0, -1, 4.5
+    xmin, xmax, ymin, ymax = 3.0, 7.0, -1, 6.5
     xleg = xmin + 0.1 * (xmax-xmin)
     yleg = ymax - 0.07 * (ymax-ymin)
 
-    fig = plt.figure(figsize=(12,12))
+    fig = plt.figure(figsize=(12,8.5))
 
-    subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
-    indices  = (0, 1, 2, 3, 4, 5, 6, 7, 8)
-    sfrs     = (500.0, 250.0, 150.0, 100.0, 50.0, 25.0, 10.0, 5.0, 1.0)
-    labelsfrs=  ('$\\rm SFR/M_{\odot} yr^{-1}= 500$', '$\\rm SFR/M_{\odot} yr^{-1}= 250$', '$\\rm SFR/M_{\odot} yr^{-1}= 150$', '$\\rm SFR/M_{\odot} yr^{-1}= 100$', '$\\rm SFR/M_{\odot} yr^{-1}= 50$','$\\rm SFR/M_{\odot} yr^{-1}= 25$','$\\rm SFR/M_{\odot} yr^{-1}= 10$','$\\rm SFR/M_{\odot} yr^{-1}= 5$','$\\rm SFR/M_{\odot} yr^{-1}= 1$')
+    #subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+    subplots = (231, 232, 233, 234, 235, 236)
+    indices  = (0, 1, 2, 3, 4, 5) #, 6, 7, 8)
+    sfrs     = (500.0, 250.0, 100.0, 10.0, 5.0, 1.0)
+    labelsfrs=  ('$\\rm SFR/M_{\odot} yr^{-1}= 500$', '$\\rm SFR/M_{\odot} yr^{-1}= 250$', '$\\rm SFR/M_{\odot} yr^{-1}= 100$', '$\\rm SFR/M_{\odot} yr^{-1}= 10$','$\\rm SFR/M_{\odot} yr^{-1}= 5$','$\\rm SFR/M_{\odot} yr^{-1}= 1$')
 
     for subplot, idx in zip(subplots, indices):
 
         ax = fig.add_subplot(subplot)
         ytitle = ' ' 
         xtitle = ' '
-        if(idx == 0 or idx == 3 or idx == 6):
+        if(idx == 0 or idx == 3):
            ytitle = ytit
-        if(idx >= 6):
+        if(idx >= 3):
            xtitle = xtit
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitle, ytitle, locators=(2, 2, 1, 1))
         ax.text(xleg,yleg, labelsfrs[idx])
         if(idx < 3):
-           ax.text(3,4.6, '13.6')
-           ax.text(4.7,4.7, 'LBT/Gyr')
-           ax.text(6.9,4.6, '0')
-        if(idx == 2 or idx == 5 or idx == 8):
-           ax.text(7.1,-1.05,'-1')
-           ax.text(7.1,3.95,'4')
-           ax.text(7.1,3, '$\\rm log_{10}(SFR/M_{\odot} yr^{-1})$', rotation='vertical')
+           ax.text(3,6.6, '13.6')
+           ax.text(4.7,6.7, 'LBT/Gyr')
+           ax.text(6.9,6.6, '10.6')
+        if(idx == 2 or idx == 5):
+           ax.text(7.1, 4.5, '$\\rm log_{10}(SFR/M_{\odot} yr^{-1})$', rotation='vertical')
 
         ind = np.where((gal_props_z2[:,3] > sfrs[idx] - 0.2*sfrs[idx]) & (gal_props_z2[:,3] < sfrs[idx] + 0.2*sfrs[idx]) & (gal_props_z2[:,1] > 1e9))
         if(len(gal_props_z2[ind,3]) > 0):
@@ -75,33 +79,51 @@ def plot_individual_seds_z2(plt, outdir, obsdir, h0, SEDs_dust_z2, total_sfh_z2,
            print 'number of galaxies', len(age_selec[0])
 
            selecgal = 0 #len(age_selec[0])/2
+           if idx > 3:
+              selecgal = 1
            #choose first galaxy
-           SEDs_selec = SEDs_dust_z2[ind,4,:]
-           SEDs_selec_d = SEDs_dust_z2[ind,2,:]
-           SEDs_selec_b = SEDs_dust_z2[ind,3,:]
+           SEDs_selec   = SEDs_dust_z2[ind,4,:]
+           SEDs_selec_b = SEDs_dust_z2[ind,2,:]
+           SEDs_selec_d = SEDs_dust_z2[ind,3,:]
          
-           tot_sfh_selec = total_sfh_z2[ind,:]
-           SED_in = pow(10.0, (SEDs_selec[0,selecgal] + 48.6)/(-2.5)) 
+           tot_sfh_selec  = total_sfh_z2[ind,:]
+           disk_sfh_selec = disk_sfh_z2[ind,:]
+           sb_sfh_selec   = sb_sfh_z2[ind,:]
+
+           SED_in   = pow(10.0, (SEDs_selec[0,selecgal] + 48.6)/(-2.5)) 
            SED_in_d = pow(10.0, (SEDs_selec_d[0,selecgal] + 48.6)/(-2.5)) 
            SED_in_b = pow(10.0, (SEDs_selec_b[0,selecgal] + 48.6)/(-2.5)) 
 
-           print 'shape SED', SED_in.shape
            yplot  = np.log10(SED_in * freq_bands)
            yplotd = np.log10(SED_in_d * freq_bands)
            yplotb = np.log10(SED_in_b * freq_bands)
+           print 'SED burst', yplotb
 
            xplot = np.log10(lambda_bands) 
            ax.plot(xplot,yplot,'kx')
            ax.plot(xplot,yplotd,'bx')
            ax.plot(xplot,yplotb,'rx')
 
-           #sfh_in = tot_sfh_selec[0,selecgal]
-           #lowsfr = np.where(sfh_in < 0.01)
-           #sfh_in[lowsfr] = 0.001
-           #ax.plot(-0.294*LBT + 7.0, np.log10(sfh_in), 'r')
+           sfh_in  = tot_sfh_selec[0,selecgal]
+           sfh_ind = disk_sfh_selec[0,selecgal]
+           sfh_inb = sb_sfh_selec[0,selecgal]
+
+           lowsfr = np.where(sfh_in < 0.01)
+           sfh_in[lowsfr] = 0.001
+           lowsfr = np.where(sfh_ind < 0.01)
+           sfh_ind[lowsfr] = 0.001
+           lowsfr = np.where(sfh_inb < 0.01)
+           sfh_inb[lowsfr] = 0.001
+
+           maxLBT = max(LBT_z2)
+           minLBT = min(LBT_z2)
+           m = 4.0/(minLBT - maxLBT)
+           b = 3.0 - m*maxLBT
+           ax.plot(m*LBT_z2 + b, np.log10(sfh_in), 'k')
+           ax.plot(m*LBT_z2 + b, np.log10(sfh_inb), 'r', linestyle='dashed')
+           ax.plot(m*LBT_z2 + b, np.log10(sfh_ind), 'b', linestyle='dotted')
 
     common.savefig(outdir, fig, "SEDs_SFRs_z2.pdf")
-
 
 def plot_individual_seds(plt, outdir, obsdir, h0, SEDs_dust_z0, SEDs_nodust_z0, total_sfh_z0, gal_props_z0, LBT):
 
@@ -183,6 +205,7 @@ def plot_individual_seds(plt, outdir, obsdir, h0, SEDs_dust_z0, SEDs_nodust_z0, 
 
     fig = plt.figure(figsize=(12,12))
     ages= (11.8, 11.0, 10.0, 9.0, 8.0, 7.0, 5.0, 4.0, 3.0)
+    colors = ('purple','Navy','Green','OrangeRed','red','DarkRed','FireBrick','Crimson','IndianRed','LightCoral','Maroon','brown','Sienna','SaddleBrown','Chocolate','Peru','DarkGoldenrod','Goldenrod','SandyBrown')
 
     for subplot, idx in zip(subplots, indices):
 
@@ -243,6 +266,8 @@ def prepare_data(hdf5_data, sfh, phot_data, ids_sed, index, nbands):
 
     for s in range(0,nsnap):
         total_sfh[:,s] = bulge_diskins_hist[:,s] + bulge_mergers_hist[:,s] + disk_hist[:,s] #in Msun/yr
+        sb_sfh[:,s]    = bulge_diskins_hist[:,s] + bulge_mergers_hist[:,s]
+        disk_sfh[:,s]  = disk_hist[:,s]
 
     ind = np.where((mdisk+mbulge) > 0)
     gal_props[:,0] = 13.6-age[ind]
