@@ -186,15 +186,15 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
 
 def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vmax_halo_gal):
 
-    #print 'sizes disk centrals'
-    #for i,j,p in zip(disk_size_cen[0,0,:],disk_size_cen[0,1,:],disk_size_cen[0,2,:]):
-    #    print i,j,p
-    #print 'disk sizes satellites'
-    #for i,j,p in zip(disk_size_sat[0,0,:],disk_size_sat[0,1,:],disk_size_sat[0,2,:]):
-    #    print i,j,p
-    #print 'sizes bulges'
-    #for i,j,p in zip(bulge_size[0,0,:],bulge_size[0,1,:],bulge_size[0,2,:]):
-    #    print i,j,p
+    print 'sizes disk centrals'
+    for i,j,p in zip(disk_size_cen[0,0,:],disk_size_cen[0,1,:],disk_size_cen[0,2,:]):
+        print i,j,p
+    print 'disk sizes satellites'
+    for i,j,p in zip(disk_size_sat[0,0,:],disk_size_sat[0,1,:],disk_size_sat[0,2,:]):
+        print i,j,p
+    print 'sizes bulges'
+    for i,j,p in zip(bulge_size[0,0,:],bulge_size[0,1,:],bulge_size[0,2,:]):
+        print i,j,p
 
     rb, r16, r84 = common.load_observation(obsdir, 'Models/SharkVariations/SizeDisksAndBulges_OtherModels.dat', [0,1,2])
     
@@ -580,7 +580,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     yplot = jbarL18[0,ind]+ 3.0
     errdn = jbarL18[1,ind]
     errup = jbarL18[2,ind]
-    ax.plot(xplot,yplot[0],color='k',linestyle='dashed', label="Lagos+18")
+    ax.plot(xplot,yplot[0],color='k',linestyle='dashed')
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='k', linestyle='dashed', alpha=0.1,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='k', linestyle='dashed', alpha=0.1,interpolate=True)
 
@@ -593,12 +593,12 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     common.prepare_legend(ax, ['k'], loc=2)
     common.savefig(outdir, fig, 'specific_am_z0_components.pdf')
 
-    #for c in range (0,2):
-    #   print 'will change selection'
-    #   for i in range (0,3):
-    #        print 'will change within the same sample'
-    #        for x,y,z,a in zip(sam_stars_disk[s,i,:,c],sam_gas_disk_mol[s,i,:,c],sam_gas_disk_atom[s,i,:,c],sam_bar[s,i,:,c]):
-    #             print x,y,z,a
+    for c in range (0,2):
+       print 'will change selection'
+       for i in range (0,3):
+            print 'will change within the same sample'
+            for x,y,z,a in zip(sam_stars_disk[s,i,:,c],sam_gas_disk_mol[s,i,:,c],sam_gas_disk_atom[s,i,:,c],sam_bar[s,i,:,c]):
+                 print x,y,z,a
 
 def plot_specific_am_ratio(plt, outdir, obsdir, sam_ratio_halo_disk, sam_ratio_halo_gal, sam_ratio_halo_disk_gas, 
                            sam_vs_sam_halo_disk, sam_vs_sam_halo_gal, sam_vs_sam_halo_disk_gas):
