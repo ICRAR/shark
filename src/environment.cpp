@@ -27,6 +27,7 @@ namespace shark {
 EnvironmentParameters::EnvironmentParameters(const Options &options)
 {
 	options.load("environment.gradual_stripping", gradual_stripping);
+	options.load("environment.ejected_mass_sat_in_ejected", ejected_mass_sat_in_ejected);
 	options.load("environment.stripping", stripping, true);
 }
 
@@ -40,7 +41,13 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 	if(parameters.stripping){
 		// Ejected gas is moved to the budget of ejected gas of the central, as this gas escaped
 		// the subhalo of the satellite.
-		central_subhalo.ejected_galaxy_gas += satellite_subhalo.ejected_galaxy_gas;
+		if(parameters.ejected_mass_sat_in_ejected){
+			central_subhalo.ejected_galaxy_gas += satellite_subhalo.ejected_galaxy_gas;
+		}
+		else{
+			central_subhalo.hot_halo_gas += satellite_subhalo.ejected_galaxy_gas;
+		}
+
 		satellite_subhalo.ejected_galaxy_gas.restore_baryon();
 
 		if(parameters.gradual_stripping){
@@ -50,7 +57,6 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 			if(satellite_subhalo.hot_halo_gas.mass > 0 || satellite_subhalo.ejected_galaxy_gas.mass > 0 || satellite_subhalo.cold_halo_gas.mass > 0){
 
 				central_subhalo.hot_halo_gas += satellite_subhalo.hot_halo_gas;
-				central_subhalo.hot_halo_gas += satellite_subhalo.cold_halo_gas;
 
 				satellite_subhalo.hot_halo_gas.restore_baryon();
 				satellite_subhalo.cold_halo_gas.restore_baryon();

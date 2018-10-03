@@ -42,6 +42,7 @@ public:
 
 	bool gradual_stripping = false;
 	bool stripping = true;
+	bool ejected_mass_sat_in_ejected = true;
 
 };
 
