@@ -709,9 +709,17 @@ public:
 	 */
 	float mass_fraction_subhalos = -1;
 
-	/** TODO: document these */
+
+	/** Vvir: virial velocity of the halo [km/s]
+	 * Mvir: dark matter mass of the halo [Msun/h]
+	 * Mgas: gas mass in the halo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
+	 * concentration: NFW concentration parameter of halo
+	 * lambda: spin parameter of halo
+	 * cooling_rate: cooling rate experienced by this halo in Msun/Gyr/h.
+	 *  */
 	float Vvir = 0;
 	float Mvir = 0;
+	float Mgas = 0;
 	float concentration = 0;
 	float lambda = 0;
 	float cooling_rate = 0;

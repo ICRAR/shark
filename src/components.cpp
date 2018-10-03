@@ -235,6 +235,7 @@ void Halo::add_subhalo(const SubhaloPtr &&subhalo)
 {
 	// Add subhalo mass to halo
 	Mvir += subhalo->Mvir;
+	Mgas += subhalo->Mgas;
 
 	// Assign subhalo to proper member
 	if (subhalo->subhalo_type == Subhalo::CENTRAL) {
