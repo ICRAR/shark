@@ -53,6 +53,8 @@ public:
 
 	std::map<int,double> redshifts {};
 
+	bool hydrorun = false;
+
 
 	void load_simulation_tables(const std::string &redshift_file);
 };

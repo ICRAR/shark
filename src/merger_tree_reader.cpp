@@ -111,6 +111,11 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
 	vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
 
+	vector<float> Mgas (Mvir.size());
+	if (simulation_params.hydrorun) {
+		Mgas = batch_file.read_dataset_v<float>("haloTrees/Mgas");
+	}
+
 	//Read indices and the snapshot number at which the subhalo lives.
 	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
 	vector<Subhalo::id_t> nodeIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/nodeIndex");
@@ -122,6 +127,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
 	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
 	vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
+
 
 	unsigned long n_subhalos = Mvir.size();
 	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
@@ -144,6 +150,14 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 
 		if (snap[i] < simulation_params.min_snapshot) {
 			return;
+		}
+
+		//Check that this subhalo has a DM mass > 0 in the case of hydrodynamical simulation input. The latter can happen at the resolution limit.
+		//If gas mass is larger than total virial mass, then skip this subhalo.
+		if(simulation_params.hydrorun){
+			if(Mvir[i]-Mgas[i] < 0){
+				return;
+			}
 		}
 
 		auto subhalo = std::make_shared<Subhalo>(nodeIndex[i], snap[i]);
@@ -178,6 +192,12 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		//Assign mass.
 		subhalo->Mvir = Mvir[i];
 
+		//Assign gas mass if the simulation is a hydrodynamical simulation.
+		if(simulation_params.hydrorun){
+			subhalo->Mgas = Mgas[i];
+			subhalo->Mvir -= subhalo->Mgas;
+		}
+
 		//Assign position
 		subhalo->position.x = position[3 * i];
 		subhalo->position.y = position[3 * i + 1];
@@ -192,6 +212,12 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		subhalo->L.x = L[3 * i];
 		subhalo->L.y = L[3 * i + 1];
 		subhalo->L.z = L[3 * i + 2];
+
+		//In case of a hydro simulation input, we need to scale the angular momentum to reflect the DM only value.
+		if(simulation_params.hydrorun){
+			double scaling = (Mvir[i] - Mgas[i]) / (Mvir[i]);
+			subhalo->L *= scaling;
+		}
 
 		subhalo->Vcirc = Vcirc[i];
 

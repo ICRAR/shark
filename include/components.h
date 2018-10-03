@@ -506,7 +506,8 @@ public:
 	id_t haloID = 0;
 
 	/** Vvir: virial velocity of the subhalo [km/s]
-	 * Mvir: virial mass of the subhalo [Msun/h]
+	 * Mvir: dark matter mass of the subhalo [Msun/h]
+	 * Mgas: gas mass in the subhalo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
 	 * L: angular momentum of subhalo [Msun/h km/s Mpc/h]
 	 * Vcirc: maximum circular velocity of the subhalo [km/s]
 	 * concentration: NFW concentration parameter of subhalo
@@ -514,6 +515,7 @@ public:
 	 *  */
 	float Vvir = 0;
 	float Mvir = 0;
+	float Mgas = 0;
 	xyz<float> L {0, 0, 0};
 	float Vcirc = 0;
 	float concentration = 0;
