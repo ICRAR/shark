@@ -121,7 +121,7 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sigmamainseq
 
     #predicted relation
     inputs = [0,1,2,3,4,5]
-    labels = ['$\\rm log_{10}(SSFR/Gyr^{-1})>-2.5$','$\\alpha=0.05$','$\\alpha=0.1$','$\\alpha=0.12$','$\\alpha=0.158$','$\\alpha=0.25$']
+    labels = ['$\\rm all$','$\\rm log_{10}(SSFR/Gyr^{-1})>-2$','$\\alpha=0.1$','$\\alpha=0.12$','$\\alpha=0.158$','$\\alpha=0.25$']
     colors = ['k','b','LightSteelBlue','Orange','Red','DarkSalmon']
     lines  = ['solid','dashed','dotted','dashdot','solid','dotted']
     for j in zip(inputs[:]):
@@ -314,14 +314,17 @@ def prepare_data(hdf5_data, index, redshift, mainseqsf, passive_fractions, hist_
                    flag[ind] = 1
 
     ind = np.where((mass > 0) & (sfr != 0))
-    calculate_sigma_sfr_fromfixssfr(sfr[ind], mass[ind], sigmamainseqsf[index,0,:], -2.0, 1.0, active_flag[ind])
-    calculate_sigma_sfr_frommsfit(sfr[ind], mass[ind], sigmamainseqsf[index,1,:], ms_fit_slope,ms_fit_offs, 1.0/20.0, active_flag[ind])
+    calculate_sigma_sfr_fromfixssfr(sfr[ind], mass[ind], sigmamainseqsf[index,0,:], -3.5, 1.0, active_flag[ind])
+    #calculate_sigma_sfr_frommsfit(sfr[ind], mass[ind], sigmamainseqsf[index,1,:], ms_fit_slope,ms_fit_offs, 1.0/20.0, active_flag[ind])
+    calculate_sigma_sfr_fromfixssfr(sfr[ind], mass[ind], sigmamainseqsf[index,1,:], -2, 1.0, active_flag[ind])
     calculate_sigma_sfr_frommsfit(sfr[ind], mass[ind], sigmamainseqsf[index,2,:], ms_fit_slope,ms_fit_offs, 1.0/10.0, active_flag[ind])
     calculate_sigma_sfr_frommsfit(sfr[ind], mass[ind], sigmamainseqsf[index,3,:], ms_fit_slope,ms_fit_offs, 1.0/8.0, active_flag[ind])
-    calculate_sigma_sfr_frommsfit(sfr[ind], mass[ind], sigmamainseqsf[index,4,:], ms_fit_slope,ms_fit_offs, 1.0/6.0, active_flag[ind])
-    calculate_sigma_sfr_frommsfit(sfr[ind], mass[ind], sigmamainseqsf[index,5,:], ms_fit_slope,ms_fit_offs, 1.0/4.0, active_flag[ind])
-
-    calculate_sigma_sfr_frommsfit(sfr, mass, sigmamainseqsf[index,6,:], ms_fit_slope, ms_fit_offs, 0.15848931924, active_flag)
+    #calculate_sigma_sfr_frommsfit(sfr[ind], mass[ind], sigmamainseqsf[index,4,:], ms_fit_slope,ms_fit_offs, 1.0/6.0, active_flag[ind])
+    #calculate_sigma_sfr_frommsfit(sfr[ind], mass[ind], sigmamainseqsf[index,5,:], ms_fit_slope,ms_fit_offs, 1.0/4.0, active_flag[ind])
+    #calculate_sigma_sfr_frommsfit(sfr, mass, sigmamainseqsf[index,6,:], ms_fit_slope, ms_fit_offs, 0.15848931924, active_flag)
+    ind = np.where((mass > 0) & (sfr != 0) & (mvir_hosthalo <= 2e12))
+    calculate_sigma_sfr_fromfixssfr(sfr[ind], mass[ind], sigmamainseqsf[index,4,:], -3.5, 1.0, active_flag[ind])
+    calculate_sigma_sfr_fromfixssfr(sfr[ind], mass[ind], sigmamainseqsf[index,5,:], -2, 1.0, active_flag[ind])
 
 
     for i in range(0,len(xmflr)):
@@ -344,19 +347,20 @@ def prepare_data(hdf5_data, index, redshift, mainseqsf, passive_fractions, hist_
 
     return (mass, ms_fit_slope, ms_fit_offs)
 
-def main(modeldir, outdir, subvols, obsdir):
+def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
-    zlist = ["199","174", "156", "131", "113", "99"]
-    redshifts = [0, 0.5, 1.0, 2.0, 3.0, 4.0]
+    z = [0, 0.5, 1.0, 2.0, 3.0, 4.0]
+    snapshots = redshift_table[z]
+
     plt = common.load_matplotlib()
 
-    mainseqsf          = np.zeros(shape = (len(zlist), 3, len(xmf)))
-    sigmamainseqsf     = np.zeros(shape = (len(zlist), 7, len(xmf)))
+    mainseqsf          = np.zeros(shape = (len(z), 3, len(xmf)))
+    sigmamainseqsf     = np.zeros(shape = (len(z), 7, len(xmf)))
 
-    passive_fractions = np.zeros(shape = (len(zlist), 3, len(xmf2)))
-    passive_fractions_cens_sats = np.zeros(shape = (len(zlist), 2, len(xmflr), len(xmf2)))
+    passive_fractions = np.zeros(shape = (len(z), 3, len(xmf2)))
+    passive_fractions_cens_sats = np.zeros(shape = (len(z), 2, len(xmflr), len(xmf2)))
 
-    hist_ssfr = np.zeros(shape = (len(zlist), len(ssfrbins)))
+    hist_ssfr = np.zeros(shape = (len(z), len(ssfrbins)))
 
     fields = {'galaxies': ('sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge',
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
@@ -365,9 +369,9 @@ def main(modeldir, outdir, subvols, obsdir):
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type', 
 			   'mvir_hosthalo', 'rstar_bulge')}
 
-    for index in range(0,len(zlist)):
-        hdf5_data = common.read_data(modeldir, zlist[index], fields, subvols)
-        (mass, slope, offset) = prepare_data(hdf5_data, index, redshifts[index], mainseqsf, passive_fractions, 
+    for index, snapshot in enumerate(snapshots):
+        hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
+        (mass, slope, offset) = prepare_data(hdf5_data, index, z[index], mainseqsf, passive_fractions, 
                             hist_ssfr, sigmamainseqsf, passive_fractions_cens_sats)
 
         h0 = hdf5_data[0]
@@ -379,16 +383,16 @@ def main(modeldir, outdir, subvols, obsdir):
             sfr_seq[1,ind] = np.log10((sfr_disk[ind] + sfr_burst[ind]) / h0 / GyrToYr)
             slope_ms_z0  = slope
             offset_ms_z0 = offset
-            print 'scatter MS'
-            for m,a,b,c,d,e,f,g in zip(xmf[:], sigmamainseqsf[index,0,:], sigmamainseqsf[index,1,:], sigmamainseqsf[index,2,:], sigmamainseqsf[index,3,:], sigmamainseqsf[index,4,:], sigmamainseqsf[index,5,:], sigmamainseqsf[index,6,:]):
-                print m,a,b,c,d,e,f,g
+            #print 'scatter MS'
+            #for m,a,b,c,d,e,f,g in zip(xmf[:], sigmamainseqsf[index,0,:], sigmamainseqsf[index,1,:], sigmamainseqsf[index,2,:], sigmamainseqsf[index,3,:], sigmamainseqsf[index,4,:], sigmamainseqsf[index,5,:], sigmamainseqsf[index,6,:]):
+            #    print m,a,b,c,d,e,f,g
 
-            print 'passive fractions centrals'
-            for m,a,b,c,d,e,f in zip(xmf2[:], passive_fractions_cens_sats[0,0,0,:], passive_fractions_cens_sats[0,0,1,:], passive_fractions_cens_sats[0,0,2,:], passive_fractions_cens_sats[0,0,3,:], passive_fractions_cens_sats[0,0,4,:], passive_fractions_cens_sats[0,0,5,:],):
-                print m,a,b,c,d,e,f
-            print 'passive fractions satellites'
-            for m,a,b,c,d,e,f in zip(xmf2[:], passive_fractions_cens_sats[0,1,0,:], passive_fractions_cens_sats[0,1,1,:], passive_fractions_cens_sats[0,1,2,:], passive_fractions_cens_sats[0,1,3,:], passive_fractions_cens_sats[0,1,4,:], passive_fractions_cens_sats[0,1,5,:],):
-                print m,a,b,c,d,e,f
+            #print 'passive fractions centrals'
+            #for m,a,b,c,d,e,f in zip(xmf2[:], passive_fractions_cens_sats[0,0,0,:], passive_fractions_cens_sats[0,0,1,:], passive_fractions_cens_sats[0,0,2,:], passive_fractions_cens_sats[0,0,3,:], passive_fractions_cens_sats[0,0,4,:], passive_fractions_cens_sats[0,0,5,:],):
+            #    print m,a,b,c,d,e,f
+            #print 'passive fractions satellites'
+            #for m,a,b,c,d,e,f in zip(xmf2[:], passive_fractions_cens_sats[0,1,0,:], passive_fractions_cens_sats[0,1,1,:], passive_fractions_cens_sats[0,1,2,:], passive_fractions_cens_sats[0,1,3,:], passive_fractions_cens_sats[0,1,4,:], passive_fractions_cens_sats[0,1,5,:],):
+            #    print m,a,b,c,d,e,f
 
 
     # This should be the same in all HDF5 files
@@ -398,4 +402,5 @@ def main(modeldir, outdir, subvols, obsdir):
 
 
 if __name__ == '__main__':
-    main(*common.parse_args(requires_snapshot=False))
+    main(*common.parse_args())
+
