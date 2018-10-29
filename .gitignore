@@ -7,4 +7,5 @@
 /doc/_build
 
 *.pyc
+*.conf
 .DS_Store
