@@ -1,0 +1,17 @@
+# UV LF of Ly-dropouts at z~7 from Ouchi et al (2009) ApJ 706, 1136
+# 22 z-dropouts in SDF & GOODS-N fields from Subaru z & y imaging (6.5<z<7.1, peak z=6.9)
+# points measured by CGL from Fig.7 (6.5<z<7.1)
+# luminosities converted to rest-frame 1500A
+#
+# Omega=0.3, Lambda=0.7, H0=70 assumed
+# AB magnitudes
+# phi in no/mag/Mpc^3
+#
+# M_UV		    phi		       err
+-2.103E+01 	2.948E-05 	1.350E-05
+-2.120E+01 	1.414E-05 	1.206E-05
+-2.154E+01 	1.125E-05 	7.839E-06
+# upper limit from GOODS-N field
+#-2.170E+01 	3.480E-06 	0.000E+00
+# upper limit from combined SDF & GOODS-N fields
+-2.204E+01 	1.775E-06 	0.000E+00

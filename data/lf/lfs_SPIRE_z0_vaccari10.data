@@ -1,0 +1,21 @@
+# local LFs at 250, 350 500 mu from HERMES SDP data (Vaccari etal A&A 518, L20)
+# values from Table 2
+#
+# 0<z<0.2, mixture of spec & photo-z
+# 
+# assume H0=72, Omega=0.28, Lambda=0.72
+#
+# L is nu*Lnu for monochromatic LFs and L_IR for bolometric LF, in units Lsun
+# LFs phi are dn/dlog10L in units Mpc^-3 dex^-1, errors in same units
+# 0 indicates no data
+#
+# log(L)	log(phi250)	log(err250)	log(phi350)	log(err350)	log(phi500)	log(err500)	log(phiIR)	log(errIR)
+7.5	0		0		0		0		-1.80		-2.69		0		0
+8.0	-1.97		-2.27		0		0		-2.12		-2.16		0		0
+8.5	-2.23		-2.63		-2.22		-2.92		-2.84		-2.92		0		0
+9.0	-2.19		-3.00		-2.54		-3.05		-3.36		-3.56		-2.15		-3.00
+9.5	-2.38		-4.50		-3.14		-3.57		-4.88		-6.14		-2.19		-2.61
+10.0	-3.14		-4.28		-4.66		-4.80		0		0		-2.30		-2.72
+10.5	-4.62		-5.23		0		0		0		0		-2.49		-3.16
+11.0	0		0		0		0		0		0		-3.21		-3.95
+11.5	0		0		0		0		0		0		-4.24		-4.65
