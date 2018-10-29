@@ -1,0 +1,26 @@
+# LF in rest-frame UV (1500A) at z=7 from McLure etal (2010) MNRAS in press
+# based on public WFC3/IR HUDF JHK data + ACS BViz + IRAC
+# use photo-z's on sample undetected in i-band
+# LF derived using 1/Vmax method including prob distribn of photo-z's and 
+# incompleteness/contamination for 6.5<z<7.5
+# data as in Fig.5 (in email from McLure 17/3/10)
+#
+# assume Omega0=0.3, Lambda0=0.7, H0=70
+# AB magnitudes
+# phi is dn/dM_AB  in no/mag/Mpc^3
+# errors are 1-sigma on dn/dM_AB
+#
+# Note: first 5 data points from McLure etal in 0.5 or 1 mag bins
+# remaining 3 datapoints from Ouchi etal (2009) in 0.5 mag bins
+#
+# M_1500	log_10(phi)	log_10(phi+err)	log_10(phi-err)
+# McLure etal 
+  -18.10 	-2.67 		-2.51 		-2.93
+  -18.65 	-2.92 		-2.77 		-3.15
+  -19.20 	-3.12 		-2.94 		-3.44
+  -19.75 	-3.30 		-3.08 		-3.73
+  -20.55 	-3.82 		-3.56 		-4.55
+# Ouchi etal (2009)
+  -21.00	-4.48 		-4.35 		-4.80
+  -21.10	-4.68 		-4.55 		-5.70
+  -21.50	-4.95 		-4.75 		-5.46
