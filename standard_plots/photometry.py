@@ -123,6 +123,140 @@ def plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_em
 
     common.savefig(outdir, fig, "fractions_luminosity_contribution.pdf")
 
+    #z=2
+    indexz = 3 
+    fig = plt.figure(figsize=(8,8))
+    subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+    idx = (0, 1, 2, 3, 4, 5, 6, 7, 8)
+    bands = (0, 2, 4, 6, 10, 16, 19, 22, 26)
+    labels= ('GALEX FUV', 'SDSS u', 'SDSS r', 'SDSS z', 'VISTA K', 'IRAC 5.8', 'P70', 'S250', 'JCTM850')
+
+    for subplot, idx, b in zip(subplots, idx, bands):
+
+        if(idx <= 2):
+           xmin, xmax, ymin, ymax = -26, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+        elif(idx > 2 and idx <= 5):
+           xmin, xmax, ymin, ymax = -28, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+        elif(idx > 5):
+           xmin, xmax, ymin, ymax = -30, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+
+        ax = fig.add_subplot(subplot)
+        if (idx == 0 or idx == 3 or idx == 6):
+            ytitplot = ytit
+        else:
+            ytitplot = ' '
+        if (idx > 5):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytitplot, locators=(4, 4, 1, 1))
+        ax.text(xleg,yleg, labels[idx], fontsize=12)
+
+        #Predicted LF
+        if(idx == 0):
+            ind = np.where(fdisk_emission[indexz,b,:] > 0.)
+            y = np.log10(fdisk_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'b', linestyle='dotted', label ='disks')
+
+            ind = np.where(fbulge_m_emission[indexz,b,:] > 0.)
+            y = np.log10(fbulge_m_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'r', linestyle='dashed', label ='merger-driven bulges')
+
+            ind = np.where(fbulge_d_emission[indexz,b,:] > 0.)
+            y = np.log10(fbulge_d_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linestyle='dashdot', label ='disk-ins-driven bulges')
+
+        else:
+            ind = np.where(fdisk_emission[indexz,b,:] > 0.)
+            y = np.log10(fdisk_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'b', linestyle='dotted')
+
+            ind = np.where(fbulge_m_emission[indexz,b,:] > 0.)
+            y = np.log10(fbulge_m_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'r', linestyle='dashed')
+
+            ind = np.where(fbulge_d_emission[indexz,b,:] > 0.)
+            y = np.log10(fbulge_d_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linestyle='dashdot')
+
+        if idx == 0:
+            common.prepare_legend(ax, ['b','r','LightSalmon'], bbox_to_anchor=[0,1.0])
+
+    common.savefig(outdir, fig, "fractions_luminosity_contribution_z2.pdf")
+
+    #z=3
+    indexz = 4
+    fig = plt.figure(figsize=(8,8))
+    subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+    idx = (0, 1, 2, 3, 4, 5, 6, 7, 8)
+    bands = (0, 2, 4, 6, 10, 16, 19, 22, 26)
+    labels= ('GALEX FUV', 'SDSS u', 'SDSS r', 'SDSS z', 'VISTA K', 'IRAC 5.8', 'P70', 'S250', 'JCTM850')
+
+    for subplot, idx, b in zip(subplots, idx, bands):
+
+        if(idx <= 2):
+           xmin, xmax, ymin, ymax = -26, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+        elif(idx > 2 and idx <= 5):
+           xmin, xmax, ymin, ymax = -28, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+        elif(idx > 5):
+           xmin, xmax, ymin, ymax = -30, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+
+        ax = fig.add_subplot(subplot)
+        if (idx == 0 or idx == 3 or idx == 6):
+            ytitplot = ytit
+        else:
+            ytitplot = ' '
+        if (idx > 5):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytitplot, locators=(4, 4, 1, 1))
+        ax.text(xleg,yleg, labels[idx], fontsize=12)
+
+        #Predicted LF
+        if(idx == 0):
+            ind = np.where(fdisk_emission[indexz,b,:] > 0.)
+            y = np.log10(fdisk_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'b', linestyle='dotted', label ='disks')
+
+            ind = np.where(fbulge_m_emission[indexz,b,:] > 0.)
+            y = np.log10(fbulge_m_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'r', linestyle='dashed', label ='merger-driven bulges')
+
+            ind = np.where(fbulge_d_emission[indexz,b,:] > 0.)
+            y = np.log10(fbulge_d_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linestyle='dashdot', label ='disk-ins-driven bulges')
+
+        else:
+            ind = np.where(fdisk_emission[indexz,b,:] > 0.)
+            y = np.log10(fdisk_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'b', linestyle='dotted')
+
+            ind = np.where(fbulge_m_emission[indexz,b,:] > 0.)
+            y = np.log10(fbulge_m_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'r', linestyle='dashed')
+
+            ind = np.where(fbulge_d_emission[indexz,b,:] > 0.)
+            y = np.log10(fbulge_d_emission[indexz,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linestyle='dashdot')
+
+        if idx == 0:
+            common.prepare_legend(ax, ['b','r','LightSalmon'], bbox_to_anchor=[0,1.0])
+
+    common.savefig(outdir, fig, "fractions_luminosity_contribution_z3.pdf")
+
 
 def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
@@ -799,7 +933,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     #              'bulges_mergers': ('star_formation_rate_histories'),
     #              'disks': ('star_formation_rate_histories')}
 
-    z = (0, 0.25, 0.5) #, 1.0, 1.5, 2.0)
+    z = (0, 0.25, 0.5, 2.0, 3.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
     # Create histogram

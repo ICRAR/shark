@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0, 0.5, 1, 2)
+zlist = (0, 0.5, 1, 2, 6, 7, 8, 9)
 
 ##################################
 #Constants
@@ -59,7 +59,12 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, 
-     mmol_bulge) = hdf5_data
+     mmol_bulge, mbh_acc_hh, mbh_acc_sb) = hdf5_data
+
+    #if(index == 7):
+    #   for x,y,z in zip(mBH,mbh_acc_hh, mbh_acc_sb):
+    #       if(x > 0): 
+    #          print x/h0,y/h0/1e9,z/h0/1e9
 
     mbulge_mergers = mburst_mergers + mstars_bulge_mergers_assembly
     zero_bulge = np.where(rbulge <= 0)
@@ -358,7 +363,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
     xtit = "$\\rm log_{10} (\\rm M_{\\rm bulge}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
 
-    xmin, xmax, ymin, ymax = 8, 12, 5, 11
+    xmin, xmax, ymin, ymax = 8, 13, 5, 11
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -496,7 +501,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo', 'mgas_disk', 'mgas_bulge','matom_disk', 'mmol_disk', 
-                           'matom_bulge', 'mmol_bulge')}
+                           'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
 
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
