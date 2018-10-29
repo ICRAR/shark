@@ -50,6 +50,80 @@ xc    = cbins + dc/2.0
 
 magbins = [-17.13,-17.88,-18.63,-19.38,-20.13,-20.88,-21.63]
 
+def plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission):
+
+    hcorr = 5.0*np.log10(h0)
+    xlf_obs  = xlf - hcorr
+ 
+    xtit="$\\rm mag-5log(h) (AB)$"
+    ytit="$\\rm log_{10}(f_{\\rm cont})$"
+    fig = plt.figure(figsize=(8,8))
+
+    subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+    idx = (0, 1, 2, 3, 4, 5, 6, 7, 8)
+    bands = (0, 2, 4, 6, 10, 16, 19, 22, 26)
+    labels= ('GALEX FUV', 'SDSS u', 'SDSS r', 'SDSS z', 'VISTA K', 'IRAC 5.8', 'P70', 'S250', 'JCTM850')
+   
+    for subplot, idx, b in zip(subplots, idx, bands):
+
+        if(idx <= 2):
+           xmin, xmax, ymin, ymax = -26, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+        elif(idx > 2 and idx <= 5):
+           xmin, xmax, ymin, ymax = -28, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+        elif(idx > 5):
+           xmin, xmax, ymin, ymax = -30, -13, -2, 0.05
+           xleg = xmax - 0.51 * (xmax-xmin)
+           yleg = ymin + 0.1 * (ymax-ymin)
+
+        ax = fig.add_subplot(subplot)
+        if (idx == 0 or idx == 3 or idx == 6):
+            ytitplot = ytit
+        else:
+            ytitplot = ' '
+        if (idx > 5):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytitplot, locators=(4, 4, 1, 1))
+        ax.text(xleg,yleg, labels[idx], fontsize=12)
+
+        #Predicted LF
+        if(idx == 0):
+            ind = np.where(fdisk_emission[0,b,:] > 0.)
+            y = np.log10(fdisk_emission[0,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'b', linestyle='dotted', label ='disks')
+
+            ind = np.where(fbulge_m_emission[0,b,:] > 0.)
+            y = np.log10(fbulge_m_emission[0,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'r', linestyle='dashed', label ='merger-driven bulges')
+
+            ind = np.where(fbulge_d_emission[0,b,:] > 0.)
+            y = np.log10(fbulge_d_emission[0,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linestyle='dashdot', label ='disk-ins-driven bulges')
+
+        else:
+            ind = np.where(fdisk_emission[0,b,:] > 0.)
+            y = np.log10(fdisk_emission[0,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'b', linestyle='dotted')
+
+            ind = np.where(fbulge_m_emission[0,b,:] > 0.)
+            y = np.log10(fbulge_m_emission[0,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'r', linestyle='dashed')
+
+            ind = np.where(fbulge_d_emission[0,b,:] > 0.)
+            y = np.log10(fbulge_d_emission[0,b,ind])
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linestyle='dashdot')
+
+        if idx == 0:
+            common.prepare_legend(ax, ['b','r','LightSalmon'], bbox_to_anchor=[0,1.0])
+
+    common.savefig(outdir, fig, "fractions_luminosity_contribution.pdf")
+
+
 def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
     hcorr = 5.0*np.log10(h0)
@@ -67,7 +141,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     subplots = (331, 332, 334, 335, 336, 337, 338)
     idx = (0, 1, 2, 3, 4, 5, 6, 7)
     bands = (0, 1, 2, 3, 4, 5, 6)
-    labels= ('GALEX FUV', 'GALEX NUV', 'SDSS u', 'SDSS g', 'SDSS r', 'SDSS i', 'VISTA Z')
+    labels= ('GALEX FUV', 'GALEX NUV', 'SDSS u', 'SDSS g', 'SDSS r', 'SDSS i', 'SDSS z')
     obs = ('lf1500', 'lf2300','lfu','lfg','lfr', 'lfi', 'lfz')
    
     for subplot, idx, b in zip(subplots, idx, bands):
@@ -212,20 +286,113 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
     common.savefig(outdir, fig, "VISTA_luminosity_functions.pdf")
 
+    ###################################################################
+    fig = plt.figure(figsize=(12,8.5))
 
     xtit="$\\rm mag-5log(h) (AB)$"
     ytit="$\\rm log_{10}(\Phi/dex^{-1} h^3 {\\rm Mpc}^{-3})$"
 
+    xmin, xmax, ymin, ymax = -28, -15, -5, -1
+    xleg = xmin + 0.2 * (xmax-xmin)
+    yleg = ymax - 0.1 * (ymax-ymin)
+
+    subplots = (231, 232, 234, 235)
+    idx = (0, 1, 2, 3)
+    bands = (12, 13, 15, 16)
+    labels= ('IRAC 3.6', 'IRAC 4.5', 'IRAC 5.8', 'IRAC 8')
+    obs = (3.6, 4.5, 5.8, 8.0) 
+
+    vegacorr = (2.79, 3.26, 3.73, 4.40) #From Gillian Wilson webpage
+
+    file = obsdir+'/lf/lf_IRAC_zLT0p6_dai2009.data'
+    bandI,lm,p,dp = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+    indx  = np.where(p > 0)
+    bandI = bandI[indx]
+    lm    = lm[indx] - hcorr
+    yobs  = np.log10(p[indx])
+    ydn   = np.log10(p[indx]-dp[indx])
+    yup   = np.log10(p[indx]+dp[indx])
+   
+    for subplot, idx, b in zip(subplots, idx, bands):
+
+        ax = fig.add_subplot(subplot)
+        if (idx == 0 or idx == 2):
+            ytitplot = ytit
+        else:
+            ytitplot = ' '
+        if (idx == 2 or idx == 3):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytitplot, locators=(2, 2, 1, 1))
+        ax.text(xleg,yleg, labels[idx])
+
+        iband = np.where(bandI == obs[idx])
+        if(idx == 0):
+            ax.errorbar(lm[iband]+vegacorr[idx], yobs[iband], yerr=[yobs[iband]-ydn[iband],yup[iband]-yobs[iband]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Dai+2009")
+        else:
+            ax.errorbar(lm[iband]+vegacorr[idx], yobs[iband], yerr=[yobs[iband]-ydn[iband],yup[iband]-yobs[iband]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+
+        #Predicted LF
+        if(idx == 0):
+            ind = np.where(LFs_dust[0,4,b,:] < 0.)
+            y = LFs_dust[0,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3, label ='Shark')
+            ind = np.where(LFs_nodust[0,4,b,:] < 0.)
+            y = LFs_nodust[0,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=1,  label ='Shark intrinsic')
+
+            #plot same line to get the right labels
+            ax.plot(xlf_obs[0:2],xlf_obs[0:2],'SlateGray', linewidth=2, label ='Shark z=0.25')
+
+            ind = np.where(LFs_dust[0,3,b,:] < 0.)
+            y = LFs_dust[0,3,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted', label ='disks')
+            ind = np.where(LFs_dust[0,1,b,:] < 0.)
+            y = LFs_dust[0,1,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='merger-driven bulges')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot', label='disk-ins-driven bulges')
+        else:
+            ind = np.where(LFs_dust[0,4,b,:] < 0.)
+            y = LFs_dust[0,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3)
+            ind = np.where(LFs_nodust[0,4,b,:] < 0.)
+            y = LFs_nodust[0,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=1)
+
+            if(idx == 3):
+               ind = np.where(LFs_dust[1,4,b,:] < 0.)
+               y = LFs_dust[1,4,b,ind]-np.log10(dm)
+               ax.plot(xlf_obs[ind],y[0],'SlateGray', linewidth=2)
+
+            ind = np.where(LFs_dust[0,3,b,:] < 0.)
+            y = LFs_dust[0,3,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
+            ind = np.where(LFs_dust[0,1,b,:] < 0.)
+            y = LFs_dust[0,1,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot')
+
+        if idx == 0:
+            common.prepare_legend(ax, ['k','k','SlateGray','b','r','LightSalmon','grey'], bbox_to_anchor=[2.2,-0.3])
+
+    common.savefig(outdir, fig, "IRAC_luminosity_functions.pdf")
+
+    ########################################################
+    fig = plt.figure(figsize=(12,12))
     xmin, xmax, ymin, ymax = -30, -16, -5, -1
     xleg = xmin + 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
 
-    fig = plt.figure(figsize=(12,12))
 
     subplots = (331, 332, 333, 334, 335, 336, 337, 338)
     idx = (0, 1, 2, 3, 4, 5, 6, 7)
-    bands = (12, 13, 14, 15, 16, 17, 18, 19)
-    labels= ('WISE 2', 'WISE 3', 'WISE 4', 'P100', 'P160', 'S250', 'S350', 'S500')
+    bands = (14, 17, 20, 21, 22, 23, 25, 26)
+    labels= ('WISE 2', 'WISE 3', 'P100', 'P160', 'S250', 'S350', 'S500', 'JCTM850')
     
     for subplot, idx, b in zip(subplots, idx, bands):
 
@@ -296,7 +463,10 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot')
 
 
-        if idx == 4:
+        if idx == 3:
+           hobs = 0.7
+           corrhobs = np.log10(hobs/h0)
+
            file = obsdir+'/lf/L160microns.dat'
            lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
            dml       = 0.15
@@ -304,12 +474,12 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
            xm[1]     = xm[1] + dml
            tenpctocm = 3.086e19
            corrpc    = np.log10(tenpctocm)*2.0
-           xobs      = -2.5*(lm[0:14]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
-           xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
+           xobs      = -2.5*(lm[0:14]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+           xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
            dmm       = np.abs(xm[0] - xm[1])
-           yobs      = np.log10(pow(10.0,p[0:14]) * dml/dmm)-3.0*np.log10(0.677)
-           ydn       = np.log10(pow(10.0,dpn[0:14]) * dml/dmm)-3.0*np.log10(0.677)
-           yup       = np.log10(pow(10.0,dpu[0:14]) * dml/dmm)-3.0*np.log10(0.677)
+           yobs      = np.log10(pow(10.0,p[0:14]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           ydn       = np.log10(pow(10.0,dpn[0:14]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           yup       = np.log10(pow(10.0,dpu[0:14]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
           
            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*')
           
@@ -318,28 +488,31 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
            xm[1]     = xm[1] + dml
            tenpctocm = 3.086e19
            corrpc    = np.log10(tenpctocm)*2.0
-           xobs      = -2.5*(lm[15:21]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
-           xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
+           xobs      = -2.5*(lm[15:21]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+           xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
            dmm       = np.abs(xm[0] - xm[1])
-           yobs      = np.log10(pow(10.0,p[15:21]) * dml/dmm)-3.0*np.log10(0.677)
-           ydn       = np.log10(pow(10.0,dpn[15:21]) * dml/dmm)-3.0*np.log10(0.677)
-           yup       = np.log10(pow(10.0,dpu[15:21]) * dml/dmm)-3.0*np.log10(0.677)
+           yobs      = np.log10(pow(10.0,p[15:21]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           ydn       = np.log10(pow(10.0,dpn[15:21]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           yup       = np.log10(pow(10.0,dpu[15:21]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
           
            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='p')
  
 
-        if idx == 5:
+        if idx == 4:
+            hobs = 0.7
+            corrhobs = np.log10(hobs/h0)
+
             file = obsdir+'/lf/lf250_dye10.data'
             lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
             lx        = np.log10(lm[0:7])
             dml       = np.abs(lx[1] - lx[0])
             tenpctocm = 3.086e19
             corrpc    = np.log10(tenpctocm)*2.0
-            xobs      = -2.5*(np.log10(lm[0:7])-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
+            xobs      = -2.5*(np.log10(lm[0:7])-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
             dmm       = np.abs(xobs[0] - xobs[1])
-            yobs      = np.log10(p[0:7] * dml/dmm)-3.0*np.log10(0.677)
-            ydn       = np.log10((p[0:7]- dp[0:7]) * dml/dmm)-3.0*np.log10(0.677)
-            yup       = np.log10((p[0:7]+ dp[0:7]) * dml/dmm)-3.0*np.log10(0.677)
+            yobs      = np.log10(p[0:7] * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10((p[0:7]- dp[0:7]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10((p[0:7]+ dp[0:7]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
            
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
            
@@ -350,16 +523,18 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             xm[1]     = xm[1] + dml
             tenpctocm = 3.086e19
             corrpc    = np.log10(tenpctocm)*2.0
-            xobs      = -2.5*(lm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
-            pxm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
+            xobs      = -2.5*(lm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            pxm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
             dmm       = np.abs(xm[0] - xm[1])
-            yobs      = np.log10(pow(10.0,p) * dml/dmm)-3.0*np.log10(0.677)
-            ydn       = np.log10(pow(10.0,dpn) * dml/dmm)-3.0*np.log10(0.677)
-            yup       = np.log10(pow(10.0,dpu) * dml/dmm)-3.0*np.log10(0.677)
+            yobs      = np.log10(pow(10.0,p) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
            
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*')
 
-        if idx == 6:
+        if idx == 5:
+            hobs = 0.7
+            corrhobs = np.log10(hobs/h0)
 
             file = obsdir+'/lf/L350microns.dat'
             lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
@@ -368,12 +543,12 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             xm[1]     = xm[1] + dml
             tenpctocm = 3.086e19
             corrpc    = np.log10(tenpctocm)*2.0
-            xobs      = -2.5*(lm[0:9]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
-            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
+            xobs      = -2.5*(lm[0:9]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
             dmm       = np.abs(xm[0] - xm[1])
-            yobs      = np.log10(pow(10.0,p[0:9]) * dml/dmm)-3.0*np.log10(0.677)
-            ydn       = np.log10(pow(10.0,dpn[0:9]) * dml/dmm)-3.0*np.log10(0.677)
-            yup       = np.log10(pow(10.0,dpu[0:9]) * dml/dmm)-3.0*np.log10(0.677)
+            yobs      = np.log10(pow(10.0,p[0:9]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn[0:9]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu[0:9]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
             
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*')
             
@@ -382,16 +557,19 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             xm[1]     = xm[1] + dml
             tenpctocm = 3.086e19
             corrpc    = np.log10(tenpctocm)*2.0
-            xobs      = -2.5*(lm[10:19]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
-            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
+            xobs      = -2.5*(lm[10:19]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
             dmm       = np.abs(xm[0] - xm[1])
-            yobs      = np.log10(pow(10.0,p[10:19]) * dml/dmm)-3.0*np.log10(0.677)
-            ydn       = np.log10(pow(10.0,dpn[10:19]) * dml/dmm)-3.0*np.log10(0.677)
-            yup       = np.log10(pow(10.0,dpu[10:19]) * dml/dmm)-3.0*np.log10(0.677)
+            yobs      = np.log10(pow(10.0,p[10:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn[10:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu[10:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
             
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
 
-        if idx == 7:
+        if idx == 6:
+            hobs = 0.7
+            corrhobs = np.log10(hobs/h0)
+
             file = obsdir+'/lf/L500microns.dat'
             lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
             dml       = 0.2
@@ -399,28 +577,63 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             xm[1]     = xm[1] + dml
             tenpctocm = 3.086e19
             corrpc    = np.log10(tenpctocm)*2.0
-            xobs      = -2.5*(lm[0:11]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
-            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
+            xobs      = -2.5*(lm[0:11]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
             dmm       = np.abs(xm[0] - xm[1])
-            yobs      = np.log10(pow(10.0,p[0:11]) * dml/dmm)-3.0*np.log10(0.677)
-            ydn       = np.log10(pow(10.0,dpn[0:11]) * dml/dmm)-3.0*np.log10(0.677)
-            yup       = np.log10(pow(10.0,dpu[0:11]) * dml/dmm)-3.0*np.log10(0.677)
-            
-            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*',label="Marchetti+2016")
-            
+            yobs      = np.log10(pow(10.0,p[0:11]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn[0:11]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu[0:11]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*')
+
             dml       = 0.3
             xm        = [25.0,25.0]
             xm[1]     = xm[1] + dml
             tenpctocm = 3.086e19
             corrpc    = np.log10(tenpctocm)*2.0
-            xobs      = -2.5*(lm[11:19]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
-            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr
+            xobs      = -2.5*(lm[11:19]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
             dmm       = np.abs(xm[0] - xm[1])
-            yobs      = np.log10(pow(10.0,p[11:19]) * dml/dmm)-3.0*np.log10(0.677)
-            ydn       = np.log10(pow(10.0,dpn[11:19]) * dml/dmm)-3.0*np.log10(0.677)
-            yup       = np.log10(pow(10.0,dpu[11:19]) * dml/dmm)-3.0*np.log10(0.677)
+            yobs      = np.log10(pow(10.0,p[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
 
-            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Negrello+2013")
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+
+        if idx == 7:
+            hobs = 0.75
+            corrhobs = np.log10(hobs/h0)
+            file = obsdir+'/lf/lf850_dunne2000.data'
+            lm,p,dp   = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+            dml       = 0.24
+            xm        = [25.0,25.0]
+            xm[1]     = xm[1] + dml
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(lm[7:13]-corrpc+7.0) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0) - 48.6 - hcorr  + 5.0*corrhobs
+            dmm       = np.abs(xm[0] - xm[1])
+            yobs      = np.log10(pow(10.0,np.log10(p[7:13])) * dml/dmm)- 3.0*np.log10(0.677) - 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,np.log10(p[7:13] - dp[7:13])) * dml/dmm)- 3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,np.log10(p[7:13] + dp[7:13])) * dml/dmm)- 3.0*np.log10(0.677)- 3.0 * corrhobs
+            
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='P',label="Dunne+00")
+            
+            file = obsdir+'/lf/lf850_vlahakis05_OS.data'
+            lm,p,dp   = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+            dml       = 0.26
+            xm        = [25.0,25.0]
+            xm[1]     = xm[1] + dml
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(lm-corrpc+7.0) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0) - 48.6 - hcorr + 5.0*corrhobs
+            dmm       = np.abs(xm[0] - xm[1])
+            yobs      = np.log10(pow(10.0,np.log10(p)) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,np.log10(p - dp)) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,np.log10(p + dp)) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Vlahakis+05")
 
             xobs = np.zeros(shape = 2)
             xobs[0] = 1.0
@@ -430,9 +643,11 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             yup=xobs
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='p',label="Patel+2013")
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Dye+2010")
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*',label="Marchetti+2016")
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Negrello+2013")
 
         if idx == 7:
-            common.prepare_legend(ax, ['k','SlateGray','Gray','k','b','r','LightSalmon','grey','grey','grey','grey'], bbox_to_anchor=[1.1,-0.1])
+            common.prepare_legend(ax, ['k','SlateGray','Gray','k','b','r','LightSalmon','grey','grey','grey','grey','grey','grey'], bbox_to_anchor=[1.1,-0.2])
 
     common.savefig(outdir, fig, "IR_luminosity_functions.pdf")
 
@@ -514,7 +729,8 @@ def plot_colours(plt, outdir, obsdir, h0, colours_dist):
     common.savefig(outdir, fig, 'gr_colour_z0.pdf')
   
 
-def prepare_data(hdf5_data, phot_data, ids_sed, LFs_dust, LFs_nodust, colours_dist, index, nbands):
+def prepare_data(hdf5_data, phot_data, ids_sed, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
+                 fdisk_emission, fbulge_m_emission, fbulge_d_emission):
    
     #star_formation_histories and SharkSED have the same number of galaxies in the same order, and so we can safely assume that to be the case.
     #to select the same galaxies in galaxies.hdf5 we need to ask for all of those that have a stellar mass > 0, and then assume that they are in the same order.
@@ -540,12 +756,20 @@ def prepare_data(hdf5_data, phot_data, ids_sed, LFs_dust, LFs_nodust, colours_di
             ind = np.where(SEDs_dust[:,c,i] < -1)
             H, bins_edges = np.histogram(SEDs_dust[ind,c,i],bins=np.append(mbins,mupp))
             LFs_dust[index,c,i,:] = LFs_dust[index,c,i,:] + H
-            
+
             #calculate LF of intrinsic bands 
             ind = np.where(SEDs_nodust[:,c,i] < -1)
             H, bins_edges = np.histogram(SEDs_nodust[ind,c,i],bins=np.append(mbins,mupp))
             LFs_nodust[index,c,i,:] = LFs_nodust[index,c,i,:] + H
 
+
+    for i in range(0,nbands):
+
+        for m in range(0,len(xlf)):
+            ind = np.where((SEDs_dust[:,4,i] > xlf[m]-dm/2.0) & (SEDs_dust[:,4,i] <= xlf[m]+dm/2.0))
+            fdisk_emission[index,i,m]    = np.sum(pow(10.0,SEDs_dust[ind,3,i]/(-2.5)))/np.sum(pow(10.0,SEDs_dust[ind,4,i]/(-2.5)))
+            fbulge_m_emission[index,i,m] = np.sum(pow(10.0,SEDs_dust[ind,1,i]/(-2.5)))/np.sum(pow(10.0,SEDs_dust[ind,4,i]/(-2.5)))
+            fbulge_d_emission[index,i,m] = np.sum(pow(10.0,SEDs_dust[ind,0,i]/(-2.5)))/np.sum(pow(10.0,SEDs_dust[ind,4,i]/(-2.5)))
 
     uband = 2
     gband = 3
@@ -589,8 +813,12 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
             LFs_dust     = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
             LFs_nodust   = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
             colours_dist = np.zeros(shape = (len(z), len(magbins)-1, 2, len(cbins)))
+            fdisk_emission    = np.zeros(shape = (len(z), nbands, len(mbins)))
+            fbulge_m_emission = np.zeros(shape = (len(z), nbands, len(mbins)))
+            fbulge_d_emission = np.zeros(shape = (len(z), nbands, len(mbins)))
 
-        prepare_data(hdf5_data, seds, ids, LFs_dust, LFs_nodust, colours_dist, index, nbands)
+        prepare_data(hdf5_data, seds, ids, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
+                     fdisk_emission, fbulge_m_emission, fbulge_d_emission)
 
         h0, volh = hdf5_data[0], hdf5_data[1]
         if(volh > 0.):
@@ -606,6 +834,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_colours(plt, outdir, obsdir, h0, colours_dist)
-  
+    plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission)
+ 
 if __name__ == '__main__':
     main(*common.parse_args())

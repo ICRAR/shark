@@ -168,6 +168,8 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	BaryonBase mH2_total;
 	BaryonBase mDM_total;
 
+        float SMBH_max = 0;
+
 	double SFR_total_disk = 0;
 	double SFR_total_burst = 0;
 
@@ -241,6 +243,10 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 				SFR_total_burst += galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins;
         
 				MBH_total.mass += galaxy->smbh.mass;
+
+				if(galaxy->smbh.mass > SMBH_max){
+					SMBH_max = galaxy->smbh.mass;
+				}
         
 			}
 		}
@@ -265,6 +271,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	AllBaryons.mejected_halo.push_back(mejectedhalo_total);
 
 	AllBaryons.mDM.push_back(mDM_total);
+	AllBaryons.max_BH.push_back(SMBH_max);
 }
 
 }

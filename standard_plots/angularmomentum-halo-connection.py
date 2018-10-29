@@ -37,18 +37,12 @@ Omegab   = 0.0491
 OmegaM   = 0.3121
 fbar     = Omegab/(OmegaM-Omegab)
 
-#stellar mass bins
+#halo mass bins
 mlow = 10.0
 mupp = 15.5
 dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
-
-#DM bins
-mlowh = 10.0
-mupph = 15.0
-mbinsh = np.arange(mlowh,mupph,dm)
-xmfh   = mbinsh + dm/2.0
 
 dmobs = 0.4
 mbins_obs = np.arange(mlow,mupp,dmobs)
@@ -63,14 +57,26 @@ xlf   = lbins + dl/2.0
 
 def prepare_data(hdf5_data, index, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
                  sam_vs_sam_halo_disk_gas, sam_vs_sam_halo_bar, m_vs_m_halo_disk, m_vs_m_halo_gal, 
-                 m_vs_m_halo_disk_gas, m_vs_m_halo_bar):
+                 m_vs_m_halo_disk_gas, m_vs_m_halo_bar, r_vs_r_halo_disk, r_vs_r_halo_gal, 
+                 r_vs_r_halo_disk_gas, r_vs_r_halo_bar):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mvir, matom_disk, mmol_disk, mgas_disk,
-     matom_bulge, mmol_bulge, mgas_bulge, sfr_disk, sfr_bulge) = hdf5_data
+     matom_bulge, mmol_bulge, mgas_bulge, sfr_disk, sfr_bulge, vvir, rgas_disk, rgas_bulge) = hdf5_data
 
+    rvir  = G * mvir / pow(vvir,2.0) * MpcToKpc / h0
+    ind = np.where(rvir == max(rvir)) 
+    print 'maximum rvir', np.log10(max(rvir)), mvir[ind]
+    ind = np.where(mvir == max(mvir)) 
+    print 'maximum mvir', np.log10(rvir[ind]), max(mvir)
+
+    rbar  = (rdisk * mdisk + rbulge * mbulge + rgas_disk * mgas_disk + rgas_bulge * mgas_bulge) / (mdisk + mbulge + mgas_disk + mgas_bulge) * MpcToKpc / h0
+    rgal  = (rdisk * mdisk + rbulge * mbulge)/(mdisk + mbulge) * MpcToKpc / h0
+    rstar_disk = rdisk * MpcToKpc / h0
+    rgas_disk  = rgas_disk * MpcToKpc / h0
+ 
     mbulge_mergers = mburst_mergers + mstars_bulge_mergers_assembly
     zero_bulge = np.where(rbulge <= 0)
     if(len(rbulge) == len(rbulge[zero_bulge])):
@@ -128,31 +134,40 @@ def prepare_data(hdf5_data, index, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
                                                          y=np.log10(jbar[ind])  - np.log10(float(h0)))
         m_vs_m_halo_bar[index,:,:,c]          = bin_it(x=np.log10(mvir[ind])  - np.log10(float(h0)),
                                                        y=np.log10(mbar[ind])  - np.log10(float(h0)))
+        r_vs_r_halo_bar[index,:,:,c]          = bin_it_j(x=np.log10(rvir[ind])  - np.log10(float(h0)),
+                                                       y=np.log10(rbar[ind])  - np.log10(float(h0)))
 
         ind = np.where((jstars > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_vs_sam_halo_gal[index,:,:,c]      = bin_it_j(x=np.log10(sam_hhalo[ind])  - np.log10(float(h0)),
                                                   y=np.log10(jstars[ind])  - np.log10(float(h0)))
 
-        m_vs_m_halo_gal[index,:,:,c]      = bin_it(x=np.log10(mvir[ind])  - np.log10(float(h0)),
+        m_vs_m_halo_gal[index,:,:,c]          = bin_it(x=np.log10(mvir[ind])  - np.log10(float(h0)),
                                                   y=ms[ind]  - np.log10(float(h0)))
+        r_vs_r_halo_gal[index,:,:,c]          = bin_it_j(x=np.log10(rvir[ind])  - np.log10(float(h0)),
+                                                       y=np.log10(rgal[ind])  - np.log10(float(h0)))
 
         ind = np.where((specific_angular_momentum_disk_star > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_vs_sam_halo_disk[index,:,:,c]     = bin_it_j(x=np.log10(sam_hhalo[ind])  - np.log10(float(h0)),
                                                          y=np.log10(specific_angular_momentum_disk_star[ind])  - np.log10(float(h0)))
         m_vs_m_halo_disk[index,:,:,c]         = bin_it(x=np.log10(mvir[ind])  - np.log10(float(h0)),
                                                        y=np.log10(mdisk[ind])  - np.log10(float(h0)))
-   
+        r_vs_r_halo_disk[index,:,:,c]         = bin_it_j(x=np.log10(rvir[ind])  - np.log10(float(h0)),
+                                                       y=np.log10(rstar_disk[ind])  - np.log10(float(h0)))
+  
         ind = np.where((specific_angular_momentum_disk_gas > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_vs_sam_halo_disk_gas[index,:,:,c] = bin_it_j(x=np.log10(sam_hhalo[ind])  - np.log10(float(h0)),
                                                   y=np.log10(specific_angular_momentum_disk_gas[ind])  - np.log10(float(h0)))
-        m_vs_m_halo_disk_gas[index,:,:,c] = bin_it(x=np.log10(mvir[ind])  - np.log10(float(h0)),
-                                                   y=np.log10(migas_disk[ind])  - np.log10(float(h0)))
-    
+        m_vs_m_halo_disk_gas[index,:,:,c]     = bin_it(x=np.log10(mvir[ind])  - np.log10(float(h0)),
+                                                   y=np.log10(mgas_disk[ind])  - np.log10(float(h0)))
+        r_vs_r_halo_disk_gas[index,:,:,c]     = bin_it_j(x=np.log10(rvir[ind])  - np.log10(float(h0)),
+                                                       y=np.log10(rgas_disk[ind])  - np.log10(float(h0)))
+   
 
     return (lh, lj, lm, bt, ms, ssfr)
 
 def plot_specific_am_ratio(plt, outdir, obsdir, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal, sam_vs_sam_halo_disk_gas, sam_vs_sam_halo_bar, 
-        m_vs_m_halo_disk, m_vs_m_halo_gal, m_vs_m_halo_disk_gas, m_vs_m_halo_bar):
+        m_vs_m_halo_disk, m_vs_m_halo_gal, m_vs_m_halo_disk_gas, m_vs_m_halo_bar, r_vs_r_halo_disk, 
+        r_vs_r_halo_gal, r_vs_r_halo_disk_gas, r_vs_r_halo_bar):
 
     selec = 0 #all galaxies
 
@@ -211,18 +226,22 @@ def plot_specific_am_ratio(plt, outdir, obsdir, sam_vs_sam_halo_disk, sam_vs_sam
     common.savefig(outdir, fig, 'specific_am_halo_vs_galaxy.pdf')
 
     #plot specific AM vs. specific AM z=0 only
-    fig = plt.figure(figsize=(9,8))
+    fig = plt.figure(figsize=(4,11.5))
     xtit = "$\\rm log_{10} (\\rm j_{\\rm halo}/kpc\,km\,s^{-1})$"
     ytit = "$\\rm log_{10} (\\rm j_{\\rm gal}/kpc\,km\,s^{-1}$)"
-    xmin, xmax, ymin, ymax = 1,6,1,6
+    xmin, xmax, ymin, ymax = 1,6,1,5
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
     # LTG ##################################
-    ax = fig.add_subplot(121)
+    ax = fig.add_subplot(311)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    #if(s == 0):
-    #    ax.text(5.5,6.4,'Lagos+18',fontsize=14)
+    plt.subplots_adjust(left=0.2)
+    #ax.text(2.7,5.1,'Shark-AM',fontsize=14)
+    #ax.text(2.5,5.1,'Shark-default',fontsize=14)
+    #ax.text(0.99,5.1,'No AGN feedback, no disk-inst',fontsize=14)
+    ax.text(2.45,5.1,'No disk-inst',fontsize=14)
+
     s = 0 #z=0
     ind = np.where(sam_vs_sam_halo_bar[s,0,:,selec] != 0)
     xplot = xlf[ind]+3
@@ -260,31 +279,33 @@ def plot_specific_am_ratio(plt, outdir, obsdir, sam_vs_sam_halo_disk, sam_vs_sam
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.2,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.2,interpolate=True)
 
+    ax.plot(xlf,xlf,color='grey',linestyle='dotted')
+
     common.prepare_legend(ax, ['k','r','g','b'], loc=2)
 
     xtit = "$\\rm log_{10} (\\rm M_{\\rm halo}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm M_{\\rm gal}(\\Omega_{\\rm DM}/\\Omega_{\\rm b})/M_{\odot})$"
-    xmin, xmax, ymin, ymax = 10,15,10,15
+    xmin, xmax, ymin, ymax = 10,15,8,13.5
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
-    # LTG ##################################
-    ax = fig.add_subplot(122)
+    ##################################
+    ax = fig.add_subplot(312)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    #if(s == 0):
-    #    ax.text(5.5,6.4,'Lagos+18',fontsize=14)
+    plt.subplots_adjust(left=0.2)
 
     ind = np.where(m_vs_m_halo_bar[s,0,:,selec] != 0)
-    xplot = xmf[ind]+3
+    xplot = xmf[ind]
     yplot = m_vs_m_halo_bar[s,0,ind,selec]-np.log10(fbar)
+    print 'fbar',np.log10(fbar),fbar,yplot[0]
     errdn = m_vs_m_halo_bar[s,1,ind,selec]
     errup = m_vs_m_halo_bar[s,2,ind,selec]
     ax.plot(xplot,yplot[0],color='k')
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='k', alpha=0.2,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='k', alpha=0.2,interpolate=True)
 
-    ind = np.where(sam_vs_sam_halo_gal[s,0,:,selec] != 0)
-    xplot = xmf[ind]+3
+    ind = np.where(m_vs_m_halo_gal[s,0,:,selec] != 0)
+    xplot = xmf[ind]
     yplot = m_vs_m_halo_gal[s,0,ind,selec]-np.log10(fbar)
     errdn = m_vs_m_halo_gal[s,1,ind,selec]
     errup = m_vs_m_halo_gal[s,2,ind,selec]
@@ -292,8 +313,8 @@ def plot_specific_am_ratio(plt, outdir, obsdir, sam_vs_sam_halo_disk, sam_vs_sam
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.2,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.2,interpolate=True)
 
-    ind = np.where(sam_vs_sam_halo_disk[s,0,:,selec] != 0)
-    xplot = xmf[ind]+3
+    ind = np.where(m_vs_m_halo_disk[s,0,:,selec] != 0)
+    xplot = xmf[ind]
     yplot = m_vs_m_halo_disk[s,0,ind,selec]-np.log10(fbar)
     errdn = m_vs_m_halo_disk[s,1,ind,selec]
     errup = m_vs_m_halo_disk[s,2,ind,selec]
@@ -301,14 +322,69 @@ def plot_specific_am_ratio(plt, outdir, obsdir, sam_vs_sam_halo_disk, sam_vs_sam
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='g', alpha=0.2,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='g', alpha=0.2,interpolate=True)
 
-    ind = np.where(sam_vs_sam_halo_disk_gas[s,0,:,selec] != 0)
-    xplot = xmf[ind]+3
+    ind = np.where(m_vs_m_halo_disk_gas[s,0,:,selec] != 0)
+    xplot = xmf[ind]
     yplot = m_vs_m_halo_disk_gas[s,0,ind,selec]-np.log10(fbar)
     errdn = m_vs_m_halo_disk_gas[s,1,ind,selec]
     errup = m_vs_m_halo_disk_gas[s,2,ind,selec]
     ax.plot(xplot,yplot[0],color='b', linestyle='dotted')
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.2,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.2,interpolate=True)
+
+    ax.plot(xmf,xmf,color='grey',linestyle='dotted')
+
+    xtit = "$\\rm log_{10} (\\rm r_{\\rm halo}/kpc)$"
+    ytit = "$\\rm log_{10} (\\rm r_{\\rm gal}/kpc$)"
+    xmin, xmax, ymin, ymax = 1.7,3.3,0,1.5
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ##################################
+    ax = fig.add_subplot(313)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    plt.subplots_adjust(left=0.2)
+    s = 0 #z=0
+    ind = np.where(r_vs_r_halo_bar[s,0,:,selec] != 0)
+    xplot = xlf[ind]
+    yplot = r_vs_r_halo_bar[s,0,ind,selec]
+    errdn = r_vs_r_halo_bar[s,1,ind,selec]
+    errup = r_vs_r_halo_bar[s,2,ind,selec]
+    ax.plot(xplot,yplot[0],color='k')
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='k', alpha=0.2,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='k', alpha=0.2,interpolate=True)
+
+    ind = np.where(r_vs_r_halo_gal[s,0,:,selec] != 0)
+    xplot = xlf[ind]
+    yplot = r_vs_r_halo_gal[s,0,ind,selec]
+    errdn = r_vs_r_halo_gal[s,1,ind,selec]
+    errup = r_vs_r_halo_gal[s,2,ind,selec]
+    ax.plot(xplot,yplot[0],color='r',linestyle='dashdot')
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.2,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.2,interpolate=True)
+
+    ind = np.where(r_vs_r_halo_disk[s,0,:,selec] != 0)
+    xplot = xlf[ind]
+    yplot = r_vs_r_halo_disk[s,0,ind,selec]
+    errdn = r_vs_r_halo_disk[s,1,ind,selec]
+    errup = r_vs_r_halo_disk[s,2,ind,selec]
+    ax.plot(xplot,yplot[0],color='g',linestyle='dashed')
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='g', alpha=0.2,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='g', alpha=0.2,interpolate=True)
+
+    ind = np.where(r_vs_r_halo_disk_gas[s,0,:,selec] != 0)
+    xplot = xlf[ind]
+    yplot = r_vs_r_halo_disk_gas[s,0,ind,selec]
+    errdn = r_vs_r_halo_disk_gas[s,1,ind,selec]
+    errup = r_vs_r_halo_disk_gas[s,2,ind,selec]
+    ax.plot(xplot,yplot[0],color='b', linestyle='dotted')
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.2,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.2,interpolate=True)
+
+    ax.plot(xlf,xlf+np.log10(0.017),color='DarkOrange',linewidth=1,label='Somerville+18')
+    ax.plot(xlf,xlf+np.log10(0.019),color='DarkOrange',linewidth=1,linestyle='dotted')
+    ax.plot(xlf,xlf+np.log10(0.016),color='DarkOrange',linewidth=1,linestyle='dotted')
+
+    common.prepare_legend(ax, ['DarkOrange'], loc=2)
 
     common.savefig(outdir, fig, 'halo_galaxy_connection.pdf')
  
@@ -322,7 +398,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo', 'mvir_hosthalo', 'matom_disk', 'mmol_disk', 'mgas_disk',
-                           'matom_bulge', 'mmol_bulge', 'mgas_bulge','sfr_disk', 'sfr_burst')}
+                           'matom_bulge', 'mmol_bulge', 'mgas_bulge','sfr_disk', 'sfr_burst', 'vvir_hosthalo', 
+                           'rgas_disk', 'rgas_bulge')}
 
     # Loop over redshift and subvolumes
 
@@ -336,15 +413,22 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     m_vs_m_halo_disk_gas = np.zeros(shape = (len(zlist), 3, len(xmf), 2))
     m_vs_m_halo_bar      = np.zeros(shape = (len(zlist), 3, len(xmf), 2))
 
+    r_vs_r_halo_disk     = np.zeros(shape = (len(zlist), 3, len(xlf), 2))
+    r_vs_r_halo_gal      = np.zeros(shape = (len(zlist), 3, len(xlf), 2))
+    r_vs_r_halo_disk_gas = np.zeros(shape = (len(zlist), 3, len(xlf), 2))
+    r_vs_r_halo_bar      = np.zeros(shape = (len(zlist), 3, len(xlf), 2))
+
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         (lh, lj, lm, bt, ms, ssfr)  = prepare_data(hdf5_data, index, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
                      sam_vs_sam_halo_disk_gas, sam_vs_sam_halo_bar, m_vs_m_halo_disk, m_vs_m_halo_gal, 
-                     m_vs_m_halo_disk_gas, m_vs_m_halo_bar)
+                     m_vs_m_halo_disk_gas, m_vs_m_halo_bar, r_vs_r_halo_disk, r_vs_r_halo_gal, 
+                     r_vs_r_halo_disk_gas, r_vs_r_halo_bar)
 
     plot_specific_am_ratio(plt, outdir, obsdir, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal, sam_vs_sam_halo_disk_gas, 
-            m_vs_m_halo_disk, m_vs_m_halo_gal,
-            m_vs_m_halo_disk_gas, m_vs_m_halo_bar)
+            sam_vs_sam_halo_bar, m_vs_m_halo_disk, m_vs_m_halo_gal,
+            m_vs_m_halo_disk_gas, m_vs_m_halo_bar, r_vs_r_halo_disk, 
+            r_vs_r_halo_gal, r_vs_r_halo_disk_gas, r_vs_r_halo_bar)
 
 if __name__ == '__main__':
     main(*common.parse_args())
