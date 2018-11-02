@@ -1,0 +1,18 @@
+# LF in rest-frame UV (13500A) at z=6 from Bouwens etal (2007) ApJ 670, 928
+# based on i-dropouts in HST ACS surveys (HUDF & all other deep ACS fields incl. GOODS)
+# LF derived using stepwise max likelihood method (Table 5)
+#
+# assume Omega0=0.3, Lambda0=0.7, H0=70
+# AB magnitudes
+# dn/dM_AB  in no/mag/Mpc^3
+# errors are 1-sigma on dn/dM_AB
+#
+# M_AB		dn/dM_AB	error
+-22.13		1e-5		1e-5
+-21.63		1e-5		1e-5
+-21.13		7e-5		2e-5
+-20.63		1.3e-4		4e-5
+-20.13		5.4e-4		1.2e-4
+-19.63		8.3e-4		1.8e-4
+-18.88		1.97e-3		4.1e-4
+-17.88		5.35e-3		1.17e-3
