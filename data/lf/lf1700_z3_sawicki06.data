@@ -1,0 +1,34 @@
+# LBG LF (1700A) at z=3 from Sawicki & Thompson (2006) ApJ 642, 653
+# data as in Fig.4, supplied in email by M. Sawicki (10/4/07)
+# Un-dropouts in Keck Deep Fields
+# LFs computed using their 'fiducial model'
+#
+# Omega_M=0.3 Omega_L=0.7 Ho=70 cosmology
+# AB mags
+#
+# M_AB = rest-frame 1700A abs mag
+# m_AB = observed R-band apparent mag
+# phi = dn/dM_AB in mag^-1 Mpc^-3
+# err = error on phi (includes root-N and field-to-field variance added in quadrature)
+# Nobj = number of objects in the bin 
+# Nfields = number of fields that contributed to the bin
+#
+# NB Sawicki only uses LF bins with Nobj>5
+#
+# M_AB 	m_AB   	phi  		err     Nobj  Nfields
+-18.52 	27.00  3.123e-03    3.384e-04   193    3  
+-19.02 	26.50  2.800e-03    2.554e-04   370    5  
+-19.52 	26.00  2.172e-03    2.847e-04   344    5  
+-20.02 	25.50  1.491e-03    1.106e-04   261    5  
+-20.52 	25.00  1.124e-03    1.955e-04   211    5  
+-21.02 	24.50  4.171e-04    7.649e-05    84    5  
+-21.52 	24.00  1.563e-04    4.880e-05    33    5  
+-22.02 	23.50  8.942e-06    7.912e-06     2    5  
+-22.52 	23.00  8.530e-06    7.730e-06     2    5 
+# Steidel etal 1999 LF 
+-22.77 	22.75  2.890e-06    1.450e-06   999   18  
+-22.27 	23.25  3.040e-05    5.790e-06   999   18  
+-21.77 	23.75  1.290e-04    1.630e-05   999   18  
+-21.27 	24.25  3.000e-04    2.480e-05   999   18  
+-20.77 	24.75  6.810e-04    4.120e-05   999   18  
+-20.27 	25.25  1.290e-03    1.270e-04   999   18  
