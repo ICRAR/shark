@@ -1,0 +1,20 @@
+# LF in rest-frame UV (1700A) at z=3.1 from Reddy & Steidel (2009) ApJ 692, 778
+# based on ground-based UnGR imaging, LBG selection for 2.7<z<3.4 star-forming gals
+# LF derived using max likelihood method (Table 2, "fiducial" LF)
+# errors include Poisson and field-to-field variations
+#
+# assume Omega0=0.3, Lambda0=0.7, H0=70
+# AB magnitudes
+# dn/dM_AB  in no/mag/Mpc^3
+# errors are 1-sigma on dn/dM_AB
+#
+# M_AB		dn/dM_AB	error
+-22.77		0.003e-3	0.001e-3
+-22.27		0.030e-3	0.013e-3
+-21.77		0.085e-3	0.032e-3
+-21.27		0.240e-3	0.104e-3
+-20.77		0.686e-3	0.249e-3
+-20.27		1.530e-3	0.273e-3
+-19.77		2.934e-3	0.333e-3
+-19.27		4.296e-3	0.432e-3
+-18.77		5.536e-3	0.601e-3
