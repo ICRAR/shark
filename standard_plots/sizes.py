@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0, 0.5, 1, 2, 6, 7, 8, 9)
+zlist = (0, 0.2, 0.3, 0.5, 1, 2, 3, 6, 7, 8, 9)
 
 ##################################
 #Constants
@@ -61,10 +61,11 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, 
      mmol_bulge, mbh_acc_hh, mbh_acc_sb) = hdf5_data
 
-    #if(index == 7):
-    #   for x,y,z in zip(mBH,mbh_acc_hh, mbh_acc_sb):
-    #       if(x > 0): 
-    #          print x/h0,y/h0/1e9,z/h0/1e9
+    mstars_tot = (mdisk+mbulge)/h0
+    if(index == 1 or index == 2):
+       for x,y,z,m in zip(mBH,mbh_acc_hh, mbh_acc_sb,mstars_tot):
+           if(x > 1e5 and m > 1e8): 
+              print x/h0,y/h0/1e9,z/h0/1e9
 
     mbulge_mergers = mburst_mergers + mstars_bulge_mergers_assembly
     zero_bulge = np.where(rbulge <= 0)

@@ -76,6 +76,23 @@ def wmedians(x=None, y=None, xbins=None, low_numbers=False):
 
     return result
 
+def stacking(x=None, y=None, xbins=None, low_numbers=False):
+
+    nbins = len(xbins)
+    #define size of bins, assuming bins are all equally spaced.
+    dx = xbins[1] - xbins[0]
+    result = np.zeros(shape = (nbins))
+
+    for i in range (0,nbins):
+        xlow = xbins[i]-dx/2.0
+        xup  = xbins[i]+dx/2.0
+        ind  = np.where((x > xlow) & (x< xup))
+        if(len(x[ind]) > 0):
+            ybin    = y[ind]
+            result[i] = np.log10(np.mean(ybin))
+
+    return result
+
 
 def fractions(x=None, y=None, xbins=None, ythresh=None):
 

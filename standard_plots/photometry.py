@@ -124,7 +124,7 @@ def plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_em
     common.savefig(outdir, fig, "fractions_luminosity_contribution.pdf")
 
     #z=2
-    indexz = 3 
+    indexz = 4 
     fig = plt.figure(figsize=(8,8))
     subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
     idx = (0, 1, 2, 3, 4, 5, 6, 7, 8)
@@ -191,7 +191,7 @@ def plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_em
     common.savefig(outdir, fig, "fractions_luminosity_contribution_z2.pdf")
 
     #z=3
-    indexz = 4
+    indexz = 5
     fig = plt.figure(figsize=(8,8))
     subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
     idx = (0, 1, 2, 3, 4, 5, 6, 7, 8)
@@ -862,6 +862,215 @@ def plot_colours(plt, outdir, obsdir, h0, colours_dist):
     
     common.savefig(outdir, fig, 'gr_colour_z0.pdf')
   
+def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
+
+    volcorr = 3.0*np.log10(h0)
+    xlf_obs  = xlf
+ 
+    xtit="$\\rm 1500 Ang mag (AB)$"
+    ytit="$\\rm log_{10}(\Phi/{\\rm dex^{-1}} {\\rm Mpc}^{-3})$"
+
+    xmin, xmax, ymin, ymax = -25, -16, -5, -1
+    xleg = xmin + 0.2 * (xmax-xmin)
+    yleg = ymax - 0.1 * (ymax-ymin)
+
+    fig = plt.figure(figsize=(5,10))
+
+    subplots = (311, 312, 313)
+    idx = (0, 1, 2)
+    zs  = (5, 6, 6)
+    band = 0
+    labels= ('z=3', 'z=6', 'z=8')
+   
+    for subplot, idx, z in zip(subplots, idx, zs):
+
+        ax = fig.add_subplot(subplot)
+        ytitplot = ytit
+        if (idx == 2):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytitplot, locators=(2, 2, 1, 1))
+        ax.text(xleg,yleg, labels[idx])
+
+        if(idx == 0):
+           file = obsdir+'/lf/lf1700_z3_sawicki06.data'
+           lm,p,dp = np.loadtxt(file,usecols=[0,2,3],unpack=True)
+           indx = np.where(p > 0)
+           yobs = np.log10(p[indx])
+           ydn  = np.log10(p[indx]-dp[indx])
+           yup  = np.log10(p[indx]+dp[indx])
+   
+           ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Sawicki+2006")
+
+           file = obsdir+'/lf/lf1700_z3_reddy09.data'
+           lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+           indx = np.where(p > 0)
+           yobs = np.log10(p[indx])
+           ydn  = np.log10(p[indx]-dp[indx])
+           yup  = np.log10(p[indx]+dp[indx])
+   
+           ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Reddy+2009")
+
+        if(idx == 1):
+           file = obsdir+'/lf/lf1350_z6_bouwens07.data'
+           lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+           indx = np.where(p > 0)
+           yobs = np.log10(p[indx])
+           ydn  = np.log10(p[indx]-dp[indx])
+           yup  = np.log10(p[indx]+dp[indx])
+   
+           ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Bouwens+2007")
+
+           file = obsdir+'/lf/lf1500_z6_mclure09.data'
+           lm,yobs,yup,ydn = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+   
+           ax.errorbar(lm, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='+',label="McLure+2009")
+
+        if(idx == 2):
+           file = obsdir+'/lf/lf1500_z8_mclure10.data'
+           lm,yobs,yup,ydn = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+           ax.errorbar(lm, yobs, yerr=[abs(yobs-ydn),abs(yup-yobs)], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='p',label="McLure+2010")
+
+        #Predicted LF
+        if(idx == 0):
+            ind = np.where(LFs_dust[z,4,band,:] < 0.)
+            y = LFs_dust[z,4,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3, label ='Shark')
+            ind = np.where(LFs_nodust[z,4,band,:] < 0.)
+            y = LFs_nodust[z,4,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=1,  label ='Shark intrinsic')
+
+            ind = np.where(LFs_dust[z,3,band,:] < 0.)
+            y = LFs_dust[z,3,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted', label ='disks')
+            ind = np.where(LFs_dust[z,2,band,:] < 0.)
+            y = LFs_dust[z,2,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='bulges')
+        else:
+            ind = np.where(LFs_dust[z,4,band,:] < 0.)
+            y = LFs_dust[z,4,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3)
+            ind = np.where(LFs_nodust[z,4,band,:] < 0.)
+            y = LFs_nodust[z,4,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=1)
+
+            ind = np.where(LFs_dust[z,3,band,:] < 0.)
+            y = LFs_dust[z,3,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
+            ind = np.where(LFs_dust[z,2,band,:] < 0.)
+            y = LFs_dust[z,2,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+        if idx == 0:
+            common.prepare_legend(ax, ['k','k','b','r','grey','grey'], loc=2)
+        else:
+            common.prepare_legend(ax, ['grey','grey'], loc=2)
+
+    common.savefig(outdir, fig, "UV_luminosity_function_evolution.pdf")
+
+def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
+
+    vegacorr = 1.85
+
+    volcorr = 3.0*np.log10(h0)
+    xlf_obs  = xlf
+ 
+    xtit="$\\rm K-band mag (AB)$"
+    ytit="$\\rm log_{10}(\Phi/{\\rm dex^{-1}} {\\rm Mpc}^{-3})$"
+
+    xmin, xmax, ymin, ymax = -25, -13, -5, -1
+    xleg = xmin + 0.2 * (xmax-xmin)
+    yleg = ymax - 0.1 * (ymax-ymin)
+
+    fig = plt.figure(figsize=(5,10))
+
+    subplots = (311, 312, 313)
+    idx = (0, 1, 2)
+    zs  = (2, 3, 5)
+    band = 10 #K-band
+    labels= ('z=0.5', 'z=1', 'z=3')
+   
+    for subplot, idx, z in zip(subplots, idx, zs):
+
+        ax = fig.add_subplot(subplot)
+        ytitplot = ytit
+        if (idx == 2):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytitplot, locators=(2, 2, 1, 1))
+        ax.text(xleg,yleg, labels[idx])
+
+        if(idx == 0):
+           file = obsdir+'/lf/lfKz_pozetti03.data'
+           lmP03,p,dpup,dpdn = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+           yobsP03 = np.log10(p)
+           ydnP03  = np.log10(p-dpdn)
+           yupP03  = np.log10(p+dpup)
+   
+           ax.errorbar(lmP03[0:12]+vegacorr, yobsP03[0:12], yerr=[yobsP03[0:12]-ydnP03[0:12],yupP03[0:12]-yobsP03[0:12]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Pozetti+2003")
+
+           file = obsdir+'/lf/lfKz_saracco06.data'
+           lmS06,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+           yobsS06 = np.log10(p)
+           ydnS06  = np.log10(p-dp)
+           yupS06  = np.log10(p+dp)
+   
+           ax.errorbar(lmS06[0:10]+vegacorr, yobsS06[0:10], yerr=[yobsS06[0:10]-ydnS06[0:10],yupS06[0:10]-yobsS06[0:10]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Saracco+2006")
+
+
+           file = obsdir+'/lf/lfKz_cirasuolo10.data'
+           lmC10,p,dpup,dpdn = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+           yobsC10 = p
+           ydnC10  = p-dpdn
+           yupC10  = p+dpup
+   
+           ax.errorbar(lmC10[0:13]+vegacorr, yobsC10[0:13], yerr=[yobsC10[0:13]-ydnC10[0:13],yupC10[0:13]-yobsC10[0:13]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Cirasouolo+2010")
+
+        if(idx == 1):
+           ax.errorbar(lmP03[13:20]+vegacorr, yobsP03[13:20], yerr=[yobsP03[13:20]-ydnP03[13:20],yupP03[13:20]-yobsP03[13:20]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+           ax.errorbar(lmS06[11:17]+vegacorr, yobsS06[11:17], yerr=[yobsS06[11:17]-ydnS06[11:17],yupS06[11:17]-yobsS06[11:17]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+           ax.errorbar(lmC10[14:25]+vegacorr, yobsC10[14:25], yerr=[yobsC10[14:25]-ydnC10[14:25],yupC10[14:25]-yobsC10[14:25]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
+
+        if(idx == 2):
+           ax.errorbar(lmP03[21:26]+vegacorr, yobsP03[21:26], yerr=[yobsP03[21:26]-ydnP03[21:26],yupP03[21:26]-yobsP03[21:26]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+           ax.errorbar(lmS06[18:22]+vegacorr, yobsS06[18:22], yerr=[yobsS06[18:22]-ydnS06[18:22],yupS06[18:22]-yobsS06[18:22]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+           ax.errorbar(lmC10[52:58]+vegacorr, yobsC10[52:58], yerr=[yobsC10[52:58]-ydnC10[52:58],yupC10[52:58]-yobsC10[52:58]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
+
+        #Predicted LF
+        if(idx == 0):
+            ind = np.where(LFs_dust[z,4,band,:] < 0.)
+            y = LFs_dust[z,4,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3, label ='Shark')
+            ind = np.where(LFs_nodust[z,4,band,:] < 0.)
+            y = LFs_nodust[z,4,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=1,  label ='Shark intrinsic')
+
+            ind = np.where(LFs_dust[z,3,band,:] < 0.)
+            y = LFs_dust[z,3,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted', label ='disks')
+            ind = np.where(LFs_dust[z,2,band,:] < 0.)
+            y = LFs_dust[z,2,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='bulges')
+        else:
+            ind = np.where(LFs_dust[z,4,band,:] < 0.)
+            y = LFs_dust[z,4,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3)
+            ind = np.where(LFs_nodust[z,4,band,:] < 0.)
+            y = LFs_nodust[z,4,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=1)
+
+            ind = np.where(LFs_dust[z,3,band,:] < 0.)
+            y = LFs_dust[z,3,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
+            ind = np.where(LFs_dust[z,2,band,:] < 0.)
+            y = LFs_dust[z,2,band,ind]+volcorr-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+        if idx == 0:
+            common.prepare_legend(ax, ['k','k','b','r','LightSalmon','grey','grey'], loc=2)
+
+    common.savefig(outdir, fig, "Kband_luminosity_function_evolution.pdf")
+
 
 def prepare_data(hdf5_data, phot_data, ids_sed, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
                  fdisk_emission, fbulge_m_emission, fbulge_d_emission):
@@ -933,7 +1142,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     #              'bulges_mergers': ('star_formation_rate_histories'),
     #              'disks': ('star_formation_rate_histories')}
 
-    z = (0, 0.25, 0.5, 2.0, 3.0) #, 1.0, 1.5, 2.0)
+    z = (0, 0.25, 0.5, 1.0, 2.0, 3.0, 6.0)#, 8.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
     # Create histogram
@@ -969,6 +1178,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_colours(plt, outdir, obsdir, h0, colours_dist)
     plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission)
- 
+    plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
+    plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
+
 if __name__ == '__main__':
     main(*common.parse_args())
