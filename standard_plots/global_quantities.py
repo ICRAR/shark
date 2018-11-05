@@ -44,7 +44,7 @@ def prepare_data(hdf5_data, redshifts):
     (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mstar,
      mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst, 
      mDM, mcold_halo, number_major_mergers, number_minor_mergers, 
-     number_disk_instabil) = hdf5_data
+     number_disk_instabil, max_smbh) = hdf5_data
 
 
     history_interactions = np.zeros(shape = (3, len(redshifts)))
@@ -143,6 +143,10 @@ def prepare_data(hdf5_data, redshifts):
     #print "HI, H2, sfr, stellar mass"
     #for i,j,p,q in zip(omegaHI,mH2den,sfr,mstarden):
     #	print np.log10(i*pow(h0,2.0)) + np.log10(XH), np.log10(j*pow(h0,2.0)) + np.log10(XH), np.log10(p*pow(h0,2.0)), np.log10(q*pow(h0,2.0)) 
+
+    #print "HI, H2, sfr, stellar mass"
+    #for z,i in zip(redshifts,omegaHI):
+    #	print z,np.log10(i*pow(h0,2.0)) + np.log10(XH)
 
     return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
@@ -293,6 +297,49 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
 
 
     common.savefig(outdir, fig, "global.pdf")
+
+    fig = plt.figure(figsize=(5,4))
+
+    xtit="$\\rm Lookback\, time/Gyr$"
+    ytit="$\\rm log_{10}(\\rho_{\\rm gas, halo} /\\rm M_{\odot} \\rm Mpc^{-3})$"
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+    common.prepare_ax(ax, 0, 13.5, 5, 10, xtit, ytit, locators=(0.1, 1, 0.1, 1), fontsize=10)
+
+    ind = np.where(mhotden > 0)
+    ax.plot(us.look_back_time(redshifts), np.log10(mhotden[ind]*pow(h0,2.0)),'r', label='Shark')
+
+    lbt, eaglesm, eaglesmout, eagleism, eaglehg, eagleejec = common.load_observation(obsdir, 'Models/OtherModels/EAGLE_BaryonGrowthTotal.dat', [0,2,3,4,5,6])
+    eaglesm  = np.log10(pow(10.0, eaglesm) + pow(10.0, eaglesmout))
+    eagletot = np.log10(pow(10.0, eaglesm) + pow(10.0, eagleism) +  pow(10.0, eaglehg) + pow(10.0, eagleejec))
+    ind = np.where(eaglehg > 0)
+    ax.plot(lbt[ind], eaglehg[ind] - 6.0, 'r', linestyle='dotted', label ='EAGLE')
+
+
+    lbt, galsm, galism, galhg, galejec = common.load_observation(obsdir, 'Models/OtherModels/global_Mitchell18.dat', [0,2,3,4,5])
+    galtot  = np.log10(pow(10.0, galsm) + pow(10.0, galism) + pow(10.0, galhg) + pow(10.0, galejec))
+    galhg   = (galhg)
+
+    h = 0.704
+    vol = 6.0 #np.log10(1953125.0/pow(h,3.0))
+    ind = np.where(galhg > 0)
+    ax.plot(lbt[ind], galhg[ind] - vol, 'r', linestyle='dashed', linewidth=1, label ='GALFORM M18')
+    ind = np.where(galejec > 0)
+
+    zbt, galism, galsm, galhg, galejec = common.load_observation(obsdir, 'Models/OtherModels/BaryonBudgetLgalaxies.dat', [1,2,3,4,5])
+    lbt = us.look_back_time(zbt)
+    galhg   = np.log10(galhg)+10.0
+
+    h = 0.673
+    vol = np.log10(125000000.0/pow(h,3.0))
+    ind = np.where(galhg > 0)
+    ax.plot(lbt[ind], galhg[ind] - vol - np.log10(h), 'r', linestyle='dashdot', linewidth=1, label ='L-galaxies H15')
+
+    common.prepare_legend(ax, ['k','k','k','k'], fontsize=10)
+
+
+    common.savefig(outdir, fig, "global_hotgas.pdf")
 
 
 def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, meje_dm, mbar_dm):
@@ -770,22 +817,29 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
                          'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
                          'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo', 'number_major_mergers', 
-                         'number_minor_mergers', 'number_disk_instabilities')}
+                         'number_minor_mergers', 'number_disk_instabilities', 'smbh_maximum')}
 
     # Read data from each subvolume at a time and add it up
     # rather than appending it all together
     for idx, subvol in enumerate(subvols):
         subvol_data = common.read_data(modeldir, redshift_table[0], fields, [subvol])
+        max_bhs_subvol = subvol_data[20].copy()
         if idx == 0:
-            hdf5_data = subvol_data
+            hdf5_data        = subvol_data
+            max_smbh         = max_bhs_subvol
         else:
+            max_smbh = np.maximum(max_smbh, max_bhs_subvol)
             for subvol_datum, hdf5_datum in zip(subvol_data[3:], hdf5_data[3:]):
                 hdf5_datum += subvol_datum
+                #select the most massive black hole from the last list item
 
     # Also make sure that the total volume takes into account the number of subvolumes read
     hdf5_data[1] = hdf5_data[1] * len(subvols)
 
     h0, redshifts = hdf5_data[0], hdf5_data[2]
+
+    #for z, m in zip(redshifts, max_smbh):
+    #    print z,m/h0
 
     (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,

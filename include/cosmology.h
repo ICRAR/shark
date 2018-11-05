@@ -84,12 +84,11 @@ public:
 	double expansion_factor(double a) const;
 
 	/**
-	 * universal_baryon_fraction: calculates the baryon density with respect to the dark matter density.
+	 * universal_baryon_fraction: calculates the baryon density with respect to the total matter density.
 	 * @return
 	 */
 	double universal_baryon_fraction() const {
-		double omega_dm = (parameters.OmegaM-parameters.OmegaB);
-		return parameters.OmegaB/omega_dm;
+		return parameters.OmegaB/parameters.OmegaM;
 	};
 
 	double hubble_parameter (double z) const;

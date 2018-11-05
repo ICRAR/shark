@@ -1,0 +1,24 @@
+# LF in rest-frame UV (1500A) at z=4.7 from Yoshida etal (2006) ApJ 653, 988
+# based on V-dropouts in SDF, 
+# raw counts in apparent mag bins not corrected for incompleteness or interlopers
+#
+# assume Omega0=0.3, Lambda0=0.7, H0=70
+# AB magnitudes
+# survey area = 875 arcmin^2
+#
+# mag = apparent z' mag at bin centre
+# Nraw = obsd no of candidates in mag bin
+# Ninterloper = estimated no of interlopers from sims
+# Veff = effective volume of survey in Mpc^3 allowing for efficiency of colour selection
+#
+# number density in 0.5 mag bin = (Nraw - Ninterloper)/Veff
+# assume negligible k-correction from observer-frame z' to rest-frame 1500A, so
+# M_AB = m_AB + 2.5*log(1+z) - DM
+# M_AB - 5logh = m_AB - 45.52  for adopted cosmology     
+#
+# mag	Nraw	Ninterloper	Veff
+23.8	1	0		1.34e6
+24.3	12	0		1.31e6
+24.8	56	0		1.31e6
+25.3	152	29.0		1.17e6
+25.8	318	22.3		9.66e5

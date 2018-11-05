@@ -824,8 +824,9 @@ public:
 	 * mHI: total mass in the form of atomic gas.
 	 * mH2: total mass in the form of molecular gas.
 	 * mDM: total mass in the form of dark matter.
-	 * SFR: integrated SFR of all galaxies over a snapshot.
+	 * SFR: integrated SFR of all galaxies over a snapshot for the disk and the bulge.
 	 * baryon_total_created: keeps track of the baryons deposited in DM halos to ensure mass convervations.
+	 * max_BH: maximum mass of the SMBHs in this snapshot.
 	 */
 
 	std::vector<BaryonBase> mcold;
@@ -842,6 +843,7 @@ public:
 
 	std::vector<double> SFR_disk;
 	std::vector<double> SFR_bulge;
+	std::vector<double> max_BH;
 
 	/**
 	 * Vectors of integers that keep track of number of mergers of galaxies and disk instability episodes in each snapshot.

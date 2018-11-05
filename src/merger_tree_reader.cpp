@@ -195,7 +195,6 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		//Assign gas mass if the simulation is a hydrodynamical simulation.
 		if(simulation_params.hydrorun){
 			subhalo->Mgas = Mgas[i];
-			subhalo->Mvir -= subhalo->Mgas;
 		}
 
 		//Assign position
@@ -212,12 +211,6 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		subhalo->L.x = L[3 * i];
 		subhalo->L.y = L[3 * i + 1];
 		subhalo->L.z = L[3 * i + 2];
-
-		//In case of a hydro simulation input, we need to scale the angular momentum to reflect the DM only value.
-		if(simulation_params.hydrorun){
-			double scaling = (Mvir[i] - Mgas[i]) / (Mvir[i]);
-			subhalo->L *= scaling;
-		}
 
 		subhalo->Vcirc = Vcirc[i];
 
