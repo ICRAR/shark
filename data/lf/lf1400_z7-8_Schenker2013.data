@@ -1,0 +1,37 @@
+# UV LF at z=7-8 from Schenker et al. 2013 (ApJ 768, 196, 2013).
+# Hubble Space Telescope Ultra Deep Field 2012 (UDF12) + ancillary data (UDF parallels, ERS, CANDELS-Deep, BoRG + other)
+# 
+# galaxies selected as Lyman dropouts (z-drops: 6.2<z<7.3; J-drops: 7.3<z<8.5)
+# M_UV apparently estimated from band longwards of break (assuming f_nu = const)
+# i.e. in UDF, Y_105 for z-drops, J_125 for Y-drops => lambda = 1360A, 1400A resp
+# 
+# LFs are derived by a non-parametric stepwise maximum likelihood (SWML) calculation
+# and the uncertainties of the LFs are derived by the probability distribution
+# estimated in each magnitude bin by SWML.
+#
+# data from Tables 4 and 5
+#
+# magnitudes are in AB system, the exact rest-frame wavelength for UV magnitudes is not stated
+# Assume H0 = 70 km s^-1 Mpc^-1, Omega_M = 0.3, Omega_L = 0.7
+#
+# phi(M_UV) = dn/dM_UV in Mpc^-3 mag^-1
+# errors are on log(phi)
+# err_up = err_low = 0.0 means phi is an upper limit for the magnitude bin.
+# Errors and upper limits are for 1-sigma
+#
+# M_UV = log_phi = log_err_up = log_err_low = -100.0 means no LF measurement
+#
+#                   z = 7                                         z = 8
+#
+# M_UV   log_phi  log_err_up  log_err_low  |    M_UV   log_phi  log_err_up  log_err_low
+#
+-20.65     -4.29     0.29     0.28            -22.00     -5.01     0.00     0.00
+-20.15     -3.71     0.14     0.10            -21.50     -5.02     0.44     0.47
+-19.65     -3.31     0.08     0.10            -21.00     -4.28     0.16     0.24
+-19.15     -3.02     0.13     0.06            -20.50     -4.15     0.12     0.43
+-18.65     -2.98     0.17     0.23            -20.00     -3.54     0.17     0.06
+-18.15     -2.56     0.19     0.06            -19.50     -3.34     0.15     0.17
+-17.65     -2.23     0.12     0.09            -19.00     -2.97     0.09     0.20
+-17.15     -3.03     0.54     2.34            -18.50     -2.91     0.14     0.24
+-100.0     -100.0    -100.0   -100.0          -18.00     -2.61     0.18     0.20
+-100.0     -100.0    -100.0   -100.0          -17.50     -2.57     0.25     0.74

@@ -1,0 +1,35 @@
+# UV LF at z=4-8 from Finkelstein et al. 2015 (ApJ 810, 71, 2015)
+# Hubble Space Telescope imaging (only) over the CANDELS/GOODS, HUDF, ERS fields
+#
+# galaxies selected using photo-z's from SED fitting to PEGASE templates
+# LFs are derived by a non-parametric step-wise maximum likelihood (SWML) calculation
+# uncertainties of the LFs are derived by the probability distribution estimated in each magnitude bin by SWML.
+# Upper limits are estimated as 1/V_eff/delta_M_1500, more details see notes for Table 5.
+#
+# data from Tabel 5 in arXiv version
+#
+# UV magnitudes for rest-frame 1500A, AB system
+# Assume H0 = 70.2 km s^-1 Mpc^-1, Omega_M = 0.275, Omega_L = 0.725 (WMAP-7 cosmology)
+#
+# phi(M_UV) = dn/dM_UV in 10^-3 Mpc^-3 mag^-1
+# errors are on phi
+#
+# err_up = err_low = 0.0 means the value for LF is an upper limit
+# phi = -100.0, err_up = err_low = -100.0 means no data in the magnitude bin
+#
+#                       z = 4                            z = 5                            z = 6                            z = 7                            z = 8
+#
+#  M_1500  |    phi    err_up   err_low   |      phi    err_up   err_low   |      phi    err_up   err_low   |      phi    err_up   err_low   |      phi    err_up   err_low
+#
+-23.0         0.0016   0.0000   0.0000         0.0023   0.0000   0.0000         0.0025   0.0000   0.0000         0.0029   0.0000   0.0000         0.0035   0.0000   0.0000
+-22.5         0.0093   0.0045   0.0033         0.0082   0.0050   0.0035         0.0025   0.0000   0.0000         0.0029   0.0000   0.0000         0.0035   0.0000   0.0000
+-22.0         0.0276   0.0074   0.0062         0.0082   0.0051   0.0036         0.0091   0.0057   0.0039         0.0046   0.0049   0.0028         0.0035   0.0000   0.0000
+-21.5         0.1192   0.0145   0.0132         0.0758   0.0137   0.0125         0.0338   0.0105   0.0085         0.0187   0.0085   0.0067         0.0079   0.0068   0.0046
+-21.0         0.2968   0.0230   0.0219         0.2564   0.0255   0.0240         0.0703   0.0148   0.0128         0.0690   0.0156   0.0144         0.0150   0.0094   0.0070
+-20.5         0.6491   0.0361   0.0347         0.5181   0.0365   0.0338         0.1910   0.0249   0.0229         0.1301   0.0239   0.0200         0.0615   0.0197   0.0165
+-20.0         1.2637   0.0494   0.0474         0.9315   0.0477   0.0482         0.3970   0.0394   0.0357         0.2742   0.0379   0.0329         0.1097   0.0356   0.0309
+-19.5         1.6645   0.0630   0.0618         1.2086   0.0488   0.0666         0.5858   0.0527   0.0437         0.3848   0.0633   0.0586         0.2174   0.1805   0.1250
+-19.0         2.6392   0.1192   0.1165         2.0874   0.1212   0.1147         0.8375   0.0916   0.0824         0.5699   0.2229   0.1817         0.6073   0.3501   0.2616
+-18.5         3.6169   0.6799   0.6091         3.6886   0.3864   0.3725         2.4450   0.3887   0.3515         2.5650   0.8735   0.7161         1.5110   1.0726   0.7718
+-18.0         5.8343   0.8836   0.8204         4.7361   0.4823   0.4413         3.6662   1.0076   0.8401         3.0780   1.0837   0.8845         -100.0   -100.0   -100.0
+-17.5         6.4858   1.0166   0.9467         7.0842   1.2829   1.1364         5.9126   1.4481   1.2338         -100.0   -100.0   -100.0         -100.0   -100.0   -100.0

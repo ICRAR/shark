@@ -1,0 +1,29 @@
+# UV LF at z=7-9 from McLure et al. 2013 (MNRAS 432, 2696, 2013).
+# Hubble Space Telescope Ultra Deep Field 2012 (UDF12) + ancillary data (UDF parallels, ERS, CANDELS, BoRG + other)
+#
+# galaxies selected using photo-z's from SED fitting to BC03 templates
+# LFs are derived by a non-parametric step-wise maximum likelihood (SWML) calculation.
+#
+# data from Table 2 and 4
+#
+# UV magnitudes for rest-frame 1500A, AB system
+# Assume H0 = 70 km s^-1 Mpc^-1, Omega_M = 0.3, Omega_L = 0.7
+#
+# phi(M_UV) = dn/dM_UV in Mpc^-3 mag^-1
+# errors are on phi
+#
+# M_1500 = phi = err = -100.0 means no LF measurement
+#
+#          z = 7                           z = 8                             z = 9
+#
+# M_1500   phi       err    |   M_1500     phi        err     |   M_1500     phi      err
+#
+-21.00   0.00003   0.00001      -21.25   0.000008   0.000003      -18.00   0.0016   0.0007
+-20.50   0.00012   0.00002      -20.75   0.00003    0.000009      -17.50   0.0021   0.0009
+-20.00   0.00033   0.00005      -20.25   0.0001     0.00003       -100.0   -100.0   -100.0
+-19.50   0.00075   0.00009      -19.75   0.0003     0.00006       -100.0   -100.0   -100.0
+-19.00   0.0011    0.0002       -19.25   0.0005     0.00012       -100.0   -100.0   -100.0
+-18.50   0.0021    0.0006       -18.75   0.0012     0.00040       -100.0   -100.0   -100.0
+-18.00   0.0042    0.0009       -18.25   0.0018     0.00060       -100.0   -100.0   -100.0
+-17.50   0.0079    0.0019       -17.75   0.0028     0.00080       -100.0   -100.0   -100.0
+-17.00   0.011     0.0025       -17.25   0.0050     0.0025        -100.0   -100.0   -100.0
