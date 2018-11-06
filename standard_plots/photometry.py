@@ -900,7 +900,6 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
            yobs = np.log10(p[indx])
            ydn  = np.log10(p[indx]-dp[indx])
            yup  = np.log10(p[indx]+dp[indx])
-   
            ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Sawicki+2006")
 
            file = obsdir+'/lf/lf1700_z3_reddy09.data'
@@ -909,28 +908,33 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
            yobs = np.log10(p[indx])
            ydn  = np.log10(p[indx]-dp[indx])
            yup  = np.log10(p[indx]+dp[indx])
-   
            ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Reddy+2009")
 
         if(idx == 1):
-           file = obsdir+'/lf/lf1350_z6_bouwens07.data'
-           lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
-           indx = np.where(p > 0)
-           yobs = np.log10(p[indx])
-           ydn  = np.log10(p[indx]-dp[indx])
-           yup  = np.log10(p[indx]+dp[indx])
-   
-           ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Bouwens+2007")
+           file = obsdir+'/lf/lf1600_z4-10_Bouwens2015.data'
+           lmB15z6,p6,dp6,lmB15z8,p8,dp8 = np.loadtxt(file,usecols=[6,7,8,12,13,14],unpack=True)
+           yobs = np.log10(p6)
+           ydn  = np.log10(p6-dp6)
+           yup  = np.log10(p6+dp6)
+           ax.errorbar(lmB15z6, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Bouwens+2015")
 
-           file = obsdir+'/lf/lf1500_z6_mclure09.data'
-           lm,yobs,yup,ydn = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
-   
-           ax.errorbar(lm, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='+',label="McLure+2009")
+           file = obsdir+'/lf/lf1500_z4-8_Finkelstein2015.data'
+           lmF15,pF6,dpuF6,dpdF6,pF8,dpuF8,dpdF8 = np.loadtxt(file,usecols=[0,7,8,9,13,14,15],unpack=True)
+           yobs = np.log10(pF6)
+           ydn  = np.log10(pF6-dpnF6)
+           yup  = np.log10(pF6+dpuF6)
+           ax.errorbar(lmF15, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v',label="Finkelstein+2015")
 
         if(idx == 2):
-           file = obsdir+'/lf/lf1500_z8_mclure10.data'
-           lm,yobs,yup,ydn = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
-           ax.errorbar(lm, yobs, yerr=[abs(yobs-ydn),abs(yup-yobs)], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='p',label="McLure+2010")
+           yobs = np.log10(p8)
+           ydn  = np.log10(p8-dp8)
+           yup  = np.log10(p8+dp8)
+           ax.errorbar(lmB15z8, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
+
+           yobs = np.log10(pF8)
+           ydn  = np.log10(pF8-dpnF8)
+           yup  = np.log10(pF8+dpuF8)
+           ax.errorbar(lmF15, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
 
         #Predicted LF
         if(idx == 0):
@@ -978,7 +982,7 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     xtit="$\\rm K-band mag (AB)$"
     ytit="$\\rm log_{10}(\Phi/{\\rm dex^{-1}} {\\rm Mpc}^{-3})$"
 
-    xmin, xmax, ymin, ymax = -25, -13, -5, -1
+    xmin, xmax, ymin, ymax = -28, -16, -5, -1
     xleg = xmin + 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
 
@@ -1067,7 +1071,7 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             y = LFs_dust[z,2,band,ind]+volcorr-np.log10(dm)
             ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
         if idx == 0:
-            common.prepare_legend(ax, ['k','k','b','r','LightSalmon','grey','grey'], loc=2)
+            common.prepare_legend(ax, ['k','k','b','r','grey','grey','grey'], loc=2)
 
     common.savefig(outdir, fig, "Kband_luminosity_function_evolution.pdf")
 
