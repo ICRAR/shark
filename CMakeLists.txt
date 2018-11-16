@@ -187,7 +187,19 @@ macro(find_openmp)
 
 		# We require at least OpenMP 2.0, so let's double check
 		# we have that at least
-		set(OPENMP_VERSION_CHECK_SOURCE "
+		# cmake support for OpenMP has varied across the 3.x series:
+		# * OPENMP_FOUND and OpenMP_<lang>_FLAGS have always been there
+		# * 3.7 brings OpenMP_<lang>_SPEC_DATE variables, which *may* be set
+		# * 3.9 brings OpenMP_<lang>_VERSION variables, which *may* be set,
+		#   and OpenMP_<lang>_LIBRARIES/LIBRARY/LIB_NAMES variables
+		# This is important for Intel compilers in particular, which require
+		# additional linking
+		if ((DECLARED OPENMP_VERSION) AND (NOT OPENMP_VERSION VERSION_LESS 2.0))
+			set(SHARK_OPENMP ON)
+		elseif((DECLARED OPENMP_CXX_SPEC_DATE) AND (NOT OPENMP_CXX_SPEC_DATE LESS 200203))
+			set(SHARK_OPENMP ON)
+		else()
+			set(OPENMP_VERSION_CHECK_SOURCE "
 #include <stdio.h>
 int main(int argc, char *argv[]) {
 #if _OPENMP >= 200203
@@ -196,21 +208,35 @@ int main(int argc, char *argv[]) {
 	fail to compile please
 #endif
 }")
-		set(WORK_DIR ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/OpenMPVersionCheck)
-		set(SRC_FILE ${WORK_DIR}/ompver.cpp)
-		file(WRITE ${SRC_FILE} "${OPENMP_VERSION_CHECK_SOURCE}")
-		try_compile(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${SRC_FILE}
-		            COMPILE_DEFINITIONS ${OpenMP_CXX_FLAGS})
+			set(WORK_DIR ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/OpenMPVersionCheck)
+			set(SRC_FILE ${WORK_DIR}/ompver.cpp)
+			file(WRITE ${SRC_FILE} "${OPENMP_VERSION_CHECK_SOURCE}")
+			try_compile(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${SRC_FILE}
+			            COMPILE_DEFINITIONS ${OpenMP_CXX_FLAGS}
+			            LINK_LIBRARIES ${OpenMP_CXX_LIBRARIES})
 
-		if (COMPILE_RESULT)
-			set(SHARK_OPENMP ON)
-		else()
-			message("-- OpenMP found, but is <= 2.0. Compiling without OpenMP support")
+			if (COMPILE_RESULT)
+				set(SHARK_OPENMP ON)
+			endif()
+		endif()
+
+		if (NOT SHARK_OPENMP)
+			message(STATUS "OpenMP found, but is <= 2.0. Compiling without OpenMP support")
+			if (CMAKE_CXX_COMPILER_ID STREQUAL Intel AND CMAKE_VERSION VERSION_LESS 3.9)
+				message(WARNING
+"**********************************************************************"
+"\nIntel compilers actually support the OpenMP version required by shark,"
+"but versions of cmake < 3.9 might fail to recognize such support."
+"Try using cmake >= 3.9 to recognize this properly"
+"and generate an OpenMP-enabled shark build.\n"
+"**********************************************************************")
+			endif()
 		endif()
 	endif()
 
 	if (SHARK_OPENMP)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+		set(SHARK_LIBS ${SHARK_LIBS} ${OpenMP_CXX_LIBRARIES})
 	endif()
 endmacro()
 
