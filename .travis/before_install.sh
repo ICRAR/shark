@@ -42,13 +42,6 @@ then
 		brew update || fail "cannot update brew"
 	fi
 
-	# The xcode 8.1 and 9.1 images need oclint to be uninstalled
-	# (see travis-ci issue #8826)
-	if [ "${XCODE}" = "8.1" -o "${XCODE}" = "9.1" ]
-	then
-		brew cask uninstall oclint || fail "cannot uninstall oclint"
-	fi
-
 	# cxxtest pulls python@2, so we need to unlink
 	# the pre-installed python first
 	brew unlink python || fail "cannot unlink python"
