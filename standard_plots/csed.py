@@ -61,7 +61,7 @@ def plot_csed(plt, outdir, obsdir, h0, CSED, nbands):
     xtit="$\\rm log_{10}(\lambda/Ang\, (rest-frame))$"
     ytit="$\\rm log_{10}(\\nu \\epsilon_{\\rm int}/ h\,W\, Mpc^{-3})$"
 
-    fig = plt.figure(figsize=(6,10))
+    fig = plt.figure(figsize=(6,13))
 
     subplots = (411, 412, 413, 414)
     idx = (0, 1, 2, 3)
@@ -109,7 +109,7 @@ def plot_csed(plt, outdir, obsdir, h0, CSED, nbands):
 
     common.savefig(outdir, fig, "CSED_Shark.pdf")
 
-    fig = plt.figure(figsize=(6,14))
+    fig = plt.figure(figsize=(6,16))
 
     subplots = (511, 512, 513, 514, 515)
     idx = (0, 1, 2, 3, 4)
