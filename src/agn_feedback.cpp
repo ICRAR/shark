@@ -48,6 +48,9 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
+	options.load("agn_feedback.kappa_qso", kappa_qso);
+	options.load("agn_feedback.epsilon_qso", epsilon_qso);
+
 }
 
 template <>
@@ -65,9 +68,10 @@ Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, c
 	throw invalid_option(os.str());
 }
 
-AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology) :
+AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology, const RecyclingParameters &recycle_params) :
 	parameters(parameters),
-	cosmology(cosmology)
+	cosmology(cosmology),
+	recycle_params(recycle_params)
 {
 	// no-op
 }
@@ -164,6 +168,58 @@ double AGNFeedback::smbh_accretion_timescale(Galaxy &galaxy, double z){
 	double tdyn = constants::MPCKM2GYR * cosmology->comoving_to_physical_size(galaxy.bulge_gas.rscale, z) / vbulge;
 
 	return tdyn * parameters.tau_fold;
+
+}
+
+double AGNFeedback::qso_critical_luminosity(Galaxy &galaxy){
+
+	double fgas = galaxy.bulge_gas.mass/galaxy.bulge_mass();
+
+	double sigma_bulge = std::sqrt(constants::G * galaxy.bulge_mass() / galaxy.bulge_gas.rscale);
+
+	//expression gives luminosity in 10^40 ergs/s.
+
+	double Lm = 3e6 * (fgas/0.1) * std::pow((sigma_bulge/200.0), 4.0);
+
+	return Lm;
+
+}
+
+double AGNFeedback::salpeter_timescale(double Lbol, double mbh){
+
+	double ledd = eddington_luminosity(mbh);
+
+	double edd_ratio = Lbol/ledd;
+
+	//returns Salpeter timescale in Gyr.
+
+	return 43.0 / edd_ratio / constants::KILO;
+}
+
+double AGNFeedback::qso_outflow_velocity(double Lbol, double zgas, double mgas){
+
+	double vout  = 320.0 * std::pow(Lbol/constants::LSOLAR, 0.5) * std::pow(zgas/recycle_params.zsun, 0.25) * std::pow(mgas, -0.25);
+
+	return vout;
+
+}
+
+void AGNFeedback::qso_outflow_rate(double mgas, double tsalp, double vout, double vcirc, double sfr, double beta_halo, double beta_ejec){
+
+	double mout_rate= mgas/tsalp;
+
+	double mejec_rate = (parameters.kappa_qso * std::pow(vout/vcirc, 2.0) - 1) * mout_rate;
+
+	// Apply boundary conditions to ejection rate
+	if(mejec_rate <  0){
+		mejec_rate = 0;
+	}
+	if(mejec_rate > mout_rate){
+		mejec_rate = mout_rate;
+	}
+
+	beta_halo = mout_rate/sfr;
+	beta_ejec = mejec_rate/sfr;
 
 }
 
