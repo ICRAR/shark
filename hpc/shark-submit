@@ -181,7 +181,7 @@ print_usage() {
 	echo "Examples"
 	echo "========"
 	echo
-	echo "$> shark-submit -q debug -S ../build/shark -V 0-9 myconfig.cfg"
+	echo "$> shark-submit -Q debug -S ../build/shark -V 0-9 myconfig.cfg"
 	echo
 	echo "   Creates a job submission that will submit the execution of 10 shark instances"
 	echo "   for subvolumes from 0 to 9 using the common configuration file 'myconfig.cfg'"
@@ -189,14 +189,14 @@ print_usage() {
 	echo "  'debug' queue"
 	echo
 	echo "$> shark-submit -m 7g -M gsl/2.3:hdf5/1.10.2:gcc/6.3 -p -N 10 -V '0-32 34-63'"
-	echo "   -q debug myconfig.cfg"
+	echo "   -Q debug myconfig.cfg"
 	echo
 	echo "   Like above, but executing for subvolumes from 0 to 63 (excluding 33), each"
 	echo "   instance needing 7 [GB] of memory, requesting 10 computing nodes, loading "
 	echo "   the gsl/2.3, hdf5/1.10.2 and gcc/6.3 modules before launching shark, and"
 	echo "   producing all standard plots"
 	echo
-	echo "$> shark-submit -q debug -m 7g -p -N 10 -V '0-32 34-63' myconfig.cfg"
+	echo "$> shark-submit -Q debug -m 7g -p -N 10 -V '0-32 34-63' myconfig.cfg"
 	echo
 	echo "   Like above, but assuming that SHARK_RUNTIME_MODULES is already set, in which"
 	echo "   case its value does not need to be specified"
