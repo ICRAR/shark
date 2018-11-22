@@ -28,8 +28,9 @@
 #include <utility>
 
 #include "cosmology.h"
-#include "options.h"
 #include "components.h"
+#include "options.h"
+#include "recycling.h"
 
 namespace shark {
 
@@ -48,6 +49,8 @@ public:
 	double accretion_eff_cooling = 0;
 	double kappa_agn = 0;
 	double nu_smbh = 0;
+	double kappa_qso = 0;
+	double epsilon_qso = 0;
 
 	enum AGNFeedbackModel {
 		CROTON16 = 0,
@@ -61,7 +64,7 @@ public:
 class AGNFeedback {
 
 public:
-	AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology);
+	AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology, const RecyclingParameters &recycle_params);
 
 	/**
 	 * All input quantities should be in comoving units.
@@ -74,12 +77,19 @@ public:
 	double smbh_growth_starburst(double mgas, double vvir);
 	double smbh_accretion_timescale(Galaxy &galaxy, double z);
 	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir);
+	double qso_critical_luminosity(Galaxy &galaxy);
+	double salpeter_timescale(double Lbol, double mbh);
+	double qso_outflow_velocity(double Lbol, double zgas, double mgas);
+	void qso_outflow_rate(double mgas, double tsalp, double vout, double vcirc, double sfr, double beta_halo, double beta_ejec);
+
 
 	// TODO: move this to private when possible
 	AGNFeedbackParameters parameters;
 
 private:
 	CosmologyPtr cosmology;
+	RecyclingParameters recycle_params;
+
 };
 
 /// Type used by users to handle an instance of AGNFeedback
