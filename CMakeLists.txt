@@ -325,11 +325,11 @@ set(SHARKLIB_SRCS
 )
 
 if (WIN32)
-	set(SHARLIB_MODE STATIC)
+	set(SHARKLIB_MODE STATIC)
 else()
-	set(SHARLIB_MODE SHARED)
+	set(SHARKLIB_MODE SHARED)
 endif()
-add_library(sharklib ${SHARLIB_MODE} ${SHARKLIB_SRCS})
+add_library(sharklib ${SHARKLIB_MODE} ${SHARKLIB_SRCS})
 target_link_libraries(sharklib ${SHARK_LIBS})
 set_target_properties(sharklib PROPERTIES
     LIBRARY_OUTPUT_NAME shark
