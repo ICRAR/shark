@@ -35,15 +35,16 @@ namespace shark {
 class GalaxyCreator {
 
 public:
-	GalaxyCreator(const CosmologyPtr &cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params);
+	GalaxyCreator(const CosmologyPtr &cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params, unsigned int threads);
 	void create_galaxies(const std::vector<MergerTreePtr> &merger_trees, TotalBaryon &AllBaryons);
 
 private:
-	bool create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t ID);
+	void create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t ID);
 
 	CosmologyPtr cosmology;
 	GasCoolingParameters cool_params;
 	SimulationParameters sim_params;
+	unsigned int threads;
 };
 
 }  // namespace shark

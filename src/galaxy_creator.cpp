@@ -25,51 +25,52 @@
 
 #include "galaxy_creator.h"
 #include "logging.h"
+#include "omp_utils.h"
 #include "timer.h"
 
 namespace shark {
 
-GalaxyCreator::GalaxyCreator(const CosmologyPtr &cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params) :
+GalaxyCreator::GalaxyCreator(const CosmologyPtr &cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params, unsigned int threads) :
 	cosmology(cosmology),
 	cool_params(cool_params),
-	sim_params(sim_params)
+	sim_params(sim_params),
+	threads(threads)
 {
 	// no-op
 }
 
 void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_trees, TotalBaryon &AllBaryons)
 {
-	int galaxies_added = 0;
-	double total_baryon = 0.0;
-
-	Galaxy::id_t galaxy_id = 0;
+	std::atomic<Galaxy::id_t> galaxy_id(0);
 	auto timer = Timer();
+
+	std::vector<double> total_baryon(threads);
+
 	for(int snapshot = sim_params.min_snapshot; snapshot <= sim_params.max_snapshot - 1; snapshot++) {
 		auto z = sim_params.redshifts[snapshot];
-		for(auto &merger_tree: merger_trees) {
+
+		omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, int thread_num) {
 			for(auto &halo: merger_tree->halos[snapshot]) {
-				if (create_galaxies(halo, z, galaxy_id)) {
-					galaxy_id++;
-					galaxies_added++;
-					total_baryon += halo->central_subhalo->hot_halo_gas.mass;
+
+				// Halo has a central subhalo with ascendants so ignore it, as it should already have galaxies in it.
+				if(halo->central_subhalo->ascendants.size() > 0){
+					continue;
 				}
+
+				create_galaxies(halo, z, galaxy_id++);
+				total_baryon[thread_num] += halo->central_subhalo->hot_halo_gas.mass;
 			}
-		}
+		});
+
 		// Keep track of the total amount of baryons integrated from the first snapshot to the current one.
-		AllBaryons.baryon_total_created[snapshot] += total_baryon;
+		AllBaryons.baryon_total_created[snapshot] += std::accumulate(total_baryon.begin(), total_baryon.end(), 0.);
 	}
 
-	LOG(info) << "Created " << galaxies_added << " initial galaxies in " << timer;
+	LOG(info) << "Created " << galaxy_id.load() << " initial galaxies in " << timer;
 }
 
-bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t galaxy_id)
+void GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t galaxy_id)
 {
-
-	// Halo has a central subhalo with ascendants so ignore it, as it should already have galaxies in it.
-	if(halo->central_subhalo->ascendants.size() > 0){
-		return false;
-	}
-
 	// Central subhalo has a central galaxy (somehow!), ignore
 	auto central_subhalo = halo->central_subhalo;
 	if(central_subhalo->central_galaxy()) {
@@ -101,9 +102,6 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 	central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
 
 	galaxy->vmax = central_subhalo->Vcirc;
-
-	return true;
-
 }
 
 }

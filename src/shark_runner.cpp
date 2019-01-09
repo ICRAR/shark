@@ -377,7 +377,7 @@ void SharkRunner::impl::run() {
 
 	/* Create the first generation of galaxies if halo is first appearing.*/
 	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
-	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, simulation_params);
+	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, simulation_params, threads);
 	galaxy_creator.create_galaxies(merger_trees, all_baryons);
 
 	// Go, go, go!
