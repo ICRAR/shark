@@ -23,6 +23,9 @@
  * Galaxy creator class implementation
  */
 
+#include <atomic>
+#include <numeric>
+
 #include "galaxy_creator.h"
 #include "logging.h"
 #include "omp_utils.h"
