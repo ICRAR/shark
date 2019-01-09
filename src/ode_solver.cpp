@@ -36,41 +36,19 @@ using namespace std;
 
 namespace shark {
 
-ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, double precision, ode_evaluator evaluator) :
-	y(y0),
-	t(t0),
-	t0(t0),
-	delta_t(delta_t),
-	step(0),
+ODESolver::ODESolver(ode_evaluator evaluator, size_t dimension, double precision, void *params) :
 	ode_system(),
 	driver()
 {
-	ode_system = std::shared_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, NULL, y0.size(), NULL});
-	driver.reset(gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rkck, delta_t, 0.0, precision));
-}
-
-ODESolver::ODESolver(const std::vector<double> &y0, double t0, double delta_t, double precision, const std::shared_ptr<gsl_odeiv2_system> &ode_system) :
-	y(y0),
-	t(t0),
-	t0(t0),
-	delta_t(delta_t),
-	step(0),
-	ode_system(ode_system),
-	driver()
-{
-	driver.reset(gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rkck, delta_t, 0.0, precision));
+	// "42" is a dummy hstart, we need something != 0
+	ode_system = std::unique_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, nullptr, dimension, params});
+	driver.reset(gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rkck, 42, 0, precision));
 }
 
 ODESolver::ODESolver(ODESolver &&odeSolver) :
-	y(odeSolver.y),
-	t(odeSolver.t),
-	t0(odeSolver.t0),
-	delta_t(odeSolver.delta_t),
-	step(odeSolver.step),
-	ode_system(odeSolver.ode_system),
-	driver()
+	ode_system(std::move(odeSolver.ode_system)),
+	driver(std::move(odeSolver.driver))
 {
-	std::swap(driver, odeSolver.driver);
 }
 
 ODESolver::~ODESolver() {
@@ -79,15 +57,16 @@ ODESolver::~ODESolver() {
 	}
 }
 
-std::vector<double> ODESolver::evolve() {
-
-	step++;
-	double t_i = t0 + step*delta_t;
-	int status = gsl_odeiv2_driver_apply(driver.get(), &t, t_i, y.data());
+void ODESolver::evolve(std::vector<double> &y, double delta_t)
+{
+	double t0 = 0;
+	double t1 = t0 + delta_t;
+	gsl_odeiv2_driver_reset_hstart(driver.get(), delta_t);
+	int status = gsl_odeiv2_driver_apply(driver.get(), &t0, t1, y.data());
 
 	// TODO: add compiler-dependent likelihood macro
 	if (status == GSL_SUCCESS) {
-		return y;
+		return;
 	}
 
 	//TEST: forcing integration to finish regardless of accuracy issue in three cases.
@@ -98,13 +77,13 @@ std::vector<double> ODESolver::evolve() {
 		os << "step size decreases below machine precision ";
 		LOG(warning) << "ODE: step size decreases below machine precision. Will force integration to finish regardless of desired accuracy not reached.";
 		status = GSL_SUCCESS;
-		return y;
+		return;
 	}
 	if (status == GSL_ENOPROG) {
 		os << "step size dropped below minimum value";
 		LOG(warning) << "ODE:step size dropped below minimum value. Will force integration to finish regardless of desired accuracy not reached.";
 		status = GSL_SUCCESS;
-		return y;
+		return;
 	}
 	else if (status == GSL_EBADFUNC) {
 		os << "user function signaled an error";
@@ -114,7 +93,7 @@ std::vector<double> ODESolver::evolve() {
 		os << "maximum number of steps reached";
 		LOG(warning) << "ODE:maximum number of steps reached. Will force integration to finish regardless of desired accuracy not reached.";
 		status = GSL_SUCCESS;
-		return y;
+		return;
 	}
 	else {
 		os << "unexpected GSL error: " << gsl_strerror(status);
@@ -128,15 +107,9 @@ unsigned long int ODESolver::num_evaluations()
 	return driver->n;
 }
 
-ODESolver &ODESolver::operator=(ODESolver &&other) {
-
-	// Normal moving of values
-	y = other.y;
-	t0 = other.t0;
-	t = other.t;
-	delta_t = other.delta_t;
-	step = other.step;
-	ode_system = other.ode_system;
+ODESolver &ODESolver::operator=(ODESolver &&other)
+{
+	std::swap(ode_system, other.ode_system);
 	std::swap(driver, other.driver);
 	return *this;
 }
