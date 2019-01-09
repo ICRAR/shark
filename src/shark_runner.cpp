@@ -209,7 +209,7 @@ std::vector<MergerTreePtr> SharkRunner::impl::import_trees()
 	HaloBasedTreeBuilder tree_builder(exec_params, threads);
 	auto halos = reader.read_halos(exec_params.simulation_batches);
 	auto trees = tree_builder.build_trees(halos, simulation_params, gas_cooling_params, cosmology, all_baryons);
-	LOG(info) << "Merger trees imported in " << t;
+	LOG(info) << trees.size() << " Merger trees imported in " << t;
 	return trees;
 }
 
