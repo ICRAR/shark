@@ -253,7 +253,7 @@ void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread
 	auto &disk_instability = objs.disk_instability;
 
 	/*here loop over the halos this merger tree has at this time.*/
-	for(auto &halo: tree->halos[snapshot]) {
+	for(auto &halo: tree->halos_at(snapshot)) {
 
 		/*Evaluate which galaxies are merging in this halo.*/
 		if (LOG_ENABLED(debug)) {
@@ -313,7 +313,8 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 
 	std::vector<HaloPtr> all_halos_this_snapshot;
 	for (auto &tree: merger_trees) {
-		all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), tree->halos[snapshot].begin(), tree->halos[snapshot].end());
+		auto &halos = tree->halos_at(snapshot);
+		all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halos.begin(), halos.end());
 	}
 
 	bool write_galaxies = exec_params.output_snapshot(snapshot + 1);

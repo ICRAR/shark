@@ -53,7 +53,7 @@ void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_tre
 		auto z = sim_params.redshifts[snapshot];
 
 		omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, int thread_num) {
-			for(auto &halo: merger_tree->halos[snapshot]) {
+			for(auto &halo: merger_tree->halos_at(snapshot)) {
 
 				// Halo has a central subhalo with ascendants so ignore it, as it should already have galaxies in it.
 				if(halo->central_subhalo->ascendants.size() > 0){
