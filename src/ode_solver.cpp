@@ -24,7 +24,6 @@
  */
 
 #include <sstream>
-#include <vector>
 
 #include "exceptions.h"
 #include "logging.h"
@@ -49,12 +48,6 @@ ODESolver::ODESolver(ODESolver &&odeSolver) :
 	ode_system(std::move(odeSolver.ode_system)),
 	driver(std::move(odeSolver.driver))
 {
-}
-
-ODESolver::~ODESolver() {
-	if (driver) {
-		gsl_odeiv2_driver_free(driver.release());
-	}
 }
 
 void ODESolver::evolve(std::vector<double> &y, double delta_t)

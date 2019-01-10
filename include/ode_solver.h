@@ -34,6 +34,16 @@
 namespace shark {
 
 /**
+ * A deleter class that knows how to delete a gsl_odeiv2_driver
+ */
+class gsl_odeiv2_driver_deleter {
+public:
+	void operator()(gsl_odeiv2_driver *d) {
+		gsl_odeiv2_driver_free(d);
+	}
+};
+
+/**
  * A solver of ODE systems
  *
  * The ODE system solved by this class is defined in terms of an evaluation
@@ -72,11 +82,6 @@ public:
 	ODESolver(ODESolver &&odeSolver);
 
 	/**
-	 * Destructs this solver and frees up all resources associated with it
-	 */
-	~ODESolver();
-
-	/**
 	 * Evolves the ODE system from 0 to ``delta_t``
 	 *
 	 * @param y The values of the system at ``t = 0``. After returning the vector
@@ -100,7 +105,7 @@ public:
 
 private:
 	std::unique_ptr<gsl_odeiv2_system> ode_system;
-	std::unique_ptr<gsl_odeiv2_driver> driver;
+	std::unique_ptr<gsl_odeiv2_driver, gsl_odeiv2_driver_deleter> driver;
 };
 
 }  // namespace shark
