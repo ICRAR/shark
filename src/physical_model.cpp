@@ -139,7 +139,7 @@ BasicPhysicalModel::BasicPhysicalModel(
 	// no-op
 }
 
-std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy)
+void BasicPhysicalModel::from_galaxy(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy)
 {
 
 	/** Variables introduced to solve ODE equations.
@@ -165,8 +165,6 @@ std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, cons
 	 *
 	 */
 
-	std::vector<double> y(17);
-
 	// Define mass inputs.
 	y[0] = galaxy.disk_stars.mass;
 	y[1] = galaxy.disk_gas.mass;
@@ -191,8 +189,6 @@ std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, cons
 	y[14] = subhalo.cold_halo_gas.sAM * subhalo.cold_halo_gas.mass;
 	y[15] = subhalo.hot_halo_gas.sAM * subhalo.hot_halo_gas.mass;
 	y[16] = subhalo.ejected_galaxy_gas.sAM * subhalo.ejected_galaxy_gas.mass;
-
-	return y;
 }
 
 void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t)
@@ -300,7 +296,7 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 }
 
 
-std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy)
+void BasicPhysicalModel::from_galaxy_starburst(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy)
 {
 	/** Variables introduced to solve ODE equations.
 	 * y[0]: stellar mass of galaxy.
@@ -325,8 +321,6 @@ std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &sub
 	 *
 	 */
 
-	std::vector<double> y(17);
-
 	// Define mass inputs.
 	y[0] = galaxy.bulge_stars.mass;
 	y[1] = galaxy.bulge_gas.mass;
@@ -346,8 +340,6 @@ std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &sub
 	y[11] = 0;
 
 	// Equations of angular momentum exchange are ignored in the case of starbursts.
-
-	return y;
 }
 
 void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger)
