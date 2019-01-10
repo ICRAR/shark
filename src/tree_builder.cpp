@@ -215,7 +215,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for (int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 
-			for (auto &halo: tree->halos[snapshot]) {
+			for (auto &halo: tree->halos_at(snapshot)) {
 
 				// First check in halo has a central subhalo, if yes, then continue with loop.
 				if (halo->central_subhalo) {
@@ -286,7 +286,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for (int snapshot=sim_params.min_snapshot; snapshot >= sim_params.max_snapshot; snapshot++) {
 
-			for (auto &halo: tree->halos[snapshot]) {
+			for (auto &halo: tree->halos_at(snapshot)) {
 				int i = 0;
 				for (auto &subhalo: halo->all_subhalos()) {
 					if(subhalo->subhalo_type == Subhalo::CENTRAL){
@@ -314,7 +314,7 @@ void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &tree
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
 
-			for(auto &halo: tree->halos[snapshot]){
+			for(auto &halo: tree->halos_at(snapshot)){
 				// Check if current mass of halo is larger than descendant. If so, redefine descendant Mvir to that of the progenitor.
 				if(halo->Mvir > halo->descendant->Mvir){
 					halo->descendant->Mvir = halo->Mvir;
@@ -333,7 +333,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for (int snapshot=sim_params.max_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
 
-			for (auto &halo: tree->halos[snapshot]) {
+			for (auto &halo: tree->halos_at(snapshot)) {
 
 				for (auto &subhalo: halo->all_subhalos()) {
 					//Check if subhalo is there because of interpolation. If so, redefine its angular momentum and concentration to that of its progenitor.
@@ -363,7 +363,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 	auto universal_baryon_fraction = cosmology.universal_baryon_fraction();
 	for(auto &tree: trees) {
 		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
-				for(auto &halo: tree->halos[snapshot]){
+				for(auto &halo: tree->halos_at(snapshot)){
 
 					const auto &ascendants = halo->ascendants;
 
@@ -392,7 +392,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot; snapshot++) {
 		for(auto &tree: trees) {
-				for(auto &halo: tree->halos[snapshot]){
+				for(auto &halo: tree->halos_at(snapshot)){
 					total_baryon_accreted += halo->central_subhalo->accreted_mass;
 				}
 		}

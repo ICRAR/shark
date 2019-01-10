@@ -785,6 +785,15 @@ public:
 	void add_halo(const HaloPtr &halo) {
 		halos[halo->snapshot].push_back(halo);
 	}
+
+	std::vector<HaloPtr> &halos_at(int snapshot)
+	{
+		static std::vector<HaloPtr> empty;
+		if (halos.find(snapshot) == halos.end()) {
+			return empty;
+		}
+		return halos.at(snapshot);
+	}
 };
 
 class TotalBaryon {
