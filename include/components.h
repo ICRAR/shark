@@ -27,6 +27,7 @@
 #define SHARK_COMPONENTS_H_
 
 #include <cassert>
+#include <cstddef>
 #include <iterator>
 #include <map>
 #include <memory>
@@ -693,7 +694,7 @@ public:
 		typename detail::subhalos_iterator_traits<constant>::satellite_iterator satellite_it {};
 
 	public:
-		typedef ptrdiff_t difference_type;
+		typedef std::ptrdiff_t difference_type;
 		typedef SubhaloPtr value_type;
 		typedef std::forward_iterator_tag iterator_category;
 		typedef typename detail::subhalos_iterator_traits<constant>::subhalo_pointer pointer;
