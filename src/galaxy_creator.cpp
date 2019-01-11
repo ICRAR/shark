@@ -92,19 +92,19 @@ void GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 	}
 
 	auto galaxy = std::make_shared<Galaxy>(galaxy_id);
-	galaxy->galaxy_type = Galaxy::CENTRAL;
-
-	central_subhalo->galaxies.push_back(galaxy);
-	if (LOG_ENABLED(debug)) {
-		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
-	}
+	galaxy->vmax = central_subhalo->Vcirc;
 
 	central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology->universal_baryon_fraction();
 
 	// Assign metallicity to the minimum allowed.
 	central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
 
-	galaxy->vmax = central_subhalo->Vcirc;
+	central_subhalo->galaxies.emplace_back(std::move(galaxy));
+
+	if (LOG_ENABLED(debug)) {
+		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
+	}
+
 }
 
 }
