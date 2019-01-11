@@ -36,12 +36,6 @@ cd ${TRAVIS_BUILD_DIR}
 if [ "${TRAVIS_OS_NAME}" = "osx" ]
 then
 
-	# The xcode7.3 osx image needs an update
-	if [ "${XCODE}" = "7.3" ]
-	then
-		brew update || fail "cannot update brew"
-	fi
-
 	# cxxtest pulls python@2, so we need to unlink
 	# the pre-installed python first
 	brew unlink python || fail "cannot unlink python"
