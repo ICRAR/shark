@@ -43,10 +43,11 @@ public:
 
 	xyz() : x(0), y(0), z(0) {};
 
-	xyz(T x, T y, T z) : x(x), y(y), z(z) {};
+	template <typename U>
+	xyz(U x, U y, U z) : x(T(x)), y(T(y)), z(T(z)) {};
 
 	template <typename U>
-	xyz(xyz<U> other) : x(other.x), y(other.y), z(other.z) {};
+	xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z)) {};
 
 	/**
 	 * The value in the X coordinate
