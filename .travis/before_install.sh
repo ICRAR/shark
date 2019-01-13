@@ -47,6 +47,10 @@ then
 		pkgs="$pkgs python3"
 	fi
 
+	# "install" seems to be "update"-ing too, which is failing
+	# with a "don't worry, [...] everything is [...] fine now"
+	# message. Let's follow that advice more explicitly
+	brew update || true
 	brew install $pkgs || fail "cannot install packages: $pkgs"
 
 	# PYTHON==venv means that we are going to use a virtualenv'd python
