@@ -678,9 +678,9 @@ public:
 	/**
 	 * @return the total number of subhalos contained in this halo
 	 */
-	unsigned long subhalo_count() const
+	std::size_t subhalo_count() const
 	{
-		unsigned int count = (central_subhalo ? 1 : 0);
+		std::size_t count = (central_subhalo ? 1 : 0);
 		return count + satellite_subhalos.size();
 	}
 
