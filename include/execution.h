@@ -25,6 +25,7 @@
 #define SHARK_EXECUTION_H_
 
 #include <ctime>
+#include <random>
 #include <set>
 #include <string>
 #include <vector>
@@ -42,6 +43,7 @@ public:
 	Options::file_format_t output_format = Options::HDF5;
 	std::string output_directory {};
 	std::string name_model {};
+	std::random_device::result_type seed = std::random_device()();
 	std::vector<unsigned int> simulation_batches {};
 	std::time_t starting_time = std::time(nullptr);
 

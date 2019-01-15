@@ -75,7 +75,7 @@ public:
 	    gas_cooling_params(options),recycling_params(options), reincorporation_params(options),
 	    simulation_params(options), star_formation_params(options),
 	    cosmology(make_cosmology(cosmo_params)),
-	    dark_matter_halos(make_dark_matter_halos(dark_matter_halo_params, cosmology, simulation_params)),
+	    dark_matter_halos(make_dark_matter_halos(dark_matter_halo_params, cosmology, simulation_params, exec_params)),
 	    writer(make_galaxy_writer(exec_params, cosmo_params, cosmology, dark_matter_halos, simulation_params)),
 	    simulation(simulation_params, cosmology),
 	    star_formation(star_formation_params, recycling_params, cosmology)
@@ -196,7 +196,7 @@ void SharkRunner::impl::create_per_thread_objects()
 
 	for(unsigned int i = 0; i != threads; i++) {
 		auto physical_model = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_params, gas_cooling_params);
-		GalaxyMergers galaxy_mergers(merger_parameters, cosmology, simulation_params, dark_matter_halos, physical_model, agnfeedback);
+		GalaxyMergers galaxy_mergers(merger_parameters, cosmology, exec_params, simulation_params, dark_matter_halos, physical_model, agnfeedback);
 		DiskInstability disk_instability(disk_instability_params, merger_parameters, simulation_params, dark_matter_halos, physical_model, agnfeedback);
 		thread_objects.emplace_back(std::move(physical_model), std::move(galaxy_mergers), std::move(disk_instability));
 	}

@@ -279,6 +279,12 @@ int Options::get<int>(const std::string &name, const std::string &value) const {
 	return _builtin_from_string<int>(name, value, "integer");
 }
 
+
+template<>
+unsigned int Options::get<unsigned int>(const std::string &name, const std::string &value) const {
+	return _builtin_from_string<unsigned int>(name, value, "unsigned integer");
+}
+
 template<>
 float Options::get<float>(const std::string &name, const std::string &value) const {
 	return _builtin_from_string<float>(name, value, "float");

@@ -37,6 +37,7 @@
 #include "components.h"
 #include "cosmology.h"
 #include "simulation.h"
+#include "execution.h"
 
 namespace shark {
 
@@ -77,7 +78,11 @@ public:
 class DarkMatterHalos {
 
 public:
-	DarkMatterHalos(const DarkMatterHaloParameters &params, const CosmologyPtr &cosmology, SimulationParameters &sim_params);
+	DarkMatterHalos(
+		const DarkMatterHaloParameters &params,
+		const CosmologyPtr &cosmology,
+		SimulationParameters &sim_params,
+		const ExecutionParameters &exec_params);
 	virtual ~DarkMatterHalos() {};
 
 	virtual double grav_potential_halo(double r, double c) const = 0;
