@@ -1,4 +1,4 @@
-#!usr/bin/env python
+#!/usr/bin/env python
 import h5py
 from numpy.testing import assert_equal, assert_array_equal, assert_raises
 
