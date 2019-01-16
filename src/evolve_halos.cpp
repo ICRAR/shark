@@ -91,6 +91,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 				galaxy->sfr_disk           = 0;
 				//restart counter of mergers and disk instabilities.
 				galaxy->interaction.restore_interaction_item();
+				//restart descendant_id
+				galaxy->descendant_id = -1;
 			}
 
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.

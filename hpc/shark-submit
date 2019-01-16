@@ -175,13 +175,15 @@ print_usage() {
 	echo "====================="
 	echo
 	echo " * SHARK_OUTPUT_DIR_BASE  Default prefix where shark_run_<xxx> dirs are created"
+	echo " * SHARK_ACCOUNT          Default value for the -a option"
+	echo " * SHARK_QUEUE            Default value for the -Q option"
 	echo " * SHARK_RUNTIME_MODULES  Default value for the -M option"
 	echo
 	echo
 	echo "Examples"
 	echo "========"
 	echo
-	echo "$> shark-submit -q debug -S ../build/shark -V 0-9 myconfig.cfg"
+	echo "$> shark-submit -Q debug -S ../build/shark -V 0-9 myconfig.cfg"
 	echo
 	echo "   Creates a job submission that will submit the execution of 10 shark instances"
 	echo "   for subvolumes from 0 to 9 using the common configuration file 'myconfig.cfg'"
@@ -189,14 +191,14 @@ print_usage() {
 	echo "  'debug' queue"
 	echo
 	echo "$> shark-submit -m 7g -M gsl/2.3:hdf5/1.10.2:gcc/6.3 -p -N 10 -V '0-32 34-63'"
-	echo "   -q debug myconfig.cfg"
+	echo "   -Q debug myconfig.cfg"
 	echo
 	echo "   Like above, but executing for subvolumes from 0 to 63 (excluding 33), each"
 	echo "   instance needing 7 [GB] of memory, requesting 10 computing nodes, loading "
 	echo "   the gsl/2.3, hdf5/1.10.2 and gcc/6.3 modules before launching shark, and"
 	echo "   producing all standard plots"
 	echo
-	echo "$> shark-submit -q debug -m 7g -p -N 10 -V '0-32 34-63' myconfig.cfg"
+	echo "$> shark-submit -Q debug -m 7g -p -N 10 -V '0-32 34-63' myconfig.cfg"
 	echo
 	echo "   Like above, but assuming that SHARK_RUNTIME_MODULES is already set, in which"
 	echo "   case its value does not need to be specified"
@@ -307,8 +309,8 @@ dry_run=
 verbose=
 quiet=
 shark_output_directory=
-queue=
-account=
+queue=${SHARK_QUEUE}
+account=${SHARK_ACCOUNT}
 job_name=
 walltime="1:00:00"
 modules=${SHARK_RUNTIME_MODULES}
