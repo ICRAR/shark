@@ -427,9 +427,14 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					}
 				}
 
-				//force the descendant Id to be = -1 if this is the last snapshot.
+				//force the descendant Id to be = -1 if this is the last snapshot. If not, check that all descendant_ids are positive.
 				if(snapshot == sim_params.max_snapshot){
 					galaxy->descendant_id = -1;
+				}
+				else if (galaxy->descendant_id < 0){
+					std::ostringstream os;
+					os << "Descendant_id of galaxy to be written is negative";
+					throw invalid_argument(os.str());
 				}
 
 				id_galaxy.push_back(galaxy->id);
