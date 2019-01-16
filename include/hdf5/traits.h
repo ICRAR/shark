@@ -79,13 +79,11 @@ struct datatype_traits<unsigned int> {
 	static const H5::PredType &write_type;
 };
 
-
 template<>
-struct datatype_traits<long int> {
+struct datatype_traits<std::int64_t> {
 	static const H5::PredType &native_type;
 	static const H5::PredType &write_type;
 };
-
 
 //
 // Traits for HDF5 entities

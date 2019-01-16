@@ -1,6 +1,13 @@
 Changelog
 =========
 
+.. rubric:: Development version
+
+* Improved support for the MSVC compiler.
+  |s| now correctly compiles, runs, and standard plots work correctly on Windows.
+* Improved the |ss| script to accept additional environment variables
+  to set default values for submission parameters.
+
 .. rubric:: 1.1.0
 
 * Fixed bug in spin parameter of halos
