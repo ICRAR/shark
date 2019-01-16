@@ -867,7 +867,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     volcorr = 3.0*np.log10(h0)
     xlf_obs  = xlf
  
-    xtit="$\\rm 1500 Ang mag (AB)$"
+    xtit="$\\rm 1500\, Ang\, mag\, (AB)$"
     ytit="$\\rm log_{10}(\Phi/{\\rm dex^{-1}} {\\rm Mpc}^{-3})$"
 
     xmin, xmax, ymin, ymax = -25, -16, -5, -1
@@ -979,7 +979,7 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     volcorr = 3.0*np.log10(h0)
     xlf_obs  = xlf
  
-    xtit="$\\rm K-band mag (AB)$"
+    xtit="$\\rm K-band\, mag\, (AB)$"
     ytit="$\\rm log_{10}(\Phi/{\\rm dex^{-1}} {\\rm Mpc}^{-3})$"
 
     xmin, xmax, ymin, ymax = -28, -16, -5, -1
