@@ -128,7 +128,7 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 		("version,V",   "Show version and exit")
 		("verbose,v",   po::value<int>()->default_value(3), "Verbosity level. Higher is more verbose")
 #ifdef SHARK_OPENMP
-		("threads,t",   po::value<std::size_t>()->default_value(1), "OpenMP threads, defaults to 1. 0 means use OpenMP default number of threads")
+		("threads,t",   po::value<unsigned int>()->default_value(1), "OpenMP threads, defaults to 1. 0 means use OpenMP default number of threads")
 #endif // SHARK_OPENMP
 		("options,o",   po::value<vector<string>>()->multitoken()->default_value({}, ""),
 		                "Space-separated additional options to override config file");
@@ -174,7 +174,7 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 Options read_options(const boost::program_options::variables_map &vm, unsigned int &threads) {
 
 #ifdef SHARK_OPENMP
-	threads = vm["threads"].as<std::size_t>();
+	threads = vm["threads"].as<unsigned int>();
 	if (threads == 0) {
 		threads = omp_get_max_threads();
 	}

@@ -132,9 +132,9 @@ struct SnapshotStatistics {
 	unsigned long starform_integration_intervals;
 	unsigned long galaxy_ode_evaluations;
 	unsigned long starburst_ode_evaluations;
-	unsigned long n_halos;
-	unsigned long n_subhalos;
-	unsigned long n_galaxies;
+	std::size_t n_halos;
+	std::size_t n_subhalos;
+	std::size_t n_galaxies;
 	Timer::duration duration_millis;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
@@ -353,10 +353,10 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 		return x + o.physical_model->get_galaxy_starburst_ode_evaluations();
 	});
 	auto n_halos = all_halos_this_snapshot.size();
-	auto n_subhalos = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_subhalos, const HaloPtr &halo) {
+	auto n_subhalos = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), std::size_t(0), [](std::size_t n_subhalos, const HaloPtr &halo) {
 		return n_subhalos + halo->subhalo_count();
 	});
-	auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_galaxies, const HaloPtr &halo) {
+	auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), std::size_t(0), [](std::size_t n_galaxies, const HaloPtr &halo) {
 		return n_galaxies + halo->galaxy_count();
 	});
 

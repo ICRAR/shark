@@ -197,7 +197,7 @@ T _builtin_from_string(const std::string &name, const std::string &val, const st
 {
 	try {
 		return _from_string<T>(val);
-	} catch (const std::invalid_argument &e) {
+	} catch (const std::invalid_argument &) {
 		std::ostringstream os;
 		os << "Invalid value for option " << name << ": " << val << ". "
 		   << type << " value was expected";
@@ -303,7 +303,7 @@ bool Options::get<bool>(const std::string &name, const std::string &value) const
 		is >> std::boolalpha;
 		is >> bool_val;
 		return bool_val;
-	} catch (const std::exception &e) {
+	} catch (const std::exception &) {
 		std::ostringstream os;
 		os << "Invalid value for option " << name << ": " << value << ". A boolean (true/false) was expected";
 		throw invalid_option(os.str());

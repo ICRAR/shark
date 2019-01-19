@@ -42,8 +42,8 @@ const H5::PredType &datatype_traits<int>::native_type = H5::PredType::NATIVE_INT
 const H5::PredType &datatype_traits<int>::write_type = H5::PredType::NATIVE_INT32;
 const H5::PredType &datatype_traits<unsigned int>::native_type = H5::PredType::NATIVE_UINT;
 const H5::PredType &datatype_traits<unsigned int>::write_type = H5::PredType::NATIVE_UINT32;
-const H5::PredType &datatype_traits<long int>::native_type = H5::PredType::NATIVE_LONG;
-const H5::PredType &datatype_traits<long int>::write_type = H5::PredType::NATIVE_INT64;
+const H5::PredType &datatype_traits<std::int64_t>::native_type = H5::PredType::NATIVE_INT64;
+const H5::PredType &datatype_traits<std::int64_t>::write_type = H5::PredType::NATIVE_INT64;
 
 }  // namespace hdf5
 

@@ -175,6 +175,8 @@ print_usage() {
 	echo "====================="
 	echo
 	echo " * SHARK_OUTPUT_DIR_BASE  Default prefix where shark_run_<xxx> dirs are created"
+	echo " * SHARK_ACCOUNT          Default value for the -a option"
+	echo " * SHARK_QUEUE            Default value for the -Q option"
 	echo " * SHARK_RUNTIME_MODULES  Default value for the -M option"
 	echo
 	echo
@@ -307,8 +309,8 @@ dry_run=
 verbose=
 quiet=
 shark_output_directory=
-queue=
-account=
+queue=${SHARK_QUEUE}
+account=${SHARK_ACCOUNT}
 job_name=
 walltime="1:00:00"
 modules=${SHARK_RUNTIME_MODULES}
