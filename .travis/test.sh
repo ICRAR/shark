@@ -62,7 +62,6 @@ if [ -n "$PYTHON" ]; then
 	 ./shark ../sample.cfg \
 	    -o simulation.redshift_file=input/redshifts.txt \
 	    -o simulation.tree_files_prefix=input/tree_199 \
-	    -o execution.seed=123 \
 	    -o execution.name_model=my_model_unequal_seed \
 	    || fail "failure during execution of shark"
 
