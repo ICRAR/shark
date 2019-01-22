@@ -47,7 +47,6 @@ ExecutionParameters::ExecutionParameters(const Options &options)
 
 	options.load("execution.output_sf_histories", output_sf_histories);
 	options.load("execution.snapshots_sf_histories", snapshots_sf_histories);
-
 }
 
 bool ExecutionParameters::output_snapshot(int snapshot)

@@ -59,11 +59,21 @@ if [ -n "$PYTHON" ]; then
 	    -o execution.name_model=my_model_equal_seed \
 	    || fail "failure during execution of shark"
 
-	 ./shark ../sample.cfg \
+	"$PYTHON" ../scripts/compare_galaxies.py \
+	    -m "mini-SURFS/my_model/199/0/galaxies.hdf5" \
+	       "mini-SURFS/my_model_equal_seed/199/0/galaxies.hdf5" \
+	    || fail "Models expected to be equal, they are not."
+
+	# Run using a random seed in the interval 2^32 - 1
+	./shark ../sample.cfg \
 	    -o simulation.redshift_file=input/redshifts.txt \
 	    -o simulation.tree_files_prefix=input/tree_199 \
-	    -o execution.name_model=my_model_unequal_seed \
+	    -o execution.name_model=my_model_random_seed \
 	    || fail "failure during execution of shark"
 
-	"$PYTHON" ../scripts/test_random_seed.py || fail "seed value was not reproducible"
+	"$PYTHON" ../scripts/compare_galaxies.py \
+	    -m "mini-SURFS/my_model/199/0/galaxies.hdf5" \
+	       "mini-SURFS/my_model_random_seed/199/0/galaxies.hdf5" \
+	    --expect-unequal \
+	    || fail "Models expected to be unequal, they are not."
 fi
