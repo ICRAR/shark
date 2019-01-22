@@ -35,7 +35,7 @@ endif()
 # Our project...
 project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # If not specified, always build in Release mode
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -273,7 +273,6 @@ configure_file(src/data.cpp.in "${data_cpp}" @ONLY)
 # Add git revision information in a generated .cpp file, which we then include
 # as part of the shark library
 #
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 git_local_changes(GIT_HAS_LOCAL_CHANGES)
