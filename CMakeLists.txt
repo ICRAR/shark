@@ -287,8 +287,52 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS
+   "${config_h}"
    "${data_cpp}"
    "${git_revision_cpp}"
+   include/agn_feedback.h
+   include/components.h
+   include/cosmology.h
+   include/dark_matter_halos.h
+   include/data.h
+   include/disk_instability.h
+   include/environment.h
+   include/evolve_halos.h
+   include/exceptions.h
+   include/execution.h
+   include/galaxy_creator.h
+   include/galaxy_mergers.h
+   include/galaxy_writer.h
+   include/gas_cooling.h
+   include/git_revision.h
+   include/integrator.h
+   include/interpolator.h
+   include/logging.h
+   include/merger_tree_reader.h
+   include/mixins.h
+   include/naming_convention.h
+   include/nfw_distribution.h
+   include/numerical_constants.h
+   include/ode_solver.h
+   include/omp_utils.h
+   include/options.h
+   include/physical_model.h
+   include/recycling.h
+   include/reincorporation.h
+   include/reionisation.h
+   include/sharkfwd.h
+   include/shark.h
+   include/shark_runner.h
+   include/simulation.h
+   include/star_formation.h
+   include/stellar_feedback.h
+   include/timer.h
+   include/tree_builder.h
+   include/utils.h
+   include/hdf5/iobase.h
+   include/hdf5/reader.h
+   include/hdf5/traits.h
+   include/hdf5/writer.h
    src/agn_feedback.cpp
    src/components.cpp
    src/cosmology.cpp
@@ -337,6 +381,9 @@ set_target_properties(sharklib PROPERTIES
 
 # The shark-importer executable
 set(SHARK_IMPORTER_SRCS
+	include/importer/descendants.h
+	include/importer/reader.h
+	include/importer/velociraptor.h
 	src/importer/descendants.cpp
 	src/importer/main.cpp
 	src/importer/reader.cpp
