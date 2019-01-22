@@ -259,7 +259,8 @@ endif()
 #
 # Save all compile-time options here
 #
-configure_file(include/config.h.in include/config.h @ONLY)
+set(config_h "${CMAKE_CURRENT_BINARY_DIR}/include/config.h")
+configure_file(include/config.h.in "${config_h}" @ONLY)
 
 #
 # We use the source code directory and the installation prefix to lookup data
