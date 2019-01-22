@@ -26,7 +26,7 @@ file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
 
 # We have only C++ sources, but until cmake 3.4 the check_symbol_exists
 # macro didn't work properly if only defining C++ as the project language
-if( ${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 4 )
+if (${CMAKE_VERSION} VERSION_LESS 3.4)
 	set(SHARK_LANGS C CXX)
 else()
 	set(SHARK_LANGS CXX)
@@ -372,7 +372,7 @@ if( SHARK_TEST )
 	# interpreter, and doesn't honour the shebang line that could be present.
 	# We try to rectify this situation here with a solution similar to what
 	# is found in cmake >= 3.7
-	if (${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 7 AND
+	if (${CMAKE_VERSION} VERSION_LESS 3.7 AND
 	    NOT "${CXXTEST_PYTHON_TESTGEN_EXECUTABLE}" STREQUAL "")
 		execute_process(COMMAND ${CXXTEST_PYTHON_TESTGEN_EXECUTABLE} --version
 		                OUTPUT_VARIABLE _CXXTEST_OUT ERROR_VARIABLE _CXXTEST_OUT
