@@ -121,6 +121,8 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 
 	file.write_attribute("run_info/model_name", exec_params.name_model);
 
+	file.write_attribute("run_info/seed", exec_params.seed);
+
 	// Calculate effective volume of the run
 	float volume = sim_params.volume * exec_params.simulation_batches.size();
 
@@ -135,6 +137,7 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 
 	comment = "Total number of subvolumes in which the simulated box was divided into";
 	file.write_dataset("run_info/tot_n_subvolumes", sim_params.tot_nsubvols, comment);
+
 
 	// Write cosmological parameters
 
