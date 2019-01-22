@@ -304,15 +304,6 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 				all_sats_to_delete.push_back(galaxy);
 			}
 			else{
-				//check if this galaxy will merge on the next snapshot instead, and if so, redefine their descendant_id.
-				if(snapshot+2 < simparams.max_snapshot){
-					double z1 = simparams.redshifts[snapshot];
-					double z2 = simparams.redshifts[snapshot+2];
-					double delta_t_twosnaps = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
-					if(galaxy->tmerge < delta_t_twosnaps){
-						galaxy->descendant_id = central_galaxy->id;
-					}
-				}
 				galaxy->tmerge = galaxy->tmerge - delta_t;
 			}
 		}

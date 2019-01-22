@@ -402,7 +402,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					cnfw_subhalo.push_back(c_sub);
 					lambda_subhalo.push_back(l_sub);
 					redshift_of_merger.push_back(-1);
-					if(snapshot < sim_params.max_snapshot){
+					if(galaxy->descendant_id < 0 && snapshot < sim_params.max_snapshot){
 						galaxy->descendant_id = galaxy->id;
 					}
 				}
@@ -419,12 +419,20 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					double redshift_merger = cosmology->convert_age_to_redshift_lcdm(tmerge);
 					redshift_of_merger.push_back(redshift_merger);
 
-					//Check whether this type 2 galaxy will merge on the next snapshot. this is done by
-					//checking if their descendant_id has been defined (which would happen in galaxy_mergers
-					//if this galaxy merges on the next snapshot.
-					if(galaxy->descendant_id < 0 && snapshot < sim_params.max_snapshot){
+					//check if this galaxy will merge on the next snapshot instead, and if so, redefine their descendant_id.
+					double z1 = sim_params.redshifts[snapshot];
+					double z2 = sim_params.redshifts[snapshot+1];
+					if(snapshot+1 > sim_params.max_snapshot){
+						z2 = 0;
+					}
+					double delta_t = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+					if(galaxy->tmerge <= delta_t){
+						galaxy->descendant_id = halo->central_subhalo->central_galaxy()->id;
+					}
+					else{
 						galaxy->descendant_id = galaxy->id;
 					}
+
 				}
 
 				//force the descendant Id to be = -1 if this is the last snapshot. If not, check that all descendant_ids are positive.
