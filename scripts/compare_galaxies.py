@@ -44,7 +44,7 @@ def assert_galaxies_equal(galaxies1, galaxies2):
 
 
 def assert_galaxies_not_equal(galaxies1, galaxies2):
-    assert_raises(AssertionError, assert_galaxies_equal, model1, model2)
+    assert_raises(AssertionError, assert_galaxies_equal, galaxies1, galaxies2)
 
 
 def main():
