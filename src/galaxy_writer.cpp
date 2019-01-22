@@ -138,7 +138,6 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 	comment = "Total number of subvolumes in which the simulated box was divided into";
 	file.write_dataset("run_info/tot_n_subvolumes", sim_params.tot_nsubvols, comment);
 
-
 	// Write cosmological parameters
 
 	comment = "omega matter assumed in simulation";
