@@ -419,17 +419,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					double redshift_merger = cosmology->convert_age_to_redshift_lcdm(tmerge);
 					redshift_of_merger.push_back(redshift_merger);
 
-					//check if this galaxy will merge on the next snapshot instead, and if so, redefine their descendant_id.
-					double z1 = sim_params.redshifts[snapshot];
-					double z2 = sim_params.redshifts[snapshot+1];
-					if(snapshot+1 > sim_params.max_snapshot){
-						z2 = 0;
-					}
-					double delta_t = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
-					if(galaxy->tmerge <= delta_t){
-						galaxy->descendant_id = halo->central_subhalo->central_galaxy()->id;
-					}
-					else{
+					if(galaxy->descendant_id < 0 ){
 						galaxy->descendant_id = galaxy->id;
 					}
 
