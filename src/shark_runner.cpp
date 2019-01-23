@@ -281,7 +281,7 @@ void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread
 		if (LOG_ENABLED(debug)) {
 			LOG(debug) << "Merging subhalos in halo " << halo;
 		}
-		galaxy_mergers.merging_subhalos(halo, z);
+		galaxy_mergers.merging_subhalos(halo, z, snapshot);
 	}
 
 }
