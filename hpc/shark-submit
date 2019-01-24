@@ -164,6 +164,15 @@ print_usage() {
 	echo "                 ranges like 1-10. Defaults to whatever is present in the"
 	echo "                 configuration file"
 	echo
+	echo " -s packed subvolumes  Identical format to subvolumes but used for parallel"
+	echo " 			processing of multiple parameter values (-E) rather than"
+	echo "			multiple subvolumes"
+	echo
+	echo " -E number of particles   Number of parallel instances of shark over the "
+	echo " 			subvolumes but with different parameter values. Use of "
+	echo " 			this specifier excludes the use of -V and -s must be used"
+	echo "                  in its stead"
+	echo
 	echo " -o opt=val ...  Extra options to pass down to shark. Options given this way"
 	echo "                 override those given in the configuration file. This parameter"
 	echo "                 can be given more than one time to pass down multiple options"
@@ -208,7 +217,7 @@ print_usage() {
 submit_slurm() {
 
 	# Each SHArk instance will be ran as a task
-	cmd="sbatch --ntasks $n_svols"
+	cmd="sbatch --ntasks $n_tasks"
 	cmd="$cmd -o shark-run.log"
 
 	# Queueing accountability
@@ -255,7 +264,6 @@ submit_slurm() {
 
 	cmd="$cmd -D \"$shark_output_directory\""
 	cmd="$cmd shark-run -v $shark_verbosity"
-
 	# shark-run command-line options
 	if [ ! -z "$modules" ]
 	then
@@ -278,7 +286,7 @@ submit_slurm() {
 	then
 		cmd="$cmd -p -P \"${shark_python_exec}\""
 	fi
-
+	cmd="$cmd -E $num_particles"
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
 
 	if [ "$dry_run" = "1" ]
@@ -290,7 +298,6 @@ submit_slurm() {
 		info ""
 	else
 		info "Submitting shark job with command: $cmd"
-
 		# Go, go, go!
 		export SHARK_HPC_DIR="$shark_hpc_dir"
 		eval $cmd
@@ -317,6 +324,7 @@ modules=${SHARK_RUNTIME_MODULES}
 mem_per_task=
 cpus_per_task=
 num_nodes=
+num_particles=
 shark_verbosity=3
 shark_binary=
 shark_subvolumes=
@@ -325,7 +333,7 @@ shark_plot=
 shark_python_exec=python
 
 # Parse command line options
-while getopts "h?dO:Q:a:w:n:M:m:c:N:vqS:V:o:pP:" opt
+while getopts "h?dO:Q:a:w:n:M:m:c:N:E:vqS:V:s:o:pP:" opt
 do
 	case "$opt" in
 		[h?])
@@ -363,6 +371,9 @@ do
 			;;
 		o)
 			shark_options+=("$OPTARG")
+			;;
+		E)
+			num_particles=("$OPTARG")
 			;;
 		p)
 			shark_plot=yes
@@ -407,6 +418,7 @@ do
 			;;
 	esac
 done
+		
 
 # Positional argument is the configuration file name
 if [ $(($# - $OPTIND)) -lt 0 ]
@@ -449,6 +461,7 @@ then
 	fi
 	shark_binary=`get_absolute_path "$shark_binary"`
 fi
+
 
 
 # Check which queueing system we are going to use from now on
@@ -537,6 +550,16 @@ svols=($svols)
 n_svols=${#svols[@]}
 info "Will submit shark to work on $n_svols subvolumes: $shark_subvolumes"
 
+if [ ! -z "$num_particles" ]
+then 
+	n_tasks=$num_particles
+else
+	n_tasks=$n_svols
+fi
+
+info "Will submit shark to work on $n_tasks tasks"
+
+
 # Make sure we have a proper working directory
 if [ ! -z "$shark_output_directory" ]
 then
@@ -556,10 +579,16 @@ else
 	done
 fi
 info "Will run shark-run under $shark_output_directory"
-
+echo $shark_output_directory > /home/msammons/Project1819/aux/SOD.txt
+cp "/home/msammons/Project1819/aux/fields.txt" "$shark_output_directory"
+cp "/home/msammons/Project1819/aux/particlePositions.ssv" "$shark_output_directory"
+cp "/home/msammons/Project1819/aux/bounds.txt" "$shark_output_directory"
+cp "/home/msammons/Project1819/aux/SOD.txt" "$shark_output_directory"
+info "Auxillary files copied to $shark_output_directory"
 # Copy the configuration file over to the working directory
 config_file_bname=`basename $config_file`
 cp "$config_file" "$shark_output_directory"
+
 config_file="$config_file_bname"
 info "Configuration file copied to $shark_output_directory/$config_file"
 
@@ -573,4 +602,4 @@ else
 	exit 1
 fi
 
-info "Submissiong successful. Thanks for using our shark-submit script, come back soon :-)"
+info "Submission successful. Thanks for using our shark-submit script, come back soon :-)"

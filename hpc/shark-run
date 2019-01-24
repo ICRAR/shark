@@ -119,7 +119,12 @@ _slurm_mem_per_task() {
 			mem_per_task="$mem_per_task `repeat $(($m / $t)) $t`"
 		done
 	else
-		mem_per_cpu=(`repeat $SLURM_MEM_PER_CPU ${#shark_subvolumes[*]}`)
+		if [ $num_particles -eq 0 ]
+		then
+			mem_per_cpu=(`repeat $SLURM_MEM_PER_CPU ${#shark_subvolumes[*]}`)
+		else	
+			mem_per_cpu=(`repeat $SLURM_MEM_PER_CPU ${#shark_params[*]}`)
+		fi
 		for i in `eval echo {1..${#mem_per_cpu[*]}}`
 		do
 			let "i = i - 1"
@@ -145,7 +150,6 @@ print_usage() {
 	echo " -V: Space-separated list of subvolumes to process. Can contain ranges like 1-10"
 	echo " config_file: The reference configuration file to use for this shark execution"
 }
-
 # Check we are under the influence of a queueing system
 if [ -z "${SLURM_JOB_ID}" ]
 then
@@ -218,12 +222,13 @@ module_names=
 shark_verbosity=3
 shark_binary=
 shark_subvolumes=
+shark_params=
+num_particles=
 shark_options=()
 shark_plot=
 shark_python_exec=python
-
 # Parse command line options
-while getopts "h?m:v:S:V:o:pP:" opt
+while getopts "h?m:v:S:E:V:o:pP:" opt
 do
 	case "$opt" in
 		[h?])
@@ -238,6 +243,9 @@ do
 			;;
 		S)
 			shark_binary="$OPTARG"
+			;;
+		E)
+			num_particles="$OPTARG"
 			;;
 		V)
 			shark_subvolumes="$OPTARG"
@@ -258,14 +266,29 @@ do
 	esac
 done
 
-# Make sure we have a list of subvolumes to process
+
 if [ -z "$shark_subvolumes" ]
 then
-	error "Missing -V option with subvolumes list"
+	error "Missing -V option with subvolume list"
 	print_usage 1>&2
 	exit 1
 fi
 shark_subvolumes=($shark_subvolumes)
+
+if [ ! $num_particles -eq 0 ]
+then
+	#reading in the parameter values from the ssv file
+	INPUT_FILE="/home/msammons/aux/particlePositions.ssv"
+	OIFS=$IFS
+	IFS=$(echo -en "\n\b")
+	count=0
+	while read param1
+	do
+		shark_params[$count]=$param1
+		count=$(($count+1))
+	done < $INPUT_FILE
+fi
+IFS=$OIFS
 
 # Positional argument is the configuration file name
 if [ $(($# - $OPTIND)) -lt 0 ]
@@ -344,25 +367,47 @@ do
 done
 post_cmd="$post_cmd -v $shark_verbosity $config_file"
 
-info "Processing ${#shark_subvolumes[*]} subvolume(s): ${shark_subvolumes[*]}"
-info ""
+if [ $num_particles -eq 0 ]
+then
+	info "Processing ${#shark_subvolumes[*]} tasks: ${shark_subvolumes[*]}"
+else
+	info "Processing ${#shark_params[*]} tasks: ${shark_params[*]}"
+fi
 info "================================================================================"
 info "Starting shark via srun with command-line:"
 info "$cmd -c <threads> --mem-per-cpu <mem> $post_cmd -o <subvol> -t <threads>"
 info "================================================================================"
-info ""
 pids=()
-for i in `eval echo {1..${#shark_subvolumes[*]}}`
-do
-	let "i = i - 1"
-	s=${shark_subvolumes[i]}
-	c=${cpus_per_task[i]}
-	m=${mem_per_task[i]}
-	_cmd="$cmd -c $c --mem-per-cpu $(($m/$c)) $post_cmd -o \"execution.simulation_batches=$s\" -t $c"
-	info "Spawning shark run for subvolume $s with $c threads and $m MB of memory: $_cmd"
-	eval $_cmd &> "shark_subvol_${s}.log" &
-	pids+=($!)
-done
+if [ $num_particles -eq 0 ]
+then
+	for i in `eval echo {1..${#shark_subvoumes[*]}}`
+	do
+		let "i = i - 1"
+		s=${shark_subvolumes[i]}
+		c=${cpus_per_task[i]}
+		m=${mem_per_task[i]}
+		_cmd="$cmd -c $c --mem-per-cpu $(($m/$c)) $post_cmd -o \"execution.simulation_batches=$s\" -t $c"
+		info "Spawning shark run for subvolume $s with $c threads and $m MB of memory: $_cmd"
+		eval $_cmd &> "shark_subvol_${s}.log" &
+		pids+=($!)
+	done
+else 
+	for i in `eval echo {1..${#shark_params[*]}}`
+	do
+		let "i = i - 1"
+		s="${shark_subvolumes[*]}"
+		c=${cpus_per_task[i]}
+		m=${mem_per_task[i]}
+		d=$PWD/$i
+		_cmd="$cmd -c $c --mem-per-cpu $(($m/$c)) $post_cmd -o \"execution.simulation_batches=$s\" -o \"execution.output_directory=$d\" -t $c"
+		p=${shark_params[i]}
+		_cmd="$_cmd $p"
+		echo $_cmd 
+		info "Spawning shark run for subvolume $s and $p with $c threads and $m MB of memory: $_cmd"
+		eval $_cmd &> "particle_$i.log" &
+		pids+=($!)
+	done
+fi
 
 info "Waiting for all instances to finish"
 all_good=1
