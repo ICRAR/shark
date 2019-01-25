@@ -278,7 +278,7 @@ shark_subvolumes=($shark_subvolumes)
 if [ ! $num_particles -eq 0 ]
 then
 	#reading in the parameter values from the ssv file
-	INPUT_FILE="/home/msammons/aux/particlePositions.ssv"
+	INPUT_FILE="/home/msammons/Project1819/aux/particlePositions.ssv"
 	OIFS=$IFS
 	IFS=$(echo -en "\n\b")
 	count=0
