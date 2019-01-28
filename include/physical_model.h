@@ -31,11 +31,12 @@
 #include <stdexcept>
 
 #include <gsl/gsl_odeiv2.h>
-#include <recycling.h>
+#include "agn_feedback.h"
 #include "components.h"
 #include "gas_cooling.h"
 #include "numerical_constants.h"
 #include "ode_solver.h"
+#include "recycling.h"
 #include "stellar_feedback.h"
 #include "star_formation.h"
 
@@ -50,6 +51,18 @@ public:
 	 * The set of parameters passed down to the ODESolver. It includes the
 	 * physical model itself, the galaxy and subhalo being evolved on each call,
 	 * and other various values.
+	 *
+	 * Parameters:
+	 * rgas: half-mass radius of the gas of disk or bulge.
+	 * rstar: half-mass radius of the stars of disk or bulge.
+	 * mcoolrate: gas cooling rate.
+	 * jcold_halo: specific angular momentum of the cooling gas.
+	 * delta_t: time span between snapshots.
+	 * redshift: current redshift.
+	 * vsubh: subhalo virial velocity.
+	 * vgal: galaxy velocity at the half-mass radius of disk or bulge.
+	 * mBHacc: BH accretion rate in the case of starbursts.
+	 * burst: whether this is a starburst or not.
 	 */
 	struct solver_params {
 		PhysicalModel<NC> &model;
@@ -61,6 +74,7 @@ public:
 		double redshift;
 		double vsubh;
 		double vgal;
+		double mBHacc;
 		bool   burst;
 	};
 
@@ -103,6 +117,7 @@ public:
 		 * rstar: half-stellar mass radius of the disk [Mpc/h]
 		 * vsubh: virial velocity of the host subhalo [km/s]
 		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
+		 * mBHacc: BH accretion rate due to starbursts; \equiv 0 in the case of star formation in disks.
 		 * burst: boolean parameter indicating if this is a starburst or not.
 		 */
 
@@ -125,10 +140,11 @@ public:
 		double rstar      = galaxy.disk_stars.rscale; //stellar scale radius.
 		double vsubh      = subhalo.Vvir;
 		double jcold_halo = subhalo.cold_halo_gas.sAM;
+		double mBHacc     = 0; //by definition 0 in the case of SF in disks
 		bool   burst      = false;
 
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
-		solver_params params{*this, rgas, rstar, mcoolrate, jcold_halo, delta_t, z, vsubh, vgal, burst};
+		solver_params params{*this, rgas, rstar, mcoolrate, jcold_halo, delta_t, z, vsubh, vgal, mBHacc, burst};
 		auto ode_solver = get_solver(delta_t, y0, params);
 		std::vector<double> y1 = ode_solver.evolve();
 		galaxy_ode_evaluations += ode_solver.num_evaluations();
@@ -146,6 +162,7 @@ public:
 		 * rstar: half-stellar mass radius of the bulge [Mpc/h]
 		 * vsubh: virial velocity of the host subhalo [km/s]
 		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
+		 * mBHacc: BH accretion rate in [Msun/Gyr/h]
 		 * burst: boolean parameter indicating if this is a starburst or not.
 		 */
 
@@ -155,10 +172,11 @@ public:
 		double rstar      = galaxy.bulge_stars.rscale; //stellar scale radius.
 		double vsubh      = subhalo.Vvir;
 		double vgal       = galaxy.bulge_gas.sAM / galaxy.bulge_gas.rscale;
+		double mBHacc     = galaxy.smbh.macc_sb;
 		bool   burst      = true;
 
 		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);
-		solver_params params{*this, rgas, rstar, mcoolrate, jcold_halo, delta_t, z, vsubh, vgal, burst};
+		solver_params params{*this, rgas, rstar, mcoolrate, jcold_halo, delta_t, z, vsubh, vgal, mBHacc, burst};
 		auto solver = get_solver(delta_t, y0, params);
 		std::vector<double> y1 = solver.evolve();
 		galaxy_starburst_ode_evaluations += solver.num_evaluations();
@@ -198,8 +216,10 @@ public:
 			GasCooling gas_cooling,
 			StellarFeedback stellar_feedback,
 			StarFormation star_formation,
+			AGNFeedback agn_feedback,
 			RecyclingParameters recycling_parameters,
-			GasCoolingParameters gas_cooling_parameters);
+			GasCoolingParameters gas_cooling_parameters,
+			AGNFeedbackParameters agn_parameters);
 
 	std::vector<double> from_galaxy(const Subhalo &subhalo, const Galaxy &galaxy);
 	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t);
@@ -207,8 +227,11 @@ public:
 	std::vector<double> from_galaxy_starburst(const Subhalo &subhalo, const Galaxy &galaxy);
 	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger);
 
+	AGNFeedback agn_feedback;
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;
+
+	AGNFeedbackParameters agn_parameters;
 	RecyclingParameters recycling_parameters;
 	GasCoolingParameters gas_cooling_parameters;
 

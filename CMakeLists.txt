@@ -26,7 +26,7 @@ file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
 
 # We have only C++ sources, but until cmake 3.4 the check_symbol_exists
 # macro didn't work properly if only defining C++ as the project language
-if( ${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 4 )
+if (${CMAKE_VERSION} VERSION_LESS 3.4)
 	set(SHARK_LANGS C CXX)
 else()
 	set(SHARK_LANGS CXX)
@@ -35,7 +35,7 @@ endif()
 # Our project...
 project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # If not specified, always build in Release mode
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -187,7 +187,19 @@ macro(find_openmp)
 
 		# We require at least OpenMP 2.0, so let's double check
 		# we have that at least
-		set(OPENMP_VERSION_CHECK_SOURCE "
+		# cmake support for OpenMP has varied across the 3.x series:
+		# * OPENMP_FOUND and OpenMP_<lang>_FLAGS have always been there
+		# * 3.7 brings OpenMP_<lang>_SPEC_DATE variables, which *may* be set
+		# * 3.9 brings OpenMP_<lang>_VERSION variables, which *may* be set,
+		#   and OpenMP_<lang>_LIBRARIES/LIBRARY/LIB_NAMES variables
+		# This is important for Intel compilers in particular, which require
+		# additional linking
+		if ((DECLARED OPENMP_VERSION) AND (NOT OPENMP_VERSION VERSION_LESS 2.0))
+			set(SHARK_OPENMP ON)
+		elseif((DECLARED OPENMP_CXX_SPEC_DATE) AND (NOT OPENMP_CXX_SPEC_DATE LESS 200203))
+			set(SHARK_OPENMP ON)
+		else()
+			set(OPENMP_VERSION_CHECK_SOURCE "
 #include <stdio.h>
 int main(int argc, char *argv[]) {
 #if _OPENMP >= 200203
@@ -196,21 +208,35 @@ int main(int argc, char *argv[]) {
 	fail to compile please
 #endif
 }")
-		set(WORK_DIR ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/OpenMPVersionCheck)
-		set(SRC_FILE ${WORK_DIR}/ompver.cpp)
-		file(WRITE ${SRC_FILE} "${OPENMP_VERSION_CHECK_SOURCE}")
-		try_compile(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${SRC_FILE}
-		            COMPILE_DEFINITIONS ${OpenMP_CXX_FLAGS})
+			set(WORK_DIR ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/OpenMPVersionCheck)
+			set(SRC_FILE ${WORK_DIR}/ompver.cpp)
+			file(WRITE ${SRC_FILE} "${OPENMP_VERSION_CHECK_SOURCE}")
+			try_compile(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${SRC_FILE}
+			            COMPILE_DEFINITIONS ${OpenMP_CXX_FLAGS}
+			            LINK_LIBRARIES ${OpenMP_CXX_LIBRARIES})
 
-		if (COMPILE_RESULT)
-			set(SHARK_OPENMP ON)
-		else()
-			message("-- OpenMP found, but is <= 2.0. Compiling without OpenMP support")
+			if (COMPILE_RESULT)
+				set(SHARK_OPENMP ON)
+			endif()
+		endif()
+
+		if (NOT SHARK_OPENMP)
+			message(STATUS "OpenMP found, but is <= 2.0. Compiling without OpenMP support")
+			if (CMAKE_CXX_COMPILER_ID STREQUAL Intel AND CMAKE_VERSION VERSION_LESS 3.9)
+				message(WARNING
+"**********************************************************************"
+"\nIntel compilers actually support the OpenMP version required by shark,"
+"but versions of cmake < 3.9 might fail to recognize such support."
+"Try using cmake >= 3.9 to recognize this properly"
+"and generate an OpenMP-enabled shark build.\n"
+"**********************************************************************")
+			endif()
 		endif()
 	endif()
 
 	if (SHARK_OPENMP)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+		set(SHARK_LIBS ${SHARK_LIBS} ${OpenMP_CXX_LIBRARIES})
 	endif()
 endmacro()
 
@@ -233,7 +259,8 @@ endif()
 #
 # Save all compile-time options here
 #
-configure_file(include/config.h.in include/config.h @ONLY)
+set(config_h "${CMAKE_CURRENT_BINARY_DIR}/include/config.h")
+configure_file(include/config.h.in "${config_h}" @ONLY)
 
 #
 # We use the source code directory and the installation prefix to lookup data
@@ -247,7 +274,6 @@ configure_file(src/data.cpp.in "${data_cpp}" @ONLY)
 # Add git revision information in a generated .cpp file, which we then include
 # as part of the shark library
 #
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 git_local_changes(GIT_HAS_LOCAL_CHANGES)
@@ -261,8 +287,52 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS
+   "${config_h}"
    "${data_cpp}"
    "${git_revision_cpp}"
+   include/agn_feedback.h
+   include/components.h
+   include/cosmology.h
+   include/dark_matter_halos.h
+   include/data.h
+   include/disk_instability.h
+   include/environment.h
+   include/evolve_halos.h
+   include/exceptions.h
+   include/execution.h
+   include/galaxy_creator.h
+   include/galaxy_mergers.h
+   include/galaxy_writer.h
+   include/gas_cooling.h
+   include/git_revision.h
+   include/integrator.h
+   include/interpolator.h
+   include/logging.h
+   include/merger_tree_reader.h
+   include/mixins.h
+   include/naming_convention.h
+   include/nfw_distribution.h
+   include/numerical_constants.h
+   include/ode_solver.h
+   include/omp_utils.h
+   include/options.h
+   include/physical_model.h
+   include/recycling.h
+   include/reincorporation.h
+   include/reionisation.h
+   include/sharkfwd.h
+   include/shark.h
+   include/shark_runner.h
+   include/simulation.h
+   include/star_formation.h
+   include/stellar_feedback.h
+   include/timer.h
+   include/tree_builder.h
+   include/utils.h
+   include/hdf5/iobase.h
+   include/hdf5/reader.h
+   include/hdf5/traits.h
+   include/hdf5/writer.h
    src/agn_feedback.cpp
    src/components.cpp
    src/cosmology.cpp
@@ -299,11 +369,11 @@ set(SHARKLIB_SRCS
 )
 
 if (WIN32)
-	set(SHARLIB_MODE STATIC)
+	set(SHARKLIB_MODE STATIC)
 else()
-	set(SHARLIB_MODE SHARED)
+	set(SHARKLIB_MODE SHARED)
 endif()
-add_library(sharklib ${SHARLIB_MODE} ${SHARKLIB_SRCS})
+add_library(sharklib ${SHARKLIB_MODE} ${SHARKLIB_SRCS})
 target_link_libraries(sharklib ${SHARK_LIBS})
 set_target_properties(sharklib PROPERTIES
     LIBRARY_OUTPUT_NAME shark
@@ -311,6 +381,9 @@ set_target_properties(sharklib PROPERTIES
 
 # The shark-importer executable
 set(SHARK_IMPORTER_SRCS
+	include/importer/descendants.h
+	include/importer/reader.h
+	include/importer/velociraptor.h
 	src/importer/descendants.cpp
 	src/importer/main.cpp
 	src/importer/reader.cpp
@@ -346,7 +419,7 @@ if( SHARK_TEST )
 	# interpreter, and doesn't honour the shebang line that could be present.
 	# We try to rectify this situation here with a solution similar to what
 	# is found in cmake >= 3.7
-	if (${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 7 AND
+	if (${CMAKE_VERSION} VERSION_LESS 3.7 AND
 	    NOT "${CXXTEST_PYTHON_TESTGEN_EXECUTABLE}" STREQUAL "")
 		execute_process(COMMAND ${CXXTEST_PYTHON_TESTGEN_EXECUTABLE} --version
 		                OUTPUT_VARIABLE _CXXTEST_OUT ERROR_VARIABLE _CXXTEST_OUT

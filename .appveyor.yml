@@ -55,3 +55,13 @@ build:
 test_script:
   - cmd: set "PATH=%APPVEYOR_BUILD_FOLDER%\Release;%PATH%"
   - cmd: ctest --output-on-failure -V
+  - cmd: mkdir input
+  - ps: Invoke-WebRequest "https://docs.google.com/uc?export=download&id=1xvNmJB_KmoBHuQz-QzdPnY0HFs7smkUB" -OutFile "input\redshifts.txt"
+  - ps: Invoke-WebRequest "https://docs.google.com/uc?export=download&id=1JDK8ak13bEhzg9H9xt0uE8Fh_2LD3KpZ" -OutFile "input\tree_199.0.hdf5"
+  - cmd: shark sample.cfg -o simulation.redshift_file=input\redshifts.txt -o simulation.tree_files_prefix=input\tree_199
+  - cmd: C:\Python36-x64\Scripts\pip install h5py matplotlib scipy
+  - cmd: C:\Python36-x64\python.exe standard_plots\all.py -c sample.cfg -z input\redshifts.txt
+
+artifacts:
+  - path: 'Plots\**\*.pdf'
+    name: Standard Plots

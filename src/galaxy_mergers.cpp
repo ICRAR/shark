@@ -120,7 +120,7 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return 0.3722 * mass_ratio/std::log(1+mass_ratio);
 }
 
-void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, bool transfer_types2)
+void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, int snapshot, bool transfer_types2)
 {
 	auto satellites = secondary->galaxies;
 	if(transfer_types2){
@@ -151,6 +151,17 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 			galaxy->tmerge = parameters.tau_delay;
 		}
 
+		//check if this galaxy will merge on the second consecutive snapshot instead, and if so, redefine their descendant_id.
+		double z1 = simparams.redshifts[snapshot+1];
+		double z2 = simparams.redshifts[snapshot+2];
+		if(snapshot+1 > simparams.max_snapshot){
+			z2 = 0;
+		}
+		double delta_t = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+		if(galaxy->tmerge <= delta_t){
+			galaxy->descendant_id = primary->central_galaxy()->id;
+		}
+
 		//Only define the following parameters if the galaxies were not type=2.
 		if(!transfer_types2){
 			galaxy->concentration_type2 = secondary->concentration;
@@ -162,7 +173,7 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 }
 
-void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
+void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z, int snapshot)
 {
 	auto central_subhalo = halo->central_subhalo;
 
@@ -190,7 +201,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 			}
 
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
-			merging_timescale(central_subhalo, satellite_subhalo, z, false);
+			merging_timescale(central_subhalo, satellite_subhalo, z, snapshot, false);
 
 			// Change type of galaxies to type=2 before transferring them to the central_subhalo.
 			for (auto &galaxy: satellite_subhalo->galaxies){
@@ -207,7 +218,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 			//In cases where the subhalo does not disappear, we search for type=2 galaxies and transfer them to the central subhalo,
 			//recalculating its merging timescale.
 
-			merging_timescale(central_subhalo, satellite_subhalo, z, true);
+			merging_timescale(central_subhalo, satellite_subhalo, z, snapshot, true);
 			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_type2galaxies_to(central_subhalo);
 		}
@@ -250,7 +261,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 		}
 
 		//Calculate dynamical friction timescale for all galaxies disappearing in the primary subhalo of the merger in the next snapshot.
-		merging_timescale(primary_subhalo, central_subhalo, z, false);
+		merging_timescale(primary_subhalo, central_subhalo, z, snapshot, false);
 
 	}
 
@@ -304,16 +315,17 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 				all_sats_to_delete.push_back(galaxy);
 			}
 			else{
-				//check if this galaxy will merge on the next snapshot instead, and if so, redefine their descendant_id.
-				if(snapshot+2 < simparams.max_snapshot){
-					double z1 = simparams.redshifts[snapshot];
-					double z2 = simparams.redshifts[snapshot+2];
-					double delta_t_twosnaps = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
-					if(galaxy->tmerge < delta_t_twosnaps){
-						galaxy->descendant_id = central_galaxy->id;
-					}
-				}
 				galaxy->tmerge = galaxy->tmerge - delta_t;
+				//check if this galaxy will merge on the second consecutive snapshot instead, and if so, redefine their descendant_id.
+				double z1 = simparams.redshifts[snapshot+1];
+				double z2 = simparams.redshifts[snapshot+2];
+				if(snapshot+1 > simparams.max_snapshot){
+					z2 = 0;
+				}
+				double delta_t = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+				if(galaxy->tmerge <= delta_t){
+					galaxy->descendant_id = central_galaxy->id;
+				}
 			}
 		}
 	}

@@ -62,10 +62,10 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
      mmol_bulge, mbh_acc_hh, mbh_acc_sb) = hdf5_data
 
     mstars_tot = (mdisk+mbulge)/h0
-    if(index == 1 or index == 2):
-       for x,y,z,m in zip(mBH,mbh_acc_hh, mbh_acc_sb,mstars_tot):
-           if(x > 1e5 and m > 1e8): 
-              print x/h0,y/h0/1e9,z/h0/1e9
+    if index in (1, 2):
+       for x, y, z, m in zip(mBH, mbh_acc_hh, mbh_acc_sb, mstars_tot):
+           if x > 1e5 and m > 1e8:
+              print(x/h0, y/h0/1e9, z/h0/1e9)
 
     mbulge_mergers = mburst_mergers + mstars_bulge_mergers_assembly
     zero_bulge = np.where(rbulge <= 0)

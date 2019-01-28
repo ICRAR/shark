@@ -101,7 +101,7 @@ DarkMatterHalos::DarkMatterHalos(const DarkMatterHaloParameters &params, const C
 	cosmology(cosmology),
 	sim_params(sim_params),
 	generator(),
-	distribution(-3.5,-0.69),
+	distribution(std::log(0.03), std::abs(std::log(0.5))),
 	flat_distribution(0,1)
 {
 	// no-op
