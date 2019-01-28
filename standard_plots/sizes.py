@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0, 0.5, 1, 2)
+zlist = (0, 0.5, 0.9, 1, 2)
 
 ##################################
 #Constants
