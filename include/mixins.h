@@ -47,7 +47,7 @@ public:
 	xyz(U x, U y, U z) : x(T(x)), y(T(y)), z(T(z)) {};
 
 	template <typename U>
-	xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z)) {};
+	explicit xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z)) {};
 
 	/**
 	 * The value in the X coordinate
@@ -93,7 +93,7 @@ public:
 	{
 		xyz<U> sum(*this);
 		sum += lhs;
-		return sum;
+		return xyz(sum);
 	}
 
 	xyz &operator*=(T scalar)
@@ -161,7 +161,8 @@ template <typename T>
 class Identifiable {
 public:
 
-	Identifiable(T id) : id(id) {}
+	explicit Identifiable(T id) : id(id)
+	{}
 
 	using id_t = T;
 

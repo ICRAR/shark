@@ -36,7 +36,7 @@ namespace shark {
 class ReincorporationParameters{
 
 public:
-	ReincorporationParameters(const Options &options);
+	explicit ReincorporationParameters(const Options &options);
 
 	double tau_reinc = 0;
 	double mhalo_norm = 0;

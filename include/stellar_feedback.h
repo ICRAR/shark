@@ -33,7 +33,7 @@ namespace shark {
 class StellarFeedbackParameters {
 
 public:
-	StellarFeedbackParameters(const Options &options);
+	explicit StellarFeedbackParameters(const Options &options);
 
 	enum StellarFeedbackModel {
 		MURATOV15 = 0,
@@ -80,7 +80,7 @@ public:
 class StellarFeedback {
 
 public:
-	StellarFeedback(StellarFeedbackParameters parameters);
+	explicit StellarFeedback(StellarFeedbackParameters parameters);
 
 	void outflow_rate(double sfr, double vsubh, double vgal, double z, double &b1, double &b2, double &b_1, double &bj_2);
 

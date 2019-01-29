@@ -38,7 +38,7 @@ namespace shark {
 class StarFormationParameters {
 
 public:
-	StarFormationParameters(const Options &options);
+	explicit StarFormationParameters(const Options &options);
 
 	/**Parameters:
 	 * model: SF model applied

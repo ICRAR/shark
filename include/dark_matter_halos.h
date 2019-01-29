@@ -43,7 +43,7 @@ namespace shark {
 class DarkMatterHaloParameters {
 
 public:
-	DarkMatterHaloParameters(const Options &options);
+	explicit DarkMatterHaloParameters(const Options &options);
 
 	enum DarkMatterProfile {
 		NFW = 0,

@@ -51,7 +51,7 @@ struct PowerSpectrumTable {
 class CosmologicalParameters {
 
 public:
-	CosmologicalParameters(const Options &options);
+	explicit CosmologicalParameters(const Options &options);
 
 	float OmegaM = 0;
 	float OmegaB = 0;
@@ -72,7 +72,7 @@ private:
 class Cosmology {
 
 public:
-	Cosmology(const CosmologicalParameters &parameters);
+	explicit Cosmology(const CosmologicalParameters &parameters);
 
 	double comoving_to_physical_angularmomentum(double r, double z) const;
 	double comoving_to_physical_size(double r, double z) const;

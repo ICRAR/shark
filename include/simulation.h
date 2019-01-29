@@ -37,7 +37,7 @@ namespace shark {
 class SimulationParameters {
 
 public:
-	SimulationParameters(const Options &options);
+	explicit SimulationParameters(const Options &options);
 
 	float volume = 0;
 	float particle_mass = 0;

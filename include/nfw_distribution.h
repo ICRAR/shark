@@ -102,7 +102,7 @@ public:
 
 	// Constructors
 	nfw_distribution() : uniform(0, 1), _p() { }
-	nfw_distribution(const param_type &p) : uniform(0, 1), _p(p) { }
+	explicit nfw_distribution(const param_type &p) : uniform(0, 1), _p(p) { }
 
 	// Reset
 	void reset() { }
@@ -153,7 +153,7 @@ namespace detail {
 	template <typename CharT, typename Traits>
 	class flag_saver {
 	public:
-		flag_saver(std::basic_ios<CharT, Traits> &stream) : stream(stream), flags(stream.flags()) {}
+		explicit flag_saver(std::basic_ios<CharT, Traits> &stream) : stream(stream), flags(stream.flags()) {}
 		~flag_saver() { stream.flags(flags); }
 	private:
 		std::basic_ios<CharT, Traits> &stream;

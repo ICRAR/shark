@@ -41,7 +41,7 @@ namespace shark {
 class GalaxyMergerParameters {
 
 	public:
-		GalaxyMergerParameters(const Options &options);
+		explicit GalaxyMergerParameters(const Options &options);
 
 		/**
 		 * Merger parameters:

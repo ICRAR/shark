@@ -38,7 +38,7 @@ namespace shark {
 class EnvironmentParameters{
 
 public:
-	EnvironmentParameters(const Options &options);
+	explicit EnvironmentParameters(const Options &options);
 
 	bool gradual_stripping = false;
 	bool stripping = true;
@@ -48,7 +48,7 @@ public:
 class Environment{
 
 public:
-	Environment(const EnvironmentParameters &parameters);
+	explicit Environment(const EnvironmentParameters &parameters);
 
 	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, Subhalo &central_subhalo);
 

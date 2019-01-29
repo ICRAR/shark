@@ -60,7 +60,7 @@ public:
 	 *
 	 * @param filename The name of the options file
 	 */
-	Options(const std::string &filename);
+	explicit Options(const std::string &filename);
 
 	/// Adds the options contained in file @p fname
 	///

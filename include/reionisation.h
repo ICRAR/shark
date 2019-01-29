@@ -36,7 +36,7 @@ namespace shark {
 class ReionisationParameters {
 
 public:
-	ReionisationParameters(const Options &options);
+	explicit ReionisationParameters(const Options &options);
 
 	enum ReionisationModel {
 		LACEY16 = 0,
@@ -56,7 +56,7 @@ public:
 class Reionisation {
 
 public:
-	Reionisation(const ReionisationParameters &parameters);
+	explicit Reionisation(const ReionisationParameters &parameters);
 	virtual ~Reionisation();
 
 	/// Checks whether a halo of viral velocity @p v and redshift @p z is affected by reionisation

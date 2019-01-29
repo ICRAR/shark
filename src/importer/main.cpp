@@ -43,7 +43,7 @@ public:
 	/**
 	 * Ctor providing default values
 	 */
-	ImporterParameters(const Options &options) :
+	explicit ImporterParameters(const Options &options) :
 		descendants_format(Options::ASCII),
 		descendants_file("descendants.txt"),
 		tree_format(TREES_VELOCIRAPTOR),

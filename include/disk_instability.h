@@ -35,7 +35,7 @@ namespace shark {
 class DiskInstabilityParameters {
 
 public:
-	DiskInstabilityParameters(const Options &options);
+	explicit DiskInstabilityParameters(const Options &options);
 
 	float stable = 0;
 	float fint = 2;

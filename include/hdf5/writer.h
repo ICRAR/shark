@@ -51,7 +51,7 @@ namespace hdf5 {
  */
 class object_exists : public exception {
 public:
-	object_exists(const std::string &what) : exception(what) {}
+	explicit object_exists(const std::string &what) : exception(what) {}
 };
 
 // How we construct data types depends on the type
@@ -208,7 +208,7 @@ public:
 	 * @param filename The name of the HDF5 file to write
 	 * @param overwrite Whether existing files should be overwritten or not
 	 */
-	Writer(const std::string &filename, bool overwrite = true,
+	explicit Writer(const std::string &filename, bool overwrite = true,
 		naming_convention group_naming_convention = naming_convention::SNAKE_CASE,
 		naming_convention dataset_naming_convention = naming_convention::SNAKE_CASE,
 		naming_convention attr_naming_convention = naming_convention::SNAKE_CASE);

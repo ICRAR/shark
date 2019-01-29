@@ -40,7 +40,7 @@ class exception : public std::exception {
 
 public:
 
-	exception(const std::string &what) :
+	explicit exception(const std::string &what) :
 		std::exception(),
 		_what(what)
 	{}
@@ -59,7 +59,8 @@ private:
  */
 class invalid_option : public exception {
 public:
-	invalid_option(const std::string &what) : exception(what) {}
+	explicit invalid_option(const std::string &what) : exception(what)
+	{}
 };
 
 /**
@@ -68,7 +69,8 @@ public:
  */
 class invalid_argument : public exception {
 public:
-	invalid_argument(const std::string &what) : exception(what) {}
+	explicit invalid_argument(const std::string &what) : exception(what)
+	{}
 };
 
 /**
@@ -76,7 +78,8 @@ public:
  */
 class missing_option : public exception {
 public:
-	missing_option(const std::string &what) : exception(what) {}
+	explicit missing_option(const std::string &what) : exception(what)
+	{}
 };
 
 /**
@@ -84,7 +87,8 @@ public:
  */
 class invalid_data : public exception {
 public:
-	invalid_data(const std::string &what) : exception(what) {};
+	explicit invalid_data(const std::string &what) : exception(what)
+	{};
 };
 
 /**
@@ -93,7 +97,8 @@ public:
  */
 class component_not_found : public invalid_data {
 public:
-	component_not_found(const std::string &what) : invalid_data(what) {};
+	explicit component_not_found(const std::string &what) : invalid_data(what)
+	{};
 };
 
 /**
@@ -131,7 +136,8 @@ public:
  */
 class math_error: public exception {
 public:
-	math_error(const std::string &what) : exception(what) {};
+	explicit math_error(const std::string &what) : exception(what)
+	{};
 };
 
 /**

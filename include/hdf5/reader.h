@@ -50,7 +50,7 @@ public:
 	 *
 	 * @param filename The name of the HDF5 file to read
 	 */
-	Reader(const std::string &filename) :
+	explicit Reader(const std::string &filename) :
 		IOBase(filename, H5F_ACC_RDONLY) {}
 
 	template<typename T>

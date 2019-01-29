@@ -36,7 +36,7 @@ namespace shark {
 class AGNFeedbackParameters {
 
 public:
-	AGNFeedbackParameters(const Options &options);
+	explicit AGNFeedbackParameters(const Options &options);
 
 	double mseed = 0;
 	double mhalo_seed = 0;

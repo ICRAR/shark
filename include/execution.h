@@ -36,7 +36,7 @@ namespace shark {
 class ExecutionParameters {
 
 public:
-	ExecutionParameters(const Options &options);
+	explicit ExecutionParameters(const Options &options);
 
 	std::set<int> output_snapshots {};
 	Options::file_format_t output_format = Options::HDF5;

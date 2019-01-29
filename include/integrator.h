@@ -47,7 +47,7 @@ public:
 	///
 	/// @param max_intervals
 	///
-	Integrator(size_t max_intervals);
+	explicit Integrator(size_t max_intervals);
 
 	// Copy/movy constructors, destructor
 	Integrator(const Integrator &other);

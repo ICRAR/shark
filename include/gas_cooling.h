@@ -78,7 +78,7 @@ public:
 		BENSON10
 	};
 
-	GasCoolingParameters(const Options &options);
+	explicit GasCoolingParameters(const Options &options);
 
 	double pre_enrich_z = 1e-7;
 	double tau_cooling = 1;
