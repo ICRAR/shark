@@ -64,7 +64,7 @@ void Options::add_file(const string &fname) {
 		trim(line);
 
 		// Skip blanks and comments
-		if ( line.size() == 0 ) {
+		if (line.empty()) {
 			continue;
 		}
 		if ( line[0] == '#' ) {
@@ -85,7 +85,7 @@ void Options::add_file(const string &fname) {
 		std::string value;
 		parse_option(line, name, value);
 
-		if ( option_group.size() == 0 ) {
+		if (option_group.empty()) {
 			cerr << "WARNING: No option group defined for option " << name << endl;
 		}
 

@@ -40,7 +40,7 @@ namespace importer {
 DescendantReader::DescendantReader(const string &filename) :
 	filename(filename)
 {
-	if ( filename.size() == 0 ) {
+	if (filename.empty()) {
 		throw invalid_argument("Descendants file has no value");
 	}
 }

@@ -46,7 +46,7 @@ VELOCIraptorReader::VELOCIraptorReader(shared_ptr<DescendantReader> &reader, con
 	Reader(),
 	trees_dir(trees_dir)
 {
-	if ( trees_dir.size() == 0 ) {
+	if (trees_dir.empty()) {
 		throw invalid_argument("Trees dir has no value");
 	}
 

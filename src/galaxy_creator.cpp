@@ -66,7 +66,7 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 {
 
 	// Halo has a central subhalo with ascendants so ignore it, as it should already have galaxies in it.
-	if(halo->central_subhalo->ascendants.size() > 0){
+	if(!halo->central_subhalo->ascendants.empty()){
 		return false;
 	}
 

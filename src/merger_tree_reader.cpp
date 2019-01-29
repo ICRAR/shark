@@ -49,7 +49,7 @@ namespace shark {
 SURFSReader::SURFSReader(const std::string &prefix, const DarkMatterHalosPtr &dark_matter_halos, const SimulationParameters &simulation_params, unsigned int threads) :
 	prefix(prefix), dark_matter_halos(dark_matter_halos), simulation_params(simulation_params), threads(threads)
 {
-	if ( prefix.size() == 0 ) {
+	if (prefix.empty()) {
 		throw invalid_argument("Trees dir has no value");
 	}
 

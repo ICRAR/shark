@@ -107,7 +107,7 @@ ifstream open_file(const string &name)
 }
 
 bool empty_or_comment(const std::string &s) {
-	return s.size() == 0 || s[0] == '#';
+	return s.empty() || s[0] == '#';
 }
 
 std::string gethostname()
