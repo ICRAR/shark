@@ -1,4 +1,4 @@
-# Test two SHARK models for equality based upon their constituent galaxies
+# Test two SHARK galaxies for equality
 #
 # Copyright by Kai Striega
 #
@@ -53,16 +53,12 @@ def assert_galaxies_not_equal(galaxy1, galaxy2):
     except AssertionError as e:
         pass
     else:
-        raise ValueError('Arrays expected to be unequal, but are equal.')
-
+        raise ValueError('Galaxies expected to be unequal, but are equal.')
 
 def main():
     args = read_args()
-    model_one = h5py.File(args.models[0])
-    model_two = h5py.File(args.models[1])
-
-    galaxies_one = model_one['galaxies']
-    galaxies_two = model_two['galaxies']
+    model_one, model_two = h5py.File(args.models[0]), h5py.File(args.models[1])
+    galaxies_one, galaxies_two = model_one['galaxies'], model_two['galaxies']
 
     if args.expect_unequal:
         assert_galaxies_not_equal(galaxies_one, galaxies_two)
