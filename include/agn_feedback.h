@@ -27,9 +27,9 @@
 #include <memory>
 #include <utility>
 
+#include "components.h"
 #include "cosmology.h"
 #include "options.h"
-#include "components.h"
 
 namespace shark {
 

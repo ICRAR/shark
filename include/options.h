@@ -27,8 +27,8 @@
 #define SHARK_OPTIONS_H_
 
 #include <map>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "exceptions.h"
 #include "logging.h"
