@@ -19,7 +19,7 @@
 import argparse
 
 import h5py
-from numpy.testing import assert_equal, assert_array_equal, assert_raises
+from numpy import array_equal
 
 
 def read_args():
@@ -37,14 +37,23 @@ def read_args():
     return arg_parser.parse_args()
 
 
-def assert_galaxies_equal(galaxies1, galaxies2):
-    assert_equal(galaxies1.keys(), galaxies2.keys())
-    for key in galaxies1.keys():
-        assert_array_equal(galaxies1[key][:], galaxies2[key][:])
+def assert_galaxies_equal(galaxy1, galaxy2):
+    """Raise an AssertionError if two galaxies are not equal."""
+    if galaxy1.keys() != galaxy2.keys():
+        raise AssertionError('Galaxy keys unequal.')
+    for key in galaxy1.keys():
+        if not array_equal(galaxy1[key][:], galaxy2[key][:]):
+            raise AssertionError('Galaxies not equal.')
 
 
-def assert_galaxies_not_equal(galaxies1, galaxies2):
-    assert_raises(AssertionError, assert_galaxies_equal, galaxies1, galaxies2)
+def assert_galaxies_not_equal(galaxy1, galaxy2):
+    """Raise an AssertionError if two galaxies are equal."""
+    try:
+        assert_galaxies_equal(galaxy1, galaxy2)
+    except AssertionError as e:
+        pass
+    else:
+        raise ValueError('Arrays expected to be unequal, but are equal.')
 
 
 def main():
