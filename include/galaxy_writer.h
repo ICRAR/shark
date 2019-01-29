@@ -94,7 +94,7 @@ private:
 
 };
 
-typedef std::unique_ptr<GalaxyWriter> GalaxyWriterPtr;
+using GalaxyWriterPtr = std::unique_ptr<GalaxyWriter>;
 
 template <typename ...Ts>
 GalaxyWriterPtr make_galaxy_writer(const ExecutionParameters &exec_params, Ts&&...ts)

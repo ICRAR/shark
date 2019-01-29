@@ -83,7 +83,7 @@ private:
 };
 
 /// Type used by users to handle an instance of AGNFeedback
-typedef std::shared_ptr<AGNFeedback> AGNFeedbackPtr;
+using AGNFeedbackPtr = std::shared_ptr<AGNFeedback>;
 
 template <typename ...Ts>
 AGNFeedbackPtr make_agn_feedback(Ts&&...ts)

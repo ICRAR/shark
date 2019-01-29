@@ -67,7 +67,7 @@ class nfw_distribution {
 
 public:
 
-	typedef FT result_type;
+	using result_type = FT;
 
 	class param_type {
 		const result_type _c;
@@ -76,7 +76,7 @@ public:
 
 	public:
 
-		typedef nfw_distribution distribution_type;
+		using distribution_type = nfw_distribution;
 
 		param_type(result_type c=1) : _c(c), _a(1 / c),
 		    _norm(std::log((_a + 1) / _a) - 1 / (_a + 1))
@@ -175,8 +175,8 @@ template <typename CharT, typename Traits, typename RealType>
 std::basic_istream<CharT, Traits>&
 operator>>(std::basic_istream<CharT, Traits>& is, nfw_distribution<RealType>& x)
 {
-	typedef typename nfw_distribution<RealType>::result_type result_type;
-	typedef typename nfw_distribution<RealType>::param_type param_type;
+	using result_type = typename nfw_distribution<RealType>::result_type;
+	using param_type = typename nfw_distribution<RealType>::param_type;
 
 	detail::flag_saver<CharT, Traits> saver(is);
 	is.flags(std::ios_base::dec | std::ios_base::skipws);

@@ -41,7 +41,7 @@ class Timer {
 
 public:
 
-	typedef typename std::chrono::milliseconds::rep duration;
+	using duration = typename std::chrono::milliseconds::rep;
 
 	/**
 	 * Creates the timer and starts measuring time

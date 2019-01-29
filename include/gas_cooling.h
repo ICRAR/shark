@@ -66,7 +66,7 @@ class GasCoolingParameters {
 
 public:
 
-	typedef std::map<double, std::string> tables_idx;
+	using tables_idx = std::map<double, std::string>;
 
 	enum LambdaCoolingModel {
 		CLOUDY = 0,

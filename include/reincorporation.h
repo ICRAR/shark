@@ -57,7 +57,7 @@ private:
 	DarkMatterHalosPtr darkmatterhalo;
 };
 
-typedef std::shared_ptr<Reincorporation> ReincorporationPtr;
+using ReincorporationPtr = std::shared_ptr<Reincorporation>;
 
 template <typename ...Ts>
 ReincorporationPtr make_reincorporation(Ts&&...ts)

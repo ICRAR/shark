@@ -64,7 +64,7 @@ public:
 	 * @param A pointer to any user-provided data
 	 * @return
 	 */
-	typedef int (*ode_evaluator)(double, const double y[], double f[], void *);
+	using ode_evaluator = int (*)(double, const double y[], double f[], void *);
 
 	/**
 	 * Creates a new ODESolver

@@ -44,9 +44,9 @@ class attribute_not_found : public std::exception {};
 class name_not_found : public std::exception {};
 
 # ifdef HDF5_NEWER_THAN_1_10_0
-typedef H5::Group CommonFG;
+using CommonFG = H5::Group;
 # else
-typedef H5::CommonFG CommonFG;
+using CommonFG = H5::CommonFG;
 # endif
 
 template <typename AttributeHolder>

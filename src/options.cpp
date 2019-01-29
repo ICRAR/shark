@@ -210,7 +210,7 @@ typename std::enable_if<std::is_integral<typename Cont::value_type>::value, Cont
 _read_ranges(const std::string &name, const std::string &value, const std::string &sep = " ")
 {
 
-	typedef typename Cont::value_type T;
+	using T = typename Cont::value_type;
 
 	std::vector<std::string> values_and_ranges = tokenize(value, sep);
 	Cont values;

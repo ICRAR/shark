@@ -163,7 +163,7 @@ public:
 
 	Identifiable(T id) : id(id) {}
 
-	typedef T id_t;
+	using id_t = T;
 
 	/**
 	 * The ID of this object

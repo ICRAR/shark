@@ -92,7 +92,7 @@ public:
 
 	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, const CosmologyPtr &cosmology);
 
-	typedef double (*func_t)(double x, void *);
+	using func_t = double (*)(double x, void *);
 
 	/**
 	 * All input quantities should be in comoving units.
@@ -139,7 +139,7 @@ private:
 };
 
 /// A collection of galaxy-indexed molecular gas objects
-typedef std::map<GalaxyPtr, StarFormation::molecular_gas> molgas_per_galaxy;
+using molgas_per_galaxy = std::map<GalaxyPtr, StarFormation::molecular_gas>;
 
 }  // namespace shark
 

@@ -99,7 +99,7 @@ public:
 };
 
 /// Type to be used by users handling pointers to this class
-typedef std::shared_ptr<Cosmology> CosmologyPtr;
+using CosmologyPtr = std::shared_ptr<Cosmology>;
 
 template <typename ...Ts>
 CosmologyPtr make_cosmology(Ts&&...ts)

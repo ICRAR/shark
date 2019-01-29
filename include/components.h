@@ -43,13 +43,13 @@ class Subhalo;
 class Halo;
 class MergerTree;
 
-typedef std::shared_ptr<Galaxy> GalaxyPtr;
-typedef std::shared_ptr<Subhalo> SubhaloPtr;
-typedef std::shared_ptr<Halo> HaloPtr;
-typedef std::shared_ptr<MergerTree> MergerTreePtr;
+using GalaxyPtr = std::shared_ptr<Galaxy>;
+using SubhaloPtr = std::shared_ptr<Subhalo>;
+using HaloPtr = std::shared_ptr<Halo>;
+using MergerTreePtr = std::shared_ptr<MergerTree>;
 
 /// Type used by galaxy_count() methods
-typedef typename std::vector<GalaxyPtr>::size_type galaxies_size_type;
+using galaxies_size_type = std::vector<GalaxyPtr>::size_type;
 
 /**
  * The common base for all baryon component types.

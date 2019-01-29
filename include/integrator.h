@@ -39,7 +39,7 @@ class Integrator {
 
 public:
 
-	typedef double (*func_t)(double x, void *);
+	using func_t = double (*)(double x, void *);
 
 	///
 	/// Creates a new Integrator that will integrate using at most

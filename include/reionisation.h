@@ -83,7 +83,7 @@ public:
 	virtual bool reionised_halo (double v, double z) const;
 };
 
-typedef std::shared_ptr<Reionisation> ReionisationPtr;
+using ReionisationPtr = std::shared_ptr<Reionisation>;
 
 template <typename ...Ts>
 ReionisationPtr make_reionisation(const ReionisationParameters &parameters, Ts&&...ts)

@@ -43,7 +43,7 @@ class Options {
 
 public:
 
-	typedef std::map<std::string, std::string> options_t;
+	using options_t = std::map<std::string, std::string>;
 
 	enum file_format_t {
 		HDF5,

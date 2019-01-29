@@ -131,7 +131,7 @@ private:
 };
 
 /// Type used by users to keep track o
-typedef std::shared_ptr<DarkMatterHalos> DarkMatterHalosPtr;
+using DarkMatterHalosPtr= std::shared_ptr<DarkMatterHalos>;
 
 class NFWDarkMatterHalos : public DarkMatterHalos {
 

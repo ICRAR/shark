@@ -57,7 +57,7 @@ private:
 	EnvironmentParameters parameters;
 };
 
-typedef std::shared_ptr<Environment> EnvironmentPtr;
+using EnvironmentPtr = std::shared_ptr<Environment>;
 
 template <typename ...Ts>
 EnvironmentPtr make_environment(Ts&&...ts)

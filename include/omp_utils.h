@@ -101,7 +101,7 @@ template <typename Container, typename Callable>
 void omp_static_for(Container &&container, int num_threads, Callable &&f)
 {
 	auto size = container.size();
-	typedef typename std::make_signed<decltype(size)>::type signed_t;
+	using signed_t = typename std::make_signed<decltype(size)>::type;
 	omp_static_for(std::size_t(0), container.size(), num_threads, [&](signed_t i, int thread_num){
 		f(container[i], thread_num);
 	});
@@ -148,7 +148,7 @@ template <typename Container, typename Callable>
 void omp_dynamic_for(Container &&container, int num_threads, int chunk, Callable &&f)
 {
 	auto size = container.size();
-	typedef typename std::make_signed<decltype(size)>::type signed_t;
+	using signed_t = typename std::make_signed<decltype(size)>::type;
 	omp_dynamic_for(std::size_t(0), container.size(), num_threads, chunk, [&](signed_t i, int thread_num){
 		f(container[i], thread_num);
 	});
