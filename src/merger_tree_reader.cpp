@@ -125,7 +125,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 
 	unsigned long n_subhalos = Mvir.size();
 	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
-	if ( !n_subhalos ) {
+	if (n_subhalos == 0) {
 		return {};
 	}
 

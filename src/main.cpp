@@ -148,11 +148,11 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 	po::store(parser.run(), vm);
 	po::notify(vm);
 
-	if (vm.count("help")) {
+	if (vm.count("help") != 0) {
 		vm.clear();
 		show_help(argv[0], visible_opts, std::cout);
 	}
-	else if (vm.count("version")) {
+	else if (vm.count("version") != 0) {
 		vm.clear();
 		std::cout << "SHArk version " << SHARK_VERSION << std::endl;
 		std::cout << "SHArk git revision " << git_sha1() << std::endl;

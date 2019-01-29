@@ -90,7 +90,7 @@ const vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int 
 {
 	hdf5::Reader batch_file(get_filename(snapshot, batch));
 	auto n_subhalos = batch_file.read_dataset<unsigned int>("Num_of_groups");
-	if ( !n_subhalos ) {
+	if (n_subhalos == 0) {
 		return {};
 	}
 

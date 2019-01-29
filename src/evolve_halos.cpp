@@ -145,7 +145,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 		}
 	}
 
-	if (subhalos_without_descendant) {
+	if (subhalos_without_descendant != 0) {
 		AllBaryons.baryon_total_lost[snapshot] = baryon_mass_loss;
 		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies.";
 	}
