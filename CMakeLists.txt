@@ -26,7 +26,7 @@ file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
 
 # We have only C++ sources, but until cmake 3.4 the check_symbol_exists
 # macro didn't work properly if only defining C++ as the project language
-if( ${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 4 )
+if (${CMAKE_VERSION} VERSION_LESS 3.4)
 	set(SHARK_LANGS C CXX)
 else()
 	set(SHARK_LANGS CXX)
@@ -35,7 +35,7 @@ endif()
 # Our project...
 project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules/)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # If not specified, always build in Release mode
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -259,7 +259,8 @@ endif()
 #
 # Save all compile-time options here
 #
-configure_file(include/config.h.in include/config.h @ONLY)
+set(config_h "${CMAKE_CURRENT_BINARY_DIR}/include/config.h")
+configure_file(include/config.h.in "${config_h}" @ONLY)
 
 #
 # We use the source code directory and the installation prefix to lookup data
@@ -273,7 +274,6 @@ configure_file(src/data.cpp.in "${data_cpp}" @ONLY)
 # Add git revision information in a generated .cpp file, which we then include
 # as part of the shark library
 #
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 git_local_changes(GIT_HAS_LOCAL_CHANGES)
@@ -287,8 +287,52 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 
 # The shark shared library
 set(SHARKLIB_SRCS
+   "${config_h}"
    "${data_cpp}"
    "${git_revision_cpp}"
+   include/agn_feedback.h
+   include/components.h
+   include/cosmology.h
+   include/dark_matter_halos.h
+   include/data.h
+   include/disk_instability.h
+   include/environment.h
+   include/evolve_halos.h
+   include/exceptions.h
+   include/execution.h
+   include/galaxy_creator.h
+   include/galaxy_mergers.h
+   include/galaxy_writer.h
+   include/gas_cooling.h
+   include/git_revision.h
+   include/integrator.h
+   include/interpolator.h
+   include/logging.h
+   include/merger_tree_reader.h
+   include/mixins.h
+   include/naming_convention.h
+   include/nfw_distribution.h
+   include/numerical_constants.h
+   include/ode_solver.h
+   include/omp_utils.h
+   include/options.h
+   include/physical_model.h
+   include/recycling.h
+   include/reincorporation.h
+   include/reionisation.h
+   include/sharkfwd.h
+   include/shark.h
+   include/shark_runner.h
+   include/simulation.h
+   include/star_formation.h
+   include/stellar_feedback.h
+   include/timer.h
+   include/tree_builder.h
+   include/utils.h
+   include/hdf5/iobase.h
+   include/hdf5/reader.h
+   include/hdf5/traits.h
+   include/hdf5/writer.h
    src/agn_feedback.cpp
    src/components.cpp
    src/cosmology.cpp
@@ -337,6 +381,9 @@ set_target_properties(sharklib PROPERTIES
 
 # The shark-importer executable
 set(SHARK_IMPORTER_SRCS
+	include/importer/descendants.h
+	include/importer/reader.h
+	include/importer/velociraptor.h
 	src/importer/descendants.cpp
 	src/importer/main.cpp
 	src/importer/reader.cpp
@@ -372,7 +419,7 @@ if( SHARK_TEST )
 	# interpreter, and doesn't honour the shebang line that could be present.
 	# We try to rectify this situation here with a solution similar to what
 	# is found in cmake >= 3.7
-	if (${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} LESS 7 AND
+	if (${CMAKE_VERSION} VERSION_LESS 3.7 AND
 	    NOT "${CXXTEST_PYTHON_TESTGEN_EXECUTABLE}" STREQUAL "")
 		execute_process(COMMAND ${CXXTEST_PYTHON_TESTGEN_EXECUTABLE} --version
 		                OUTPUT_VARIABLE _CXXTEST_OUT ERROR_VARIABLE _CXXTEST_OUT

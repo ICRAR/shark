@@ -59,7 +59,7 @@ test_script:
   - ps: Invoke-WebRequest "https://docs.google.com/uc?export=download&id=1xvNmJB_KmoBHuQz-QzdPnY0HFs7smkUB" -OutFile "input\redshifts.txt"
   - ps: Invoke-WebRequest "https://docs.google.com/uc?export=download&id=1JDK8ak13bEhzg9H9xt0uE8Fh_2LD3KpZ" -OutFile "input\tree_199.0.hdf5"
   - cmd: shark sample.cfg -o simulation.redshift_file=input\redshifts.txt -o simulation.tree_files_prefix=input\tree_199 -o execution.seed=123456 -o execution.name_model=my_model
-  - cmd: C:\Python36-x64\Scripts\pip install -U pip wheel setuptools h5py matplotlib scipy
+  - cmd: C:\Python36-x64\Scripts\pip install h5py matplotlib scipy
   - cmd: C:\Python36-x64\python.exe standard_plots\all.py -c sample.cfg -z input\redshifts.txt
   - cmd: shark sample.cfg -o simulation.redshift_file=input\redshifts.txt -o simulation.tree_files_prefix=input\tree_199 -o execution.seed=123456 -o execution.name_model=my_model_equal_seed
   - cmd: C:\Python36-x64\python.exe scripts\compare_galaxies.py -m mini-SURFS\my_model\199\0\galaxies.hdf5 mini-SURFS\my_model_equal_seed\199\0\galaxies.hdf5
