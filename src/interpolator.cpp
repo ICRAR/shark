@@ -67,7 +67,7 @@ Interpolator::Interpolator(const Interpolator &other) :
 	_init_gsl_objects();
 }
 
-Interpolator::Interpolator(Interpolator &&other) :
+Interpolator::Interpolator(Interpolator &&other) noexcept :
 	interp2d(nullptr),
 	xacc(nullptr),
 	yacc(nullptr),

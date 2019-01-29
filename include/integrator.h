@@ -51,7 +51,7 @@ public:
 
 	// Copy/movy constructors, destructor
 	Integrator(const Integrator &other);
-	Integrator(Integrator &&other);
+	Integrator(Integrator &&other) noexcept;
 	~Integrator();
 
 	///

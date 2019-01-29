@@ -47,7 +47,7 @@ public:
 
 	// Copy/move constructors, destructor
 	Interpolator(const Interpolator &other);
-	Interpolator(Interpolator &&other);
+	Interpolator(Interpolator &&other) noexcept;
 	~Interpolator();
 
 	double get(double x, double y) const;

@@ -36,7 +36,7 @@ Integrator::Integrator(size_t max_intervals) :
 	init_gsl_objects();
 }
 
-Integrator::Integrator(Integrator &&other) :
+Integrator::Integrator(Integrator &&other) noexcept :
 	workspace(),
 	max_intervals(other.max_intervals),
 	num_intervals(other.num_intervals)
