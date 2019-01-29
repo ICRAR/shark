@@ -58,9 +58,9 @@ public:
 	/**
 	 * A ctor that reads options from a file
 	 *
-	 * @param filename The name of the options file
+	 * @param fname The name of the options file
 	 */
-	explicit Options(const std::string &filename);
+	explicit Options(const std::string &fname);
 
 	/// Adds the options contained in file @p fname
 	///

@@ -129,8 +129,9 @@ Cosmology::Cosmology(const CosmologicalParameters &parameters) :
 	// no-op
 }
 
-double Cosmology::comoving_to_physical_angularmomentum(double L, double z) const {
-	return L / std::pow(parameters.Hubble_h, 2) / (1 + z);
+double Cosmology::comoving_to_physical_angularmomentum(double r, double z) const
+{
+	return r / std::pow(parameters.Hubble_h, 2) / (1 + z);
 }
 
 double Cosmology::comoving_to_physical_size(double r, double z) const {

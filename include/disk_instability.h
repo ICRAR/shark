@@ -59,7 +59,7 @@ public:
 
 	void create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z, double delta_t);
 
-	void transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot);
+	void transfer_history_disk_to_bulge(GalaxyPtr &galaxy, int snapshot);
 
 	void effective_angular_momentum(GalaxyPtr &galaxy);
 
