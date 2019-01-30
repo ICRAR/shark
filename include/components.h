@@ -770,7 +770,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const HaloPtr &
  * A merger tree contains halos, which are indexed by snapshot,
  * and an ID to identify it.
  */
-class MergerTree : public Identifiable<long> {
+class MergerTree : public Identifiable<std::int32_t> {
 public:
 
 	using Identifiable::Identifiable;
