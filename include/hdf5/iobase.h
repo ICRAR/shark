@@ -108,7 +108,7 @@ protected:
 
 private:
 
-	bool opened;
+	bool opened {true};
 	H5::DataSpace get_nd_dataspace(const H5::DataSet &dataset, unsigned int expected_ndims) const;
 };
 

@@ -44,12 +44,6 @@ public:
 	using duration = typename std::chrono::milliseconds::rep;
 
 	/**
-	 * Creates the timer and starts measuring time
-	 */
-	inline
-	Timer() : t0(std::chrono::steady_clock::now()) {}
-
-	/**
 	 * Returns the number of milliseconds elapsed since the creation
 	 * of the timer
 	 *
@@ -61,7 +55,7 @@ public:
 	}
 
 private:
-	std::chrono::steady_clock::time_point t0;
+	std::chrono::steady_clock::time_point t0 {std::chrono::steady_clock::now()};
 
 };
 
