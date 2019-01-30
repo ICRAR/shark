@@ -143,7 +143,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 	};
 
 	auto f = [](double r, void *ctx) -> double {
-		StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
+		auto *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 		return sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
 	};
 
@@ -186,7 +186,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 			// over the same set of 'r' that it used during the first round of the previous integration,
 			// so we could save ourselves lots of calculation by storing those values and reusing them here
 			auto f_j = [](double r, void *ctx) -> double {
-				StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
+				auto *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 				return r * sf_and_props->star_formation->star_formation_rate_surface_density(r, sf_and_props->props);
 			};
 
@@ -476,7 +476,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	};
 
 	auto f = [](double r, void *ctx) -> double {
-		StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
+		auto *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 		return sf_and_props->star_formation->molecular_surface_density(r, sf_and_props->props);
 	};
 
@@ -520,7 +520,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 			// over the same set of 'r' that it used during the first round of the previous integration,
 			// so we could save ourselves lots of calculation by storing those values and reusing them here
 			auto f_j = [](double r, void *ctx) -> double {
-				StarFormationAndProps *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
+				auto *sf_and_props = reinterpret_cast<StarFormationAndProps *>(ctx);
 				return r * sf_and_props->star_formation->molecular_surface_density(r, sf_and_props->props);
 			};
 

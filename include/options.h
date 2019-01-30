@@ -91,7 +91,7 @@ public:
 
 			// Check that it's there and read it using the specialized
 			// get<T> template
-			options_t::const_iterator it = options.find(name);
+			auto it = options.find(name);
 			if ( it == options.end() ) {
 				throw missing_option(name);
 			}
