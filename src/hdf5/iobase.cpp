@@ -45,7 +45,6 @@ IOBase::IOBase(const string &filename, unsigned int flags) :
 }
 
 IOBase::IOBase() :
-	hdf5_file(),
 	opened(true)
 {
 	// no-op

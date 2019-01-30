@@ -376,23 +376,11 @@ public:
  * This structure keeps track of the properties of the halo gas, which are necessary to implement a more sophisticated cooling model.
  */
 struct CoolingSubhaloTracking {
-	/**
-	 * Initialize values in zero.
-	 */
-	CoolingSubhaloTracking():
-		deltat(),
-		temp(),
-		mass(),
-		tcooling(),
-		rheat(0)
-	{
-		//no=op
-	};
 	std::vector<double> deltat;
 	std::vector<double> temp;
 	std::vector<double> mass;
 	std::vector<double> tcooling;
-	double rheat;
+	double rheat {0};
 };
 
 
@@ -794,20 +782,12 @@ public:
 	}
 };
 
+/**
+ * Class to track all the mass componets in the simulation.
+ */
 class TotalBaryon {
 
 public:
-
-	/**
-	 * Class to track all the mass componets in the simulation.
-	 */
-
-	TotalBaryon() :
-		SFR_disk(0),
-		SFR_bulge(0)
-	{
-		// no-op
-	}
 
 	/**
 	 * mcold: total cold gas mass in disk+bulge.

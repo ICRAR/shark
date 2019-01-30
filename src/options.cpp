@@ -40,14 +40,7 @@ using namespace std;
 
 namespace shark {
 
-Options::Options() :
-	options()
-{
-	// no-op
-}
-
-Options::Options(const string &fname) :
-	options()
+Options::Options(const string &fname)
 {
 	add_file(fname);
 }

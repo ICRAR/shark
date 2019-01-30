@@ -29,7 +29,6 @@
 namespace shark {
 
 Integrator::Integrator(size_t max_intervals) :
-	workspace(),
 	max_intervals(max_intervals),
 	num_intervals(0)
 {
@@ -37,7 +36,6 @@ Integrator::Integrator(size_t max_intervals) :
 }
 
 Integrator::Integrator(Integrator &&other) noexcept :
-	workspace(),
 	max_intervals(other.max_intervals),
 	num_intervals(other.num_intervals)
 {
@@ -45,7 +43,6 @@ Integrator::Integrator(Integrator &&other) noexcept :
 }
 
 Integrator::Integrator(const Integrator &other) :
-	workspace(),
 	max_intervals(other.max_intervals),
 	num_intervals(other.num_intervals)
 {

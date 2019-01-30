@@ -41,7 +41,7 @@ class xyz {
 
 public:
 
-	xyz() : x(0), y(0), z(0) {};
+	xyz() = default;
 
 	template <typename U>
 	xyz(U x, U y, U z) : x(T(x)), y(T(y)), z(T(z)) {};
@@ -52,17 +52,17 @@ public:
 	/**
 	 * The value in the X coordinate
 	 */
-	T x;
+	T x {0};
 
 	/**
 	 * The value in the Y coordinate
 	 */
-	T y;
+	T y {0};
 
 	/**
 	 * The value in the Z coordinate
 	 */
-	T z;
+	T z {0};
 
 	xyz &operator+=(T scalar)
 	{

@@ -53,7 +53,7 @@ public:
 	///
 	/// A ctor that creates an empty Options object
 	///
-	Options();
+	Options() = default;
 
 	/**
 	 * A ctor that reads options from a file
