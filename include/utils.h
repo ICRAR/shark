@@ -216,6 +216,14 @@ detail::_memory_amount memory_amount(std::size_t amount) {
 /// Returns the name of the computer executing this program
 std::string gethostname();
 
+/// A class template for deleters that use a function to delete objects
+template<typename T, void (*F)(T *)>
+class deleter {
+public:
+	void operator()(T *x)
+	{ F(x); }
+};
+
 }  // namespace shark
 
 #endif // SHARK_UTILS
