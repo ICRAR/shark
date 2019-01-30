@@ -217,7 +217,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 					hist_galaxy.sfr_z_bulge_mergers = galaxy->sfr_z_bulge_mergers;
 					hist_galaxy.sfr_z_bulge_diskins = galaxy->sfr_z_bulge_diskins;
 					hist_galaxy.snapshot            = snapshot;
-					galaxy->history.emplace_back(std::move(hist_galaxy));
+					galaxy->history.emplace_back(hist_galaxy);
 				}
         
 				//Accumulate galaxy baryons

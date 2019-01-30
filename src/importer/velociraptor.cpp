@@ -54,7 +54,7 @@ VELOCIraptorReader::VELOCIraptorReader(shared_ptr<DescendantReader> &reader, con
 	auto descendants = reader->read_whole();
 
 	for(auto &&descendant: descendants) {
-		descendants_data[descendant.halo_id] = move(descendant);
+		descendants_data[descendant.halo_id] = descendant;
 	}
 }
 

@@ -77,7 +77,7 @@ vector<descendants_data_t> AsciiDescendantReader::read_whole()
 		descendants_data_t desc;
 		istringstream linestream(line);
 		linestream >> desc.halo_id >> desc.halo_snapshot >> desc.descendant_id >> desc.descendant_snapshot;
-		descendants.push_back(move(desc));
+		descendants.push_back(desc);
 	}
 
 	return descendants;
@@ -129,7 +129,7 @@ vector<descendants_data_t> HDF5DescendantReader::read_whole()
 			desc_ids[i],
 			desc_snaps[i]
 		};
-		descendants.push_back(move(desc));
+		descendants.push_back(desc);
 	}
 
 	return descendants;

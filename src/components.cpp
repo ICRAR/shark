@@ -156,7 +156,7 @@ std::vector<GalaxyPtr> Subhalo::all_type2_galaxies() const
 
 	for (auto &galaxy: galaxies){
 		if(galaxy->galaxy_type == Galaxy::TYPE2){
-			all.push_back(std::move(galaxy));
+			all.push_back(galaxy);
 		}
 	}
 
