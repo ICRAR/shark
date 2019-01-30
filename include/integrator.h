@@ -23,12 +23,13 @@
  * Integrator class headers
  */
 
+#ifndef SHARK_INTEGRATOR_H_
+#define SHARK_INTEGRATOR_H_
+
 #include <memory>
 
 #include <gsl/gsl_integration.h>
 
-#ifndef SHARK_INTEGRATOR_H_
-#define SHARK_INTEGRATOR_H_
 
 namespace shark {
 

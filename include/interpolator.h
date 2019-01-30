@@ -21,14 +21,15 @@
  * @file
  */
 
+#ifndef SHARK_INTERPOLATION_H_
+#define SHARK_INTERPOLATION_H_
+
 #include <memory>
 #include <vector>
 
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
 
-#ifndef SHARK_INTERPOLATION_H_
-#define SHARK_INTERPOLATION_H_
 
 namespace shark {
 
