@@ -21,12 +21,12 @@
  * @file
  */
 
+#include <cerrno>
 #include <cmath>
 #include <fstream>
 #include <sstream>
 #include <map>
 #include <tuple>
-#include <errno.h>
 #include <stdexcept>
 
 #include "cosmology.h"

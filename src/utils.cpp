@@ -25,13 +25,12 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
+#include <cstring>
 #include <functional>
 #include <locale>
 #include <string>
 #include <sstream>
-
-#include <errno.h>
-#include <string.h>
 
 // gethostname
 #ifdef _WIN32
