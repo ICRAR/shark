@@ -106,7 +106,7 @@ H5::DataSpace IOBase::get_2d_dataspace(const H5::DataSet &dataset) const {
 
 hsize_t IOBase::get_1d_dimsize(const H5::DataSpace &space) const {
 	hsize_t dim_size;
-	space.getSimpleExtentDims(&dim_size, NULL);
+	space.getSimpleExtentDims(&dim_size, nullptr);
 	return dim_size;
 }
 
