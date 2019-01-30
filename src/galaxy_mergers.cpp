@@ -680,8 +680,8 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	return r;
 }
 
-void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite){
-
+void GalaxyMergers::transfer_baryon_mass(const SubhaloPtr &central, const SubhaloPtr &satellite)
+{
 	central->hot_halo_gas += satellite->hot_halo_gas;
 	central->cold_halo_gas += satellite->cold_halo_gas;
 	central->ejected_galaxy_gas += satellite->ejected_galaxy_gas;

@@ -128,7 +128,7 @@ public:
 
 	double r_remnant(double mc, double ms, double rc, double rs);
 
-	void transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite);
+	void transfer_baryon_mass(const SubhaloPtr &central, const SubhaloPtr &satellite);
 
 	void transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z);
 
