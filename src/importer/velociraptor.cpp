@@ -43,7 +43,6 @@ namespace shark {
 namespace importer {
 
 VELOCIraptorReader::VELOCIraptorReader(shared_ptr<DescendantReader> &reader, const string &trees_dir) :
-	Reader(),
 	trees_dir(trees_dir)
 {
 	if (trees_dir.empty()) {

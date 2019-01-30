@@ -41,7 +41,6 @@ class exception : public std::exception {
 public:
 
 	explicit exception(const std::string &what) :
-		std::exception(),
 		_what(what)
 	{}
 

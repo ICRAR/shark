@@ -409,7 +409,6 @@ public:
 	 */
 	Subhalo(id_t id, int snapshot):
 		Identifiable(id),
-		Spatial(),
 		snapshot(snapshot)
 	{
 		//no-op
@@ -659,7 +658,6 @@ public:
 
 	Halo(id_t halo_id, int snapshot) :
 		Identifiable(halo_id),
-		Spatial(),
 		snapshot(snapshot)
 	{
 		// no-op
