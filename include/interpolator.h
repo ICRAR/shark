@@ -30,8 +30,15 @@
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
 
+#include "utils.h"
 
 namespace shark {
+
+/// A deleter of gsl_interp2d objects
+using gsl_interp2d_deleter = deleter<gsl_interp2d, gsl_interp2d_free>;
+
+/// A deleter of gsl_interp_accel objects
+using gsl_interp_accel_deleter = deleter<gsl_interp_accel, gsl_interp_accel_free>;
 
 /// A 2D interpolation object
 class Interpolator {

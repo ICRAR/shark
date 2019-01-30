@@ -31,17 +31,12 @@
 
 #include <gsl/gsl_odeiv2.h>
 
+#include "utils.h"
+
 namespace shark {
 
-/**
- * A deleter class that knows how to delete a gsl_odeiv2_driver
- */
-class gsl_odeiv2_driver_deleter {
-public:
-	void operator()(gsl_odeiv2_driver *d) {
-		gsl_odeiv2_driver_free(d);
-	}
-};
+/// A deleter of gsl_odeiv2_driver objects
+using gsl_odeiv2_driver_deleter = deleter<gsl_odeiv2_driver, gsl_odeiv2_driver_free>;
 
 /**
  * A solver of ODE systems

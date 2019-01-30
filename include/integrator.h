@@ -30,8 +30,12 @@
 
 #include <gsl/gsl_integration.h>
 
+#include "utils.h"
 
 namespace shark {
+
+/// A deleter of gsl_integration_workspace objects
+using gsl_integration_workspace_deleter = deleter<gsl_integration_workspace, gsl_integration_workspace_free>;
 
 ///
 /// A class that integrates functions through different ranges
