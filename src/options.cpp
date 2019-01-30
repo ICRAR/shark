@@ -89,8 +89,10 @@ void Options::add_file(const string &fname) {
 			cerr << "WARNING: No option group defined for option " << name << endl;
 		}
 
-		name = option_group + '.' + name;
-		store_option(name, value);
+		std::string full_name = option_group;
+		full_name += '.';
+		full_name += name;
+		store_option(full_name, value);
 	}
 
 }
