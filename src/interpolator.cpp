@@ -34,9 +34,6 @@ namespace shark {
 
 Interpolator::Interpolator(std::vector<double> xvals, std::vector<double> yvals,
 		std::vector<double> zvals, InterpolatorType type) :
-	interp2d(nullptr),
-	xacc(nullptr),
-	yacc(nullptr),
 	type(to_gsl(type)),
 	x(std::move(xvals)), y(std::move(yvals)), z(std::move(zvals))
 {
@@ -58,38 +55,10 @@ void Interpolator::_init_gsl_objects()
 }
 
 Interpolator::Interpolator(const Interpolator &other) :
-	interp2d(nullptr),
-	xacc(nullptr),
-	yacc(nullptr),
 	type(other.type),
 	x(other.x), y(other.y), z(other.z)
 {
 	_init_gsl_objects();
-}
-
-Interpolator::Interpolator(Interpolator &&other) noexcept :
-	interp2d(nullptr),
-	xacc(nullptr),
-	yacc(nullptr),
-	type(other.type),
-	x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z))
-{
-	std::swap(other.interp2d, interp2d);
-	std::swap(other.xacc, xacc);
-	std::swap(other.yacc, yacc);
-}
-
-Interpolator::~Interpolator()
-{
-	if (xacc) {
-		gsl_interp_accel_free(xacc.release());
-	}
-	if (yacc) {
-		gsl_interp_accel_free(yacc.release());
-	}
-	if (interp2d) {
-		gsl_interp2d_free(interp2d.release());
-	}
 }
 
 double Interpolator::get(double x, double y) const

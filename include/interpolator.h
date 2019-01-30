@@ -53,17 +53,15 @@ public:
 	Interpolator(std::vector<double> xvals, std::vector<double> yvals,
 	             std::vector<double> zvals, InterpolatorType type = BILINEAR);
 
-	// Copy/move constructors, destructor
+	/// Copy constructor
 	Interpolator(const Interpolator &other);
-	Interpolator(Interpolator &&other) noexcept;
-	~Interpolator();
 
 	double get(double x, double y) const;
 
 private:
-	std::unique_ptr<gsl_interp2d> interp2d;
-	std::unique_ptr<gsl_interp_accel> xacc;
-	std::unique_ptr<gsl_interp_accel> yacc;
+	std::unique_ptr<gsl_interp2d, gsl_interp2d_deleter> interp2d;
+	std::unique_ptr<gsl_interp_accel, gsl_interp_accel_deleter> xacc;
+	std::unique_ptr<gsl_interp_accel, gsl_interp_accel_deleter> yacc;
 	const gsl_interp2d_type *type;
 	std::vector<double> x;
 	std::vector<double> y;

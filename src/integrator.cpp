@@ -35,25 +35,11 @@ Integrator::Integrator(size_t max_intervals) :
 	init_gsl_objects();
 }
 
-Integrator::Integrator(Integrator &&other) noexcept :
-	max_intervals(other.max_intervals),
-	num_intervals(other.num_intervals)
-{
-	std::swap(workspace, other.workspace);
-}
-
 Integrator::Integrator(const Integrator &other) :
 	max_intervals(other.max_intervals),
 	num_intervals(other.num_intervals)
 {
 	init_gsl_objects();
-}
-
-Integrator::~Integrator()
-{
-	if (workspace) {
-		gsl_integration_workspace_free(workspace.release());
-	}
 }
 
 void Integrator::init_gsl_objects()

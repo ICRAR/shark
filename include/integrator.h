@@ -54,10 +54,8 @@ public:
 	///
 	explicit Integrator(size_t max_intervals);
 
-	// Copy/movy constructors, destructor
+	/// Copy constructor
 	Integrator(const Integrator &other);
-	Integrator(Integrator &&other) noexcept;
-	~Integrator();
 
 	///
 	/// Integrates function `f` with parameters `params` between `from` and `to`
@@ -79,7 +77,7 @@ public:
 	void reset_num_intervals();
 
 private:
-	std::unique_ptr<gsl_integration_workspace> workspace;
+	std::unique_ptr<gsl_integration_workspace, gsl_integration_workspace_deleter> workspace;
 	size_t max_intervals;
 	std::size_t num_intervals;
 
