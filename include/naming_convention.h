@@ -63,7 +63,7 @@ std::basic_ostream<CharT, Traits> &operator<<(std::basic_ostream<CharT, Traits> 
  * @param word The word to check
  * @return Whether the word follows the given naming convention or not.
  */
-bool follows_convention(const std::string &word, const naming_convention convention);
+bool follows_convention(const std::string &word, naming_convention convention);
 
 }
 
