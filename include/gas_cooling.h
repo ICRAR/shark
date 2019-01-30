@@ -87,7 +87,7 @@ public:
 	CoolingModel model = CROTON06;
 
 	//cooling tables
-	CoolingTable cooling_table {}; //these should be an array of parameters.
+	CoolingTable cooling_table; //these should be an array of parameters.
 
 
 private:

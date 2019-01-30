@@ -103,8 +103,8 @@ private:
 	GalaxyWriterPtr writer;
 	Simulation simulation;
 	StarFormation star_formation;
-	std::vector<PerThreadObjects> thread_objects {};
-	TotalBaryon all_baryons {};
+	std::vector<PerThreadObjects> thread_objects;
+	TotalBaryon all_baryons;
 
 	void create_per_thread_objects();
 	std::vector<MergerTreePtr> import_trees();

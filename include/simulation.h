@@ -47,11 +47,11 @@ public:
 	int max_snapshot = 0;
 	int tot_nsubvols = 0;
 
-	std::string sim_name {};
+	std::string sim_name;
 
 	std::string tree_files_prefix {"tree."};
 
-	std::map<int,double> redshifts {};
+	std::map<int,double> redshifts;
 
 
 	void load_simulation_tables(const std::string &redshift_file);

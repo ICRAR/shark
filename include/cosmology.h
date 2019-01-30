@@ -59,7 +59,7 @@ public:
 	float n_s = 0;
 	float sigma8 = 0;
 	float Hubble_h = 0;
-	PowerSpectrumTable power_spectrum {};
+	PowerSpectrumTable power_spectrum;
 
 private:
 	void load_tables(const std::string &power_spec_file);

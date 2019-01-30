@@ -38,11 +38,11 @@ class ExecutionParameters {
 public:
 	explicit ExecutionParameters(const Options &options);
 
-	std::set<int> output_snapshots {};
+	std::set<int> output_snapshots;
 	Options::file_format_t output_format = Options::HDF5;
-	std::string output_directory {};
-	std::string name_model {};
-	std::vector<unsigned int> simulation_batches {};
+	std::string output_directory;
+	std::string name_model;
+	std::vector<unsigned int> simulation_batches;
 	std::time_t starting_time = std::time(nullptr);
 
 	bool output_snapshot(int snapshot);
@@ -58,7 +58,7 @@ public:
 	 * snapshots_sf_histories: vector of int with the snapshots the user wants the star formation histories output at.
 	 */
 	bool output_sf_histories = false;
-	std::vector<int> snapshots_sf_histories {};
+	std::vector<int> snapshots_sf_histories;
 
 	float ode_solver_precision = 0;
 };

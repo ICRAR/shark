@@ -201,15 +201,15 @@ public:
 	 */
 	galaxy_type_t galaxy_type = CENTRAL;
 
-	Baryon bulge_stars {};
-	Baryon bulge_gas {};
-	Baryon disk_stars {};
-	Baryon disk_gas {};
-	Baryon galaxymergers_burst_stars {};
-	Baryon galaxymergers_assembly_stars {};
-	Baryon diskinstabilities_burst_stars {};
-	Baryon diskinstabilities_assembly_stars {};
-	BlackHole smbh {};
+	Baryon bulge_stars;
+	Baryon bulge_gas;
+	Baryon disk_stars;
+	Baryon disk_gas;
+	Baryon galaxymergers_burst_stars;
+	Baryon galaxymergers_assembly_stars;
+	Baryon diskinstabilities_burst_stars;
+	Baryon diskinstabilities_assembly_stars;
+	BlackHole smbh;
 
 	//save average star formation rates and metallicities of the newly formed stars.
 	float sfr_disk = 0;
@@ -231,10 +231,10 @@ public:
 	float vmax = 0;
 
 	//save star formation and gas history
-	std::vector<HistoryItem>  history {};
+	std::vector<HistoryItem>  history;
 
 	//save interactions of this galaxy during this snapshot.
-	InteractionItem interaction {};
+	InteractionItem interaction;
 
 	/**
 	 * tmerge: dynamical friction timescale, which is defined only if galaxy is satellite.
@@ -460,12 +460,12 @@ public:
 	 * If this pointer is set then descendant_id and descendant_subhalo are
 	 * meaningless.
 	 */
-	SubhaloPtr descendant {};
+	SubhaloPtr descendant;
 
 	/**
 	 * The list of galaxies in this subhalo.
 	 */
-	std::vector<GalaxyPtr> galaxies {};
+	std::vector<GalaxyPtr> galaxies;
 
 	/** Returns a pointer to the central galaxy. If no central galaxy is found
 	 in this Subhalo, then an empty pointer is returned.
@@ -509,33 +509,33 @@ public:
 	/**
 	 * cooling_subhalo_tracking: saves que information of the virial temperature, total halo gas and cooling time history.
 	 */
-	CoolingSubhaloTracking cooling_subhalo_tracking {};
+	CoolingSubhaloTracking cooling_subhalo_tracking;
 
 
 	/**
 	 * Hot gas component of the halo and outside the galaxies that is
 	 * allowed to cool down and/or fall onto the galaxy.
 	 */
-	Baryon hot_halo_gas {};
+	Baryon hot_halo_gas;
 
 	/**
 	 * Cold gas component of the halo and outside the galaxies that has
 	 * cooled down.
 	 */
-	Baryon cold_halo_gas {};
+	Baryon cold_halo_gas;
 
 	/**
 	 * Hot gas component of the halo and outside galaxies that tracks
 	 * the ejected outflowing gas from the galaxy and that is not
 	 * available for cooling yet.
 	 */
-	Baryon ejected_galaxy_gas {};
+	Baryon ejected_galaxy_gas;
 
 	/**
 	 * A list of pointers to the ascendants of this subhalo, sorted by mass in
 	 * descending order
 	 */
-	std::vector<SubhaloPtr> ascendants {};
+	std::vector<SubhaloPtr> ascendants;
 
 	/**
 	 * The accreted baryonic mass onto the subhalo. This information comes from the merger tree.
@@ -545,7 +545,7 @@ public:
 	/**
 	 * The halo that holds this subhalo.
 	 */
-	HaloPtr host_halo {};
+	HaloPtr host_halo;
 
 	/**
 	 * @return The main progenitor of this Subhalo
@@ -654,12 +654,12 @@ public:
 	/**
 	 * The central subhalo
 	 */
-	SubhaloPtr central_subhalo {};
+	SubhaloPtr central_subhalo;
 
 	/**
 	 * The subhalos contained in this halo
 	 */
-	std::vector<SubhaloPtr> satellite_subhalos {};
+	std::vector<SubhaloPtr> satellite_subhalos;
 
 	/**
 	 * @return the total number of subhalos contained in this halo
@@ -707,13 +707,13 @@ public:
 
 	bool main_progenitor = false;
 
-	HaloPtr descendant {};
-	std::set<HaloPtr> ascendants {};
+	HaloPtr descendant;
+	std::set<HaloPtr> ascendants;
 
 	/**
 	 * The merger tree that holds this halo.
 	 */
-	MergerTreePtr merger_tree {};
+	MergerTreePtr merger_tree;
 
 	/**
 	 * Adds @a subhalo to this Halo.
