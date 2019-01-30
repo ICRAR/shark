@@ -1,4 +1,4 @@
-# Test two SHARK galaxies for equality
+# Test two shark galaxies for equality
 #
 # Copyright by Kai Striega
 #
@@ -25,7 +25,7 @@ from numpy import array_equal
 def read_args():
     """Return an argparse.Namespace object with the CLI arguments"""
     arg_parser = argparse.ArgumentParser(
-        "Test whether two SCHARK models are equivalent."
+        "Test whether two shark models are equivalent."
         )
     arg_parser.add_argument(
         '-e', '--expect-unequal', action='store_true',
@@ -53,7 +53,7 @@ def assert_galaxies_not_equal(galaxy1, galaxy2):
     except AssertionError as e:
         pass
     else:
-        raise ValueError('Galaxies expected to be unequal, but are equal.')
+        raise AssertionError('Galaxies expected to be unequal, but are equal.')
 
 def main():
     args = read_args()

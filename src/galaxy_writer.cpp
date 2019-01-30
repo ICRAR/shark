@@ -121,7 +121,8 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 
 	file.write_attribute("run_info/model_name", exec_params.name_model);
 
-	file.write_attribute("run_info/seed", exec_params.seed);
+	comment = "The seed value used in the random number engines";
+	file.write_dataset("run_info/seed", exec_params.seed, comment);
 
 	// Calculate effective volume of the run
 	float volume = sim_params.volume * exec_params.simulation_batches.size();

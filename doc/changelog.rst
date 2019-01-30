@@ -3,6 +3,7 @@ Changelog
 
 .. rubric:: Development version
 
+* Add optional execution parameter to seed random number engines.
 * Improved support for the MSVC compiler.
   |s| now correctly compiles, runs, and standard plots work correctly on Windows.
 * Improved the |ss| script to accept additional environment variables
