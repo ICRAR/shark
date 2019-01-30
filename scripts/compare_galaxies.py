@@ -39,7 +39,7 @@ def read_args():
 
 def assert_galaxies_equal(galaxy1, galaxy2):
     """Raise an AssertionError if two galaxies are not equal."""
-    if galaxy1.keys() != galaxy2.keys():
+    if frozenset(galaxy1.keys()) != frozenset(galaxy2.keys()):
         raise AssertionError('Galaxy keys unequal.')
     for key in galaxy1.keys():
         if not array_equal(galaxy1[key][:], galaxy2[key][:]):
