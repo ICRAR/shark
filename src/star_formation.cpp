@@ -84,10 +84,10 @@ Options::get<StarFormationParameters::StarFormationModel>(const std::string &nam
 	throw invalid_option(os.str());
 }
 
-StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, const CosmologyPtr &cosmology) :
+StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, CosmologyPtr cosmology) :
 	parameters(parameters),
 	recycleparams(recycleparams),
-	cosmology(cosmology),
+	cosmology(std::move(cosmology)),
 	integrator(1000)
 {
 	// no-op

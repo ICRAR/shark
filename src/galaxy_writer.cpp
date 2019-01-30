@@ -47,12 +47,13 @@
 
 namespace shark {
 
-GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  const CosmologyPtr &cosmology, const DarkMatterHalosPtr &darkmatterhalo, SimulationParameters sim_params):
-	exec_params(exec_params),
-	cosmo_params(cosmo_params),
-	cosmology(cosmology),
-	darkmatterhalo(darkmatterhalo),
-	sim_params(sim_params){
+GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  CosmologyPtr cosmology, DarkMatterHalosPtr darkmatterhalo, SimulationParameters sim_params):
+	exec_params(std::move(exec_params)),
+	cosmo_params(std::move(cosmo_params)),
+	cosmology(std::move(cosmology)),
+	darkmatterhalo(std::move(darkmatterhalo)),
+	sim_params(std::move(sim_params))
+{
 	//no-opt
 }
 

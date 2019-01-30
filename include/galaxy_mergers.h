@@ -77,11 +77,11 @@ class GalaxyMergers{
 
 public:
 	GalaxyMergers(GalaxyMergerParameters parameters,
-			const CosmologyPtr &cosmology,
+			CosmologyPtr cosmology,
 			SimulationParameters simparams,
-			const DarkMatterHalosPtr &darkmatterhalo,
+			DarkMatterHalosPtr darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
-			const AGNFeedbackPtr &agnfeedback);
+			AGNFeedbackPtr agnfeedback);
 
 	void orbital_parameters(double &vr, double &vt, double f);
 

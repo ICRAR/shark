@@ -39,7 +39,7 @@
 namespace shark {
 
 TreeBuilder::TreeBuilder(ExecutionParameters exec_params, unsigned int threads) :
-	exec_params(exec_params), threads(threads)
+	exec_params(std::move(exec_params)), threads(threads)
 {
 	// no-op
 }
@@ -418,7 +418,7 @@ void TreeBuilder::remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo){
 }
 
 HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params, unsigned int threads) :
-	TreeBuilder(exec_params, threads)
+	TreeBuilder(std::move(exec_params), threads)
 {
 	// no-op
 }

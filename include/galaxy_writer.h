@@ -50,8 +50,8 @@ public:
 
 	GalaxyWriter(ExecutionParameters exec_params,
 			CosmologicalParameters cosmo_params,
-			const CosmologyPtr &cosmology,
-			const DarkMatterHalosPtr &darkmatterhalo,
+			CosmologyPtr cosmology,
+			DarkMatterHalosPtr darkmatterhalo,
 			SimulationParameters sim_params);
 	virtual ~GalaxyWriter() {};
 

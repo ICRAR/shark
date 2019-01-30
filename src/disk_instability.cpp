@@ -42,15 +42,15 @@ DiskInstabilityParameters::DiskInstabilityParameters(const Options &options)
 DiskInstability::DiskInstability(DiskInstabilityParameters parameters,
 		GalaxyMergerParameters merger_params,
 		SimulationParameters simparams,
-		const DarkMatterHalosPtr &darkmatterhalo,
+		DarkMatterHalosPtr darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
-		const AGNFeedbackPtr &agnfeedback) :
+		AGNFeedbackPtr agnfeedback) :
 	parameters(parameters),
 	merger_params(merger_params),
-	simparams(simparams),
-	darkmatterhalo(darkmatterhalo),
-	physicalmodel(physicalmodel),
-	agnfeedback(agnfeedback)
+	simparams(std::move(simparams)),
+	darkmatterhalo(std::move(darkmatterhalo)),
+	physicalmodel(std::move(physicalmodel)),
+	agnfeedback(std::move(agnfeedback))
 {
 	// no-op
 }

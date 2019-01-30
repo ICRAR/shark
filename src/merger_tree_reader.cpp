@@ -46,8 +46,8 @@ using namespace std;
 
 namespace shark {
 
-SURFSReader::SURFSReader(const std::string &prefix, const DarkMatterHalosPtr &dark_matter_halos, const SimulationParameters &simulation_params, unsigned int threads) :
-	prefix(prefix), dark_matter_halos(dark_matter_halos), simulation_params(simulation_params), threads(threads)
+SURFSReader::SURFSReader(const std::string &prefix, DarkMatterHalosPtr dark_matter_halos, SimulationParameters simulation_params, unsigned int threads) :
+	prefix(prefix), dark_matter_halos(std::move(dark_matter_halos)), simulation_params(std::move(simulation_params)), threads(threads)
 {
 	if (prefix.empty()) {
 		throw invalid_argument("Trees dir has no value");

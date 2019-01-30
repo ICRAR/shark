@@ -212,20 +212,20 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 
 GasCooling::GasCooling(GasCoolingParameters parameters,
 		StarFormationParameters params_sf,
-		const ReionisationPtr &reionisation,
-		const CosmologyPtr &cosmology,
-		const AGNFeedbackPtr &agnfeedback,
-		const DarkMatterHalosPtr &darkmatterhalos,
-		const ReincorporationPtr &reincorporation,
-		const EnvironmentPtr &environment) :
+		ReionisationPtr reionisation,
+		CosmologyPtr cosmology,
+		AGNFeedbackPtr agnfeedback,
+		DarkMatterHalosPtr darkmatterhalos,
+		ReincorporationPtr reincorporation,
+		EnvironmentPtr environment) :
 	parameters(parameters),
 	params_sf(params_sf),
-	reionisation(reionisation),
-	cosmology(cosmology),
-	agnfeedback(agnfeedback),
-	darkmatterhalos(darkmatterhalos),
-	reincorporation(reincorporation),
-	environment(environment),
+	reionisation(std::move(reionisation)),
+	cosmology(std::move(cosmology)),
+	agnfeedback(std::move(agnfeedback)),
+	darkmatterhalos(std::move(darkmatterhalos)),
+	reincorporation(std::move(reincorporation)),
+	environment(std::move(environment)),
 	cooling_lambda_interpolator(parameters.cooling_table.get_temperatures(), parameters.cooling_table.get_metallicities(), parameters.cooling_table.get_lambda())
 {
 	//no-opt

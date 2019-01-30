@@ -53,17 +53,17 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 }
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
-		const CosmologyPtr &cosmology,
+		CosmologyPtr cosmology,
 		SimulationParameters simparams,
-		const DarkMatterHalosPtr &darkmatterhalo,
+		DarkMatterHalosPtr darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
-		const AGNFeedbackPtr &agnfeedback) :
+		AGNFeedbackPtr agnfeedback) :
 	parameters(parameters),
-	cosmology(cosmology),
-	simparams(simparams),
-	darkmatterhalo(darkmatterhalo),
-	physicalmodel(physicalmodel),
-	agnfeedback(agnfeedback),
+	cosmology(std::move(cosmology)),
+	simparams(std::move(simparams)),
+	darkmatterhalo(std::move(darkmatterhalo)),
+	physicalmodel(std::move(physicalmodel)),
+	agnfeedback(std::move(agnfeedback)),
 	generator(),
 	distribution(-0.14, 0.26)
 {

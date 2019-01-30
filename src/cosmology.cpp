@@ -123,8 +123,8 @@ void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 
 }
 
-Cosmology::Cosmology(const CosmologicalParameters &parameters) :
-	parameters(parameters)
+Cosmology::Cosmology(CosmologicalParameters parameters) :
+	parameters(std::move(parameters))
 {
 	// no-op
 }

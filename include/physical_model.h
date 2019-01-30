@@ -73,7 +73,7 @@ public:
 		ode_solver(evaluator, NC, ode_solver_precision, &params),
 		starburst_ode_solver(evaluator, NC, ode_solver_precision, &starburst_params),
 		ode_values(NC), starburst_ode_values(NC),
-		gas_cooling(gas_cooling),
+		gas_cooling(std::move(gas_cooling)),
 		galaxy_ode_evaluations(0),
 		galaxy_starburst_ode_evaluations(0)
 	{

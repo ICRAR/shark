@@ -28,6 +28,7 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 
 #include "components.h"
 
@@ -40,8 +41,8 @@ class exception : public std::exception {
 
 public:
 
-	explicit exception(const std::string &what) :
-		_what(what)
+	explicit exception(std::string what) :
+		_what(std::move(what))
 	{}
 
 	virtual const char* what() const noexcept {
@@ -58,7 +59,7 @@ private:
  */
 class invalid_option : public exception {
 public:
-	explicit invalid_option(const std::string &what) : exception(what)
+	explicit invalid_option(std::string what) : exception(std::move(what))
 	{}
 };
 
@@ -68,7 +69,7 @@ public:
  */
 class invalid_argument : public exception {
 public:
-	explicit invalid_argument(const std::string &what) : exception(what)
+	explicit invalid_argument(std::string what) : exception(std::move(what))
 	{}
 };
 
@@ -77,7 +78,7 @@ public:
  */
 class missing_option : public exception {
 public:
-	explicit missing_option(const std::string &what) : exception(what)
+	explicit missing_option(std::string what) : exception(std::move(what))
 	{}
 };
 
@@ -86,7 +87,7 @@ public:
  */
 class invalid_data : public exception {
 public:
-	explicit invalid_data(const std::string &what) : exception(what)
+	explicit invalid_data(std::string what) : exception(std::move(what))
 	{};
 };
 
@@ -96,7 +97,7 @@ public:
  */
 class component_not_found : public invalid_data {
 public:
-	explicit component_not_found(const std::string &what) : invalid_data(what)
+	explicit component_not_found(std::string what) : invalid_data(std::move(what))
 	{};
 };
 
@@ -105,8 +106,8 @@ public:
  */
 class halo_not_found : public component_not_found {
 public:
-	halo_not_found(const std::string &what, Halo::id_t halo_id) :
-		component_not_found(what),
+	halo_not_found(std::string what, Halo::id_t halo_id) :
+		component_not_found(std::move(what)),
 		halo_id(halo_id) {}
 
 	/**
@@ -120,8 +121,8 @@ public:
  */
 class subhalo_not_found : public component_not_found {
 public:
-	subhalo_not_found(const std::string &what, Subhalo::id_t subhalo_id) :
-		component_not_found(what),
+	subhalo_not_found(std::string what, Subhalo::id_t subhalo_id) :
+		component_not_found(std::move(what)),
 		subhalo_id(subhalo_id) {}
 
 	/**
@@ -135,7 +136,7 @@ public:
  */
 class math_error: public exception {
 public:
-	explicit math_error(const std::string &what) : exception(what)
+	explicit math_error(std::string what) : exception(std::move(what))
 	{};
 };
 

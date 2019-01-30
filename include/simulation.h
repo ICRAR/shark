@@ -62,7 +62,7 @@ class Simulation {
 
 public:
 
-	Simulation(SimulationParameters parameters, const CosmologyPtr &cosmology);
+	Simulation(SimulationParameters parameters, CosmologyPtr cosmology);
 
 	double convert_snapshot_to_age(int s);
 

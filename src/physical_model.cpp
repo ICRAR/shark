@@ -130,11 +130,11 @@ BasicPhysicalModel::BasicPhysicalModel(
 		StarFormation star_formation,
 		RecyclingParameters recycling_parameters,
 		GasCoolingParameters gas_cooling_parameters) :
-	PhysicalModel(ode_solver_precision, basic_physicalmodel_evaluator, gas_cooling),
+	PhysicalModel(ode_solver_precision, basic_physicalmodel_evaluator, std::move(gas_cooling)),
 	stellar_feedback(stellar_feedback),
-	star_formation(star_formation),
+	star_formation(std::move(star_formation)),
 	recycling_parameters(recycling_parameters),
-	gas_cooling_parameters(gas_cooling_parameters)
+	gas_cooling_parameters(std::move(gas_cooling_parameters))
 {
 	// no-op
 }

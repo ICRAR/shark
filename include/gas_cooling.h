@@ -101,12 +101,12 @@ class GasCooling {
 public:
 	GasCooling(GasCoolingParameters parameters,
 			StarFormationParameters params_sf,
-			const ReionisationPtr &reionisation,
-			const CosmologyPtr &cosmology,
-			const AGNFeedbackPtr &agnfeedback,
-			const DarkMatterHalosPtr &darkmatterhalos,
-			const ReincorporationPtr &reincorporation,
-			const EnvironmentPtr &environment);
+			ReionisationPtr reionisation,
+			CosmologyPtr cosmology,
+			AGNFeedbackPtr agnfeedback,
+			DarkMatterHalosPtr darkmatterhalos,
+			ReincorporationPtr reincorporation,
+			EnvironmentPtr environment);
 
 	double cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, double deltat);
 	double cooling_time(double Tvir, double logl, double nh_density);

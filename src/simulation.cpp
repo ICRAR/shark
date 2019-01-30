@@ -100,9 +100,9 @@ void SimulationParameters::load_simulation_tables(const std::string &redshift_fi
 
 }
 
-Simulation::Simulation(SimulationParameters parameters, const CosmologyPtr &cosmology) :
-	parameters(parameters),
-	cosmology(cosmology)
+Simulation::Simulation(SimulationParameters parameters, CosmologyPtr cosmology) :
+	parameters(std::move(parameters)),
+	cosmology(std::move(cosmology))
 {
 	// no-op
 }

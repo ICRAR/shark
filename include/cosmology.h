@@ -72,7 +72,7 @@ private:
 class Cosmology {
 
 public:
-	explicit Cosmology(const CosmologicalParameters &parameters);
+	explicit Cosmology(CosmologicalParameters parameters);
 
 	double comoving_to_physical_angularmomentum(double r, double z) const;
 	double comoving_to_physical_size(double r, double z) const;

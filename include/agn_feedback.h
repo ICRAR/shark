@@ -61,7 +61,7 @@ public:
 class AGNFeedback {
 
 public:
-	AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology);
+	AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology);
 
 	/**
 	 * All input quantities should be in comoving units.

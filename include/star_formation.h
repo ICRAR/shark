@@ -90,7 +90,7 @@ public:
 		double j_atom;
 	};
 
-	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, const CosmologyPtr &cosmology);
+	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, CosmologyPtr cosmology);
 
 	using func_t = double (*)(double x, void *);
 

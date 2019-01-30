@@ -96,9 +96,9 @@ Options::get<DarkMatterHaloParameters::ConcentrationModel>(const std::string &na
 }
 
 
-DarkMatterHalos::DarkMatterHalos(const DarkMatterHaloParameters &params, const CosmologyPtr &cosmology, SimulationParameters &sim_params) :
+DarkMatterHalos::DarkMatterHalos(const DarkMatterHaloParameters &params, CosmologyPtr cosmology, SimulationParameters &sim_params) :
 	params(params),
-	cosmology(cosmology),
+	cosmology(std::move(cosmology)),
 	sim_params(sim_params),
 	generator(),
 	distribution(std::log(0.03), std::abs(std::log(0.5))),
