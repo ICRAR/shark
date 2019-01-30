@@ -45,10 +45,7 @@ DescendantReader::DescendantReader(const string &filename) :
 	}
 }
 
-DescendantReader::~DescendantReader()
-{
-	// no-op
-}
+DescendantReader::~DescendantReader() = default;
 
 //
 // AsciiDescendantReader methods follow

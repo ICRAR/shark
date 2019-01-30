@@ -29,9 +29,7 @@ namespace shark {
 
 namespace importer {
 
-Reader::~Reader() {
-	// no-op
-}
+Reader::~Reader() = default;
 
 }  // namespace trees
 

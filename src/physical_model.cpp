@@ -55,7 +55,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	 */
 
 	auto params= reinterpret_cast<BasicPhysicalModel::solver_params *>(data);
-	BasicPhysicalModel &model = dynamic_cast<BasicPhysicalModel &>(params->model);
+	auto &model = dynamic_cast<BasicPhysicalModel &>(params->model);
 
 	double R = model.recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
 

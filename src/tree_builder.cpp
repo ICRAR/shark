@@ -44,10 +44,7 @@ TreeBuilder::TreeBuilder(ExecutionParameters exec_params, unsigned int threads) 
 	// no-op
 }
 
-TreeBuilder::~TreeBuilder()
-{
-	// no-op
-}
+TreeBuilder::~TreeBuilder() = default;
 
 ExecutionParameters &TreeBuilder::get_exec_params()
 {

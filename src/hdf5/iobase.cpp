@@ -43,11 +43,6 @@ IOBase::IOBase(const string &filename, unsigned int flags) :
 	// no-op
 }
 
-IOBase::IOBase()
-{
-	// no-op
-}
-
 IOBase::~IOBase()
 {
 	close();

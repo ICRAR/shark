@@ -78,7 +78,7 @@ class DarkMatterHalos {
 
 public:
 	DarkMatterHalos(const DarkMatterHaloParameters &params, CosmologyPtr cosmology, SimulationParameters &sim_params);
-	virtual ~DarkMatterHalos() {};
+	virtual ~DarkMatterHalos() = default;
 
 	virtual double grav_potential_halo(double r, double c) const = 0;
 

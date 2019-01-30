@@ -61,7 +61,7 @@ public:
 	/**
 	 * Creates a new IOBase instance without opening a file
 	 */
-	IOBase();
+	IOBase() = default;
 
 	/**
 	 * Opens the given file in the given mode

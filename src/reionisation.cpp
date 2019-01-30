@@ -63,9 +63,7 @@ Reionisation::Reionisation(const ReionisationParameters &parameters) :
 	// no-op
 }
 
-Reionisation::~Reionisation()
-{
-}
+Reionisation::~Reionisation() = default;
 
 bool Lacey16Reionisation::reionised_halo(double v, double z) const
 {

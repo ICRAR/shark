@@ -80,10 +80,7 @@ public:
 		// no-op
 	}
 
-	virtual ~PhysicalModel()
-	{
-		// no-op
-	}
+	virtual ~PhysicalModel() = default;
 
 	void evolve_galaxy(Subhalo &subhalo, Galaxy &galaxy, double z, double delta_t)
 	{
