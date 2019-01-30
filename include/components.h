@@ -720,7 +720,7 @@ public:
 	 *
 	 * @param subhalo The subhalo to add
 	 */
-	void add_subhalo(const SubhaloPtr &&subhalo);
+	void add_subhalo(SubhaloPtr &&subhalo);
 
 	///
 	/// Returns the number of galaxies contained in this Halo

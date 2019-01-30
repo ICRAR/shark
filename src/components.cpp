@@ -231,7 +231,7 @@ std::vector<SubhaloPtr> Halo::all_subhalos() const
 	return all;
 }
 
-void Halo::add_subhalo(const SubhaloPtr &&subhalo)
+void Halo::add_subhalo(SubhaloPtr &&subhalo)
 {
 	// Add subhalo mass to halo
 	Mvir += subhalo->Mvir;

@@ -245,7 +245,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 	std::vector<HaloPtr> halos;
 	Halo::id_t last_halo_id = -1;
 	Timer t;
-	for(const auto &subhalo: subhalos) {
+	for(auto &subhalo: subhalos) {
 
 		auto halo_id = subhalo->haloID;
 		if (halo_id != last_halo_id) {
