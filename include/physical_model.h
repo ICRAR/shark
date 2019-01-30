@@ -164,7 +164,7 @@ public:
 		return galaxy_starburst_ode_evaluations;
 	}
 
-	void reset_ode_evaluations() {
+	virtual void reset_ode_evaluations() {
 		galaxy_ode_evaluations = 0;
 		galaxy_starburst_ode_evaluations = 0;
 	}
@@ -190,18 +190,18 @@ public:
 			RecyclingParameters recycling_parameters,
 			GasCoolingParameters gas_cooling_parameters);
 
-	void from_galaxy(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy);
-	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t);
+	void from_galaxy(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy) override;
+	void to_galaxy(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t) override;
 
-	void from_galaxy_starburst(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy);
-	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger);
+	void from_galaxy_starburst(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy) override;
+	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger) override;
 
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;
 	RecyclingParameters recycling_parameters;
 	GasCoolingParameters gas_cooling_parameters;
 
-	void reset_ode_evaluations() {
+	void reset_ode_evaluations() override {
 		PhysicalModel::reset_ode_evaluations();
 		star_formation.reset_integration_intervals();
 	}

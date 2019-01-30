@@ -73,14 +73,14 @@ private:
 class Lacey16Reionisation : public Reionisation {
 public:
 	using Reionisation::Reionisation;
-	virtual bool reionised_halo (double v, double z) const;
+	bool reionised_halo (double v, double z) const override;
 };
 
 /// The Sobacchi13 model of reionisation
 class Sobacchi13Reionisation : public Reionisation {
 public:
 	using Reionisation::Reionisation;
-	virtual bool reionised_halo (double v, double z) const;
+	bool reionised_halo (double v, double z) const override;
 };
 
 using ReionisationPtr = std::shared_ptr<Reionisation>;

@@ -47,7 +47,7 @@ public:
 	 */
 	VELOCIraptorReader(std::shared_ptr<DescendantReader> &descendant_reader, const std::string &trees_dir);
 
-	virtual const std::vector<Subhalo> read_subhalos(int snapshot) override;
+	const std::vector<Subhalo> read_subhalos(int snapshot) override;
 
 private:
 

@@ -74,7 +74,7 @@ public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 
 protected:
-	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) override;
+	void loop_through_halos(const std::vector<HaloPtr> &halos) override;
 
 };
 

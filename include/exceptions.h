@@ -45,7 +45,7 @@ public:
 		_what(std::move(what))
 	{}
 
-	virtual const char* what() const noexcept {
+	const char* what() const noexcept override {
 		return _what.c_str();
 	}
 
