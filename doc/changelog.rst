@@ -3,7 +3,10 @@ Changelog
 
 .. rubric:: Development version
 
-* Add optional execution parameter to seed random number engines.
+* Add optional execution parameter to seed random number engines,
+  and recording it on output files.
+  These two options allow users to fully reproduce a previous |s| run.
+  For now this works for single-threaded executions only.
 * Improved support for the MSVC compiler.
   |s| now correctly compiles, runs, and standard plots work correctly on Windows.
 * Improved the |ss| script to accept additional environment variables
