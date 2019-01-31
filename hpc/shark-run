@@ -245,7 +245,7 @@ do
 			shark_binary="$OPTARG"
 			;;
 		E)
-			num_particles="$OPTARG"
+			posPath="$OPTARG"
 			;;
 		V)
 			shark_subvolumes="$OPTARG"
@@ -265,7 +265,7 @@ do
 			;;
 	esac
 done
-
+num_particles=$(wc -l < $posPath)
 
 if [ -z "$shark_subvolumes" ]
 then
@@ -278,7 +278,7 @@ shark_subvolumes=($shark_subvolumes)
 if [ ! $num_particles -eq 0 ]
 then
 	#reading in the parameter values from the ssv file
-	INPUT_FILE="/home/msammons/Project1819/aux/particlePositions.ssv"
+	INPUT_FILE=$posPath
 	OIFS=$IFS
 	IFS=$(echo -en "\n\b")
 	count=0

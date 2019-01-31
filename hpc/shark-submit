@@ -286,7 +286,7 @@ submit_slurm() {
 	then
 		cmd="$cmd -p -P \"${shark_python_exec}\""
 	fi
-	cmd="$cmd -E $num_particles"
+	cmd="$cmd -E $posPath"
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
 
 	if [ "$dry_run" = "1" ]
@@ -322,6 +322,7 @@ job_name=
 walltime="1:00:00"
 modules=${SHARK_RUNTIME_MODULES}
 mem_per_task=
+posPath=
 cpus_per_task=
 num_nodes=
 num_particles=
@@ -373,7 +374,7 @@ do
 			shark_options+=("$OPTARG")
 			;;
 		E)
-			num_particles=("$OPTARG")
+			posPath=("$OPTARG")
 			;;
 		p)
 			shark_plot=yes
@@ -419,6 +420,8 @@ do
 	esac
 done
 		
+
+num_particles=$(wc -l < $posPath)
 
 # Positional argument is the configuration file name
 if [ $(($# - $OPTIND)) -lt 0 ]
