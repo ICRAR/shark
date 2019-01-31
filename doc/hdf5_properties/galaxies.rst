@@ -81,7 +81,8 @@
 * ``velocity_y``: peculiar velocity component y of galaxy [km/s]. In the case of type 2 galaxies, the velocity is generated to randomly sample the velocity dispersion of a NFW halo with the concentration of the halo the galaxy lives in.
 * ``velocity_z``: peculiar velocity component z of galaxy [km/s]. In the case of type 2 galaxies, the velocity is generated to randomly sample the velocity dispersion of a NFW halo with the concentration of the halo the galaxy lives in.
 * ``vmax_subhalo``: Maximum circular velocity of this galaxy [km/s]
-* ``vvir_hosthalo``: Virial velocity of the dark matter halo in which this galaxy resides [km/s]. In the case of type 2 satellites, this corresponds to the virial velocity its subhalo had before disappearing from the subhalo catalogs.
+* ``vvir_hosthalo``: Virial velocity of the dark matter host halo in which this galaxy resides [km/s].
+* ``vvir_subhalo``: Virial velocity of the dark matter subhalo in which this galaxy resides [km/s]. In the case of type 2 satellites, this corresponds to the virial velocity its subhalo had before disappearing from the subhalo catalogs.
 
 
 ``global``
@@ -106,6 +107,9 @@
 * ``mstars_metals``: total mass of metals locked in stars in the simulated box [Msun/h]
 * ``mstars_metals_bursts_diskinstabilities``: total mass of metals locked in stars that formed via starbursts triggered by disk instabilities in the simulated box [Msun/h]
 * ``mstars_metals_bursts_mergers``: total mass of metals locked in stars that formed via starbursts triggered by galaxy mergers in the simulated box [Msun/h]
+* ``number_disk_instabilities``: number of disk instability episodes taking place in the simulated box at this snapshot.
+* ``number_major_mergers``: number of major mergers taking place in the simulated box at this snapshot.
+* ``number_minor_mergers``: number of minor mergers taking place in the simulated box at this snapshot.
 * ``redshifts``: redshifts of the global outputs.
 * ``sfr_burst``: total star formation rate taking place in bulges in the simulated box [Msun/Gyr/h]
 * ``sfr_quiescent``: total star formation rate taking place in disks in the simulated box [Msun/Gyr/h]
@@ -119,6 +123,7 @@
 * ``ode_solver_precision``: accuracy applied when solving the ODE system of the physical model.
 * ``particle_mass``: dark matter particle mass of this simulation [Msun/h]
 * ``redshift``: output redshift
+* ``seed``: The seed value used in the random number engines
 * ``shark_git_has_local_changes``: whether this shark instance had uncommitted local changes
 * ``shark_git_revision``: the git revision of shark used to produce this data
 * ``shark_version``: the shark version
