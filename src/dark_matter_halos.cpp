@@ -190,10 +190,7 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo, double z){
 		return 0.334 * rdisk;
 
 	}
-	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
-		//TODO
-		return 0;
-	}
+	throw std::runtime_error("Only the MO98 disk size model is implemented");
 }
 
 double NFWDarkMatterHalos::grav_potential_halo(double r, double c) const
@@ -411,7 +408,7 @@ double DarkMatterHalos::nfw_concentration(double mvir, double z){
 		double a = 0.537 + (1.025 - 0.537) * std::exp(-0.718 * std::pow(z,1.08));
 		return std::pow(10.0, a + b * std::log10(mvir/1e12));
 	}
-
+	throw std::runtime_error("Only the Duffy08 and Dutton14 concentration models are implemented");
 }
 
 /// Specialization of lambert_w0 implemented using GSL
