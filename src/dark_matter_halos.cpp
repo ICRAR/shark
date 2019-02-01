@@ -443,7 +443,6 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	double c = halo->concentration;
 
 	double rvir = constants::G * halo->Mvir / std::pow(halo->Vvir,2);
-	double vvir = halo->Vvir;
 
 	// Assign positions based on an NFW halo of concentration c.
 	nfw_distribution<double> r(c);
