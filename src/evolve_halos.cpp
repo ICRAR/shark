@@ -29,8 +29,6 @@
 #include "logging.h"
 #include "numerical_constants.h"
 
-using namespace std;
-
 namespace shark {
 
 void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)

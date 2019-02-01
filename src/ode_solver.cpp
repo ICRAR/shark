@@ -31,8 +31,6 @@
 
 #include <gsl/gsl_errno.h>
 
-using namespace std;
-
 namespace shark {
 
 ODESolver::ODESolver(ode_evaluator evaluator, size_t dimension, double precision, void *params) :
@@ -58,7 +56,7 @@ void ODESolver::evolve(std::vector<double> &y, double delta_t)
 
 	//TEST: forcing integration to finish regardless of accuracy issue in three cases.
 
-	ostringstream os;
+	std::ostringstream os;
 	os << "Error while solving ODE system: ";
 	if (status == GSL_FAILURE) {
 		os << "step size decreases below machine precision ";

@@ -36,23 +36,21 @@
 #include "options.h"
 #include "utils.h"
 
-using namespace std;
-
 namespace shark {
 
-Options::Options(const string &fname)
+Options::Options(const std::string &fname)
 {
 	add_file(fname);
 }
 
-void Options::add_file(const string &fname) {
+void Options::add_file(const std::string &fname) {
 
 	LOG(info) << "Loading options from " << fname;
-	ifstream f = open_file(fname);
-	string line;
-	string option_group;
+	std::ifstream f = open_file(fname);
+	std::string line;
+	std::string option_group;
 
-	while ( getline(f, line) ) {
+	while ( std::getline(f, line) ) {
 
 		trim(line);
 
@@ -66,7 +64,7 @@ void Options::add_file(const string &fname) {
 
 		if ( line[0] == '[' ) {
 			if ( line[line.size() - 1] != ']' ) {
-				ostringstream os;
+				std::ostringstream os;
 				os << "Invalid group definition: " << line;
 				throw invalid_option(os.str());
 			}
@@ -79,7 +77,7 @@ void Options::add_file(const string &fname) {
 		parse_option(line, name, value);
 
 		if (option_group.empty()) {
-			cerr << "WARNING: No option group defined for option " << name << endl;
+			LOG(warning) << "No option group defined for option " << name;
 		}
 
 		std::string full_name = option_group;
@@ -103,7 +101,7 @@ void Options::check_valid_name(const std::string &name)
 	auto tokens = tokenize(name, ".");
 	for (auto &token: tokens) {
 		if (!follows_convention(token, naming_convention::SNAKE_CASE)) {
-			ostringstream os;
+			std::ostringstream os;
 			os << "A part of option " << name << " does not follow the ";
 			os << "snake_case naming convention: " << token;
 			throw invalid_option(os.str());
@@ -128,7 +126,7 @@ void Options::parse_option(const std::string &optspec, std::string &name, std::s
 {
 	auto tokens = tokenize(optspec, "=");
 	if (tokens.size() < 2) {
-		ostringstream os;
+		std::ostringstream os;
 		os << "Option " << optspec << " has no value (should be name = value)";
 		throw invalid_option(os.str());
 	}

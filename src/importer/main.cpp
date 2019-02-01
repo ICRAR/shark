@@ -31,8 +31,6 @@
 #include "importer/descendants.h"
 #include "importer/velociraptor.h"
 
-using namespace std;
-
 namespace shark {
 namespace importer {
 
@@ -93,7 +91,7 @@ namespace importer {
 int run(int argc, char **argv)
 {
 	if ( argc < 2 ) {
-		cerr << "Usage: " << argv[0] << " <options-file>" << endl;
+		std::cerr << "Usage: " << argv[0] << " <options-file>" << std::endl;
 		return 1;
 	}
 
@@ -103,12 +101,12 @@ int run(int argc, char **argv)
 	//
 	// The reader for the descendants file
 	//
-	shared_ptr<DescendantReader> descendants_reader;
+	std::shared_ptr<DescendantReader> descendants_reader;
 	if ( importer_params.descendants_format == shark::Options::HDF5 ) {
-		descendants_reader = make_shared<HDF5DescendantReader>(importer_params.descendants_file);
+		descendants_reader = std::make_shared<HDF5DescendantReader>(importer_params.descendants_file);
 	}
 	else if ( importer_params.descendants_format == shark::Options::ASCII ) {
-		descendants_reader = make_shared<AsciiDescendantReader>(importer_params.descendants_file);
+		descendants_reader = std::make_shared<AsciiDescendantReader>(importer_params.descendants_file);
 	}
 
 	//
@@ -117,7 +115,7 @@ int run(int argc, char **argv)
 	if ( importer_params.tree_format != ImporterParameters::TREES_VELOCIRAPTOR ) {
 		throw invalid_option("Only tree format currently supported is VELOCIraptor");
 	}
-	unique_ptr<Reader> reader(new VELOCIraptorReader(descendants_reader, importer_params.tree_dir));
+	std::unique_ptr<Reader> reader(new VELOCIraptorReader(descendants_reader, importer_params.tree_dir));
 
 	//
 	// Go ahead and read all required snapshots
@@ -125,7 +123,7 @@ int run(int argc, char **argv)
 	for(int snapshot=importer_params.last_snapshot; snapshot >= importer_params.first_snapshot; snapshot--) {
 		Timer timer;
 		auto subhalos = reader->read_subhalos(snapshot);
-		cout << "Snapshot " << snapshot << " read and processed in " << timer.get() << " [ms]" << endl;
+		std::cout << "Snapshot " << snapshot << " read and processed in " << timer.get() << " [ms]\n";
 	}
 
 	return 0;

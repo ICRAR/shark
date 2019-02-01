@@ -42,8 +42,6 @@
 #include "hdf5/reader.h"
 
 
-using namespace std;
-
 namespace shark {
 
 SURFSReader::SURFSReader(const std::string &prefix, DarkMatterHalosPtr dark_matter_halos, SimulationParameters simulation_params, unsigned int threads) :
@@ -55,9 +53,9 @@ SURFSReader::SURFSReader(const std::string &prefix, DarkMatterHalosPtr dark_matt
 
 }
 
-const string SURFSReader::get_filename(int batch)
+const std::string SURFSReader::get_filename(int batch)
 {
-	ostringstream os;
+	std::ostringstream os;
 	os << prefix << "." << batch << ".hdf5";
 	return os.str();
 }
@@ -103,25 +101,25 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	hdf5::Reader batch_file(fname);
 
 	//Read position and velocities first.
-	vector<float> position = batch_file.read_dataset_v_2<float>("haloTrees/position");
-	vector<float> velocity = batch_file.read_dataset_v_2<float>("haloTrees/velocity");
+	std::vector<float> position = batch_file.read_dataset_v_2<float>("haloTrees/position");
+	std::vector<float> velocity = batch_file.read_dataset_v_2<float>("haloTrees/velocity");
 
 	//Read mass, circular velocity and angular momentum.
-	vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
-	vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
-	vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
+	std::vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
+	std::vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
+	std::vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
 
 	//Read indices and the snapshot number at which the subhalo lives.
-	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
-	vector<Subhalo::id_t> nodeIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/nodeIndex");
-	vector<Subhalo::id_t> descIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/descendantIndex");
-	vector<Halo::id_t> hostIndex = batch_file.read_dataset_v<Halo::id_t>("haloTrees/hostIndex");
-	vector<Halo::id_t> descHost = batch_file.read_dataset_v<Halo::id_t>("haloTrees/descendantHost");
+	std::vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
+	std::vector<Subhalo::id_t> nodeIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/nodeIndex");
+	std::vector<Subhalo::id_t> descIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/descendantIndex");
+	std::vector<Halo::id_t> hostIndex = batch_file.read_dataset_v<Halo::id_t>("haloTrees/hostIndex");
+	std::vector<Halo::id_t> descHost = batch_file.read_dataset_v<Halo::id_t>("haloTrees/descendantHost");
 
 	//Read properties that characterise the position of the subhalo inside the halo.descendantIndex
-	vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
-	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
-	vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
+	std::vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
+	std::vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
+	std::vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
 
 	auto n_subhalos = Mvir.size();
 	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
@@ -135,7 +133,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	LOG(info) << os.str();
 
 	t = Timer();
-	vector<vector<SubhaloPtr>> t_subhalos(threads);
+	std::vector<std::vector<SubhaloPtr>> t_subhalos(threads);
 	for (auto &subhalos: t_subhalos) {
 		subhalos.reserve(n_subhalos / threads);
 	}
@@ -213,7 +211,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		t_subhalos[thread_idx].emplace_back(std::move(subhalo));
 	});
 
-	vector<SubhaloPtr> subhalos;
+	std::vector<SubhaloPtr> subhalos;
 	if (threads == 0) {
 		subhalos = std::move(t_subhalos[0]);
 	}

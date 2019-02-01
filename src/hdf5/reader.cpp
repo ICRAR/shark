@@ -34,8 +34,6 @@
 #include "logging.h"
 #include "hdf5/reader.h"
 
-using namespace std;
-
 namespace shark {
 
 namespace hdf5 {
@@ -94,7 +92,7 @@ static H5::Attribute _get_attribute(const CommonFG &file_or_group, const std::ve
 	throw name_not_found();
 }
 
-H5::Attribute Reader::get_attribute(const string &name) const
+H5::Attribute Reader::get_attribute(const std::string &name) const
 {
 	LOG(debug) << "Getting attribute " << name << " from file " << get_filename();
 	std::vector<std::string> parts = tokenize(name, "/");

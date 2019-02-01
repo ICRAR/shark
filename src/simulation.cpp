@@ -58,14 +58,11 @@ SimulationParameters::SimulationParameters(const Options &options)
 
 void SimulationParameters::load_simulation_tables(const std::string &redshift_file)
 {
-
-	using namespace std;
-
 	LOG(debug) << "Reading table " << redshift_file ;
 
-	ifstream f = open_file(redshift_file);
-	string line;
-	while ( getline(f, line) ) {
+	std::ifstream f = open_file(redshift_file);
+	std::string line;
+	while ( std::getline(f, line) ) {
 
 		trim(line);
 		if (empty_or_comment(line)) {
@@ -75,7 +72,7 @@ void SimulationParameters::load_simulation_tables(const std::string &redshift_fi
 		int s;
 		double r;
 
-		istringstream iss(line);
+		std::istringstream iss(line);
 		iss >> s >> r;
 
 		redshifts[s]=r;

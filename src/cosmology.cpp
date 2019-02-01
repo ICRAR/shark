@@ -98,13 +98,11 @@ CosmologicalParameters::CosmologicalParameters(const Options &options)
 void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 {
 
-	using namespace std;
-
 	LOG(debug) << "Reading table " << power_spec_file ;
 
-	ifstream f = open_file(power_spec_file);
-	string line;
-	while ( getline(f, line) ) {
+	std::ifstream f = open_file(power_spec_file);
+	std::string line;
+	while ( std::getline(f, line) ) {
 
 		trim(line);
 		if (empty_or_comment(line)) {
@@ -112,7 +110,7 @@ void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 		}
 
 		double k,p;
-		istringstream iss(line);
+		std::istringstream iss(line);
 		iss >> k >> p;
 
 		power_spectrum.k.push_back(k);
