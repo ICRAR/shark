@@ -647,11 +647,4 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 	}
 }
 
-double GasCooling::disk_size_cooling(Subhalo &subhalo){
-
-	//Do the basics first, and then more complicated stuff.
-	return 0;
-}
-
-
 }  // namespace shark

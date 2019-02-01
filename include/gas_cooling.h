@@ -114,7 +114,6 @@ public:
 	double cooling_radius(double mhot, double rvir, double tcharac, double logl, double Tvir);
 	double density_shell(double mhot, double rvir, double r);
 	double cooling_luminosity(double logl, double rcool, double rvir, double mhot);
-	double disk_size_cooling(Subhalo &subhalo);
 
 private:
 

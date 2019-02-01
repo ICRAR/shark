@@ -130,7 +130,7 @@ public:
 
 	void transfer_baryon_mass(const SubhaloPtr &central, const SubhaloPtr &satellite);
 
-	void transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z);
+	void transfer_bulge_gas(GalaxyPtr &galaxy);
 
 	void transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot);
 

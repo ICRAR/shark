@@ -527,11 +527,11 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
 				if(galaxy->bulge_gas.mass > 0 && galaxy->bulge_gas.mass < parameters.mass_min){
-					transfer_bulge_gas(subhalo, galaxy, z);
+					transfer_bulge_gas(galaxy);
 				}
 			}
 			else if (galaxy->bulge_gas.mass > 0){
-				transfer_bulge_gas(subhalo, galaxy, z);
+				transfer_bulge_gas(galaxy);
 			}
 		}
 	}
@@ -693,8 +693,8 @@ void GalaxyMergers::transfer_baryon_mass(const SubhaloPtr &central, const Subhal
 
 }
 
-void GalaxyMergers::transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z){
-
+void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy)
+{
 	galaxy->disk_gas += galaxy->bulge_gas;
 
 	if(galaxy->disk_gas.rscale == 0){

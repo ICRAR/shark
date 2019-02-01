@@ -325,7 +325,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 
 	/*track all baryons of this snapshot*/
 	Timer tracking_t;
-	track_total_baryons(star_formation, *cosmology, exec_params, simulation_params, all_halos_this_snapshot, all_baryons, snapshot, molgas_per_gal, delta_t);
+	track_total_baryons(*cosmology, exec_params, simulation_params, all_halos_this_snapshot, all_baryons, snapshot, molgas_per_gal, delta_t);
 	LOG(info) << "Total baryon amounts tracked in " << tracking_t;
 
 	/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
