@@ -156,11 +156,11 @@ public:
 	virtual void from_galaxy_starburst(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy) = 0;
 	virtual void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger) = 0;
 
-	unsigned long int get_galaxy_ode_evaluations() {
+	std::size_t get_galaxy_ode_evaluations() {
 		return galaxy_ode_evaluations;
 	}
 
-	unsigned long int get_galaxy_starburst_ode_evaluations() {
+	std::size_t get_galaxy_starburst_ode_evaluations() {
 		return galaxy_starburst_ode_evaluations;
 	}
 
@@ -177,8 +177,8 @@ private:
 	std::vector<double> ode_values;
 	std::vector<double> starburst_ode_values;
 	GasCooling gas_cooling;
-	unsigned long int galaxy_ode_evaluations;
-	unsigned long int galaxy_starburst_ode_evaluations;
+	std::size_t galaxy_ode_evaluations;
+	std::size_t galaxy_starburst_ode_evaluations;
 };
 
 class BasicPhysicalModel : public PhysicalModel<17> {
@@ -206,7 +206,7 @@ public:
 		star_formation.reset_integration_intervals();
 	}
 
-	unsigned long int get_star_formation_integration_intervals() {
+	std::size_t get_star_formation_integration_intervals() {
 		return star_formation.get_integration_intervals();
 	}
 

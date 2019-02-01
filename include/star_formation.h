@@ -114,7 +114,7 @@ public:
 
 	double k13_fmol(double zgas, double sigma_gas);
 
-	unsigned long int get_integration_intervals() {
+	std::size_t get_integration_intervals() {
 		return integrator.get_num_intervals();
 	}
 

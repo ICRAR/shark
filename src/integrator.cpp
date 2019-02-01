@@ -76,7 +76,7 @@ double Integrator::integrate(func_t f, void *params, double from, double to, dou
 	return result;
 }
 
-unsigned long int Integrator::get_num_intervals()
+std::size_t Integrator::get_num_intervals()
 {
 	return num_intervals;
 }

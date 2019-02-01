@@ -91,7 +91,7 @@ public:
 	 *
 	 * @return The number of times the ODE system has been evaluated.
 	 */
-	unsigned long int num_evaluations();
+	std::size_t num_evaluations();
 
 private:
 	std::unique_ptr<gsl_odeiv2_system> ode_system;

@@ -86,7 +86,7 @@ void ODESolver::evolve(std::vector<double> &y, double delta_t)
 	throw math_error(os.str());
 }
 
-unsigned long int ODESolver::num_evaluations()
+std::size_t ODESolver::num_evaluations()
 {
 	return driver->n;
 }

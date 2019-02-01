@@ -123,7 +123,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
 	vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
 
-	unsigned long n_subhalos = Mvir.size();
+	auto n_subhalos = Mvir.size();
 	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
 	if (n_subhalos == 0) {
 		return {};
@@ -140,7 +140,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		subhalos.reserve(n_subhalos / threads);
 	}
 
-	omp_static_for(0ul, n_subhalos, threads, [&](unsigned long i, int thread_idx) {
+	omp_static_for(0, n_subhalos, threads, [&](std::size_t i, int thread_idx) {
 
 		if (snap[i] < simulation_params.min_snapshot) {
 			return;

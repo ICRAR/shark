@@ -66,7 +66,7 @@ public:
 	/// The number of intervals is an indication of how many times the functions
 	/// being integrated have been called.
 	///
-	unsigned long int get_num_intervals();
+	std::size_t get_num_intervals();
 
 	///
 	/// Reset the number of intervals count.
@@ -76,7 +76,7 @@ public:
 private:
 	std::unique_ptr<gsl_integration_workspace> workspace;
 	size_t max_intervals;
-	unsigned long int num_intervals;
+	std::size_t num_intervals;
 
 	void init_gsl_objects();
 };

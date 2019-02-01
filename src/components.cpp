@@ -292,7 +292,7 @@ galaxies_size_type Halo::galaxy_count() const
 	}
 
 	const auto &sats = satellite_subhalos;
-	return std::accumulate(sats.begin(), sats.end(), count, [](unsigned long galaxy_count, const SubhaloPtr &subhalo) {
+	return std::accumulate(sats.begin(), sats.end(), count, [](galaxies_size_type galaxy_count, const SubhaloPtr &subhalo) {
 		return galaxy_count + subhalo->galaxy_count();
 	});
 }

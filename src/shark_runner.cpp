@@ -129,9 +129,9 @@ void SharkRunner::run()
 struct SnapshotStatistics {
 
 	int snapshot;
-	unsigned long starform_integration_intervals;
-	unsigned long galaxy_ode_evaluations;
-	unsigned long starburst_ode_evaluations;
+	std::size_t starform_integration_intervals;
+	std::size_t galaxy_ode_evaluations;
+	std::size_t starburst_ode_evaluations;
 	std::size_t n_halos;
 	std::size_t n_subhalos;
 	std::size_t n_galaxies;
@@ -344,13 +344,13 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 	auto duration_millis = t.get();
 
 	// Some high-level ODE and integration iteration count statistics
-	auto starform_integration_intervals = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+	auto starform_integration_intervals = std::accumulate(thread_objects.begin(), thread_objects.end(), std::size_t(0), [](std::size_t x, const PerThreadObjects &o) {
 		return x + o.physical_model->get_star_formation_integration_intervals();
 	});
-	auto galaxy_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+	auto galaxy_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), std::size_t(0), [](std::size_t x, const PerThreadObjects &o) {
 		return x + o.physical_model->get_galaxy_ode_evaluations();
 	});
-	auto starburst_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), 0UL, [](unsigned long x, const PerThreadObjects &o) {
+	auto starburst_ode_evaluations = std::accumulate(thread_objects.begin(), thread_objects.end(), std::size_t(0), [](std::size_t x, const PerThreadObjects &o) {
 		return x + o.physical_model->get_galaxy_starburst_ode_evaluations();
 	});
 	auto n_halos = all_halos_this_snapshot.size();
