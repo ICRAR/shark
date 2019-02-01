@@ -105,4 +105,4 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 
 }
 
-}
+} // namespace shark

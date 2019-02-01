@@ -112,7 +112,5 @@ double Simulation::convert_snapshot_to_age(int s){
 	return cosmology->convert_redshift_to_age(parameters.redshifts[s]);
 
 }
-}
 
-
-
+} // namespace shark

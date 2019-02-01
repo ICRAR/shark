@@ -159,7 +159,7 @@ namespace detail {
 		std::basic_ios<CharT, Traits> &stream;
 		typename std::basic_ios<CharT, Traits>::fmtflags flags;
 	};
-}
+} // namespace detail
 
 template <typename CharT, typename Traits, typename RealType>
 std::basic_ostream<CharT, Traits> &

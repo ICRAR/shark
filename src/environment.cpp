@@ -60,6 +60,4 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 
 }
 
-}
-
-
+} // namespace shark

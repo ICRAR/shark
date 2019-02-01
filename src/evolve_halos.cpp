@@ -267,4 +267,4 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	AllBaryons.mDM.push_back(mDM_total);
 }
 
-}
+} // namespace shark

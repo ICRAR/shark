@@ -73,7 +73,7 @@ private:
 
 };
 
-} // end namespace
+} // namespace shark
 
 
 #endif /* INCLUDE_DISK_INSTABILITY_H_ */

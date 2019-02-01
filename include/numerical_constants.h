@@ -200,7 +200,7 @@ namespace constants {
 	//0.67714285714;
 	// @}
 
-};
+} // namespace constants
 
 }  // namespace shark
 

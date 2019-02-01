@@ -61,4 +61,4 @@ double Reincorporation::reincorporated_mass(Halo &halo, Subhalo &subhalo, double
 
 }
 
-}
+} // namespace shark

@@ -140,6 +140,6 @@ const vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int 
 }
 
 
-}  // namespace trees
+}  // namespace importer
 
 }  // namespace shark

@@ -65,6 +65,6 @@ std::basic_ostream<CharT, Traits> &operator<<(std::basic_ostream<CharT, Traits> 
  */
 bool follows_convention(const std::string &word, naming_convention convention);
 
-}
+} // namespace shark
 
 #endif /* INCLUDE_NAMING_CONVENTION_H_ */

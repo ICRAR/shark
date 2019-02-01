@@ -238,4 +238,4 @@ double Cosmology::hubble_parameter (double z) const {
 	return parameters.Hubble_h * 100.0 * std::sqrt(H2);
 }
 
-}
+} // namespace shark

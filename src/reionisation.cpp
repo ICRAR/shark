@@ -79,4 +79,4 @@ bool Sobacchi13Reionisation::reionised_halo(double v, double z) const
 	return v < vthresh;
 }
 
-}
+} // namespace shark

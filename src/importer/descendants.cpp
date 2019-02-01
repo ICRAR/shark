@@ -132,6 +132,6 @@ vector<descendants_data_t> HDF5DescendantReader::read_whole()
 	return descendants;
 }
 
-}  // namespace trees
+}  // namespace importer
 
 }  // namespace shark
