@@ -133,5 +133,12 @@ int run(int argc, char **argv)
 } // namespace shark
 
 int main(int argc, char *argv[]) {
-	shark::importer::run(argc, argv);
+	try {
+		shark::importer::run(argc, argv);
+		return 0;
+	} catch (shark::invalid_option &) {
+		return 1;
+	} catch (...) {
+		return 2;
+	}
 }
