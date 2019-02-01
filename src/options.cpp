@@ -158,6 +158,31 @@ void Options::parse_option(const std::string &optspec, std::string &name, std::s
 }
 
 template <typename T>
+struct type_name {;
+	constexpr static const char *name = "unknown";
+};
+
+template <>
+struct type_name<unsigned int> {
+	constexpr static const char *name = "unsigned int";
+};
+
+template <>
+struct type_name<int> {
+	constexpr static const char *name = "int";
+};
+
+template <>
+struct type_name<float> {
+	constexpr static const char *name = "float";
+};
+
+template <>
+struct type_name<double> {
+	constexpr static const char *name = "double";
+};
+
+template <typename T>
 static inline
 T _from_string(const std::string &val);
 
@@ -186,14 +211,14 @@ unsigned int _from_string<unsigned int>(const std::string &val)
 }
 
 template <typename T>
-T _builtin_from_string(const std::string &name, const std::string &val, const std::string &type)
+T _builtin_from_string(const std::string &name, const std::string &val)
 {
 	try {
 		return _from_string<T>(val);
 	} catch (const std::invalid_argument &) {
 		std::ostringstream os;
 		os << "Invalid value for option " << name << ": " << val << ". "
-		   << type << " value was expected";
+		   << type_name<T>::name << " value was expected";
 		throw invalid_option(os.str());
 	}
 }
@@ -205,9 +230,8 @@ _read_ranges(const std::string &name, const std::string &value, const std::strin
 
 	using T = typename Cont::value_type;
 
-	std::vector<std::string> values_and_ranges = tokenize(value, sep);
 	Cont values;
-	for(auto value_or_range: values_and_ranges) {
+	for(auto value_or_range: tokenize(value, sep)) {
 
 		trim(value_or_range);
 		if (value_or_range.empty()) {
@@ -221,8 +245,8 @@ _read_ranges(const std::string &name, const std::string &value, const std::strin
 			auto first_s = value_or_range.substr(0, pos);
 			auto last_s = value_or_range.substr(pos + 1);
 
-			auto first = _from_string<T>(first_s);
-			auto last = _from_string<T>(last_s);
+			auto first = _builtin_from_string<T>(name, first_s);
+			auto last = _builtin_from_string<T>(name, last_s);
 
 			// Can't find a more intelligent way of doing this, sorry...
 			if (first < last) {
@@ -239,7 +263,7 @@ _read_ranges(const std::string &name, const std::string &value, const std::strin
 		}
 
 		// A normal value
-		std::inserter(values, values.end()) = _from_string<T>(value_or_range);
+		std::inserter(values, values.end()) = _builtin_from_string<T>(name, value_or_range);
 	}
 
 	return values;
@@ -269,17 +293,17 @@ Options::file_format_t Options::get<Options::file_format_t>(const std::string &n
 
 template<>
 int Options::get<int>(const std::string &name, const std::string &value) const {
-	return _builtin_from_string<int>(name, value, "integer");
+	return _builtin_from_string<int>(name, value);
 }
 
 template<>
 float Options::get<float>(const std::string &name, const std::string &value) const {
-	return _builtin_from_string<float>(name, value, "float");
+	return _builtin_from_string<float>(name, value);
 }
 
 template<>
 double Options::get<double>(const std::string &name, const std::string &value) const {
-	return _builtin_from_string<double>(name, value, "double");
+	return _builtin_from_string<double>(name, value);
 }
 
 template<>
@@ -302,7 +326,7 @@ std::vector<double> Options::get<std::vector<double>>(const std::string &name, c
 	std::vector<std::string> values_as_str = tokenize(value, " ");
 	std::vector<double> values;
 	std::transform(values_as_str.begin(), values_as_str.end(), std::back_inserter(values), [&name](const std::string &s) {
-		return _builtin_from_string<double>(name, s, "double");
+		return _builtin_from_string<double>(name, s);
 	});
 	return values;
 }
