@@ -582,12 +582,8 @@ else
 	done
 fi
 info "Will run shark-run under $shark_output_directory"
-echo $shark_output_directory > /home/msammons/Project1819/aux/SOD.txt
-cp "/home/msammons/Project1819/aux/fields.txt" "$shark_output_directory"
 cp "/home/msammons/Project1819/aux/particlePositions.ssv" "$shark_output_directory"
-cp "/home/msammons/Project1819/aux/bounds.txt" "$shark_output_directory"
-cp "/home/msammons/Project1819/aux/SOD.txt" "$shark_output_directory"
-info "Auxillary files copied to $shark_output_directory"
+info "Particle positions copied to copied to $shark_output_directory"
 # Copy the configuration file over to the working directory
 config_file_bname=`basename $config_file`
 cp "$config_file" "$shark_output_directory"
