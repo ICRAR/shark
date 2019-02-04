@@ -119,12 +119,7 @@ _slurm_mem_per_task() {
 			mem_per_task="$mem_per_task `repeat $(($m / $t)) $t`"
 		done
 	else
-		if [ $num_particles -eq 0 ]
-		then
-			mem_per_cpu=(`repeat $SLURM_MEM_PER_CPU ${#shark_subvolumes[*]}`)
-		else	
-			mem_per_cpu=(`repeat $SLURM_MEM_PER_CPU ${#shark_params[*]}`)
-		fi
+		mem_per_cpu=(`repeat $SLURM_MEM_PER_CPU $num_instances`)
 		for i in `eval echo {1..${#mem_per_cpu[*]}}`
 		do
 			let "i = i - 1"
@@ -223,7 +218,7 @@ shark_verbosity=3
 shark_binary=
 shark_subvolumes=
 shark_params=
-num_particles=
+num_instances=
 shark_options=()
 shark_plot=
 shark_python_exec=python
@@ -244,11 +239,11 @@ do
 		S)
 			shark_binary="$OPTARG"
 			;;
-		E)
-			posPath="$OPTARG"
-			;;
 		V)
 			shark_subvolumes="$OPTARG"
+			;;
+		E)
+			posPath="$OPTARG"
 			;;
 		o)
 			shark_options+=("$OPTARG")
@@ -265,7 +260,7 @@ do
 			;;
 	esac
 done
-num_particles=$(wc -l < $posPath)
+echo $shark_subvolumes the shark subvolumes
 
 if [ -z "$shark_subvolumes" ]
 then
@@ -275,7 +270,14 @@ then
 fi
 shark_subvolumes=($shark_subvolumes)
 
-if [ ! $num_particles -eq 0 ]
+if [ -z "$posPath"]
+then
+	num_instances=${#shark_subvolumes[*]}
+else
+	num_instances=$(wc -l < $posPath)
+fi
+
+if [ ! -z "$posPath" ]
 then
 	#reading in the parameter values from the ssv file
 	INPUT_FILE=$posPath
@@ -287,8 +289,8 @@ then
 		shark_params[$count]=$param1
 		count=$(($count+1))
 	done < $INPUT_FILE
+	IFS=$OIFS
 fi
-IFS=$OIFS
 
 # Positional argument is the configuration file name
 if [ $(($# - $OPTIND)) -lt 0 ]
@@ -367,7 +369,7 @@ do
 done
 post_cmd="$post_cmd -v $shark_verbosity $config_file"
 
-if [ $num_particles -eq 0 ]
+if [ -z $posPath ]
 then
 	info "Processing ${#shark_subvolumes[*]} tasks: ${shark_subvolumes[*]}"
 else
@@ -378,7 +380,7 @@ info "Starting shark via srun with command-line:"
 info "$cmd -c <threads> --mem-per-cpu <mem> $post_cmd -o <subvol> -t <threads>"
 info "================================================================================"
 pids=()
-if [ $num_particles -eq 0 ]
+if [ -z "$posPath" ]
 then
 	for i in `eval echo {1..${#shark_subvoumes[*]}}`
 	do

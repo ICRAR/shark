@@ -286,7 +286,7 @@ submit_slurm() {
 	then
 		cmd="$cmd -p -P \"${shark_python_exec}\""
 	fi
-	cmd="$cmd -E $posPath"
+	cmd="$cmd -E \"$posPath\""
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
 
 	if [ "$dry_run" = "1" ]
