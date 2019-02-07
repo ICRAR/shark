@@ -363,7 +363,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 
 	SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
 							  n_halos, n_subhalos, n_galaxies, duration_millis};
-	LOG(info) << "Statistics for snapshot " << snapshot << std::endl << stats;
+	LOG(info) << "Statistics for snapshot " << snapshot << "\n" << stats;
 
 
 	/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
