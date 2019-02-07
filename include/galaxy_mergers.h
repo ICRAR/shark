@@ -35,6 +35,7 @@
 #include "options.h"
 #include "physical_model.h"
 #include "simulation.h"
+#include "execution.h"
 
 namespace shark {
 
@@ -78,6 +79,7 @@ class GalaxyMergers{
 public:
 	GalaxyMergers(GalaxyMergerParameters parameters,
 			CosmologyPtr cosmology,
+			const ExecutionParameters &execparams,
 			SimulationParameters simparams,
 			DarkMatterHalosPtr darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,

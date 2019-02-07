@@ -42,10 +42,38 @@ curl -L -o input/tree_199.0.hdf5 'https://docs.google.com/uc?export=download&id=
 
 ./shark ../sample.cfg \
     -o simulation.redshift_file=input/redshifts.txt \
-    -o simulation.tree_files_prefix=input/tree_199 || fail "failure during execution of shark"
+    -o simulation.tree_files_prefix=input/tree_199 \
+    -o execution.seed=123456 \
+    -o execution.name_model=my_model || fail "failure during execution of shark"
 
 # Make sure the standard plotting scripts run correctly
 if [ -n "$PYTHON" ]; then
 	echo "backend: Agg" >> matplotlibrc
 	"$PYTHON" ../standard_plots/all.py -c ../sample.cfg -z input/redshifts.txt || fail "failure during execution of python plotting scripts"
+
+	# Make sure the seed value returns a reproducible result
+	./shark ../sample.cfg \
+	    -o simulation.redshift_file=input/redshifts.txt \
+	    -o simulation.tree_files_prefix=input/tree_199 \
+	    -o execution.seed=123456 \
+	    -o execution.name_model=my_model_equal_seed \
+	    || fail "failure during execution of shark"
+
+	"$PYTHON" ../scripts/compare_galaxies.py \
+	    -m "mini-SURFS/my_model/199/0/galaxies.hdf5" \
+	       "mini-SURFS/my_model_equal_seed/199/0/galaxies.hdf5" \
+	    || fail "Models expected to be equal, they are not."
+
+	# Run using a random seed in the interval 2^32 - 1
+	./shark ../sample.cfg \
+	    -o simulation.redshift_file=input/redshifts.txt \
+	    -o simulation.tree_files_prefix=input/tree_199 \
+	    -o execution.name_model=my_model_random_seed \
+	    || fail "failure during execution of shark"
+
+	"$PYTHON" ../scripts/compare_galaxies.py \
+	    -m "mini-SURFS/my_model/199/0/galaxies.hdf5" \
+	       "mini-SURFS/my_model_random_seed/199/0/galaxies.hdf5" \
+	    --expect-unequal \
+	    || fail "Models expected to be unequal, they are not."
 fi
