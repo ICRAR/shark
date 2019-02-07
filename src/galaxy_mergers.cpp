@@ -157,9 +157,14 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 		if(snapshot+1 > simparams.max_snapshot){
 			z2 = 0;
 		}
-		double delta_t = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
-		if(galaxy->tmerge <= delta_t){
+		double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+		if(galaxy->tmerge <= delta_t_next){
 			galaxy->descendant_id = primary->central_galaxy()->id;
+		}
+		else{
+			//As this is the last time this is calculated before going to write the output at this snapshot, we make sure that the galaxy
+			//has no descendant_id in the rare eventuality it was defined during merging_galaxies (before this step).
+			galaxy->descendant_id = -1;
 		}
 
 		//Only define the following parameters if the galaxies were not type=2.
@@ -322,8 +327,8 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 				if(snapshot+1 > simparams.max_snapshot){
 					z2 = 0;
 				}
-				double delta_t = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
-				if(galaxy->tmerge <= delta_t){
+				double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+				if(galaxy->tmerge <= delta_t_next){
 					galaxy->descendant_id = central_galaxy->id;
 				}
 			}
