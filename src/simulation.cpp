@@ -51,7 +51,7 @@ SimulationParameters::SimulationParameters(const Options &options)
 	options.load("simulation.sim_name", sim_name);
 	options.load("simulation.tree_files_prefix", tree_files_prefix, true);
 	options.load("simulation.redshift_file",redshift_file, true);
-	options.load("simulation.hydrorun", hydrorun);
+	options.load("simulation.hydrorun", hydrorun, false);
 
 	load_simulation_tables(redshift_file);
 
