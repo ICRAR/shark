@@ -172,7 +172,9 @@ void Subhalo::transfer_galaxies_to(SubhaloPtr &target)
 {
 	auto gals_before = target->galaxy_count();
 	auto our_gals = galaxies.size();
-	LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	if (LOG_ENABLED(trace)) {
+		LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	}
 
 	copy_galaxies_to(target, galaxies);
 	galaxies.clear();
@@ -185,7 +187,9 @@ void Subhalo::transfer_type2galaxies_to(SubhaloPtr &target)
 	auto type2_gals = all_type2_galaxies();
 	auto gals_before = target->galaxy_count();
 	auto our_gals = type2_gals.size();
-	LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	if (LOG_ENABLED(trace)) {
+		LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	}
 
 	copy_galaxies_to(target, type2_gals);
 	remove_galaxies(type2_gals);

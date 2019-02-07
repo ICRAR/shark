@@ -536,7 +536,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(id_subhalo);
 
 	LOG(info) << "Total amount of memory used by the writing process: " << memory_amount(total);
-	LOG(debug) << "Detailed amounts follow: " << os.str();
+	if (LOG_ENABLED(debug)) {
+		LOG(debug) << "Detailed amounts follow: " << os.str();
+	}
 
 	LOG(info) << "Galaxies pivoted and memory reported in " << t;
 
