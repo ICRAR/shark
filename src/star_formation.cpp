@@ -623,7 +623,7 @@ StarFormation::molecular_gas StarFormation::get_molecular_gas(const GalaxyPtr &g
 
 		if(jcalc){
 			// Calculate specific AM of atomic gas.
-			j_atom = (jgas * (1-f_ion) * galaxy->disk_gas.mass - j_mol * m_mol) / m_atom;
+			j_atom = (jgas * m_neutral - j_mol * m_mol) / m_atom;
 		}
 	}
 	if (galaxy->bulge_gas.mass > 0) {

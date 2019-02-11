@@ -207,16 +207,16 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	}
 
 	// Assign new masses.
-	galaxy.disk_stars.mass 					= y[0];
-	galaxy.disk_gas.mass   					= y[1];
-	subhalo.cold_halo_gas.mass 				= y[2];
+	galaxy.disk_stars.mass 			= y[0];
+	galaxy.disk_gas.mass   			= y[1];
+	subhalo.cold_halo_gas.mass 		= y[2];
 	subhalo.hot_halo_gas.mass               = y[3];
-	subhalo.ejected_galaxy_gas.mass 		= y[4];
+	subhalo.ejected_galaxy_gas.mass 	= y[4];
 
 	// Assign new mass in metals.
-	galaxy.disk_stars.mass_metals 			= y[5];
-	galaxy.disk_gas.mass_metals 			= y[6];
-	subhalo.cold_halo_gas.mass_metals 		= y[7];
+	galaxy.disk_stars.mass_metals 		= y[5];
+	galaxy.disk_gas.mass_metals 		= y[6];
+	subhalo.cold_halo_gas.mass_metals 	= y[7];
 	subhalo.hot_halo_gas.mass_metals        = y[8];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[9];
 
@@ -382,14 +382,14 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	}
 
 	// Assign new masses.
-	galaxy.bulge_stars.mass 				= y[0];
-	galaxy.bulge_gas.mass   				= y[1];
+	galaxy.bulge_stars.mass 		= y[0];
+	galaxy.bulge_gas.mass   		= y[1];
 	subhalo.hot_halo_gas.mass               = y[3];
-	subhalo.ejected_galaxy_gas.mass 		= y[4];
+	subhalo.ejected_galaxy_gas.mass 	= y[4];
 
 	// Assign new mass in metals.
-	galaxy.bulge_stars.mass_metals 			= y[5];
-	galaxy.bulge_gas.mass_metals 			= y[6];
+	galaxy.bulge_stars.mass_metals 		= y[5];
+	galaxy.bulge_gas.mass_metals 		= y[6];
 	subhalo.hot_halo_gas.mass_metals        = y[8];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[9];
 
