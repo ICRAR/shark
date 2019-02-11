@@ -132,9 +132,9 @@ struct SnapshotStatistics {
 	unsigned long starform_integration_intervals;
 	unsigned long galaxy_ode_evaluations;
 	unsigned long starburst_ode_evaluations;
-	unsigned long n_halos;
-	unsigned long n_subhalos;
-	unsigned long n_galaxies;
+	std::size_t n_halos;
+	std::size_t n_subhalos;
+	std::size_t n_galaxies;
 	Timer::duration duration_millis;
 
 	double galaxy_ode_evaluations_per_galaxy() const {
@@ -195,7 +195,8 @@ void SharkRunner::impl::create_per_thread_objects()
 	GasCooling gas_cooling {gas_cooling_params, star_formation_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation, environment};
 
 	for(unsigned int i = 0; i != threads; i++) {
-		auto physical_model = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, recycling_params, gas_cooling_params);
+		auto physical_model = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, *agnfeedback,
+				recycling_params, gas_cooling_params, agn_params);
 		GalaxyMergers galaxy_mergers(merger_parameters, cosmology, simulation_params, dark_matter_halos, physical_model, agnfeedback);
 		DiskInstability disk_instability(disk_instability_params, merger_parameters, simulation_params, dark_matter_halos, physical_model, agnfeedback);
 		thread_objects.emplace_back(std::move(physical_model), std::move(galaxy_mergers), std::move(disk_instability));
@@ -280,7 +281,7 @@ void SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread
 		if (LOG_ENABLED(debug)) {
 			LOG(debug) << "Merging subhalos in halo " << halo;
 		}
-		galaxy_mergers.merging_subhalos(halo, z);
+		galaxy_mergers.merging_subhalos(halo, z, snapshot);
 	}
 
 }
@@ -353,10 +354,10 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 		return x + o.physical_model->get_galaxy_starburst_ode_evaluations();
 	});
 	auto n_halos = all_halos_this_snapshot.size();
-	auto n_subhalos = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_subhalos, const HaloPtr &halo) {
+	auto n_subhalos = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), std::size_t(0), [](std::size_t n_subhalos, const HaloPtr &halo) {
 		return n_subhalos + halo->subhalo_count();
 	});
-	auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), 0UL, [](unsigned long n_galaxies, const HaloPtr &halo) {
+	auto n_galaxies = std::accumulate(all_halos_this_snapshot.begin(), all_halos_this_snapshot.end(), std::size_t(0), [](std::size_t n_galaxies, const HaloPtr &halo) {
 		return n_galaxies + halo->galaxy_count();
 	});
 

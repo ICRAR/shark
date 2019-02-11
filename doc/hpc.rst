@@ -99,6 +99,20 @@ If you are missing a module you have a few alternatives:
 * Contact your HPC cluster support and ask them to install the missing module
 * Build the software yourself (and optionally install it as a personal module)
 
+.. _hpc.building.intelcc:
+
+Intel compiler
+^^^^^^^^^^^^^^
+
+Depending on the version,
+OpenMP support on the Intel compiler is a bit difficult to identify.
+Until version 3.9 ``cmake`` was not able to identify OpenMP support
+for newer Intel compilers,
+and simply using a version of ``cmake`` >= 3.9 will solve the issue.
+If you find yourself in this situation,
+a big warning message will appear when running ``cmake``
+to alert you and guide you in what to do.
+
 
 .. _hpc.running:
 

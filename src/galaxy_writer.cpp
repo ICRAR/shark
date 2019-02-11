@@ -177,12 +177,12 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	// Crate all subhalo properties to write.
 
-	vector<long> descendant_id;
+	vector<Subhalo::id_t> descendant_id;
 	vector<int> main;
-	vector<long> id;
-	vector<long> host_id;
-	vector<long> id_galaxy;
-	vector<long> descendant_id_galaxy;
+	vector<Subhalo::id_t> id;
+	vector<Halo::id_t> host_id;
+	vector<Galaxy::id_t> id_galaxy;
+	vector<Galaxy::id_t> descendant_id_galaxy;
 
 	// Create all galaxies properties to write
 	vector<float> mstars_disk;
@@ -263,7 +263,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<Subhalo::id_t> id_subhalo;
 	vector<Subhalo::id_t> id_subhalo_tree;
 
-	long j = 1;
+	Halo::id_t j = 1;
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
@@ -271,7 +271,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 		auto mhalo = halo->Mvir;
 		auto vhalo = halo->Vvir;
 
-		long i=1;
+		Subhalo::id_t i = 1;
 
 		for (auto &subhalo: halo->all_subhalos()){
 
@@ -402,7 +402,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					cnfw_subhalo.push_back(c_sub);
 					lambda_subhalo.push_back(l_sub);
 					redshift_of_merger.push_back(-1);
-					if(snapshot < sim_params.max_snapshot){
+					if(galaxy->descendant_id < 0 && snapshot < sim_params.max_snapshot){
 						galaxy->descendant_id = galaxy->id;
 					}
 				}
@@ -419,17 +419,21 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					double redshift_merger = cosmology->convert_age_to_redshift_lcdm(tmerge);
 					redshift_of_merger.push_back(redshift_merger);
 
-					//Check whether this type 2 galaxy will merge on the next snapshot. this is done by
-					//checking if their descendant_id has been defined (which would happen in galaxy_mergers
-					//if this galaxy merges on the next snapshot.
-					if(galaxy->descendant_id < 0 && snapshot < sim_params.max_snapshot){
+					if(galaxy->descendant_id < 0 ){
 						galaxy->descendant_id = galaxy->id;
 					}
+
 				}
 
-				//force the descendant Id to be = -1 if this is the last snapshot.
+
+				//force the descendant Id to be = -1 if this is the last snapshot. If not, check that all descendant_ids are positive.
 				if(snapshot == sim_params.max_snapshot){
 					galaxy->descendant_id = -1;
+				}
+				else if (galaxy->descendant_id < 0){
+					std::ostringstream os;
+					os << "Descendant_id of galaxy to be written is negative";
+					throw invalid_argument(os.str());
 				}
 
 				id_galaxy.push_back(galaxy->id);
@@ -878,7 +882,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			vector<vector<float>> stellar_mass_bulge_diskins;
 			vector<vector<float>> stellar_metals_bulge_diskins;
 
-			vector<long> id_galaxy;
+			vector<Galaxy::id_t> id_galaxy;
 
 			float defl_value = 0;
 

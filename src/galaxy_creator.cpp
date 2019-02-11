@@ -95,7 +95,14 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
 	}
 
-	central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology->universal_baryon_fraction();
+
+	//If the input simulation is a hydro simulation, then use the input gas mass.
+	if(sim_params.hydrorun){
+		central_subhalo->hot_halo_gas.mass = halo->Mgas;
+	}
+	else{
+		central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology->universal_baryon_fraction();
+	}
 
 	// Assign metallicity to the minimum allowed.
 	central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;

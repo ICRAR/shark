@@ -99,9 +99,10 @@ public:
 	 * @param primary the primary subhalo, which must contain the central galaxy
 	 * @param secondary the secondary subhalo
 	 * @param z redshift
+	 * @param snapshot currently being processed.
 	 * @param transfer_types2 whether we are merging a satellite subhalo or transfering type 2 galaxies.
 	 */
-	void merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, bool transfer_types2);
+	void merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, int snapshot, bool transfer_types2);
 
 	/**
 	 * Evaluates whether subhalos in each timestep are disappearing from the merger tree, and if they are
@@ -116,7 +117,7 @@ public:
 	 * @param halo the halo where subhalos are going to be possibly merged
 	 * @param z the redshift
 	 */
-	void merging_subhalos(HaloPtr &halo, double z);
+	void merging_subhalos(HaloPtr &halo, double z, int snapshot);
 
 	void merging_galaxies(HaloPtr &halo, int snapshot, double delta_t);
 

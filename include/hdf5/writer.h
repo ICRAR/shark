@@ -250,7 +250,7 @@ public:
 		try {
 			auto group = ensure_group(path);
 			_create_and_write_attribute(group, attr_name, value);
-		} catch (const object_exists &e) {
+		} catch (const object_exists &) {
 			// name doesn't point to a group but to an existing dataset
 			// if this one fails we give up
 			auto dataset = get_dataset(path);

@@ -128,13 +128,17 @@ BasicPhysicalModel::BasicPhysicalModel(
 		GasCooling gas_cooling,
 		StellarFeedback stellar_feedback,
 		StarFormation star_formation,
+		AGNFeedback agn_feedback,
 		RecyclingParameters recycling_parameters,
-		GasCoolingParameters gas_cooling_parameters) :
+		GasCoolingParameters gas_cooling_parameters,
+		AGNFeedbackParameters agn_parameters) :
 	PhysicalModel(ode_solver_precision, basic_physicalmodel_evaluator, gas_cooling),
 	stellar_feedback(stellar_feedback),
 	star_formation(star_formation),
+	agn_feedback(agn_feedback),
 	recycling_parameters(recycling_parameters),
-	gas_cooling_parameters(gas_cooling_parameters)
+	gas_cooling_parameters(gas_cooling_parameters),
+	agn_parameters(agn_parameters)
 {
 	// no-op
 }

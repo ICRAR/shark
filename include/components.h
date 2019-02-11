@@ -400,14 +400,14 @@ struct CoolingSubhaloTracking {
  * coexist with other subhalos in the same halo. A subhalo con also host 0, 1 or more galaxies depending on how we allow galaxies to populate
  * subhalos.
  */
-class Subhalo : public Identifiable<long>, public Spatial<float> {
+class Subhalo : public Identifiable<std::int64_t>, public Spatial<float> {
 
 public:
 
 	/**
 	 * Initialize values in zero.
 	 */
-	Subhalo(long id, int snapshot):
+	Subhalo(id_t id, int snapshot):
 		Identifiable(id),
 		Spatial(),
 		snapshot(snapshot)
@@ -655,7 +655,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const SubhaloPt
  * Halos are the largest gravitationally bound structures in the universe. They
  * must contain at least one subhalo inside.
  */
-class Halo : public Identifiable<long>, public Spatial<float> {
+class Halo : public Identifiable<std::int64_t>, public Spatial<float> {
 
 public:
 
@@ -680,9 +680,9 @@ public:
 	/**
 	 * @return the total number of subhalos contained in this halo
 	 */
-	unsigned long subhalo_count() const
+	std::size_t subhalo_count() const
 	{
-		unsigned int count = (central_subhalo ? 1 : 0);
+		std::size_t count = (central_subhalo ? 1 : 0);
 		return count + satellite_subhalos.size();
 	}
 
