@@ -210,7 +210,7 @@ private:
 	unsigned long int galaxy_starburst_ode_evaluations;
 };
 
-class BasicPhysicalModel : public PhysicalModel<17> {
+class BasicPhysicalModel : public PhysicalModel<19> {
 public:
 	BasicPhysicalModel(double ode_solver_precision,
 			GasCooling gas_cooling,

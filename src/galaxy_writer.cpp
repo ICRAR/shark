@@ -234,6 +234,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> mreheated;
 	vector<float> mreheated_metals;
 
+	vector<float> mlost;
+	vector<float> mlost_metals;
+
 	vector<float> cooling_rate;
 
 	vector<float> mvir_hosthalo;
@@ -287,6 +290,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto hot_subhalo = subhalo->hot_halo_gas;
 			auto cold_subhalo = subhalo->cold_halo_gas;
 			auto reheated_subhalo = subhalo->ejected_galaxy_gas;
+			auto lost_subhalo = subhalo->lost_galaxy_gas;
 
 			descendant_id.push_back(subhalo->descendant_id);
 			int m = 0;
@@ -363,6 +367,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				double mzhot_gal = 0;
 				double mreheat = 0;
 				double mzreheat = 0;
+				double lostm = 0;
+				double lostzm = 0;
+
 				double rcool = 0;
 				int t = galaxy->galaxy_type;
 				if(galaxy->galaxy_type == Galaxy::CENTRAL){
@@ -370,6 +377,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					mzhot_gal = hot_subhalo.mass_metals + cold_subhalo.mass_metals;
 					mreheat = reheated_subhalo.mass;
 					mzreheat = reheated_subhalo.mass_metals;
+					lostm = lost_subhalo.mass;
+					lostzm = lost_subhalo.mass_metals;
 					rcool = halo->cooling_rate;
 				}
 
@@ -379,6 +388,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mhot_metals.push_back(mzhot_gal);
 				mreheated.push_back(mreheat);
 				mreheated_metals.push_back(mzreheat);
+				mlost.push_back(lostm);
+				mlost_metals.push_back(lostzm);
 
 				mvir_hosthalo.push_back(mhalo);
 				vvir_hosthalo.push_back(vhalo);
@@ -514,6 +525,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mhot_metals);
 	REPORT(mreheated);
 	REPORT(mreheated_metals);
+	REPORT(mlost);
+	REPORT(mlost_metals);
 	REPORT(cooling_rate);
 	REPORT(mvir_hosthalo);
 	REPORT(mvir_subhalo);
@@ -679,6 +692,12 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "mass of metals locked in the ejected gas component [Msun/h]";
 	file.write_dataset("galaxies/mreheated_metals", mreheated_metals, comment);
 
+	comment = "gas mass in the lost gas component - due to QSO feedback [Msun/h]";
+	file.write_dataset("galaxies/mlost", mlost, comment);
+
+	comment = "mass of metals locked in the lost gas component - due to QSO feedback [Msun/h]";
+	file.write_dataset("galaxies/mlost_metals", mlost_metals, comment);
+
 	comment = "cooling rate of the hot halo component [Msun/Gyr/h].";
 	file.write_dataset("galaxies/cooling_rate", cooling_rate, comment);
 
@@ -821,14 +840,14 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot
 	comment = "Maximum mass of the SMBHs in the simulated box [Msun/h]";
 	file.write_dataset("global/smbh_maximum",AllBaryons.max_BH, comment);
 
-        comment = "number of major mergers taking place in the simulated box at this snapshot.";
-        file.write_dataset("global/number_major_mergers", AllBaryons.major_mergers, comment);
+	comment = "number of major mergers taking place in the simulated box at this snapshot.";
+	file.write_dataset("global/number_major_mergers", AllBaryons.major_mergers, comment);
 
-        comment = "number of minor mergers taking place in the simulated box at this snapshot.";
-        file.write_dataset("global/number_minor_mergers", AllBaryons.minor_mergers, comment);
+	comment = "number of minor mergers taking place in the simulated box at this snapshot.";
+	file.write_dataset("global/number_minor_mergers", AllBaryons.minor_mergers, comment);
 
-        comment = "number of disk instability episodes taking place in the simulated box at this snapshot.";
-        file.write_dataset("global/number_disk_instabilities", AllBaryons.disk_instabil, comment);
+	comment = "number of disk instability episodes taking place in the simulated box at this snapshot.";
+	file.write_dataset("global/number_disk_instabilities", AllBaryons.disk_instabil, comment);
 
 	comment = "total hot gas mass in halos in the simulated box [Msun/h]";
 	file.write_dataset("global/mhot_halo",AllBaryons.get_masses(AllBaryons.mhot_halo),comment);
@@ -841,11 +860,17 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot
 	comment = "total mass of metals in the halo cold gas mass in the simulated box [Msun/h]";
 	file.write_dataset("global/mcold_halo_metals",AllBaryons.get_metals(AllBaryons.mcold_halo), comment);
 
-	comment = "total gas mass ejected from halos (and that has not yet been reincorporated) in the simulated box [Msun/h]";
+	comment = "total gas mass ejected from halos due to stellar feedback (and that has not yet been reincorporated) in the simulated box [Msun/h]";
 	file.write_dataset("global/mejected_halo",AllBaryons.get_masses(AllBaryons.mejected_halo), comment);
 
-	comment = "total mass of metals in the ejected gas reservoir in the simulated box [Msun/h]";
+	comment = "total mass of metals in the ejected gas reservoir due to stellar feedback in the simulated box [Msun/h]";
 	file.write_dataset("global/mejected_halo_metals",AllBaryons.get_metals(AllBaryons.mejected_halo), comment);
+
+	comment = "total gas mass ejected from halos due to QSO feedback in the simulated box [Msun/h]";
+	file.write_dataset("global/mlost_halo",AllBaryons.get_masses(AllBaryons.mlost_halo), comment);
+
+	comment = "total mass of metals in the ejected gas reservoir due to QSO feedback in the simulated box [Msun/h]";
+	file.write_dataset("global/mlost_halo_metals",AllBaryons.get_metals(AllBaryons.mlost_halo), comment);
 
 	comment = "total dark matter mass locked up in halos in the simulated box [Msun/h].";
 	file.write_dataset("global/m_dm",AllBaryons.get_masses(AllBaryons.mDM), comment);

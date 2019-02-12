@@ -37,21 +37,32 @@ static
 int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *data) {
 
 	/** Functions describing the time derivatives of:
+	 * mass exchange:
 	 * f[0]: stellar mass of galaxy.
 	 * f[1]: cold gas mass of galaxy.
 	 * f[2]: cold gas in the halo (the one cooling).
 	 * f[3]: hot gas mass.
 	 * f[4]: ejected gas mass.
-	 * f[5]: metals locked in the stellar mass of galaxies.
-	 * f[6]: metals locked in the cold gas mass of galaxies.
-	 * f[7]: metals locked in the cold gas mass of the halo.
-	 * f[8]: metals locked in the hot halo gas reservoir.
-	 * f[9]: metals locked in the ejected gas mass.
-	 * f[10]: total stellar mass formed (without recycling included).
-	 * f[11]: total stellar angular momentum of the galaxy component.
-	 * f[12]: total gas angular momentum of the galaxy component.
-	 * f[13]: total angular momentum of the hot gas component.
-	 * f[14]: total angular momentum of the ejected gas component.
+	 * f[5]: lost gas mass (only relevant during QSO outflows).
+	 *
+	 * metals exchange:
+	 * f[6]: metals locked in the stellar mass of galaxies.
+	 * f[7]: metals locked in the cold gas mass of galaxies.
+	 * f[8]: metals locked in the cold gas mass of the halo.
+	 * f[9]: metals locked in the hot halo gas reservoir.
+	 * f[10]: metals locked in the ejected gas mass reservoir.
+	 * f[11]: metals locked in the lost gas mass reservoir (only relevant for QSO feedback).
+	 *
+	 * tracking total mass and angular momentum formed.
+	 * f[12]: total stellar mass formed (without recycling included).
+	 * f[13]: total stellar angular momentum of the galaxy component.
+	 *
+	 * angular momentum exchange:
+	 * f[14]: stellar angular momentum of the galaxy component.
+	 * f[15]: gas angular momentum of the galaxy component.
+	 * f[16]: angular momentum of the cold halo gas component.
+	 * f[17]: angular momentum of the hot gas component.
+	 * f[18]: angular momentum of the ejected gas component.
 	 */
 
 	auto params= reinterpret_cast<BasicPhysicalModel::solver_params *>(data);
@@ -72,22 +83,25 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	double jrate = 0; /*variable that saves the angular momentum transfer rate from gas to stars*/
 
 	// Define current gas metallicity and angular momentum.
-	if(y[1] > 0 && y[6] > 0) {
-		zcold = y[6] / y[1];
-		jgas  = y[13] / y[1];
+	if(y[1] > 0 && y[7] > 0) {
+		zcold = y[7] / y[1];
+		jgas  = y[15] / y[1];
 	}
 
-	// Define current hot gas metallicity.
-	if(y[2] > 0 && y[7] > 0) {
-		zhot = y[7] / y[2];
+	// Define current cooling halo gas metallicity.
+	if(y[2] > 0 && y[8] > 0) {
+		zhot = y[8] / y[2];
 	}
 
 	// Calculate SFR.
 	double SFR   = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, zcold, params->redshift, params->burst, params->vgal, jrate, jgas);
 
-	// Initialize mass loading and angular momentum loading parameters.
+	// Initialize mass loading and angular momentum loading parameters related to star formation.
 	double beta1 = 0, beta2 = 0;
 	double betaj_1 = 0, betaj_2 = 0;
+
+	// Initialize mass loading related to QSO outflows;
+	double beta_qso1 = 0, beta_qso2 = 0;
 
 	// Calculate mass and angular momentum loading from stellar feedback process.
 	model.stellar_feedback.outflow_rate(SFR, params->vsubh, params->vgal, params->redshift, beta1, beta2, betaj_1, betaj_2); /*mass loading parameter*/
@@ -101,24 +115,26 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	f[2] = - mcoolrate;
 	f[3] = (beta1 - beta2) * SFR;
 	f[4] = beta2 * SFR;
+	f[5] = beta_qso2 * SFR;
 
 	// Metallicity transfer equations.
-	f[5] = rsub * zcold * SFR;
-	f[6] = mcoolrate * zhot + SFR * (yield - (rsub + beta1) * zcold);
-	f[7] = - mcoolrate * zhot;
-	f[8] = (beta1 - beta2) * zcold * SFR;
-	f[9] = beta2 * zcold * SFR;
+	f[6] = rsub * zcold * SFR;
+	f[7] = mcoolrate * zhot + SFR * (yield - (rsub + beta1) * zcold);
+	f[8] = - mcoolrate * zhot;
+	f[9] = (beta1 - beta2) * zcold * SFR;
+	f[10] = beta2 * zcold * SFR;
+	f[11] = beta_qso2  * zcold * SFR;
 
 	// Keeps track of total stellar mass formed and the metals locked up in it..
-	f[10] = SFR;
-	f[11] = zcold * SFR;
+	f[12] = SFR;
+	f[13] = zcold * SFR;
 
 	// Solve angular momentum equations.
-	f[12] = rsub * jrate;
-	f[13] = mcoolrate * params->jcold_halo - (rsub + betaj_1) * jrate;
-	f[14] = - mcoolrate * params->jcold_halo;
-	f[15] = (betaj_1 - betaj_2) * jrate;
-	f[16] = betaj_2 * jrate;
+	f[14] = rsub * jrate;
+	f[15] = mcoolrate * params->jcold_halo - (rsub + betaj_1) * jrate;
+	f[16] = - mcoolrate * params->jcold_halo;
+	f[17] = (betaj_1 - betaj_2) * jrate;
+	f[18] = betaj_2 * jrate;
 
 	return 0;
 }
@@ -152,24 +168,28 @@ std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, cons
 	 * y[2]: cold gas in the halo (the one cooling).
 	 * y[3]: hot gas mass;
 	 * y[4]: ejected gas mass;
-	 * y[5]: metals locked in the stellar mass of galaxies.
-	 * y[6]: metals locked in the cold gas mass of galaxies.
-	 * y[7]: metals locked in the cold gas mass of the halo.
-	 * y[8]: metals locked in the hot halo gas reservoir.
-	 * y[9]: metals locked in the ejected gas mass.
-	 * y[10]: total stellar mass formed (without recycling included).
-	 * y[11]: total stellar mass in metals formed (without recycling included).
+	 * y[5]: lost gas mass.
+	 *
+	 * y[6]: metals locked in the stellar mass of galaxies.
+	 * y[7]: metals locked in the cold gas mass of galaxies.
+	 * y[8]: metals locked in the cold gas mass of the halo.
+	 * y[9]: metals locked in the hot halo gas reservoir.
+	 * y[10]: metals locked in the ejected gas mass reservoir.
+	 * y[11]: metals locked in the lost has mass reservoir.
+	 *
+	 * y[12]: total stellar mass formed (without recycling included).
+	 * y[13]: total stellar mass in metals formed (without recycling included).
 	 *
 	 * Equations dealing with angular momentum:
-	 * y[12]: total stellar angular momentum of the bulge.
-	 * y[13]: total gas angular momentum of the bulge.
-	 * y[14]: total cold gas angular momentum of the cold halo gas component.
-	 * y[15]: total angular momentum of the hot gas component.
-	 * y[16]: total angular momentum of the ejected gas component.
+	 * y[14]: total stellar angular momentum of the bulge.
+	 * y[15]: total gas angular momentum of the bulge.
+	 * y[16]: total cold gas angular momentum of the cold halo gas component.
+	 * y[17]: total angular momentum of the hot gas component.
+	 * y[18]: total angular momentum of the ejected gas component.
 	 *
 	 */
 
-	std::vector<double> y(17);
+	std::vector<double> y(19);
 
 	// Define mass inputs.
 	y[0] = galaxy.disk_stars.mass;
@@ -177,24 +197,26 @@ std::vector<double> BasicPhysicalModel::from_galaxy(const Subhalo &subhalo, cons
 	y[2] = subhalo.cold_halo_gas.mass; //This is the component that has the cooling gas.
 	y[3] = subhalo.hot_halo_gas.mass;
 	y[4] = subhalo.ejected_galaxy_gas.mass;
+	y[5] = subhalo.lost_galaxy_gas.mass;
 
 	// Define mass in metals inputs.
-	y[5] = galaxy.disk_stars.mass_metals;
-	y[6] = galaxy.disk_gas.mass_metals;
-	y[7] = subhalo.cold_halo_gas.mass_metals;
-	y[8] = subhalo.hot_halo_gas.mass_metals;
-	y[9] = subhalo.ejected_galaxy_gas.mass_metals;
+	y[6] = galaxy.disk_stars.mass_metals;
+	y[7] = galaxy.disk_gas.mass_metals;
+	y[8] = subhalo.cold_halo_gas.mass_metals;
+	y[9] = subhalo.hot_halo_gas.mass_metals;
+	y[10] = subhalo.ejected_galaxy_gas.mass_metals;
+	y[11] = subhalo.lost_galaxy_gas.mass_metals;
 
 	// Variable to keep track of total stellar mass and metals formed in this SF episode.
-	y[10] = 0;
-	y[11] = 0;
+	y[12] = 0;
+	y[13] = 0;
 
 	// Equations of angular momentum exchange. Input total angular momentum.
-	y[12] = galaxy.disk_stars.sAM * galaxy.disk_stars.mass;
-	y[13] = galaxy.disk_gas.sAM * galaxy.disk_gas.mass;
-	y[14] = subhalo.cold_halo_gas.sAM * subhalo.cold_halo_gas.mass;
-	y[15] = subhalo.hot_halo_gas.sAM * subhalo.hot_halo_gas.mass;
-	y[16] = subhalo.ejected_galaxy_gas.sAM * subhalo.ejected_galaxy_gas.mass;
+	y[14] = galaxy.disk_stars.sAM * galaxy.disk_stars.mass;
+	y[15] = galaxy.disk_gas.sAM * galaxy.disk_gas.mass;
+	y[16] = subhalo.cold_halo_gas.sAM * subhalo.cold_halo_gas.mass;
+	y[17] = subhalo.hot_halo_gas.sAM * subhalo.hot_halo_gas.mass;
+	y[18] = subhalo.ejected_galaxy_gas.sAM * subhalo.ejected_galaxy_gas.mass;
 
 	return y;
 }
@@ -216,28 +238,30 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	subhalo.cold_halo_gas.mass 				= y[2];
 	subhalo.hot_halo_gas.mass               = y[3];
 	subhalo.ejected_galaxy_gas.mass 		= y[4];
+	subhalo.lost_galaxy_gas.mass			= y[5];
 
 	// Assign new mass in metals.
-	galaxy.disk_stars.mass_metals 			= y[5];
-	galaxy.disk_gas.mass_metals 			= y[6];
-	subhalo.cold_halo_gas.mass_metals 		= y[7];
-	subhalo.hot_halo_gas.mass_metals        = y[8];
-	subhalo.ejected_galaxy_gas.mass_metals 	= y[9];
+	galaxy.disk_stars.mass_metals 			= y[6];
+	galaxy.disk_gas.mass_metals 			= y[7];
+	subhalo.cold_halo_gas.mass_metals 		= y[8];
+	subhalo.hot_halo_gas.mass_metals        = y[9];
+	subhalo.ejected_galaxy_gas.mass_metals 	= y[10];
+	subhalo.lost_galaxy_gas.mass_metals		= y[11];
 
 	// Calculate average SFR and metallicity of newly formed stars.
-	galaxy.sfr_disk                         += y[10]/delta_t;
-	galaxy.sfr_z_disk                       += y[11]/delta_t;
+	galaxy.sfr_disk                         += y[12]/delta_t;
+	galaxy.sfr_z_disk                       += y[13]/delta_t;
 
 	// Equations of angular momentum exchange. Input total angular momentum.
 	// Redefine angular momentum ONLY if the new value is > 0.
-	if(y[12] > 0 && y[13] > 0){
+	if(y[14] > 0 && y[15] > 0){
 
 		// Assign new specific angular momenta.
-		galaxy.disk_stars.sAM          = y[12] / galaxy.disk_stars.mass;
-		galaxy.disk_gas.sAM            = y[13] / galaxy.disk_gas.mass;
-		subhalo.cold_halo_gas.sAM      = y[14] / subhalo.cold_halo_gas.mass;
-		subhalo.hot_halo_gas.sAM       = y[15] / subhalo.hot_halo_gas.mass;
-		subhalo.ejected_galaxy_gas.sAM = y[16] / subhalo.ejected_galaxy_gas.mass;
+		galaxy.disk_stars.sAM          = y[14] / galaxy.disk_stars.mass;
+		galaxy.disk_gas.sAM            = y[15] / galaxy.disk_gas.mass;
+		subhalo.cold_halo_gas.sAM      = y[16] / subhalo.cold_halo_gas.mass;
+		subhalo.hot_halo_gas.sAM       = y[17] / subhalo.hot_halo_gas.mass;
+		subhalo.ejected_galaxy_gas.sAM = y[18] / subhalo.ejected_galaxy_gas.mass;
 
 		// Assign new sizes based on new AM.
 		galaxy.disk_stars.rscale = galaxy.disk_stars.sAM / galaxy.vmax * constants::EAGLEJconv;
@@ -309,27 +333,31 @@ std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &sub
 	/** Variables introduced to solve ODE equations.
 	 * y[0]: stellar mass of galaxy.
 	 * y[1]: cold gas mass of galaxy.
-	 * y[2]: cold gas in the halo (the one cooling); =0 in the case of starbursts.
+	 * y[2]: cold gas in the halo (the one cooling).
 	 * y[3]: hot gas mass;
 	 * y[4]: ejected gas mass;
-	 * y[5]: metals locked in the stellar mass of galaxies.
-	 * y[6]: metals locked in the cold gas mass of galaxies.
-	 * y[7]: metals locked in the cold gas mass of the halo.
-	 * y[8]: metals locked in the hot halo gas reservoir.
-	 * y[9]: metals locked in the ejected gas mass.
-	 * y[10]: total stellar mass formed (without recycling included).
-	 * y[11]: total stellar mass in metals formed (without recycling included).
+	 * y[5]: lost gas mass.
+	 *
+	 * y[6]: metals locked in the stellar mass of galaxies.
+	 * y[7]: metals locked in the cold gas mass of galaxies.
+	 * y[8]: metals locked in the cold gas mass of the halo.
+	 * y[9]: metals locked in the hot halo gas reservoir.
+	 * y[10]: metals locked in the ejected gas mass reservoir.
+	 * y[11]: metals locked in the lost has mass reservoir.
+	 *
+	 * y[12]: total stellar mass formed (without recycling included).
+	 * y[13]: total stellar mass in metals formed (without recycling included).
 	 *
 	 * Equations dealing with angular momentum:
-	 * y[12]: total stellar angular momentum of the bulge.
-	 * y[13]: total gas angular momentum of the bulge.
-	 * y[14]: total cold gas angular momentum of the cold halo gas component.
-	 * y[15]: total angular momentum of the hot gas component.
-	 * y[16]: total angular momentum of the ejected gas component.
+	 * y[14]: total stellar angular momentum of the bulge.
+	 * y[15]: total gas angular momentum of the bulge.
+	 * y[16]: total cold gas angular momentum of the cold halo gas component.
+	 * y[17]: total angular momentum of the hot gas component.
+	 * y[18]: total angular momentum of the ejected gas component.
 	 *
 	 */
 
-	std::vector<double> y(17);
+	std::vector<double> y(19);
 
 	// Define mass inputs.
 	y[0] = galaxy.bulge_stars.mass;
@@ -337,17 +365,19 @@ std::vector<double> BasicPhysicalModel::from_galaxy_starburst(const Subhalo &sub
 	y[2] = 0; //there is no gas cooling.
 	y[3] = subhalo.hot_halo_gas.mass;
 	y[4] = subhalo.ejected_galaxy_gas.mass;
+	y[5] = subhalo.lost_galaxy_gas.mass;
 
 	// Define mass in metals inputs.
-	y[5] = galaxy.bulge_stars.mass_metals;
-	y[6] = galaxy.bulge_gas.mass_metals;
-	y[7] = 0; //there is no gas cooling.
-	y[8] = subhalo.hot_halo_gas.mass_metals;
-	y[9] = subhalo.ejected_galaxy_gas.mass_metals;
+	y[6] = galaxy.bulge_stars.mass_metals;
+	y[7] = galaxy.bulge_gas.mass_metals;
+	y[8] = 0; //there is no gas cooling.
+	y[9] = subhalo.hot_halo_gas.mass_metals;
+	y[10] = subhalo.ejected_galaxy_gas.mass_metals;
+	y[11] = subhalo.lost_galaxy_gas.mass_metals;
 
 	// Variable to keep track of total stellar mass and metals formed in this SF episode.
-	y[10] = 0;
-	y[11] = 0;
+	y[12] = 0;
+	y[13] = 0;
 
 	// Equations of angular momentum exchange are ignored in the case of starbursts.
 
@@ -374,15 +404,15 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 		galaxy.galaxymergers_burst_stars.mass                 += y[0] -  galaxy.bulge_stars.mass;
 		galaxy.galaxymergers_burst_stars.mass_metals          += y[5] -  galaxy.bulge_stars.mass_metals;
 		// Calculate average SFR and metallicity of newly formed stars.
-		galaxy.sfr_bulge_mergers                              += y[10]/delta_t;
-		galaxy.sfr_z_bulge_mergers                            += y[11]/delta_t;
+		galaxy.sfr_bulge_mergers                              += y[12]/delta_t;
+		galaxy.sfr_z_bulge_mergers                            += y[13]/delta_t;
 	}
 	else{
 		galaxy.diskinstabilities_burst_stars.mass             += y[0] -  galaxy.bulge_stars.mass;
 		galaxy.diskinstabilities_burst_stars.mass_metals      += y[5] -  galaxy.bulge_stars.mass_metals;
 		// Calculate average SFR and metallicity of newly formed stars.
-		galaxy.sfr_bulge_diskins                              += y[10]/delta_t;
-		galaxy.sfr_z_bulge_diskins                            += y[11]/delta_t;
+		galaxy.sfr_bulge_diskins                              += y[12]/delta_t;
+		galaxy.sfr_z_bulge_diskins                            += y[13]/delta_t;
 	}
 
 	// Assign new masses.
@@ -390,12 +420,14 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	galaxy.bulge_gas.mass   				= y[1];
 	subhalo.hot_halo_gas.mass               = y[3];
 	subhalo.ejected_galaxy_gas.mass 		= y[4];
+	subhalo.lost_galaxy_gas.mass 			= y[5];
 
 	// Assign new mass in metals.
-	galaxy.bulge_stars.mass_metals 			= y[5];
-	galaxy.bulge_gas.mass_metals 			= y[6];
-	subhalo.hot_halo_gas.mass_metals        = y[8];
-	subhalo.ejected_galaxy_gas.mass_metals 	= y[9];
+	galaxy.bulge_stars.mass_metals 			= y[6];
+	galaxy.bulge_gas.mass_metals 			= y[7];
+	subhalo.hot_halo_gas.mass_metals        = y[9];
+	subhalo.ejected_galaxy_gas.mass_metals 	= y[10];
+	subhalo.lost_galaxy_gas.mass_metals		= y[11];
 
 	// Equations of angular momentum exchange are ignored in the case of starbursts.
 

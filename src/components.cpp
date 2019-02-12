@@ -265,7 +265,7 @@ double Subhalo::total_baryon_mass() const
 	double mass= 0.0;
 
 	// add subhalo components.
-	mass += hot_halo_gas.mass + cold_halo_gas.mass + ejected_galaxy_gas.mass;
+	mass += hot_halo_gas.mass + cold_halo_gas.mass + ejected_galaxy_gas.mass + lost_galaxy_gas.mass;
 
 	for (auto &galaxy: galaxies){
 		mass += galaxy->baryon_mass() + galaxy->smbh.mass;

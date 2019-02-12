@@ -130,6 +130,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			descendant_subhalo->cold_halo_gas += subhalo->cold_halo_gas;
 			descendant_subhalo->hot_halo_gas += subhalo->hot_halo_gas;
 			descendant_subhalo->ejected_galaxy_gas += subhalo->ejected_galaxy_gas;
+			descendant_subhalo->lost_galaxy_gas += subhalo->lost_galaxy_gas;
+
 			if (subhalo->main_progenitor) {
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
 			}
@@ -162,6 +164,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	BaryonBase mhothalo_total;
 	BaryonBase mcoldhalo_total;
 	BaryonBase mejectedhalo_total;
+	BaryonBase mlosthalo_total;
 	BaryonBase mstars_total;
 	BaryonBase mstars_bursts_galaxymergers;
 	BaryonBase mstars_bursts_diskinstabilities;
@@ -201,6 +204,9 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
         
 			mejectedhalo_total.mass += subhalo->ejected_galaxy_gas.mass;
 			mejectedhalo_total.mass_metals += subhalo->ejected_galaxy_gas.mass_metals;
+
+			mlosthalo_total.mass += subhalo->lost_galaxy_gas.mass;
+			mlosthalo_total.mass_metals += subhalo->lost_galaxy_gas.mass_metals;
         
 			for (auto &galaxy: subhalo->galaxies){
        
