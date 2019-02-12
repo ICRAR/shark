@@ -111,17 +111,17 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	// Mass transfer equations.
 	f[0] = SFR * rsub;
-	f[1] = mcoolrate - (rsub + beta1) * SFR;
+	f[1] = mcoolrate - (rsub + beta1 + beta_qso1) * SFR;
 	f[2] = - mcoolrate;
-	f[3] = (beta1 - beta2) * SFR;
+	f[3] = (beta1 + beta_qso1 - (beta2 + beta_qso2)) * SFR;
 	f[4] = beta2 * SFR;
 	f[5] = beta_qso2 * SFR;
 
 	// Metallicity transfer equations.
 	f[6] = rsub * zcold * SFR;
-	f[7] = mcoolrate * zhot + SFR * (yield - (rsub + beta1) * zcold);
+	f[7] = mcoolrate * zhot + SFR * (yield - (rsub + beta1 + beta_qso1) * zcold);
 	f[8] = - mcoolrate * zhot;
-	f[9] = (beta1 - beta2) * zcold * SFR;
+	f[9] = f[3] * zcold;
 	f[10] = beta2 * zcold * SFR;
 	f[11] = beta_qso2  * zcold * SFR;
 
