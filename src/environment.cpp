@@ -41,7 +41,10 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 		// Ejected gas is moved to the budget of ejected gas of the central, as this gas escaped
 		// the subhalo of the satellite.
 		central_subhalo.ejected_galaxy_gas += satellite_subhalo.ejected_galaxy_gas;
+		central_subhalo.lost_galaxy_gas += satellite_subhalo.lost_galaxy_gas;
+
 		satellite_subhalo.ejected_galaxy_gas.restore_baryon();
+		satellite_subhalo.lost_galaxy_gas.restore_baryon();
 
 		if(parameters.gradual_stripping){
 			//TODO

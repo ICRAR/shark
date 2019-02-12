@@ -547,6 +547,12 @@ public:
 	Baryon ejected_galaxy_gas {};
 
 	/**
+	 * Lost gas reservoir which tracks the gas that is outflowing due to
+	 * QSO feedback and that has escaped the halo.
+	 */
+	Baryon lost_galaxy_gas {};
+
+	/**
 	 * A list of pointers to the ascendants of this subhalo, sorted by mass in
 	 * descending order
 	 */
@@ -819,7 +825,8 @@ public:
 	 * mstars_burst_diskinstabilities: total stellar mass formed via bursts driven by disk instabilities.
 	 * mhot_halo: total hot halo gas.
 	 * mcold_halo: total cold halo gas (that is cooling during the current snapshot).
-	 * mejected_halo: total hot gas that has been ejected from galaxies due to feeback and that has not been reincorporated yet onto the hot halo gas reservoir.
+	 * mejected_halo: total hot gas that has been ejected from galaxies due to stellar feedback and that has not been reincorporated yet onto the hot halo gas reservoir.
+	 * mlost_halo: total gas mass that has been ejected from galaxies and halos due to QSO feedback.
 	 * mBH: total mass locked in black holes.
 	 * mHI: total mass in the form of atomic gas.
 	 * mH2: total mass in the form of molecular gas.
@@ -836,6 +843,7 @@ public:
 	std::vector<BaryonBase> mhot_halo;
 	std::vector<BaryonBase> mcold_halo;
 	std::vector<BaryonBase> mejected_halo;
+	std::vector<BaryonBase> mlost_halo;
 	std::vector<BaryonBase> mBH;
 	std::vector<BaryonBase> mHI;
 	std::vector<BaryonBase> mH2;
