@@ -531,16 +531,16 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				// Define accretion rate.
 				galaxy->smbh.macc_sb = delta_mbh/tdyn;
 
-				// Grow SMBH.
-				galaxy->smbh.mass += delta_mbh;
-				galaxy->smbh.mass_metals += delta_mzbh;
-
 				// Reduce gas available for star formation due to black hole growth.
 				galaxy->bulge_gas.mass -= delta_mbh;
 				galaxy->bulge_gas.mass_metals -= delta_mzbh;
 
 				// Trigger starburst.
 				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t, true);
+
+				// Grow SMBH after starbursts, as during it we need a realistical measurement of Ledd the BH had before the starburst.
+				galaxy->smbh.mass += delta_mbh;
+				galaxy->smbh.mass_metals += delta_mzbh;
 
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
 				if(galaxy->bulge_gas.mass > 0 && galaxy->bulge_gas.mass < parameters.mass_min){

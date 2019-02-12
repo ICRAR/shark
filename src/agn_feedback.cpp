@@ -36,18 +36,23 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.mhalo_seed",mhalo_seed);
 
 	options.load("agn_feedback.model", model);
+
+	//relevant for Bower06 model
 	options.load("agn_feedback.alpha_cool",alpha_cool);
 	options.load("agn_feedback.f_edd",f_edd);
+	options.load("agn_feedback.accretion_eff_cooling",accretion_eff_cooling);
 
+	//control accretion rate onto BHs during starbursts
 	options.load("agn_feedback.f_smbh", f_smbh);
 	options.load("agn_feedback.v_smbh", v_smbh);
 	options.load("agn_feedback.tau_fold", tau_fold);
 
-	options.load("agn_feedback.accretion_eff_cooling",accretion_eff_cooling);
-
+	// relevant for Croton16 model.
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
+	// control QSO feedback.
+	options.load("agn_feedback.qso_feedback", qso_feedback, false);
 	options.load("agn_feedback.kappa_qso", kappa_qso);
 	options.load("agn_feedback.epsilon_qso", epsilon_qso);
 
@@ -171,11 +176,11 @@ double AGNFeedback::smbh_accretion_timescale(Galaxy &galaxy, double z){
 
 }
 
-double AGNFeedback::qso_critical_luminosity(Galaxy &galaxy){
+double AGNFeedback::qso_critical_luminosity(double mgas, double m, double r){
 
-	double fgas = galaxy.bulge_gas.mass/galaxy.bulge_mass();
+	double fgas =mgas/m;
 
-	double sigma_bulge = std::sqrt(constants::G * galaxy.bulge_mass() / galaxy.bulge_gas.rscale);
+	double sigma_bulge = std::sqrt(constants::G * m / r);
 
 	//expression gives luminosity in 10^40 ergs/s.
 
@@ -204,22 +209,45 @@ double AGNFeedback::qso_outflow_velocity(double Lbol, double zgas, double mgas){
 
 }
 
-void AGNFeedback::qso_outflow_rate(double mgas, double tsalp, double vout, double vcirc, double sfr, double beta_halo, double beta_ejec){
+void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double zgas, double vcirc,
+		double sfr, double mbulge, double rbulge, double beta_halo, double beta_ejec){
 
-	double mout_rate= mgas/tsalp;
+	// QSO feedback only acts if the accretion rate is >0, BH mass is > 0 and QSO feedback is activated by the user.
+	if(macc > 0 and mBH > 0 and parameters.qso_feedback){
+		double Lbol = agn_bolometric_luminosity(macc);
+		double Lcrit = qso_critical_luminosity(mgas, mbulge, rbulge);
 
-	double mejec_rate = (parameters.kappa_qso * std::pow(vout/vcirc, 2.0) - 1) * mout_rate;
+		// check if bolometric luminosity is larger than the critical luminosity and the gas mass in the bulge is positive. The latter is not always the case becaus equations are solved
+		// numerically and hence negative solutions are in principle possible.
+		if(Lbol >= parameters.kappa_qso * Lcrit and mgas > 0){
 
-	// Apply boundary conditions to ejection rate
-	if(mejec_rate <  0){
-		mejec_rate = 0;
+			double tsalp = salpeter_timescale(Lbol, mBH);
+			double vout = qso_outflow_velocity(Lbol, zgas, mgas);
+
+			double mout_rate= mgas/tsalp;
+
+			double mejec_rate = (parameters.epsilon_qso * std::pow(vout/vcirc, 2.0) - 1) * mout_rate;
+
+			// Apply boundary conditions to ejection rate
+			if(mejec_rate <  0){
+				mejec_rate = 0;
+			}
+			if(mejec_rate > mout_rate){
+				mejec_rate = mout_rate;
+			}
+
+			beta_halo = mout_rate/sfr;
+			beta_ejec = mejec_rate/sfr;
+		}
+		else{
+			beta_halo = 0;
+			beta_ejec = 0;
+		}
 	}
-	if(mejec_rate > mout_rate){
-		mejec_rate = mout_rate;
+	else{
+		beta_halo = 0;
+		beta_ejec = 0;
 	}
-
-	beta_halo = mout_rate/sfr;
-	beta_ejec = mejec_rate/sfr;
 
 }
 
