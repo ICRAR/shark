@@ -62,6 +62,7 @@ public:
 	 * vsubh: subhalo virial velocity.
 	 * vgal: galaxy velocity at the half-mass radius of disk or bulge.
 	 * mBHacc: BH accretion rate in the case of starbursts.
+	 * mBH: supermassive black hole mass.
 	 * burst: whether this is a starburst or not.
 	 */
 	struct solver_params {
@@ -75,6 +76,7 @@ public:
 		double vsubh;
 		double vgal;
 		double mBHacc;
+		double mBH;
 		bool   burst;
 	};
 
@@ -118,6 +120,7 @@ public:
 		 * vsubh: virial velocity of the host subhalo [km/s]
 		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
 		 * mBHacc: BH accretion rate due to starbursts; \equiv 0 in the case of star formation in disks.
+		 * mBH: supermassive black hole mass.
 		 * burst: boolean parameter indicating if this is a starburst or not.
 		 */
 
@@ -141,10 +144,11 @@ public:
 		double vsubh      = subhalo.Vvir;
 		double jcold_halo = subhalo.cold_halo_gas.sAM;
 		double mBHacc     = 0; //by definition 0 in the case of SF in disks
+		double mBH        = galaxy.smbh.mass;
 		bool   burst      = false;
 
 		std::vector<double> y0 = from_galaxy(subhalo, galaxy);
-		solver_params params{*this, rgas, rstar, mcoolrate, jcold_halo, delta_t, z, vsubh, vgal, mBHacc, burst};
+		solver_params params{*this, rgas, rstar, mcoolrate, jcold_halo, delta_t, z, vsubh, vgal, mBHacc, mBH, burst};
 		auto ode_solver = get_solver(delta_t, y0, params);
 		std::vector<double> y1 = ode_solver.evolve();
 		galaxy_ode_evaluations += ode_solver.num_evaluations();
@@ -163,6 +167,7 @@ public:
 		 * vsubh: virial velocity of the host subhalo [km/s]
 		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
 		 * mBHacc: BH accretion rate in [Msun/Gyr/h]
+		 * mBH: supermassive black hole mass [Msun/h]
 		 * burst: boolean parameter indicating if this is a starburst or not.
 		 */
 
@@ -173,10 +178,11 @@ public:
 		double vsubh      = subhalo.Vvir;
 		double vgal       = galaxy.bulge_gas.sAM / galaxy.bulge_gas.rscale;
 		double mBHacc     = galaxy.smbh.macc_sb;
+		double mBH        = galaxy.smbh.mass;
 		bool   burst      = true;
 
 		std::vector<double> y0 = from_galaxy_starburst(subhalo, galaxy);
-		solver_params params{*this, rgas, rstar, mcoolrate, jcold_halo, delta_t, z, vsubh, vgal, mBHacc, burst};
+		solver_params params{*this, rgas, rstar, mcoolrate, jcold_halo, delta_t, z, vsubh, vgal, mBHacc, mBH, burst};
 		auto solver = get_solver(delta_t, y0, params);
 		std::vector<double> y1 = solver.evolve();
 		galaxy_starburst_ode_evaluations += solver.num_evaluations();
@@ -210,7 +216,7 @@ private:
 	unsigned long int galaxy_starburst_ode_evaluations;
 };
 
-class BasicPhysicalModel : public PhysicalModel<17> {
+class BasicPhysicalModel : public PhysicalModel<19> {
 public:
 	BasicPhysicalModel(double ode_solver_precision,
 			GasCooling gas_cooling,
