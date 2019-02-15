@@ -383,7 +383,8 @@ do
 			shark_options+=("$OPTARG")
 			;;
 		E)
-			posPath=("$OPTARG")
+			posPath="$OPTARG"
+			check_file_exists "${posPath}" ", please check the -E option"
 			;;
 		p)
 			shark_plot=yes
