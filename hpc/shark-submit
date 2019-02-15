@@ -278,6 +278,7 @@ submit_slurm() {
 
 	cmd="$cmd -D \"$shark_output_directory\""
 	cmd="$cmd shark-run -v $shark_verbosity"
+
 	# shark-run command-line options
 	if [ ! -z "$modules" ]
 	then
@@ -300,6 +301,7 @@ submit_slurm() {
 	then
 		cmd="$cmd -p -P \"${shark_python_exec}\""
 	fi
+
 	cmd="$cmd -E \"$shark_params_file\""
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
 
@@ -312,6 +314,7 @@ submit_slurm() {
 		info ""
 	else
 		info "Submitting shark job with command: $cmd"
+
 		# Go, go, go!
 		export SHARK_HPC_DIR="$shark_hpc_dir"
 		eval $cmd
