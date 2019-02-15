@@ -376,37 +376,31 @@ info "==========================================================================
 info "Starting shark via srun with command-line:"
 info "$cmd -c <threads> --mem-per-cpu <mem> $post_cmd -o <subvol> -t <threads>"
 info "================================================================================"
+info ""
 pids=()
-if [ -z "$shark_params_file" ]
-then
-	for i in `eval echo {1..${#shark_subvoumes[*]}}`
-	do
-		let "i = i - 1"
+for i in `eval echo {1..$num_instances}`
+do
+	let "i = i - 1"
+	c=${cpus_per_task[i]}
+	m=${mem_per_task[i]}
+	_cmd="$cmd -c $c --mem-per-cpu $(($m/$c)) $post_cmd -t $c"
+
+	if [ -z "$shark_params_file" ]
+	then
 		s=${shark_subvolumes[i]}
-		c=${cpus_per_task[i]}
-		m=${mem_per_task[i]}
-		_cmd="$cmd -c $c --mem-per-cpu $(($m/$c)) $post_cmd -o \"execution.simulation_batches=$s\" -t $c"
-		info "Spawning shark run for subvolume $s with $c threads and $m MB of memory: $_cmd"
-		eval $_cmd &> "shark_subvol_${s}.log" &
-		pids+=($!)
-	done
-else 
-	for i in `eval echo {1..${#shark_params[*]}}`
-	do
-		let "i = i - 1"
+		output_fname="shark_subvol_${s}.log"
+	else
 		s="${shark_subvolumes[*]}"
-		c=${cpus_per_task[i]}
-		m=${mem_per_task[i]}
-		d=$PWD/$i
-		_cmd="$cmd -c $c --mem-per-cpu $(($m/$c)) $post_cmd -o \"execution.simulation_batches=$s\" -o \"execution.output_directory=$d\" -t $c"
-		p=${shark_params[i]}
-		_cmd="$_cmd $p"
-		echo $_cmd 
-		info "Spawning shark run for subvolume $s and $p with $c threads and $m MB of memory: $_cmd"
-		eval $_cmd &> "particle_$i.log" &
-		pids+=($!)
-	done
-fi
+		_cmd="$_cmd -o \"execution.output_directory=$PWD/$i\" ${shark_params[i]}"
+		output_fname="shark_paramset_${i}.log"
+	fi
+
+	_cmd="$_cmd -o \"execution.simulation_batches=$s\""
+
+	info "Spawning shark run for subvolume $s with $c threads and $m MB of memory: $_cmd"
+	eval $_cmd &> "${output_fname}" &
+	pids+=($!)
+done
 
 info "Waiting for all instances to finish"
 all_good=1
