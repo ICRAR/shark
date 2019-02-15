@@ -219,6 +219,7 @@ shark_binary=
 shark_subvolumes=
 shark_params=
 num_instances=
+shark_params_file=
 shark_options=()
 shark_plot=
 shark_python_exec=python
@@ -243,7 +244,7 @@ do
 			shark_subvolumes="$OPTARG"
 			;;
 		E)
-			posPath="$OPTARG"
+			shark_params_file="$OPTARG"
 			;;
 		o)
 			shark_options+=("$OPTARG")
@@ -270,17 +271,17 @@ then
 fi
 shark_subvolumes=($shark_subvolumes)
 
-if [ -z "$posPath"]
+if [ -z "$shark_params_file" ]
 then
 	num_instances=${#shark_subvolumes[*]}
 else
-	num_instances=$(wc -l < $posPath)
+	num_instances=$(wc -l < $shark_params_file)
 fi
 
-if [ ! -z "$posPath" ]
+if [ -n "$shark_params_file" ]
 then
 	#reading in the parameter values from the ssv file
-	INPUT_FILE=$posPath
+	INPUT_FILE=$shark_params_file
 	OIFS=$IFS
 	IFS=$(echo -en "\n\b")
 	count=0
@@ -369,7 +370,7 @@ do
 done
 post_cmd="$post_cmd -v $shark_verbosity $config_file"
 
-if [ -z $posPath ]
+if [ -z $shark_params_file ]
 then
 	info "Processing ${#shark_subvolumes[*]} tasks: ${shark_subvolumes[*]}"
 else
@@ -380,7 +381,7 @@ info "Starting shark via srun with command-line:"
 info "$cmd -c <threads> --mem-per-cpu <mem> $post_cmd -o <subvol> -t <threads>"
 info "================================================================================"
 pids=()
-if [ -z "$posPath" ]
+if [ -z "$shark_params_file" ]
 then
 	for i in `eval echo {1..${#shark_subvoumes[*]}}`
 	do
