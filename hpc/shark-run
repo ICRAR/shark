@@ -145,6 +145,7 @@ print_usage() {
 	echo " -V: Space-separated list of subvolumes to process. Can contain ranges like 1-10"
 	echo " config_file: The reference configuration file to use for this shark execution"
 }
+
 # Check we are under the influence of a queueing system
 if [ -z "${SLURM_JOB_ID}" ]
 then
@@ -221,6 +222,7 @@ shark_params_file=
 shark_options=()
 shark_plot=
 shark_python_exec=python
+
 # Parse command line options
 while getopts "h?m:v:S:E:V:o:pP:" opt
 do
@@ -259,8 +261,8 @@ do
 			;;
 	esac
 done
-echo $shark_subvolumes the shark subvolumes
 
+# Make sure we have a list of subvolumes to process
 if [ -z "$shark_subvolumes" ]
 then
 	error "Missing -V option with subvolume list"
