@@ -49,6 +49,14 @@ get_absolute_path() {
 	cd $OLDPWD
 }
 
+check_file_exists() {
+	if [ ! -f "$1" ]
+	then
+		error "File $1 is not an existing (or accessible) file$2"
+		exit 1
+	fi
+}
+
 to_bytes() {
 	x="$1"
 	if [[ "$x" =~ ^([0-9]+)([kKmMgGtT]?) ]]
@@ -366,6 +374,7 @@ do
 			;;
 		S)
 			shark_binary="$OPTARG"
+			check_file_exists "${shark_binary}" ", please check the -S option"
 			;;
 		V)
 			shark_subvolumes="$OPTARG"
@@ -431,6 +440,7 @@ then
 	exit 1
 fi
 config_file=${@:$OPTIND:1}
+check_file_exists "${config_file}"
 
 #
 # Check that everything is in place if plotting is requested
@@ -440,11 +450,7 @@ then
 	# The python binary must be there
 	if [ "${shark_python_exec}" != "python" ]
 	then
-		if [ ! -f "${shark_python_exec}" ]
-		then
-			error "Python executable ${shark_python_exec} does not exist, please check the -P option"
-			exit 1
-		fi
+		check_file_exists "${shark_python_exec}" ", please check the -P option"
 		shark_python_exec=`get_absolute_path "${shark_python_exec}"`
 	fi
 fi
@@ -457,11 +463,7 @@ fi
 #
 if [ -n "$shark_binary" ]
 then
-	if [ ! -e "$shark_binary" ]
-	then
-		error "$shark_binary does not exist, check the -S option"
-		exit 1
-	fi
+	check_file_exists "${shark_binary}" ", please check the -S option"
 	shark_binary=`get_absolute_path "$shark_binary"`
 fi
 
@@ -495,13 +497,6 @@ else
 	error "details of your queueing system so they can add the corresponding support to"
 	error "this script in future versions of shark."
 	error ""
-	exit 1
-fi
-
-# Make sure the configuration file exists
-if [ ! -f ${config_file} ]
-then
-	error "File ${config_file} is not an existing (or accessible) file"
 	exit 1
 fi
 
