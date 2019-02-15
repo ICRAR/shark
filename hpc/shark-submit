@@ -172,10 +172,6 @@ print_usage() {
 	echo "                 ranges like 1-10. Defaults to whatever is present in the"
 	echo "                 configuration file"
 	echo
-	echo " -s packed subvolumes  Identical format to subvolumes but used for parallel"
-	echo " 			processing of multiple parameter values (-E) rather than"
-	echo "			multiple subvolumes"
-	echo
 	echo " -E number of particles   Number of parallel instances of shark over the "
 	echo " 			subvolumes but with different parameter values. Use of "
 	echo " 			this specifier excludes the use of -V and -s must be used"
@@ -342,7 +338,7 @@ shark_plot=
 shark_python_exec=python
 
 # Parse command line options
-while getopts "h?dO:Q:a:w:n:M:m:c:N:E:vqS:V:s:o:pP:" opt
+while getopts "h?dO:Q:a:w:n:M:m:c:N:E:vqS:V:o:pP:" opt
 do
 	case "$opt" in
 		[h?])
