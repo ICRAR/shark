@@ -97,14 +97,15 @@ print_usage() {
 	echo "Usage: $0 [-h] [-?] [-d] [-O output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-M modules] [-m mem] [-c cpus] [-N num-nodes] [-v | -q]"
 	echo "       [-S shark_binary] [-V subvolumes] [-o opt1=val1 [-o opt2=val2...]]"
-	echo "       [-p] [-P python-exec] config_file"
+	echo "       [-E params-file] [-p] [-P python-exec] config_file"
 	echo
 	echo "This program calculates what is the best way to submit a series of jobs to"
 	echo "execute shark over a number of subvolumes, and performs such submission. The"
 	echo "resources needed by the submission depend on: a) the number of subvolumes to"
-	echo "process (-V option), and b) the memory required by each shark instance"
-	echo "(-m option). An additional -N option allows users to manually specify a minimum"
-	echo "number of nodes to be requested."
+	echo "process (-V option) or the number of parameters in the paramter file (-E option,"
+	echo "and b) the memory required by each shark instance (-m option). An additional"
+	echo "option allows users to manually specify a minimum number of nodes to be"
+	echo "requested (-N)."
 	echo
 	echo "General options"
 	echo "---------------"
@@ -170,12 +171,14 @@ print_usage() {
 	echo
 	echo " -V subvolumes   Space-separated list of subvolumes to process. Can contain"
 	echo "                 ranges like 1-10. Defaults to whatever is present in the"
-	echo "                 configuration file"
+	echo "                 configuration file. One independent shark instance will be"
+	echo "                 spawned for each subvolume in parallel"
 	echo
-	echo " -E number of particles   Number of parallel instances of shark over the "
-	echo " 			subvolumes but with different parameter values. Use of "
-	echo " 			this specifier excludes the use of -V and -s must be used"
-	echo "                  in its stead"
+	echo " -E params-file  File specifying sets of shark options, one set per line. When"
+	echo "                 this file is given, one shark instance will be spawned for each"
+	echo "                 parameter set (instead of one shark instance per subvolume) in"
+	echo "                 parallel, and each instance will use all subvolumes indicated"
+	echo "                 by the -V option"
 	echo
 	echo " -o opt=val ...  Extra options to pass down to shark. Options given this way"
 	echo "                 override those given in the configuration file. This parameter"
@@ -202,6 +205,13 @@ print_usage() {
 	echo "   for subvolumes from 0 to 9 using the common configuration file 'myconfig.cfg'"
 	echo "   and the shark binary '../build/shark'. The submission is performed to the "
 	echo "  'debug' queue"
+	echo
+	echo "$> shark-submit -V 0-9 -E params-file.txt myconfig.cfg"
+	echo
+	echo "   Creates a job submission that will submit the execution of N shark instances,"
+	echo "   one for each line in <params-file.txt>. Each instance will process subvolumes"
+	echo "   from 0 to 9 using the common configuration file 'myconfig.cfg' and the"
+	echo "   corresponding options contained in the params-file.txt file"
 	echo
 	echo "$> shark-submit -m 7g -M gsl/2.3:hdf5/1.10.2:gcc/6.3 -p -N 10 -V '0-32 34-63'"
 	echo "   -q debug myconfig.cfg"
