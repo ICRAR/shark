@@ -300,7 +300,7 @@ submit_slurm() {
 	then
 		cmd="$cmd -p -P \"${shark_python_exec}\""
 	fi
-	cmd="$cmd -E \"$posPath\""
+	cmd="$cmd -E \"$shark_params_file\""
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
 
 	if [ "$dry_run" = "1" ]
@@ -336,10 +336,9 @@ job_name=
 walltime="1:00:00"
 modules=${SHARK_RUNTIME_MODULES}
 mem_per_task=
-posPath=
+shark_params_file=
 cpus_per_task=
 num_nodes=
-num_particles=
 shark_verbosity=3
 shark_binary=
 shark_subvolumes=
@@ -389,8 +388,8 @@ do
 			shark_options+=("$OPTARG")
 			;;
 		E)
-			posPath="$OPTARG"
-			check_file_exists "${posPath}" ", please check the -E option"
+			shark_params_file="$OPTARG"
+			check_file_exists "${shark_params_file}" ", please check the -E option"
 			;;
 		p)
 			shark_plot=yes
@@ -435,9 +434,6 @@ do
 			;;
 	esac
 done
-		
-
-num_particles=$(wc -l < $posPath)
 
 # Positional argument is the configuration file name
 if [ $(($# - $OPTIND)) -lt 0 ]
@@ -473,7 +469,6 @@ then
 	check_file_exists "${shark_binary}" ", please check the -S option"
 	shark_binary=`get_absolute_path "$shark_binary"`
 fi
-
 
 
 # Check which queueing system we are going to use from now on
@@ -555,9 +550,9 @@ svols=($svols)
 n_svols=${#svols[@]}
 info "Will submit shark to work on $n_svols subvolumes: $shark_subvolumes"
 
-if [ ! -z "$num_particles" ]
-then 
-	n_tasks=$num_particles
+if [ -n "$shark_params_file" ]
+then
+	n_tasks=$(wc -l < $shark_params_file)
 else
 	n_tasks=$n_svols
 fi
@@ -584,14 +579,20 @@ else
 	done
 fi
 info "Will run shark-run under $shark_output_directory"
-cp "/home/msammons/Project1819/aux/particlePositions.ssv" "$shark_output_directory"
-info "Particle positions copied to copied to $shark_output_directory"
-# Copy the configuration file over to the working directory
+
+# Copy the configuration and parameter files over to the working directory
 config_file_bname=`basename $config_file`
 cp "$config_file" "$shark_output_directory"
-
 config_file="$config_file_bname"
 info "Configuration file copied to $shark_output_directory/$config_file"
+
+if [ -n "$shark_params_file" ]
+then
+	bname=`basename $shark_params_file`
+	cp "$shark_params_file" "$shark_output_directory"
+	shark_params_file="$bname"
+	info "Parameters file copied to $shark_output_directory/$shark_params_file"
+fi
 
 # Go, go, go!
 info "Submitting shark to $queue_system"
