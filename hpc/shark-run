@@ -217,8 +217,6 @@ module_names=
 shark_verbosity=3
 shark_binary=
 shark_subvolumes=
-shark_params=
-num_instances=
 shark_params_file=
 shark_options=()
 shark_plot=
@@ -278,19 +276,17 @@ else
 	num_instances=$(wc -l < $shark_params_file)
 fi
 
+# Store each line from the parameters file
+# as an item in the shark_params list
 if [ -n "$shark_params_file" ]
 then
-	#reading in the parameter values from the ssv file
-	INPUT_FILE=$shark_params_file
-	OIFS=$IFS
-	IFS=$(echo -en "\n\b")
+	shark_params=
 	count=0
-	while read param1
+	while IFS='' read param1 || [[ -n "$param1" ]]
 	do
 		shark_params[$count]=$param1
 		count=$(($count+1))
-	done < $INPUT_FILE
-	IFS=$OIFS
+	done < "$shark_params_file"
 fi
 
 # Positional argument is the configuration file name
