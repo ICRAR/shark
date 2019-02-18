@@ -92,6 +92,16 @@ def read_configuration(config):
     redshift_file = cparser.get('simulation', 'redshift_file')
     return shark_dir, simu, model, redshift_file
 
+def parse_subvolumes(subvolumes_str):
+    subvolumes = set()
+    for r in filter(None, subvolumes_str.replace(',', ' ').split()):
+        if '-' in r:
+            svol_range = [int(x) for x in r.split('-')]
+            subvolumes.update(range(svol_range[0], svol_range[1] + 1))
+        else:
+            subvolumes.add(int(r))
+    return subvolumes
+
 def parse_args(requires_observations=True):
 
     parser = argparse.ArgumentParser()
@@ -142,13 +152,7 @@ def parse_args(requires_observations=True):
 
     # Having the replace(',', ' ') allows us to separate subvolumes by command
     # and/or space
-    subvolumes = set()
-    for r in filter(None, opts.subvolumes.replace(',', ' ').split()):
-        if '-' in r:
-            x = [int(x) for x in r.split('-')]
-            subvolumes.update(range(x[0], x[1] + 1))
-        else:
-            subvolumes.add(int(r))
+    subvolumes = parse_subvolumes(opts.subvolumes)
     print("Considering the following subvolumes: %s" % ' '.join([str(x) for x in subvolumes]))
 
     ret = [model_dir, output_dir, _redshift_table(redshift_file), tuple(subvolumes)]
