@@ -81,7 +81,10 @@ def load_matplotlib():
     plt.rcParams['legend.numpoints'] = 1
     return plt
 
-def get_output_dir(shark_dir, simu, model):
+def get_shark_output_dir(shark_dir, simu, model):
+    return os.path.join(shark_dir, simu, model)
+
+def get_plots_output_dir(shark_dir, simu, model):
     return os.path.join(shark_dir, 'Plots', simu, model)
 
 def read_configuration(config):
@@ -160,7 +163,7 @@ def parse_args(requires_observations=True):
 
     output_dir = opts.output_dir
     if not output_dir:
-        output_dir = get_output_dir(shark_dir, simu, model)
+        output_dir = get_plots_output_dir(shark_dir, simu, model)
     print("Creating plots under %s" % (output_dir,))
 
     try:
@@ -263,7 +266,7 @@ if __name__ == '__main__':
     action = sys.argv[1]
     shark_dir, simu, model, redshift_file = read_configuration(sys.argv[2])
     if action == 'output_dir':
-        print(get_output_dir(shark_dir, simu, model))
+        print(get_plots_output_dir(shark_dir, simu, model))
     elif action == 'snapshots':
         z = list(map(float, ' '.join(sys.argv[3:]).split()))
         table = _redshift_table(redshift_file)
