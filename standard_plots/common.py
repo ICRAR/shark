@@ -100,6 +100,16 @@ def exec_command(cmd, shell=False, **kwargs):
     out, err = p.communicate()
     return out, err, p.poll()
 
+def has_program(program):
+    """Checks whether `program` exists or not"""
+    try:
+        subprocess.check_output(program, shell=False, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        pass
+    except OSError:
+        return False
+    return True
+
 def parse_subvolumes(subvolumes_str):
     subvolumes = set()
     for r in filter(None, subvolumes_str.replace(',', ' ').split()):
