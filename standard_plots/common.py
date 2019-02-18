@@ -22,6 +22,7 @@
 import argparse
 import collections
 import os
+import subprocess
 import sys
 
 import h5py
@@ -91,6 +92,13 @@ def read_configuration(config):
     simu = cparser.get('simulation', 'sim_name')
     redshift_file = cparser.get('simulation', 'redshift_file')
     return shark_dir, simu, model, redshift_file
+
+def exec_command(cmd, shell=False, **kwargs):
+    """Executes `cmd` and returns the stdout, stderr and exit code"""
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         shell=shell, **kwargs)
+    out, err = p.communicate()
+    return out, err, p.poll()
 
 def parse_subvolumes(subvolumes_str):
     subvolumes = set()
