@@ -41,6 +41,7 @@ public:
 
 	double mseed = 0;
 	double mhalo_seed = 0;
+
 	double alpha_cool = 0;
 	double f_edd = 0;
 	double f_smbh = 0;
@@ -49,6 +50,8 @@ public:
 	double accretion_eff_cooling = 0;
 	double kappa_agn = 0;
 	double nu_smbh = 0;
+
+	bool qso_feedback = false;
 	double kappa_qso = 0;
 	double epsilon_qso = 0;
 
@@ -77,10 +80,11 @@ public:
 	double smbh_growth_starburst(double mgas, double vvir);
 	double smbh_accretion_timescale(Galaxy &galaxy, double z);
 	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir);
-	double qso_critical_luminosity(Galaxy &galaxy);
+	double qso_critical_luminosity(double mgas, double m, double r);
 	double salpeter_timescale(double Lbol, double mbh);
 	double qso_outflow_velocity(double Lbol, double zgas, double mgas);
-	void qso_outflow_rate(double mgas, double tsalp, double vout, double vcirc, double sfr, double beta_halo, double beta_ejec);
+	void qso_outflow_rate(double mgas, double macc, double mBH, double zgas, double vcirc,
+			double sfr, double mbulge, double rbulge, double beta_halo, double beta_ejec);
 
 
 	// TODO: move this to private when possible
