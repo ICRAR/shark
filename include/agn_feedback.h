@@ -84,7 +84,7 @@ public:
 	double salpeter_timescale(double Lbol, double mbh);
 	double qso_outflow_velocity(double Lbol, double zgas, double mgas);
 	void qso_outflow_rate(double mgas, double macc, double mBH, double zgas, double vcirc,
-			double sfr, double mbulge, double rbulge, double beta_halo, double beta_ejec);
+			double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec);
 
 
 	// TODO: move this to private when possible

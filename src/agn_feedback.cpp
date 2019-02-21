@@ -210,16 +210,16 @@ double AGNFeedback::qso_outflow_velocity(double Lbol, double zgas, double mgas){
 }
 
 void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double zgas, double vcirc,
-		double sfr, double mbulge, double rbulge, double beta_halo, double beta_ejec){
+		double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec){
 
 	// QSO feedback only acts if the accretion rate is >0, BH mass is > 0 and QSO feedback is activated by the user.
-	if(macc > 0 and mBH > 0 and parameters.qso_feedback){
+	if(macc > 0 and mBH > 0 and sfr > 0 and mgas > 0 and parameters.qso_feedback){
 		double Lbol = agn_bolometric_luminosity(macc);
 		double Lcrit = qso_critical_luminosity(mgas, mbulge, rbulge);
 
 		// check if bolometric luminosity is larger than the critical luminosity and the gas mass in the bulge is positive. The latter is not always the case becaus equations are solved
 		// numerically and hence negative solutions are in principle possible.
-		if(Lbol >= parameters.kappa_qso * Lcrit and mgas > 0){
+		if(Lbol > parameters.kappa_qso * Lcrit){
 
 			double tsalp = salpeter_timescale(Lbol, mBH);
 			double vout = qso_outflow_velocity(Lbol, zgas, mgas);
@@ -228,8 +228,11 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 
 			double mejec_rate = (parameters.epsilon_qso * std::pow(vout/vcirc, 2.0) - 1) * mout_rate;
 
-			// Apply boundary conditions to ejection rate
-			if(mejec_rate <  0){
+			// Apply boundary conditions to outflow and ejection rates
+			if(mout_rate <  0 or std::isnan(mout_rate)){
+				mout_rate = 0;
+			}
+			if(mejec_rate <  0 or std::isnan(mejec_rate)){
 				mejec_rate = 0;
 			}
 			if(mejec_rate > mout_rate){

@@ -301,6 +301,9 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	if(subhalo.ejected_galaxy_gas.mass_metals < tolerance){
 		subhalo.ejected_galaxy_gas.mass_metals = 0;
 	}
+	if(subhalo.lost_galaxy_gas.mass_metals < tolerance){
+		subhalo.lost_galaxy_gas.mass_metals = 0;
+	}
 
 	/**
 	 * Check that masses are not negative. If they are, mass and metals are set to zero.
@@ -320,6 +323,9 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	}
 	if(subhalo.ejected_galaxy_gas.mass < tolerance){
 		subhalo.ejected_galaxy_gas.restore_baryon();
+	}
+	if(subhalo.lost_galaxy_gas.mass < tolerance){
+		subhalo.lost_galaxy_gas.restore_baryon();
 	}
 
 	/* Check unrealistic cases*/
@@ -405,14 +411,14 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	// Accumulated burst stellar mass in the corresponding baryon budget depending on triggering mechanism:
 	if(from_galaxy_merger){
 		galaxy.galaxymergers_burst_stars.mass                 += y[0] -  galaxy.bulge_stars.mass;
-		galaxy.galaxymergers_burst_stars.mass_metals          += y[5] -  galaxy.bulge_stars.mass_metals;
+		galaxy.galaxymergers_burst_stars.mass_metals          += y[6] -  galaxy.bulge_stars.mass_metals;
 		// Calculate average SFR and metallicity of newly formed stars.
 		galaxy.sfr_bulge_mergers                              += y[12]/delta_t;
 		galaxy.sfr_z_bulge_mergers                            += y[13]/delta_t;
 	}
 	else{
 		galaxy.diskinstabilities_burst_stars.mass             += y[0] -  galaxy.bulge_stars.mass;
-		galaxy.diskinstabilities_burst_stars.mass_metals      += y[5] -  galaxy.bulge_stars.mass_metals;
+		galaxy.diskinstabilities_burst_stars.mass_metals      += y[6] -  galaxy.bulge_stars.mass_metals;
 		// Calculate average SFR and metallicity of newly formed stars.
 		galaxy.sfr_bulge_diskins                              += y[12]/delta_t;
 		galaxy.sfr_z_bulge_diskins                            += y[13]/delta_t;
@@ -449,6 +455,9 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	if(subhalo.ejected_galaxy_gas.mass_metals < tolerance){
 		subhalo.ejected_galaxy_gas.mass_metals = 0;
 	}
+	if(subhalo.lost_galaxy_gas.mass_metals < tolerance){
+		subhalo.lost_galaxy_gas.mass_metals = 0;
+	}
 
 	/**
 	 * Check that masses are not negative. If they are, mass and metals are set to zero.
@@ -465,6 +474,9 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	}
 	if(subhalo.ejected_galaxy_gas.mass < tolerance){
 		subhalo.ejected_galaxy_gas.restore_baryon();
+	}
+	if(subhalo.lost_galaxy_gas.mass < tolerance){
+		subhalo.lost_galaxy_gas.restore_baryon();
 	}
 
 	/* Check unrealistic cases*/
