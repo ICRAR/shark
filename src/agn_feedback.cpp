@@ -203,7 +203,7 @@ double AGNFeedback::salpeter_timescale(double Lbol, double mbh){
 
 double AGNFeedback::qso_outflow_velocity(double Lbol, double zgas, double mgas){
 
-	double vout  = 320.0 * std::pow(Lbol/constants::LSOLAR, 0.5) * std::pow(zgas/recycle_params.zsun, 0.25) * std::pow(mgas, -0.25);
+	double vout  = 320.0 * std::pow(Lbol/(1e7 * constants::LSOLAR), 0.5) * std::pow(zgas/recycle_params.zsun, 0.25) * std::pow(mgas, -0.25);
 
 	return vout;
 
@@ -235,9 +235,9 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 			if(mejec_rate <  0 or std::isnan(mejec_rate)){
 				mejec_rate = 0;
 			}
-			if(mejec_rate > mout_rate){
+			/*if(mejec_rate > mout_rate){
 				mejec_rate = mout_rate;
-			}
+			}*/
 
 			beta_halo = mout_rate/sfr;
 			beta_ejec = mejec_rate/sfr;
