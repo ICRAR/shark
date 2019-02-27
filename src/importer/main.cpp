@@ -123,7 +123,7 @@ int run(int argc, char **argv)
 	for(int snapshot=importer_params.last_snapshot; snapshot >= importer_params.first_snapshot; snapshot--) {
 		Timer timer;
 		auto subhalos = reader->read_subhalos(snapshot);
-		std::cout << "Snapshot " << snapshot << " read and processed in " << timer.get() << " [ms]\n";
+		std::cout << "Snapshot " << snapshot << " read and processed in " << timer << "\n";
 	}
 
 	return 0;
