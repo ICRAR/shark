@@ -41,7 +41,8 @@ class Timer {
 
 public:
 
-	using duration = typename std::chrono::milliseconds::rep;
+	using clock = std::chrono::high_resolution_clock;
+	using duration = typename std::chrono::nanoseconds::rep;
 
 	/**
 	 * Returns the number of milliseconds elapsed since the creation
@@ -51,11 +52,11 @@ public:
 	 */
 	inline
 	duration get() const {
-		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count();
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(clock::now() - t0).count();
 	}
 
 private:
-	std::chrono::steady_clock::time_point t0 {std::chrono::steady_clock::now()};
+	clock::time_point t0 {clock::now()};
 
 };
 
