@@ -341,7 +341,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 		writer->write(snapshot + 1, all_halos_this_snapshot, all_baryons, molgas_per_gal);
 	}
 
-	auto duration_millis = t.get();
+	auto duration_millis = t.get() / 1000 / 1000;
 
 	// Some high-level ODE and integration iteration count statistics
 	auto starform_integration_intervals = std::accumulate(thread_objects.begin(), thread_objects.end(), std::size_t(0), [](std::size_t x, const PerThreadObjects &o) {
