@@ -775,10 +775,11 @@ public:
 	std::vector<HaloPtr> &halos_at(int snapshot)
 	{
 		static std::vector<HaloPtr> empty;
-		if (halos.find(snapshot) == halos.end()) {
+		auto it = halos.find(snapshot);
+		if (it == halos.end()) {
 			return empty;
 		}
-		return halos.at(snapshot);
+		return it->second;
 	}
 };
 
