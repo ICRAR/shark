@@ -33,6 +33,8 @@
 
 namespace shark {
 
+std::vector<HaloPtr> MergerTree::NONE;
+
 SubhaloPtr Subhalo::main() const
 {
 	for (auto &sub: ascendants) {
