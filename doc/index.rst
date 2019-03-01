@@ -10,6 +10,7 @@ shark
    running
    hpc
    output_files
+   optim
    changelog
 
 
@@ -35,8 +36,9 @@ the gas–stellar mass and stellar mass–metallicity relations.
 |s| is written in C++11 and has been parallelized with OpenMP.
 It currently compiles with all major compilers
 (gcc, clang, MSVC), but any C++11-enabled compiler should work.
-It comes with a set of standard plotting scripts and HPC-related utilities
-to ease its usage across as many platforms as possible.
+It comes with a set of standard plotting scripts, HPC-related utilities
+to ease its usage across as many platforms as possible,
+and optimization routines for easy parameter exploration.
 
 Citing
 ------
