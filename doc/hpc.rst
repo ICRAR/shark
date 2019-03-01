@@ -160,6 +160,44 @@ Its most basic usage looks like this::
 That will submit an execution of |s| only for sub-volume 0
 using the ``config_file`` configuration file.
 
+
+.. _hpc.param_sets:
+
+Running with different parameter sets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As explained above,
+the default mode of execution of |ss|
+parallelizes |s| executions by sub-volume,
+using the same configuration.
+However, a second mode is supported,
+where users can specify different parameter sets
+to be evaluated against the same inputs.
+This is useful, for instance,
+when one is sampling a parameter search space
+to :doc:`optimize shark <optim>` against certain constraints,
+or during other exploratory exercises.
+
+This mode is triggered by using the ``-E file`` flag.
+``file`` must contain all the command-line flags
+that will be given to each |s| instance, one per row.
+For example::
+
+ -o "reincorporation.tau_reinc=9.789522070051014" -o "reincorporation.mhalo_norm=53167281575.647736" -o "reincorporation.halo_mass_power=-1.662049864221243"
+ -o "reincorporation.tau_reinc=4.433571656151598" -o "reincorporation.mhalo_norm=344951728442.8235" -o "reincorporation.halo_mass_power=-2.197944428980997"
+ -o "reincorporation.tau_reinc=8.744659838237162" -o "reincorporation.mhalo_norm=106081569566.5114" -o "reincorporation.halo_mass_power=-2.2146743876637798"
+ -o "reincorporation.tau_reinc=5.568250109183069" -o "reincorporation.mhalo_norm=36854502778.199234" -o "reincorporation.halo_mass_power=-1.909464612909543"
+ -o "reincorporation.tau_reinc=2.9521943986079364" -o "reincorporation.mhalo_norm=1916185243.0129645" -o "reincorporation.halo_mass_power=-2.797548035509215"
+
+When this mode is used,
+the ``-V`` flag that indicates subvolumes
+applies equally to all |s| instances.
+For example, if the user specifies ``-V 0-3 -E simple.txt``,
+and ``simple.txt`` contains three lines,
+then only three |s| instances will be spawned.
+
+
+
 Options
 ^^^^^^^
 
@@ -181,6 +219,8 @@ For a full help on all available options run::
 
  $> hpc/shark-submit -h
 
+.. _hpc.envvars:
+
 Environment variables
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -189,7 +229,8 @@ will probably remain the same
 across most (if not all) executions.
 Because of these, a handful of environment variables
 are inspected by |ss| and interpreted
-as the default value for some of these options.
+as the default value for some of these options
+(run ``shark-submit -h`` for a full list).
 You can thus define these variables once
 (e.g., in your ``~/.bash_rc`` or ``~/.bash_profile`` files)
 to avoid having to repeat typing them each time.

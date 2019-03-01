@@ -49,6 +49,14 @@ get_absolute_path() {
 	cd $OLDPWD
 }
 
+check_file_exists() {
+	if [ ! -f "$1" ]
+	then
+		error "File $1 is not an existing (or accessible) file$2"
+		exit 1
+	fi
+}
+
 to_bytes() {
 	x="$1"
 	if [[ "$x" =~ ^([0-9]+)([kKmMgGtT]?) ]]
@@ -89,14 +97,15 @@ print_usage() {
 	echo "Usage: $0 [-h] [-?] [-d] [-O output_dir] [-Q queue] [-a account] [-w walltime]"
 	echo "       [-n job-name] [-M modules] [-m mem] [-c cpus] [-N num-nodes] [-v | -q]"
 	echo "       [-S shark_binary] [-V subvolumes] [-o opt1=val1 [-o opt2=val2...]]"
-	echo "       [-p] [-P python-exec] config_file"
+	echo "       [-E params-file] [-p] [-P python-exec] config_file"
 	echo
 	echo "This program calculates what is the best way to submit a series of jobs to"
 	echo "execute shark over a number of subvolumes, and performs such submission. The"
 	echo "resources needed by the submission depend on: a) the number of subvolumes to"
-	echo "process (-V option), and b) the memory required by each shark instance"
-	echo "(-m option). An additional -N option allows users to manually specify a minimum"
-	echo "number of nodes to be requested."
+	echo "process (-V option) or the number of parameters in the paramter file (-E option,"
+	echo "and b) the memory required by each shark instance (-m option). An additional"
+	echo "option allows users to manually specify a minimum number of nodes to be"
+	echo "requested (-N)."
 	echo
 	echo "General options"
 	echo "---------------"
@@ -162,7 +171,14 @@ print_usage() {
 	echo
 	echo " -V subvolumes   Space-separated list of subvolumes to process. Can contain"
 	echo "                 ranges like 1-10. Defaults to whatever is present in the"
-	echo "                 configuration file"
+	echo "                 configuration file. One independent shark instance will be"
+	echo "                 spawned for each subvolume in parallel"
+	echo
+	echo " -E params-file  File specifying sets of shark options, one set per line. When"
+	echo "                 this file is given, one shark instance will be spawned for each"
+	echo "                 parameter set (instead of one shark instance per subvolume) in"
+	echo "                 parallel, and each instance will use all subvolumes indicated"
+	echo "                 by the -V option"
 	echo
 	echo " -o opt=val ...  Extra options to pass down to shark. Options given this way"
 	echo "                 override those given in the configuration file. This parameter"
@@ -190,6 +206,13 @@ print_usage() {
 	echo "   and the shark binary '../build/shark'. The submission is performed to the "
 	echo "  'debug' queue"
 	echo
+	echo "$> shark-submit -V 0-9 -E params-file.txt myconfig.cfg"
+	echo
+	echo "   Creates a job submission that will submit the execution of N shark instances,"
+	echo "   one for each line in <params-file.txt>. Each instance will process subvolumes"
+	echo "   from 0 to 9 using the common configuration file 'myconfig.cfg' and the"
+	echo "   corresponding options contained in the params-file.txt file"
+	echo
 	echo "$> shark-submit -m 7g -M gsl/2.3:hdf5/1.10.2:gcc/6.3 -p -N 10 -V '0-32 34-63'"
 	echo "   -Q debug myconfig.cfg"
 	echo
@@ -208,7 +231,7 @@ print_usage() {
 submit_slurm() {
 
 	# Each SHArk instance will be ran as a task
-	cmd="sbatch --ntasks $n_svols"
+	cmd="sbatch --ntasks $n_tasks"
 	cmd="$cmd -o shark-run.log"
 
 	# Queueing accountability
@@ -279,6 +302,7 @@ submit_slurm() {
 		cmd="$cmd -p -P \"${shark_python_exec}\""
 	fi
 
+	cmd="$cmd -E \"$shark_params_file\""
 	cmd="$cmd -V \"$shark_subvolumes\" $config_file"
 
 	if [ "$dry_run" = "1" ]
@@ -315,6 +339,7 @@ job_name=
 walltime="1:00:00"
 modules=${SHARK_RUNTIME_MODULES}
 mem_per_task=
+shark_params_file=
 cpus_per_task=
 num_nodes=
 shark_verbosity=3
@@ -325,7 +350,7 @@ shark_plot=
 shark_python_exec=python
 
 # Parse command line options
-while getopts "h?dO:Q:a:w:n:M:m:c:N:vqS:V:o:pP:" opt
+while getopts "h?dO:Q:a:w:n:M:m:c:N:E:vqS:V:o:pP:" opt
 do
 	case "$opt" in
 		[h?])
@@ -357,12 +382,17 @@ do
 			;;
 		S)
 			shark_binary="$OPTARG"
+			check_file_exists "${shark_binary}" ", please check the -S option"
 			;;
 		V)
 			shark_subvolumes="$OPTARG"
 			;;
 		o)
 			shark_options+=("$OPTARG")
+			;;
+		E)
+			shark_params_file="$OPTARG"
+			check_file_exists "${shark_params_file}" ", please check the -E option"
 			;;
 		p)
 			shark_plot=yes
@@ -416,6 +446,7 @@ then
 	exit 1
 fi
 config_file=${@:$OPTIND:1}
+check_file_exists "${config_file}"
 
 #
 # Check that everything is in place if plotting is requested
@@ -425,11 +456,7 @@ then
 	# The python binary must be there
 	if [ "${shark_python_exec}" != "python" ]
 	then
-		if [ ! -f "${shark_python_exec}" ]
-		then
-			error "Python executable ${shark_python_exec} does not exist, please check the -P option"
-			exit 1
-		fi
+		check_file_exists "${shark_python_exec}" ", please check the -P option"
 		shark_python_exec=`get_absolute_path "${shark_python_exec}"`
 	fi
 fi
@@ -442,11 +469,7 @@ fi
 #
 if [ -n "$shark_binary" ]
 then
-	if [ ! -e "$shark_binary" ]
-	then
-		error "$shark_binary does not exist, check the -S option"
-		exit 1
-	fi
+	check_file_exists "${shark_binary}" ", please check the -S option"
 	shark_binary=`get_absolute_path "$shark_binary"`
 fi
 
@@ -479,13 +502,6 @@ else
 	error "details of your queueing system so they can add the corresponding support to"
 	error "this script in future versions of shark."
 	error ""
-	exit 1
-fi
-
-# Make sure the configuration file exists
-if [ ! -f ${config_file} ]
-then
-	error "File ${config_file} is not an existing (or accessible) file"
 	exit 1
 fi
 
@@ -537,6 +553,16 @@ svols=($svols)
 n_svols=${#svols[@]}
 info "Will submit shark to work on $n_svols subvolumes: $shark_subvolumes"
 
+if [ -n "$shark_params_file" ]
+then
+	n_tasks=$(wc -l < $shark_params_file)
+else
+	n_tasks=$n_svols
+fi
+
+info "Will submit shark to work on $n_tasks tasks"
+
+
 # Make sure we have a proper working directory
 if [ ! -z "$shark_output_directory" ]
 then
@@ -557,11 +583,19 @@ else
 fi
 info "Will run shark-run under $shark_output_directory"
 
-# Copy the configuration file over to the working directory
+# Copy the configuration and parameter files over to the working directory
 config_file_bname=`basename $config_file`
 cp "$config_file" "$shark_output_directory"
 config_file="$config_file_bname"
 info "Configuration file copied to $shark_output_directory/$config_file"
+
+if [ -n "$shark_params_file" ]
+then
+	bname=`basename $shark_params_file`
+	cp "$shark_params_file" "$shark_output_directory"
+	shark_params_file="$bname"
+	info "Parameters file copied to $shark_output_directory/$shark_params_file"
+fi
 
 # Go, go, go!
 info "Submitting shark to $queue_system"
@@ -573,4 +607,4 @@ else
 	exit 1
 fi
 
-info "Submissiong successful. Thanks for using our shark-submit script, come back soon :-)"
+info "Submission successful. Thanks for using our shark-submit script, come back soon :-)"
