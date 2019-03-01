@@ -54,8 +54,8 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	 * f[14]: total angular momentum of the ejected gas component.
 	 */
 
-	auto params= reinterpret_cast<BasicPhysicalModel::solver_params *>(data);
-	auto &model = dynamic_cast<BasicPhysicalModel &>(params->model);
+	auto params = static_cast<BasicPhysicalModel::solver_params *>(data);
+	auto &model = static_cast<BasicPhysicalModel &>(params->model);
 
 	double R = model.recycling_parameters.recycle; /*recycling fraction of newly formed stars*/
 
