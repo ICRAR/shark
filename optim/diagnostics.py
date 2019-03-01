@@ -35,7 +35,14 @@ import matplotlib.cm as cmx
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+
 import analysis
+
+try:
+    import pandas
+    import seaborn
+except:
+    seaborn = pandas = None
 
 
 pos_re = re.compile('track_[0-9]+_pos.npy')
@@ -163,6 +170,13 @@ def plot_3d_space_animation(space, pos, fx, fig=None):
     animation = anim.FuncAnimation(fig, update, frames=frames_data, blit=False)
     return animation
 
+def plot_pairplot(space, pos):
+    """Produce a pairplot with seaborn"""
+    S, D, L = pos.shape
+    pos = np.swapaxes(pos, 0, 1)
+    f = pandas.DataFrame(pos.reshape((D, S * L)).T, columns=space['plot_label'])
+    return seaborn.pairplot(f)
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -185,6 +199,10 @@ def main():
         fig.savefig('3DPSOC.pdf')
         animation = plot_3d_space_animation(space, pos, fx)
         animation.save('3d-particles.gif', writer='imagemagick', fps=8)
+
+    if seaborn:
+        fig = plot_pairplot(space, pos)
+        fig.savefig('pairplot.pdf')
 
 if __name__ == '__main__':
     main()
