@@ -243,7 +243,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 }
 
-double StarFormation::star_formation_rate_surface_density(double r, void * params){
+double StarFormation::star_formation_rate_surface_density(double r, void * params) const {
 
 	using namespace constants;
 
@@ -298,7 +298,7 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 	return sfr_density;
 }
 
-double StarFormation::molecular_surface_density(double r, void * params){
+double StarFormation::molecular_surface_density(double r, void * params) const {
 
 	using namespace constants;
 
@@ -327,7 +327,7 @@ double StarFormation::molecular_surface_density(double r, void * params){
 	return PI2 * fmol(Sigma_gas, Sigma_stars, props->zgas, r) * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
 }
 
-double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double zgas, double r){
+double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double zgas, double r) const {
 
 	double rmol = 0;
 
@@ -373,7 +373,7 @@ double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double zgas, do
 	}
 }
 
-double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, double r){
+double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, double r) const {
 
 	/**
 	 * This function calculate the midplane pressure of the disk, and returns it in units of K/cm^-3.
@@ -395,7 +395,7 @@ double StarFormation::midplane_pressure(double Sigma_gas, double Sigma_stars, do
 	return pressure;
 }
 
-double StarFormation::gd14_sigma_norm(double d_mw, double u_mw){
+double StarFormation::gd14_sigma_norm(double d_mw, double u_mw) const {
 
 	double g = sqrt(std::pow(d_mw,2.0) + 0.0289);
 
@@ -404,7 +404,7 @@ double StarFormation::gd14_sigma_norm(double d_mw, double u_mw){
 	return sigma_r1;
 }
 
-double StarFormation::kmt09_fmol(double zgas, double sigma_gas){
+double StarFormation::kmt09_fmol(double zgas, double sigma_gas) const {
 
 	double chi   = 0.77 * (1.0 + 3.1 * std::pow(zgas,0.365));
 	double s     = std::log(1.0 + 0.6 * chi)/( 0.04 * parameters.clump_factor_KMT09 * sigma_gas/std::pow(constants::MEGA, 2.0) * zgas);
@@ -414,7 +414,7 @@ double StarFormation::kmt09_fmol(double zgas, double sigma_gas){
 	return func;
 }
 
-double StarFormation::k13_fmol(double zgas, double sigma_gas){
+double StarFormation::k13_fmol(double zgas, double sigma_gas) const {
 
 	//Galaxy parameters
 	double d_mw = zgas;

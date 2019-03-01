@@ -100,19 +100,19 @@ public:
 	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double zgas, double z,
 							   bool burst, double vgal, double &jrate, double jgas);
 
-	double star_formation_rate_surface_density(double r, void * params);
+	double star_formation_rate_surface_density(double r, void * params) const;
 
 	double manual_integral(func_t f, void * params, double rmin, double rmax);
 
-	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r);
+	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r) const;
 
-	double midplane_pressure(double Sigma_gas, double Sigma_stars, double r);
+	double midplane_pressure(double Sigma_gas, double Sigma_stars, double r) const;
 
-	double gd14_sigma_norm(double d_mw, double u_mw);
+	double gd14_sigma_norm(double d_mw, double u_mw) const;
 
-	double kmt09_fmol(double zgas, double sigma_gas);
+	double kmt09_fmol(double zgas, double sigma_gas) const;
 
-	double k13_fmol(double zgas, double sigma_gas);
+	double k13_fmol(double zgas, double sigma_gas) const;
 
 	std::size_t get_integration_intervals() {
 		return integrator.get_num_intervals();
@@ -124,7 +124,7 @@ public:
 
 	double molecular_hydrogen(double mcold, double mstars, double rgas, double rstars, double zgas, double z, double &jmol,  double jgas, double vgal, bool bulge, bool jcalc);
 
-	double molecular_surface_density(double r, void * params);
+	double molecular_surface_density(double r, void * params) const;
 
 	molecular_gas get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc);
 
