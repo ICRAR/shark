@@ -256,6 +256,11 @@ if (WIN32)
 	set(SHARK_LIBS ${SHARK_LIBS} ws2_32)
 endif()
 
+# Compiler-specific tweaks
+if (MSVC)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 #
 # Save all compile-time options here
 #
