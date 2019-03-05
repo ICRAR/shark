@@ -33,6 +33,8 @@
 
 namespace shark {
 
+std::vector<HaloPtr> MergerTree::NONE;
+
 SubhaloPtr Subhalo::main() const
 {
 	for (auto &sub: ascendants) {
@@ -45,7 +47,7 @@ SubhaloPtr Subhalo::main() const
 
 GalaxyPtr Subhalo::central_galaxy() const
 {
-	for (auto galaxy: galaxies){
+	for (auto &galaxy: galaxies){
 		if(galaxy->galaxy_type == Galaxy::CENTRAL){
 			return galaxy;
 		}
@@ -55,7 +57,7 @@ GalaxyPtr Subhalo::central_galaxy() const
 
 GalaxyPtr Subhalo::type1_galaxy() const
 {
-	for (auto galaxy: galaxies){
+	for (auto &galaxy: galaxies){
 		if(galaxy->galaxy_type == Galaxy::TYPE1){
 			return galaxy;
 		}
@@ -154,9 +156,9 @@ std::vector<GalaxyPtr> Subhalo::all_type2_galaxies() const
 
 	std::vector<GalaxyPtr> all;
 
-	for (auto galaxy: galaxies){
+	for (auto &galaxy: galaxies){
 		if(galaxy->galaxy_type == Galaxy::TYPE2){
-			all.push_back(std::move(galaxy));
+			all.push_back(galaxy);
 		}
 	}
 
@@ -172,7 +174,9 @@ void Subhalo::transfer_galaxies_to(SubhaloPtr &target)
 {
 	auto gals_before = target->galaxy_count();
 	auto our_gals = galaxies.size();
-	LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	if (LOG_ENABLED(trace)) {
+		LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	}
 
 	copy_galaxies_to(target, galaxies);
 	galaxies.clear();
@@ -185,7 +189,9 @@ void Subhalo::transfer_type2galaxies_to(SubhaloPtr &target)
 	auto type2_gals = all_type2_galaxies();
 	auto gals_before = target->galaxy_count();
 	auto our_gals = type2_gals.size();
-	LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	if (LOG_ENABLED(trace)) {
+		LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	}
 
 	copy_galaxies_to(target, type2_gals);
 	remove_galaxies(type2_gals);
@@ -231,7 +237,7 @@ std::vector<SubhaloPtr> Halo::all_subhalos() const
 	return all;
 }
 
-void Halo::add_subhalo(const SubhaloPtr &&subhalo)
+void Halo::add_subhalo(SubhaloPtr &&subhalo)
 {
 	// Add subhalo mass to halo
 	Mvir += subhalo->Mvir;
@@ -293,7 +299,7 @@ galaxies_size_type Halo::galaxy_count() const
 	}
 
 	const auto &sats = satellite_subhalos;
-	return std::accumulate(sats.begin(), sats.end(), count, [](unsigned long galaxy_count, const SubhaloPtr &subhalo) {
+	return std::accumulate(sats.begin(), sats.end(), count, [](galaxies_size_type galaxy_count, const SubhaloPtr &subhalo) {
 		return galaxy_count + subhalo->galaxy_count();
 	});
 }

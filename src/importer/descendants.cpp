@@ -28,8 +28,6 @@
 #include "hdf5/reader.h"
 #include "importer/descendants.h"
 
-using namespace std;
-
 namespace shark {
 
 namespace importer {
@@ -37,47 +35,44 @@ namespace importer {
 //
 // BaseDescendantReader methods follow
 //
-DescendantReader::DescendantReader(const string &filename) :
+DescendantReader::DescendantReader(const std::string &filename) :
 	filename(filename)
 {
-	if ( filename.size() == 0 ) {
+	if (filename.empty()) {
 		throw invalid_argument("Descendants file has no value");
 	}
 }
 
-DescendantReader::~DescendantReader()
-{
-	// no-op
-}
+DescendantReader::~DescendantReader() = default;
 
 //
 // AsciiDescendantReader methods follow
 //
-AsciiDescendantReader::AsciiDescendantReader(const string &filename) :
+AsciiDescendantReader::AsciiDescendantReader(const std::string &filename) :
 	DescendantReader(filename)
 {
 	// no-op
 }
 
-vector<descendants_data_t> AsciiDescendantReader::read_whole()
+std::vector<descendants_data_t> AsciiDescendantReader::read_whole()
 {
-	string line;
-	ifstream descendants_f = open_file(filename);
+	std::string line;
+	std::ifstream descendants_f = open_file(filename);
 
 	// The first line tells us how many descendants there are
 	unsigned int nhalos;
-	getline(descendants_f, line);
-	istringstream linestream(line);
+	std::getline(descendants_f, line);
+	std::istringstream linestream(line);
 	linestream >> nhalos;
 
 	// continue reading the rest and check if we'll need a final sorting
-	vector<descendants_data_t> descendants;
+	std::vector<descendants_data_t> descendants;
 	descendants.reserve(nhalos);
 	while ( getline(descendants_f, line) ) {
 		descendants_data_t desc;
-		istringstream linestream(line);
+		std::istringstream linestream(line);
 		linestream >> desc.halo_id >> desc.halo_snapshot >> desc.descendant_id >> desc.descendant_snapshot;
-		descendants.push_back(move(desc));
+		descendants.push_back(desc);
 	}
 
 	return descendants;
@@ -87,40 +82,40 @@ vector<descendants_data_t> AsciiDescendantReader::read_whole()
 // HDF5DescendantReader methods follow
 //
 
-HDF5DescendantReader::HDF5DescendantReader(const string &filename) :
+HDF5DescendantReader::HDF5DescendantReader(const std::string &filename) :
 	DescendantReader(filename)
 {
 	// no-op
 }
 
-vector<descendants_data_t> HDF5DescendantReader::read_whole()
+std::vector<descendants_data_t> HDF5DescendantReader::read_whole()
 {
 	hdf5::Reader reader(filename);
 
-	vector<long> halo_ids = reader.read_dataset_v<long>("Halo_IDs");
-	vector<int> halo_snaps = reader.read_dataset_v<int>("Halo_Snapshots");
-	vector<long> desc_ids = reader.read_dataset_v<long>("Descendant_IDs");
-	vector<int> desc_snaps = reader.read_dataset_v<int>("Descendant_Snapshots");
+	std::vector<long> halo_ids = reader.read_dataset_v<long>("Halo_IDs");
+	std::vector<int> halo_snaps = reader.read_dataset_v<int>("Halo_Snapshots");
+	std::vector<long> desc_ids = reader.read_dataset_v<long>("Descendant_IDs");
+	std::vector<int> desc_snaps = reader.read_dataset_v<int>("Descendant_Snapshots");
 
 	// Check that all sizes are the same
 	auto size = halo_ids.size();
 	if ( halo_snaps.size() != size ) {
-		ostringstream os;
+		std::ostringstream os;
 		os << "Halo_Snapshots length != Halo_IDs length: " << size << " != " << halo_snaps.size();
 		throw invalid_data(os.str());
 	}
 	if ( desc_ids.size() != size ) {
-		ostringstream os;
+		std::ostringstream os;
 		os << "Descendant_IDs length != Halo_IDs length: " << size << " != " << desc_ids.size();
 		throw invalid_data(os.str());
 	}
 	if ( desc_snaps.size() != size ) {
-		ostringstream os;
+		std::ostringstream os;
 		os << "Descendant_Snapshots length != Halo_IDs length: " << size << " != " << desc_snaps.size();
 		throw invalid_data(os.str());
 	}
 
-	vector<descendants_data_t> descendants;
+	std::vector<descendants_data_t> descendants;
 	descendants.reserve(size);
 	for(unsigned int i=0; i!=size; i++) {
 		descendants_data_t desc = {
@@ -129,12 +124,12 @@ vector<descendants_data_t> HDF5DescendantReader::read_whole()
 			desc_ids[i],
 			desc_snaps[i]
 		};
-		descendants.push_back(move(desc));
+		descendants.push_back(desc);
 	}
 
 	return descendants;
 }
 
-}  // namespace trees
+}  // namespace importer
 
 }  // namespace shark

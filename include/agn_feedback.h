@@ -27,8 +27,8 @@
 #include <memory>
 #include <utility>
 
-#include "cosmology.h"
 #include "components.h"
+#include "cosmology.h"
 #include "options.h"
 #include "recycling.h"
 
@@ -37,7 +37,7 @@ namespace shark {
 class AGNFeedbackParameters {
 
 public:
-	AGNFeedbackParameters(const Options &options);
+	explicit AGNFeedbackParameters(const Options &options);
 
 	double mseed = 0;
 	double mhalo_seed = 0;
@@ -67,7 +67,7 @@ public:
 class AGNFeedback {
 
 public:
-	AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology, const RecyclingParameters &recycle_params);
+	AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology, RecyclingParameters recycle_params);
 
 	/**
 	 * All input quantities should be in comoving units.
@@ -97,7 +97,7 @@ private:
 };
 
 /// Type used by users to handle an instance of AGNFeedback
-typedef std::shared_ptr<AGNFeedback> AGNFeedbackPtr;
+using AGNFeedbackPtr = std::shared_ptr<AGNFeedback>;
 
 template <typename ...Ts>
 AGNFeedbackPtr make_agn_feedback(Ts&&...ts)

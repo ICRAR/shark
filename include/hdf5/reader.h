@@ -50,7 +50,7 @@ public:
 	 *
 	 * @param filename The name of the HDF5 file to read
 	 */
-	Reader(const std::string &filename) :
+	explicit Reader(const std::string &filename) :
 		IOBase(filename, H5F_ACC_RDONLY) {}
 
 	template<typename T>
@@ -110,7 +110,7 @@ private:
 
 		H5::DataSpace space = get_2d_dataspace(dataset);
 		hsize_t dim_sizes[2];
-		space.getSimpleExtentDims(dim_sizes, NULL);
+		space.getSimpleExtentDims(dim_sizes, nullptr);
 
 		std::vector<T> data(dim_sizes[0] * dim_sizes[1]);
 		dataset.read(data.data(), dataset.getDataType(), space, space);

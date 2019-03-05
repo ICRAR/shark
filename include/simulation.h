@@ -37,7 +37,7 @@ namespace shark {
 class SimulationParameters {
 
 public:
-	SimulationParameters(const Options &options);
+	explicit SimulationParameters(const Options &options);
 
 	float volume = 0;
 	float particle_mass = 0;
@@ -47,11 +47,11 @@ public:
 	int max_snapshot = 0;
 	int tot_nsubvols = 0;
 
-	std::string sim_name {};
+	std::string sim_name;
 
 	std::string tree_files_prefix {"tree."};
 
-	std::map<int,double> redshifts {};
+	std::map<int,double> redshifts;
 
 	bool hydrorun = false;
 
@@ -64,7 +64,7 @@ class Simulation {
 
 public:
 
-	Simulation(SimulationParameters parameters, const CosmologyPtr &cosmology);
+	Simulation(SimulationParameters parameters, CosmologyPtr cosmology);
 
 	double convert_snapshot_to_age(int s);
 

@@ -21,16 +21,24 @@
  * @file
  */
 
+#ifndef SHARK_INTERPOLATION_H_
+#define SHARK_INTERPOLATION_H_
+
 #include <memory>
 #include <vector>
 
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
 
-#ifndef SHARK_INTERPOLATION_H_
-#define SHARK_INTERPOLATION_H_
+#include "utils.h"
 
 namespace shark {
+
+/// A deleter of gsl_interp2d objects
+using gsl_interp2d_deleter = deleter<gsl_interp2d, gsl_interp2d_free>;
+
+/// A deleter of gsl_interp_accel objects
+using gsl_interp_accel_deleter = deleter<gsl_interp_accel, gsl_interp_accel_free>;
 
 /// A 2D interpolation object
 class Interpolator {
@@ -45,17 +53,15 @@ public:
 	Interpolator(std::vector<double> xvals, std::vector<double> yvals,
 	             std::vector<double> zvals, InterpolatorType type = BILINEAR);
 
-	// Copy/move constructors, destructor
+	/// Copy constructor
 	Interpolator(const Interpolator &other);
-	Interpolator(Interpolator &&other);
-	~Interpolator();
 
 	double get(double x, double y) const;
 
 private:
-	std::unique_ptr<gsl_interp2d> interp2d;
-	std::unique_ptr<gsl_interp_accel> xacc;
-	std::unique_ptr<gsl_interp_accel> yacc;
+	std::unique_ptr<gsl_interp2d, gsl_interp2d_deleter> interp2d;
+	std::unique_ptr<gsl_interp_accel, gsl_interp_accel_deleter> xacc;
+	std::unique_ptr<gsl_interp_accel, gsl_interp_accel_deleter> yacc;
 	const gsl_interp2d_type *type;
 	std::vector<double> x;
 	std::vector<double> y;

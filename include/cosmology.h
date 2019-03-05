@@ -51,7 +51,7 @@ struct PowerSpectrumTable {
 class CosmologicalParameters {
 
 public:
-	CosmologicalParameters(const Options &options);
+	explicit CosmologicalParameters(const Options &options);
 
 	float OmegaM = 0;
 	float OmegaB = 0;
@@ -59,7 +59,7 @@ public:
 	float n_s = 0;
 	float sigma8 = 0;
 	float Hubble_h = 0;
-	PowerSpectrumTable power_spectrum {};
+	PowerSpectrumTable power_spectrum;
 
 private:
 	void load_tables(const std::string &power_spec_file);
@@ -72,7 +72,7 @@ private:
 class Cosmology {
 
 public:
-	Cosmology(const CosmologicalParameters &parameters);
+	explicit Cosmology(CosmologicalParameters parameters);
 
 	double comoving_to_physical_angularmomentum(double r, double z) const;
 	double comoving_to_physical_size(double r, double z) const;
@@ -81,7 +81,7 @@ public:
 	double physical_to_comoving_mass(double m) const;
 	double convert_redshift_to_age(double z) const;
 	double convert_age_to_redshift_lcdm(double t) const;
-	double expansion_factor(double a) const;
+	double expansion_factor(double t) const;
 
 	/**
 	 * universal_baryon_fraction: calculates the baryon density with respect to the total matter density.
@@ -98,7 +98,7 @@ public:
 };
 
 /// Type to be used by users handling pointers to this class
-typedef std::shared_ptr<Cosmology> CosmologyPtr;
+using CosmologyPtr = std::shared_ptr<Cosmology>;
 
 template <typename ...Ts>
 CosmologyPtr make_cosmology(Ts&&...ts)

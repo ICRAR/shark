@@ -31,22 +31,12 @@
 #include "logging.h"
 #include "utils.h"
 
-using namespace std;
-
 namespace shark {
 
 namespace hdf5 {
 
-IOBase::IOBase(const string &filename, unsigned int flags) :
-	hdf5_file(filename, flags),
-	opened(true)
-{
-	// no-op
-}
-
-IOBase::IOBase() :
-	hdf5_file(),
-	opened(true)
+IOBase::IOBase(const std::string &filename, unsigned int flags) :
+	hdf5_file(filename, flags)
 {
 	// no-op
 }
@@ -71,7 +61,7 @@ void IOBase::open_file(const std::string &filename, unsigned int flags)
 	hdf5_file = H5::H5File(filename, flags);
 }
 
-const string IOBase::get_filename() const
+const std::string IOBase::get_filename() const
 {
 	return hdf5_file.getFileName();
 }
@@ -81,13 +71,13 @@ H5::DataSpace IOBase::get_nd_dataspace(const H5::DataSet &dataset, unsigned int 
 	H5::DataSpace space = dataset.getSpace();
 	int ndims = space.getSimpleExtentNdims();
 	if (ndims != int(expected_ndims)) {
-		ostringstream os;
+		std::ostringstream os;
 		os << ndims << " dimensions found in dataset";
 #ifdef HDF5_NEWER_THAN_1_8_11
 		os << " " << dataset.getObjName();
 #endif // HDF5_NEWER_THAN_1_8_11
 		os << ", " << expected_ndims << " expected";
-		throw runtime_error(os.str());
+		throw std::runtime_error(os.str());
 	}
 	return space;
 }
@@ -106,17 +96,17 @@ H5::DataSpace IOBase::get_2d_dataspace(const H5::DataSet &dataset) const {
 
 hsize_t IOBase::get_1d_dimsize(const H5::DataSpace &space) const {
 	hsize_t dim_size;
-	space.getSimpleExtentDims(&dim_size, NULL);
+	space.getSimpleExtentDims(&dim_size, nullptr);
 	return dim_size;
 }
 
-H5::DataSet IOBase::get_dataset(const string &name) const {
+H5::DataSet IOBase::get_dataset(const std::string &name) const {
 
 	LOG(debug) << "Getting dataset " << name << " on file " << get_filename();
 
 	// The name might contains slashes, so we can navigate through
 	// a hierarchy of groups/datasets
-	const vector<string> parts = tokenize(name, "/");
+	auto parts = tokenize(name, "/");
 
 	return get_dataset(parts);
 }
@@ -130,7 +120,7 @@ H5::DataSet IOBase::get_dataset(const std::vector<std::string> &path) const {
 
 	// else there's a path to follow, go for it!
 	H5::Group group = hdf5_file.openGroup(path.front());
-	vector<string> group_paths(path.begin() + 1, path.end() - 1);
+	std::vector<std::string> group_paths(path.begin() + 1, path.end() - 1);
 	for(auto const &path: group_paths) {
 		LOG(debug) << "Getting dataset " << path << " on file " << get_filename();
 		group = group.openGroup(path);

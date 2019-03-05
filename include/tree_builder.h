@@ -50,8 +50,8 @@ protected:
 
 	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) = 0;
 
-	void link(const SubhaloPtr &subhalo, const SubhaloPtr &d_subhalo,
-	          const HaloPtr &halo, const HaloPtr &d_halo);
+	void link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_subhalo,
+	          const HaloPtr &parent_halo, const HaloPtr &desc_halo);
 
 private:
 	void ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const;
@@ -74,7 +74,7 @@ public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 
 protected:
-	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) override;
+	void loop_through_halos(const std::vector<HaloPtr> &halos) override;
 
 };
 

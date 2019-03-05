@@ -66,7 +66,7 @@ class GasCoolingParameters {
 
 public:
 
-	typedef std::map<double, std::string> tables_idx;
+	using tables_idx = std::map<double, std::string>;
 
 	enum LambdaCoolingModel {
 		CLOUDY = 0,
@@ -78,7 +78,7 @@ public:
 		BENSON10
 	};
 
-	GasCoolingParameters(const Options &options);
+	explicit GasCoolingParameters(const Options &options);
 
 	double pre_enrich_z = 1e-7;
 	double tau_cooling = 1;
@@ -87,7 +87,7 @@ public:
 	CoolingModel model = CROTON06;
 
 	//cooling tables
-	CoolingTable cooling_table {}; //these should be an array of parameters.
+	CoolingTable cooling_table; //these should be an array of parameters.
 
 
 private:
@@ -101,12 +101,12 @@ class GasCooling {
 public:
 	GasCooling(GasCoolingParameters parameters,
 			StarFormationParameters params_sf,
-			const ReionisationPtr &reionisation,
-			const CosmologyPtr &cosmology,
-			const AGNFeedbackPtr &agnfeedback,
-			const DarkMatterHalosPtr &darkmatterhalos,
-			const ReincorporationPtr &reincorporation,
-			const EnvironmentPtr &environment);
+			ReionisationPtr reionisation,
+			CosmologyPtr cosmology,
+			AGNFeedbackPtr agnfeedback,
+			DarkMatterHalosPtr darkmatterhalos,
+			ReincorporationPtr reincorporation,
+			EnvironmentPtr environment);
 
 	double cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, double deltat);
 	double cooling_time(double Tvir, double logl, double nh_density);
@@ -114,7 +114,6 @@ public:
 	double cooling_radius(double mhot, double rvir, double tcharac, double logl, double Tvir);
 	double density_shell(double mhot, double rvir, double r);
 	double cooling_luminosity(double logl, double rcool, double rvir, double mhot);
-	double disk_size_cooling(Subhalo &subhalo);
 
 private:
 

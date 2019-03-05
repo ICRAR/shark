@@ -36,7 +36,7 @@ namespace shark {
 class ReincorporationParameters{
 
 public:
-	ReincorporationParameters(const Options &options);
+	explicit ReincorporationParameters(const Options &options);
 
 	double tau_reinc = 0;
 	double mhalo_norm = 0;
@@ -47,7 +47,7 @@ public:
 class Reincorporation{
 
 public:
-	Reincorporation(const ReincorporationParameters &parameters, const DarkMatterHalosPtr &darkmatterhalo);
+	Reincorporation(const ReincorporationParameters &parameters, DarkMatterHalosPtr darkmatterhalo);
 
 	double reincorporated_mass (Halo &halo, Subhalo &subhalo, double z, double delta_t);
 
@@ -57,7 +57,7 @@ private:
 	DarkMatterHalosPtr darkmatterhalo;
 };
 
-typedef std::shared_ptr<Reincorporation> ReincorporationPtr;
+using ReincorporationPtr = std::shared_ptr<Reincorporation>;
 
 template <typename ...Ts>
 ReincorporationPtr make_reincorporation(Ts&&...ts)

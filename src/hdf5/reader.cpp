@@ -34,8 +34,6 @@
 #include "logging.h"
 #include "hdf5/reader.h"
 
-using namespace std;
-
 namespace shark {
 
 namespace hdf5 {
@@ -44,9 +42,9 @@ class attribute_not_found : public std::exception {};
 class name_not_found : public std::exception {};
 
 # ifdef HDF5_NEWER_THAN_1_10_0
-typedef H5::Group CommonFG;
+using CommonFG = H5::Group;
 # else
-typedef H5::CommonFG CommonFG;
+using CommonFG = H5::CommonFG;
 # endif
 
 template <typename AttributeHolder>
@@ -94,7 +92,7 @@ static H5::Attribute _get_attribute(const CommonFG &file_or_group, const std::ve
 	throw name_not_found();
 }
 
-H5::Attribute Reader::get_attribute(const string &name) const
+H5::Attribute Reader::get_attribute(const std::string &name) const
 {
 	LOG(debug) << "Getting attribute " << name << " from file " << get_filename();
 	std::vector<std::string> parts = tokenize(name, "/");

@@ -31,7 +31,12 @@
 
 #include <gsl/gsl_odeiv2.h>
 
+#include "utils.h"
+
 namespace shark {
+
+/// A deleter of gsl_odeiv2_driver objects
+using gsl_odeiv2_driver_deleter = deleter<gsl_odeiv2_driver, gsl_odeiv2_driver_free>;
 
 /**
  * A solver of ODE systems
@@ -54,52 +59,26 @@ public:
 	 * @param A pointer to any user-provided data
 	 * @return
 	 */
-	typedef int (*ode_evaluator)(double, const double y[], double f[], void *);
+	using ode_evaluator = int (*)(double, const double y[], double f[], void *);
 
 	/**
 	 * Creates a new ODESolver
 	 *
-	 * @param y0 The initial values for the ODE system. It should contain as
-	 * many values as those produced by `evaluator`
-	 * @param t0 The time associated with the initial values `y0`.
-	 * @param delta_t The time difference used to evolve the system on each
-	 * evaluation
+	 * @param evaluator The function that evaluates the ODE system
+	 * @param dimension The dimensionality of the ODE system to solve
 	 * @param precision The precision to use for the adaptive step sizes.
-	 * @param evaluator The function evaluating the system at time `t`
+	 * @param params The parameters to pass down to ``evaluator``
 	 */
-	ODESolver(const std::vector<double> &y0, double t0, double delta_t,
-	          double precision, ode_evaluator evaluator);
+	ODESolver(ode_evaluator evaluator, size_t dimension, double precision, void *params);
 
 	/**
-	 * Creates a new ODESolver
+	 * Evolves the ODE system from 0 to ``delta_t``
 	 *
-	 * @param y0 The initial values for the ODE system. It should contain as
-	 * many values as those produced by `evaluator`
-	 * @param t0 The time associated with the initial values `y0`.
-	 * @param delta_t The time difference used to evolve the system on each
-	 * evaluation
-	 * @param ode_system The (GSL) ODE system to solve
-	 * @param precision The precision to use for the adaptive step sizes.
+	 * @param y The values of the system at ``t = 0``. After returning the vector
+	 *  contains the values at ``delta_t``.
+	 * @param delta_t The amount of time the system is evolved for
 	 */
-	ODESolver(const std::vector<double> &y0, double t0, double delta_t,
-	          double precision, const std::shared_ptr<gsl_odeiv2_system> &ode_system);
-
-	/**
-	 * Move constructor
-	 */
-	ODESolver(ODESolver &&odeSolver);
-
-	/**
-	 * Destructs this solver and frees up all resources associated with it
-	 */
-	~ODESolver();
-
-	/**
-	 * Evolves the ODE system by evaluating it in the new `t = t + delta_t`
-	 *
-	 * @return The `y` values for the evaluation of the system at `t`.
-	 */
-	std::vector<double> evolve();
+	void evolve(std::vector<double> &y, double delta_t);
 
 	/**
 	 * Returns the number of times that the internal ODE system has been
@@ -107,29 +86,11 @@ public:
 	 *
 	 * @return The number of times the ODE system has been evaluated.
 	 */
-	unsigned long int num_evaluations();
-
-	/**
-	 * Returns the current time `t` at which the system is sitting
-	 * @return
-	 */
-	double current_t() {
-		return t;
-	}
-
-	/**
-	 * Move assignment operator
-	 */
-	ODESolver& operator=(ODESolver &&other);
+	std::size_t num_evaluations();
 
 private:
-	std::vector<double> y;
-	double t;
-	double t0;
-	double delta_t;
-	unsigned int step;
-	std::shared_ptr<gsl_odeiv2_system> ode_system;
-	std::unique_ptr<gsl_odeiv2_driver> driver;
+	std::unique_ptr<gsl_odeiv2_system> ode_system;
+	std::unique_ptr<gsl_odeiv2_driver, gsl_odeiv2_driver_deleter> driver;
 };
 
 }  // namespace shark

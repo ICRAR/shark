@@ -73,10 +73,10 @@ Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, c
 	throw invalid_option(os.str());
 }
 
-AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology, const RecyclingParameters &recycle_params) :
+AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology, RecyclingParameters recycle_params) :
 	parameters(parameters),
-	cosmology(cosmology),
-	recycle_params(recycle_params)
+	cosmology(std::move(cosmology)),
+	recycle_params(std::move(recycle_params))
 {
 	// no-op
 }

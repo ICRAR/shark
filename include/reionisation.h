@@ -36,7 +36,7 @@ namespace shark {
 class ReionisationParameters {
 
 public:
-	ReionisationParameters(const Options &options);
+	explicit ReionisationParameters(const Options &options);
 
 	enum ReionisationModel {
 		LACEY16 = 0,
@@ -56,7 +56,7 @@ public:
 class Reionisation {
 
 public:
-	Reionisation(const ReionisationParameters &parameters);
+	explicit Reionisation(const ReionisationParameters &parameters);
 	virtual ~Reionisation();
 
 	/// Checks whether a halo of viral velocity @p v and redshift @p z is affected by reionisation
@@ -73,17 +73,17 @@ private:
 class Lacey16Reionisation : public Reionisation {
 public:
 	using Reionisation::Reionisation;
-	virtual bool reionised_halo (double v, double z) const;
+	bool reionised_halo (double v, double z) const override;
 };
 
 /// The Sobacchi13 model of reionisation
 class Sobacchi13Reionisation : public Reionisation {
 public:
 	using Reionisation::Reionisation;
-	virtual bool reionised_halo (double v, double z) const;
+	bool reionised_halo (double v, double z) const override;
 };
 
-typedef std::shared_ptr<Reionisation> ReionisationPtr;
+using ReionisationPtr = std::shared_ptr<Reionisation>;
 
 template <typename ...Ts>
 ReionisationPtr make_reionisation(const ReionisationParameters &parameters, Ts&&...ts)

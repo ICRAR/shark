@@ -53,18 +53,19 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 }
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
-		const CosmologyPtr &cosmology,
+		CosmologyPtr cosmology,
+		const ExecutionParameters &execparams,
 		SimulationParameters simparams,
-		const DarkMatterHalosPtr &darkmatterhalo,
+		DarkMatterHalosPtr darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
-		const AGNFeedbackPtr &agnfeedback) :
+		AGNFeedbackPtr agnfeedback) :
 	parameters(parameters),
-	cosmology(cosmology),
-	simparams(simparams),
-	darkmatterhalo(darkmatterhalo),
-	physicalmodel(physicalmodel),
-	agnfeedback(agnfeedback),
-	generator(),
+	cosmology(std::move(cosmology)),
+	simparams(std::move(simparams)),
+	darkmatterhalo(std::move(darkmatterhalo)),
+	physicalmodel(std::move(physicalmodel)),
+	agnfeedback(std::move(agnfeedback)),
+	generator(execparams.seed),
 	distribution(-0.14, 0.26)
 {
 	// no-op
@@ -260,7 +261,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z, int snapshot)
 			auto ascendants = primary_subhalo->ascendants;
 			std::copy(ascendants.begin(), ascendants.end(), std::ostream_iterator<SubhaloPtr>(os, " "));
 			os << ". Galaxies are: ";
-			auto galaxies = primary_subhalo->galaxies;
+			auto &galaxies = primary_subhalo->galaxies;
 			std::copy(galaxies.begin(), galaxies.end(), std::ostream_iterator<GalaxyPtr>(os, " "));
 			throw invalid_argument(os.str());
 		}
@@ -544,11 +545,11 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
 				if(galaxy->bulge_gas.mass > 0 && galaxy->bulge_gas.mass < parameters.mass_min){
-					transfer_bulge_gas(subhalo, galaxy, z);
+					transfer_bulge_gas(galaxy);
 				}
 			}
 			else if (galaxy->bulge_gas.mass > 0){
-				transfer_bulge_gas(subhalo, galaxy, z);
+				transfer_bulge_gas(galaxy);
 			}
 		}
 	}
@@ -697,8 +698,8 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	return r;
 }
 
-void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite){
-
+void GalaxyMergers::transfer_baryon_mass(const SubhaloPtr &central, const SubhaloPtr &satellite)
+{
 	central->hot_halo_gas += satellite->hot_halo_gas;
 	central->cold_halo_gas += satellite->cold_halo_gas;
 	central->ejected_galaxy_gas += satellite->ejected_galaxy_gas;
@@ -712,8 +713,8 @@ void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellit
 
 }
 
-void GalaxyMergers::transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z){
-
+void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy)
+{
 	galaxy->disk_gas += galaxy->bulge_gas;
 
 	if(galaxy->disk_gas.rscale == 0){

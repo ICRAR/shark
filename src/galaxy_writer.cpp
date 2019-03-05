@@ -47,12 +47,13 @@
 
 namespace shark {
 
-GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  const CosmologyPtr &cosmology, const DarkMatterHalosPtr &darkmatterhalo, SimulationParameters sim_params):
-	exec_params(exec_params),
-	cosmo_params(cosmo_params),
-	cosmology(cosmology),
-	darkmatterhalo(darkmatterhalo),
-	sim_params(sim_params){
+GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParameters cosmo_params,  CosmologyPtr cosmology, DarkMatterHalosPtr darkmatterhalo, SimulationParameters sim_params):
+	exec_params(std::move(exec_params)),
+	cosmo_params(std::move(cosmo_params)),
+	cosmology(std::move(cosmology)),
+	darkmatterhalo(std::move(darkmatterhalo)),
+	sim_params(std::move(sim_params))
+{
 	//no-opt
 }
 
@@ -120,6 +121,9 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 	file.write_dataset("run_info/timestamp", std::string(time_str), comment);
 
 	file.write_attribute("run_info/model_name", exec_params.name_model);
+
+	comment = "The seed value used in the random number engines";
+	file.write_dataset("run_info/seed", exec_params.seed, comment);
 
 	// Calculate effective volume of the run
 	float volume = sim_params.volume * exec_params.simulation_batches.size();
@@ -549,7 +553,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(id_subhalo);
 
 	LOG(info) << "Total amount of memory used by the writing process: " << memory_amount(total);
-	LOG(debug) << "Detailed amounts follow: " << os.str();
+	if (LOG_ENABLED(debug)) {
+		LOG(debug) << "Detailed amounts follow: " << os.str();
+	}
 
 	LOG(info) << "Galaxies pivoted and memory reported in " << t;
 

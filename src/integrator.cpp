@@ -29,34 +29,17 @@
 namespace shark {
 
 Integrator::Integrator(size_t max_intervals) :
-	workspace(),
 	max_intervals(max_intervals),
 	num_intervals(0)
 {
 	init_gsl_objects();
 }
 
-Integrator::Integrator(Integrator &&other) :
-	workspace(),
-	max_intervals(other.max_intervals),
-	num_intervals(other.num_intervals)
-{
-	std::swap(workspace, other.workspace);
-}
-
 Integrator::Integrator(const Integrator &other) :
-	workspace(),
 	max_intervals(other.max_intervals),
 	num_intervals(other.num_intervals)
 {
 	init_gsl_objects();
-}
-
-Integrator::~Integrator()
-{
-	if (workspace) {
-		gsl_integration_workspace_free(workspace.release());
-	}
 }
 
 void Integrator::init_gsl_objects()
@@ -79,7 +62,7 @@ double Integrator::integrate(func_t f, void *params, double from, double to, dou
 	return result;
 }
 
-unsigned long int Integrator::get_num_intervals()
+std::size_t Integrator::get_num_intervals()
 {
 	return num_intervals;
 }

@@ -36,7 +36,7 @@ namespace shark {
 class RecyclingParameters {
 
 public:
-	RecyclingParameters(const Options &options);
+	explicit RecyclingParameters(const Options &options);
 
 	double yield = 0;
 	double recycle = 0;
