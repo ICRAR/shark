@@ -63,6 +63,29 @@ struct PerThreadObjects
 	DiskInstability disk_instability;
 };
 
+/// Structure containing detailed runtimes for the impl::evolve_merger_tree routine
+struct evolution_times {
+	Timer::duration galaxy_mergers = 0;
+	Timer::duration subhalos_mergers = 0;
+	Timer::duration galaxy_evolution = 0;
+	Timer::duration disk_instability_evaluation = 0;
+
+	evolution_times &operator +=(const evolution_times &rhs)
+	{
+		galaxy_mergers += rhs.galaxy_mergers;
+		subhalos_mergers += rhs.subhalos_mergers;
+		galaxy_evolution += rhs.galaxy_evolution;
+		disk_instability_evaluation += rhs.disk_instability_evaluation;
+		return *this;
+	}
+
+	evolution_times operator +(const evolution_times &rhs)
+	{
+		evolution_times sum = *this;
+		return sum += rhs;
+	}
+};
+
 /// impl class definition
 class SharkRunner::impl {
 public:
@@ -87,23 +110,6 @@ public:
 	void run();
 
 private:
-
-	/// Used to communicate individual runtimes within evolve_merger_tree
-	struct evolution_times {
-		Timer::duration galaxy_mergers = 0;
-		Timer::duration subhalos_mergers = 0;
-		Timer::duration galaxy_evolution = 0;
-		Timer::duration disk_instability_evaluation = 0;
-		evolution_times &operator +=(const evolution_times &rhs)
-		{
-			galaxy_mergers += rhs.galaxy_mergers;
-			subhalos_mergers += rhs.subhalos_mergers;
-			galaxy_evolution += rhs.galaxy_evolution;
-			disk_instability_evaluation += rhs.disk_instability_evaluation;
-			return *this;
-		}
-	};
-
 	Options options;
 	unsigned int threads;
 	CosmologicalParameters cosmo_params;
@@ -195,7 +201,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
 }
 
 template <typename T>
-std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SharkRunner::impl::evolution_times &times)
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const evolution_times &times)
 {
 	os << "galaxy mergers: " << ns_time(times.galaxy_mergers)
 	   << ", disk instability: " << ns_time(times.disk_instability_evaluation)
@@ -270,7 +276,7 @@ molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr
 
 }
 
-SharkRunner::impl::evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread_idx, int snapshot, double z, double delta_t)
+evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread_idx, int snapshot, double z, double delta_t)
 {
 	// Get the thread-specific objects needed to run the evolution
 	// In the non-OpenMP case we simply have one
@@ -279,7 +285,7 @@ SharkRunner::impl::evolution_times SharkRunner::impl::evolve_merger_tree(const M
 	auto &galaxy_mergers = objs.galaxy_mergers;
 	auto &disk_instability = objs.disk_instability;
 
-	SharkRunner::impl::evolution_times times;
+	evolution_times times;
 
 	/*here loop over the halos this merger tree has at this time.*/
 	for(auto &halo: tree->halos_at(snapshot)) {
@@ -345,12 +351,12 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 	LOG(info) << os.str();
 
 	Timer evolution_t;
-	evolution_times times;
+	std::vector<evolution_times> times(threads);
 	omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, int thread_idx) {
-		times += evolve_merger_tree(merger_tree, thread_idx, snapshot, simulation_params.redshifts[snapshot], delta_t);
+		times[thread_idx] += evolve_merger_tree(merger_tree, thread_idx, snapshot, simulation_params.redshifts[snapshot], delta_t);
 	});
 	LOG(info) << "Evolved galaxies in " << evolution_t;
-	LOG(info) << "Detailed times: " << times;
+	LOG(info) << "Detailed times: " << std::accumulate(times.begin(), times.end(), evolution_times{});
 
 	std::vector<HaloPtr> all_halos_this_snapshot;
 	for (auto &tree: merger_trees) {
