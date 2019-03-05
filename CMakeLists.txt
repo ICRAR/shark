@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
 	endif()
 
 	if (SHARK_OPENMP)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+		add_compile_options("${OpenMP_CXX_FLAGS}")
 		set(SHARK_LIBS ${SHARK_LIBS} ${OpenMP_CXX_LIBRARIES})
 	endif()
 endmacro()
