@@ -213,7 +213,7 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 		double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec){
 
 	// QSO feedback only acts if the accretion rate is >0, BH mass is > 0 and QSO feedback is activated by the user.
-	if(macc > 0 and mBH > 0 and sfr > 0 and mgas > 0 and parameters.qso_feedback){
+	if(macc > 0 && mBH > 0 && sfr > 0 && mgas > 0 && parameters.qso_feedback){
 		double Lbol = agn_bolometric_luminosity(macc);
 		double Lcrit = qso_critical_luminosity(mgas, mbulge, rbulge);
 
@@ -229,10 +229,10 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 			double mejec_rate = (parameters.epsilon_qso * std::pow(vout/vcirc, 2.0) - 1) * mout_rate;
 
 			// Apply boundary conditions to outflow and ejection rates
-			if(mout_rate <  0 or std::isnan(mout_rate)){
+			if(mout_rate <  0 || std::isnan(mout_rate)){
 				mout_rate = 0;
 			}
-			if(mejec_rate <  0 or std::isnan(mejec_rate)){
+			if(mejec_rate <  0 || std::isnan(mejec_rate)){
 				mejec_rate = 0;
 			}
 			/*if(mejec_rate > mout_rate){
