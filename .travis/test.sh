@@ -52,10 +52,12 @@ check_hdf5_doc() {
    ../scripts/properties_as_list.sh mini-SURFS/my_model/$1 > props.rst
 	_diff="`diff -Naur ../doc/hdf5_properties/$2 props.rst`"
 	if [ -n "${_diff}" ]; then
-		fail "\nThe file doc/hdf5_properties/$2 is out of date. Differences follow:" \
-		     "\n\n${_diff}\n\n" \
-		     "Please run the script/properties_as_lish.sh script against a `basename $1` file"
-		     "to re-generate its documentation, then commit your changes."
+		fail "\nThe file doc/hdf5_properties/$2 is out of date. This probably means that you added a new\n" \
+		     "dataset to shark's output, but forgot to update the corresponding documentation.\n" \
+		     "The full difference follows:\n\n${_diff}\n\n" \
+		     "Please run the script/properties_as_lish.sh script against a `basename $1` file\n" \
+		     "to re-generate its documentation, then commit your changes. For example:\n\n" \
+		     "scripts/properties_as_list.sh my-output/model/199/0/`basename $1` > doc/hdf5_properties/$2"
 	fi
 }
 
