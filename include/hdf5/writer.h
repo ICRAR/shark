@@ -218,9 +218,9 @@ public:
 		if (comment.empty()) {
 			return;
 		}
-#ifdef HDF5_NEWER_THAN_1_8_11
-		dataset.setComment(comment);
-#endif
+
+		// C-style function call; DataSet.setComment works only in hdf5>=1.8.11
+		H5Oset_comment(dataset.getId(), comment.c_str());
 
 		// Follow naming convention, "comment" works with snake_case and lowerCamelCase
 		auto comment_attr_name = "comment";
