@@ -62,8 +62,9 @@ check_hdf5_doc() {
 check_hdf5_doc 199/0/galaxies.hdf5 galaxies.rst
 check_hdf5_doc 156/0/star_formation_histories.hdf5 star_formation_histories.rst
 
-# Make sure the standard plotting scripts run correctly
 if [ -n "$PYTHON" ]; then
+
+	# Make sure the standard plotting scripts run correctly
 	echo "backend: Agg" >> matplotlibrc
 	"$PYTHON" ../standard_plots/all.py -c ../sample.cfg -z input/redshifts.txt || fail "failure during execution of python plotting scripts"
 
