@@ -6,10 +6,16 @@
    Please see the script's help for more information on how to use it
 
 
-``bulges``
-^^^^^^^^^^
-* ``metallicity_histories``: Stellar metallicity of the stars formed in a timestep that by this output time ends up in the disk
-* ``star_formation_rate_histories``: Star formation history of stars formed that by this output time end up in the bulge [Msun/yr/h]
+``bulges_diskins``
+^^^^^^^^^^^^^^^^^^
+* ``metallicity_histories``: Stellar metallicity of the stars formed in a timestep that by this output time ends up in the bulge formed via disk instabilities
+* ``star_formation_rate_histories``: Star formation history of stars formed that by this output time end up in the bulge formed via disk instabilities [Msun/yr/h]
+
+
+``bulges_mergers``
+^^^^^^^^^^^^^^^^^^
+* ``metallicity_histories``: Stellar metallicity of the stars formed in a timestep that by this output time ends up in the bulge formed via galaxy mergers
+* ``star_formation_rate_histories``: Star formation history of stars formed that by this output time end up in the bulge formed via galaxy mergers [Msun/yr/h]
 
 
 ``cosmology``
@@ -44,6 +50,7 @@
 * ``ode_solver_precision``: accuracy applied when solving the ODE system of the physical model.
 * ``particle_mass``: dark matter particle mass of this simulation [Msun/h]
 * ``redshift``: output redshift
+* ``seed``: The seed value used in the random number engines
 * ``shark_git_has_local_changes``: whether this shark instance had uncommitted local changes
 * ``shark_git_revision``: the git revision of shark used to produce this data
 * ``shark_version``: the shark version
