@@ -413,11 +413,11 @@ void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, Sim
 					 * 50% and 80% of the mass of the current halo.
 					 */
 					auto snap = snapshot - 1;
-					while(prog and (halo->age_50 == 0 or halo->age_80 == 0)){
-						if(prog->Mvir <= 0.8* halo->Mvir and halo->age_80 == 0){
+					while(prog && (halo->age_50 == 0 || halo->age_80 == 0)){
+						if(prog->Mvir <= 0.8* halo->Mvir && halo->age_80 == 0){
 							halo->age_80 = sim_params.redshifts[snap];
 						}
-						if(prog->Mvir <= 0.5* halo->Mvir and halo->age_50 == 0){
+						if(prog->Mvir <= 0.5* halo->Mvir && halo->age_50 == 0){
 							halo->age_50 = sim_params.redshifts[snap];
 						}
 						snap --;
@@ -429,7 +429,7 @@ void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, Sim
 						auto main_prog = subhalo->main();
 						auto snap = snapshot - 1;
 
-						while(main_prog and subhalo->infall_t == 0){
+						while(main_prog && subhalo->infall_t == 0){
 							if(main_prog->subhalo_type == Subhalo::CENTRAL){
 								subhalo->infall_t = sim_params.redshifts[snap];
 							}
