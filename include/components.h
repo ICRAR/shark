@@ -499,6 +499,7 @@ public:
 	 * Vcirc: maximum circular velocity of the subhalo [km/s]
 	 * concentration: NFW concentration parameter of subhalo
 	 * lambda: spin parameter of subhalo
+	 * infall_t: redshift at which the subhalo became a type > 0.
 	 *  */
 	float Vvir = 0;
 	float Mvir = 0;
@@ -507,6 +508,7 @@ public:
 	float Vcirc = 0;
 	float concentration = 0;
 	float lambda = 0;
+	float infall_t = 0;
 
 	/**
 	 * cooling_subhalo_tracking: saves que information of the virial temperature, total halo gas and cooling time history.
@@ -695,6 +697,11 @@ public:
 	void remove_subhalo(const SubhaloPtr &subhalo);
 
 	/**
+	 * @return The main progenitor of this halo
+	 */
+	HaloPtr main_progenitor() const;
+
+	/**
 	 * The mass contained in the subhalos.
 	 * This quantity should be =1 for classic SAMs, but with Rodrigo Canas work
 	 * on VELOCIraptor, this quantity could be less than 1.
@@ -708,6 +715,8 @@ public:
 	 * concentration: NFW concentration parameter of halo
 	 * lambda: spin parameter of halo
 	 * cooling_rate: cooling rate experienced by this halo in Msun/Gyr/h.
+	 * age_80: redshift at which the halo had 80% of its mass in place.
+	 * age_50: redshift at which the halo had 50% of its mass in place.
 	 *  */
 	float Vvir = 0;
 	float Mvir = 0;
@@ -715,13 +724,13 @@ public:
 	float concentration = 0;
 	float lambda = 0;
 	float cooling_rate = 0;
+	float age_80 = 0;
+	float age_50 = 0;
 
 	/**
 	 * The snapshot at which this halo is found
 	 */
 	int snapshot;
-
-	bool main_progenitor = false;
 
 	HaloPtr descendant;
 	std::set<HaloPtr> ascendants;
@@ -737,6 +746,12 @@ public:
 	 * @param subhalo The subhalo to add
 	 */
 	void add_subhalo(SubhaloPtr &&subhalo);
+
+	/**
+	 * Returns the z=0 halo in which this halo ends up.
+	 * @return
+	 */
+	HaloPtr final_halo() const;
 
 	///
 	/// Returns the number of galaxies contained in this Halo
@@ -795,6 +810,11 @@ public:
 			return NONE;
 		}
 		return it->second;
+	}
+
+	std::vector<HaloPtr> &halos_at_last_snapshot()
+	{
+		return halos.rbegin()->second;
 	}
 
 private:

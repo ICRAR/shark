@@ -22,6 +22,7 @@
  */
 
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <iterator>
 #include <numeric>
@@ -43,6 +44,23 @@ SubhaloPtr Subhalo::main() const
 		}
 	}
 	return SubhaloPtr();
+}
+
+HaloPtr Halo::main_progenitor() const
+{
+	auto prog_cen_subh = central_subhalo->main();
+	if (prog_cen_subh) {
+		return prog_cen_subh->host_halo;
+	}
+
+	return HaloPtr();
+}
+
+HaloPtr Halo::final_halo() const
+{
+	auto final_halos = merger_tree->halos_at_last_snapshot();
+	assert(final_halos.size() == 1);
+	return final_halos[0];
 }
 
 GalaxyPtr Subhalo::central_galaxy() const

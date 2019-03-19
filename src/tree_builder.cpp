@@ -130,6 +130,10 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	LOG(info) << "Defining accretion rate using cosmology";
 	define_accretion_rate_from_dm(trees, sim_params, gas_cooling_params, *cosmology, AllBaryons);
 
+	// Define halo and subhalos ages and other relevant properties
+	LOG(info) << "Defining ages of halos and subhalos";
+	define_ages_halos(trees, sim_params);
+
 	return trees;
 }
 
@@ -394,6 +398,51 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 }
 
+void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
+
+
+	//Loop over trees.
+	for(auto &tree: trees) {
+		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
+				for(auto &halo: tree->halos_at(snapshot)){
+
+					auto prog = halo->main_progenitor();
+
+					/*
+					 * Define assembly ages of halos by going backwards in time and checking when the main progenitors had
+					 * 50% and 80% of the mass of the current halo.
+					 */
+					auto snap = snapshot - 1;
+					while(prog and (halo->age_50 == 0 or halo->age_80 == 0)){
+						if(prog->Mvir <= 0.8* halo->Mvir and halo->age_80 == 0){
+							halo->age_80 = sim_params.redshifts[snap];
+						}
+						if(prog->Mvir <= 0.5* halo->Mvir and halo->age_50 == 0){
+							halo->age_50 = sim_params.redshifts[snap];
+						}
+						snap --;
+						prog = prog->main_progenitor();
+					}
+
+					for (auto &subhalo: halo->satellite_subhalos) {
+
+						auto main_prog = subhalo->main();
+						auto snap = snapshot - 1;
+
+						while(main_prog and subhalo->infall_t == 0){
+							if(main_prog->subhalo_type == Subhalo::CENTRAL){
+								subhalo->infall_t = sim_params.redshifts[snap];
+							}
+							snap --;
+							main_prog = main_prog->main();
+						}
+					}
+				}
+		}
+
+	}
+
+}
 
 void TreeBuilder::remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo){
 

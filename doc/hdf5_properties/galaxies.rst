@@ -120,6 +120,17 @@
 * ``smbh_maximum``: Maximum mass of the SMBHs in the simulated box [Msun/h]
 
 
+``halo``
+^^^^^^^^
+* ``age_50``: redshift at which the halo had 50% of its current mass
+* ``age_80``: redshift at which the halo had 80% of its current mass
+* ``concentration``: halo concentration
+* ``final_z0_mvir``: virial mass of the halo in which this halo will end up in by z=0 [Msun/h]
+* ``lambda``: halo spin
+* ``mvir``: virial mass of halo [Msun/h]
+* ``vvir``: virial velocity of halo [km/s]
+
+
 ``run_info``
 ^^^^^^^^^^^^
 * ``batches``: number of batches analysed
@@ -143,4 +154,5 @@
 * ``descendant_id``: id of the subhalo that is the descendant of this subhalo
 * ``host_id``: id of the host halo of this subhalo
 * ``id``: Subhalo id
+* ``infall_time_subhalo``: redshift at which the subhalo became a SATELLITE (only well defined for satellite subhalos)
 * ``main_progenitor``: =1 if subhalo is the main progenitor' =0 otherwise.

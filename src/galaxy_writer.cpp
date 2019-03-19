@@ -187,6 +187,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<Halo::id_t> host_id;
 	vector<Galaxy::id_t> id_galaxy;
 	vector<Galaxy::id_t> descendant_id_galaxy;
+	vector<Halo::id_t> halo_id;
 
 	// Create all galaxies properties to write
 	vector<float> mstars_disk;
@@ -252,6 +253,16 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> cnfw_subhalo;
 	vector<float> lambda_subhalo;
 
+	vector<float> halo_m;
+	vector<float> halo_v;
+	vector<float> halo_lambda;
+	vector<float> halo_concentration;
+	vector<float> age_80_halo;
+	vector<float> age_50_halo;
+	vector<float> halo_final_m;
+
+	vector<float> infall_time_subhalo;
+
 	vector<float> position_x;
 	vector<float> position_y;
 	vector<float> position_z;
@@ -278,6 +289,16 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 		auto mhalo = halo->Mvir;
 		auto vhalo = halo->Vvir;
 
+		halo_m.push_back(mhalo);
+		halo_v.push_back(vhalo);
+		halo_lambda.push_back(halo->lambda);
+		halo_concentration.push_back(halo->concentration);
+		age_80_halo.push_back(halo->age_80);
+		age_50_halo.push_back(halo->age_50);
+		halo_id.push_back(halo->id);
+
+		halo_final_m.push_back(halo->final_halo()->Mvir);
+
 		Subhalo::id_t i = 1;
 
 		for (auto &subhalo: halo->all_subhalos()){
@@ -297,6 +318,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto lost_subhalo = subhalo->lost_galaxy_gas;
 
 			descendant_id.push_back(subhalo->descendant_id);
+			infall_time_subhalo.push_back(subhalo->infall_t);
+
 			int m = 0;
 			if(subhalo->main_progenitor){
 				m = 1;
@@ -486,9 +509,18 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(descendant_id);
 	REPORT(main);
 	REPORT(id);
+	REPORT(halo_id);
 	REPORT(id_galaxy);
 	REPORT(descendant_id_galaxy);
 	REPORT(host_id);
+	REPORT(halo_m);
+	REPORT(halo_v);
+	REPORT(halo_lambda);
+	REPORT(halo_concentration);
+	REPORT(age_50_halo);
+	REPORT(age_80_halo);
+	REPORT(halo_final_m);
+	REPORT(infall_time_subhalo);
 	REPORT(mstars_disk);
 	REPORT(mstars_bulge);
 	REPORT(mstars_burst_mergers);
@@ -561,6 +593,29 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	t = Timer();
 
+	//Write halo properties.
+
+	comment = "virial mass of halo [Msun/h]";
+	file.write_dataset("halo/mvir", halo_m, comment);
+
+	comment = "virial velocity of halo [km/s]";
+	file.write_dataset("halo/vvir", halo_m, comment);
+
+	comment = "halo concentration";
+	file.write_dataset("halo/concentration", halo_concentration, comment);
+
+	comment = "halo spin";
+	file.write_dataset("halo/lambda", halo_lambda, comment);
+
+	comment = "redshift at which the halo had 80% of its current mass";
+	file.write_dataset("halo/age_80", age_80_halo, comment);
+
+	comment = "redshift at which the halo had 50% of its current mass";
+	file.write_dataset("halo/age_50", age_50_halo, comment);
+
+	comment = "virial mass of the halo in which this halo will end up in by z=0 [Msun/h]";
+	file.write_dataset("halo/final_z0_mvir", halo_final_m, comment);
+
 	//Write subhalo properties.
 	comment = "Subhalo id";
 	file.write_dataset("subhalo/id", id, comment);
@@ -573,6 +628,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "id of the host halo of this subhalo";
 	file.write_dataset("subhalo/host_id", host_id, comment);
+
+	comment = "redshift at which the subhalo became a SATELLITE (only well defined for satellite subhalos)";
+	file.write_dataset("subhalo/infall_time_subhalo", infall_time_subhalo, comment);
 
 	//Write galaxy properties.
 	comment = "stellar mass in the disk [Msun/h]";
