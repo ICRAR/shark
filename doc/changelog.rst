@@ -1,7 +1,7 @@
 Changelog
 =========
 
-.. rubric:: Development version
+.. rubric:: 1.2.0
 
 * Initial version of the :doc:`PSO optimization routines <optim>`,
   originally contributed by Mawson Sammons.
