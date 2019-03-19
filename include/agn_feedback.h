@@ -27,19 +27,21 @@
 #include <memory>
 #include <utility>
 
+#include "components.h"
 #include "cosmology.h"
 #include "options.h"
-#include "components.h"
+#include "recycling.h"
 
 namespace shark {
 
 class AGNFeedbackParameters {
 
 public:
-	AGNFeedbackParameters(const Options &options);
+	explicit AGNFeedbackParameters(const Options &options);
 
 	double mseed = 0;
 	double mhalo_seed = 0;
+
 	double alpha_cool = 0;
 	double f_edd = 0;
 	double f_smbh = 0;
@@ -48,6 +50,10 @@ public:
 	double accretion_eff_cooling = 0;
 	double kappa_agn = 0;
 	double nu_smbh = 0;
+
+	bool qso_feedback = false;
+	double kappa_qso = 0;
+	double epsilon_qso = 0;
 
 	enum AGNFeedbackModel {
 		CROTON16 = 0,
@@ -61,7 +67,7 @@ public:
 class AGNFeedback {
 
 public:
-	AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology);
+	AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology, RecyclingParameters recycle_params);
 
 	/**
 	 * All input quantities should be in comoving units.
@@ -74,16 +80,24 @@ public:
 	double smbh_growth_starburst(double mgas, double vvir);
 	double smbh_accretion_timescale(Galaxy &galaxy, double z);
 	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir);
+	double qso_critical_luminosity(double mgas, double m, double r);
+	double salpeter_timescale(double Lbol, double mbh);
+	double qso_outflow_velocity(double Lbol, double zgas, double mgas);
+	void qso_outflow_rate(double mgas, double macc, double mBH, double zgas, double vcirc,
+			double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec);
+
 
 	// TODO: move this to private when possible
 	AGNFeedbackParameters parameters;
 
 private:
 	CosmologyPtr cosmology;
+	RecyclingParameters recycle_params;
+
 };
 
 /// Type used by users to handle an instance of AGNFeedback
-typedef std::shared_ptr<AGNFeedback> AGNFeedbackPtr;
+using AGNFeedbackPtr = std::shared_ptr<AGNFeedback>;
 
 template <typename ...Ts>
 AGNFeedbackPtr make_agn_feedback(Ts&&...ts)

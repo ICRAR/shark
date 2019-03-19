@@ -25,13 +25,12 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
+#include <cstring>
 #include <functional>
 #include <locale>
 #include <string>
 #include <sstream>
-
-#include <errno.h>
-#include <string.h>
 
 // gethostname
 #ifdef _WIN32
@@ -42,17 +41,15 @@
 
 #include "utils.h"
 
-using namespace std;
-
 namespace shark {
 
-vector<string> tokenize(const string &s, const string &delims)
+std::vector<std::string> tokenize(const std::string &s, const std::string &delims)
 {
-	string::size_type lastPos = s.find_first_not_of(delims, 0);
-	string::size_type pos     = s.find_first_of(delims, lastPos);
+	auto lastPos = s.find_first_not_of(delims, 0);
+	auto pos     = s.find_first_of(delims, lastPos);
 
-	vector<string> tokens;
-	while (string::npos != pos || string::npos != lastPos) {
+	std::vector<std::string> tokens;
+	while (std::string::npos != pos || std::string::npos != lastPos) {
 		tokens.push_back(s.substr(lastPos, pos - lastPos));
 		lastPos = s.find_first_not_of(delims, pos);
 		pos = s.find_first_of(delims, lastPos);
@@ -61,16 +58,16 @@ vector<string> tokenize(const string &s, const string &delims)
 }
 
 // trim from start
-static inline string &ltrim(std::string &s) {
-	s.erase(s.begin(), find_if(s.begin(), s.end(),
-	        not1(ptr_fun<int, int>(isspace))));
+static inline std::string &ltrim(std::string &s) {
+	s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+			std::not1(std::ptr_fun<int, int>(isspace))));
 	return s;
 }
 
 // trim from end
-static inline string &rtrim(std::string &s) {
-	s.erase(find_if(s.rbegin(), s.rend(),
-	        not1(ptr_fun<int, int>(isspace))).base(), s.end());
+static inline std::string &rtrim(std::string &s) {
+	s.erase(std::find_if(s.rbegin(), s.rend(),
+			std::not1(std::ptr_fun<int, int>(isspace))).base(), s.end());
 	return s;
 }
 
@@ -79,9 +76,9 @@ void trim(std::string &s) {
 	ltrim(rtrim(s));
 }
 
-void lower(string &s)
+void lower(std::string &s)
 {
-	transform(s.begin(), s.end(), s.begin(), ::tolower);
+	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
 
 std::string lower(const std::string &s)
@@ -91,24 +88,24 @@ std::string lower(const std::string &s)
 	return low;
 }
 
-void upper(string &s)
+void upper(std::string &s)
 {
-	transform(s.begin(), s.end(), s.begin(), ::toupper);
+	std::transform(s.begin(), s.end(), s.begin(), ::toupper);
 }
 
-ifstream open_file(const string &name)
+std::ifstream open_file(const std::string &name)
 {
-	ifstream f(name);
+	std::ifstream f(name);
 	if( !f ) {
-		ostringstream os;
+		std::ostringstream os;
 		os << "Error when opening file '" << name << "': " << strerror(errno);
-		throw runtime_error(os.str());
+		throw std::runtime_error(os.str());
 	}
 	return f;
 }
 
 bool empty_or_comment(const std::string &s) {
-	return s.size() == 0 || s[0] == '#';
+	return s.empty() || s[0] == '#';
 }
 
 std::string gethostname()

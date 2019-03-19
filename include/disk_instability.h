@@ -35,7 +35,7 @@ namespace shark {
 class DiskInstabilityParameters {
 
 public:
-	DiskInstabilityParameters(const Options &options);
+	explicit DiskInstabilityParameters(const Options &options);
 
 	float stable = 0;
 	float fint = 2;
@@ -47,9 +47,9 @@ public:
 	DiskInstability (DiskInstabilityParameters parameters,
 			GalaxyMergerParameters merger_params,
 			SimulationParameters simparams,
-			const DarkMatterHalosPtr &darkmatterhalo,
+			DarkMatterHalosPtr darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
-			const AGNFeedbackPtr &agnfeedback);
+			AGNFeedbackPtr agnfeedback);
 
 	double bulge_size(GalaxyPtr &galaxy);
 
@@ -59,7 +59,7 @@ public:
 
 	void create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z, double delta_t);
 
-	void transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot);
+	void transfer_history_disk_to_bulge(GalaxyPtr &galaxy, int snapshot);
 
 	void effective_angular_momentum(GalaxyPtr &galaxy);
 
@@ -73,7 +73,7 @@ private:
 
 };
 
-} // end namespace
+} // namespace shark
 
 
 #endif /* INCLUDE_DISK_INSTABILITY_H_ */

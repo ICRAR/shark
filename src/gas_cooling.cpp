@@ -37,8 +37,6 @@
 #include "reincorporation.h"
 #include "utils.h"
 
-using namespace std;
-
 namespace shark {
 
 void CoolingTable::add_metallicity_measurements(double zmetal, const std::map<double, double> &records)
@@ -52,8 +50,8 @@ void CoolingTable::add_metallicity_measurements(double zmetal, const std::map<do
 
 		auto first_metallicity = std::begin(_table)->first;
 		auto &first_measurement = std::begin(_table)->second;
-		vector<double> first_keys = get_keys(first_measurement);
-		vector<double> these_keys = get_keys(first_measurement);
+		std::vector<double> first_keys = get_keys(first_measurement);
+		std::vector<double> these_keys = get_keys(first_measurement);
 
 		if (first_keys != these_keys) {
 			std::ostringstream os;
@@ -101,10 +99,10 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 }
 
 GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
-	const string &cooling_tables_dir)
+	const std::string &cooling_tables_dir)
 {
 	//read cooling tables and load values in
-	string prefix;
+	std::string prefix;
 	if (lambdamodel == CLOUDY) {
 		prefix = "C08.00_";
 	}
@@ -115,14 +113,14 @@ GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
 		throw invalid_argument("Cooling model is not valid");
 	}
 
-	string tables = cooling_tables_dir + "/" + prefix + "tables.txt";
+	std::string tables = cooling_tables_dir + "/" + prefix + "tables.txt";
 
 	// Collect metallicity tables information
 	LOG(debug) << "Reading metallicity table index" << tables;
-	string line;
-	map<double, string> metallicity_tables;
-	ifstream f = open_file(tables);
-	while ( getline(f, line) ) {
+	std::string line;
+	std::map<double, std::string> metallicity_tables;
+	std::ifstream f = open_file(tables);
+	while ( std::getline(f, line) ) {
 
 		trim(line);
 		if (empty_or_comment(line)) {
@@ -130,8 +128,8 @@ GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
 		}
 
 		double metallicity;
-		string table_fname;
-		istringstream iss(line);
+		std::string table_fname;
+		std::istringstream iss(line);
 		iss >> metallicity >> table_fname;
 		trim(table_fname);
 
@@ -143,7 +141,7 @@ GasCoolingParameters::tables_idx GasCoolingParameters::find_tables(
 }
 
 void GasCoolingParameters::load_tables(
-	const string &cooling_tables_dir,
+	const std::string &cooling_tables_dir,
 	const tables_idx &metallicity_tables)
 {
 
@@ -151,15 +149,15 @@ void GasCoolingParameters::load_tables(
 	for(auto &kv: metallicity_tables) {
 
 		double metallicity = std::get<0>(kv);
-		const string fname = cooling_tables_dir + "/" + std::get<1>(kv);
+		const std::string fname = cooling_tables_dir + "/" + std::get<1>(kv);
 
 		LOG(debug) << "Reading table " << fname << " for metallicity " << metallicity;
 
-		ifstream f = open_file(fname);
-		string line;
+		std::ifstream f = open_file(fname);
+		std::string line;
 
 		std::map<double, double> measurements;
-		while ( getline(f, line) ) {
+		while ( std::getline(f, line) ) {
 
 			trim(line);
 			if (empty_or_comment(line)) {
@@ -167,7 +165,7 @@ void GasCoolingParameters::load_tables(
 			}
 
 			double t, ne, nh, nt, logl;
-			istringstream iss(line);
+			std::istringstream iss(line);
 			iss >> t >> ne >> nh >> nt >> logl;
 
 			measurements[t] = logl;
@@ -212,20 +210,20 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 
 GasCooling::GasCooling(GasCoolingParameters parameters,
 		StarFormationParameters params_sf,
-		const ReionisationPtr &reionisation,
-		const CosmologyPtr &cosmology,
-		const AGNFeedbackPtr &agnfeedback,
-		const DarkMatterHalosPtr &darkmatterhalos,
-		const ReincorporationPtr &reincorporation,
-		const EnvironmentPtr &environment) :
+		ReionisationPtr reionisation,
+		CosmologyPtr cosmology,
+		AGNFeedbackPtr agnfeedback,
+		DarkMatterHalosPtr darkmatterhalos,
+		ReincorporationPtr reincorporation,
+		EnvironmentPtr environment) :
 	parameters(parameters),
 	params_sf(params_sf),
-	reionisation(reionisation),
-	cosmology(cosmology),
-	agnfeedback(agnfeedback),
-	darkmatterhalos(darkmatterhalos),
-	reincorporation(reincorporation),
-	environment(environment),
+	reionisation(std::move(reionisation)),
+	cosmology(std::move(cosmology)),
+	agnfeedback(std::move(agnfeedback)),
+	darkmatterhalos(std::move(darkmatterhalos)),
+	reincorporation(std::move(reincorporation)),
+	environment(std::move(environment)),
 	cooling_lambda_interpolator(parameters.cooling_table.get_temperatures(), parameters.cooling_table.get_metallicities(), parameters.cooling_table.get_lambda())
 {
 	//no-opt
@@ -648,12 +646,5 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 		return 0;
 	}
 }
-
-double GasCooling::disk_size_cooling(Subhalo &subhalo){
-
-	//Do the basics first, and then more complicated stuff.
-	return 0;
-}
-
 
 }  // namespace shark

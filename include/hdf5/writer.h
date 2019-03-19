@@ -51,7 +51,7 @@ namespace hdf5 {
  */
 class object_exists : public exception {
 public:
-	object_exists(const std::string &what) : exception(what) {}
+	explicit object_exists(const std::string &what) : exception(what) {}
 };
 
 // How we construct data types depends on the type
@@ -208,7 +208,7 @@ public:
 	 * @param filename The name of the HDF5 file to write
 	 * @param overwrite Whether existing files should be overwritten or not
 	 */
-	Writer(const std::string &filename, bool overwrite = true,
+	explicit Writer(const std::string &filename, bool overwrite = true,
 		naming_convention group_naming_convention = naming_convention::SNAKE_CASE,
 		naming_convention dataset_naming_convention = naming_convention::SNAKE_CASE,
 		naming_convention attr_naming_convention = naming_convention::SNAKE_CASE);
@@ -218,9 +218,9 @@ public:
 		if (comment.empty()) {
 			return;
 		}
-#ifdef HDF5_NEWER_THAN_1_8_11
-		dataset.setComment(comment);
-#endif
+
+		// C-style function call; DataSet.setComment works only in hdf5>=1.8.11
+		H5Oset_comment(dataset.getId(), comment.c_str());
 
 		// Follow naming convention, "comment" works with snake_case and lowerCamelCase
 		auto comment_attr_name = "comment";

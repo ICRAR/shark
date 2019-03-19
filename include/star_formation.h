@@ -38,7 +38,7 @@ namespace shark {
 class StarFormationParameters {
 
 public:
-	StarFormationParameters(const Options &options);
+	explicit StarFormationParameters(const Options &options);
 
 	/**Parameters:
 	 * model: SF model applied
@@ -90,9 +90,9 @@ public:
 		double j_atom;
 	};
 
-	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, const CosmologyPtr &cosmology);
+	StarFormation(StarFormationParameters parameters, RecyclingParameters recycleparams, CosmologyPtr cosmology);
 
-	typedef double (*func_t)(double x, void *);
+	using func_t = double (*)(double x, void *);
 
 	/**
 	 * All input quantities should be in comoving units.
@@ -100,21 +100,21 @@ public:
 	double star_formation_rate(double mcold, double mstars, double rgas, double rstars, double zgas, double z,
 							   bool burst, double vgal, double &jrate, double jgas);
 
-	double star_formation_rate_surface_density(double r, void * params);
+	double star_formation_rate_surface_density(double r, void * params) const;
 
 	double manual_integral(func_t f, void * params, double rmin, double rmax);
 
-	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r);
+	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r) const;
 
-	double midplane_pressure(double Sigma_gas, double Sigma_stars, double r);
+	double midplane_pressure(double Sigma_gas, double Sigma_stars, double r) const;
 
-	double gd14_sigma_norm(double d_mw, double u_mw);
+	double gd14_sigma_norm(double d_mw, double u_mw) const;
 
-	double kmt09_fmol(double zgas, double sigma_gas);
+	double kmt09_fmol(double zgas, double sigma_gas) const;
 
-	double k13_fmol(double zgas, double sigma_gas);
+	double k13_fmol(double zgas, double sigma_gas) const;
 
-	unsigned long int get_integration_intervals() {
+	std::size_t get_integration_intervals() {
 		return integrator.get_num_intervals();
 	}
 
@@ -124,7 +124,7 @@ public:
 
 	double molecular_hydrogen(double mcold, double mstars, double rgas, double rstars, double zgas, double z, double &jmol,  double jgas, double vgal, bool bulge, bool jcalc);
 
-	double molecular_surface_density(double r, void * params);
+	double molecular_surface_density(double r, void * params) const;
 
 	molecular_gas get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc);
 
@@ -139,7 +139,7 @@ private:
 };
 
 /// A collection of galaxy-indexed molecular gas objects
-typedef std::map<GalaxyPtr, StarFormation::molecular_gas> molgas_per_galaxy;
+using molgas_per_galaxy = std::map<GalaxyPtr, StarFormation::molecular_gas>;
 
 }  // namespace shark
 

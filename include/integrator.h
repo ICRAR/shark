@@ -23,14 +23,19 @@
  * Integrator class headers
  */
 
+#ifndef SHARK_INTEGRATOR_H_
+#define SHARK_INTEGRATOR_H_
+
 #include <memory>
 
 #include <gsl/gsl_integration.h>
 
-#ifndef SHARK_INTEGRATOR_H_
-#define SHARK_INTEGRATOR_H_
+#include "utils.h"
 
 namespace shark {
+
+/// A deleter of gsl_integration_workspace objects
+using gsl_integration_workspace_deleter = deleter<gsl_integration_workspace, gsl_integration_workspace_free>;
 
 ///
 /// A class that integrates functions through different ranges
@@ -39,7 +44,7 @@ class Integrator {
 
 public:
 
-	typedef double (*func_t)(double x, void *);
+	using func_t = double (*)(double x, void *);
 
 	///
 	/// Creates a new Integrator that will integrate using at most
@@ -47,12 +52,10 @@ public:
 	///
 	/// @param max_intervals
 	///
-	Integrator(size_t max_intervals);
+	explicit Integrator(size_t max_intervals);
 
-	// Copy/movy constructors, destructor
+	/// Copy constructor
 	Integrator(const Integrator &other);
-	Integrator(Integrator &&other);
-	~Integrator();
 
 	///
 	/// Integrates function `f` with parameters `params` between `from` and `to`
@@ -66,7 +69,7 @@ public:
 	/// The number of intervals is an indication of how many times the functions
 	/// being integrated have been called.
 	///
-	unsigned long int get_num_intervals();
+	std::size_t get_num_intervals();
 
 	///
 	/// Reset the number of intervals count.
@@ -74,9 +77,9 @@ public:
 	void reset_num_intervals();
 
 private:
-	std::unique_ptr<gsl_integration_workspace> workspace;
+	std::unique_ptr<gsl_integration_workspace, gsl_integration_workspace_deleter> workspace;
 	size_t max_intervals;
-	unsigned long int num_intervals;
+	std::size_t num_intervals;
 
 	void init_gsl_objects();
 };

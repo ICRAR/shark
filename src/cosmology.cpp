@@ -21,12 +21,12 @@
  * @file
  */
 
+#include <cerrno>
 #include <cmath>
 #include <fstream>
 #include <sstream>
 #include <map>
 #include <tuple>
-#include <errno.h>
 #include <stdexcept>
 
 #include "cosmology.h"
@@ -98,13 +98,11 @@ CosmologicalParameters::CosmologicalParameters(const Options &options)
 void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 {
 
-	using namespace std;
-
 	LOG(debug) << "Reading table " << power_spec_file ;
 
-	ifstream f = open_file(power_spec_file);
-	string line;
-	while ( getline(f, line) ) {
+	std::ifstream f = open_file(power_spec_file);
+	std::string line;
+	while ( std::getline(f, line) ) {
 
 		trim(line);
 		if (empty_or_comment(line)) {
@@ -112,7 +110,7 @@ void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 		}
 
 		double k,p;
-		istringstream iss(line);
+		std::istringstream iss(line);
 		iss >> k >> p;
 
 		power_spectrum.k.push_back(k);
@@ -123,14 +121,15 @@ void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 
 }
 
-Cosmology::Cosmology(const CosmologicalParameters &parameters) :
-	parameters(parameters)
+Cosmology::Cosmology(CosmologicalParameters parameters) :
+	parameters(std::move(parameters))
 {
 	// no-op
 }
 
-double Cosmology::comoving_to_physical_angularmomentum(double L, double z) const {
-	return L / std::pow(parameters.Hubble_h, 2) / (1 + z);
+double Cosmology::comoving_to_physical_angularmomentum(double r, double z) const
+{
+	return r / std::pow(parameters.Hubble_h, 2) / (1 + z);
 }
 
 double Cosmology::comoving_to_physical_size(double r, double z) const {
@@ -237,4 +236,4 @@ double Cosmology::hubble_parameter (double z) const {
 	return parameters.Hubble_h * 100.0 * std::sqrt(H2);
 }
 
-}
+} // namespace shark

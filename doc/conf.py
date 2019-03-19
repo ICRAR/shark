@@ -24,7 +24,7 @@ import os
 import subprocess
 
 # -- General configuration ------------------------------------------------
-extensions = ['sphinx.ext.imgmath']
+extensions = ['sphinx.ext.mathjax']
 master_doc = 'index'
 source_suffix = '.rst'
 rst_prolog = '''

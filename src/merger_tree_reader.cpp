@@ -42,22 +42,20 @@
 #include "hdf5/reader.h"
 
 
-using namespace std;
-
 namespace shark {
 
-SURFSReader::SURFSReader(const std::string &prefix, const DarkMatterHalosPtr &dark_matter_halos, const SimulationParameters &simulation_params, unsigned int threads) :
-	prefix(prefix), dark_matter_halos(dark_matter_halos), simulation_params(simulation_params), threads(threads)
+SURFSReader::SURFSReader(const std::string &prefix, DarkMatterHalosPtr dark_matter_halos, SimulationParameters simulation_params, unsigned int threads) :
+	prefix(prefix), dark_matter_halos(std::move(dark_matter_halos)), simulation_params(std::move(simulation_params)), threads(threads)
 {
-	if ( prefix.size() == 0 ) {
+	if (prefix.empty()) {
 		throw invalid_argument("Trees dir has no value");
 	}
 
 }
 
-const string SURFSReader::get_filename(int batch)
+const std::string SURFSReader::get_filename(int batch)
 {
-	ostringstream os;
+	std::ostringstream os;
 	os << prefix << "." << batch << ".hdf5";
 	return os.str();
 }
@@ -103,29 +101,34 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	hdf5::Reader batch_file(fname);
 
 	//Read position and velocities first.
-	vector<float> position = batch_file.read_dataset_v_2<float>("haloTrees/position");
-	vector<float> velocity = batch_file.read_dataset_v_2<float>("haloTrees/velocity");
+	std::vector<float> position = batch_file.read_dataset_v_2<float>("haloTrees/position");
+	std::vector<float> velocity = batch_file.read_dataset_v_2<float>("haloTrees/velocity");
 
 	//Read mass, circular velocity and angular momentum.
-	vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
-	vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
-	vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
+	std::vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
+	std::vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
+	std::vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
+
+	std::vector<float> Mgas (Mvir.size());
+	if (simulation_params.hydrorun) {
+		Mgas = batch_file.read_dataset_v<float>("haloTrees/Mgas");
+	}
 
 	//Read indices and the snapshot number at which the subhalo lives.
-	vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
-	vector<Subhalo::id_t> nodeIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/nodeIndex");
-	vector<Subhalo::id_t> descIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/descendantIndex");
-	vector<Halo::id_t> hostIndex = batch_file.read_dataset_v<Halo::id_t>("haloTrees/hostIndex");
-	vector<Halo::id_t> descHost = batch_file.read_dataset_v<Halo::id_t>("haloTrees/descendantHost");
+	std::vector<int> snap = batch_file.read_dataset_v<int>("haloTrees/snapshotNumber");
+	std::vector<Subhalo::id_t> nodeIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/nodeIndex");
+	std::vector<Subhalo::id_t> descIndex = batch_file.read_dataset_v<Subhalo::id_t>("haloTrees/descendantIndex");
+	std::vector<Halo::id_t> hostIndex = batch_file.read_dataset_v<Halo::id_t>("haloTrees/hostIndex");
+	std::vector<Halo::id_t> descHost = batch_file.read_dataset_v<Halo::id_t>("haloTrees/descendantHost");
 
 	//Read properties that characterise the position of the subhalo inside the halo.descendantIndex
-	vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
-	vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
-	vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
+	std::vector<int> IsMain = batch_file.read_dataset_v<int>("haloTrees/isMainProgenitor");
+	std::vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
+	std::vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
 
-	unsigned long n_subhalos = Mvir.size();
+	auto n_subhalos = Mvir.size();
 	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
-	if ( !n_subhalos ) {
+	if (n_subhalos == 0) {
 		return {};
 	}
 
@@ -135,15 +138,23 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	LOG(info) << os.str();
 
 	t = Timer();
-	vector<vector<SubhaloPtr>> t_subhalos(threads);
+	std::vector<std::vector<SubhaloPtr>> t_subhalos(threads);
 	for (auto &subhalos: t_subhalos) {
 		subhalos.reserve(n_subhalos / threads);
 	}
 
-	omp_static_for(0ul, n_subhalos, threads, [&](unsigned long i, int thread_idx) {
+	omp_static_for(0, n_subhalos, threads, [&](std::size_t i, int thread_idx) {
 
 		if (snap[i] < simulation_params.min_snapshot) {
 			return;
+		}
+
+		//Check that this subhalo has a DM mass > 0 in the case of hydrodynamical simulation input. The latter can happen at the resolution limit.
+		//If gas mass is larger than total virial mass, then skip this subhalo.
+		if(simulation_params.hydrorun){
+			if(Mvir[i]-Mgas[i] < 0){
+				return;
+			}
 		}
 
 		auto subhalo = std::make_shared<Subhalo>(nodeIndex[i], snap[i]);
@@ -177,6 +188,11 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 
 		//Assign mass.
 		subhalo->Mvir = Mvir[i];
+
+		//Assign gas mass if the simulation is a hydrodynamical simulation.
+		if(simulation_params.hydrorun){
+			subhalo->Mgas = Mgas[i];
+		}
 
 		//Assign position
 		subhalo->position.x = position[3 * i];
@@ -213,7 +229,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		t_subhalos[thread_idx].emplace_back(std::move(subhalo));
 	});
 
-	vector<SubhaloPtr> subhalos;
+	std::vector<SubhaloPtr> subhalos;
 	if (threads == 0) {
 		subhalos = std::move(t_subhalos[0]);
 	}
@@ -245,7 +261,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 	std::vector<HaloPtr> halos;
 	Halo::id_t last_halo_id = -1;
 	Timer t;
-	for(const auto &subhalo: subhalos) {
+	for(auto &subhalo: subhalos) {
 
 		auto halo_id = subhalo->haloID;
 		if (halo_id != last_halo_id) {

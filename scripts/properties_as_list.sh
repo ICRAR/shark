@@ -51,7 +51,7 @@ sed_cmd='
   $ !{
     N
     s/.*DATASET "\(.*\)" {\n.*COMMENT "\(.*\)"/* ``\1``: \2/
-	 p
+    p
   }
 }'
 
@@ -63,4 +63,4 @@ cat <<EOF
    ======================
    Please see the script's help for more information on how to use it
 EOF
-h5dump "$1" | sed -n "$sed_cmd"
+h5dump -H "$1" | sed -n "$sed_cmd"

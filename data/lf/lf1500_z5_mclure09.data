@@ -1,0 +1,33 @@
+# LF in rest-frame UV (1500A) at z=5 from McLure etal (2009) MNRAS 395, 2196
+# based on photo-z's in UKIDSS UDS survey + Subaru/XMM Deep Survey (BVRizJK)
+# LF derived using 1/Vmax method including prob distribn of photo-z's and 
+# incompleteness/contamination for 4.7<z<5.3
+# data as in Fig.4 (in email from McLure 17/3/10)
+#
+# assume Omega0=0.3, Lambda0=0.7, H0=70
+# AB magnitudes
+# phi is dn/dM_AB  in no/mag/Mpc^3
+# errors are 1-sigma on dn/dM_AB
+#
+# Note: first 7 data points from Bouwens et al. (2007) in 0.5 mag bins
+# remaining 8 datapoints from McLure in 0.25 mag bins
+#
+# M_1500	log_10(phi)	log_10(phi+err)	log_10(phi-err)
+# Bouwens etal (2007)
+-17.16 		-2.10679317 	-1.93479383 	-2.39577389
+-17.66 		-2.27572417 	-2.17783189 	-2.40230489
+-18.16 		-2.29584956 	-2.24949169 	-2.34775376
+-18.66 		-2.69250393 	-2.64781737 	-2.74232149
+-19.16 		-2.74714708 	-2.70114684 	-2.79860282
+-19.66 		-2.94692159 	-2.92081881 	-2.97469401
+-20.16 		-3.20760822 	-3.18045616 	-3.23657203
+# McLure etal 
+-20.500 	-3.30611134 	-3.27336764 	-3.34152675
+-20.750 	-3.49719238 	-3.46195793 	-3.53553987
+-21.000 	-3.72237873 	-3.6785934 	-3.77107835
+-21.250 	-3.96313691 	-3.90851784 	-4.02562666
+-21.500 	-4.23020792 	-4.15994692 	-4.31407213
+-21.750 	-4.41253996 	-4.32900667 	-4.51606083
+-22.125 	-4.89139652 	-4.79329395 	-5.01833057
+-22.625 	-5.66787672 	-5.46323681 	-6.06790257
+

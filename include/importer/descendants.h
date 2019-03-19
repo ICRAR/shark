@@ -46,7 +46,7 @@ struct descendants_data_t {
 class DescendantReader {
 
 public:
-	DescendantReader(const std::string &filename);
+	explicit DescendantReader(const std::string &filename);
 	virtual ~DescendantReader();
 	virtual std::vector<descendants_data_t> read_whole() = 0;
 
@@ -57,7 +57,7 @@ protected:
 class AsciiDescendantReader : public DescendantReader {
 
 public:
-	AsciiDescendantReader(const std::string &filename);
+	explicit AsciiDescendantReader(const std::string &filename);
 	std::vector<descendants_data_t> read_whole() override;
 
 };
@@ -65,7 +65,7 @@ public:
 class HDF5DescendantReader : public DescendantReader {
 
 public:
-	HDF5DescendantReader(const std::string &filename);
+	explicit HDF5DescendantReader(const std::string &filename);
 	std::vector<descendants_data_t> read_whole() override;
 
 };

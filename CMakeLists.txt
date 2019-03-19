@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
 	endif()
 
 	if (SHARK_OPENMP)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+		add_compile_options("${OpenMP_CXX_FLAGS}")
 		set(SHARK_LIBS ${SHARK_LIBS} ${OpenMP_CXX_LIBRARIES})
 	endif()
 endmacro()
@@ -254,6 +254,11 @@ endif()
 # Windows builds need to link to ws2_32 (due to usage of gethostname)
 if (WIN32)
 	set(SHARK_LIBS ${SHARK_LIBS} ws2_32)
+endif()
+
+# Compiler-specific tweaks
+if (MSVC)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 #

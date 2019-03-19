@@ -39,15 +39,12 @@
 namespace shark {
 
 TreeBuilder::TreeBuilder(ExecutionParameters exec_params, unsigned int threads) :
-	exec_params(exec_params), threads(threads)
+	exec_params(std::move(exec_params)), threads(threads)
 {
 	// no-op
 }
 
-TreeBuilder::~TreeBuilder()
-{
-	// no-op
-}
+TreeBuilder::~TreeBuilder() = default;
 
 ExecutionParameters &TreeBuilder::get_exec_params()
 {
@@ -76,7 +73,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 
 	// Find roots and create Trees for each of them
 	std::vector<MergerTreePtr> trees;
-	int tree_counter = 0;
+	MergerTree::id_t tree_counter = 0;
 	for(const auto &halo: halos) {
 		if (halo->snapshot == last_snapshot_to_consider) {
 			auto tree = std::make_shared<MergerTree>(tree_counter++);
@@ -132,6 +129,10 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	// Define accretion rate from DM in case we want this.
 	LOG(info) << "Defining accretion rate using cosmology";
 	define_accretion_rate_from_dm(trees, sim_params, gas_cooling_params, *cosmology, AllBaryons);
+
+	// Define halo and subhalos ages and other relevant properties
+	LOG(info) << "Defining ages of halos and subhalos";
+	define_ages_halos(trees, sim_params);
 
 	return trees;
 }
@@ -215,7 +216,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for (int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 
-			for (auto &halo: tree->halos[snapshot]) {
+			for (auto &halo: tree->halos_at(snapshot)) {
 
 				// First check in halo has a central subhalo, if yes, then continue with loop.
 				if (halo->central_subhalo) {
@@ -286,7 +287,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for (int snapshot=sim_params.min_snapshot; snapshot >= sim_params.max_snapshot; snapshot++) {
 
-			for (auto &halo: tree->halos[snapshot]) {
+			for (auto &halo: tree->halos_at(snapshot)) {
 				int i = 0;
 				for (auto &subhalo: halo->all_subhalos()) {
 					if(subhalo->subhalo_type == Subhalo::CENTRAL){
@@ -314,7 +315,7 @@ void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &tree
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
 
-			for(auto &halo: tree->halos[snapshot]){
+			for(auto &halo: tree->halos_at(snapshot)){
 				// Check if current mass of halo is larger than descendant. If so, redefine descendant Mvir to that of the progenitor.
 				if(halo->Mvir > halo->descendant->Mvir){
 					halo->descendant->Mvir = halo->Mvir;
@@ -333,7 +334,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
 		for (int snapshot=sim_params.max_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
 
-			for (auto &halo: tree->halos[snapshot]) {
+			for (auto &halo: tree->halos_at(snapshot)) {
 
 				for (auto &subhalo: halo->all_subhalos()) {
 					//Check if subhalo is there because of interpolation. If so, redefine its angular momentum and concentration to that of its progenitor.
@@ -363,7 +364,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 	auto universal_baryon_fraction = cosmology.universal_baryon_fraction();
 	for(auto &tree: trees) {
 		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
-				for(auto &halo: tree->halos[snapshot]){
+				for(auto &halo: tree->halos_at(snapshot)){
 
 					const auto &ascendants = halo->ascendants;
 
@@ -373,11 +374,6 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 					// Define accreted baryonic mass.
 					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * universal_baryon_fraction;
-
-					// Apply maximum to accretion rate.
-					/*if(halo->central_subhalo->accreted_mass > gas_cooling_params.max_fractional_accreted_mass * halo->Mvir * universal_baryon_fraction){
-						halo->central_subhalo->accreted_mass = gas_cooling_params.max_fractional_accreted_mass * halo->Mvir * universal_baryon_fraction;
-					}*/
 
 					// Avoid negative numbers
 					if(halo->central_subhalo->accreted_mass < 0){
@@ -392,7 +388,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 	for(int snapshot=sim_params.min_snapshot; snapshot <= sim_params.max_snapshot; snapshot++) {
 		for(auto &tree: trees) {
-				for(auto &halo: tree->halos[snapshot]){
+				for(auto &halo: tree->halos_at(snapshot)){
 					total_baryon_accreted += halo->central_subhalo->accreted_mass;
 				}
 		}
@@ -402,6 +398,51 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 }
 
+void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
+
+
+	//Loop over trees.
+	for(auto &tree: trees) {
+		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
+				for(auto &halo: tree->halos_at(snapshot)){
+
+					auto prog = halo->main_progenitor();
+
+					/*
+					 * Define assembly ages of halos by going backwards in time and checking when the main progenitors had
+					 * 50% and 80% of the mass of the current halo.
+					 */
+					auto snap = snapshot - 1;
+					while(prog && (halo->age_50 == 0 || halo->age_80 == 0)){
+						if(prog->Mvir <= 0.8* halo->Mvir && halo->age_80 == 0){
+							halo->age_80 = sim_params.redshifts[snap];
+						}
+						if(prog->Mvir <= 0.5* halo->Mvir && halo->age_50 == 0){
+							halo->age_50 = sim_params.redshifts[snap];
+						}
+						snap --;
+						prog = prog->main_progenitor();
+					}
+
+					for (auto &subhalo: halo->satellite_subhalos) {
+
+						auto main_prog = subhalo->main();
+						auto snap = snapshot - 1;
+
+						while(main_prog && subhalo->infall_t == 0){
+							if(main_prog->subhalo_type == Subhalo::CENTRAL){
+								subhalo->infall_t = sim_params.redshifts[snap];
+							}
+							snap --;
+							main_prog = main_prog->main();
+						}
+					}
+				}
+		}
+
+	}
+
+}
 
 void TreeBuilder::remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo){
 
@@ -418,7 +459,7 @@ void TreeBuilder::remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo){
 }
 
 HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params, unsigned int threads) :
-	TreeBuilder(exec_params, threads)
+	TreeBuilder(std::move(exec_params), threads)
 {
 	// no-op
 }

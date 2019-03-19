@@ -51,6 +51,7 @@ SimulationParameters::SimulationParameters(const Options &options)
 	options.load("simulation.sim_name", sim_name);
 	options.load("simulation.tree_files_prefix", tree_files_prefix, true);
 	options.load("simulation.redshift_file",redshift_file, true);
+	options.load("simulation.hydrorun", hydrorun, false);
 
 	load_simulation_tables(redshift_file);
 
@@ -58,14 +59,11 @@ SimulationParameters::SimulationParameters(const Options &options)
 
 void SimulationParameters::load_simulation_tables(const std::string &redshift_file)
 {
-
-	using namespace std;
-
 	LOG(debug) << "Reading table " << redshift_file ;
 
-	ifstream f = open_file(redshift_file);
-	string line;
-	while ( getline(f, line) ) {
+	std::ifstream f = open_file(redshift_file);
+	std::string line;
+	while ( std::getline(f, line) ) {
 
 		trim(line);
 		if (empty_or_comment(line)) {
@@ -75,7 +73,7 @@ void SimulationParameters::load_simulation_tables(const std::string &redshift_fi
 		int s;
 		double r;
 
-		istringstream iss(line);
+		std::istringstream iss(line);
 		iss >> s >> r;
 
 		redshifts[s]=r;
@@ -100,9 +98,9 @@ void SimulationParameters::load_simulation_tables(const std::string &redshift_fi
 
 }
 
-Simulation::Simulation(SimulationParameters parameters, const CosmologyPtr &cosmology) :
-	parameters(parameters),
-	cosmology(cosmology)
+Simulation::Simulation(SimulationParameters parameters, CosmologyPtr cosmology) :
+	parameters(std::move(parameters)),
+	cosmology(std::move(cosmology))
 {
 	// no-op
 }
@@ -112,7 +110,5 @@ double Simulation::convert_snapshot_to_age(int s){
 	return cosmology->convert_redshift_to_age(parameters.redshifts[s]);
 
 }
-}
 
-
-
+} // namespace shark

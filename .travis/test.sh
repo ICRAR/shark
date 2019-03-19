@@ -26,7 +26,7 @@
 #
 
 fail() {
-	echo $1 1>&2
+	echo -e "$@" 1>&2
 	exit 1
 }
 
@@ -46,8 +46,27 @@ curl -L -o input/tree_199.0.hdf5 'https://docs.google.com/uc?export=download&id=
     -o execution.seed=123456 \
     -o execution.name_model=my_model || fail "failure during execution of shark"
 
-# Make sure the standard plotting scripts run correctly
+# Generate the HDF5 output documentation and check it's up to date
+# otherwise tell the user how to update it
+check_hdf5_doc() {
+   ../scripts/properties_as_list.sh mini-SURFS/my_model/$1 > props.rst
+	_diff="`diff -Naur ../doc/hdf5_properties/$2 props.rst`"
+	if [ -n "${_diff}" ]; then
+		fail "\nThe file doc/hdf5_properties/$2 is out of date. This probably means that you added a new\n" \
+		     "dataset to shark's output, but forgot to update the corresponding documentation.\n" \
+		     "The full difference follows:\n\n${_diff}\n\n" \
+		     "Please run the script/properties_as_lish.sh script against a `basename $1` file\n" \
+		     "to re-generate its documentation, then commit your changes. For example:\n\n" \
+		     "scripts/properties_as_list.sh my-output/model/199/0/`basename $1` > doc/hdf5_properties/$2"
+	fi
+}
+
+check_hdf5_doc 199/0/galaxies.hdf5 galaxies.rst
+check_hdf5_doc 156/0/star_formation_histories.hdf5 star_formation_histories.rst
+
 if [ -n "$PYTHON" ]; then
+
+	# Make sure the standard plotting scripts run correctly
 	echo "backend: Agg" >> matplotlibrc
 	"$PYTHON" ../standard_plots/all.py -c ../sample.cfg -z input/redshifts.txt || fail "failure during execution of python plotting scripts"
 

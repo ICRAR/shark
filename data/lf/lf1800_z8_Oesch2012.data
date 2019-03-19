@@ -1,0 +1,32 @@
+# UV LF at z=8 from Oesch et al. 2012 (ApJ 759, 135, 2012).
+# Hubble Space Telescope WFC3/IR imaging data from CANDELS
+# Multi-Cycle Treasury program over the GOODS-S field.
+#
+# galaxies selected using 2-colour LBG selection
+# LFs are derived by N_obs/V_eff, where N_obs is the number of observed galaxies and
+# V_eff is the effective selection volume of the given magnitudes, see section 4.3 for more details. 
+# Upper limits for 1-sigma.
+#
+# data from Table 3
+#
+# magnitudes are in AB system, the detailed rest-frame wavelength for UV magnitudes is not mentioned
+# but using H_160 & <z>=7.9 => lambda(rest) = 1800A
+# Assume H0 = 70 km s^-1 Mpc^-1, Omega_M = 0.3, Omega_L = 0.7
+#
+# phi(M_UV) = dn/dM_UV in 10^-3 Mpc^-3 mag^-1
+# errors are on phi
+#
+# err = 0.0 means phi is an upper limit for the magnitude bin.
+#
+#        z = 8
+#
+# M_UV    phi    err
+#
+-21.94   0.008   0.000
+-21.34   0.005   0.006
+-20.74   0.046   0.020
+-20.14   0.130   0.045
+-19.54   0.339   0.118
+-18.94   1.03    0.35
+-18.34   1.56    0.72
+-17.74   4.52    2.07

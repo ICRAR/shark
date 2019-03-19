@@ -41,13 +41,8 @@ class Timer {
 
 public:
 
-	typedef typename std::chrono::milliseconds::rep duration;
-
-	/**
-	 * Creates the timer and starts measuring time
-	 */
-	inline
-	Timer() : t0(std::chrono::steady_clock::now()) {}
+	using clock = std::chrono::high_resolution_clock;
+	using duration = typename std::chrono::nanoseconds::rep;
 
 	/**
 	 * Returns the number of milliseconds elapsed since the creation
@@ -57,41 +52,18 @@ public:
 	 */
 	inline
 	duration get() const {
-		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count();
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(clock::now() - t0).count();
 	}
 
 private:
-	std::chrono::steady_clock::time_point t0;
+	clock::time_point t0 {clock::now()};
 
 };
 
 template <typename T>
 inline
 std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const Timer &t) {
-
-	auto time = t.get();
-	if (time < 1000) {
-		os << time << " [ms]";
-		return os;
-	}
-
-	float ftime = time / 1000.f;
-	const char *prefix = " [s]";
-	if (ftime > 60) {
-		ftime /= 60;
-		prefix = " [min]";
-		if (ftime > 60) {
-			ftime /= 60;
-			prefix = " [h]";
-			if (ftime > 24) {
-				ftime /= 24;
-				prefix = " [d]";
-			}
-		}
-	}
-	// that should be enough...
-
-	os << fixed<3>(ftime) << prefix;
+	os << ns_time(t.get());
 	return os;
 }
 

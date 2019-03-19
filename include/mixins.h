@@ -41,28 +41,28 @@ class xyz {
 
 public:
 
-	xyz() : x(0), y(0), z(0) {};
+	xyz() = default;
 
 	template <typename U>
 	xyz(U x, U y, U z) : x(T(x)), y(T(y)), z(T(z)) {};
 
 	template <typename U>
-	xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z)) {};
+	explicit xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z)) {};
 
 	/**
 	 * The value in the X coordinate
 	 */
-	T x;
+	T x {0};
 
 	/**
 	 * The value in the Y coordinate
 	 */
-	T y;
+	T y {0};
 
 	/**
 	 * The value in the Z coordinate
 	 */
-	T z;
+	T z {0};
 
 	xyz &operator+=(T scalar)
 	{
@@ -93,7 +93,7 @@ public:
 	{
 		xyz<U> sum(*this);
 		sum += lhs;
-		return sum;
+		return xyz(sum);
 	}
 
 	xyz &operator*=(T scalar)
@@ -161,9 +161,10 @@ template <typename T>
 class Identifiable {
 public:
 
-	Identifiable(T id) : id(id) {}
+	explicit Identifiable(T id) : id(id)
+	{}
 
-	typedef T id_t;
+	using id_t = T;
 
 	/**
 	 * The ID of this object

@@ -107,6 +107,10 @@ namespace constants {
 	/** The mass of the Sun in kg */
 	constexpr double MSOLAR = 1.9891e30;
 
+	/**Solar luminosity in 10^40 ergs/s.**/
+
+	constexpr double LSOLAR = 3.828e-7;
+
 	/** The mass of the Sun in g */
 	constexpr double MSOLAR_g = MSOLAR * KILO;
 
@@ -200,7 +204,7 @@ namespace constants {
 	//0.67714285714;
 	// @}
 
-};
+} // namespace constants
 
 }  // namespace shark
 

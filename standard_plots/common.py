@@ -22,6 +22,7 @@
 import argparse
 import collections
 import os
+import subprocess
 import sys
 
 import h5py
@@ -80,7 +81,10 @@ def load_matplotlib():
     plt.rcParams['legend.numpoints'] = 1
     return plt
 
-def get_output_dir(shark_dir, simu, model):
+def get_shark_output_dir(shark_dir, simu, model):
+    return os.path.join(shark_dir, simu, model)
+
+def get_plots_output_dir(shark_dir, simu, model):
     return os.path.join(shark_dir, 'Plots', simu, model)
 
 def read_configuration(config):
@@ -91,6 +95,33 @@ def read_configuration(config):
     simu = cparser.get('simulation', 'sim_name')
     redshift_file = cparser.get('simulation', 'redshift_file')
     return shark_dir, simu, model, redshift_file
+
+def exec_command(cmd, shell=False, **kwargs):
+    """Executes `cmd` and returns the stdout, stderr and exit code"""
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         shell=shell, **kwargs)
+    out, err = p.communicate()
+    return out, err, p.poll()
+
+def has_program(program):
+    """Checks whether `program` exists or not"""
+    try:
+        subprocess.check_output(program, shell=False, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        pass
+    except OSError:
+        return False
+    return True
+
+def parse_subvolumes(subvolumes_str):
+    subvolumes = set()
+    for r in filter(None, subvolumes_str.replace(',', ' ').split()):
+        if '-' in r:
+            svol_range = [int(x) for x in r.split('-')]
+            subvolumes.update(range(svol_range[0], svol_range[1] + 1))
+        else:
+            subvolumes.add(int(r))
+    return subvolumes
 
 def parse_args(requires_observations=True):
 
@@ -132,7 +163,7 @@ def parse_args(requires_observations=True):
 
     output_dir = opts.output_dir
     if not output_dir:
-        output_dir = get_output_dir(shark_dir, simu, model)
+        output_dir = get_plots_output_dir(shark_dir, simu, model)
     print("Creating plots under %s" % (output_dir,))
 
     try:
@@ -142,13 +173,7 @@ def parse_args(requires_observations=True):
 
     # Having the replace(',', ' ') allows us to separate subvolumes by command
     # and/or space
-    subvolumes = set()
-    for r in filter(None, opts.subvolumes.replace(',', ' ').split()):
-        if '-' in r:
-            x = [int(x) for x in r.split('-')]
-            subvolumes.update(range(x[0], x[1] + 1))
-        else:
-            subvolumes.add(int(r))
+    subvolumes = parse_subvolumes(opts.subvolumes)
     print("Considering the following subvolumes: %s" % ' '.join([str(x) for x in subvolumes]))
 
     ret = [model_dir, output_dir, _redshift_table(redshift_file), tuple(subvolumes)]
@@ -215,7 +240,7 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     for idx, subv in enumerate(subvolumes):
 
         fname = os.path.join(model_dir, str(snapshot), str(subv), 'galaxies.hdf5')
-        print('Reading data from %s' % fname)
+        print('Reading galaxies data from %s' % fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0 and include_h0_volh:
                 data['h0'] = f['cosmology/h'].value
@@ -234,6 +259,116 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
 
     return list(data.values())
 
+def read_sfh(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
+    """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
+
+    data = collections.OrderedDict()
+    for idx, subv in enumerate(subvolumes):
+
+        fname = os.path.join(model_dir, str(snapshot), str(subv), 'star_formation_histories.hdf5')
+        print('Reading SFH data from %s' % fname)
+        with h5py.File(fname, 'r') as f:
+            if idx == 0:
+                delta_t = f['delta_t'].value
+                LBT     = f['lbt_mean'].value
+
+            for gnames, dsname in fields.items():
+                group = f[gnames]
+                full_name = '%s/%s' % (gnames, dsname)
+                l = data.get(full_name, None)
+                if l is None:
+                    l = group[dsname].value
+                else:
+                    l = np.concatenate([l, group[dsname].value])
+                data[full_name] = l
+
+    return list(data.values()), delta_t, LBT
+
+
+def read_photometry_data(model_dir, snapshot, subvolumes):
+    """Read the SharkSED.csv file for the given model/snapshot/subvolume"""
+
+    nbands = None
+    seds = None
+    ids = None
+    for subv in subvolumes:
+
+        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED.csv')
+        print('Reading photometry data from %s' % fname)
+        my_data = np.genfromtxt(fname, delimiter=',', skip_header=1)
+
+        # Make sure all files come with the same number of bands
+        _nbands = (len(my_data[0])-1)/5/2/2
+        if nbands is None:
+            nbands = _nbands
+            print('Number of bands %s' % nbands)
+        elif nbands != _nbands:
+            raise ValueError('inconsistent number of bands found: %d / %d' % (nbands, _nbands))
+        
+        # Reshape the 1-d data of each line to 4-d data with the following dimension lengths
+        # 2: absolute and apparent magnitude; 
+        # 2: no dust and dust.
+        # 5: bulge disk-instabilities, bulge mergers, bulge, disk and total; 
+        # nbands: each of the bands
+        _seds = my_data[:,1:].reshape((len(my_data), 2, 2, 5, nbands))
+        _ids = my_data[:,0]
+
+        # Append values to global lists
+        if seds is None:
+            seds = _seds
+        else:
+            seds = np.concatenate([seds, _seds])
+        if ids is None:
+            ids = _ids
+        else:
+            ids = np.concatenate([ids, _ids])
+
+    return (seds, ids, nbands)
+
+def read_photometry_data_variable_tau_screen(model_dir, snapshot, subvolumes):
+    """Read the SharkSED.csv file for the given model/snapshot/subvolume"""
+
+    nbands = None
+    seds = None
+    ids = None
+    for subv in subvolumes:
+
+        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED-tau-EAGLE.csv')
+        print('Reading photometry data from %s' % fname)
+        my_data = np.genfromtxt(fname, delimiter=',', skip_header=1)
+
+        # Make sure all files come with the same number of bands
+        _nbands = (len(my_data[0])-2)/5/2/2
+        if nbands is None:
+            nbands = _nbands
+            print('Number of bands %s' % nbands)
+        elif nbands != _nbands:
+            raise ValueError('inconsistent number of bands found: %d / %d' % (nbands, _nbands))
+        
+        # Reshape the 1-d data of each line to 4-d data with the following dimension lengths
+        # 2: absolute and apparent magnitude; 
+        # 2: no dust and dust.
+        # 5: bulge disk-instabilities, bulge mergers, bulge, disk and total; 
+        # nbands: each of the bands
+        _seds = my_data[:,2:].reshape((len(my_data), 2, 2, 5, nbands))
+        _ids = my_data[:,0]
+        _tau_screen = my_data[:,1]
+
+        # Append values to global lists
+        if seds is None:
+            seds = _seds
+        else:
+            seds = np.concatenate([seds, _seds])
+        if ids is None:
+            ids = _ids
+            tau_screen = _tau_screen
+        else:
+            ids = np.concatenate([ids, _ids])
+            tau_screen = np.concatenate([tau_screen,_tau_screen])
+
+    return (seds, ids, nbands, tau_screen)
+
+
 # If called as a program, print information taken from a configuration file
 # This simple functionality is used by shark-submit to easily find out where
 # the plots have been produced, and save us the trouble to re-implement it
@@ -241,7 +376,7 @@ if __name__ == '__main__':
     action = sys.argv[1]
     shark_dir, simu, model, redshift_file = read_configuration(sys.argv[2])
     if action == 'output_dir':
-        print(get_output_dir(shark_dir, simu, model))
+        print(get_plots_output_dir(shark_dir, simu, model))
     elif action == 'snapshots':
         z = list(map(float, ' '.join(sys.argv[3:]).split()))
         table = _redshift_table(redshift_file)

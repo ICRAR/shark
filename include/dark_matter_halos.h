@@ -44,7 +44,7 @@ namespace shark {
 class DarkMatterHaloParameters {
 
 public:
-	DarkMatterHaloParameters(const Options &options);
+	explicit DarkMatterHaloParameters(const Options &options);
 
 	enum DarkMatterProfile {
 		NFW = 0,
@@ -80,10 +80,10 @@ class DarkMatterHalos {
 public:
 	DarkMatterHalos(
 		const DarkMatterHaloParameters &params,
-		const CosmologyPtr &cosmology,
+		CosmologyPtr cosmology,
 		SimulationParameters &sim_params,
 		const ExecutionParameters &exec_params);
-	virtual ~DarkMatterHalos() {};
+	virtual ~DarkMatterHalos() = default;
 
 	virtual double grav_potential_halo(double r, double c) const = 0;
 
@@ -136,7 +136,7 @@ private:
 };
 
 /// Type used by users to keep track o
-typedef std::shared_ptr<DarkMatterHalos> DarkMatterHalosPtr;
+using DarkMatterHalosPtr= std::shared_ptr<DarkMatterHalos>;
 
 class NFWDarkMatterHalos : public DarkMatterHalos {
 

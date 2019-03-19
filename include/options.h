@@ -27,8 +27,8 @@
 #define SHARK_OPTIONS_H_
 
 #include <map>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "exceptions.h"
 #include "logging.h"
@@ -43,7 +43,7 @@ class Options {
 
 public:
 
-	typedef std::map<std::string, std::string> options_t;
+	using options_t = std::map<std::string, std::string>;
 
 	enum file_format_t {
 		HDF5,
@@ -53,14 +53,14 @@ public:
 	///
 	/// A ctor that creates an empty Options object
 	///
-	Options();
+	Options() = default;
 
 	/**
 	 * A ctor that reads options from a file
 	 *
-	 * @param filename The name of the options file
+	 * @param fname The name of the options file
 	 */
-	Options(const std::string &filename);
+	explicit Options(const std::string &fname);
 
 	/// Adds the options contained in file @p fname
 	///
@@ -91,7 +91,7 @@ public:
 
 			// Check that it's there and read it using the specialized
 			// get<T> template
-			options_t::const_iterator it = options.find(name);
+			auto it = options.find(name);
 			if ( it == options.end() ) {
 				throw missing_option(name);
 			}

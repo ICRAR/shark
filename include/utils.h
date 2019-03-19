@@ -27,6 +27,7 @@
 #define SHARK_UTILS
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -161,6 +162,10 @@ namespace detail {
 		std::size_t _val;
 	};
 
+	struct _nanoseconds_amount {
+		std::chrono::nanoseconds::rep _val;
+	};
+
 	template <typename T>
 	inline
 	std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const detail::_memory_amount &m)
@@ -200,6 +205,48 @@ namespace detail {
 		return os;
 	}
 
+	template <typename T>
+	inline
+	std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const detail::_nanoseconds_amount &t)
+	{
+		auto time = t._val;
+		if (time < 1000) {
+			os << time << " [ns]";
+			return os;
+		}
+
+		time /= 1000;
+		if (time < 1000) {
+			os << time << " [us]";
+			return os;
+		}
+
+		time /= 1000;
+		if (time < 1000) {
+			os << time << " [ms]";
+			return os;
+		}
+
+		float ftime = time / 1000.f;
+		const char *prefix = " [s]";
+		if (ftime > 60) {
+			ftime /= 60;
+			prefix = " [min]";
+			if (ftime > 60) {
+				ftime /= 60;
+				prefix = " [h]";
+				if (ftime > 24) {
+					ftime /= 24;
+					prefix = " [d]";
+				}
+			}
+		}
+		// that should be enough...
+
+		os << fixed<3>(ftime) << prefix;
+		return os;
+	}
+
 } // namespace detail
 
 ///
@@ -213,8 +260,27 @@ detail::_memory_amount memory_amount(std::size_t amount) {
 	return {amount};
 }
 
+///
+/// Sent to a stream object, this manipulator will print the given amount of
+/// nanoseconds using the correct suffix and 3 decimal places.
+///
+/// @param v The value to send to the stream
+///
+inline
+detail::_nanoseconds_amount ns_time(std::chrono::nanoseconds::rep amount) {
+	return {amount};
+}
+
 /// Returns the name of the computer executing this program
 std::string gethostname();
+
+/// A class template for deleters that use a function to delete objects
+template<typename T, void (*F)(T *)>
+class deleter {
+public:
+	void operator()(T *x)
+	{ F(x); }
+};
 
 }  // namespace shark
 

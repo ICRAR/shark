@@ -29,10 +29,10 @@
 
 namespace shark {
 
-GalaxyCreator::GalaxyCreator(const CosmologyPtr &cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params) :
-	cosmology(cosmology),
-	cool_params(cool_params),
-	sim_params(sim_params)
+GalaxyCreator::GalaxyCreator(CosmologyPtr cosmology, GasCoolingParameters cool_params, SimulationParameters sim_params) :
+	cosmology(std::move(cosmology)),
+	cool_params(std::move(cool_params)),
+	sim_params(std::move(sim_params))
 {
 	// no-op
 }
@@ -47,7 +47,7 @@ void GalaxyCreator::create_galaxies(const std::vector<MergerTreePtr> &merger_tre
 	for(int snapshot = sim_params.min_snapshot; snapshot <= sim_params.max_snapshot - 1; snapshot++) {
 		auto z = sim_params.redshifts[snapshot];
 		for(auto &merger_tree: merger_trees) {
-			for(auto &halo: merger_tree->halos[snapshot]) {
+			for(auto &halo: merger_tree->halos_at(snapshot)) {
 				if (create_galaxies(halo, z, galaxy_id)) {
 					galaxy_id++;
 					galaxies_added++;
@@ -66,7 +66,7 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 {
 
 	// Halo has a central subhalo with ascendants so ignore it, as it should already have galaxies in it.
-	if(halo->central_subhalo->ascendants.size() > 0){
+	if(!halo->central_subhalo->ascendants.empty()){
 		return false;
 	}
 
@@ -88,22 +88,28 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 	}
 
 	auto galaxy = std::make_shared<Galaxy>(galaxy_id);
-	galaxy->galaxy_type = Galaxy::CENTRAL;
+	galaxy->vmax = central_subhalo->Vcirc;
 
-	central_subhalo->galaxies.push_back(galaxy);
-	if (LOG_ENABLED(debug)) {
-		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
+
+	//If the input simulation is a hydro simulation, then use the input gas mass.
+	if(sim_params.hydrorun){
+		central_subhalo->hot_halo_gas.mass = halo->Mgas;
 	}
-
-	central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology->universal_baryon_fraction();
+	else{
+		central_subhalo->hot_halo_gas.mass = halo->Mvir * cosmology->universal_baryon_fraction();
+	}
 
 	// Assign metallicity to the minimum allowed.
 	central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
 
-	galaxy->vmax = central_subhalo->Vcirc;
+	central_subhalo->galaxies.emplace_back(std::move(galaxy));
+
+	if (LOG_ENABLED(debug)) {
+		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;
+	}
 
 	return true;
 
 }
 
-}
+} // namespace shark

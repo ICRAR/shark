@@ -90,17 +90,17 @@ struct datatype_traits<std::int64_t> {
 //
 template <H5G_obj_t E>
 struct entity_traits {
-	typedef void rettype;
+	using rettype = void ;
 };
 
 template<>
 struct entity_traits<H5G_GROUP> {
-	typedef H5::Group rettype;
+	using rettype = H5::Group;
 };
 
 template<>
 struct entity_traits<H5G_DATASET> {
-	typedef H5::DataSet rettype;
+	using rettype = H5::DataSet;
 };
 
 }  // namespace hdf5

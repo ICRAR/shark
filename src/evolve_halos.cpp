@@ -29,8 +29,6 @@
 #include "logging.h"
 #include "numerical_constants.h"
 
-using namespace std;
-
 namespace shark {
 
 void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
@@ -91,6 +89,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 				galaxy->sfr_disk           = 0;
 				//restart counter of mergers and disk instabilities.
 				galaxy->interaction.restore_interaction_item();
+				//restart descendant_id
+				galaxy->descendant_id = -1;
 			}
 
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
@@ -128,6 +128,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			descendant_subhalo->cold_halo_gas += subhalo->cold_halo_gas;
 			descendant_subhalo->hot_halo_gas += subhalo->hot_halo_gas;
 			descendant_subhalo->ejected_galaxy_gas += subhalo->ejected_galaxy_gas;
+			descendant_subhalo->lost_galaxy_gas += subhalo->lost_galaxy_gas;
+
 			if (subhalo->main_progenitor) {
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
 			}
@@ -145,14 +147,14 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 		}
 	}
 
-	if (subhalos_without_descendant) {
+	if (subhalos_without_descendant != 0) {
 		AllBaryons.baryon_total_lost[snapshot] = baryon_mass_loss;
 		LOG(warning) << "Found " << subhalos_without_descendant << " subhalos without descendant while transferring galaxies.";
 	}
 
 }
 
-void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, ExecutionParameters execparams, SimulationParameters simulation_params, const std::vector<HaloPtr> &halos,
+void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, SimulationParameters simulation_params, const std::vector<HaloPtr> &halos,
 		TotalBaryon &AllBaryons, int snapshot, const molgas_per_galaxy &molgas, double deltat){
 
 
@@ -160,6 +162,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	BaryonBase mhothalo_total;
 	BaryonBase mcoldhalo_total;
 	BaryonBase mejectedhalo_total;
+	BaryonBase mlosthalo_total;
 	BaryonBase mstars_total;
 	BaryonBase mstars_bursts_galaxymergers;
 	BaryonBase mstars_bursts_diskinstabilities;
@@ -167,6 +170,8 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	BaryonBase mHI_total;
 	BaryonBase mH2_total;
 	BaryonBase mDM_total;
+
+        float SMBH_max = 0;
 
 	double SFR_total_disk = 0;
 	double SFR_total_burst = 0;
@@ -197,6 +202,9 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
         
 			mejectedhalo_total.mass += subhalo->ejected_galaxy_gas.mass;
 			mejectedhalo_total.mass_metals += subhalo->ejected_galaxy_gas.mass_metals;
+
+			mlosthalo_total.mass += subhalo->lost_galaxy_gas.mass;
+			mlosthalo_total.mass_metals += subhalo->lost_galaxy_gas.mass_metals;
         
 			for (auto &galaxy: subhalo->galaxies){
        
@@ -217,7 +225,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 					hist_galaxy.sfr_z_bulge_mergers = galaxy->sfr_z_bulge_mergers;
 					hist_galaxy.sfr_z_bulge_diskins = galaxy->sfr_z_bulge_diskins;
 					hist_galaxy.snapshot            = snapshot;
-					galaxy->history.emplace_back(std::move(hist_galaxy));
+					galaxy->history.emplace_back(hist_galaxy);
 				}
         
 				//Accumulate galaxy baryons
@@ -241,6 +249,10 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 				SFR_total_burst += galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins;
         
 				MBH_total.mass += galaxy->smbh.mass;
+
+				if(galaxy->smbh.mass > SMBH_max){
+					SMBH_max = galaxy->smbh.mass;
+				}
         
 			}
 		}
@@ -265,6 +277,7 @@ void track_total_baryons(StarFormation &starformation, Cosmology &cosmology, Exe
 	AllBaryons.mejected_halo.push_back(mejectedhalo_total);
 
 	AllBaryons.mDM.push_back(mDM_total);
+	AllBaryons.max_BH.push_back(SMBH_max);
 }
 
-}
+} // namespace shark

@@ -44,14 +44,28 @@ dmobs = 0.4
 mbins_obs = np.arange(mlow,mupp,dmobs)
 xmf_obs = mbins_obs + dmobs/2.0
 
+vlow = 1.0
+vupp = 3.0
+dv   = 0.1
+vbins = np.arange(vlow,vupp,dv)
+xv    = vbins + dv/2.0
+
+
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
-                 disk_vel, BT_fractions_centrals, BT_fractions_satellites):
+                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
-     specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s) = hdf5_data
+     specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, 
+     mmol_bulge, mbh_acc_hh, mbh_acc_sb) = hdf5_data
+
+    mstars_tot = (mdisk+mbulge)/h0
+    #if index in (2, 3):
+    #   for x, y, z, m in zip(mBH, mbh_acc_hh, mbh_acc_sb, mstars_tot):
+    #       if x > 1e5 and m > 1e8:
+    #          print(x/h0, y/h0/1e9, z/h0/1e9)
 
     mbulge_mergers = mburst_mergers + mstars_bulge_mergers_assembly
     zero_bulge = np.where(rbulge <= 0)
@@ -61,9 +75,10 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
             specific_angular_momentum_bulge_star[zero_bulge] = 1.0
             mbulge[zero_bulge] = 10.0
 
-    bin_it = functools.partial(us.wmedians, xbins=xmf)
+    bin_it   = functools.partial(us.wmedians, xbins=xmf)
+    bin_it_v = functools.partial(us.wmedians, xbins=xv)
 
-    vdisk = specific_angular_momentum_disk_star / rdisk / 2.0 #in km/s
+    vdisk = specific_angular_momentum_disk_star / rdisk / 2.0  #in km/s
     vbulge = specific_angular_momentum_bulge_star / rbulge / 2.0 #in km/s
    
     ind = np.where(mdisk+mbulge > 0)
@@ -86,6 +101,11 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     ind = np.where((mdisk > 0) & (typeg == 0) & (mbulge/mdisk < 0.5))
     disk_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                 y=np.log10(vdisk[ind]))
+
+    ind = np.where((mdisk > 0) & ((mgas_disk+mgas_bulge)/(mdisk+mbulge) > 1))
+    baryonic_TF[index,:] = bin_it_v(x=np.log10(vdisk[ind]), 
+                                y=np.log10(mdisk[ind]+mbulge[ind]+matom_disk[ind]+mmol_disk[ind]+
+                                matom_bulge[ind]+mmol_bulge[ind]) - np.log10(float(h0)))
 
     ind = np.where((mdisk > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) > 0.5))
     disk_size_cen[index,:]  = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
@@ -234,7 +254,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
     common.savefig(outdir, fig, 'sizes.pdf')
 
 
-def plot_velocities(plt, outdir, disk_vel, bulge_vel):
+def plot_velocities(plt, outdir, disk_vel, bulge_vel, baryonic_TF):
 
     fig = plt.figure(figsize=(5,9.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -282,6 +302,36 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel):
 
     common.savefig(outdir, fig, 'velocities.pdf')
  
+    fig = plt.figure(figsize=(5,5))
+    ytit = "$\\rm log_{10} (\\rm M_{\\rm bar}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm V_{\\rm max}/km\, s^{-1})$"
+    xmin, xmax, ymin, ymax = 1.3, 2.5, 6, 13
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    # LTG ##################################
+    ax = fig.add_subplot(111)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    ind = np.where(xv < 2.477)
+    ax.plot(xv,3.94*xv+1.79,linestyle='solid',color='b',label='McGaugh 2012')
+    ax.fill_between(xv,3.94*xv+1.8,3.94*xv+1.79-0.26-0.25, facecolor='PaleTurquoise', alpha=0.5, interpolate=True)
+    ax.fill_between(xv,3.94*xv+1.8,3.94*xv+1.79+0.22+0.25, facecolor='PaleTurquoise', alpha=0.5, interpolate=True)
+    ax.fill_between(xv,3.94*xv+1.8,3.94*xv+1.79-0.26, facecolor='LightSeaGreen', alpha=0.5, interpolate=True)
+    ax.fill_between(xv,3.94*xv+1.8,3.94*xv+1.79+0.26, facecolor='LightSeaGreen', alpha=0.5, interpolate=True)
+
+    #Predicted size-mass for disks in disk=dominated galaxies
+    ind = np.where(baryonic_TF[0,0,:] != 0)
+    xplot = xv[ind]
+    yplot = baryonic_TF[0,0,ind]
+    errdn = baryonic_TF[0,1,ind]
+    errup = baryonic_TF[0,2,ind]
+    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark gas-dominated")
+
+    common.prepare_legend(ax, ['b','k'], loc=2)
+
+    common.savefig(outdir, fig, 'baryon-TF.pdf')
+
 def plot_sizes_combined(plt, outdir, rcomb):
 
     fig = plt.figure(figsize=(5,4.5))
@@ -314,7 +364,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
     xtit = "$\\rm log_{10} (\\rm M_{\\rm bulge}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
 
-    xmin, xmax, ymin, ymax = 8, 12, 5, 11
+    xmin, xmax, ymin, ymax = 8, 13, 5, 11
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -451,7 +501,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'specific_angular_momentum_disk_star', 'specific_angular_momentum_bulge_star',
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
-                           'lambda_subhalo', 'mvir_subhalo')}
+                           'lambda_subhalo', 'mvir_subhalo', 'mgas_disk', 'mgas_bulge','matom_disk', 'mmol_disk', 
+                           'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
 
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -469,15 +520,16 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     BT_fractions_satellites = np.zeros(shape = (len(zlist), len(xmf)))
     disk_vel =  np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_vel =  np.zeros(shape = (len(zlist), 3, len(xmf)))
-    
+    baryonic_TF =  np.zeros(shape = (len(zlist), 3, len(xv))) 
+   
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     BT_fractions_centrals, BT_fractions_satellites)
+                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF)
 
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins)
-    plot_velocities(plt, outdir, disk_vel, bulge_vel)
+    plot_velocities(plt, outdir, disk_vel, bulge_vel, baryonic_TF)
     plot_sizes_combined(plt, outdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)

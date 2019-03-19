@@ -1241,6 +1241,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     zlist = (0, 0.5, 1, 2, 3, 4)
+    #zlist = (0.005, 0.2, 0.5 , 0.8 , 1.1 , 1.5 , 2.2 , 2.9 , 3.9, 5.1)
 
     plt = common.load_matplotlib()
 
@@ -1342,8 +1343,10 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     ind = np.where(hist_H2mf_sat > 0.)
     hist_H2mf_sat[ind] = np.log10(hist_H2mf_sat[ind])
 
-    #for i,j in zip(hist_HImf[0,:],hist_H2mf[0,:]):
-    #    print i,j
+    #for z in range (0,len(zlist)):
+    #    print 'redshift=',zlist[z]
+    #    for i,j in zip(xmf,hist_H2mf[z,:]):
+    #        print i,j
 
     plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err, hist_smf_30kpc)
     plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf)

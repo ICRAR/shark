@@ -42,6 +42,8 @@
 * ``mgas_metals_disk``: mass of metals locked in the gas of the disk [Msun/h]
 * ``mhot``: hot gas mass in the halo [Msun/h]
 * ``mhot_metals``: mass of metals locked in the hot halo gas [Msun/h]
+* ``mlost``: gas mass in the lost gas component - due to QSO feedback [Msun/h]
+* ``mlost_metals``: mass of metals locked in the lost gas component - due to QSO feedback [Msun/h]
 * ``mmol_bulge``: molecular gas mass (helium plus hydrogen) in the bulge [Msun/h]
 * ``mmol_disk``: molecular gas mass (helium plus hydrogen) in the disk [Msun/h]
 * ``mreheated``: gas mass in the ejected gas component [Msun/h]
@@ -97,10 +99,12 @@
 * ``mcold_halo``: total halo cold gas in the simulated box [Msun/h]
 * ``mcold_halo_metals``: total mass of metals in the halo cold gas mass in the simulated box [Msun/h]
 * ``mcold_metals``: total mass of metals locked in cold gas in the simulated box [Msun/h]
-* ``mejected_halo``: total gas mass ejected from halos (and that has not yet been reincorporated) in the simulated box [Msun/h]
-* ``mejected_halo_metals``: total mass of metals in the ejected gas reservoir in the simulated box [Msun/h]
+* ``mejected_halo``: total gas mass ejected from halos due to stellar feedback (and that has not yet been reincorporated) in the simulated box [Msun/h]
+* ``mejected_halo_metals``: total mass of metals in the ejected gas reservoir due to stellar feedback in the simulated box [Msun/h]
 * ``mhot_halo``: total hot gas mass in halos in the simulated box [Msun/h]
 * ``mhot_metals``: total mass of metals in the hot gas mass in halos in the simulated box [Msun/h]
+* ``mlost_halo``: total gas mass ejected from halos due to QSO feedback in the simulated box [Msun/h]
+* ``mlost_halo_metals``: total mass of metals in the ejected gas reservoir due to QSO feedback in the simulated box [Msun/h]
 * ``mstars``: total stellar mass in the simulated box [Msun/h]
 * ``mstars_bursts_diskinstabilities``: total stellar mass formed via starbursts triggered by disk instabilities in the simulated box [Msun/h]
 * ``mstars_bursts_mergers``: total stellar mass formed via starbursts triggered by galaxy mergers in the simulated box [Msun/h]
@@ -113,6 +117,18 @@
 * ``redshifts``: redshifts of the global outputs.
 * ``sfr_burst``: total star formation rate taking place in bulges in the simulated box [Msun/Gyr/h]
 * ``sfr_quiescent``: total star formation rate taking place in disks in the simulated box [Msun/Gyr/h]
+* ``smbh_maximum``: Maximum mass of the SMBHs in the simulated box [Msun/h]
+
+
+``halo``
+^^^^^^^^
+* ``age_50``: redshift at which the halo had 50% of its current mass
+* ``age_80``: redshift at which the halo had 80% of its current mass
+* ``concentration``: halo concentration
+* ``final_z0_mvir``: virial mass of the halo in which this halo will end up in by z=0 [Msun/h]
+* ``lambda``: halo spin
+* ``mvir``: virial mass of halo [Msun/h]
+* ``vvir``: virial velocity of halo [km/s]
 
 
 ``run_info``
@@ -138,4 +154,5 @@
 * ``descendant_id``: id of the subhalo that is the descendant of this subhalo
 * ``host_id``: id of the host halo of this subhalo
 * ``id``: Subhalo id
+* ``infall_time_subhalo``: redshift at which the subhalo became a SATELLITE (only well defined for satellite subhalos)
 * ``main_progenitor``: =1 if subhalo is the main progenitor' =0 otherwise.

@@ -3,6 +3,18 @@ Changelog
 
 .. rubric:: Development version
 
+* Initial version of the :doc:`PSO optimization routines <optim>`,
+  originally contributed by Mawson Sammons.
+  This initial version allows users to run PSO over |s|
+  using an arbitrary number of parameters.
+  Two evaluation functions (chi2 and log student-t)
+  and three constraints with flexible domains (SMF at z=0,1 and HIMF at z=0)
+  can be chosen from.
+  Execution in both desktop/laptop and HPC environments is supported.
+* |s| can also read halo inputs from hydro-dynamical simulations.
+* Correctly tracking history of subhalos across snapshots.
+* Simple model of radiation pressure QSO feedback included.
+* Extended outputs including halo properties.
 * Add optional execution parameter to seed random number engines,
   and recording it on output files.
   These two options allow users to fully reproduce a previous |s| run.
@@ -11,6 +23,7 @@ Changelog
   |s| now correctly compiles, runs, and standard plots work correctly on Windows.
 * Improved the |ss| script to accept additional environment variables
   to set default values for submission parameters.
+* Miscelaneous additions and modifications to plotting scripts.
 
 .. rubric:: 1.1.0
 

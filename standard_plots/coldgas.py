@@ -47,10 +47,11 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
 def prepare_data(hdf5_data):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
+    stack  = functools.partial(us.stacking, xbins=xmf)
 
     # Unpack data
     (h0, _, typeg, mdisk, mbulge, _, _, mHI, mH2, mgas,
-     mHI_bulge, mH2_bulge, mgas_bulge) = hdf5_data
+     mHI_bulge, mH2_bulge, mgas_bulge, mvir) = hdf5_data
 
     XH = 0.72
     h0log = np.log10(float(h0))
@@ -71,6 +72,7 @@ def prepare_data(hdf5_data):
     mh1_gals = np.zeros(shape = (2, n_typeg))
     mgas_gals = np.zeros(shape = (2, n_typeg))
 
+
     mh2_gals_ltg = np.zeros(shape = (2, n_typeg))
     mh1_gals_ltg = np.zeros(shape = (2, n_typeg))
     mgas_gals_ltg = np.zeros(shape = (2, n_typeg))
@@ -78,6 +80,9 @@ def prepare_data(hdf5_data):
     mh2_gals_etg = np.zeros(shape = (2, n_typeg))
     mh1_gals_etg = np.zeros(shape = (2, n_typeg))
     mgas_gals_etg = np.zeros(shape = (2, n_typeg))
+
+    mh1_relation_satellites_halos = np.zeros(shape = (5,len(mbins))) 
+
 
     #Gas scaling relations based on morphological criterion calculated using total baryon mass of disk and bulge
     ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0) & (morpho_type == 0))
@@ -131,7 +136,6 @@ def prepare_data(hdf5_data):
 
 
 
-
     # Constrains
     ind = np.where((mdisk + mbulge > 0) & (mgas + mgas_bulge > 0) & (mH2 + mH2_bulge > 0))
 
@@ -148,6 +152,17 @@ def prepare_data(hdf5_data):
     mh2_relation = bin_it(x=mh2_gals[0, ind], y=mh2_gals[1, ind])
     mhr_relation = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - h0log,
                         y=np.log10((mH2[ind] + mH2_bulge[ind]) / (mHI[ind] + mHI_bulge[ind])))
+
+    ind = np.where((mdisk + mbulge > 0) & (mvir/h0 < 1e12) & (typeg > 0))
+    mh1_relation_satellites_halos[0] =  stack(x=np.log10((mdisk[ind] + mbulge[ind])/h0), y=(mHI[ind]+mHI_bulge[ind])/(mdisk[ind] + mbulge[ind]))
+    ind = np.where((mdisk + mbulge > 0) & (mvir/h0 >= 1e12)  & (mvir/h0 <= 1e13) & (typeg > 0))
+    mh1_relation_satellites_halos[1] =  stack(x=np.log10((mdisk[ind] + mbulge[ind])/h0), y=(mHI[ind]+mHI_bulge[ind])/(mdisk[ind] + mbulge[ind]))
+    ind = np.where((mdisk + mbulge > 0) & (mvir/h0 >= 1e13)  & (mvir/h0 <= 1e14) & (typeg > 0))
+    mh1_relation_satellites_halos[2] =  stack(x=np.log10((mdisk[ind] + mbulge[ind])/h0), y=(mHI[ind]+mHI_bulge[ind])/(mdisk[ind] + mbulge[ind]))
+    ind = np.where((mdisk + mbulge > 0) & (mvir/h0 >= 1e14)  & (mvir/h0 <= 1e15) & (typeg > 0))
+    mh1_relation_satellites_halos[3] =  stack(x=np.log10((mdisk[ind] + mbulge[ind])/h0), y=(mHI[ind]+mHI_bulge[ind])/(mdisk[ind] + mbulge[ind]))
+    ind = np.where((mdisk + mbulge > 0) & (typeg > 0))
+    mh1_relation_satellites_halos[4] =  stack(x=np.log10((mdisk[ind] + mbulge[ind])/h0), y=(mHI[ind]+mHI_bulge[ind])/(mdisk[ind] + mbulge[ind]))
 
     ind = np.where((mdisk+mbulge > 0) & (typeg == 0))
     mass_central = mdisk[ind] + mbulge[ind]
@@ -168,7 +183,7 @@ def prepare_data(hdf5_data):
             mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat, 
             mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, 
 	    mh1_relation_etg, mgas_ms_relation_ltg, mh2_ms_relation_ltg, mh1_ms_relation_ltg, 
-	    mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg)
+	    mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg, mh1_relation_satellites_halos)
 
 def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relation_cen, mgas_relation_sat):
 
@@ -210,6 +225,49 @@ def plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relatio
 
     common.prepare_legend(ax, ['k','b','r','grey','grey'])
     common.savefig(output_dir, fig, "cold_gas_fraction.pdf")
+
+def plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos):
+
+    ###################################
+    #   Plots global mass densities
+    fig = plt.figure(figsize=(5,4.5))
+
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit="$\\rm log_{10}(M_{\\rm HI}/M_{\\star})$"
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    prepare_ax(ax, 9, 11.5, -4, 1, xtit, ytit)
+
+    #Predicted SMHM
+    ind = np.where(mh1_relation_satellites_halos[0,:] != 0)
+    xplot = xmf[ind]
+    yplot = mh1_relation_satellites_halos[0,ind]
+    ax.plot(xplot,yplot[0],color='b', linestyle='solid', label="$M_{\\rm halo}<10^{12}\,M_{\odot}$")
+    ind = np.where(mh1_relation_satellites_halos[1,:] != 0)
+    xplot = xmf[ind]
+    yplot = mh1_relation_satellites_halos[1,ind]
+    ax.plot(xplot,yplot[0],color='g', linestyle='dotted', label="$10^{12}\,M_{\odot}<M_{\\rm halo}<10^{13}\,M_{\odot}$")
+    ind = np.where(mh1_relation_satellites_halos[2,:] != 0)
+    xplot = xmf[ind]
+    yplot = mh1_relation_satellites_halos[2,ind]
+    ax.plot(xplot,yplot[0],color='magenta', linestyle='dashed', label="$10^{13}\,M_{\odot}<M_{\\rm halo}<10^{14}\,M_{\odot}$")
+    ind = np.where(mh1_relation_satellites_halos[3,:] != 0)
+    xplot = xmf[ind]
+    yplot = mh1_relation_satellites_halos[3,ind]
+    ax.plot(xplot,yplot[0],color='r', linestyle='dashdot', label="$M_{\\rm halo}>10^{14}\,M_{\odot}$")
+    ind = np.where(mh1_relation_satellites_halos[4,:] != 0)
+    xplot = xmf[ind]
+    yplot = mh1_relation_satellites_halos[4,ind]
+    ax.plot(xplot,yplot[0],color='k', linestyle='dotted', label="all satellites")
+
+
+    xobs=[9.2,10,11]
+    yobs=[0.25,-0.5,-1.5]
+    ax.plot(xobs,yobs,'ko', label='Brown+17 all satellites')
+    common.prepare_legend(ax, ['b','g','magenta','r', 'k'])
+    common.savefig(output_dir, fig, "HI_stacking_satellites.pdf")
 
 
 def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, 
@@ -396,10 +454,11 @@ def plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
+
     plt = common.load_matplotlib()
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge',
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
-                           'matom_bulge', 'mmol_bulge', 'mgas_bulge')}
+                           'matom_bulge', 'mmol_bulge', 'mgas_bulge', 'mvir_hosthalo')}
     hdf5_data = common.read_data(model_dir, redshift_table[0], fields, subvols)
 
     (mgas_relation, mgas_relation_cen, mgas_relation_sat,
@@ -408,9 +467,11 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
      mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg,
      mgas_relation_etg, mh2_relation_etg, mh1_relation_etg,
      mgas_ms_relation_ltg, mh2_ms_relation_ltg, mh1_ms_relation_ltg,
-     mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg) = prepare_data(hdf5_data)
+     mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg, 
+     mh1_relation_satellites_halos) = prepare_data(hdf5_data)
 
     plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relation_cen, mgas_relation_sat)
+    plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos)
 
     plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, mgas_relation_ltg, 
 	mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg, mgas_ms_relation_ltg, mh2_ms_relation_ltg, 

@@ -50,10 +50,10 @@ public:
 
 	GalaxyWriter(ExecutionParameters exec_params,
 			CosmologicalParameters cosmo_params,
-			const CosmologyPtr &cosmology,
-			const DarkMatterHalosPtr &darkmatterhalo,
+			CosmologyPtr cosmology,
+			DarkMatterHalosPtr darkmatterhalo,
 			SimulationParameters sim_params);
-	virtual ~GalaxyWriter() {};
+	virtual ~GalaxyWriter() = default;
 
 	virtual void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal) = 0;
 
@@ -94,7 +94,7 @@ private:
 
 };
 
-typedef std::unique_ptr<GalaxyWriter> GalaxyWriterPtr;
+using GalaxyWriterPtr = std::unique_ptr<GalaxyWriter>;
 
 template <typename ...Ts>
 GalaxyWriterPtr make_galaxy_writer(const ExecutionParameters &exec_params, Ts&&...ts)

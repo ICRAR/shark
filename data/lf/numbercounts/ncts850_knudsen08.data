@@ -1,0 +1,23 @@
+# 850 mu number counts from Knudsen etal (2008, MNRAS384, 1611) (Table 4)
+# based on obs of 12 lensing clusters + NTT Deep Field
+# 59 sources over 72 arcmin^2 in image plane (40 arcmin^2 in source plane)
+#
+# S850 in mJy
+# N(>S) in arcmin^-2
+# errors are Poisson
+# Nsrc is number of sources for that datapoint
+# area with S > 3 sigma for that datapoint in arcmin^2
+#
+#S850	N(>S)	errup	errdn	Nsrc	area
+0.13	30.8	70.7	25.4	1	0.033
+0.20	24.1	31.8	15.5	2	0.083
+0.32	12.3	16.3	7.96	2	0.16
+0.50	3.88	8.71	3.13	1	0.26
+0.80	3.15	4.16	2.04	2	0.63
+1.26	1.78	1.73	0.97	3	1.69
+2.00	0.66	0.64	0.36	3	4.54
+3.17	0.75	0.26	0.20	14	18.8
+5.02	0.22	0.11	0.076	8	36.2
+7.96	0.049	0.064	0.031	2	41.2
+12.6	0.024	0.054	0.020	1	42.2
+

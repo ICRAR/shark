@@ -58,4 +58,5 @@ int ExecutionParameters::last_output_snapshot()
 {
 	return *output_snapshots.rbegin();
 }
-}
+
+} // namespace shark

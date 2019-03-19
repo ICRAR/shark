@@ -36,17 +36,25 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.mhalo_seed",mhalo_seed);
 
 	options.load("agn_feedback.model", model);
+
+	//relevant for Bower06 model
 	options.load("agn_feedback.alpha_cool",alpha_cool);
 	options.load("agn_feedback.f_edd",f_edd);
+	options.load("agn_feedback.accretion_eff_cooling",accretion_eff_cooling);
 
+	//control accretion rate onto BHs during starbursts
 	options.load("agn_feedback.f_smbh", f_smbh);
 	options.load("agn_feedback.v_smbh", v_smbh);
 	options.load("agn_feedback.tau_fold", tau_fold);
 
-	options.load("agn_feedback.accretion_eff_cooling",accretion_eff_cooling);
-
+	// relevant for Croton16 model.
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
+
+	// control QSO feedback.
+	options.load("agn_feedback.qso_feedback", qso_feedback, false);
+	options.load("agn_feedback.kappa_qso", kappa_qso);
+	options.load("agn_feedback.epsilon_qso", epsilon_qso);
 
 }
 
@@ -65,9 +73,10 @@ Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, c
 	throw invalid_option(os.str());
 }
 
-AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, const CosmologyPtr &cosmology) :
+AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology, RecyclingParameters recycle_params) :
 	parameters(parameters),
-	cosmology(cosmology)
+	cosmology(std::move(cosmology)),
+	recycle_params(std::move(recycle_params))
 {
 	// no-op
 }
@@ -164,6 +173,84 @@ double AGNFeedback::smbh_accretion_timescale(Galaxy &galaxy, double z){
 	double tdyn = constants::MPCKM2GYR * cosmology->comoving_to_physical_size(galaxy.bulge_gas.rscale, z) / vbulge;
 
 	return tdyn * parameters.tau_fold;
+
+}
+
+double AGNFeedback::qso_critical_luminosity(double mgas, double m, double r){
+
+	double fgas =mgas/m;
+
+	double sigma_bulge = std::sqrt(constants::G * m / r);
+
+	//expression gives luminosity in 10^40 ergs/s.
+
+	double Lm = 3e6 * (fgas/0.1) * std::pow((sigma_bulge/200.0), 4.0);
+
+	return Lm;
+
+}
+
+double AGNFeedback::salpeter_timescale(double Lbol, double mbh){
+
+	double ledd = eddington_luminosity(mbh);
+
+	double edd_ratio = Lbol/ledd;
+
+	//returns Salpeter timescale in Gyr.
+
+	return 43.0 / edd_ratio / constants::KILO;
+}
+
+double AGNFeedback::qso_outflow_velocity(double Lbol, double zgas, double mgas){
+
+	double vout  = 320.0 * std::pow(Lbol/(1e7 * constants::LSOLAR), 0.5) * std::pow(zgas/recycle_params.zsun, 0.25) * std::pow(mgas, -0.25);
+
+	return vout;
+
+}
+
+void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double zgas, double vcirc,
+		double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec){
+
+	// QSO feedback only acts if the accretion rate is >0, BH mass is > 0 and QSO feedback is activated by the user.
+	if(macc > 0 && mBH > 0 && sfr > 0 && mgas > 0 && parameters.qso_feedback){
+		double Lbol = agn_bolometric_luminosity(macc);
+		double Lcrit = qso_critical_luminosity(mgas, mbulge, rbulge);
+
+		// check if bolometric luminosity is larger than the critical luminosity and the gas mass in the bulge is positive. The latter is not always the case becaus equations are solved
+		// numerically and hence negative solutions are in principle possible.
+		if(Lbol > parameters.kappa_qso * Lcrit){
+
+			double tsalp = salpeter_timescale(Lbol, mBH);
+			double vout = qso_outflow_velocity(Lbol, zgas, mgas);
+
+			double mout_rate= mgas/tsalp;
+
+			double mejec_rate = (parameters.epsilon_qso * std::pow(vout/vcirc, 2.0) - 1) * mout_rate;
+
+			// Apply boundary conditions to outflow and ejection rates
+			if(mout_rate <  0 || std::isnan(mout_rate)){
+				mout_rate = 0;
+			}
+			if(mejec_rate <  0 || std::isnan(mejec_rate)){
+				mejec_rate = 0;
+			}
+			/*if(mejec_rate > mout_rate){
+				mejec_rate = mout_rate;
+			}*/
+
+			beta_halo = mout_rate/sfr;
+			beta_ejec = mejec_rate/sfr;
+		}
+		else{
+			beta_halo = 0;
+			beta_ejec = 0;
+		}
+	}
+	else{
+		beta_halo = 0;
+		beta_ejec = 0;
+	}
 
 }
 

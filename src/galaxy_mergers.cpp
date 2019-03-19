@@ -53,18 +53,18 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 }
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
-		const CosmologyPtr &cosmology,
+		CosmologyPtr cosmology,
 		const ExecutionParameters &execparams,
 		SimulationParameters simparams,
-		const DarkMatterHalosPtr &darkmatterhalo,
+		DarkMatterHalosPtr darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
-		const AGNFeedbackPtr &agnfeedback) :
+		AGNFeedbackPtr agnfeedback) :
 	parameters(parameters),
-	cosmology(cosmology),
-	simparams(simparams),
-	darkmatterhalo(darkmatterhalo),
-	physicalmodel(physicalmodel),
-	agnfeedback(agnfeedback),
+	cosmology(std::move(cosmology)),
+	simparams(std::move(simparams)),
+	darkmatterhalo(std::move(darkmatterhalo)),
+	physicalmodel(std::move(physicalmodel)),
+	agnfeedback(std::move(agnfeedback)),
 	generator(execparams.seed),
 	distribution(-0.14, 0.26)
 {
@@ -121,7 +121,7 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return 0.3722 * mass_ratio/std::log(1+mass_ratio);
 }
 
-void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, bool transfer_types2)
+void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, int snapshot, bool transfer_types2)
 {
 	auto satellites = secondary->galaxies;
 	if(transfer_types2){
@@ -152,6 +152,22 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 			galaxy->tmerge = parameters.tau_delay;
 		}
 
+		//check if this galaxy will merge on the second consecutive snapshot instead, and if so, redefine their descendant_id.
+		double z1 = simparams.redshifts[snapshot+1];
+		double z2 = simparams.redshifts[snapshot+2];
+		if(snapshot+1 > simparams.max_snapshot){
+			z2 = 0;
+		}
+		double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+		if(galaxy->tmerge <= delta_t_next){
+			galaxy->descendant_id = primary->central_galaxy()->id;
+		}
+		else{
+			//As this is the last time this is calculated before going to write the output at this snapshot, we make sure that the galaxy
+			//has no descendant_id in the rare eventuality it was defined during merging_galaxies (before this step).
+			galaxy->descendant_id = -1;
+		}
+
 		//Only define the following parameters if the galaxies were not type=2.
 		if(!transfer_types2){
 			galaxy->concentration_type2 = secondary->concentration;
@@ -163,7 +179,7 @@ void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary
 
 }
 
-void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
+void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z, int snapshot)
 {
 	auto central_subhalo = halo->central_subhalo;
 
@@ -191,7 +207,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 			}
 
 			//Calculate dynamical friction timescale for all galaxies in satellite_subhalo.
-			merging_timescale(central_subhalo, satellite_subhalo, z, false);
+			merging_timescale(central_subhalo, satellite_subhalo, z, snapshot, false);
 
 			// Change type of galaxies to type=2 before transferring them to the central_subhalo.
 			for (auto &galaxy: satellite_subhalo->galaxies){
@@ -208,7 +224,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 			//In cases where the subhalo does not disappear, we search for type=2 galaxies and transfer them to the central subhalo,
 			//recalculating its merging timescale.
 
-			merging_timescale(central_subhalo, satellite_subhalo, z, true);
+			merging_timescale(central_subhalo, satellite_subhalo, z, snapshot, true);
 			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_type2galaxies_to(central_subhalo);
 		}
@@ -245,13 +261,13 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z)
 			auto ascendants = primary_subhalo->ascendants;
 			std::copy(ascendants.begin(), ascendants.end(), std::ostream_iterator<SubhaloPtr>(os, " "));
 			os << ". Galaxies are: ";
-			auto galaxies = primary_subhalo->galaxies;
+			auto &galaxies = primary_subhalo->galaxies;
 			std::copy(galaxies.begin(), galaxies.end(), std::ostream_iterator<GalaxyPtr>(os, " "));
 			throw invalid_argument(os.str());
 		}
 
 		//Calculate dynamical friction timescale for all galaxies disappearing in the primary subhalo of the merger in the next snapshot.
-		merging_timescale(primary_subhalo, central_subhalo, z, false);
+		merging_timescale(primary_subhalo, central_subhalo, z, snapshot, false);
 
 	}
 
@@ -305,16 +321,17 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 				all_sats_to_delete.push_back(galaxy);
 			}
 			else{
-				//check if this galaxy will merge on the next snapshot instead, and if so, redefine their descendant_id.
-				if(snapshot+2 < simparams.max_snapshot){
-					double z1 = simparams.redshifts[snapshot];
-					double z2 = simparams.redshifts[snapshot+2];
-					double delta_t_twosnaps = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
-					if(galaxy->tmerge < delta_t_twosnaps){
-						galaxy->descendant_id = central_galaxy->id;
-					}
-				}
 				galaxy->tmerge = galaxy->tmerge - delta_t;
+				//check if this galaxy will merge on the second consecutive snapshot instead, and if so, redefine their descendant_id.
+				double z1 = simparams.redshifts[snapshot+1];
+				double z2 = simparams.redshifts[snapshot+2];
+				if(snapshot+1 > simparams.max_snapshot){
+					z2 = 0;
+				}
+				double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+				if(galaxy->tmerge <= delta_t_next){
+					galaxy->descendant_id = central_galaxy->id;
+				}
 			}
 		}
 	}
@@ -515,10 +532,6 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				// Define accretion rate.
 				galaxy->smbh.macc_sb = delta_mbh/tdyn;
 
-				// Grow SMBH.
-				galaxy->smbh.mass += delta_mbh;
-				galaxy->smbh.mass_metals += delta_mzbh;
-
 				// Reduce gas available for star formation due to black hole growth.
 				galaxy->bulge_gas.mass -= delta_mbh;
 				galaxy->bulge_gas.mass_metals -= delta_mzbh;
@@ -526,13 +539,17 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				// Trigger starburst.
 				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t, true);
 
+				// Grow SMBH after starbursts, as during it we need a realistical measurement of Ledd the BH had before the starburst.
+				galaxy->smbh.mass += delta_mbh;
+				galaxy->smbh.mass_metals += delta_mzbh;
+
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
 				if(galaxy->bulge_gas.mass > 0 && galaxy->bulge_gas.mass < parameters.mass_min){
-					transfer_bulge_gas(subhalo, galaxy, z);
+					transfer_bulge_gas(galaxy);
 				}
 			}
 			else if (galaxy->bulge_gas.mass > 0){
-				transfer_bulge_gas(subhalo, galaxy, z);
+				transfer_bulge_gas(galaxy);
 			}
 		}
 	}
@@ -681,21 +698,23 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	return r;
 }
 
-void GalaxyMergers::transfer_baryon_mass(SubhaloPtr central, SubhaloPtr satellite){
-
+void GalaxyMergers::transfer_baryon_mass(const SubhaloPtr &central, const SubhaloPtr &satellite)
+{
 	central->hot_halo_gas += satellite->hot_halo_gas;
 	central->cold_halo_gas += satellite->cold_halo_gas;
 	central->ejected_galaxy_gas += satellite->ejected_galaxy_gas;
+	central->lost_galaxy_gas += satellite->lost_galaxy_gas;
 
 	// Make baryon components of satellite subhalo = 0.
 	satellite->hot_halo_gas.restore_baryon();
 	satellite->cold_halo_gas.restore_baryon();
 	satellite->ejected_galaxy_gas.restore_baryon();
+	satellite->lost_galaxy_gas.restore_baryon();
 
 }
 
-void GalaxyMergers::transfer_bulge_gas(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z){
-
+void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy)
+{
 	galaxy->disk_gas += galaxy->bulge_gas;
 
 	if(galaxy->disk_gas.rscale == 0){

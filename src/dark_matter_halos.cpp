@@ -98,11 +98,11 @@ Options::get<DarkMatterHaloParameters::ConcentrationModel>(const std::string &na
 
 DarkMatterHalos::DarkMatterHalos(
 	const DarkMatterHaloParameters &params,
-	const CosmologyPtr &cosmology,
+	CosmologyPtr cosmology,
 	SimulationParameters &sim_params,
 	const ExecutionParameters &exec_params) :
 	params(params),
-	cosmology(cosmology),
+	cosmology(std::move(cosmology)),
 	sim_params(sim_params),
 	generator(exec_params.seed),
 	distribution(std::log(0.03), std::abs(std::log(0.5))),
@@ -194,10 +194,7 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo, double z){
 		return 0.334 * rdisk;
 
 	}
-	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
-		//TODO
-		return 0;
-	}
+	throw std::runtime_error("Only the MO98 disk size model is implemented");
 }
 
 double NFWDarkMatterHalos::grav_potential_halo(double r, double c) const
@@ -415,7 +412,7 @@ double DarkMatterHalos::nfw_concentration(double mvir, double z){
 		double a = 0.537 + (1.025 - 0.537) * std::exp(-0.718 * std::pow(z,1.08));
 		return std::pow(10.0, a + b * std::log10(mvir/1e12));
 	}
-
+	throw std::runtime_error("Only the Duffy08 and Dutton14 concentration models are implemented");
 }
 
 /// Specialization of lambert_w0 implemented using GSL
@@ -447,7 +444,6 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	double c = halo->concentration;
 
 	double rvir = constants::G * halo->Mvir / std::pow(halo->Vvir,2);
-	double vvir = halo->Vvir;
 
 	// Assign positions based on an NFW halo of concentration c.
 	nfw_distribution<double> r(c);

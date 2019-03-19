@@ -43,13 +43,13 @@ class Subhalo;
 class Halo;
 class MergerTree;
 
-typedef std::shared_ptr<Galaxy> GalaxyPtr;
-typedef std::shared_ptr<Subhalo> SubhaloPtr;
-typedef std::shared_ptr<Halo> HaloPtr;
-typedef std::shared_ptr<MergerTree> MergerTreePtr;
+using GalaxyPtr = std::shared_ptr<Galaxy>;
+using SubhaloPtr = std::shared_ptr<Subhalo>;
+using HaloPtr = std::shared_ptr<Halo>;
+using MergerTreePtr = std::shared_ptr<MergerTree>;
 
 /// Type used by galaxy_count() methods
-typedef typename std::vector<GalaxyPtr>::size_type galaxies_size_type;
+using galaxies_size_type = std::vector<GalaxyPtr>::size_type;
 
 /**
  * The common base for all baryon component types.
@@ -201,15 +201,15 @@ public:
 	 */
 	galaxy_type_t galaxy_type = CENTRAL;
 
-	Baryon bulge_stars {};
-	Baryon bulge_gas {};
-	Baryon disk_stars {};
-	Baryon disk_gas {};
-	Baryon galaxymergers_burst_stars {};
-	Baryon galaxymergers_assembly_stars {};
-	Baryon diskinstabilities_burst_stars {};
-	Baryon diskinstabilities_assembly_stars {};
-	BlackHole smbh {};
+	Baryon bulge_stars;
+	Baryon bulge_gas;
+	Baryon disk_stars;
+	Baryon disk_gas;
+	Baryon galaxymergers_burst_stars;
+	Baryon galaxymergers_assembly_stars;
+	Baryon diskinstabilities_burst_stars;
+	Baryon diskinstabilities_assembly_stars;
+	BlackHole smbh;
 
 	//save average star formation rates and metallicities of the newly formed stars.
 	float sfr_disk = 0;
@@ -231,10 +231,10 @@ public:
 	float vmax = 0;
 
 	//save star formation and gas history
-	std::vector<HistoryItem>  history {};
+	std::vector<HistoryItem>  history;
 
 	//save interactions of this galaxy during this snapshot.
-	InteractionItem interaction {};
+	InteractionItem interaction;
 
 	/**
 	 * tmerge: dynamical friction timescale, which is defined only if galaxy is satellite.
@@ -376,23 +376,11 @@ public:
  * This structure keeps track of the properties of the halo gas, which are necessary to implement a more sophisticated cooling model.
  */
 struct CoolingSubhaloTracking {
-	/**
-	 * Initialize values in zero.
-	 */
-	CoolingSubhaloTracking():
-		deltat(),
-		temp(),
-		mass(),
-		tcooling(),
-		rheat(0)
-	{
-		//no=op
-	};
 	std::vector<double> deltat;
 	std::vector<double> temp;
 	std::vector<double> mass;
 	std::vector<double> tcooling;
-	double rheat;
+	double rheat {0};
 };
 
 
@@ -409,7 +397,6 @@ public:
 	 */
 	Subhalo(id_t id, int snapshot):
 		Identifiable(id),
-		Spatial(),
 		snapshot(snapshot)
 	{
 		//no-op
@@ -473,12 +460,12 @@ public:
 	 * If this pointer is set then descendant_id and descendant_subhalo are
 	 * meaningless.
 	 */
-	SubhaloPtr descendant {};
+	SubhaloPtr descendant;
 
 	/**
 	 * The list of galaxies in this subhalo.
 	 */
-	std::vector<GalaxyPtr> galaxies {};
+	std::vector<GalaxyPtr> galaxies;
 
 	/** Returns a pointer to the central galaxy. If no central galaxy is found
 	 in this Subhalo, then an empty pointer is returned.
@@ -506,49 +493,59 @@ public:
 	id_t haloID = 0;
 
 	/** Vvir: virial velocity of the subhalo [km/s]
-	 * Mvir: virial mass of the subhalo [Msun/h]
+	 * Mvir: dark matter mass of the subhalo [Msun/h]
+	 * Mgas: gas mass in the subhalo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
 	 * L: angular momentum of subhalo [Msun/h km/s Mpc/h]
 	 * Vcirc: maximum circular velocity of the subhalo [km/s]
 	 * concentration: NFW concentration parameter of subhalo
 	 * lambda: spin parameter of subhalo
+	 * infall_t: redshift at which the subhalo became a type > 0.
 	 *  */
 	float Vvir = 0;
 	float Mvir = 0;
+	float Mgas = 0;
 	xyz<float> L {0, 0, 0};
 	float Vcirc = 0;
 	float concentration = 0;
 	float lambda = 0;
+	float infall_t = 0;
 
 	/**
 	 * cooling_subhalo_tracking: saves que information of the virial temperature, total halo gas and cooling time history.
 	 */
-	CoolingSubhaloTracking cooling_subhalo_tracking {};
+	CoolingSubhaloTracking cooling_subhalo_tracking;
 
 
 	/**
 	 * Hot gas component of the halo and outside the galaxies that is
 	 * allowed to cool down and/or fall onto the galaxy.
 	 */
-	Baryon hot_halo_gas {};
+	Baryon hot_halo_gas;
 
 	/**
 	 * Cold gas component of the halo and outside the galaxies that has
 	 * cooled down.
 	 */
-	Baryon cold_halo_gas {};
+	Baryon cold_halo_gas;
 
 	/**
 	 * Hot gas component of the halo and outside galaxies that tracks
 	 * the ejected outflowing gas from the galaxy and that is not
 	 * available for cooling yet.
 	 */
-	Baryon ejected_galaxy_gas {};
+	Baryon ejected_galaxy_gas;
+
+	/**
+	 * Lost gas reservoir which tracks the gas that is outflowing due to
+	 * QSO feedback and that has escaped the halo.
+	 */
+	Baryon lost_galaxy_gas {};
 
 	/**
 	 * A list of pointers to the ascendants of this subhalo, sorted by mass in
 	 * descending order
 	 */
-	std::vector<SubhaloPtr> ascendants {};
+	std::vector<SubhaloPtr> ascendants;
 
 	/**
 	 * The accreted baryonic mass onto the subhalo. This information comes from the merger tree.
@@ -558,7 +555,7 @@ public:
 	/**
 	 * The halo that holds this subhalo.
 	 */
-	HaloPtr host_halo {};
+	HaloPtr host_halo;
 
 	/**
 	 * @return The main progenitor of this Subhalo
@@ -659,7 +656,6 @@ public:
 
 	Halo(id_t halo_id, int snapshot) :
 		Identifiable(halo_id),
-		Spatial(),
 		snapshot(snapshot)
 	{
 		// no-op
@@ -668,12 +664,12 @@ public:
 	/**
 	 * The central subhalo
 	 */
-	SubhaloPtr central_subhalo {};
+	SubhaloPtr central_subhalo;
 
 	/**
 	 * The subhalos contained in this halo
 	 */
-	std::vector<SubhaloPtr> satellite_subhalos {};
+	std::vector<SubhaloPtr> satellite_subhalos;
 
 	/**
 	 * @return the total number of subhalos contained in this halo
@@ -701,40 +697,61 @@ public:
 	void remove_subhalo(const SubhaloPtr &subhalo);
 
 	/**
+	 * @return The main progenitor of this halo
+	 */
+	HaloPtr main_progenitor() const;
+
+	/**
 	 * The mass contained in the subhalos.
 	 * This quantity should be =1 for classic SAMs, but with Rodrigo Canas work
 	 * on VELOCIraptor, this quantity could be less than 1.
 	 */
 	float mass_fraction_subhalos = -1;
 
-	/** TODO: document these */
+
+	/** Vvir: virial velocity of the halo [km/s]
+	 * Mvir: dark matter mass of the halo [Msun/h]
+	 * Mgas: gas mass in the halo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
+	 * concentration: NFW concentration parameter of halo
+	 * lambda: spin parameter of halo
+	 * cooling_rate: cooling rate experienced by this halo in Msun/Gyr/h.
+	 * age_80: redshift at which the halo had 80% of its mass in place.
+	 * age_50: redshift at which the halo had 50% of its mass in place.
+	 *  */
 	float Vvir = 0;
 	float Mvir = 0;
+	float Mgas = 0;
 	float concentration = 0;
 	float lambda = 0;
 	float cooling_rate = 0;
+	float age_80 = 0;
+	float age_50 = 0;
 
 	/**
 	 * The snapshot at which this halo is found
 	 */
 	int snapshot;
 
-	bool main_progenitor = false;
-
-	HaloPtr descendant {};
-	std::set<HaloPtr> ascendants {};
+	HaloPtr descendant;
+	std::set<HaloPtr> ascendants;
 
 	/**
 	 * The merger tree that holds this halo.
 	 */
-	MergerTreePtr merger_tree {};
+	MergerTreePtr merger_tree;
 
 	/**
 	 * Adds @a subhalo to this Halo.
 	 *
 	 * @param subhalo The subhalo to add
 	 */
-	void add_subhalo(const SubhaloPtr &&subhalo);
+	void add_subhalo(SubhaloPtr &&subhalo);
+
+	/**
+	 * Returns the z=0 halo in which this halo ends up.
+	 * @return
+	 */
+	HaloPtr final_halo() const;
 
 	///
 	/// Returns the number of galaxies contained in this Halo
@@ -772,7 +789,7 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const HaloPtr &
  * A merger tree contains halos, which are indexed by snapshot,
  * and an ID to identify it.
  */
-class MergerTree : public Identifiable<long> {
+class MergerTree : public Identifiable<std::int32_t> {
 public:
 
 	using Identifiable::Identifiable;
@@ -785,22 +802,31 @@ public:
 	void add_halo(const HaloPtr &halo) {
 		halos[halo->snapshot].push_back(halo);
 	}
+
+	std::vector<HaloPtr> &halos_at(int snapshot)
+	{
+		auto it = halos.find(snapshot);
+		if (it == halos.end()) {
+			return NONE;
+		}
+		return it->second;
+	}
+
+	std::vector<HaloPtr> &halos_at_last_snapshot()
+	{
+		return halos.rbegin()->second;
+	}
+
+private:
+	static std::vector<HaloPtr> NONE;
 };
 
+/**
+ * Class to track all the mass componets in the simulation.
+ */
 class TotalBaryon {
 
 public:
-
-	/**
-	 * Class to track all the mass componets in the simulation.
-	 */
-
-	TotalBaryon() :
-		SFR_disk(0),
-		SFR_bulge(0)
-	{
-		// no-op
-	}
 
 	/**
 	 * mcold: total cold gas mass in disk+bulge.
@@ -809,13 +835,15 @@ public:
 	 * mstars_burst_diskinstabilities: total stellar mass formed via bursts driven by disk instabilities.
 	 * mhot_halo: total hot halo gas.
 	 * mcold_halo: total cold halo gas (that is cooling during the current snapshot).
-	 * mejected_halo: total hot gas that has been ejected from galaxies due to feeback and that has not been reincorporated yet onto the hot halo gas reservoir.
+	 * mejected_halo: total hot gas that has been ejected from galaxies due to stellar feedback and that has not been reincorporated yet onto the hot halo gas reservoir.
+	 * mlost_halo: total gas mass that has been ejected from galaxies and halos due to QSO feedback.
 	 * mBH: total mass locked in black holes.
 	 * mHI: total mass in the form of atomic gas.
 	 * mH2: total mass in the form of molecular gas.
 	 * mDM: total mass in the form of dark matter.
-	 * SFR: integrated SFR of all galaxies over a snapshot.
+	 * SFR: integrated SFR of all galaxies over a snapshot for the disk and the bulge.
 	 * baryon_total_created: keeps track of the baryons deposited in DM halos to ensure mass convervations.
+	 * max_BH: maximum mass of the SMBHs in this snapshot.
 	 */
 
 	std::vector<BaryonBase> mcold;
@@ -825,6 +853,7 @@ public:
 	std::vector<BaryonBase> mhot_halo;
 	std::vector<BaryonBase> mcold_halo;
 	std::vector<BaryonBase> mejected_halo;
+	std::vector<BaryonBase> mlost_halo;
 	std::vector<BaryonBase> mBH;
 	std::vector<BaryonBase> mHI;
 	std::vector<BaryonBase> mH2;
@@ -832,6 +861,7 @@ public:
 
 	std::vector<double> SFR_disk;
 	std::vector<double> SFR_bulge;
+	std::vector<double> max_BH;
 
 	/**
 	 * Vectors of integers that keep track of number of mergers of galaxies and disk instability episodes in each snapshot.
