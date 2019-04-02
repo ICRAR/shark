@@ -236,6 +236,7 @@ int main(int argc, char *argv[]) {
 
 	if (SHARK_OPENMP)
 		add_compile_options("${OpenMP_CXX_FLAGS}")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_CXX_FLAGS}")
 		set(SHARK_LIBS ${SHARK_LIBS} ${OpenMP_CXX_LIBRARIES})
 	endif()
 endmacro()
