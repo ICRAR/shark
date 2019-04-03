@@ -149,8 +149,8 @@ double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
 float DarkMatterHalos::halo_lambda (xyz<float> L, float m, double z, double npart){
 
 	//Spin parameter either read from the DM files or assumed a random distribution.
-	double H0 = 10.0* cosmology->hubble_parameter(z);
-        double lambda = L.norm() / m / 1.41421356237 / std::pow(constants::G * m, 0.666) * std::pow(H0,0.33);
+	double H0 = cosmology->hubble_parameter(z);
+	double lambda = L.norm() / m * 1.5234153 / std::pow(constants::G * m, 0.666) * std::pow(H0,0.33);
 
 	if(lambda > 1){
 			lambda = 1;

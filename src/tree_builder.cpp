@@ -66,7 +66,7 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 	});
 }
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
 {
 
 	auto last_snapshot_to_consider = exec_params.last_output_snapshot();
@@ -124,7 +124,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 
 	// Define central subhalos
 	LOG(info) << "Defining central subhalos";
-	define_central_subhalos(trees, sim_params);
+	define_central_subhalos(trees, sim_params, dark_matter_params);
 
 	// Define accretion rate from DM in case we want this.
 	LOG(info) << "Defining accretion rate using cosmology";
@@ -208,7 +208,7 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	return subhalo;
 }
 
-void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
+void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, DarkMatterHaloParameters &dark_matter_params){
 
 	//This function loops over merger trees and halos to define central galaxies in a self-consistent way. The loop starts at z=0.
 
@@ -264,8 +264,10 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 						break;
 					}
 
-					// Redefine lambda of main progenitor to have the same one as its descendant.
-					main_prog->lambda = lambda;
+					// Redefine lambda of main progenitor to have the same one as its descendant, only if this halo is not reliable.
+					if (!dark_matter_params.use_converged_lambda_catalog or (dark_matter_params.use_converged_lambda_catalog && main_prog->Mvir/sim_params.particle_mass < dark_matter_params.min_part_convergence)) {
+						main_prog->lambda = lambda;
+					}
 					subhalo = define_central_subhalo(ascendant_halo, main_prog);
 
 					// Define property last_identified_snapshot for all the ascendants that are not the main progenitor of the subhalo.
