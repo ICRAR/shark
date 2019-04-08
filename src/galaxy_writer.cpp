@@ -275,6 +275,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> L_y;
 	vector<float> L_z;
 
+	vector<float> L_x_subhalo;
+	vector<float> L_y_subhalo;
+	vector<float> L_z_subhalo;
+
 	vector<int> type;
 	vector<Halo::id_t> id_halo;
 	vector<Halo::id_t> id_halo_tree;
@@ -326,6 +330,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			}
 			main.push_back(m);
 			id.push_back(subhalo->id);
+
+			L_x_subhalo.push_back(subhalo->L.x);
+			L_y_subhalo.push_back(subhalo->L.y);
+			L_z_subhalo.push_back(subhalo->L.z);
 
 			for (const auto &galaxy: subhalo->galaxies){
 
@@ -571,6 +579,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(vvir_subhalo);
 	REPORT(cnfw_subhalo);
 	REPORT(lambda_subhalo);
+	REPORT(L_x_subhalo);
+	REPORT(L_y_subhalo);
+	REPORT(L_z_subhalo);
 	REPORT(position_x);
 	REPORT(position_y);
 	REPORT(position_z);
@@ -631,6 +642,14 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "redshift at which the subhalo became a SATELLITE (only well defined for satellite subhalos)";
 	file.write_dataset("subhalo/infall_time_subhalo", infall_time_subhalo, comment);
+
+	//Subhalo AM vector
+	comment = "total angular momentum component x of subhalo [Msun pMpc km/s]. From VELOCIraptor.";
+	file.write_dataset("subhalo/l_x", L_x_subhalo,  comment);
+	comment = "total angular momentum component y of galaxy [Msun pMpc km/s]. From VELOCIraptor.";
+	file.write_dataset("suubhalo/l_y", L_y_subhalo, comment);
+	comment = "total angular momentum component z of galaxy [Msun pMpc km/s]. From VELOCIraptor.";
+	file.write_dataset("subhalo/l_z", L_z_subhalo, comment);
 
 	//Write galaxy properties.
 	comment = "stellar mass in the disk [Msun/h]";
