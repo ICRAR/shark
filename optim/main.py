@@ -79,7 +79,8 @@ def main():
                           default='student-t', choices=list(analysis.stat_tests.keys()))
     pso_opts.add_argument('-x', '--constraints', default='HIMF,SMF_z0,SMF_z1',
                           help=("Comma-separated list of constraints, any of HIMF, SMF_z0 or SMF_z1, defaults to 'HIMF,SMF_z0,SMF_z1'. "
-                                "Can specify a domain range after the name (e.g., 'SMF_z0(8-11)')"))
+                                "Can specify a domain range after the name (e.g., 'SMF_z0(8-11)')"
+                                "and/or a relative weight (e.g. 'HIMF*6,SMF_z0(8-11)*10)'"))
 
     hpc_opts = parser.add_argument_group('HPC options')
     hpc_opts.add_argument('-H', '--hpc-mode', help='Enable HPC mode', action='store_true')
