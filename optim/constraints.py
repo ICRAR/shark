@@ -65,6 +65,7 @@ class Constraint(object):
 
     def __init__(self):
         self.redshift_table = None
+        self.weight = 1
 
     def _load_model_data(self, modeldir, subvols):
 
@@ -208,7 +209,9 @@ class SMF_z1(SMF):
 
         return x_obs, y_obs, y_dn, y_up
 
-_constraint_re = re.compile(r'([0-9_a-zA-Z]+)(?:\(([0-9\.]+)-([0-9\.]+)\))?')
+_constraint_re = re.compile((r'([0-9_a-zA-Z]+)' # name
+                              '(?:\(([0-9\.]+)-([0-9\.]+)\))?' # domain boundaries
+                              '(?:\*([0-9\.]+))?')) # weight
 def parse(spec):
     """Parses a comma-separated string of constraint names into a list of
     Constraint objects. Specific domain values can be specified in `spec`"""
@@ -231,6 +234,8 @@ def parse(spec):
             if up > c.domain[1]:
                 raise ValueError('Constraint up boundary is higher than lowest value possible (%f > %f)' % (up, c.domain[1]))
             c.domain = (dn, up)
+        if m.group(4):
+            c.weight = float(m.group(4))
         return c
 
     return [_parse(s) for s in spec.split(',')]
