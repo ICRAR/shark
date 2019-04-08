@@ -66,6 +66,7 @@ class Constraint(object):
     def __init__(self):
         self.redshift_table = None
         self.weight = 1
+        self.rel_weight = 1
 
     def _load_model_data(self, modeldir, subvols):
 
@@ -134,12 +135,9 @@ class Constraint(object):
         return y_obs[ind], y_mod[ind], err
 
     def __str__(self):
-        s = '%s [%.1f - %.1f]'
-        args = [self.__class__.__name__, self.domain[0], self.domain[1]]
-        if self.weight != 1:
-            s += ', weight: %.2f'
-            args.append(self.weight)
-        return s % tuple(args)
+        s = '%s, low=%.1f, up=%.1f, weight=%.2f, rel_weight=%.2f'
+        args = self.__class__.__name__, self.domain[0], self.domain[1], self.weight, self.rel_weight
+        return s % args
 
 
 class HIMF(Constraint):
@@ -247,4 +245,8 @@ def parse(spec):
             c.weight = float(m.group(4))
         return c
 
-    return [_parse(s) for s in spec.split(',')]
+    constraints = [_parse(s) for s in spec.split(',')]
+    total_weight = sum([c.weight for c in constraints])
+    for c in constraints:
+        c.rel_weight = c.weight / total_weight
+    return constraints
