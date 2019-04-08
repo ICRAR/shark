@@ -67,6 +67,9 @@ def _to_shark_options(particle, space):
             value = 10 ** value
         yield '%s=%s' % (name, value)
 
+def _evaluate(constraint, stat_test, modeldir, subvols):
+    y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
+    return stat_test(y_obs, y_mod, err)
 
 count = 0
 def run_shark_hpc(particles, *args):
@@ -121,9 +124,7 @@ def run_shark_hpc(particles, *args):
         _, simu, model, _ = common.read_configuration(opts.config)
         particle_outdir = os.path.join(shark_output_base, str(i))
         modeldir = common.get_shark_output_dir(particle_outdir, simu, model)
-        for j, constraint in enumerate(opts.constraints):
-            y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
-            fx[i, j] = statTest(y_obs, y_mod, err)
+        fx[i] = [_evaluate(c, statTest, modeldir, subvols) for c in opts.constraints]
         if not opts.keep:
             shutil.rmtree(particle_outdir)
 
@@ -152,11 +153,7 @@ def run_shark(particle, *args):
         cmdline += ['-o', option]
     _exec_shark('Executing shark instance', cmdline)
 
-    total = 0
-    for constraint in opts.constraints:
-        y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
-        total += statTest(y_obs, y_mod, err)
-
+    total = sum(_evaluate(c, statTest, modeldir, subvols) for c in opts.constraints)
     logger.info('Particle %r evaluated to %f', particle, total)
 
     if not opts.keep:
