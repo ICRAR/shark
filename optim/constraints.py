@@ -133,6 +133,15 @@ class Constraint(object):
         err = np.maximum(np.abs(y_dn[ind]), np.abs(y_up[ind]))
         return y_obs[ind], y_mod[ind], err
 
+    def __str__(self):
+        s = '%s [%.1f - %.1f]'
+        args = [self.__class__.__name__, self.domain[0], self.domain[1]]
+        if self.weight != 1:
+            s += ', weight: %.2f'
+            args.append(self.weight)
+        return s % tuple(args)
+
+
 class HIMF(Constraint):
     """The HI Mass Function constraint"""
 

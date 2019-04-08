@@ -152,7 +152,7 @@ def main():
     logger.info('    Test function: %s', opts.stat_test)
     logger.info('Constraints:')
     for c in opts.constraints:
-        logger.info('%10s [%.1f - %.1f]' % (c.__class__.__name__, c.domain[0], c.domain[1]))
+        logger.info('    %s', c)
     logger.info('HPC mode: %d', opts.hpc_mode)
     if opts.hpc_mode:
         logger.info('    Account used to submit: %s', opts.account if opts.account else '')
