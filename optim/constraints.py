@@ -65,6 +65,8 @@ class Constraint(object):
 
     def __init__(self):
         self.redshift_table = None
+        self.weight = 1
+        self.rel_weight = 1
 
     def _load_model_data(self, modeldir, subvols):
 
@@ -131,6 +133,12 @@ class Constraint(object):
         ind = np.where((x_obs >= self.domain[0]) & (x_obs <= self.domain[1]))
         err = np.maximum(np.abs(y_dn[ind]), np.abs(y_up[ind]))
         return y_obs[ind], y_mod[ind], err
+
+    def __str__(self):
+        s = '%s, low=%.1f, up=%.1f, weight=%.2f, rel_weight=%.2f'
+        args = self.__class__.__name__, self.domain[0], self.domain[1], self.weight, self.rel_weight
+        return s % args
+
 
 class HIMF(Constraint):
     """The HI Mass Function constraint"""
@@ -208,7 +216,9 @@ class SMF_z1(SMF):
 
         return x_obs, y_obs, y_dn, y_up
 
-_constraint_re = re.compile(r'([0-9_a-zA-Z]+)(?:\(([0-9\.]+)-([0-9\.]+)\))?')
+_constraint_re = re.compile((r'([0-9_a-zA-Z]+)' # name
+                              '(?:\(([0-9\.]+)-([0-9\.]+)\))?' # domain boundaries
+                              '(?:\*([0-9\.]+))?')) # weight
 def parse(spec):
     """Parses a comma-separated string of constraint names into a list of
     Constraint objects. Specific domain values can be specified in `spec`"""
@@ -231,6 +241,12 @@ def parse(spec):
             if up > c.domain[1]:
                 raise ValueError('Constraint up boundary is higher than lowest value possible (%f > %f)' % (up, c.domain[1]))
             c.domain = (dn, up)
+        if m.group(4):
+            c.weight = float(m.group(4))
         return c
 
-    return [_parse(s) for s in spec.split(',')]
+    constraints = [_parse(s) for s in spec.split(',')]
+    total_weight = sum([c.weight for c in constraints])
+    for c in constraints:
+        c.rel_weight = c.weight / total_weight
+    return constraints

@@ -265,7 +265,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 					}
 
 					// Redefine lambda of main progenitor to have the same one as its descendant, only if this halo is not reliable.
-					if (!dark_matter_params.use_converged_lambda_catalog or (dark_matter_params.use_converged_lambda_catalog && main_prog->Mvir/sim_params.particle_mass < dark_matter_params.min_part_convergence)) {
+					if (!dark_matter_params.use_converged_lambda_catalog || (dark_matter_params.use_converged_lambda_catalog && main_prog->Mvir/sim_params.particle_mass < dark_matter_params.min_part_convergence)) {
 						main_prog->lambda = lambda;
 					}
 					subhalo = define_central_subhalo(ascendant_halo, main_prog);

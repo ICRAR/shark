@@ -31,8 +31,12 @@ import numpy as np
 PY2 = sys.version_info[0] == 2
 if PY2:
     import ConfigParser as configparser
+    b2s = lambda b: b
 else:
     import configparser
+    b2s = lambda b: b.decode('ascii')
+    raw_input = input
+
 
 def _select_closest(i1, i2, z, redshifts):
     i1 = min(i1, len(redshifts) - 1)
