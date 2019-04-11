@@ -647,7 +647,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "total angular momentum component x of subhalo [Msun pMpc km/s]. From VELOCIraptor.";
 	file.write_dataset("subhalo/l_x", L_x_subhalo,  comment);
 	comment = "total angular momentum component y of galaxy [Msun pMpc km/s]. From VELOCIraptor.";
-	file.write_dataset("suubhalo/l_y", L_y_subhalo, comment);
+	file.write_dataset("subhalo/l_y", L_y_subhalo, comment);
 	comment = "total angular momentum component z of galaxy [Msun pMpc km/s]. From VELOCIraptor.";
 	file.write_dataset("subhalo/l_z", L_z_subhalo, comment);
 
