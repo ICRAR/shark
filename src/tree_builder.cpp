@@ -155,31 +155,7 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 	}
 	parent_shalo->descendant = desc_subhalo;
 
-	// Establish ascendant and descendant link at halo level
-	// Ascendant is only added if not added previously
-	auto result = desc_halo->ascendants.insert(parent_halo);
-	auto halos_linked = std::get<1>(result);
-
-	// Fail if a halo has more than one descendant
-	if (parent_halo->descendant && parent_halo->descendant->id != desc_halo->id) {
-		std::ostringstream os;
-		os << parent_halo << " already has a descendant " << parent_halo->descendant;
-		os << " but " << desc_halo << " is claiming to be its descendant as well";
-		throw invalid_data(os.str());
-	}
-	parent_halo->descendant = desc_halo;
-
-	// Link this halo to merger tree and back
-	if (!desc_halo->merger_tree) {
-		std::ostringstream os;
-		os << "Descendant " << desc_halo << " has no MergerTree associated to it";
-		throw invalid_data(os.str());
-	}
-	parent_halo->merger_tree = desc_halo->merger_tree;
-	if (halos_linked) {
-		parent_halo->merger_tree->add_halo(parent_halo);
-	}
-
+	add_parent(desc_halo, parent_halo);
 }
 
 SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo)
