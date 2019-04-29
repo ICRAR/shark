@@ -156,3 +156,57 @@ public:
 	}
 
 };
+
+class TestHalos : public CxxTest::TestSuite
+{
+
+private:
+	template <typename ... Ts>
+	HaloPtr make_halo(Ts && ... ts)
+	{
+		return std::make_shared<Halo>(std::forward<Ts>(ts)...);
+	}
+
+	template <typename ... Ts>
+	MergerTreePtr make_merger_tree(Ts && ... ts)
+	{
+		return std::make_shared<MergerTree>(std::forward<Ts>(ts)...);
+	}
+
+public:
+
+	void test_roots()
+	{
+
+		auto tree = make_merger_tree(1);
+
+		// Merger Tree is:
+		//
+		// 1 --> 3 --> 5
+		//       ^     ^
+		// 2 ----|     |
+		//             |
+		//       4 ----|
+		//
+		// Roots should be 1, 2 and 4
+		auto halo1 = make_halo(1, 1);
+		auto halo2 = make_halo(2, 1);
+		auto halo3 = make_halo(3, 2);
+		auto halo4 = make_halo(4, 2);
+		auto halo5 = make_halo(5, 3);
+		halo5->merger_tree = tree;
+		add_parent(halo5, halo3);
+		add_parent(halo5, halo4);
+		add_parent(halo3, halo2);
+		add_parent(halo3, halo1);
+
+		auto roots = tree->roots();
+		TS_ASSERT_EQUALS(roots.size(), 3);
+		std::set<Halo::id_t> ids;
+		for (auto &root: roots) {
+			ids.insert(root->id);
+		}
+		TS_ASSERT_EQUALS(ids, std::set<Halo::id_t>({1, 2, 4}));
+	}
+
+};

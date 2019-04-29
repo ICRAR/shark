@@ -828,6 +828,23 @@ public:
 		return halos.rbegin()->second;
 	}
 
+	/**
+	 * Get all the roots of this merger tree -- that is, all Halos
+	 * that don't have an ascendant.
+	 */
+	std::vector<HaloPtr> roots()
+	{
+		std::vector<HaloPtr> roots;
+		for (auto &snapshot_and_halos: halos) {
+			for (auto &halo: snapshot_and_halos.second) {
+				if (halo->ascendants.empty()) {
+					roots.push_back(halo);
+				}
+			}
+		}
+		return roots;
+	}
+
 private:
 	static std::vector<HaloPtr> NONE;
 };
