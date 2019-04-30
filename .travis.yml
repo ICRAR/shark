@@ -27,39 +27,38 @@
 language: cpp
 sudo: false
 
-# In Linux we cache the gsl binary version
-cache:
- directories:
-  - gsl/2.4
-
 # We try with both GNU and LLVM
 # When running with gcc-6 we also collect coverage information
 # and upload it to coveralls
 matrix:
  include:
   - compiler: gcc
+    dist: xenial
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-5, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest]
+      packages: [g++-5, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, libgsl-dev]
     env: COMPILER=g++-5
   - compiler: gcc
+    dist: xenial
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-6, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, python-matplotlib, python-scipy, python-h5py, python-tk]
+      packages: [g++-6, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, libgsl-dev, python-matplotlib, python-scipy, python-h5py, python-tk]
     env: COMPILER=g++-6 PYTHON=python
   - compiler: gcc
+    dist: xenial
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, python3-matplotlib, python3-scipy, python3-h5py, python3-tk]
+      packages: [g++-7, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, libgsl-dev, python3-matplotlib, python3-scipy, python3-h5py, python3-tk]
     env: COMPILER=g++-7 PYTHON=python3
   - compiler: clang
+    dist: xenial
     addons:
      apt:
       sources: ubuntu-toolchain-r-test
-      packages: [g++-7, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest]
+      packages: [g++-7, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, libgsl-dev]
     env: COMPILER=clang++ LD_LIBRARY_PATH=/usr/local/clang-5.0.0/lib
   - os: osx
     osx_image: xcode8.3 # OSX 10.12
