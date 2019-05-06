@@ -255,6 +255,32 @@ std::vector<SubhaloPtr> Halo::all_subhalos() const
 	return all;
 }
 
+void add_parent(const HaloPtr &halo, const HaloPtr &parent)
+{
+	auto result = halo->ascendants.insert(parent);
+	auto halos_linked = std::get<1>(result);
+
+	// Fail if a halo has more than one descendant
+	if (parent->descendant && parent->descendant->id != halo->id) {
+		std::ostringstream os;
+		os << parent << " already has a descendant " << parent->descendant;
+		os << " but " << halo << " is claiming to be its descendant as well";
+		throw invalid_data(os.str());
+	}
+	parent->descendant = halo;
+
+	// Link this halo to merger tree and back
+	if (!halo->merger_tree) {
+		std::ostringstream os;
+		os << "Descendant " << halo << " has no MergerTree associated to it";
+		throw invalid_data(os.str());
+	}
+	parent->merger_tree = halo->merger_tree;
+	if (halos_linked) {
+		parent->merger_tree->add_halo(parent);
+	}
+}
+
 void Halo::add_subhalo(SubhaloPtr &&subhalo)
 {
 	// Add subhalo mass to halo

@@ -784,6 +784,17 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const HaloPtr &
 }
 
 /**
+ * Adds @p parent as the parent halo of @p halo, and likewise add @p halo as a
+ * descendant of @p parent. If a descendant has already been set in @p parent
+ * and is different from @p descendant then an error is thrown.
+ *
+ * @param halo The halo of which @p parent is a parent (i.e., a descendant of
+ *        @p parent).
+ * @param parent A parent of @p halo
+ */
+void add_parent(const HaloPtr &halo, const HaloPtr &parent);
+
+/**
  * A merger tree.
  *
  * A merger tree contains halos, which are indexed by snapshot,
@@ -815,6 +826,23 @@ public:
 	std::vector<HaloPtr> &halos_at_last_snapshot()
 	{
 		return halos.rbegin()->second;
+	}
+
+	/**
+	 * Get all the roots of this merger tree -- that is, all Halos
+	 * that don't have an ascendant.
+	 */
+	std::vector<HaloPtr> roots()
+	{
+		std::vector<HaloPtr> roots;
+		for (auto &snapshot_and_halos: halos) {
+			for (auto &halo: snapshot_and_halos.second) {
+				if (halo->ascendants.empty()) {
+					roots.push_back(halo);
+				}
+			}
+		}
+		return roots;
 	}
 
 private:
