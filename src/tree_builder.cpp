@@ -69,7 +69,6 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, SimulationParameters sim_params, ExecutionParameters exec_params) 
 {
 	omp_static_for(trees, threads, [&](MergerTreePtr &tree, int thread_idx) {
-		all++;
 		for (auto &root: tree->roots()) {
 			if(root->Mvir > exec_params.ignore_npart_threshold * sim_params.particle_mass && sim_params.redshifts[root->snapshot] < exec_params.ignore_below_z){
 				root->ignore_gal_formation = true;
