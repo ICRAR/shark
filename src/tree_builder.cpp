@@ -66,19 +66,33 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 	});
 }
 
-void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees) 
+void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, SimulationParameters sim_params, ExecutionParameters exec_params) 
 {
-	/*omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
-		for (auto &snapshot_and_halos: tree->halos) {
-			for (auto &halo: snapshot_and_halos.second) {
-				if (halo->merger_tree != tree) {
-					std::ostringstream os;
-					os << halo << " is not actually part of " << tree;
-					throw invalid_data(os.str());
-				}
+	auto trees_to_evaluate = trees;
+	int ignored = 0, all = 0;
+
+	omp_static_for(trees, threads, [&](MergerTreePtr &tree, int thread_idx) {
+		all++;
+		for (auto &root: tree->roots()) {
+			if(root->Mvir > exec_params.ignore_npart_threshold * sim_params.particle_mass && sim_params.redshifts[root->snapshot] < exec_params.ignore_below_z){
+		                auto it = std::find(trees_to_evaluate.begin(), trees_to_evaluate.end(), tree);
+				trees_to_evaluate.erase(it);
+                                ignored++;
+				break;
 			}
 		}
-	});*/
+	});
+
+	trees = trees_to_evaluate;
+        if (LOG_ENABLED(debug)) {
+                LOG(debug) << ignored << "/" << all << " ("
+                           << std::setprecision(2) << std::setiosflags(std::ios::fixed)
+                           << ignored * 100. / all << "%)"
+                           << " Merger trees ignored at snapshot due to"
+                           << " one of the roots being formed with a halo mass"
+                           << " > " << exec_params.ignore_npart_threshold * sim_params.particle_mass;
+        }
+
 }
 
 
@@ -129,7 +143,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	// Ignore massive halos that pop in for the first time at low redshift. 
 	// These generally are flaws of the merger tree builder.
 	if(exec_params.ignore_late_massive_halos){
-		ignore_late_massive_halos(trees);
+		ignore_late_massive_halos(trees, sim_params, exec_params);
 	}
 
 	// Make sure merger trees are fully self-contained

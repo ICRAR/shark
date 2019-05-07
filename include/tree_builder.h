@@ -62,7 +62,7 @@ private:
 	void define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, GasCoolingParameters &gas_cooling_params, Cosmology &cosmology, TotalBaryon &AllBaryons);
 	void remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo);
  	void define_ages_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params);
-	void ignore_late_massive_halos(std::vector<MergerTreePtr> &trees);
+	void ignore_late_massive_halos(std::vector<MergerTreePtr> &trees,  SimulationParameters sim_params, ExecutionParameters exec_params);
 
 private:
 	ExecutionParameters exec_params;

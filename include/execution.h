@@ -65,6 +65,7 @@ public:
 
 	float ode_solver_precision = 0;
 	int ignore_npart_threshold = 1000;
+	float ignore_below_z = 1.0;
 };
 
 } // namespace shark
