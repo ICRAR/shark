@@ -75,23 +75,10 @@ void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, S
 		all++;
 		for (auto &root: tree->roots()) {
 			if(root->Mvir > exec_params.ignore_npart_threshold * sim_params.particle_mass && sim_params.redshifts[root->snapshot] < exec_params.ignore_below_z){
-		                auto it = std::find(trees_to_evaluate.begin(), trees_to_evaluate.end(), tree);
-				trees_to_evaluate.erase(it);
-                                ignored++;
-				break;
+				root->ignore_gal_formation = true;
 			}
 		}
 	});
-
-	trees = trees_to_evaluate;
-        if (LOG_ENABLED(debug)) {
-                LOG(debug) << ignored << "/" << all << " ("
-                           << std::setprecision(2) << std::setiosflags(std::ios::fixed)
-                           << ignored * 100. / all << "%)"
-                           << " Merger trees ignored at snapshot due to"
-                           << " one of the roots being formed with a halo mass"
-                           << " > " << exec_params.ignore_npart_threshold * sim_params.particle_mass;
-        }
 
 }
 
