@@ -59,7 +59,7 @@ matrix:
      apt:
       sources: ubuntu-toolchain-r-test
       packages: [g++-7, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, libgsl-dev]
-    env: COMPILER=clang++ LD_LIBRARY_PATH=/usr/local/clang-5.0.0/lib
+    env: COMPILER=clang++ LD_LIBRARY_PATH=/usr/local/clang-7.0.0/lib
   - os: osx
     osx_image: xcode8.3 # OSX 10.12
     env: XCODE=8.3
