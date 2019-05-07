@@ -38,6 +38,7 @@
 #include "components.h"
 #include "dark_matter_halos.h"
 #include "environment.h"
+#include "execution.h"
 #include "interpolator.h"
 #include "options.h"
 #include "reincorporation.h"
@@ -101,6 +102,7 @@ class GasCooling {
 public:
 	GasCooling(GasCoolingParameters parameters,
 			StarFormationParameters params_sf,
+			ExecutionParameters exec_params,
 			ReionisationPtr reionisation,
 			CosmologyPtr cosmology,
 			AGNFeedbackPtr agnfeedback,
@@ -119,6 +121,7 @@ private:
 
 	GasCoolingParameters parameters;
 	StarFormationParameters params_sf;
+	ExecutionParameters exec_params;
 	ReionisationPtr reionisation;
 	CosmologyPtr cosmology;
 	AGNFeedbackPtr agnfeedback;

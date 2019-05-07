@@ -66,6 +66,19 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 	});
 }
 
+void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, SimulationParameters sim_params, ExecutionParameters exec_params) 
+{
+	omp_static_for(trees, threads, [&](MergerTreePtr &tree, int thread_idx) {
+		for (auto &root: tree->roots()) {
+			if(root->Mvir > exec_params.ignore_npart_threshold * sim_params.particle_mass && sim_params.redshifts[root->snapshot] < exec_params.ignore_below_z){
+				root->ignore_gal_formation = true;
+			}
+		}
+	});
+
+}
+
+
 std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
 {
 
@@ -109,6 +122,12 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	}
 
 	loop_through_halos(halos);
+
+	// Ignore massive halos that pop in for the first time at low redshift. 
+	// These generally are flaws of the merger tree builder.
+	if(exec_params.ignore_late_massive_halos){
+		ignore_late_massive_halos(trees, sim_params, exec_params);
+	}
 
 	// Make sure merger trees are fully self-contained
 	ensure_trees_are_self_contained(trees);

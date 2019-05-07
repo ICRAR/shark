@@ -53,6 +53,7 @@ public:
 	bool skip_missing_descendants = true;
 	bool warn_on_missing_descendants = true;
         bool ensure_mass_growth = true;
+	bool ignore_late_massive_halos  = false;
 
 	/**
 	 * Parameters of sf histories:
@@ -63,6 +64,8 @@ public:
 	std::vector<int> snapshots_sf_histories;
 
 	float ode_solver_precision = 0;
+	int ignore_npart_threshold = 1000;
+	float ignore_below_z = 1.0;
 };
 
 } // namespace shark

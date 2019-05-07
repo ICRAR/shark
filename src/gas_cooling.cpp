@@ -210,6 +210,7 @@ Options::get<GasCoolingParameters::CoolingModel>(const std::string &name, const 
 
 GasCooling::GasCooling(GasCoolingParameters parameters,
 		StarFormationParameters params_sf,
+		ExecutionParameters exec_params,
 		ReionisationPtr reionisation,
 		CosmologyPtr cosmology,
 		AGNFeedbackPtr agnfeedback,
@@ -218,6 +219,7 @@ GasCooling::GasCooling(GasCoolingParameters parameters,
 		EnvironmentPtr environment) :
 	parameters(parameters),
 	params_sf(params_sf),
+	exec_params(exec_params),
 	reionisation(std::move(reionisation)),
 	cosmology(std::move(cosmology)),
 	agnfeedback(std::move(agnfeedback)),
@@ -259,6 +261,12 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
     // If subhalo does not have a main galaxy (which could happen in satellite subhalos), or subhalo does not have a hot halo, return 0.
     if(subhalo.hot_halo_gas.mass <= 0){
+    	return 0;
+    }
+
+    // Check if user is running the code to ignore galaxy formation in late, massive forming halos, and if so,
+    // check whether this is one of the halos we have to ignore.
+    if(exec_params.ignore_late_massive_halos && halo->ignore_gal_formation){
     	return 0;
     }
 

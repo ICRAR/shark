@@ -709,14 +709,14 @@ public:
 	float mass_fraction_subhalos = -1;
 
 
-	/** Vvir: virial velocity of the halo [km/s]
-	 * Mvir: dark matter mass of the halo [Msun/h]
-	 * Mgas: gas mass in the halo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
-	 * concentration: NFW concentration parameter of halo
-	 * lambda: spin parameter of halo
-	 * cooling_rate: cooling rate experienced by this halo in Msun/Gyr/h.
-	 * age_80: redshift at which the halo had 80% of its mass in place.
-	 * age_50: redshift at which the halo had 50% of its mass in place.
+	/** @param Vvir: virial velocity of the halo [km/s]
+	 * @param Mvir: dark matter mass of the halo [Msun/h]
+	 * @param Mgas: gas mass in the halo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
+	 * @param concentration: NFW concentration parameter of halo
+	 * @param lambda: spin parameter of halo
+	 * @param cooling_rate: cooling rate experienced by this halo in Msun/Gyr/h.
+	 * @param age_80: redshift at which the halo had 80% of its mass in place.
+	 * @param age_50: redshift at which the halo had 50% of its mass in place.
 	 *  */
 	float Vvir = 0;
 	float Mvir = 0;
@@ -728,7 +728,7 @@ public:
 	float age_50 = 0;
 
 	/**
-	 * The snapshot at which this halo is found
+	 * @param snapshot: The snapshot at which this halo is found
 	 */
 	int snapshot;
 
@@ -736,9 +736,17 @@ public:
 	std::set<HaloPtr> ascendants;
 
 	/**
-	 * The merger tree that holds this halo.
+	 * @param merger_tree: The merger tree that holds this halo.
 	 */
 	MergerTreePtr merger_tree;
+
+	/**
+	 *
+	 * @param ignore_gal_formation: in the case the user runs the code with the option of ignoring late, massive forming halos (which are usually
+	 * issues in the merger tree builder), this boolean parameter indicates whether this halo has been flagged as having this issue.
+	 */
+
+	bool ignore_gal_formation = false;
 
 	/**
 	 * Adds @a subhalo to this Halo.

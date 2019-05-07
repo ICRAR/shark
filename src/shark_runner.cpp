@@ -225,7 +225,7 @@ void SharkRunner::impl::create_per_thread_objects()
 	auto reionisation = make_reionisation(reio_params);
 	auto reincorporation = make_reincorporation(reinc_params, dark_matter_halos);
 	StellarFeedback stellar_feedback {stellar_feedback_params};
-	GasCooling gas_cooling {gas_cooling_params, star_formation_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation, environment};
+	GasCooling gas_cooling {gas_cooling_params, star_formation_params, exec_params, reionisation, cosmology, agnfeedback, dark_matter_halos, reincorporation, environment};
 
 	for(unsigned int i = 0; i != threads; i++) {
 		auto physical_model = std::make_shared<BasicPhysicalModel>(exec_params.ode_solver_precision, gas_cooling, stellar_feedback, star_formation, *agnfeedback,
