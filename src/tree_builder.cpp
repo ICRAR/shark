@@ -68,9 +68,6 @@ void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePt
 
 void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, SimulationParameters sim_params, ExecutionParameters exec_params) 
 {
-	auto trees_to_evaluate = trees;
-	int ignored = 0, all = 0;
-
 	omp_static_for(trees, threads, [&](MergerTreePtr &tree, int thread_idx) {
 		all++;
 		for (auto &root: tree->roots()) {
