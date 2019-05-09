@@ -595,7 +595,7 @@ def plot_mzr(plt, outdir, obsdir, h0, mzr, mzr_cen, mzr_sat):
         if obs:
             # The observation has error bars or not
             if obs.yerrup is not None:
-                common.errorbars(ax, obs.x, obs.y, obs.yerrdn, obs.yerrup, 'grey', 's', err_absolute=obs.err_absolute)
+                common.errorbars(ax, obs.x, obs.y, obs.yerrdn, obs.yerrup, 'grey', 's', err_absolute=obs.err_absolute, label=obs.label)
                 colors.append('grey')
             else:
                 ax.plot(obs.x, obs.y, 'k', label=obs.label)
