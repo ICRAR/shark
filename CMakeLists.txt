@@ -346,7 +346,6 @@ set(SHARKLIB_SRCS
    include/hdf5/traits.h
    include/hdf5/writer.h
    src/agn_feedback.cpp
-   src/components.cpp
    src/cosmology.cpp
    src/execution.cpp
    src/dark_matter_halos.cpp
@@ -357,9 +356,11 @@ set(SHARKLIB_SRCS
    src/galaxy_mergers.cpp
    src/galaxy_writer.cpp
    src/gas_cooling.cpp
+   src/halo.cpp
    src/integrator.cpp
    src/interpolator.cpp
    src/logging.cpp
+   src/merger_tree.cpp
    src/merger_tree_reader.cpp
    src/naming_convention.cpp
    src/options.cpp
@@ -372,6 +373,8 @@ set(SHARKLIB_SRCS
    src/simulation.cpp
    src/star_formation.cpp
    src/stellar_feedback.cpp
+   src/subhalo.cpp
+   src/total_baryon.cpp
    src/tree_builder.cpp
    src/utils.cpp
    src/hdf5/iobase.cpp

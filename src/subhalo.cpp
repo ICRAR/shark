@@ -1,6 +1,6 @@
 //
 // ICRAR - International Centre for Radio Astronomy Research
-// (c) UWA - The University of Western Australia, 2018
+// (c) UWA - The University of Western Australia, 2019
 // Copyright by UWA (in the framework of the ICRAR)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,24 +17,16 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-/**
- * @file
- */
-
 #include <algorithm>
-#include <cassert>
-#include <functional>
 #include <iterator>
-#include <numeric>
 #include <sstream>
 
-#include "components.h"
 #include "exceptions.h"
 #include "logging.h"
+#include "galaxy.h"
+#include "subhalo.h"
 
 namespace shark {
-
-std::vector<HaloPtr> MergerTree::NONE;
 
 SubhaloPtr Subhalo::main() const
 {
@@ -44,23 +36,6 @@ SubhaloPtr Subhalo::main() const
 		}
 	}
 	return SubhaloPtr();
-}
-
-HaloPtr Halo::main_progenitor() const
-{
-	auto prog_cen_subh = central_subhalo->main();
-	if (prog_cen_subh) {
-		return prog_cen_subh->host_halo;
-	}
-
-	return HaloPtr();
-}
-
-HaloPtr Halo::final_halo() const
-{
-	auto final_halos = merger_tree->halos_at_last_snapshot();
-	assert(final_halos.size() == 1);
-	return final_halos[0];
 }
 
 GalaxyPtr Subhalo::central_galaxy() const
@@ -234,82 +209,6 @@ void Subhalo::remove_galaxies(const std::vector<GalaxyPtr> &to_remove)
 	}
 }
 
-std::vector<SubhaloPtr> Halo::all_subhalos() const
-{
-
-	std::vector<SubhaloPtr> all;
-
-	if (central_subhalo) {
-		all.push_back(central_subhalo);
-	}
-	all.insert(all.end(), satellite_subhalos.begin(), satellite_subhalos.end());
-
-	// If there are more than one subhalo, then return them ordered by mass in decreasing order.
-	if(all.size() > 1){
-		std::sort(all.begin(), all.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
-			return lhs->Mvir > rhs->Mvir;
-		});
-	}
-
-	assert(all.size() == satellite_subhalos.size() + (central_subhalo ? 1 : 0));
-	return all;
-}
-
-void add_parent(const HaloPtr &halo, const HaloPtr &parent)
-{
-	auto result = halo->ascendants.insert(parent);
-	auto halos_linked = std::get<1>(result);
-
-	// Fail if a halo has more than one descendant
-	if (parent->descendant && parent->descendant->id != halo->id) {
-		std::ostringstream os;
-		os << parent << " already has a descendant " << parent->descendant;
-		os << " but " << halo << " is claiming to be its descendant as well";
-		throw invalid_data(os.str());
-	}
-	parent->descendant = halo;
-
-	// Link this halo to merger tree and back
-	if (!halo->merger_tree) {
-		std::ostringstream os;
-		os << "Descendant " << halo << " has no MergerTree associated to it";
-		throw invalid_data(os.str());
-	}
-	parent->merger_tree = halo->merger_tree;
-	if (halos_linked) {
-		parent->merger_tree->add_halo(parent);
-	}
-}
-
-void Halo::add_subhalo(SubhaloPtr &&subhalo)
-{
-	// Add subhalo mass to halo
-	Mvir += subhalo->Mvir;
-	Mgas += subhalo->Mgas;
-
-	// Assign subhalo to proper member
-	if (subhalo->subhalo_type == Subhalo::CENTRAL) {
-		central_subhalo = std::move(subhalo);
-	}
-	else {
-		satellite_subhalos.emplace_back(std::move(subhalo));
-	}
-}
-
-void Halo::remove_subhalo(const SubhaloPtr &subhalo)
-{
-	if (subhalo == central_subhalo) {
-		central_subhalo.reset();
-		return;
-	}
-
-	auto it = std::find(satellite_subhalos.begin(), satellite_subhalos.end(), subhalo);
-	if (it == satellite_subhalos.end()) {
-		throw subhalo_not_found("subhalo not in satellites", subhalo->id);
-	}
-	satellite_subhalos.erase(it);
-}
-
 double Subhalo::total_baryon_mass() const
 {
 	double mass= 0.0;
@@ -323,47 +222,4 @@ double Subhalo::total_baryon_mass() const
 
 	return mass;
 }
-
-double Halo::total_baryon_mass() const
-{
-	double mass= 0.0;
-
-	for (auto &subhalo: all_subhalos()){
-		mass += subhalo->total_baryon_mass();
-	}
-
-	return mass;
-}
-
-galaxies_size_type Halo::galaxy_count() const
-{
-	galaxies_size_type count = 0;
-	if (central_subhalo) {
-		count = central_subhalo->galaxy_count();
-	}
-
-	const auto &sats = satellite_subhalos;
-	return std::accumulate(sats.begin(), sats.end(), count, [](galaxies_size_type galaxy_count, const SubhaloPtr &subhalo) {
-		return galaxy_count + subhalo->galaxy_count();
-	});
-}
-
-std::vector<double> TotalBaryon::get_masses (const std::vector<BaryonBase> &B) const
-{
-	std::vector<double> masses(B.size());
-	std::transform(B.begin(), B.end(), masses.begin(), [](const BaryonBase &b) {
-		return b.mass;
-	});
-	return masses;
-}
-
-std::vector<double> TotalBaryon::get_metals (const std::vector<BaryonBase> &B) const
-{
-	std::vector<double> masses(B.size());
-	std::transform(B.begin(), B.end(), masses.begin(), [](const BaryonBase &b) {
-		return b.mass_metals;
-	});
-	return masses;
-}
-
 }  // namespace shark
