@@ -33,7 +33,6 @@
 #include "data.h"
 #include "logging.h"
 #include "numerical_constants.h"
-#include "components.h"
 #include "utils.h"
 
 namespace shark {

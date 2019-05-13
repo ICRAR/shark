@@ -24,6 +24,7 @@
 #include <cmath>
 #include <gsl/gsl_errno.h>
 
+#include "galaxy.h"
 #include "logging.h"
 #include "numerical_constants.h"
 #include "star_formation.h"

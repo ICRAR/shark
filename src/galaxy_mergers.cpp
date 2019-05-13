@@ -31,7 +31,7 @@
 #include <gsl/gsl_roots.h>
 
 #include "agn_feedback.h"
-#include "components.h"
+#include "galaxy.h"
 #include "galaxy_mergers.h"
 #include "numerical_constants.h"
 #include "physical_model.h"

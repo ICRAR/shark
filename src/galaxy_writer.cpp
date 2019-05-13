@@ -33,15 +33,17 @@
 #include <boost/filesystem.hpp>
 
 #include "hdf5/writer.h"
-#include "components.h"
 #include "config.h"
 #include "cosmology.h"
 #include "exceptions.h"
+#include "galaxy.h"
 #include "galaxy_writer.h"
 #include "git_revision.h"
 #include "logging.h"
 #include "star_formation.h"
+#include "subhalo.h"
 #include "timer.h"
+#include "total_baryon.h"
 #include "utils.h"
 
 

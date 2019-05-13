@@ -37,7 +37,8 @@
 #include <boost/program_options.hpp>
 #include <gsl/gsl_errno.h>
 
-#include "components.h"
+#include "galaxy.h"
+#include "merger_tree.h"
 #include "logging.h"
 #include "options.h"
 #include "shark_runner.h"

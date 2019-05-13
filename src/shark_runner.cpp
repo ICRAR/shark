@@ -28,7 +28,6 @@
 #include <ostream>
 #include <vector>
 
-#include "components.h"
 #include "evolve_halos.h"
 #include "execution.h"
 #include "disk_instability.h"
@@ -37,12 +36,14 @@
 #include "galaxy_mergers.h"
 #include "galaxy_writer.h"
 #include "logging.h"
+#include "merger_tree.h"
 #include "merger_tree_reader.h"
 #include "omp_utils.h"
 #include "options.h"
 #include "physical_model.h"
 #include "shark_runner.h"
 #include "timer.h"
+#include "total_baryon.h"
 #include "tree_builder.h"
 
 namespace shark {

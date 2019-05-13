@@ -25,7 +25,9 @@
 
 #include "galaxy_creator.h"
 #include "logging.h"
+#include "merger_tree.h"
 #include "timer.h"
+#include "total_baryon.h"
 
 namespace shark {
 

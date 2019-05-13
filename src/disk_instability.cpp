@@ -27,8 +27,8 @@
 #include <stdexcept>
 #include <tuple>
 
-#include "components.h"
 #include "disk_instability.h"
+#include "galaxy.h"
 #include "numerical_constants.h"
 
 namespace shark {

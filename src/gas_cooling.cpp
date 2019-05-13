@@ -28,9 +28,9 @@
 #include <numeric>
 #include <tuple>
 
-#include "components.h"
 #include "cosmology.h"
 #include "data.h"
+#include "galaxy.h"
 #include "gas_cooling.h"
 #include "logging.h"
 #include "numerical_constants.h"

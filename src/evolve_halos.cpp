@@ -24,10 +24,10 @@
 #include <cmath>
 #include <memory>
 
-#include "components.h"
 #include "evolve_halos.h"
 #include "logging.h"
 #include "numerical_constants.h"
+#include "total_baryon.h"
 
 namespace shark {
 
