@@ -81,7 +81,7 @@ Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string 
 		return StellarFeedbackParameters::LACEY16FIRE;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are muratov14, lacey16, guo11, lagos13, lagos13trunc and lacey16redrep";
+	os << name << " option value invalid: " << value << ". Supported values are muratov15, lacey16, guo11, lagos13, lagos13trunc and lacey16redrep";
 	throw invalid_option(os.str());
 }
 
@@ -163,9 +163,9 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 			b1 += constants::EPS3; //add a small number to b1 to make it strictly larger than b2.
 		}
 	}
-	else{
+	/*else{
 		b1 = eps_halo / energ_halo;
-	}
+	}*/
 
 	// If no radial feedback is applied, then change in angular momentum reflects that of the mass.
 	if(!parameters.radial_feedback){
