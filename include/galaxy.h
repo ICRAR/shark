@@ -26,6 +26,7 @@
 #ifndef INCLUDE_GALAXY_H_
 #define INCLUDE_GALAXY_H_
 
+#include <ostream>
 #include <vector>
 
 #include "baryon.h"
@@ -273,6 +274,20 @@ public:
 	}
 
 };
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Galaxy &galaxy)
+{
+	stream << "<Galaxy " << galaxy.id << ", type=" << galaxy.galaxy_type << '>';
+	return stream;
+}
+
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const GalaxyPtr &galaxy)
+{
+	stream << *galaxy;
+	return stream;
+}
 
 }  // namespace shark
 
