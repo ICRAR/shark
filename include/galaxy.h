@@ -148,44 +148,53 @@ public:
 	 * Define functions to calculate total mass and metals of various components.
 	 */
 
-	double disk_mass(){
+	double disk_mass() const
+	{
 		return disk_gas.mass + disk_stars.mass;
 	}
 
-	double disk_mass_metals(){
+	double disk_mass_metals() const
+	{
 		return disk_gas.mass_metals + disk_stars.mass_metals;
 	}
 
-	double bulge_mass(){
+	double bulge_mass() const
+	{
 		return bulge_gas.mass + bulge_stars.mass;
 	}
 
-	double bulge_mass_metals(){
+	double bulge_mass_metals() const
+	{
 		return bulge_gas.mass_metals + bulge_stars.mass_metals;
 	}
 
-	double baryon_mass(){
+	double baryon_mass() const
+	{
 		return disk_gas.mass + disk_stars.mass + bulge_gas.mass + bulge_stars.mass;
 	}
 
-	double stellar_mass(){
+	double stellar_mass() const
+	{
 		return disk_stars.mass + bulge_stars.mass;
 	}
 
-	double stellar_mass_metals(){
+	double stellar_mass_metals() const
+	{
 		return disk_stars.mass_metals + bulge_stars.mass_metals;
 	}
 
-	double gas_mass(){
+	double gas_mass() const
+	{
 		return disk_gas.mass + bulge_gas.mass;
 	}
 
-	double gas_mass_metals(){
+	double gas_mass_metals() const
+	{
 		return disk_gas.mass_metals + bulge_gas.mass_metals;
 	}
 
-	double disk_size(){
-
+	double disk_size() const
+	{
 		double rgas  = 0;
 		double rstar = 0;
 
@@ -206,9 +215,8 @@ public:
 		return rcomp;
 	}
 
-	double bulge_size(){
-
-
+	double bulge_size() const
+	{
 		double rgas  = 0;
 		double rstar = 0;
 
@@ -229,8 +237,8 @@ public:
 		return rcomp;
 	}
 
-	double composite_size(){
-
+	double composite_size() const
+	{
 		double rdisk = disk_size();
 		double rbulge = bulge_stars.rscale;
 
@@ -244,8 +252,8 @@ public:
 		return rcomp;
 	}
 
-	double stellar_size(){
-
+	double stellar_size() const
+	{
 		double rdisk = disk_size();
 		double rbulge = bulge_size();
 
@@ -259,8 +267,8 @@ public:
 		return rcomp;
 	}
 
-	double angular_momentum(){
-
+	double angular_momentum() const
+	{
 		return disk_gas.angular_momentum() + disk_stars.angular_momentum() + bulge_gas.angular_momentum() + bulge_stars.angular_momentum();
 	}
 

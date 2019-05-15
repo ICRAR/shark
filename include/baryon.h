@@ -91,7 +91,8 @@ public:
 		sAM = 0;
 	}
 
-	float angular_momentum(){
+	float angular_momentum() const
+	{
 		return mass * sAM;
 	}
 
