@@ -330,7 +330,6 @@ set(SHARKLIB_SRCS
    include/recycling.h
    include/reincorporation.h
    include/reionisation.h
-   include/sharkfwd.h
    include/shark.h
    include/shark_runner.h
    include/simulation.h
