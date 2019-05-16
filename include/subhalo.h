@@ -28,10 +28,13 @@
 
 #include <cstdint>
 #include <iosfwd>
+#include <iterator>
 #include <memory>
 #include <vector>
+#include <type_traits>
 
 #include "baryon.h"
+#include "galaxy.h"
 #include "mixins.h"
 
 namespace shark {
@@ -65,6 +68,109 @@ struct CoolingSubhaloTracking {
 class Subhalo : public Identifiable<std::int64_t>, public Spatial<float> {
 
 public:
+
+	/**
+	 * A range-like class that offers iteration over type2 galaxies living in
+	 * the Subhalo's "galaxies" vector via a begin()/end() pair without having
+	 * to construct a new vector and copy the galaxies over (and therefore
+	 * giving direct access to the galaxies by reference). This makes it easier
+	 * to iterate over these galaxies with range-for, algorithms, etc.
+	 */
+	class type2_galaxies_view {
+	public:
+
+		template <bool is_const>
+		class _iterator {
+
+		public:
+			using iterator_category = std::input_iterator_tag;
+			using value_type = Galaxy;
+			using difference_type = std::ptrdiff_t;
+			using reference = typename std::conditional<is_const, const Galaxy &, Galaxy &>::type;
+			using pointer = typename std::conditional<is_const, const Galaxy *, Galaxy *>::type;
+
+		private:
+			std::vector<Galaxy>::const_iterator m_pos;
+			std::vector<Galaxy>::const_iterator m_end;
+
+		public:
+			_iterator(const std::vector<Galaxy> &galaxies, bool is_end)
+			 : m_pos(is_end ? galaxies.end() : galaxies.begin()), m_end(galaxies.end())
+			{
+				if (!is_end) {
+					advance();
+				}
+			}
+
+			bool operator==(const _iterator &other)
+			{
+				return m_pos == other.m_pos;
+			}
+
+			bool operator!=(const _iterator &other)
+			{
+				return !(*this == other);
+			}
+
+			_iterator &operator++()
+			{
+				m_pos++;
+				advance();
+				return *this;
+			}
+
+			template <bool _is_const=is_const>
+			typename std::enable_if<!_is_const, reference>::type
+			operator*()
+			{
+				return const_cast<reference>(*m_pos);
+			}
+
+			template <bool _is_const=is_const>
+			typename std::enable_if<_is_const, reference>::type
+			operator*() const
+			{
+				return *m_pos;
+			}
+
+		private:
+			void advance() {
+				while (m_pos != m_end && m_pos->galaxy_type != Galaxy::TYPE2) {
+					m_pos++;
+				}
+			}
+		};
+
+		using const_iterator = _iterator<true>;
+		using iterator = _iterator<false>;
+
+		explicit type2_galaxies_view(const std::vector<Galaxy> &galaxies)
+		 : galaxies(galaxies)
+		{ }
+
+		const_iterator begin() const
+		{
+			return {galaxies, false};
+		}
+
+		const_iterator end() const
+		{
+			return {galaxies, true};
+		}
+
+		iterator begin()
+		{
+			return {galaxies, false};
+		}
+
+		iterator end()
+		{
+			return {galaxies, true};
+		}
+
+	private:
+		const std::vector<Galaxy> &galaxies;
+	};
 
 	/**
 	 * Initialize values in zero.
