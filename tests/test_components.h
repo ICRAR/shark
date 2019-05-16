@@ -23,8 +23,11 @@
 
 #include <functional>
 
-#include "components.h"
 #include "exceptions.h"
+#include "galaxy.h"
+#include "halo.h"
+#include "merger_tree.h"
+#include "subhalo.h"
 
 using namespace shark;
 
