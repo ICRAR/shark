@@ -123,26 +123,24 @@ public:
 	float mean_stellar_age = 0;
 	float total_stellar_mass_ever_formed = 0;
 
-	//save maximum circular velocity.
+	/// maximum circular velocity.
 	float vmax = 0;
 
-	//save star formation and gas history
+	/// star formation and gas history of this galaxy across snapshots
 	std::vector<HistoryItem>  history;
 
-	//save interactions of this galaxy during this snapshot.
+	/// interactions of this galaxy during this snapshot
 	InteractionItem interaction;
 
-	/**
-	 * tmerge: dynamical friction timescale, which is defined only if galaxy is satellite.
-	 * concentration_type2: concentration of the subhalo this galaxy was before becoming type 2 (only relevant for type 2 galaxies).
-	 * msubhalo_type2: subhalo mass of this galaxy before it became type 2 (only relevant for type 2 galaxies).
-	 * vvir_type2: subhalo virial velocity of this galaxy before it became type 2 (only relevant for type 2 galaxies).
-	 * lambda_type2: subhalo spin parameter of this galaxy before it became type 2 (only relevant for type 2 galaxies).
-	 */
+	/// dynamical friction timescale, defined only if galaxy is satellite.
 	float tmerge = 0;
+	/// concentration of the subhalo this galaxy was before becoming type 2, only relevant for type 2 galaxies
 	float concentration_type2 = 0;
+	/// subhalo mass of this galaxy before it became type 2, only relevant for type 2 galaxies
 	float msubhalo_type2 = 0;
+	/// subhalo virial velocity of this galaxy before it became type 2, only relevant for type 2 galaxies
 	float vvir_type2 = 0;
+	/// subhalo spin parameter of this galaxy before it became type 2, only relevant for type 2 galaxies
 	float lambda_type2 = 0;
 
 	/**
