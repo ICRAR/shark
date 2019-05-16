@@ -89,9 +89,8 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 		throw invalid_argument(os.str());
 	}
 
-	auto galaxy = std::make_shared<Galaxy>(galaxy_id);
+	auto &galaxy = central_subhalo->emplace_galaxy(galaxy_id);
 	galaxy->vmax = central_subhalo->Vcirc;
-
 
 	//If the input simulation is a hydro simulation, then use the input gas mass.
 	if(sim_params.hydrorun){
@@ -103,8 +102,6 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 
 	// Assign metallicity to the minimum allowed.
 	central_subhalo->hot_halo_gas.mass_metals = central_subhalo->hot_halo_gas.mass * cool_params.pre_enrich_z;
-
-	central_subhalo->galaxies.emplace_back(std::move(galaxy));
 
 	if (LOG_ENABLED(debug)) {
 		LOG(debug) << "Added a central galaxy for subhalo " << central_subhalo;

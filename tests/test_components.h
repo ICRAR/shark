@@ -73,7 +73,7 @@ private:
 		subhalo->subhalo_type = subhalo_type;
 		Galaxy::id_t id = 0;
 		for(auto t: types) {
-			GalaxyPtr g = std::make_shared<Galaxy>(id++);
+			auto &g = subhalo->emplace_galaxy(id++);
 			if (t == 'C') {
 				g->galaxy_type = Galaxy::CENTRAL;
 			}
@@ -83,7 +83,6 @@ private:
 			else if (t == '2') {
 				g->galaxy_type = Galaxy::TYPE2;
 			}
-			subhalo->galaxies.emplace_back(std::move(g));
 		}
 		return subhalo;
 	}

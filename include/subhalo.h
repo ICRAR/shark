@@ -141,6 +141,13 @@ public:
 	 */
 	std::vector<GalaxyPtr> galaxies;
 
+	template <typename ... Ts>
+	GalaxyPtr &emplace_galaxy(Ts && ... args)
+	{
+		galaxies.emplace_back(std::make_shared<Galaxy>(std::forward<Ts>(args)...));
+		return galaxies.back();
+	}
+
 	/** Returns a pointer to the central galaxy. If no central galaxy is found
 	 in this Subhalo, then an empty pointer is returned.
 	 */
