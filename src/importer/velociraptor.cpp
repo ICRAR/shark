@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -63,7 +64,7 @@ const std::string VELOCIraptorReader::get_filename(int snapshot, int batch)
 	return os.str();
 }
 
-const std::vector<Subhalo> VELOCIraptorReader::read_subhalos(int snapshot)
+std::vector<Subhalo> VELOCIraptorReader::read_subhalos(int snapshot)
 {
 	unsigned int nbatches;
 
@@ -78,12 +79,12 @@ const std::vector<Subhalo> VELOCIraptorReader::read_subhalos(int snapshot)
 	std::vector<Subhalo> subhalos;
 	for(unsigned int batch=0; batch != nbatches; batch++) {
 		auto batch_subhalos = read_subhalos_batch(snapshot, batch);
-		subhalos.insert(subhalos.end(), batch_subhalos.begin(), batch_subhalos.end());
+		std::move(batch_subhalos.begin(), batch_subhalos.end(), std::back_inserter(subhalos));
 	}
 	return subhalos;
 }
 
-const std::vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int batch)
+std::vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int batch)
 {
 	hdf5::Reader batch_file(get_filename(snapshot, batch));
 	auto n_subhalos = batch_file.read_dataset<unsigned int>("Num_of_groups");
@@ -111,7 +112,8 @@ const std::vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot,
 	std::vector<Subhalo> subhalos;
 	for(unsigned int i=0; i!=n_subhalos; i++) {
 
-		Subhalo subhalo(inhalo[i], snapshot);
+		subhalos.emplace_back(inhalo[i], snapshot);
+		auto &subhalo = subhalos.back();
 
 		//
 		// TODO: here we assign properties, etc
@@ -129,9 +131,6 @@ const std::vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot,
 		auto desc = it->second;
 		subhalo.descendant_id = desc.descendant_id;
 		subhalo.descendant_snapshot = desc.descendant_snapshot;
-
-		// Done, save it now
-		subhalos.push_back(std::move(subhalo));
 	}
 
 	return subhalos;
