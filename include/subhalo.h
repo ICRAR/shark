@@ -34,19 +34,11 @@
 #include <type_traits>
 
 #include "baryon.h"
+#include "components.h"
 #include "galaxy.h"
 #include "mixins.h"
 
 namespace shark {
-
-// Forward definitions
-class Halo;
-class Galaxy;
-class Subhalo;
-using HaloPtr = std::shared_ptr<Halo>;
-using GalaxyPtr = std::shared_ptr<Galaxy>;
-using SubhaloPtr = std::shared_ptr<Subhalo>;
-using galaxies_size_type = std::vector<GalaxyPtr>::size_type;
 
 /**
  * This structure keeps track of the properties of the halo gas,

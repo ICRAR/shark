@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "baryon.h"
+#include "components.h"
 #include "mixins.h"
 
 namespace shark {

@@ -26,6 +26,7 @@
 #ifndef SHARK_COMPONENTS_H_
 #define SHARK_COMPONENTS_H_
 
+#include <cstdint>
 #include <memory>
 
 namespace shark {
@@ -40,6 +41,7 @@ using GalaxyPtr = std::shared_ptr<Galaxy>;
 using SubhaloPtr = std::shared_ptr<Subhalo>;
 using HaloPtr = std::shared_ptr<Halo>;
 using MergerTreePtr = std::shared_ptr<MergerTree>;
+using galaxies_size_type = std::size_t;
 
 } // namespace shark
 

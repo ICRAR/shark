@@ -32,23 +32,10 @@
 #include <set>
 #include <vector>
 
+#include "components.h"
 #include "mixins.h"
 
 namespace shark {
-
-// Forward definitions
-class Galaxy;
-class Halo;
-class MergerTree;
-class Subhalo;
-
-using GalaxyPtr = std::shared_ptr<Galaxy>;
-using HaloPtr = std::shared_ptr<Halo>;
-using MergerTreePtr = std::shared_ptr<MergerTree>;
-using SubhaloPtr = std::shared_ptr<Subhalo>;
-
-using galaxies_size_type = std::vector<GalaxyPtr>::size_type;
-
 
 /**
  * A halo.
