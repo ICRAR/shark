@@ -571,8 +571,8 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	return result;
 }
 
-double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z){
-
+double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z) const
+{
 	double re = cosmology->comoving_to_physical_size(rgas / constants::RDISK_HALF_SCALE, z);
 
 	double sigma0 = mgas/constants::PI2 / (re * re);
@@ -636,8 +636,8 @@ StarFormation::molecular_gas StarFormation::get_molecular_gas(const GalaxyPtr &g
 	return molecular_gas {m_mol, m_atom, m_mol_b, m_atom_b, j_mol, j_atom};
 }
 
-double StarFormation::manual_integral(func_t f, void * params, double rmin, double rmax){
-
+double StarFormation::manual_integral(func_t f, void * params, double rmin, double rmax) const
+{
 	double integral = 0;
 
 	int nbins = 30;
@@ -665,7 +665,6 @@ double StarFormation::manual_integral(func_t f, void * params, double rmin, doub
 	}
 
 	return integral;
-
 }
 
 }  // namespace shark

@@ -102,7 +102,7 @@ public:
 
 	double star_formation_rate_surface_density(double r, void * params) const;
 
-	double manual_integral(func_t f, void * params, double rmin, double rmax);
+	double manual_integral(func_t f, void * params, double rmin, double rmax) const;
 
 	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r) const;
 
@@ -128,7 +128,7 @@ public:
 
 	molecular_gas get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc);
 
-	double ionised_gas_fraction(double mgas, double rgas, double z);
+	double ionised_gas_fraction(double mgas, double rgas, double z) const;
 
 private:
 	StarFormationParameters parameters;

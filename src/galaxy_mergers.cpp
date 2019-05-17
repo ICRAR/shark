@@ -348,8 +348,8 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 
 }
 
-void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot){
-
+void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot) const
+{
 	/**
 	 * This function classifies the merger and transfer all the baryon masses to the right component of the central.
 	 * Inputs:
@@ -557,8 +557,8 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
 }
 
-double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo){
-
+double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo) const
+{
 	/**
 	 * This function calculates the bulge sizes resulting from a galaxy mergers following Cole et al. (2000). This assumes
 	 * that the internal energy of the remnant spheroid just after the mergers is equal to the sum of the internal and relative
@@ -661,8 +661,8 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 }
 
 
-double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
-
+double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs) const
+{
 	/**
 	 * Input variables:
 	 * mc: mass central.
@@ -731,8 +731,8 @@ void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy)
 
 }
 
-void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot){
-
+void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot) const
+{
 	/**
 	 * Function transfers the satellite stellar mass history to the bulge of the central galaxy.
 	 */
@@ -789,8 +789,8 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 
 }
 
-void GalaxyMergers::transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot){
-
+void GalaxyMergers::transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot) const
+{
 	/**
 	 * Function transfers the disk stellar mass history to bulge of the central galaxy.
 	 */

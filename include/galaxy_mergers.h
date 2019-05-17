@@ -123,21 +123,21 @@ public:
 
 	void merging_galaxies(HaloPtr &halo, int snapshot, double delta_t);
 
-	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot);
+	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot) const;
 
 	void create_starbursts(HaloPtr &halo, double z, double delta_t);
 
-	double bulge_size_merger(double mass_ratio, double mgas_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo);
+	double bulge_size_merger(double mass_ratio, double mgas_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo) const;
 
-	double r_remnant(double mc, double ms, double rc, double rs);
+	double r_remnant(double mc, double ms, double rc, double rs) const;
 
 	void transfer_baryon_mass(const SubhaloPtr &central, const SubhaloPtr &satellite);
 
 	void transfer_bulge_gas(GalaxyPtr &galaxy);
 
-	void transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot);
+	void transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot) const;
 
-	void transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot);
+	void transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot) const;
 
 
 private:

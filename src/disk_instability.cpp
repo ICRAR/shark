@@ -111,8 +111,8 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 
 }
 
-double DiskInstability::toomre_parameter(GalaxyPtr &galaxy){
-
+double DiskInstability::toomre_parameter(GalaxyPtr &galaxy) const
+{
 	double vc = galaxy->vmax;
 	double md =  galaxy->disk_mass();
 	//double rd = galaxy->disk_gas.rscale;
@@ -129,8 +129,8 @@ double DiskInstability::toomre_parameter(GalaxyPtr &galaxy){
 	return t;
 }
 
-double DiskInstability::bulge_size(GalaxyPtr &galaxy){
-
+double DiskInstability::bulge_size(GalaxyPtr &galaxy) const
+{
 	double md = galaxy->disk_mass();
 	double mb = galaxy->bulge_mass();
 
