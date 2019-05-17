@@ -274,6 +274,14 @@ public:
 
 };
 
+// Support for less-based comparison of Galaxy objects. This allows them to be
+// put into a set or be keys for a std::map
+inline
+bool operator<(const Galaxy &a, const Galaxy &b)
+{
+	return a.id < b.id;
+}
+
 template <typename T>
 std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const Galaxy &galaxy)
 {
