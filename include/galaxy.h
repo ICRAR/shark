@@ -296,6 +296,13 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const GalaxyPtr
 	return stream;
 }
 
+template <typename T>
+std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const ConstGalaxyPtr &galaxy)
+{
+	stream << *galaxy;
+	return stream;
+}
+
 }  // namespace shark
 
 #endif /* INCLUDE_GALAXY_H_ */
