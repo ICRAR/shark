@@ -343,7 +343,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				id_subhalo_tree.push_back(subhalo->id);
 
 				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
-				auto &molecular_gas = molgas_per_gal.at(galaxy);
+				auto &molecular_gas = molgas_per_gal.at(galaxy->id);
 				// Gas components separated into HI and H2.
 				mmol_disk.push_back(molecular_gas.m_mol);
 				mmol_bulge.push_back(molecular_gas.m_mol_b);
@@ -1176,7 +1176,7 @@ void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &
 	auto mBH = galaxy->smbh.mass;
 	auto rdisk = galaxy->disk_stars.rscale;
 	auto rbulge = galaxy->bulge_stars.rscale;
-	auto &molecular_gas = molgas_per_gal.at(galaxy);
+	auto &molecular_gas = molgas_per_gal.at(galaxy->id);
 
 	f << mstars_disk << " " << mstars_bulge << " " <<  molecular_gas.m_atom + molecular_gas.m_atom_b
 	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "

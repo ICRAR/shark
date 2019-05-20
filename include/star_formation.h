@@ -139,7 +139,7 @@ private:
 };
 
 /// A collection of galaxy-indexed molecular gas objects
-using molgas_per_galaxy = std::map<GalaxyPtr, StarFormation::molecular_gas>;
+using molgas_per_galaxy = std::map<Galaxy::id_t, StarFormation::molecular_gas>;
 
 }  // namespace shark
 

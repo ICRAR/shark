@@ -252,7 +252,7 @@ void _get_molecular_gas(const HaloPtr &halo, molgas_per_galaxy &molgas, StarForm
 {
 	for (auto &subhalo: halo->all_subhalos()) {
 		for (auto &galaxy: subhalo->galaxies) {
-			molgas[galaxy] = star_formation.get_molecular_gas(galaxy, z, calc_j);
+			molgas[galaxy->id] = star_formation.get_molecular_gas(galaxy, z, calc_j);
 		}
 	}
 }

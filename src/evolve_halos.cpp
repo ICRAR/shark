@@ -229,7 +229,7 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
 				}
         
 				//Accumulate galaxy baryons
-				auto &molecular_gas = molgas.at(galaxy);
+				auto &molecular_gas = molgas.at(galaxy->id);
         
 				mHI_total.mass += molecular_gas.m_atom + molecular_gas.m_atom_b;
 				mH2_total.mass += molecular_gas.m_mol + molecular_gas.m_mol_b;
