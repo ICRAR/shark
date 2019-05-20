@@ -77,6 +77,16 @@ public:
 
 	using Identifiable::Identifiable;
 
+	/// Deleted copy constructor to avoid copying Galaxy objects
+	Galaxy(const Galaxy &other) = delete;
+	/// Move constructor
+	Galaxy(Galaxy &&other) = default;
+
+	/// Deleted copy assignment operator to avoid copying Galaxy objects
+	Galaxy &operator=(const Galaxy &other) = delete;
+	/// Move assignment operator
+	Galaxy &operator=(Galaxy &&other) = default;
+
 	/**
 	 * An enumeration of types of galaxies
 	 */
