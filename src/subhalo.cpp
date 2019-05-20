@@ -38,24 +38,38 @@ SubhaloPtr Subhalo::main() const
 	return SubhaloPtr();
 }
 
-GalaxyPtr Subhalo::central_galaxy() const
+static
+ConstGalaxyPtr pointer_to(const std::vector<Galaxy> &galaxies, Galaxy::galaxy_type_t type)
 {
-	for (auto &galaxy: galaxies){
-		if(galaxy->galaxy_type == Galaxy::CENTRAL){
-			return galaxy;
-		}
+	auto galaxy = std::find_if(galaxies.begin(), galaxies.end(), [type](const Galaxy &galaxy) {
+		return galaxy.galaxy_type == type;
+	});
+	if (galaxy == galaxies.end()) {
+		return nullptr;
 	}
-	return GalaxyPtr();
+	return &(*galaxy);
 }
 
-GalaxyPtr Subhalo::type1_galaxy() const
+ConstGalaxyPtr Subhalo::central_galaxy() const
 {
-	for (auto &galaxy: galaxies){
-		if(galaxy->galaxy_type == Galaxy::TYPE1){
-			return galaxy;
-		}
-	}
-	return GalaxyPtr();
+	return pointer_to(galaxies, Galaxy::CENTRAL);
+}
+
+GalaxyPtr Subhalo::central_galaxy()
+{
+	return const_cast<GalaxyPtr>(
+		static_cast<const Subhalo &>(*this).central_galaxy());
+}
+
+ConstGalaxyPtr Subhalo::type1_galaxy() const
+{
+	return pointer_to(galaxies, Galaxy::TYPE1);
+}
+
+GalaxyPtr Subhalo::type1_galaxy()
+{
+	return const_cast<GalaxyPtr>(
+		static_cast<const Subhalo &>(*this).type1_galaxy());
 }
 
 void Subhalo::check_subhalo_galaxy_composition() const
@@ -94,13 +108,13 @@ void Subhalo::do_check_satellite_subhalo_galaxy_composition() const
 	// type TYPE1, and no TYPE1 galaxies at all
 
 	auto i = 0;
-	for (auto &g: galaxies){
-		if (g->galaxy_type == Galaxy::CENTRAL) {
+	for (const auto &g: galaxies){
+		if (g.galaxy_type == Galaxy::CENTRAL) {
 			std::ostringstream os;
 			os << "Satellite subhalo " << *this << " has at least one central galaxy";
 			throw invalid_data(os.str());
 		}
-		if (g->galaxy_type == Galaxy::TYPE1) {
+		if (g.galaxy_type == Galaxy::TYPE1) {
 			i++;
 		}
 	}
@@ -117,13 +131,13 @@ void Subhalo::do_check_central_subhalo_galaxy_composition() const
 	// type CENTRAL, and no TYPE1 galaxies at all
 
 	auto n_central = 0;
-	for(auto &g: galaxies) {
-		if (g->galaxy_type == Galaxy::TYPE1) {
+	for(const auto &g: galaxies) {
+		if (g.galaxy_type == Galaxy::TYPE1) {
 			std::ostringstream os;
 			os << "Central subhalo " << *this << " has at least one type 1 galaxy";
 			throw invalid_data(os.str());
 		}
-		else if (g->galaxy_type == Galaxy::CENTRAL) {
+		else if (g.galaxy_type == Galaxy::CENTRAL) {
 			n_central++;
 		}
 	}
@@ -144,23 +158,14 @@ void Subhalo::do_check_central_subhalo_galaxy_composition() const
 	}
 }
 
-std::vector<GalaxyPtr> Subhalo::all_type2_galaxies() const
+const Subhalo::type2_galaxies_view Subhalo::type2_galaxies() const
 {
-
-	std::vector<GalaxyPtr> all;
-
-	for (auto &galaxy: galaxies){
-		if(galaxy->galaxy_type == Galaxy::TYPE2){
-			all.push_back(galaxy);
-		}
-	}
-
-	return all;
+	return type2_galaxies_view(galaxies);
 }
 
-void Subhalo::copy_galaxies_to(SubhaloPtr &target, const std::vector<GalaxyPtr> &gals) const
+Subhalo::type2_galaxies_view Subhalo::type2_galaxies()
 {
-	target->galaxies.insert(target->galaxies.end(), gals.begin(), gals.end());
+	return type2_galaxies_view(galaxies);
 }
 
 void Subhalo::transfer_galaxies_to(SubhaloPtr &target)
@@ -170,40 +175,50 @@ void Subhalo::transfer_galaxies_to(SubhaloPtr &target)
 	if (LOG_ENABLED(trace)) {
 		LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
 	}
-
-	copy_galaxies_to(target, galaxies);
-	galaxies.clear();
-
+	if (gals_before == 0) {
+		std::swap(galaxies, target->galaxies);
+	}
+	else {
+		std::move(galaxies.begin(), galaxies.end(), std::back_inserter(target->galaxies));
+		galaxies.clear();
+		galaxies.shrink_to_fit();
+	}
+	assert(galaxies.empty());
 	assert(gals_before + our_gals == target->galaxy_count());
 }
 
 void Subhalo::transfer_type2galaxies_to(SubhaloPtr &target)
 {
-	auto type2_gals = all_type2_galaxies();
-	auto gals_before = target->galaxy_count();
-	auto our_gals = type2_gals.size();
-	if (LOG_ENABLED(trace)) {
-		LOG(trace) << "Transferring " << our_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	auto our_type2_gals = type2_galaxies_count();
+	if (our_type2_gals == 0) {
+		return;
 	}
-
-	copy_galaxies_to(target, type2_gals);
-	remove_galaxies(type2_gals);
-
-	assert(gals_before + our_gals == target->galaxy_count());
+	auto gals_before = target->galaxy_count();
+	if (LOG_ENABLED(trace)) {
+		LOG(trace) << "Transferring " << our_type2_gals << " galaxies from " << *this << " to " << target << " (currently " << gals_before << " galaxies)";
+	}
+	std::vector<Galaxy::id_t> ids;
+	auto type2_gals = type2_galaxies();
+	std::transform(type2_gals.begin(), type2_gals.end(), std::back_inserter(ids), [](const Galaxy &g) { return g.id; });
+	std::move(type2_gals.begin(), type2_gals.end(), std::back_inserter(target->galaxies));
+	remove_galaxies(ids);
+	galaxies.shrink_to_fit();
+	assert(gals_before + our_type2_gals == target->galaxy_count());
 }
 
-
-void Subhalo::remove_galaxies(const std::vector<GalaxyPtr> &to_remove)
+void Subhalo::remove_galaxies(const std::vector<Galaxy::id_t> &to_remove)
 {
 	// TODO: Maybe not most efficiently, but it will do for now
-	for(auto &galaxy: to_remove) {
-		auto it = std::find(galaxies.begin(), galaxies.end(), galaxy);
+	for(const auto &galaxy_id: to_remove) {
+		auto it = std::find_if(galaxies.begin(), galaxies.end(), [galaxy_id](const Galaxy &galaxy) {
+			return galaxy.id == galaxy_id;
+		});
 		if (it == galaxies.end()) {
-			LOG(warning) << "Trying to remove galaxy " << galaxy << " which is not in subhalo " << *this << ", ignoring";
+			LOG(warning) << "Trying to remove galaxy with id=" << galaxy_id << " which is not in subhalo " << *this << ", ignoring";
 			continue;
 		}
 		if (LOG_ENABLED(debug)) {
-			LOG(debug) << "Removing galaxy " << galaxy << " from subhalo " << *this;
+			LOG(debug) << "Removing galaxy " << *it << " from subhalo " << *this;
 		}
 		galaxies.erase(it);
 	}
@@ -216,8 +231,8 @@ double Subhalo::total_baryon_mass() const
 	// add subhalo components.
 	mass += hot_halo_gas.mass + cold_halo_gas.mass + ejected_galaxy_gas.mass + lost_galaxy_gas.mass;
 
-	for (auto &galaxy: galaxies){
-		mass += galaxy->baryon_mass() + galaxy->smbh.mass;
+	for (const auto &galaxy: galaxies){
+		mass += galaxy.baryon_mass() + galaxy.smbh.mass;
 	}
 
 	return mass;

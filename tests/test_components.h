@@ -67,23 +67,23 @@ class TestSubhalos : public CxxTest::TestSuite
 {
 private:
 
-	SubhaloPtr make_subhalo(const std::string &types, Subhalo::subhalo_type_t subhalo_type)
+	SubhaloPtr make_subhalo(const std::string &types, Subhalo::subhalo_type_t subhalo_type, Galaxy::id_t id=0)
 	{
 		SubhaloPtr subhalo = std::make_shared<Subhalo>(0, 0);
 		subhalo->subhalo_type = subhalo_type;
-		Galaxy::id_t id = 0;
 		for(auto t: types) {
 			auto &g = subhalo->emplace_galaxy(id++);
 			if (t == 'C') {
-				g->galaxy_type = Galaxy::CENTRAL;
+				g.galaxy_type = Galaxy::CENTRAL;
 			}
 			else if (t == '1') {
-				g->galaxy_type = Galaxy::TYPE1;
+				g.galaxy_type = Galaxy::TYPE1;
 			}
 			else if (t == '2') {
-				g->galaxy_type = Galaxy::TYPE2;
+				g.galaxy_type = Galaxy::TYPE2;
 			}
 		}
+		TS_ASSERT_EQUALS(types.size(), subhalo->galaxy_count());
 		return subhalo;
 	}
 
@@ -155,6 +155,24 @@ public:
 		_test_valid_satellite_galaxy_composition("122", true);
 		_test_valid_satellite_galaxy_composition("122222", true);
 		_test_valid_satellite_galaxy_composition("122222C", false);
+	}
+
+	void test_galaxy_finding()
+	{
+		auto subhalo = make_subhalo("222C222122", Subhalo::SATELLITE, 0);
+		TS_ASSERT_EQUALS(3, subhalo->central_galaxy()->id);
+		TS_ASSERT_EQUALS(7, subhalo->type1_galaxy()->id);
+		TS_ASSERT_EQUALS(8, subhalo->type2_galaxies_count());
+	}
+
+	void test_galaxy_movement()
+	{
+		auto subhalo1 = make_subhalo("C12", Subhalo::CENTRAL, 0);
+		auto subhalo2 = make_subhalo("222", Subhalo::SATELLITE, 3);
+		subhalo2->transfer_type2galaxies_to(subhalo1);
+		TS_ASSERT_EQUALS(6, subhalo1->galaxy_count());
+		TS_ASSERT_EQUALS(4, subhalo1->type2_galaxies_count());
+		TS_ASSERT_EQUALS(0, subhalo2->type2_galaxies_count());
 	}
 
 };

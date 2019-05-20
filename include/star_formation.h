@@ -126,7 +126,7 @@ public:
 
 	double molecular_surface_density(double r, void * params) const;
 
-	molecular_gas get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc);
+	molecular_gas get_molecular_gas(const Galaxy &galaxy, double z, bool jcalc);
 
 	double ionised_gas_fraction(double mgas, double rgas, double z) const;
 

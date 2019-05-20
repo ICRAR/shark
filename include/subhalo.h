@@ -237,29 +237,48 @@ public:
 	/**
 	 * The list of galaxies in this subhalo.
 	 */
-	std::vector<GalaxyPtr> galaxies;
+	std::vector<Galaxy> galaxies;
 
 	template <typename ... Ts>
-	GalaxyPtr &emplace_galaxy(Ts && ... args)
+	Galaxy &emplace_galaxy(Ts && ... args)
 	{
-		galaxies.emplace_back(std::make_shared<Galaxy>(std::forward<Ts>(args)...));
+		galaxies.emplace_back(std::forward<Ts>(args)...);
 		return galaxies.back();
 	}
 
 	/** Returns a pointer to the central galaxy. If no central galaxy is found
 	 in this Subhalo, then an empty pointer is returned.
 	 */
-	GalaxyPtr central_galaxy() const;
+	ConstGalaxyPtr central_galaxy() const;
+
+	/// @see const GalaxyPtr central_galaxy() const
+	GalaxyPtr central_galaxy();
 
 	/** Returns a pointer to the type1 galaxy. If no type1 galaxy is found
 	 in this Subhalo, then an empty pointer is returned.
 	 */
-	GalaxyPtr type1_galaxy() const;
+	ConstGalaxyPtr type1_galaxy() const;
+
+	/// @see const GalaxyPtr type1_galaxy() const
+	GalaxyPtr type1_galaxy();
 
 	/**
 	 * Returns all the type 2 satellites of this subhalo.
 	 */
-	std::vector<GalaxyPtr> all_type2_galaxies() const;
+	const type2_galaxies_view type2_galaxies() const;
+
+	/// @see all_type2_galaxies() const
+	type2_galaxies_view type2_galaxies();
+
+	/**
+	 * Returns the total number of type 2 galaxies of this subhalo
+	 * @return The total number of type 2 galaxies of this subhalo
+	 */
+	std::size_t type2_galaxies_count() const
+	{
+		auto type2_gals = type2_galaxies();
+		return std::distance(type2_gals.begin(), type2_gals.end());
+	}
 
 	/**
 	 * The subhalo type
@@ -342,14 +361,6 @@ public:
 	SubhaloPtr main() const;
 
 	/**
-	 * Copies the galaxies from this Subhalo into @a target
-	 *
-	 * @param target The subhalo where galaxies will be copied to
-	 * @param gals The galaxies to copy to the target subhalo; defaults to all our galaxies
-	 */
-	void copy_galaxies_to(SubhaloPtr &target, const std::vector<GalaxyPtr> &gals) const;
-
-	/**
 	 * Transfers (i.e., moves) the galaxies from this Subhalo into @a target
 	 *
 	 * @param target The subhalo where galaxies will be transferred to
@@ -368,7 +379,7 @@ public:
 	 *
 	 * @param to_remove A vector of galaxies to remove.
 	 */
-	void remove_galaxies(const std::vector<GalaxyPtr> &to_remove);
+	void remove_galaxies(const std::vector<Galaxy::id_t> &to_remove);
 
 	/// Returns the number of galaxies contained in this Halo
 	galaxies_size_type galaxy_count() const

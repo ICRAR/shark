@@ -252,7 +252,7 @@ void _get_molecular_gas(const HaloPtr &halo, molgas_per_galaxy &molgas, StarForm
 {
 	for (auto &subhalo: halo->all_subhalos()) {
 		for (auto &galaxy: subhalo->galaxies) {
-			molgas[galaxy->id] = star_formation.get_molecular_gas(galaxy, z, calc_j);
+			molgas[galaxy.id] = star_formation.get_molecular_gas(galaxy, z, calc_j);
 		}
 	}
 }
@@ -315,7 +315,7 @@ evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree,
 		Timer t3;
 		for(auto &subhalo: halo->all_subhalos()) {
 			for(auto &galaxy: subhalo->galaxies) {
-				physical_model->evolve_galaxy(*subhalo, *galaxy, z, delta_t);
+				physical_model->evolve_galaxy(*subhalo, galaxy, z, delta_t);
 			}
 		}
 		times.galaxy_evolution += t3.get();

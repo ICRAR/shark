@@ -90,7 +90,7 @@ bool GalaxyCreator::create_galaxies(const HaloPtr &halo, double z, Galaxy::id_t 
 	}
 
 	auto &galaxy = central_subhalo->emplace_galaxy(galaxy_id);
-	galaxy->vmax = central_subhalo->Vcirc;
+	galaxy.vmax = central_subhalo->Vcirc;
 
 	//If the input simulation is a hydro simulation, then use the input gas mass.
 	if(sim_params.hydrorun){

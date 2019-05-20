@@ -37,7 +37,7 @@ class Halo;
 class MergerTree;
 class TotalBaryon;
 
-using GalaxyPtr = std::shared_ptr<Galaxy>;
+using GalaxyPtr = Galaxy *;
 using ConstGalaxyPtr = const Galaxy *;
 using SubhaloPtr = std::shared_ptr<Subhalo>;
 using HaloPtr = std::shared_ptr<Halo>;
