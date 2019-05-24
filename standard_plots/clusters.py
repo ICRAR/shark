@@ -100,7 +100,6 @@ def prepare_data(hdf5_data, fradii, index):
             dist_to_ms      = sfr_tot_galsin / pow(10.0, (ms[0] * mstars_galsin + ms[1]))
             dist_to_gf      = mgas_tot_galsin / pow(10.0, (gasfracms[0] * mstars_galsin + gasfracms[1]))
             dist_proj       = d_all[ind]
-            #print dist_proj
             for j in range(0, len(xrf)):
                 inr = np.where((dist_proj >= xrf[j] - dr/2.0) & (dist_proj < xrf[j] + dr/2.0))
                 nradii_this_z[0,i,j,g] = len(dist_proj[inr])
