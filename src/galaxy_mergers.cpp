@@ -214,10 +214,8 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z, int snapshot)
 				galaxy->galaxy_type = Galaxy::TYPE2;
 			}
 
-			//transfer all mass from the satellite_subhalo to the central_subhalo. Note that this implies a horizontal transfer of information.
-			transfer_baryon_mass(central_subhalo, satellite_subhalo);
-
-			//Now transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
+			// Any transfer of halo baryons from satellite to central happens in environment.cpp
+			// Transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_galaxies_to(central_subhalo);
 		}
 		else {
@@ -696,21 +694,6 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	}
 
 	return r;
-}
-
-void GalaxyMergers::transfer_baryon_mass(const SubhaloPtr &central, const SubhaloPtr &satellite)
-{
-	central->hot_halo_gas += satellite->hot_halo_gas;
-	central->cold_halo_gas += satellite->cold_halo_gas;
-	central->ejected_galaxy_gas += satellite->ejected_galaxy_gas;
-	central->lost_galaxy_gas += satellite->lost_galaxy_gas;
-
-	// Make baryon components of satellite subhalo = 0.
-	satellite->hot_halo_gas.restore_baryon();
-	satellite->cold_halo_gas.restore_baryon();
-	satellite->ejected_galaxy_gas.restore_baryon();
-	satellite->lost_galaxy_gas.restore_baryon();
-
 }
 
 void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy)

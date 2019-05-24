@@ -114,10 +114,7 @@ public:
 		 */
 
 		// Define cooling rate only in the case galaxy is central.
-		params.mcoolrate = 0;
-		if (galaxy.galaxy_type == Galaxy::CENTRAL) {
-			params.mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
-		}
+		params.mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
 
 		params.rgas = galaxy.disk_gas.rscale; //gas scale radius.
 		params.vgal = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale * constants::EAGLEJconv;
