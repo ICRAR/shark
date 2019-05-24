@@ -574,22 +574,21 @@ def plot_mzr(plt, outdir, obsdir, h0, mzr, mzr_cen, mzr_sat):
         errdn = (mzr[idx,1,ind])
         errup = (mzr[idx,2,ind])
         xplot = xmf[ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='o',label="all galaxies")
+        common.errorbars(ax, xplot, yplot[0], errdn[0], errup[0], 'b', 'o', label="all galaxies", err_absolute=False)
 
         ind = np.where(mzr_cen[idx,0,:] != 0)
         yplot = (mzr_cen[idx,0,ind])
         errdn = (mzr_cen[idx,1,ind])
         errup = (mzr_cen[idx,2,ind])
         xplot = xmf[ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'g', mec='g',marker='o',markersize=2,label="centrals")
+        common.errorbars(ax, xplot, yplot[0], errdn[0], errup[0], 'g', 'o', markersize=2, label="centrals", err_absolute=False)
 
         ind = np.where(mzr_sat[idx,0,:] != 0)
         yplot = (mzr_sat[idx,0,ind])
         errdn = (mzr_sat[idx,1,ind])
         errup = (mzr_sat[idx,2,ind])
         xplot = xmf[ind]
-
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='o',markersize=2,label="satellites")
+        common.errorbars(ax, xplot, yplot[0], errdn[0], errup[0], 'r', 'o', markersize=2, label="satellites", err_absolute=False)
 
         colors = ['b','g','r']
         if obs:
@@ -847,21 +846,21 @@ def plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat):
         yplot = sfe[idx,0,ind]
         errdn = sfe[idx,1,ind]
         errup = sfe[idx,2,ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='o',label="all galaxies")
+        common.errorbars(ax, xplot, yplot[0], errdn[0], errup[0], 'b', 'o', label="all galaxies", err_absolute=False)
 
         ind = np.where(sfe_cen[idx,0,:] != 0)
         xplot = xmf[ind]
         yplot = sfe_cen[idx,0,ind]
         errdn = sfe_cen[idx,1,ind]
         errup = sfe_cen[idx,2,ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'g', mec='g',marker='o',markersize=2,label="centrals")
+        common.errorbars(ax, xplot, yplot[0], errdn[0], errup[0], 'g', 'o', markersize=2, label="centrals", err_absolute=False)
 
         ind = np.where(sfe_sat[idx,0,:] != 0)
         xplot = xmf[ind]
         yplot = sfe_sat[idx,0,ind]
         errdn = sfe_sat[idx,1,ind]
         errup = sfe_sat[idx,2,ind]
-        ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='o',markersize=2,label="satellites")
+        common.errorbars(ax, xplot, yplot[0], errdn[0], errup[0], 'r', 'o', markersize=2, label="satellites", err_absolute=False)
 
         common.prepare_legend(ax, ['b', 'g', 'r'])
 

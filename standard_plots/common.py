@@ -229,7 +229,12 @@ def errorbars(ax, x, y, yerrdn, yerrup, color, marker,
     else:
         yerr = [yerrdn, yerrup]
 
-    ax.errorbar(x, y, yerr=yerr, ls='None', mfc='None', ecolor=color, mec=color,
+    # Avoid bug in mpl 1.5.1 and 2.1.x caused by "empty" errors
+    # See https://github.com/matplotlib/matplotlib/issues/9699 for details
+    if np.any(yerr):
+        kwargs['yerr'] = yerr
+
+    ax.errorbar(x, y, ls='None', mfc='None', ecolor=color, mec=color,
                 marker=marker, **kwargs)
 
 def savefig(output_dir, fig, plotname):
