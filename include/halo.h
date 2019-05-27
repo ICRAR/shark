@@ -54,16 +54,6 @@ public:
 	}
 
 	/**
-	 * The central subhalo
-	 */
-	SubhaloPtr central_subhalo;
-
-	/**
-	 * The subhalos contained in this halo
-	 */
-	std::vector<SubhaloPtr> satellite_subhalos;
-
-	/**
 	 * @return the total number of subhalos contained in this halo
 	 */
 	std::size_t subhalo_count() const
@@ -89,58 +79,6 @@ public:
 	void remove_subhalo(const SubhaloPtr &subhalo);
 
 	/**
-	 * @return The main progenitor of this halo
-	 */
-	HaloPtr main_progenitor() const;
-
-	/**
-	 * The mass contained in the subhalos.
-	 * This quantity should be =1 for classic SAMs, but with Rodrigo Canas work
-	 * on VELOCIraptor, this quantity could be less than 1.
-	 */
-	float mass_fraction_subhalos = -1;
-
-
-	/** @param Vvir: virial velocity of the halo [km/s]
-	 * @param Mvir: dark matter mass of the halo [Msun/h]
-	 * @param Mgas: gas mass in the halo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
-	 * @param concentration: NFW concentration parameter of halo
-	 * @param lambda: spin parameter of halo
-	 * @param cooling_rate: cooling rate experienced by this halo in Msun/Gyr/h.
-	 * @param age_80: redshift at which the halo had 80% of its mass in place.
-	 * @param age_50: redshift at which the halo had 50% of its mass in place.
-	 *  */
-	float Vvir = 0;
-	float Mvir = 0;
-	float Mgas = 0;
-	float concentration = 0;
-	float lambda = 0;
-	float cooling_rate = 0;
-	float age_80 = 0;
-	float age_50 = 0;
-
-	/**
-	 * @param snapshot: The snapshot at which this halo is found
-	 */
-	int snapshot;
-
-	HaloPtr descendant;
-	std::vector<HaloPtr> ascendants;
-
-	/**
-	 * @param merger_tree: The merger tree that holds this halo.
-	 */
-	MergerTreePtr merger_tree;
-
-	/**
-	 *
-	 * @param ignore_gal_formation: in the case the user runs the code with the option of ignoring late, massive forming halos (which are usually
-	 * issues in the merger tree builder), this boolean parameter indicates whether this halo has been flagged as having this issue.
-	 */
-
-	bool ignore_gal_formation = false;
-
-	/**
 	 * Adds @a subhalo to this Halo.
 	 *
 	 * @param subhalo The subhalo to add
@@ -162,6 +100,53 @@ public:
 	 * @return The total baryon mass contained in this Halo
 	 */
 	double total_baryon_mass() const;
+
+	/**
+	 * @return The main progenitor of this halo
+	 */
+	HaloPtr main_progenitor() const;
+
+	/// The ascendant Halos of this Halo
+	std::vector<HaloPtr> ascendants;
+	/// The subhalos contained in this Halo
+	std::vector<SubhaloPtr> satellite_subhalos;
+	/// The central subhalo of this Halo
+	SubhaloPtr central_subhalo;
+	/// The descendant Halo of this Halo, if any
+	HaloPtr descendant;
+	/// The merger tree that holds this halo
+	MergerTreePtr merger_tree;
+	/**
+	 * The mass contained in the subhalos.
+	 * This quantity should be =1 for classic SAMs, but with Rodrigo Canas work
+	 * on VELOCIraptor, this quantity could be less than 1.
+	 */
+	float mass_fraction_subhalos = -1;
+	/// virial velocity of the halo [km/s]
+	float Vvir = 0;
+	/// dark matter mass of the halo [Msun/h]
+	float Mvir = 0;
+	/// gas mass in the halo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation
+	float Mgas = 0;
+	/// NFW concentration parameter of halo
+	float concentration = 0;
+	/// spin parameter of halo
+	float lambda = 0;
+	/// cooling rate experienced by this halo [Msun/Gyr/h]
+	float cooling_rate = 0;
+	/// redshift at which the halo had 80% of its mass in place
+	float age_80 = 0;
+	/// redshift at which the halo had 50% of its mass in place
+	float age_50 = 0;
+	/// The snapshot at which this halo is found
+	int snapshot;
+	/**
+	 * in the case the user runs the code with the option of ignoring late,
+	 * massive forming halos (which are usually issues in the merger tree
+	 * builder), this boolean parameter indicates whether this halo has been
+	 * flagged as having this issue.
+	 */
+	bool ignore_gal_formation = false;
 
 };
 
