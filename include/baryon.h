@@ -57,7 +57,8 @@ public:
 		return lhs;
 	}
 
-	void restore_baryon(){
+	void restore_baryon()
+	{
 		mass = 0;
 		mass_metals = 0;
 	}
