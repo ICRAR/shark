@@ -1061,7 +1061,7 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     common.savefig(outdir, fig, "Kband_luminosity_function_evolution.pdf")
 
 
-def prepare_data(hdf5_data, phot_data, ids_sed, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
+def prepare_data(hdf5_data, phot_data, phot_data_nod, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
                  fdisk_emission, fbulge_m_emission, fbulge_d_emission):
    
     #star_formation_histories and SharkSED have the same number of galaxies in the same order, and so we can safely assume that to be the case.
@@ -1079,8 +1079,20 @@ def prepare_data(hdf5_data, phot_data, ids_sed, LFs_dust, LFs_nodust, colours_di
     #2: total bulge
     #3: disk
     #4: total
-    SEDs_dust   = phot_data[:,1,0,:,:]
-    SEDs_nodust = phot_data[:,0,0,:,:]
+
+    ind = np.where(mdisk + mbulge > 0)
+    SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
+    SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
+
+    lala = phot_data[0]
+    p = 0
+    for c in range(0,5):
+        indust = phot_data[p]
+        innodust = phot_data_nod[p]
+        for i in range(0,nbands):
+            SEDs_dust[:,c,i] = indust[i,:]
+            SEDs_nodust[:,c,i] = innodust[i,:]
+        p = p + 1
 
     for i in range(0,nbands):
         for c in range(0,5):
@@ -1131,6 +1143,9 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     #              'bulges_mergers': ('star_formation_rate_histories'),
     #              'disks': ('star_formation_rate_histories')}
 
+    fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
+    fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
+
     z = (0, 0.25, 0.5, 1.0, 2.0, 3.0, 6.0, 8.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
@@ -1139,8 +1154,10 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
         #sfh, delta_t, LBT = common.read_sfh(model_dir, snapshot, sfh_fields, subvols)
-        seds, ids, nbands = common.read_photometry_data(model_dir, snapshot, subvols)
-        
+        seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
+        seds_nod = common.read_photometry_data(model_dir, snapshot, fields_sed_nod, subvols)
+        nbands = len(seds[0]) 
+
         if(index == 0):
             LFs_dust     = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
             LFs_nodust   = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
@@ -1149,7 +1166,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
             fbulge_m_emission = np.zeros(shape = (len(z), nbands, len(mbins)))
             fbulge_d_emission = np.zeros(shape = (len(z), nbands, len(mbins)))
 
-        prepare_data(hdf5_data, seds, ids, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
+        prepare_data(hdf5_data, seds, seds_nod, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
                      fdisk_emission, fbulge_m_emission, fbulge_d_emission)
 
         h0, volh = hdf5_data[0], hdf5_data[1]
