@@ -28,7 +28,6 @@
 #include <sstream>
 #include <tuple>
 
-#include "components.h"
 #include "exceptions.h"
 #include "logging.h"
 #include "numerical_constants.h"

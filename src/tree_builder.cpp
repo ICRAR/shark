@@ -31,8 +31,10 @@
 #include "cosmology.h"
 #include "exceptions.h"
 #include "logging.h"
+#include "merger_tree.h"
 #include "omp_utils.h"
 #include "timer.h"
+#include "total_baryon.h"
 #include "tree_builder.h"
 
 

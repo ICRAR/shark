@@ -24,10 +24,10 @@
 #include <cmath>
 #include <memory>
 
-#include "components.h"
 #include "evolve_halos.h"
 #include "logging.h"
 #include "numerical_constants.h"
+#include "total_baryon.h"
 
 namespace shark {
 
@@ -80,17 +80,17 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 		for(auto &subhalo: halo->all_subhalos()) {
 
 			// Make sure all SFRs (in mass and metals) are set to 0 for the next snapshot
-			for (GalaxyPtr & galaxy: subhalo->galaxies){
-				galaxy->sfr_bulge_mergers  = 0;
-				galaxy->sfr_z_bulge_mergers= 0;
-				galaxy->sfr_bulge_diskins  = 0;
-				galaxy->sfr_z_bulge_diskins= 0;
-				galaxy->sfr_z_disk         = 0;
-				galaxy->sfr_disk           = 0;
+			for (auto &galaxy: subhalo->galaxies) {
+				galaxy.sfr_bulge_mergers  = 0;
+				galaxy.sfr_z_bulge_mergers= 0;
+				galaxy.sfr_bulge_diskins  = 0;
+				galaxy.sfr_z_bulge_diskins= 0;
+				galaxy.sfr_z_disk         = 0;
+				galaxy.sfr_disk           = 0;
 				//restart counter of mergers and disk instabilities.
-				galaxy->interaction.restore_interaction_item();
+				galaxy.interaction.restore_interaction_item();
 				//restart descendant_id
-				galaxy->descendant_id = -1;
+				galaxy.descendant_id = -1;
 			}
 
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
@@ -208,50 +208,50 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
         
 			for (auto &galaxy: subhalo->galaxies){
        
-				number_major_mergers += galaxy->interaction.major_mergers;
- 				number_minor_mergers += galaxy->interaction.minor_mergers;
-				number_disk_instabil += galaxy->interaction.disk_instabilities;
+				number_major_mergers += galaxy.interaction.major_mergers;
+				number_minor_mergers += galaxy.interaction.minor_mergers;
+				number_disk_instabil += galaxy.interaction.disk_instabilities;
 
 				if(execparams.output_sf_histories){
         
-					galaxy->mean_stellar_age += (galaxy->sfr_disk + galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins) * deltat * mean_age;
-					galaxy->total_stellar_mass_ever_formed += (galaxy->sfr_disk + galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins) * deltat;
+					galaxy.mean_stellar_age += (galaxy.sfr_disk + galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins) * deltat * mean_age;
+					galaxy.total_stellar_mass_ever_formed += (galaxy.sfr_disk + galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins) * deltat;
 
 					HistoryItem hist_galaxy;
-					hist_galaxy.sfr_disk            = galaxy->sfr_disk;
-					hist_galaxy.sfr_bulge_mergers   = galaxy->sfr_bulge_mergers;
-					hist_galaxy.sfr_bulge_diskins   = galaxy->sfr_bulge_diskins;
-					hist_galaxy.sfr_z_disk          = galaxy->sfr_z_disk;
-					hist_galaxy.sfr_z_bulge_mergers = galaxy->sfr_z_bulge_mergers;
-					hist_galaxy.sfr_z_bulge_diskins = galaxy->sfr_z_bulge_diskins;
+					hist_galaxy.sfr_disk            = galaxy.sfr_disk;
+					hist_galaxy.sfr_bulge_mergers   = galaxy.sfr_bulge_mergers;
+					hist_galaxy.sfr_bulge_diskins   = galaxy.sfr_bulge_diskins;
+					hist_galaxy.sfr_z_disk          = galaxy.sfr_z_disk;
+					hist_galaxy.sfr_z_bulge_mergers = galaxy.sfr_z_bulge_mergers;
+					hist_galaxy.sfr_z_bulge_diskins = galaxy.sfr_z_bulge_diskins;
 					hist_galaxy.snapshot            = snapshot;
-					galaxy->history.emplace_back(hist_galaxy);
+					galaxy.history.emplace_back(hist_galaxy);
 				}
         
 				//Accumulate galaxy baryons
-				auto &molecular_gas = molgas.at(galaxy);
+				auto &molecular_gas = molgas.at(galaxy.id);
         
 				mHI_total.mass += molecular_gas.m_atom + molecular_gas.m_atom_b;
 				mH2_total.mass += molecular_gas.m_mol + molecular_gas.m_mol_b;
         
-				mcold_total.mass += galaxy->disk_gas.mass + galaxy->bulge_gas.mass;
-				mcold_total.mass_metals += galaxy->disk_gas.mass_metals + galaxy->bulge_gas.mass_metals;
+				mcold_total.mass += galaxy.disk_gas.mass + galaxy.bulge_gas.mass;
+				mcold_total.mass_metals += galaxy.disk_gas.mass_metals + galaxy.bulge_gas.mass_metals;
         
-				mstars_total.mass += galaxy->disk_stars.mass + galaxy->bulge_stars.mass;
-				mstars_total.mass_metals += galaxy->disk_stars.mass_metals + galaxy->bulge_stars.mass_metals;
+				mstars_total.mass += galaxy.disk_stars.mass + galaxy.bulge_stars.mass;
+				mstars_total.mass_metals += galaxy.disk_stars.mass_metals + galaxy.bulge_stars.mass_metals;
         
-				mstars_bursts_galaxymergers.mass += galaxy->galaxymergers_burst_stars.mass;
-				mstars_bursts_galaxymergers.mass_metals += galaxy->galaxymergers_burst_stars.mass_metals;
-				mstars_bursts_diskinstabilities.mass += galaxy->diskinstabilities_burst_stars.mass;
-				mstars_bursts_diskinstabilities.mass_metals += galaxy->diskinstabilities_burst_stars.mass_metals;
+				mstars_bursts_galaxymergers.mass += galaxy.galaxymergers_burst_stars.mass;
+				mstars_bursts_galaxymergers.mass_metals += galaxy.galaxymergers_burst_stars.mass_metals;
+				mstars_bursts_diskinstabilities.mass += galaxy.diskinstabilities_burst_stars.mass;
+				mstars_bursts_diskinstabilities.mass_metals += galaxy.diskinstabilities_burst_stars.mass_metals;
 
-				SFR_total_disk  += galaxy->sfr_disk;
-				SFR_total_burst += galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins;
+				SFR_total_disk  += galaxy.sfr_disk;
+				SFR_total_burst += galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins;
         
-				MBH_total.mass += galaxy->smbh.mass;
+				MBH_total.mass += galaxy.smbh.mass;
 
-				if(galaxy->smbh.mass > SMBH_max){
-					SMBH_max = galaxy->smbh.mass;
+				if(galaxy.smbh.mass > SMBH_max){
+					SMBH_max = galaxy.smbh.mass;
 				}
         
 			}

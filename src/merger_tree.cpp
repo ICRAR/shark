@@ -1,6 +1,6 @@
 //
 // ICRAR - International Centre for Radio Astronomy Research
-// (c) UWA - The University of Western Australia, 2017
+// (c) UWA - The University of Western Australia, 2019
 // Copyright by UWA (in the framework of the ICRAR)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,42 +17,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-/**
- * @file
- *
- * Base importer reader class definition
- */
-
-#ifndef SHARK_IMPORTER_READER
-#define SHARK_IMPORTER_READER
-
-#include <stdexcept>
-#include <vector>
-
-#include "components.h"
+#include "merger_tree.h"
 
 namespace shark {
 
-namespace importer {
-
-class Reader {
-
-public:
-
-	virtual ~Reader() = 0;
-
-	/**
-	 * Reads all the subhalos for a given snapshot
-	 *
-	 * @param snapshot The snapshot number
-	 * @return A list of populated Subhalos
-	 */
-	virtual std::vector<Subhalo> read_subhalos(int snapshot) = 0;
-
-};
-
-}  // namespace importer
+std::vector<HaloPtr> MergerTree::NONE;
 
 }  // namespace shark
-
-#endif // SHARK_IMPORTER_READER

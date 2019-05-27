@@ -30,6 +30,7 @@
 
 #include "cosmology.h"
 #include "dark_matter_halos.h"
+#include "galaxy.h"
 #include "logging.h"
 #include "nfw_distribution.h"
 #include "numerical_constants.h"
@@ -345,14 +346,14 @@ void DarkMatterHalos::bulge_sAM(Subhalo &subhalo, Galaxy &galaxy){
 
 }
 
-void DarkMatterHalos::transfer_bulge_am(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z){
+void DarkMatterHalos::transfer_bulge_am(SubhaloPtr &subhalo, Galaxy &galaxy, double z){
 
 	//modify AM based on mass weighting. How to do this should depend on size model.
 	if(params.sizemodel == DarkMatterHaloParameters::MO98){
-  	   	galaxy->disk_gas.rscale = disk_size_theory(*subhalo, z);
+		galaxy.disk_gas.rscale = disk_size_theory(*subhalo, z);
 
-  	   	//define disk angular momentum.
-  	   	disk_sAM(*subhalo, *galaxy);
+		// define disk angular momentum.
+		disk_sAM(*subhalo, galaxy);
 	}
 	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
 		//TODO
