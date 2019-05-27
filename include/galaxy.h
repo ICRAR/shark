@@ -97,17 +97,6 @@ public:
 		FLYBY
 	};
 
-
-	/**
-	 * The ID of the descendant of this galaxy.
-	 */
-	id_t descendant_id = -1;
-
-	/**
-	 * The type of galaxy
-	 */
-	galaxy_type_t galaxy_type = CENTRAL;
-
 	Baryon bulge_stars;
 	Baryon bulge_gas;
 	Baryon disk_stars;
@@ -138,7 +127,7 @@ public:
 	float vmax = 0;
 
 	/// star formation and gas history of this galaxy across snapshots
-	std::vector<HistoryItem>  history;
+	std::vector<HistoryItem> history;
 
 	/// interactions of this galaxy during this snapshot
 	InteractionItem interaction;
@@ -153,6 +142,11 @@ public:
 	float vvir_type2 = 0;
 	/// subhalo spin parameter of this galaxy before it became type 2, only relevant for type 2 galaxies
 	float lambda_type2 = 0;
+
+	/// The ID of the descendant of this galaxy, -1 if no descendant is defined
+	id_t descendant_id = -1;
+	/// The type of this galaxy
+	galaxy_type_t galaxy_type = CENTRAL;
 
 	/**
 	 * Define functions to calculate total mass and metals of various components.

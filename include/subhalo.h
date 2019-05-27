@@ -183,62 +183,6 @@ public:
 		FLYBY
 	};
 
-	/**
-	 * The snapshot at which this subhalo is found
-	 */
-	int snapshot;
-
-	/**
-	 * Whether this subhalo has a descendant or not
-	 */
-	bool has_descendant = false;
-
-	/**
-	 * Boolean property indicating if subhalo is a main progenitor of its descendant.
-	 */
-	bool main_progenitor = false;
-
-	/**
-	 * Boolean property indicating if subhalo is the result of an interpolation in snapshots were descendants were missing. In this case Dhalos puts a subhalo in those snapshots
-	 * to ensure continuation of the merger tree.
-	 */
-	bool IsInterpolated = false;
-
-	/**
-	 * The ID of the descendant of this subhalo.
-	 * Valid only if has_descendant is \code{true}
-	 */
-	id_t descendant_id = 0;
-
-	/**
-	 * The ID of the Halo containing the descendant of this subhalo
-	 */
-	id_t descendant_halo_id = 0;
-
-	/**
-	 * The snapshot at which the descendant of this subhalo can be found
-	 */
-	int descendant_snapshot = -1;
-
-    /**
-     * Integer that shows if this subhalo will disappear from the tree in the next snapshot.
-     * last_snapshot_identified = 1 if disappears in the next snapshot, =0 otherwise.
-     */
-
-    int last_snapshot_identified = -1;
-
-	/**
-	 * A pointer to the descendant of this subhalo.
-	 * If this pointer is set then descendant_id and descendant_subhalo are
-	 * meaningless.
-	 */
-	SubhaloPtr descendant;
-
-	/**
-	 * The list of galaxies in this subhalo.
-	 */
-	std::vector<Galaxy> galaxies;
-
 	template <typename ... Ts>
 	Galaxy &emplace_galaxy(Ts && ... args)
 	{
@@ -279,81 +223,6 @@ public:
 		auto type2_gals = type2_galaxies();
 		return std::distance(type2_gals.begin(), type2_gals.end());
 	}
-
-	/**
-	 * The subhalo type
-	 */
-	subhalo_type_t subhalo_type = CENTRAL;
-
-	/**
-	 * haloID: ID of the Halo this Subhalo belong to
-	 */
-	id_t haloID = 0;
-
-	/** Vvir: virial velocity of the subhalo [km/s]
-	 * Mvir: dark matter mass of the subhalo [Msun/h]
-	 * Mgas: gas mass in the subhalo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
-	 * L: angular momentum of subhalo [Msun/h km/s Mpc/h]
-	 * Vcirc: maximum circular velocity of the subhalo [km/s]
-	 * concentration: NFW concentration parameter of subhalo
-	 * lambda: spin parameter of subhalo
-	 * infall_t: redshift at which the subhalo became a type > 0.
-	 *  */
-	float Vvir = 0;
-	float Mvir = 0;
-	float Mgas = 0;
-	xyz<float> L {0, 0, 0};
-	float Vcirc = 0;
-	float concentration = 0;
-	float lambda = 0;
-	float infall_t = 0;
-
-	/**
-	 * cooling_subhalo_tracking: saves que information of the virial temperature, total halo gas and cooling time history.
-	 */
-	CoolingSubhaloTracking cooling_subhalo_tracking;
-
-
-	/**
-	 * Hot gas component of the halo and outside the galaxies that is
-	 * allowed to cool down and/or fall onto the galaxy.
-	 */
-	RotatingBaryonBase hot_halo_gas;
-
-	/**
-	 * Cold gas component of the halo and outside the galaxies that has
-	 * cooled down.
-	 */
-	RotatingBaryonBase cold_halo_gas;
-
-	/**
-	 * Hot gas component of the halo and outside galaxies that tracks
-	 * the ejected outflowing gas from the galaxy and that is not
-	 * available for cooling yet.
-	 */
-	RotatingBaryonBase ejected_galaxy_gas;
-
-	/**
-	 * Lost gas reservoir which tracks the gas that is outflowing due to
-	 * QSO feedback and that has escaped the halo.
-	 */
-	BaryonBase lost_galaxy_gas;
-
-	/**
-	 * A list of pointers to the ascendants of this subhalo, sorted by mass in
-	 * descending order
-	 */
-	std::vector<SubhaloPtr> ascendants;
-
-	/**
-	 * The accreted baryonic mass onto the subhalo. This information comes from the merger tree.
-	 */
-	float accreted_mass = 0;
-
-	/**
-	 * The halo that holds this subhalo.
-	 */
-	HaloPtr host_halo;
 
 	/**
 	 * @return The main progenitor of this Subhalo
@@ -409,6 +278,63 @@ public:
 	 * a satellite subhalo
 	 */
 	void check_satellite_subhalo_galaxy_composition() const;
+
+	/// The ID of the descendant of this subhalo. Valid only if has_descendant is \code{true}
+	id_t descendant_id = 0;
+	/// The ID of the Halo containing the descendant of this subhalo
+	id_t descendant_halo_id = 0;
+	/// The ID of the Halo this Subhalo belong to
+	id_t haloID = 0;
+	/// The galaxies in this subhalo
+	std::vector<Galaxy> galaxies;
+	/// The ascendants of this subhalo, sorted by mass in descending order
+	std::vector<SubhaloPtr> ascendants;
+	/// The descendant of this subhalo. If this pointer is set then descendant_id and descendant_subhalo are meaningless.
+	SubhaloPtr descendant;
+	/// The halo that holds this subhalo.
+	HaloPtr host_halo;
+	/// virial velocity of the subhalo [km/s]
+	float Vvir = 0;
+	/// dark matter mass of the subhalo [Msun/h]
+	float Mvir = 0;
+	/// gas mass in the subhalo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
+	float Mgas = 0;
+	/// angular momentum of subhalo [Msun/h km/s Mpc/h]
+	xyz<float> L {0, 0, 0};
+	/// maximum circular velocity of the subhalo [km/s]
+	float Vcirc = 0;
+	/// NFW concentration parameter of subhalo
+	float concentration = 0;
+	/// spin parameter of subhalo
+	float lambda = 0;
+	/// redshift at which the subhalo became a type > 0.
+	float infall_t = 0;
+	/// The accreted baryonic mass onto the subhalo. This information comes from the merger tree
+	float accreted_mass = 0;
+	/// information of the virial temperature, total halo gas and cooling time history.
+	CoolingSubhaloTracking cooling_subhalo_tracking;
+	/// Hot gas component of the halo and outside the galaxies that is allowed to cool down and/or fall onto the galaxy.
+	RotatingBaryonBase hot_halo_gas;
+	/// Cold gas component of the halo and outside the galaxies that has cooled down.
+	RotatingBaryonBase cold_halo_gas;
+	/// Hot gas component of the halo and outside galaxies that tracks the ejected outflowing gas from the galaxy and that is not available for cooling yet.
+	RotatingBaryonBase ejected_galaxy_gas;
+	/// Lost gas reservoir which tracks the gas that is outflowing due to QSO feedback and that has escaped the halo.
+	BaryonBase lost_galaxy_gas;
+	/// The snapshot at which this subhalo is found
+	int snapshot;
+	/// The snapshot at which the descendant of this subhalo can be found
+	int descendant_snapshot = -1;
+	/// Whether this subhalo will disappear from the tree in the next snapshot or not. last_snapshot_identified = 1 if disappears in the next snapshot, =0 otherwise.
+	int last_snapshot_identified = -1;
+	/// The subhalo type
+	subhalo_type_t subhalo_type = CENTRAL;
+	/// Whether this subhalo has a descendant or not
+	bool has_descendant = false;
+	/// Whether this subhalo is a main progenitor of its descendant.
+	bool main_progenitor = false;
+	/// Whether this subhalo is the result of an interpolation in snapshots were descendants were missing. In this case Dhalos puts a subhalo in those snapshots  to ensure continuation of the merger tree.
+	bool IsInterpolated = false;
 
 private:
 	void do_check_satellite_subhalo_galaxy_composition() const;
