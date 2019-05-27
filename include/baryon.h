@@ -65,10 +65,44 @@ public:
 };
 
 /**
+ * A baryon that rotates, and therefore has angular momentum.
+ */
+class RotatingBaryonBase : public BaryonBase {
+
+public:
+
+	/**
+	 * Specific angular momentum
+	 */
+	float sAM = 0;
+
+	/**
+	 * @return The angular momentum of this baryon
+	 */
+	float angular_momentum() const
+	{
+		return mass * sAM;
+	}
+
+	void restore_baryon()
+	{
+		BaryonBase::restore_baryon();
+		sAM = 0;
+	}
+
+	friend RotatingBaryonBase &operator+(RotatingBaryonBase &lhs, const RotatingBaryonBase &rhs)
+	{
+		lhs += rhs;
+		return lhs;
+	}
+
+};
+
+/**
  * A common baryon component.
  * Note that black holes are not baryon components as they use their own class.
  */
-class Baryon : public BaryonBase {
+class Baryon : public RotatingBaryonBase {
 public:
 
 	/**
@@ -76,26 +110,16 @@ public:
 	 */
 	float rscale = 0;
 
-	/**
-	 * Specific angular momentum
-	 */
-	float sAM = 0;
-
 	friend Baryon &operator+(Baryon &lhs, const Baryon &rhs)
 	{
 		lhs += rhs;
 		return lhs;
 	}
 
-	void restore_baryon(){
-		BaryonBase::restore_baryon();
-		rscale = 0;
-		sAM = 0;
-	}
-
-	float angular_momentum() const
+	void restore_baryon()
 	{
-		return mass * sAM;
+		RotatingBaryonBase::restore_baryon();
+		rscale = 0;
 	}
 
 };
