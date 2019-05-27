@@ -51,7 +51,8 @@ public:
 		return *this;
 	}
 
-	friend BaryonBase operator+(BaryonBase &lhs, const BaryonBase &rhs) {
+	friend BaryonBase &operator+(BaryonBase &lhs, const BaryonBase &rhs)
+	{
 		lhs += rhs;
 		return lhs;
 	}
@@ -80,7 +81,8 @@ public:
 	 */
 	float sAM = 0;
 
-	friend Baryon operator+(Baryon &lhs, const Baryon &rhs) {
+	friend Baryon &operator+(Baryon &lhs, const Baryon &rhs)
+	{
 		lhs += rhs;
 		return lhs;
 	}
