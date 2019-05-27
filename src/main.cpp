@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <ios>
 #include <iostream>
+#include <ostream>
 #include <vector>
 
 #include "config.h"
@@ -69,6 +70,14 @@ void show_help(const char *prog, const boost::program_options::options_descripti
 	out << endl;
 }
 
+template <typename T>
+void report_size_of_things(std::basic_ostream<T> &os)
+{
+	os << "Main structure/class sizes follow. ";
+	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
+	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
+}
+
 static
 void setup_logging(const boost::program_options::variables_map &vm) {
 
@@ -108,11 +117,8 @@ void log_startup_information(int argc, char **argv)
 	std::copy(argv, argv + argc, std::ostream_iterator<char *>(os, " "));
 	LOG(info) << "shark started with command line: " << os.str();
 
-	// Inform the size of things
 	os = std::ostringstream();
-	os << "Main structure/class sizes follow. ";
-	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
-	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
+	report_size_of_things(os);
 	LOG(info) << os.str();
 }
 
@@ -164,6 +170,8 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 #else
 		std::cout << "No" << std::endl;
 #endif
+		report_size_of_things(std::cout);
+		std::cout << '\n';
 	}
 	else if (vm.count("config-file") == 0 ) {
 		throw boost::program_options::error("At least one <config-file> option must be given. Use -h to see the help");
