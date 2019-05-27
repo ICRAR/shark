@@ -318,26 +318,26 @@ public:
 	 * Hot gas component of the halo and outside the galaxies that is
 	 * allowed to cool down and/or fall onto the galaxy.
 	 */
-	Baryon hot_halo_gas;
+	RotatingBaryonBase hot_halo_gas;
 
 	/**
 	 * Cold gas component of the halo and outside the galaxies that has
 	 * cooled down.
 	 */
-	Baryon cold_halo_gas;
+	RotatingBaryonBase cold_halo_gas;
 
 	/**
 	 * Hot gas component of the halo and outside galaxies that tracks
 	 * the ejected outflowing gas from the galaxy and that is not
 	 * available for cooling yet.
 	 */
-	Baryon ejected_galaxy_gas;
+	RotatingBaryonBase ejected_galaxy_gas;
 
 	/**
 	 * Lost gas reservoir which tracks the gas that is outflowing due to
 	 * QSO feedback and that has escaped the halo.
 	 */
-	Baryon lost_galaxy_gas {};
+	BaryonBase lost_galaxy_gas;
 
 	/**
 	 * A list of pointers to the ascendants of this subhalo, sorted by mass in
