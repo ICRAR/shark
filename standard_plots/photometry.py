@@ -1084,7 +1084,6 @@ def prepare_data(hdf5_data, phot_data, phot_data_nod, LFs_dust, LFs_nodust, colo
     SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
     SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
 
-    lala = phot_data[0]
     p = 0
     for c in range(0,5):
         indust = phot_data[p]
