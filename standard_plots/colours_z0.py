@@ -84,7 +84,7 @@ def plot_colours(plt, outdir, obsdir, colours_dist):
         ax.fill_between(cSDSS[c1:columns[idx+1]], dpSDSS[c1:columns[idx+1]], yzeros, facecolor='grey', alpha=1,interpolate=True)
         
         # Predicted CDF
-        y = colours_dist[0,idx,0,:]
+        y = colours_dist[idx,0,:]
         ind = np.where(y > 0.)
         ax.plot(xc[ind],y[ind],'r', label='Shark')
         
@@ -119,7 +119,7 @@ def plot_colours(plt, outdir, obsdir, colours_dist):
         ax.fill_between(cSDSS[c1:columns[idx+1]], dpSDSS[c1:columns[idx+1]], yzeros, facecolor='grey', alpha=1,interpolate=True)
     
         # Predicted CDF
-        y = colours_dist[0,idx,1,:]
+        y = colours_dist[idx,1,:]
         ind = np.where(y > 0.)
         ax.plot(xc[ind],y[ind],'r', label='Shark')
     
@@ -162,11 +162,11 @@ def prepare_data(hdf5_data, phot_data, colours_dist, nbands):
     for mag in range(0,len(magbins)-1):
         ind = np.where((ubandl < -1) & (gbandl < -1) & (rbandl < magbins[mag]) & (rbandl >= magbins[mag+1]))
         H, bins_edges  = np.histogram(ubandl[ind] - rbandl[ind],bins=np.append(cbins,cupp))
-        colours_dist[index,mag,0,:] = colours_dist[index,mag,0,:] + H
-        colours_dist[index,mag,0,:] = colours_dist[index,mag,0,:] / (len(ubandl[ind]) * dc)
+        colours_dist[mag,0,:] = colours_dist[mag,0,:] + H
+        colours_dist[mag,0,:] = colours_dist[mag,0,:] / (len(ubandl[ind]) * dc)
         H, bins_edges  = np.histogram(gbandl[ind] - rbandl[ind],bins=np.append(cbins,cupp))
-        colours_dist[index,mag,1,:] = colours_dist[index,mag,1,:] + H
-        colours_dist[index,mag,1,:] = colours_dist[index,mag,1,:] / (len(gbandl[ind]) * dc)
+        colours_dist[mag,1,:] = colours_dist[mag,1,:] + H
+        colours_dist[mag,1,:] = colours_dist[mag,1,:] / (len(gbandl[ind]) * dc)
  
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
@@ -184,11 +184,11 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     seds = common.read_photometry_data(model_dir, redshift_table[0], fields_sed, subvols)
     nbands = len(seds[0]) 
 
-    colours_dist = np.zeros(shape = (len(z), len(magbins)-1, 2, len(cbins)))
+    colours_dist = np.zeros(shape = (len(magbins)-1, 2, len(cbins)))
 
     prepare_data(hdf5_data, seds, colours_dist, nbands)
 
-    plot_colours(plt, outdir, obsdir, h0, colours_dist)
+    plot_colours(plt, outdir, obsdir, colours_dist)
 
 if __name__ == '__main__':
     main(*common.parse_args())
