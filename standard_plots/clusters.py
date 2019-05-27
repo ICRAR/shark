@@ -73,9 +73,9 @@ def prepare_data(hdf5_data, fradii, index):
     sfr_tot = (sfrd + sfrb) / h0 / GyrtoYr
 
     #define main sequence first
-    inms = np.where((mstar_tot > 5e8) & (mstar_tot < 5e9) & (typeg == 0) & (sfr_tot > 0))
-    ms = np.polyfit(np.log10(mstar_tot[inms]), np.log10(sfr_tot[inms]), 1)
-    gasfracms = np.polyfit(np.log10(mstar_tot[inms]), np.log10(mgas[inms]+mgas_bulge[inms])-h0log, 1)
+    inms = np.where((mstar_tot > 5e8) & (mstar_tot < 7e9) & (typeg == 0) & (sfr_tot > 0))
+    ms = np.polyfit(np.log10(mstar_tot[inms]), np.log10(sfr_tot[inms]), 2)
+    gasfracms = np.polyfit(np.log10(mstar_tot[inms]), np.log10(mgas[inms]+mgas_bulge[inms])-h0log, 2)
 
     print 'ms',ms
     indcen = np.where((mvir/h0 > 1e14) & (typeg == 0))
@@ -97,8 +97,8 @@ def prepare_data(hdf5_data, fradii, index):
             mstars_galsin   = np.log10(mstar_tot[ind])
             sfr_tot_galsin  = sfr_tot[ind]
             mgas_tot_galsin = (mgas[ind] + mgas_bulge[ind])/h0
-            dist_to_ms      = sfr_tot_galsin / pow(10.0, (ms[0] * mstars_galsin + ms[1]))
-            dist_to_gf      = mgas_tot_galsin / pow(10.0, (gasfracms[0] * mstars_galsin + gasfracms[1]))
+            dist_to_ms      = sfr_tot_galsin / pow(10.0, (ms[0] * mstars_galsin**2.0 + ms[1] * mstars_galsin + ms[2]))
+            dist_to_gf      = mgas_tot_galsin / pow(10.0, (gasfracms[0] * mstars_galsin**2.0 + gasfracms[1] * mstars_galsin + gasfracms[2]))
             dist_proj       = d_all[ind]
             for j in range(0, len(xrf)):
                 inr = np.where((dist_proj >= xrf[j] - dr/2.0) & (dist_proj < xrf[j] + dr/2.0))
