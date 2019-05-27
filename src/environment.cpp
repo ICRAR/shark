@@ -50,7 +50,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 			//TODO
 		}
 		else{
-			if(satellite_subhalo.hot_halo_gas.mass > 0 || satellite_subhalo.ejected_galaxy_gas.mass > 0 || satellite_subhalo.cold_halo_gas.mass > 0){
+			if(satellite_subhalo.hot_halo_gas.mass > 0 || satellite_subhalo.cold_halo_gas.mass > 0){
 
 				central_subhalo.hot_halo_gas += satellite_subhalo.hot_halo_gas;
 				central_subhalo.hot_halo_gas += satellite_subhalo.cold_halo_gas;
