@@ -29,7 +29,6 @@
 #include <cstdint>
 #include <iosfwd>
 #include <memory>
-#include <set>
 #include <vector>
 
 #include "components.h"
@@ -126,7 +125,7 @@ public:
 	int snapshot;
 
 	HaloPtr descendant;
-	std::set<HaloPtr> ascendants;
+	std::vector<HaloPtr> ascendants;
 
 	/**
 	 * @param merger_tree: The merger tree that holds this halo.

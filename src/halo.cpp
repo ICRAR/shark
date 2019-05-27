@@ -124,8 +124,11 @@ galaxies_size_type Halo::galaxy_count() const
 
 void add_parent(const HaloPtr &halo, const HaloPtr &parent)
 {
-	auto result = halo->ascendants.insert(parent);
-	auto halos_linked = std::get<1>(result);
+	auto parent_in_ascendants = std::find(halo->ascendants.begin(), halo->ascendants.end(), parent);
+	auto parent_previously_linked = parent_in_ascendants != halo->ascendants.end();
+	if (!parent_previously_linked) {
+		halo->ascendants.push_back(parent);
+	}
 
 	// Fail if a halo has more than one descendant
 	if (parent->descendant && parent->descendant->id != halo->id) {
@@ -143,7 +146,7 @@ void add_parent(const HaloPtr &halo, const HaloPtr &parent)
 		throw invalid_data(os.str());
 	}
 	parent->merger_tree = halo->merger_tree;
-	if (halos_linked) {
+	if (!parent_previously_linked) {
 		parent->merger_tree->add_halo(parent);
 	}
 }
