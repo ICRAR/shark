@@ -160,12 +160,12 @@ void Subhalo::do_check_central_subhalo_galaxy_composition() const
 
 const Subhalo::type2_galaxies_view Subhalo::type2_galaxies() const
 {
-	return type2_galaxies_view(galaxies);
+	return {galaxies};
 }
 
 Subhalo::type2_galaxies_view Subhalo::type2_galaxies()
 {
-	return type2_galaxies_view(galaxies);
+	return {galaxies};
 }
 
 void Subhalo::transfer_galaxies_to(SubhaloPtr &target)
