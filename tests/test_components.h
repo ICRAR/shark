@@ -214,6 +214,7 @@ public:
 		auto halo3 = make_halo(3, 2);
 		auto halo4 = make_halo(4, 2);
 		auto halo5 = make_halo(5, 3);
+		tree->add_halo(halo5);
 		halo5->merger_tree = tree;
 		add_parent(halo5, halo3);
 		add_parent(halo5, halo4);
@@ -227,6 +228,11 @@ public:
 			ids.insert(root->id);
 		}
 		TS_ASSERT_EQUALS(ids, std::set<Halo::id_t>({1, 2, 4}));
+
+		// 2, 2, and 1 halos for snapshots 1, 2 and 3 respectivelly
+		TS_ASSERT_EQUALS(2, tree->halos_at(1).size());
+		TS_ASSERT_EQUALS(2, tree->halos_at(2).size());
+		TS_ASSERT_EQUALS(1, tree->halos_at(3).size());
 	}
 
 };
