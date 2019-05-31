@@ -42,6 +42,7 @@
 #include "options.h"
 #include "physical_model.h"
 #include "shark_runner.h"
+#include "subhalo.h"
 #include "timer.h"
 #include "total_baryon.h"
 #include "tree_builder.h"

@@ -29,7 +29,9 @@
 
 #include "disk_instability.h"
 #include "galaxy.h"
+#include "halo.h"
 #include "numerical_constants.h"
+#include "subhalo.h"
 
 namespace shark {
 

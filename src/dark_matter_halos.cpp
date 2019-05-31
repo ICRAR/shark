@@ -31,9 +31,11 @@
 #include "cosmology.h"
 #include "dark_matter_halos.h"
 #include "galaxy.h"
+#include "halo.h"
 #include "logging.h"
 #include "nfw_distribution.h"
 #include "numerical_constants.h"
+#include "subhalo.h"
 #include "utils.h"
 
 

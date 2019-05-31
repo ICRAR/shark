@@ -26,6 +26,7 @@
 #include "galaxy_creator.h"
 #include "logging.h"
 #include "merger_tree.h"
+#include "subhalo.h"
 #include "timer.h"
 #include "total_baryon.h"
 

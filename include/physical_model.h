@@ -40,6 +40,7 @@
 #include "recycling.h"
 #include "stellar_feedback.h"
 #include "star_formation.h"
+#include "subhalo.h"
 
 namespace shark {
 

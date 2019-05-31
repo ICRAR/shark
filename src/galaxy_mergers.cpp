@@ -33,8 +33,10 @@
 #include "agn_feedback.h"
 #include "galaxy.h"
 #include "galaxy_mergers.h"
+#include "halo.h"
 #include "numerical_constants.h"
 #include "physical_model.h"
+#include "subhalo.h"
 
 namespace shark {
 

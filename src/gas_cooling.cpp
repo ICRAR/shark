@@ -32,9 +32,11 @@
 #include "data.h"
 #include "galaxy.h"
 #include "gas_cooling.h"
+#include "halo.h"
 #include "logging.h"
 #include "numerical_constants.h"
 #include "reincorporation.h"
+#include "subhalo.h"
 #include "utils.h"
 
 namespace shark {

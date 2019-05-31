@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "exceptions.h"
+#include "subhalo.h"
 #include "utils.h"
 #include "hdf5/reader.h"
 

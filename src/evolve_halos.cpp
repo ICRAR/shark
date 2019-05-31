@@ -25,8 +25,10 @@
 #include <memory>
 
 #include "evolve_halos.h"
+#include "halo.h"
 #include "logging.h"
 #include "numerical_constants.h"
+#include "subhalo.h"
 #include "total_baryon.h"
 
 namespace shark {

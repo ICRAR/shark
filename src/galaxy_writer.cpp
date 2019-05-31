@@ -38,6 +38,7 @@
 #include "exceptions.h"
 #include "galaxy.h"
 #include "galaxy_writer.h"
+#include "halo.h"
 #include "git_revision.h"
 #include "logging.h"
 #include "star_formation.h"

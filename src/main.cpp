@@ -43,6 +43,7 @@
 #include "logging.h"
 #include "options.h"
 #include "shark_runner.h"
+#include "subhalo.h"
 #include "git_revision.h"
 #include "timer.h"
 

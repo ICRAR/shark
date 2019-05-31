@@ -30,8 +30,7 @@
 #include <string>
 #include <utility>
 
-#include "halo.h"
-#include "subhalo.h"
+#include "components.h"
 
 namespace shark {
 
