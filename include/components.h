@@ -31,6 +31,11 @@
 
 namespace shark {
 
+using galaxy_id_t = int;
+using subhalo_id_t = std::int64_t;
+using halo_id_t = std::int64_t;
+using merger_tree_id_t = std::int32_t;
+
 class Galaxy;
 class Subhalo;
 class Halo;
