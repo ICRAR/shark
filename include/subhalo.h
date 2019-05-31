@@ -26,7 +26,6 @@
 #ifndef INCLUDE_SUBHALO_H_
 #define INCLUDE_SUBHALO_H_
 
-#include <cstdint>
 #include <iosfwd>
 #include <iterator>
 #include <memory>
@@ -57,7 +56,7 @@ struct CoolingSubhaloTracking {
  * coexist with other subhalos in the same halo. A subhalo con also host 0, 1 or more galaxies depending on how we allow galaxies to populate
  * subhalos.
  */
-class Subhalo : public Identifiable<std::int64_t>, public Spatial<float> {
+class Subhalo : public Identifiable<subhalo_id_t>, public Spatial<float> {
 
 public:
 
@@ -284,7 +283,7 @@ public:
 	/// The ID of the Halo containing the descendant of this subhalo
 	id_t descendant_halo_id = 0;
 	/// The ID of the Halo this Subhalo belong to
-	id_t haloID = 0;
+	halo_id_t haloID = 0;
 	/// The galaxies in this subhalo
 	std::vector<Galaxy> galaxies;
 	/// The ascendants of this subhalo, sorted by mass in descending order

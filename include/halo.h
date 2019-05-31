@@ -26,7 +26,6 @@
 #ifndef INCLUDE_HALO_H_
 #define INCLUDE_HALO_H_
 
-#include <cstdint>
 #include <iosfwd>
 #include <memory>
 #include <vector>
@@ -42,7 +41,7 @@ namespace shark {
  * Halos are the largest gravitationally bound structures in the universe. They
  * must contain at least one subhalo inside.
  */
-class Halo : public Identifiable<std::int64_t>, public Spatial<float> {
+class Halo : public Identifiable<halo_id_t>, public Spatial<float> {
 
 public:
 

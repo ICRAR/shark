@@ -26,7 +26,6 @@
 #ifndef INCLUDE_MERGER_TREE_H_
 #define INCLUDE_MERGER_TREE_H_
 
-#include <cstdint>
 #include <iosfwd>
 #include <map>
 #include <memory>
@@ -49,7 +48,7 @@ using HaloPtr = std::shared_ptr<Halo>;
  * A merger tree contains halos, which are indexed by snapshot,
  * and an ID to identify it.
  */
-class MergerTree : public Identifiable<std::int32_t> {
+class MergerTree : public Identifiable<merger_tree_id_t> {
 public:
 
 	using Identifiable::Identifiable;

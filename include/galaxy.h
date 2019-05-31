@@ -72,7 +72,7 @@ struct InteractionItem {
  * having gas and stars. A Galaxy also requires to have a SMBH.
  */
 
-class Galaxy : public Identifiable<int> {
+class Galaxy : public Identifiable<galaxy_id_t> {
 public:
 
 	using Identifiable::Identifiable;
