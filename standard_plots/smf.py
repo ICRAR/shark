@@ -1317,30 +1317,10 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     # This should be the same in all HDF5 files
 
     # Take logs
-    ind = np.where(hist_smf > 0.)
-    hist_smf[ind] = np.log10(hist_smf[ind])
-    ind = np.where(hist_smf_30kpc > 0.)
-    hist_smf_30kpc[ind] = np.log10(hist_smf_30kpc[ind])
-    ind = np.where(hist_smf_cen > 0.)
-    hist_smf_cen[ind] = np.log10(hist_smf_cen[ind])
-    ind = np.where(hist_smf_sat > 0.)
-    hist_smf_sat[ind] = np.log10(hist_smf_sat[ind])
-    ind = np.where(hist_smf_err > 0.)
-    hist_smf_err[ind] = np.log10(hist_smf_err[ind])
-
-    ind = np.where(hist_HImf > 0.)
-    hist_HImf[ind] = np.log10(hist_HImf[ind])
-    ind = np.where(hist_HImf_cen > 0.)
-    hist_HImf_cen[ind] = np.log10(hist_HImf_cen[ind])
-    ind = np.where(hist_HImf_sat > 0.)
-    hist_HImf_sat[ind] = np.log10(hist_HImf_sat[ind])
-
-    ind = np.where(hist_H2mf > 0.)
-    hist_H2mf[ind] = np.log10(hist_H2mf[ind])
-    ind = np.where(hist_H2mf_cen > 0.)
-    hist_H2mf_cen[ind] = np.log10(hist_H2mf_cen[ind])
-    ind = np.where(hist_H2mf_sat > 0.)
-    hist_H2mf_sat[ind] = np.log10(hist_H2mf_sat[ind])
+    for x in (hist_smf, hist_smf_30kpc, hist_smf_cen, hist_smf_sat,
+            hist_smf_err, hist_HImf, hist_HImf_cen, hist_HImf_sat, hist_H2mf,
+            hist_H2mf_cen, hist_H2mf_sat):
+        common.safe_log10(x)
 
     #for z in range (0,len(zlist)):
     #    print 'redshift=',zlist[z]
