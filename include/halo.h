@@ -178,6 +178,48 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &stream, const HaloPtr &
  */
 void add_parent(const HaloPtr &halo, const HaloPtr &parent);
 
+/**
+ * Utility class to be use as a unary predicate to filter HaloPtr objects belonging
+ * to a given snapshot
+ */
+class in_snapshot {
+public:
+	in_snapshot() {}
+	explicit in_snapshot(int snapshot)
+	 : m_snapshot(snapshot)
+	{}
+
+	bool operator()(const HaloPtr &halo) const
+	{
+		return halo->snapshot == m_snapshot;
+	}
+
+private:
+	int m_snapshot = -1;
+};
+
+/**
+ * A binary predicate class that compares Halo objects according to their
+ * snapshots.
+ */
+class by_snapshot {
+public:
+	bool operator()(const HaloPtr &halo, int snapshot) const
+	{
+		return halo->snapshot < snapshot;
+	}
+
+	bool operator()(int snapshot, const HaloPtr &halo) const
+	{
+		return snapshot < halo->snapshot;
+	}
+
+	bool operator()(const HaloPtr &a, const HaloPtr &b) const
+	{
+		return a->snapshot < b->snapshot;
+	}
+};
+
 }  // namespace shark
 
 #endif /* INCLUDE_HALO_H_ */
