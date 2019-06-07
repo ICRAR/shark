@@ -471,6 +471,62 @@ HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params, unsi
 	// no-op
 }
 
+static std::vector<SubhaloPtr>::const_iterator find_by_id(const std::vector<SubhaloPtr> &subhalos, Subhalo::id_t id)
+{
+	return std::find_if(subhalos.begin(), subhalos.end(), [id](const SubhaloPtr &subhalo)
+	{
+		return subhalo->id == id;
+	});
+}
+
+SubhaloPtr HaloBasedTreeBuilder::find_descendant_subhalo(
+    const HaloPtr &halo, const SubhaloPtr &subhalo, const HaloPtr &descendant_halo)
+{
+	// if the descendant subhalo is not found in the descendant halos'
+	// subhalos then we error
+	bool subhalo_descendant_found = false;
+	auto descendant_subhalos = descendant_halo->all_subhalos();
+	auto descendant_subhalo_found = find_by_id(descendant_subhalos, subhalo->descendant_id);
+
+	if (descendant_subhalo_found == descendant_subhalos.end()) {
+		std::ostringstream os;
+		auto exec_params = get_exec_params();
+		if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
+			os << "Descendant Subhalo id=" << subhalo->descendant_id;
+			os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
+			os << " in the Subhalo's descendant Halo " << descendant_halo << std::endl;
+			os << "Subhalos in " << descendant_halo << ": " << std::endl << "  ";
+			auto all_subhalos = descendant_halo->all_subhalos();
+			std::copy(all_subhalos.begin(), all_subhalos.end(),
+					  std::ostream_iterator<SubhaloPtr>(os, "\n  "));
+		}
+
+		// Users can choose whether to continue in these situations
+		// (with or without a warning) or if it should be considered an error
+		if (!get_exec_params().skip_missing_descendants) {
+			throw subhalo_not_found(os.str(), subhalo->descendant_id);
+		}
+
+		if (get_exec_params().warn_on_missing_descendants) {
+			LOG(warning) << os.str();
+		}
+		halo->remove_subhalo(subhalo);
+		return nullptr;
+	}
+
+	// We support only direct parentage; that is, descendants must be
+	// in the snapshot directly after ours
+	auto descendant_subhalo = *descendant_subhalo_found;
+	if (subhalo->snapshot != descendant_subhalo->snapshot - 1) {
+		std::ostringstream os;
+		os << "Subhalo " << descendant_subhalo << " (snapshot " << subhalo->snapshot << ") ";
+		os << "is not a direct descendant of " << subhalo << " (" << descendant_subhalo->snapshot << ").";
+		throw invalid_data(os.str());
+	}
+
+	return descendant_subhalo;
+}
+
 static void sort_by_id(std::vector<HaloPtr> &halos)
 {
 	std::sort(halos.begin(), halos.end(), [](const HaloPtr &x, const HaloPtr &y) {
@@ -544,8 +600,8 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 
 				// if the descendant halo is not found, we don't consider this
 				// halo anymore (and all its progenitors)
-				auto descendant_halo = find_by_id(halos, subhalo->descendant_halo_id);
-				if (descendant_halo == halos.end()) {
+				auto descendant_halo_position = find_by_id(halos, subhalo->descendant_halo_id);
+				if (descendant_halo_position == halos.end()) {
 					if (LOG_ENABLED(debug)) {
 						LOG(debug) << subhalo << " points to descendant halo/subhalo "
 						           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
@@ -554,53 +610,16 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 					ignored++;
 					break;
 				}
-
-				// if the descendant subhalo is not found in the descendant halos'
-				// subhalos then we error
-				bool subhalo_descendant_found = false;
-				const auto &d_halo = *descendant_halo;
-				for(auto &d_subhalo: d_halo->all_subhalos()) {
-					if (d_subhalo->id == subhalo->descendant_id) {
-
-						// We support only direct parentage; that is, descendants must be
-						// in the snapshot directly after ours
-						if (subhalo->snapshot != d_subhalo->snapshot - 1) {
-							std::ostringstream os;
-							os << "Subhalo " << d_subhalo << " (snapshot " << subhalo->snapshot << ") ";
-							os << "is not a direct descendant of " << subhalo << " (" << d_subhalo->snapshot << ").";
-							throw invalid_data(os.str());
-						}
-
-						link(subhalo, d_subhalo, halo, d_halo);
-						subhalo_descendant_found = true;
-						halo_linked = true;
-						break;
-					}
+				auto descendant_halo = *descendant_halo_position;
+				// hasn't been put in any merger tree, so it was ignored
+				if (!descendant_halo->merger_tree) {
+					continue;
 				}
-				if (!subhalo_descendant_found) {
 
-					std::ostringstream os;
-					auto exec_params = get_exec_params();
-					if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
-						os << "Descendant Subhalo id=" << subhalo->descendant_id;
-						os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
-						os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
-						os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
-						auto all_subhalos = d_halo->all_subhalos();
-						std::copy(all_subhalos.begin(), all_subhalos.end(),
-								  std::ostream_iterator<SubhaloPtr>(os, "\n  "));
-					}
-
-					// Users can choose whether to continue in these situations
-					// (with or without a warning) or if it should be considered an error
-					if (!get_exec_params().skip_missing_descendants) {
-						throw subhalo_not_found(os.str(), subhalo->descendant_id);
-					}
-
-					if (get_exec_params().warn_on_missing_descendants) {
-						LOG(warning) << os.str();
-					}
-					halo->remove_subhalo(subhalo);
+				auto descendant_subhalo = find_descendant_subhalo(halo, subhalo, descendant_halo);
+				if (descendant_subhalo) {
+					link(subhalo, descendant_subhalo, halo, descendant_halo);
+					halo_linked = true;
 				}
 			}
 

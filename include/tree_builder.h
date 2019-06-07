@@ -77,6 +77,7 @@ public:
 
 protected:
 	void loop_through_halos(std::vector<HaloPtr> &halos) override;
+	SubhaloPtr find_descendant_subhalo(const HaloPtr &halo, const SubhaloPtr &subhalo, const HaloPtr &descendant_halo);
 
 };
 
