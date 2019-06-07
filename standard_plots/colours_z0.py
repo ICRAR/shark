@@ -19,6 +19,7 @@
 """HMF plots"""
 
 import numpy as np
+import os
 
 import common
 
@@ -173,6 +174,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
 
+    Variable_Ext = True
+
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
                            'mvir_subhalo', 'type', 'mean_stellar_age',
                            'sfr_disk', 'sfr_burst', 'id_galaxy')}
@@ -181,12 +184,19 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
 
-    seds = common.read_photometry_data(model_dir, redshift_table[0], fields_sed, subvols)
+    if(Variable_Ext == False):
+       seds = common.read_photometry_data(model_dir, redshift_table[0], fields_sed, subvols)
+    else:
+       seds = common.read_photometry_data_variable_tau_screen(model_dir, redshift_table[0], fields_sed, subvols)
+ 
     nbands = len(seds[0]) 
 
     colours_dist = np.zeros(shape = (len(magbins)-1, 2, len(cbins)))
 
     prepare_data(hdf5_data, seds, colours_dist, nbands)
+
+    if(Variable_Ext):
+       outdir = os.path.join(outdir, 'EAGLE-Ext')
 
     plot_colours(plt, outdir, obsdir, colours_dist)
 

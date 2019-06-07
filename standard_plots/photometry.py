@@ -19,6 +19,7 @@
 """HMF plots"""
 
 import numpy as np
+import os
 
 import common
 
@@ -1040,6 +1041,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     #              'bulges_mergers': ('star_formation_rate_histories'),
     #              'disks': ('star_formation_rate_histories')}
 
+    Variable_Ext = False
+
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
@@ -1050,9 +1053,13 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     for index, snapshot in enumerate(snapshots):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
-        #sfh, delta_t, LBT = common.read_sfh(model_dir, snapshot, sfh_fields, subvols)
-        seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
-        seds_nod = common.read_photometry_data(model_dir, snapshot, fields_sed_nod, subvols)
+        if(Variable_Ext == False):
+           seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
+           seds_nod = common.read_photometry_data(model_dir, snapshot, fields_sed_nod, subvols)
+        else:
+           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols)
+           seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, subvols)
+
         nbands = len(seds[0]) 
 
         if(index == 0):
@@ -1076,6 +1083,9 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     ind = np.where(LFs_nodust > 0.)
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
+
+    if(Variable_Ext):
+       outdir = os.path.join(outdir, 'EAGLE-Ext')
 
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission)
