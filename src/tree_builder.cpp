@@ -34,6 +34,7 @@
 #include "logging.h"
 #include "merger_tree.h"
 #include "omp_utils.h"
+#include "ranges.h"
 #include "subhalo.h"
 #include "timer.h"
 #include "total_baryon.h"
@@ -474,10 +475,8 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 {
 
 	// Index all halos by snapshot and by ID, we'll need them later
-	std::map<int, std::vector<HaloPtr>> halos_by_snapshot;
 	std::map<Halo::id_t, HaloPtr> halos_by_id;
 	for(const auto &halo: halos) {
-		halos_by_snapshot[halo->snapshot].push_back(halo);
 		halos_by_id[halo->id] = halo;
 	}
 
@@ -511,8 +510,8 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
 
 		int ignored = 0;
-		for(auto &halo: halos_by_snapshot[snapshot]) {
-
+		auto halos_in_snapshot = make_range_filter(halos, in_snapshot(snapshot));
+		for(auto &halo: halos_in_snapshot) {
 			bool halo_linked = false;
 			for(const auto &subhalo: halo->all_subhalos()) {
 
@@ -601,8 +600,8 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 
 		}
 
-		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
 		if (LOG_ENABLED(debug)) {
+			auto n_snapshot_halos = halos_in_snapshot.size();
 			LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
 			           << std::setprecision(2) << std::setiosflags(std::ios::fixed)
 			           << ignored * 100. / n_snapshot_halos << "%)"
