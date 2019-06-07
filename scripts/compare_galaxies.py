@@ -34,7 +34,7 @@ def lenient_dataset_equality(name, a, b):
         not_close = np.logical_not(isclose)
         raise AssertionError(
             "Galaxies dataset %s not equal: %r / %r"
-            % (key, ds1[not_close], ds2[not_close])
+            % (name, a[not_close], b[not_close])
         )
 
 
