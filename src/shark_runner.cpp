@@ -363,7 +363,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 
 	std::vector<HaloPtr> all_halos_this_snapshot;
 	for (auto &tree: merger_trees) {
-		auto &halos = tree->halos_at(snapshot);
+		const auto &halos = tree->halos_at(snapshot);
 		all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halos.begin(), halos.end());
 	}
 

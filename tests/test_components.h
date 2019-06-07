@@ -220,6 +220,7 @@ public:
 		add_parent(halo5, halo4);
 		add_parent(halo3, halo2);
 		add_parent(halo3, halo1);
+		tree->consolidate();
 
 		auto roots = tree->roots();
 		TS_ASSERT_EQUALS(roots.size(), 3);

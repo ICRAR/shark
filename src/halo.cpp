@@ -44,7 +44,7 @@ HaloPtr Halo::final_halo() const
 {
 	auto final_halos = merger_tree->halos_at_last_snapshot();
 	assert(final_halos.size() == 1);
-	return final_halos[0];
+	return *final_halos.begin();
 }
 
 

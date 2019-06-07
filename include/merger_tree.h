@@ -26,6 +26,7 @@
 #ifndef INCLUDE_MERGER_TREE_H_
 #define INCLUDE_MERGER_TREE_H_
 
+#include <algorithm>
 #include <iosfwd>
 #include <map>
 #include <memory>
@@ -33,6 +34,7 @@
 
 #include "halo.h"
 #include "mixins.h"
+#include "ranges.h"
 
 namespace shark {
 
@@ -41,6 +43,17 @@ class Halo;
 
 using HaloPtr = std::shared_ptr<Halo>;
 
+namespace detail {
+
+class is_root {
+public:
+	bool operator()(const HaloPtr &halo) const
+	{
+		return halo->ascendants.empty();
+	}
+};
+
+}  // namespace detail
 
 /**
  * A merger tree.
@@ -53,48 +66,47 @@ public:
 
 	using Identifiable::Identifiable;
 
-	/**
-	 * All halos contained in this merger tree, indexed by snapshot number
-	 */
-	std::map<int, std::vector<HaloPtr>> halos;
+	using root_subrange = range_filter<std::vector<HaloPtr>, detail::is_root>;
+	using snapshot_subrange = range<std::vector<HaloPtr>::iterator>;
 
 	void add_halo(const HaloPtr &halo) {
-		halos[halo->snapshot].push_back(halo);
-	}
-
-	std::vector<HaloPtr> &halos_at(int snapshot)
-	{
-		auto it = halos.find(snapshot);
-		if (it == halos.end()) {
-			return NONE;
+		if (last_snapshot < halo->snapshot) {
+			last_snapshot = halo->snapshot;
 		}
-		return it->second;
+		halos.push_back(halo);
 	}
 
-	std::vector<HaloPtr> &halos_at_last_snapshot()
+	snapshot_subrange halos_at(int snapshot)
 	{
-		return halos.rbegin()->second;
+		return {
+			std::lower_bound(halos.begin(), halos.end(), snapshot, by_snapshot{}),
+			std::upper_bound(halos.begin(), halos.end(), snapshot, by_snapshot{})
+		};
+	}
+
+	snapshot_subrange halos_at_last_snapshot()
+	{
+		return halos_at(last_snapshot);
+	}
+
+	void consolidate()
+	{
+		std::sort(halos.begin(), halos.end(), by_snapshot{});
 	}
 
 	/**
 	 * Get all the roots of this merger tree -- that is, all Halos
 	 * that don't have an ascendant.
 	 */
-	std::vector<HaloPtr> roots()
+	root_subrange roots()
 	{
-		std::vector<HaloPtr> roots;
-		for (auto &snapshot_and_halos: halos) {
-			for (auto &halo: snapshot_and_halos.second) {
-				if (halo->ascendants.empty()) {
-					roots.push_back(halo);
-				}
-			}
-		}
-		return roots;
+		return {halos};
 	}
 
-private:
-	static std::vector<HaloPtr> NONE;
+	/// All halos contained in this merger tree
+	std::vector<HaloPtr> halos;
+	/// Last snapshot included by this MergerTree
+	int last_snapshot = -1;
 };
 
 template <typename T>

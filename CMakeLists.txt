@@ -359,7 +359,6 @@ set(SHARKLIB_SRCS
    src/integrator.cpp
    src/interpolator.cpp
    src/logging.cpp
-   src/merger_tree.cpp
    src/merger_tree_reader.cpp
    src/naming_convention.cpp
    src/options.cpp

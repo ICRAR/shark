@@ -58,13 +58,11 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const
 {
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
-		for (auto &snapshot_and_halos: tree->halos) {
-			for (auto &halo: snapshot_and_halos.second) {
-				if (halo->merger_tree != tree) {
-					std::ostringstream os;
-					os << halo << " is not actually part of " << tree;
-					throw invalid_data(os.str());
-				}
+		for (auto &halo: tree->halos) {
+			if (halo->merger_tree != tree) {
+				std::ostringstream os;
+				os << halo << " is not actually part of " << tree;
+				throw invalid_data(os.str());
 			}
 		}
 	});
@@ -126,6 +124,13 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	}
 
 	loop_through_halos(halos);
+	{
+		Timer t;
+		omp_static_for(trees, threads, [](MergerTreePtr &tree, int thread_idx) {
+			tree->consolidate();
+		});
+		LOG(info) << "Took " << t << " to consolidate all trees";
+	}
 
 	// Ignore massive halos that pop in for the first time at low redshift. 
 	// These generally are flaws of the merger tree builder.
