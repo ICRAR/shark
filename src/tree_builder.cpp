@@ -82,7 +82,7 @@ void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, S
 }
 
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
 {
 
 	auto last_snapshot_to_consider = exec_params.last_output_snapshot();
@@ -471,21 +471,39 @@ HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params, unsi
 	// no-op
 }
 
-void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
+static void sort_by_id(std::vector<HaloPtr> &halos)
+{
+	std::sort(halos.begin(), halos.end(), [](const HaloPtr &x, const HaloPtr &y) {
+		return x->id < y->id;
+	});
+}
+
+static std::vector<HaloPtr>::iterator find_by_id(std::vector<HaloPtr> &halos, Halo::id_t id)
+{
+	auto lo = std::lower_bound(halos.begin(), halos.end(), id, [](const HaloPtr &x, Halo::id_t id)
+	{
+		return x->id < id;
+	});
+	auto up = std::upper_bound(halos.begin(), halos.end(), id, [](const Halo::id_t id, const HaloPtr &x)
+	{
+		return id < x->id;
+	});
+	if (lo == up) {
+		return halos.end();
+	}
+	return lo;
+}
+
+void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 {
 
-	// Index all halos by snapshot and by ID, we'll need them later
-	std::map<Halo::id_t, HaloPtr> halos_by_id;
-	for(const auto &halo: halos) {
-		halos_by_id[halo->id] = halo;
-	}
+	sort_by_id(halos);
 
 	// To find subhalos/halos that correspond to each other, we do the following
 	//  1. Iterate over snapshots in descending order
 	//  2. For each snapshot S we iterate over its halos
 	//  3. For each halo H we iterate over its subhalos
 	//  4. For each subhalo SH we find the halo with subhalo.descendant_halo_id
-	//     (which we globally keep at the halos_by_id map)
 	//  5. When the descendant halo DH is found, we find the particular subhalo
 	//     DSH inside DH that matches SH's descendant_id
 	//  6. Now we have SH, H, DSH and DH. We link them all together,
@@ -526,14 +544,13 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 
 				// if the descendant halo is not found, we don't consider this
 				// halo anymore (and all its progenitors)
-				auto it = halos_by_id.find(subhalo->descendant_halo_id);
-				if (it == halos_by_id.end()) {
+				auto descendant_halo = find_by_id(halos, subhalo->descendant_halo_id);
+				if (descendant_halo == halos.end()) {
 					if (LOG_ENABLED(debug)) {
 						LOG(debug) << subhalo << " points to descendant halo/subhalo "
 						           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
 						           << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
 					}
-					halos_by_id.erase(halo->id);
 					ignored++;
 					break;
 				}
@@ -541,7 +558,7 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 				// if the descendant subhalo is not found in the descendant halos'
 				// subhalos then we error
 				bool subhalo_descendant_found = false;
-				const auto &d_halo = halos_by_id[subhalo->descendant_halo_id];
+				const auto &d_halo = *descendant_halo;
 				for(auto &d_subhalo: d_halo->all_subhalos()) {
 					if (d_subhalo->id == subhalo->descendant_id) {
 
@@ -594,7 +611,6 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 					LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
 					           << " descendants, ignoring it (and the rest of its progenitors)";
 				}
-				halos_by_id.erase(halo->id);
 				ignored++;
 			}
 
