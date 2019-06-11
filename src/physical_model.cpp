@@ -93,14 +93,8 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 		zhot = params->zcool;
 	}
 
-	double SFR = 0;
 	// Calculate SFR.
-	if(params->burst or (!params->burst and params->vgal < 250)){
-		SFR   = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, zcold, params->redshift, params->burst, params->vgal, jrate, jgas);
-	}
-	if(!params->burst and params->vgal > 250){
-		double lala = 1;
-	}
+	double SFR   = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, zcold, params->redshift, params->burst, params->vgal, jrate, jgas);
 
 	// Initialize mass loading and angular momentum loading parameters related to star formation.
 	double beta1 = 0, beta2 = 0;
