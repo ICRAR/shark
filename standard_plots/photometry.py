@@ -19,6 +19,7 @@
 """HMF plots"""
 
 import numpy as np
+import os
 
 import common
 
@@ -40,15 +41,6 @@ mupp = -10 + 5.0 * np.log10(0.677)
 dm = 0.5
 mbins = np.arange(mlow,mupp,dm)
 xlf   = mbins + dm/2.0
-
-# colour distribution initialization
-clow  = -0.1
-cupp  = 3.5
-dc    = 0.075
-cbins = np.arange(clow,cupp,dc)
-xc    = cbins + dc/2.0
-
-magbins = [-17.13,-17.88,-18.63,-19.38,-20.13,-20.88,-21.63]
 
 def plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission):
 
@@ -785,83 +777,6 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
     common.savefig(outdir, fig, "IR_luminosity_functions.pdf")
 
-def plot_colours(plt, outdir, obsdir, h0, colours_dist):
-
-    #plot colour distributions
-    fig = plt.figure(figsize=(9.7,11.7))
-    xtit = "$\\rm (u-r)$"
-    ytit = "$\\rm dp/d(u-r)$"
-    xmin, xmax, ymin, ymax = 0, 3.5, 0, 3
-    xleg = xmax - 0.4 * (xmax - xmin)
-    yleg = ymax - 0.15 * (ymax - ymin)
-   
-    subplots = (321, 322, 323, 324, 325, 326)
-    indeces = (0, 1, 2, 3, 4, 5)
-    labels  = ("(-17.13,-17.88)","(-17.88,-18.63)","(-18.63,-19.38)","(-19.38,-20.13)","(-20.13,-20.88)","(-20.88,-21.63)")
-   
-    file = obsdir+'/Colours/ur_colours_SDSS.data'
-    cSDSS,dpSDSS = np.loadtxt(file,usecols=[0,1],unpack=True)
-    columns = [0,38,77,112,151,190,229]
-   
-    for subplot, idx in zip(subplots, indeces):
-   
-        ax = fig.add_subplot(subplot)
-        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-        ax.text(xleg, yleg, labels[idx])
-        
-        if(idx == 0):
-           c1 = columns[idx]
-        if(idx > 0):
-           c1 = columns[idx]+1
-        # Observed CDF
-        yzeros = np.zeros(shape = len(cSDSS[c1:columns[idx+1]]))
-        ax.plot(cSDSS[c1:columns[idx+1]], dpSDSS[c1:columns[idx+1]],'grey', label='SDSS')
-        ax.fill_between(cSDSS[c1:columns[idx+1]], dpSDSS[c1:columns[idx+1]], yzeros, facecolor='grey', alpha=1,interpolate=True)
-        
-        # Predicted CDF
-        y = colours_dist[0,idx,0,:]
-        ind = np.where(y > 0.)
-        ax.plot(xc[ind],y[ind],'r', label='Shark')
-        
-        common.prepare_legend(ax, ['grey','r'], loc = 2)
-
-    common.savefig(outdir, fig, 'ur_colour_z0.pdf')
-
-    fig = plt.figure(figsize=(9.7,11.7))
-    xtit = "$\\rm (g-r)$"
-    ytit = "$\\rm dp/d(g-r)$"
-    xmin, xmax, ymin, ymax = 0, 1.1, 0, 6.5
-    xleg = xmax - 0.4 * (xmax - xmin)
-    yleg = ymax - 0.15 * (ymax - ymin)
-    
-    file = obsdir+'/Colours/gr_colours_SDSS.data'
-    cSDSS,dpSDSS = np.loadtxt(file,usecols=[0,1],unpack=True)
-    columns = [0,21,43,65,87,109,131]
-    
-    for subplot, idx in zip(subplots, indeces):
-    
-        ax = fig.add_subplot(subplot)
-        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-        ax.text(xleg, yleg, labels[idx])
-    
-        if(idx == 0):
-           c1 = columns[idx]
-        if(idx > 0):
-           c1 = columns[idx]+1
-        # Observed CDF
-        yzeros = np.zeros(shape = len(cSDSS[c1:columns[idx+1]]))
-        ax.plot(cSDSS[c1:columns[idx+1]], dpSDSS[c1:columns[idx+1]],'grey', label='SDSS')
-        ax.fill_between(cSDSS[c1:columns[idx+1]], dpSDSS[c1:columns[idx+1]], yzeros, facecolor='grey', alpha=1,interpolate=True)
-    
-        # Predicted CDF
-        y = colours_dist[0,idx,1,:]
-        ind = np.where(y > 0.)
-        ax.plot(xc[ind],y[ind],'r', label='Shark')
-    
-        common.prepare_legend(ax, ['grey','r'], loc = 2)
-    
-    common.savefig(outdir, fig, 'gr_colour_z0.pdf')
-  
 def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
     volcorr = 3.0*np.log10(h0)
@@ -1061,7 +976,7 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     common.savefig(outdir, fig, "Kband_luminosity_function_evolution.pdf")
 
 
-def prepare_data(hdf5_data, phot_data, phot_data_nod, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
+def prepare_data(hdf5_data, phot_data, phot_data_nod, LFs_dust, LFs_nodust, index, nbands, 
                  fdisk_emission, fbulge_m_emission, fbulge_d_emission):
    
     #star_formation_histories and SharkSED have the same number of galaxies in the same order, and so we can safely assume that to be the case.
@@ -1114,22 +1029,6 @@ def prepare_data(hdf5_data, phot_data, phot_data_nod, LFs_dust, LFs_nodust, colo
             fbulge_m_emission[index,i,m] = np.sum(pow(10.0,SEDs_dust[ind,1,i]/(-2.5)))/np.sum(pow(10.0,SEDs_dust[ind,4,i]/(-2.5)))
             fbulge_d_emission[index,i,m] = np.sum(pow(10.0,SEDs_dust[ind,0,i]/(-2.5)))/np.sum(pow(10.0,SEDs_dust[ind,4,i]/(-2.5)))
 
-    uband = 2
-    gband = 3
-    rband = 4
-    ubandl = SEDs_dust[:,4,uband]
-    gbandl = SEDs_dust[:,4,gband]
-    rbandl = SEDs_dust[:,4,rband]
-
-    for mag in range(0,len(magbins)-1):
-        ind = np.where((ubandl < -1) & (gbandl < -1) & (rbandl < magbins[mag]) & (rbandl >= magbins[mag+1]))
-        H, bins_edges  = np.histogram(ubandl[ind] - rbandl[ind],bins=np.append(cbins,cupp))
-        colours_dist[index,mag,0,:] = colours_dist[index,mag,0,:] + H
-        colours_dist[index,mag,0,:] = colours_dist[index,mag,0,:] / (len(ubandl[ind]) * dc)
-        H, bins_edges  = np.histogram(gbandl[ind] - rbandl[ind],bins=np.append(cbins,cupp))
-        colours_dist[index,mag,1,:] = colours_dist[index,mag,1,:] + H
-        colours_dist[index,mag,1,:] = colours_dist[index,mag,1,:] / (len(gbandl[ind]) * dc)
- 
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     # Loop over redshift and subvolumes
@@ -1142,6 +1041,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     #              'bulges_mergers': ('star_formation_rate_histories'),
     #              'disks': ('star_formation_rate_histories')}
 
+    Variable_Ext = False
+
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
@@ -1152,20 +1053,23 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     for index, snapshot in enumerate(snapshots):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
-        #sfh, delta_t, LBT = common.read_sfh(model_dir, snapshot, sfh_fields, subvols)
-        seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
-        seds_nod = common.read_photometry_data(model_dir, snapshot, fields_sed_nod, subvols)
+        if(Variable_Ext == False):
+           seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
+           seds_nod = common.read_photometry_data(model_dir, snapshot, fields_sed_nod, subvols)
+        else:
+           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols)
+           seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, subvols)
+
         nbands = len(seds[0]) 
 
         if(index == 0):
             LFs_dust     = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
             LFs_nodust   = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
-            colours_dist = np.zeros(shape = (len(z), len(magbins)-1, 2, len(cbins)))
             fdisk_emission    = np.zeros(shape = (len(z), nbands, len(mbins)))
             fbulge_m_emission = np.zeros(shape = (len(z), nbands, len(mbins)))
             fbulge_d_emission = np.zeros(shape = (len(z), nbands, len(mbins)))
 
-        prepare_data(hdf5_data, seds, seds_nod, LFs_dust, LFs_nodust, colours_dist, index, nbands, 
+        prepare_data(hdf5_data, seds, seds_nod, LFs_dust, LFs_nodust, index, nbands, 
                      fdisk_emission, fbulge_m_emission, fbulge_d_emission)
 
         h0, volh = hdf5_data[0], hdf5_data[1]
@@ -1180,8 +1084,10 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     ind = np.where(LFs_nodust > 0.)
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
+    if(Variable_Ext):
+       outdir = os.path.join(outdir, 'EAGLE-Ext')
+
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
-    plot_colours(plt, outdir, obsdir, h0, colours_dist)
     plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission)
     plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
