@@ -56,6 +56,7 @@ public:
 	 * rgas: half-mass radius of the gas of disk or bulge.
 	 * rstar: half-mass radius of the stars of disk or bulge.
 	 * mcoolrate: gas cooling rate.
+	 * zcool: metallicity of cooling gas.
 	 * jcold_halo: specific angular momentum of the cooling gas.
 	 * delta_t: time span between snapshots.
 	 * redshift: current redshift.
@@ -71,6 +72,7 @@ public:
 		double rgas;
 		double rstar;
 		double mcoolrate;
+		double zcool;
 		double jcold_halo;
 		double delta_t;
 		double redshift;
@@ -84,8 +86,8 @@ public:
 			double ode_solver_precision,
 			ODESolver::ode_evaluator evaluator,
 			GasCooling gas_cooling) :
-		params {*this, false, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.},
-		starburst_params {*this, true, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.},
+		params {*this, false, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.},
+		starburst_params {*this, true, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.},
 		ode_solver(evaluator, NC, ode_solver_precision, &params),
 		starburst_ode_solver(evaluator, NC, ode_solver_precision, &starburst_params),
 		ode_values(NC), starburst_ode_values(NC),
@@ -103,6 +105,7 @@ public:
 		/**
 		 * Parameters that are needed as input in the ode_solver:
 		 * mcoolrate: gas cooling rate onto galaxy [Msun/Gyr/h]
+		 * zcool: metallicity of the cooling gas.
 		 * rgas: half-gas mass radius of the disk [Mpc/h]
 		 * vgal: disk velocity at rgas [km/s]
 		 * rstar: half-stellar mass radius of the disk [Mpc/h]
@@ -115,6 +118,12 @@ public:
 
 		// Define cooling rate only in the case galaxy is central.
 		params.mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
+		if(subhalo.cold_halo_gas.mass > 0){
+			params.zcool = subhalo.cold_halo_gas.mass_metals /  subhalo.cold_halo_gas.mass;
+		}
+		else{
+			params.zcool = 0;
+		}
 
 		params.rgas = galaxy.disk_gas.rscale; //gas scale radius.
 		params.vgal = galaxy.disk_gas.sAM / galaxy.disk_gas.rscale * constants::EAGLEJconv;
@@ -145,6 +154,7 @@ public:
 		/**
 		 * Parameters that are needed as input in the ode_solver:
 		 * mcoolrate: gas cooling rate onto galaxy [Msun/Gyr/h]. In the case of starbursts, this is \equiv 0
+		 * zcool: metallicity of the cooling gas. In the cae of starbursts =0.
 		 * rgas: half-gas mass radius of the bulge [Mpc/h]
 		 * vgal: bulge velocity at rgas [km/s]
 		 * rstar: half-stellar mass radius of the bulge [Mpc/h]

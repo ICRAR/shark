@@ -195,7 +195,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> mstars_burst_mergers;
 	vector<float> mstars_burst_diskinstabilities;
 	vector<float> mstars_bulge_mergers_assembly;
-       	vector<float> mstars_bulge_diskins_assembly;
+	vector<float> mstars_bulge_diskins_assembly;
 	vector<float> mgas_disk;
 	vector<float> mgas_bulge;
 	vector<float> mstars_metals_disk;
@@ -286,6 +286,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<Subhalo::id_t> id_subhalo_tree;
 
 	Halo::id_t j = 1;
+	Subhalo::id_t i = 1;
+
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
@@ -300,10 +302,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 		age_80_halo.push_back(halo->age_80);
 		age_50_halo.push_back(halo->age_50);
 		halo_id.push_back(halo->id);
-
 		halo_final_m.push_back(halo->final_halo()->Mvir);
-
-		Subhalo::id_t i = 1;
 
 		for (auto &subhalo: halo->all_subhalos()){
 
@@ -605,6 +604,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	t = Timer();
 
 	//Write halo properties.
+
+	comment = "halo id in the tree (unique to entire halo catalogue)";
+	file.write_dataset("halo/halo_id", halo_id, comment);
 
 	comment = "virial mass of halo [Msun/h]";
 	file.write_dataset("halo/mvir", halo_m, comment);
