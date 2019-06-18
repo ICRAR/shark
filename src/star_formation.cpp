@@ -235,7 +235,7 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 
 	if(mcold > 0 && result <= 0){
 		std::ostringstream os;
-		os << "Galaxy with SFR=0 and mcold " << mcold;
+		os << "Galaxy with SFR=0, mcold " << mcold << " and rgas " << rgas;
 		throw invalid_argument(os.str());
 	}
 
