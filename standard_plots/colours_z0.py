@@ -161,7 +161,7 @@ def prepare_data(hdf5_data, phot_data, colours_dist, nbands):
     rbandl = SEDs_dust[:,4,rband]
 
     for mag in range(0,len(magbins)-1):
-        ind = np.where((ubandl < -1) & (gbandl < -1) & (rbandl < magbins[mag]) & (rbandl >= magbins[mag+1]))
+        ind = np.where((ubandl < -1) & (ubandl > -30) & (gbandl < -1) & (gbandl > -30) & (rbandl < magbins[mag]) & (rbandl >= magbins[mag+1]))
         H, bins_edges  = np.histogram(ubandl[ind] - rbandl[ind],bins=np.append(cbins,cupp))
         colours_dist[mag,0,:] = colours_dist[mag,0,:] + H
         colours_dist[mag,0,:] = colours_dist[mag,0,:] / (len(ubandl[ind]) * dc)

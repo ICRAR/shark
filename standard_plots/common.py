@@ -32,6 +32,7 @@ PY2 = sys.version_info[0] == 2
 if PY2:
     import ConfigParser as configparser
     b2s = lambda b: b
+    from __builtin__ import raw_input
 else:
     import configparser
     b2s = lambda b: b.decode('ascii')
@@ -327,7 +328,7 @@ def read_photometry_data_variable_tau_screen(model_dir, snapshot, fields, subvol
 
     for subv in subvolumes:
 
-        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED-EAGLE-tau.hdf5')
+        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED-eagle-rr14.hdf5')
         print('Reading photometry data from %s' % fname)
 
         with h5py.File(fname, 'r') as f:

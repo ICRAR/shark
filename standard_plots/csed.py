@@ -19,6 +19,7 @@
 """HMF plots"""
 
 import numpy as np
+import os
 
 import common
 
@@ -139,7 +140,67 @@ def plot_csed(plt, outdir, obsdir, h0, CSED, nbands):
 
     common.savefig(outdir, fig, "CSED_Shark_highz.pdf")
 
-def prepare_data(hdf5_data, phot_data, ids_sed, CSED, nbands, index):
+    #only optical-NIR
+    #wavelength in angstroms.
+    file = obsdir+'/Models/Shark_SED_bands.dat'
+    lambda_bands = np.loadtxt(file,usecols=[0],unpack=True)
+    freq_bands   = c_light / (lambda_bands * 1e-10) #in Hz
+    lambda_bands = np.log10(lambda_bands)
+
+    xtit="$\\rm log_{10}(\lambda/Ang\, (rest-frame))$"
+    ytit="$\\rm log_{10}(\\nu \\epsilon_{\\rm int}/ h\,W\, Mpc^{-3})$"
+
+    fig = plt.figure(figsize=(6,13))
+
+    subplots = (411, 412, 413, 414)
+    idx = (0, 1, 2, 3)
+    labels= ('z=0', 'z=0.25', 'z=0.5', 'z=1')
+    obs = ('z0p05', 'z0p25', 'z0p5', 'z0p95')
+    colors = ('Indigo','purple','Navy','MediumBlue','Green','MediumAquamarine','LightGreen','YellowGreen','Gold','Orange','Coral','OrangeRed','red','DarkRed','FireBrick','Crimson','IndianRed','LightCoral','Maroon','brown','Sienna','SaddleBrown','Chocolate','Peru','DarkGoldenrod','Goldenrod','SandyBrown')
+
+    labelsgal = ('disks','bulges')
+    for subplot, idx in zip(subplots, idx):
+        xmin, xmax, ymin, ymax = 3.0, np.log10(46520.157), 32.7, 35.2
+        xleg = xmin + 0.1 * (xmax-xmin)
+        yleg = ymin + 0.1 * (ymax-ymin)
+
+        ax = fig.add_subplot(subplot)
+        if (idx == 3):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytit, locators=(1, 1, 1, 1))
+        ax.text(xleg,yleg, labels[idx], fontsize=12)
+
+        #plot observations
+        file = obsdir+'/lf/CSED/CSED_Andrews17_'+obs[idx]+'.dat'
+        lw,p1,p2 = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+        lw = np.log10(lw * 1e10) #in angstroms 
+        p1 = np.log10(p1)
+        p2 = np.log10(p2)
+   
+        xobs = np.zeros(shape = 2)
+        yobs = np.zeros(shape = 2)
+        for xi,ymin,ymax in zip(lw,p1,p2):
+            xobs[0] = xi
+            xobs[1] = xi
+            yobs[0] = ymin
+            yobs[1] = ymax
+            ax.plot(xobs,yobs, color='grey', linestyle='solid',linewidth=5)  
+
+        #plot model
+        ax.plot(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands)-np.log10(h0), 'k', linewidth=1, label='total')
+
+        for xi,yi,c in zip(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands),colors):
+            ax.plot(xi,yi-np.log10(h0), 'd', markersize=6, color=c, alpha=0.8)
+        ax.plot(lambda_bands,np.log10(CSED[idx,3,:]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1, label=labelsgal[0])
+        ax.plot(lambda_bands,np.log10(CSED[idx,2,:]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1, label=labelsgal[1])
+        #ax.plot(lambda_bands,np.log10(CSED[idx,0,:]*freq_bands)-np.log10(h0), marker = 'p', mec = 'LightSalmon', markersize=3, linewidth=1)
+    common.prepare_legend(ax, ['k','b', 'r'], loc='lower center')
+    common.savefig(outdir, fig, "CSED_Shark_optical_to_nir.pdf")
+
+
+def prepare_data(hdf5_data, phot_data, CSED, nbands, index):
    
     #star_formation_histories and SharkSED have the same number of galaxies in the same order, and so we can safely assume that to be the case.
     #to select the same galaxies in galaxies.hdf5 we need to ask for all of those that have a stellar mass > 0, and then assume that they are in the same order.
@@ -156,26 +217,36 @@ def prepare_data(hdf5_data, phot_data, ids_sed, CSED, nbands, index):
     #2: total bulge
     #3: disk
     #4: total
-    SEDs_dust   = phot_data[:,1,0,:,:]
-    SEDs_nodust = phot_data[:,0,0,:,:]
+    ind = np.where(mdisk + mbulge > 0)
+    SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
+
+    p = 0
+    for c in range(0,5):
+        indust = phot_data[p]
+        for i in range(0,nbands):
+            SEDs_dust[:,c,i] = indust[i,:]
+        p = p + 1
 
     for i in range(0,nbands):
         for c in range(0,5):
             #calculate LF with bands with dust
-            ind = np.where(SEDs_dust[:,c,i] < -1)
+            ind = np.where((SEDs_dust[:,c,i] < -1) & (SEDs_dust[:,c,i] > -50))
             #W Hz-1
             total = np.sum(pow(10.0,(SEDs_dust[ind,c,i]+48.6)/(-2.5))) * (4.0 * PI * pow(10.0*3.086e18,2.0)) * 1e-7 
             CSED[index,c,i] = total 
 
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
+    Variable_Ext = True 
+
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
                            'mvir_subhalo', 'type', 'mean_stellar_age', 
                            'sfr_disk', 'sfr_burst', 'id_galaxy')}
+    fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
 
-    z = (0, 0.25, 0.5, 1, 1.5, 2.0, 3.0, 4.0, 6.0)
+    z = (0, 0.25, 0.5, 1, 1, 2.0, 3.0, 4.0, 6.0)
     snapshots = redshift_table[z]
 
     # Create histogram
@@ -183,16 +254,23 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
         #sfh, delta_t, LBT = common.read_sfh(model_dir, snapshot, sfh_fields, subvols)
-        seds, ids, nbands = common.read_photometry_data(model_dir, snapshot, subvols)
-        
+        if(Variable_Ext == False):
+           seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
+        else:
+           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols)
+        nbands = len(seds[0]) 
+
         if(index == 0):
             CSED = np.zeros(shape = (len(z), 5, nbands))
 
-        prepare_data(hdf5_data, seds, ids, CSED, nbands, index)
+        prepare_data(hdf5_data, seds, CSED, nbands, index)
 
         h0, volh = hdf5_data[0], hdf5_data[1]
         if(volh > 0.):
             CSED[index,:]   = CSED[index,:] / volh * pow(h0,3.0)
+
+    if(Variable_Ext):
+       outdir = os.path.join(outdir, 'EAGLE-Ext')
 
     # Take logs
     plot_csed(plt, outdir, obsdir, h0, CSED, nbands)

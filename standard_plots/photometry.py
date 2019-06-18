@@ -508,6 +508,104 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
     common.savefig(outdir, fig, "IRAC_luminosity_functions.pdf")
 
+    # All NIR bands together
+    xtit="$\\rm mag-5log(h) (AB)$"
+    ytit="$\\rm log_{10}(\Phi/(0.5\\, {\\rm mag})/h^3 {\\rm Mpc}^{-3})$"
+    ytit2="$\\rm log_{10}(\Phi/dex^{-1} h^3 {\\rm Mpc}^{-3})$"
+
+    xmin, xmax, ymin, ymax = -25, -13, -5, -1
+    xleg = xmin + 0.2 * (xmax-xmin)
+    yleg = ymax - 0.1 * (ymax-ymin)
+
+    fig = plt.figure(figsize=(8.5,12))
+
+    subplots = (321, 322, 323, 324, 325, 326)
+    idx = (0, 1, 2, 3, 4, 5, 6)
+    bands = (7, 8, 9, 10, 12, 13) 
+    obs = ('lf1500', 'lf2300','lfu','lfg','lfr', 'lfi', 'lfz')
+    labels= ('VISTA Y', 'VISTA J', 'VISTA H', 'VISTA K','IRAC 3.6', 'IRAC 4.5')
+    obs_vista = ('lfy', 'lfj','lfh','lfk')
+    obs_irac = (3.6, 4.5)
+
+    file = obsdir+'/lf/lf_IRAC_zLT0p6_dai2009.data'
+    bandI,lm,p,dp = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+    indx  = np.where(p > 0)
+    bandI = bandI[indx]
+    lmir    = lm[indx] - hcorr
+    yobsir  = np.log10(p[indx])
+    ydnir   = np.log10(p[indx]-dp[indx])
+    yupir   = np.log10(p[indx]+dp[indx])
+
+    for subplot, idx, b in zip(subplots, idx, bands):
+        print 'band', b
+        ax = fig.add_subplot(subplot)
+        if (idx == 0 or idx == 2):
+            ytitplot = ytit
+        elif idx == 4:
+            ytitplot = ytit2
+        else:
+            ytitplot = ' '
+        if (idx >= 4):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytitplot, locators=(2, 2, 1, 1))
+        ax.text(xleg,yleg, labels[idx])
+
+        if(idx  <= 3):
+            file = obsdir+'/lf/'+obs_vista[idx]+'_z0_driver12.data'
+            lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+            indx = np.where(p > 0)
+            yobs = np.log10(p[indx])
+            ydn  = np.log10(p[indx]-dp[indx])
+            yup  = np.log10(p[indx]+dp[indx])
+            ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Driver+2012")
+        else:
+            iband = np.where(bandI == obs_irac[idx-4])
+            ax.errorbar(lmir[iband]+vegacorr[idx-4], yobsir[iband], yerr=[yobsir[iband]-ydnir[iband],yupir[iband]-yobsir[iband]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='d',label="Dai+2009")
+
+        #Predicted LF
+        if(idx <= 3):
+              ind = np.where(LFs_dust[0,4,b,:] < 0.)
+              y = LFs_dust[0,4,b,ind]
+              ax.plot(xlf_obs[ind],y[0],'k', linewidth=3)
+              ind = np.where(LFs_nodust[0,4,b,:] < 0.)
+              y = LFs_nodust[0,4,b,ind]
+              ax.plot(xlf_obs[ind],y[0],'k', linewidth=1)
+ 
+              ind = np.where(LFs_dust[0,3,b,:] < 0.)
+              y = LFs_dust[0,3,b,ind]
+              ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
+              ind = np.where(LFs_dust[0,1,b,:] < 0.)
+              y = LFs_dust[0,1,b,ind]
+              ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+              ind = np.where(LFs_dust[0,0,b,:] < 0.)
+              y = LFs_dust[0,0,b,ind]
+              ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot')
+        else:
+              ind = np.where(LFs_dust[0,4,b,:] < 0.)
+              y = LFs_dust[0,4,b,ind]-np.log10(dm)
+              ax.plot(xlf_obs[ind],y[0],'k', linewidth=3)
+              ind = np.where(LFs_nodust[0,4,b,:] < 0.)
+              y = LFs_nodust[0,4,b,ind]-np.log10(dm)
+              ax.plot(xlf_obs[ind],y[0],'k', linewidth=1)
+              
+              ind = np.where(LFs_dust[0,3,b,:] < 0.)
+              y = LFs_dust[0,3,b,ind]-np.log10(dm)
+              ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
+              ind = np.where(LFs_dust[0,1,b,:] < 0.)
+              y = LFs_dust[0,1,b,ind]-np.log10(dm)
+              ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+              ind = np.where(LFs_dust[0,0,b,:] < 0.)
+              y = LFs_dust[0,0,b,ind]-np.log10(dm)
+              ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot')
+
+        if(idx == 0 or idx == 4):
+           common.prepare_legend(ax, ['k','k','b','r','LightSalmon','grey','grey'], loc='lower right')
+
+    common.savefig(outdir, fig, "NIR_luminosity_functions.pdf")
+
+
     ########################################################
     fig = plt.figure(figsize=(12,12))
     xmin, xmax, ymin, ymax = -30, -16, -5, -1
@@ -1041,12 +1139,12 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     #              'bulges_mergers': ('star_formation_rate_histories'),
     #              'disks': ('star_formation_rate_histories')}
 
-    Variable_Ext = False
+    Variable_Ext = True
 
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
-    z = (0, 0.25, 0.5, 1.0, 2.0, 3.0, 6.0, 8.0) #, 1.0, 1.5, 2.0)
+    z = (0, 0.25, 0.25, 2.0, 2.0, 3.0, 6.0, 8.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
     # Create histogram
@@ -1085,7 +1183,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'EAGLE-Ext')
+       outdir = os.path.join(outdir, 'eagle-rr14')
 
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission)
