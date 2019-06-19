@@ -86,7 +86,7 @@ def dust_mass(mz, mg, h0):
          highm = np.where(XHd > -0.59)
          y[highm] = 10.0**(2.21 - XHd[highm]) #gas-to-dust mass ratio
          lowm = np.where(XHd <= -0.59)
-         y[lowm] = 10.0**(0.96 - 3.1 * XHd[lowm]) #gas-to-dust mass ratio
+         y[lowm] = 10.0**(0.96 - (3.1) * XHd[lowm]) #gas-to-dust mass ratio
          DToM = 1.0 / y / (mz[ind]/mg[ind])
          DToM = np.clip(DToM, 1e-6, 1)
          md[ind] = mz[ind]/h0 * DToM
@@ -181,7 +181,7 @@ def slope_diff (md, rd, hd, h0):
     return m 
 
 
-def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sfr_rat, met_evo,  m_diff, model_dir, snapshot, subvol, writeon):
+def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
 
@@ -208,46 +208,22 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sfr_rat, met_evo,
     slope_dust_disk  = slope_diff(mdustd, rgasd, bd, h0)
 
 
-    mass = np.log10((mdisk +  mbulge)/h0)
-    #ignore these low mass satellites because they are not converged
-    lowmasssat = np.where((mass <= 8.3) & (sfrd+sfrb > 0) & (typeg > 0))
-    sfrd[lowmasssat] = 0
-    sfrb[lowmasssat] = 0
- 
-
-    ind = np.where((mass >= 6) & (sfrd > 0))
-    tdiff[index,0,:]  = bin_it(x=mass[ind], y=tau_dust_disk[ind])
-    tcloud[index,0,:] = bin_it(x=mass[ind], y=tau_clump_disk[ind])
-    m_diff[index,0,:]  = bin_it(x=mass[ind], y=slope_dust_disk[ind])
-    sigmad_diff[index,0,:]  = bin_it(x=mass[ind], y=sigmad[ind])
-
-    ind = np.where((mass >= 6) & (sfrb > 0))
-    tdiff[index,1,:]  = bin_it(x=mass[ind], y=tau_dust_bulge[ind])
-    tcloud[index,1,:] = bin_it(x=mass[ind], y=tau_clump_bulge[ind])
-    sigmad_diff[index,1,:]  = bin_it(x=mass[ind], y=sigmab[ind])
-    m_diff[index,1,:]  = bin_it(x=mass[ind], y=slope_dust_bulge[ind])
-
-    ind = np.where((mass >= 6) & (sfrd + sfrb > 0))
-    sfr_rat[index,:] = bin_it(x=mass[ind], y=sfrb[ind]/(sfrd[ind]+sfrb[ind]))
-    met_evo[index,:] = bin_it(x=mass[ind], y=np.log10((mzd[ind]+mzb[ind])/(mgasd[ind]+mgasb[ind])/zsun))
-
-    if(writeon):
-        # will write the hdf5 files with the CO SLEDs and relevant quantities
-        # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
-        ind = np.where( (mdisk +  mbulge) > 0)
-        file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14.hdf5')
-        print ('Will write extinction to %s' % file_to_write)
-        hf = h5py.File(file_to_write, 'w')
-       
-        hf.create_dataset('galaxies/tau_diff_disk', data=tau_dust_disk[ind])
-        hf.create_dataset('galaxies/tau_diff_bulge', data=tau_dust_bulge[ind])
-        hf.create_dataset('galaxies/tau_clump_disk', data=tau_clump_disk[ind])
-        hf.create_dataset('galaxies/tau_clump_bulge', data=tau_clump_bulge[ind])
-        hf.create_dataset('galaxies/m_diff_disk', data=slope_dust_disk[ind])
-        hf.create_dataset('galaxies/m_diff_bulge', data=slope_dust_bulge[ind])
-        hf.create_dataset('galaxies/id_galaxy', data=idgal[ind])
-        hf.create_dataset('galaxies/inclination', data=inclination[ind])
-        hf.close()
+    # will write the hdf5 files with the CO SLEDs and relevant quantities
+    # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
+    ind = np.where( (mdisk +  mbulge) > 0)
+    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14.hdf5')
+    print ('Will write extinction to %s' % file_to_write)
+    hf = h5py.File(file_to_write, 'w')
+    
+    hf.create_dataset('galaxies/tau_diff_disk', data=tau_dust_disk[ind])
+    hf.create_dataset('galaxies/tau_diff_bulge', data=tau_dust_bulge[ind])
+    hf.create_dataset('galaxies/tau_clump_disk', data=tau_clump_disk[ind])
+    hf.create_dataset('galaxies/tau_clump_bulge', data=tau_clump_bulge[ind])
+    hf.create_dataset('galaxies/m_diff_disk', data=slope_dust_disk[ind])
+    hf.create_dataset('galaxies/m_diff_bulge', data=slope_dust_bulge[ind])
+    hf.create_dataset('galaxies/id_galaxy', data=idgal[ind])
+    hf.create_dataset('galaxies/inclination', data=inclination[ind])
+    hf.close()
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
@@ -261,7 +237,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     for index, snapshot in enumerate(redshift_table[zlist]):
         for subv in subvols:
             hdf5_data = common.read_data(model_dir, snapshot, fields, [subv])
-            prepare_data(hdf5_data, index, tau_diff, tau_cloud, sigmad_diff, sfr_rat, met_evo, m_diff, model_dir, snapshot, subv, writeon)
+            prepare_data(hdf5_data, index, model_dir, snapshot, subv)
 
 if __name__ == '__main__':
     main(*common.parse_args())
