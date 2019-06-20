@@ -18,8 +18,8 @@
 //
 
 /**
- * @file
- */
+* @file
+*/
 
 #include <cmath>
 #include <fstream>
@@ -620,9 +620,9 @@ double GasCooling::density_shell(double mhot, double rvir, double r) {
 	using namespace constants;
 
 	/**
-	 * rho_shell as defined by an isothermal profile.
-	 * Any other hot gas profile should modify rho_shell.
-	 */
+	* rho_shell as defined by an isothermal profile.
+	* Any other hot gas profile should modify rho_shell.
+	*/
 	return mhot*MSOLAR_g /PI4 /(rvir*MPC2CM) / std::pow(r*MPC2CM,2.0) / (M_Atomic_g*mu_Primordial); //in cgs.
 
 }
@@ -630,17 +630,17 @@ double GasCooling::density_shell(double mhot, double rvir, double r) {
 double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, double mhot){
 
 	/**
-	 *  This function calculates the cooling luminosity for a given cooling function
-	 *  and a notional gas density profile. Units are returned in 10^40 erg/s.
-	 *
-	 */
+	*  This function calculates the cooling luminosity for a given cooling function
+	*  and a notional gas density profile. Units are returned in 10^40 erg/s.
+	*
+	*/
 	using namespace constants;
 
 	if(rcool < rvir){
 
 		/**
-		 * For an isothermal profile, we define a small core radius.
-		 */
+		* For an isothermal profile, we define a small core radius.
+		*/
 		double rcore = 0.01 * rvir;
 
 		double r1 = rvir/rcore;
