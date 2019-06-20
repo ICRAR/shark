@@ -61,7 +61,7 @@ public:
 		BOWER06
 	};
 
-	AGNFeedbackModel model = BOWER06;
+	AGNFeedbackModel model = CROTON16;
 };
 
 
