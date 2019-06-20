@@ -56,7 +56,8 @@ public:
 	double epsilon_qso = 0;
 
 	enum AGNFeedbackModel {
-		CROTON16 = 0,
+		BRAVO19 = 0,
+		CROTON16,
 		BOWER06
 	};
 
@@ -76,13 +77,15 @@ public:
 	void plant_seed_smbh(Halo &halo);
 	double eddington_luminosity(double mbh);
 	double accretion_rate_hothalo_smbh(double Lcool, double mbh);
-	double agn_bolometric_luminosity(double macc);
+	double accretion_rate_ratio(double macc, double mBH);
+	double agn_bolometric_luminosity(double macc, double mBH);
+	double agn_mechanical_luminosity(double macc, double mBH);
 	double smbh_growth_starburst(double mgas, double vvir);
 	double smbh_accretion_timescale(Galaxy &galaxy, double z);
 	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir);
 	double qso_critical_luminosity(double mgas, double m, double r);
 	double salpeter_timescale(double Lbol, double mbh);
-	double qso_outflow_velocity(double Lbol, double zgas, double mgas);
+	double qso_outflow_velocity(double Lbol, double mbh, double zgas, double mgas, double mbulge, double rbulge);
 	void qso_outflow_rate(double mgas, double macc, double mBH, double zgas, double vcirc,
 			double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec);
 

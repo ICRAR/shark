@@ -47,7 +47,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.v_smbh", v_smbh);
 	options.load("agn_feedback.tau_fold", tau_fold);
 
-	// relevant for Croton16 model.
+	// relevant for Croton16 and Bravo 19 models.
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
@@ -68,8 +68,11 @@ Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, c
 	else if (lvalue == "croton16") {
 		return AGNFeedbackParameters::CROTON16;
 	}
+	else if (lvalue == "bravo19") {
+		return AGNFeedbackParameters::BRAVO19;
+	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are Bower06 and Croton16";
+	os << name << " option value invalid: " << value << ". Supported values are Bower06, Croton16 and Bravo19";
 	throw invalid_option(os.str());
 }
 
@@ -133,15 +136,67 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double mbh) {
 
 }
 
-double AGNFeedback::agn_bolometric_luminosity(double macc) {
+double AGNFeedback::accretion_rate_ratio(double macc, double mBH){
+
+	//return the ratio between the physical and Eddington mass accretion rates.
+	using namespace constants;
+
+	double LEdd = eddington_luminosity(mBH);
+	double M_dot_Edd = 1e40 * LEdd / (parameters.accretion_eff_cooling * std::pow(c_light_cm,2.0));
+	double m_dot = (macc/MACCRETION_cgs_simu) / M_dot_Edd;
+	return m_dot;
+}
+
+double AGNFeedback::agn_bolometric_luminosity(double macc, double mBH){
 
 	//return bolometric luminosity in units of 10^40 erg/s.
 	using namespace constants;
 
-	double Lbol = parameters.nu_smbh * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
+	double Lbol = 0;
+	if (parameters.model == AGNFeedbackParameters::BRAVO19) {
+		double LEdd = eddington_luminosity(mBH);
+		double m_dot = accretion_rate_ratio(macc,mBH);
+		
+		if(m_dot >= 0.01){
+			Lbol = parameters.nu_smbh * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
+			double eta = 4;
+			if(Lbol > eta * LEdd){
+				Lbol = eta * (1 + std::log(m_dot / eta)) * LEdd;
+			}
+		}
+		else{
+			if(m_dot > (7.5e-6)){
+				Lbol = (44 * m_dot) * parameters.accretion_eff_cooling * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
+			}
+			else{
+				Lbol = 6.3e-5 * parameters.accretion_eff_cooling * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
+			}
+		}
+	}
+	else if (parameters.model == AGNFeedbackParameters::CROTON16) {
+		Lbol = parameters.nu_smbh * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
+	}
 
 	return Lbol;
 }
+
+double AGNFeedback::agn_mechanical_luminosity(double macc, double mBH){
+	
+	//return mechanical luminosity in units of 10^40 erg/s.
+	using namespace constants;
+	
+	double m_dot = accretion_rate_ratio(macc,mBH) * 100;
+	double Lmech = 0;
+	if(m_dot >= 1.0){
+		Lmech = 2.5e3 * std::pow(mBH/1e9,1.1) * std::pow(m_dot,1.2) * std::pow(0.67,2);
+	}
+	else{
+		Lmech = 2e5 * (mBH/1e9) * m_dot  * std::pow(0.67,2);
+	}
+
+	return Lmech;
+}
+
 
 double AGNFeedback::accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir){
 
@@ -201,7 +256,7 @@ double AGNFeedback::salpeter_timescale(double Lbol, double mbh){
 	return 43.0 / edd_ratio / constants::KILO;
 }
 
-double AGNFeedback::qso_outflow_velocity(double Lbol, double zgas, double mgas){
+double AGNFeedback::qso_outflow_velocity(double Lbol, double mbh, double zgas, double mgas, double mbulge, double rbulge){
 
 	double vout  = 320.0 * std::pow(Lbol/(1e7 * constants::LSOLAR), 0.5) * std::pow(zgas/recycle_params.zsun, 0.25) * std::pow(mgas, -0.25);
 
@@ -214,7 +269,7 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 
 	// QSO feedback only acts if the accretion rate is >0, BH mass is > 0 and QSO feedback is activated by the user.
 	if(macc > 0 && mBH > 0 && sfr > 0 && mgas > 0 && parameters.qso_feedback){
-		double Lbol = agn_bolometric_luminosity(macc);
+		double Lbol = agn_bolometric_luminosity(macc,mBH);
 		double Lcrit = qso_critical_luminosity(mgas, mbulge, rbulge);
 
 		// check if bolometric luminosity is larger than the critical luminosity and the gas mass in the bulge is positive. The latter is not always the case becaus equations are solved
@@ -222,7 +277,7 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 		if(Lbol > parameters.kappa_qso * Lcrit){
 
 			double tsalp = salpeter_timescale(Lbol, mBH);
-			double vout = qso_outflow_velocity(Lbol, zgas, mgas);
+			double vout = qso_outflow_velocity(Lbol, mBH, zgas, mgas, mbulge, rbulge);
 
 			double mout_rate= mgas/tsalp;
 
