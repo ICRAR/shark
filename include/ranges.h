@@ -20,20 +20,21 @@
 // MA 02111-1307  USA
 //
 
-#ifndef INCLUDE_SUBRANGE_ITERATOR_H_
-#define INCLUDE_SUBRANGE_ITERATOR_H_
-
-#include <iterator>
-#include <type_traits>
-#include <tuple>
-
 /**
  * @file
  *
  * Utility classes to easily iterate over subranges of a container.
  */
 
+#ifndef SHARK_RANGES_H_
+#define SHARK_RANGES_H_
+
+#include <iterator>
+#include <type_traits>
+#include <tuple>
+
 namespace shark {
+
 /**
  * A range-like filter over a range-like object.
  *
@@ -210,4 +211,4 @@ public:
 
 
 
-#endif /* INCLUDE_SUBRANGE_ITERATOR_H_ */
+#endif /* SHARK_RANGES_H_ */
