@@ -466,7 +466,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		//Mass heating rate from AGN in units of Msun/Gyr.
 		double mheatrate = 0;
 		if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19){
-			mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh.macc_hh,central_galaxy->smbh.mass) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
+			mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh.macc_hh+central_galaxy->smbh.macc_sb,central_galaxy->smbh.mass) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
 		}
 		else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
 			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh,central_galaxy->smbh.mass) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
