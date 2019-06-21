@@ -126,6 +126,7 @@
 * ``age_80``: redshift at which the halo had 80% of its current mass
 * ``concentration``: halo concentration
 * ``final_z0_mvir``: virial mass of the halo in which this halo will end up in by z=0 [Msun/h]
+* ``halo_id``: halo id in the tree (unique to entire halo catalogue)
 * ``lambda``: halo spin
 * ``mvir``: virial mass of halo [Msun/h]
 * ``vvir``: virial velocity of halo [km/s]
