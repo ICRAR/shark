@@ -35,19 +35,15 @@ import common
 
 logger = logging.getLogger(__name__)
 
-def count_jobs(job_name):
-    """Returns how many jobs with self.jobs_name are currently queued or running"""
-
+def job_is_alive(job_id):
+    """Returns whether `job_id` is still "alive" (i.e., in the queue) or not"""
     try:
-        out, err, code = common.exec_command("squeue")
+        out, err, code = common.exec_command(['squeue', '--noheader', '-j', job_id])
     except OSError:
         raise RuntimeError("Couldn't run squeue, is it installed?")
-
     if code:
         raise RuntimeError("squeue failed with code %d: stdout: %s, stderr: %s" % (code, out, err))
-
-    lines_with_jobname = [l for l in out.splitlines() if job_name in l]
-    return len(lines_with_jobname)
+    return len([l for l in out.splitlines() if job_id in l]) > 0
 
 def _exec_shark(msg, cmdline):
     logger.info('%s with command line: %s', msg, subprocess.list2cmdline(cmdline))
@@ -57,6 +53,7 @@ def _exec_shark(msg, cmdline):
                      'stdout:\n%s\nstderr:\n%s', cmdline[0], code,
                      common.b2s(out), common.b2s(err))
         raise RuntimeError('%s error' % cmdline[0])
+    return out
 
 
 def _to_shark_options(particle, space):
@@ -112,10 +109,20 @@ def run_shark_hpc(particles, *args):
     else:
         cmdline += ['-m', opts.memory, '-c', str(opts.cpus)]
     cmdline.append(opts.config)
-    _exec_shark('Queueing PSO particles', cmdline)
+    out = _exec_shark('Queueing PSO particles', cmdline)
 
-    # Actually wait for the jobs to finish...
-    while count_jobs(job_name) > 0:
+    # In the output of shark-submit there will be the Job ID we need to monitor
+    job_id = None
+    _job_id_msg = 'shark-submit: New job submitted with ID '
+    for line in out.splitlines():
+        if line.startswith(_job_id_msg):
+            job_id = line.split(_job_id_msg)[-1]
+            break
+    if job_id is None:
+        raise RuntimeError("Couldn't get the ID of the new submitted job, cannot continue")
+
+    # Actually wait for the job to finish...
+    while job_is_alive(job_id):
         time.sleep(10)
 
     ss = len(particles)
