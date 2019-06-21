@@ -125,7 +125,7 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double mbh) {
 		if (parameters.model == AGNFeedbackParameters::BOWER06) {
 			macc = Lcool * 1e40 / std::pow(c_light_cm,2.0) / parameters.accretion_eff_cooling;
 		}
-		else if (parameters.model == AGNFeedbackParameters::CROTON16) {
+		else if (parameters.model == AGNFeedbackParameters::BRAVO19 || parameters.model == AGNFeedbackParameters::CROTON16) {
 			macc = parameters.kappa_agn * 0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * 1e40 * (mbh * MSOLAR_g);
 		}
 		return macc * MACCRETION_cgs_simu; //accretion rate in units of Msun/Gyr.
@@ -196,7 +196,6 @@ double AGNFeedback::agn_mechanical_luminosity(double macc, double mBH){
 
 	return Lmech;
 }
-
 
 double AGNFeedback::accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir){
 
