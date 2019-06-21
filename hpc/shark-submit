@@ -234,6 +234,9 @@ submit_slurm() {
 	cmd="sbatch --ntasks $n_tasks"
 	cmd="$cmd -o shark-run.log"
 
+	# Get the ID of the new job
+	cmd="$cmd --parsable"
+
 	# Queueing accountability
 	if [ ! -z "$account" ]
 	then
@@ -317,11 +320,14 @@ submit_slurm() {
 
 		# Go, go, go!
 		export SHARK_HPC_DIR="$shark_hpc_dir"
-		eval $cmd
+		job_id=`eval $cmd`
 		if [ $? -ne 0 ]
 		then
 			error "Error when submitting job to the queue"
 			exit 1
+		else
+			info "New job submitted with ID $job_id"
+			echo "$job_id" > "${shark_output_directory}"/jobid
 		fi
 	fi
 }
