@@ -1147,6 +1147,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     z = (0, 0.25, 0.25, 2.0, 2.0, 3.0, 6.0, 8.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
+    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
     # Create histogram
     for index, snapshot in enumerate(snapshots):
 
@@ -1155,8 +1156,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
            seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
            seds_nod = common.read_photometry_data(model_dir, snapshot, fields_sed_nod, subvols)
         else:
-           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols)
-           seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, subvols)
+           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols, file_hdf5_sed)
+           seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
 
         nbands = len(seds[0]) 
 
@@ -1183,7 +1184,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14')
+       outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission)

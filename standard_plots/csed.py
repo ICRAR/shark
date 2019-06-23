@@ -238,6 +238,7 @@ def prepare_data(hdf5_data, phot_data, CSED, nbands, index):
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     Variable_Ext = True 
+    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
@@ -257,7 +258,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
         if(Variable_Ext == False):
            seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
         else:
-           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols)
+           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols, file_hdf5_sed)
         nbands = len(seds[0]) 
 
         if(index == 0):
