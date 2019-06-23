@@ -537,7 +537,6 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     yupir   = np.log10(p[indx]+dp[indx])
 
     for subplot, idx, b in zip(subplots, idx, bands):
-        print 'band', b
         ax = fig.add_subplot(subplot)
         if (idx == 0 or idx == 2):
             ytitplot = ytit
