@@ -43,8 +43,8 @@ polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238]
 
 #choose dust model between mm14, rr14 and constdust
 m14 = False
-rr14 = True
-constdust = False
+rr14 = False
+constdust = True
 rr14xcoc = False
 
 #read EAGLE tables
@@ -92,14 +92,14 @@ def dust_mass(mz, mg, h0):
          DToM_MW = 1.0 / (10.0**(2.21)) / zsun
     elif(rr14xcoc == True):
         y = np.zeros(shape = len(XHd))
-         highm = np.where(XHd > -0.15999999999999998)
-         y[highm] = 10.0**(2.21 - XHd[highm]) #gas-to-dust mass ratio
-         lowm = np.where(XHd <= -0.15999999999999998)
-         y[lowm] = 10.0**(1.66 - 4.43 * XHd[lowm]) #gas-to-dust mass ratio
-         DToM = 1.0 / y / (mz[ind]/mg[ind])
-         DToM = np.clip(DToM, 1e-6, 1)
-         md[ind] = mz[ind]/h0 * DToM
-         DToM_MW = 1.0 / (10.0**(2.21)) / zsun
+        highm = np.where(XHd > -0.15999999999999998)
+        y[highm] = 10.0**(2.21 - XHd[highm]) #gas-to-dust mass ratio
+        lowm = np.where(XHd <= -0.15999999999999998)
+        y[lowm] = 10.0**(1.66 - 4.43 * XHd[lowm]) #gas-to-dust mass ratio
+        DToM = 1.0 / y / (mz[ind]/mg[ind])
+        DToM = np.clip(DToM, 1e-6, 1)
+        md[ind] = mz[ind]/h0 * DToM
+        DToM_MW = 1.0 / (10.0**(2.21)) / zsun
     elif(constdust == True):
          md[ind] = 0.33 * mz[ind]/h0
          DToM_MW = 0.33
@@ -185,7 +185,7 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
     yleg = ymax - 0.1 * (ymax-ymin)
     #ax.text(xleg, yleg, 'z=0')
 
-def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sfr_rat, met_evo,  m_diff, model_dir, snapshot, subvol, writeon):
+def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo,  m_diff, model_dir, snapshot, subvol, writeon):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
 
@@ -194,6 +194,8 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sfr_rat, met_evo,
     XH = 0.72
     h0log = np.log10(float(h0))
 
+    sigma_g_d = mgasd/h0/(2.0 * 3.1416 * (rgasd/h0*1e3)**2.0)
+    sigma_g_b = mgasb/h0/(2.0 * 3.1416 * (rgasb/h0*1e3)**2.0)
 
     (mdustd, DToM_MW) = dust_mass(mzd, mgasd, h0)
     (mdustb, DToM_MW) = dust_mass(mzb, mgasb, h0)
@@ -218,18 +220,20 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sfr_rat, met_evo,
     sfrd[lowmasssat] = 0
     sfrb[lowmasssat] = 0
  
-
     ind = np.where((mass >= 6) & (sfrd > 0))
     tdiff[index,0,:]  = bin_it(x=mass[ind], y=tau_dust_disk[ind])
     tcloud[index,0,:] = bin_it(x=mass[ind], y=tau_clump_disk[ind])
     m_diff[index,0,:]  = bin_it(x=mass[ind], y=slope_dust_disk[ind])
     sigmad_diff[index,0,:]  = bin_it(x=mass[ind], y=sigmad[ind])
+    sigmag_diff[index,0,:]  = bin_it(x=mass[ind], y=np.log10(sigma_g_d[ind]))
+    print sigmag_diff[index,0,:]
 
     ind = np.where((mass >= 6) & (sfrb > 0))
     tdiff[index,1,:]  = bin_it(x=mass[ind], y=tau_dust_bulge[ind])
     tcloud[index,1,:] = bin_it(x=mass[ind], y=tau_clump_bulge[ind])
     sigmad_diff[index,1,:]  = bin_it(x=mass[ind], y=sigmab[ind])
     m_diff[index,1,:]  = bin_it(x=mass[ind], y=slope_dust_bulge[ind])
+    sigmag_diff[index,1,:]  = bin_it(x=mass[ind], y=np.log10(sigma_g_b[ind]))
 
     ind = np.where((mass >= 6) & (sfrd + sfrb > 0))
     sfr_rat[index,:] = bin_it(x=mass[ind], y=sfrb[ind]/(sfrd[ind]+sfrb[ind]))
@@ -253,7 +257,7 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sfr_rat, met_evo,
         hf.create_dataset('galaxies/inclination', data=inclination[ind])
         hf.close()
 
-def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sfr_rat, met_evo, m_diff, zlist):
+def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, m_diff, zlist):
 
     #tau diffuse medium
     fig = plt.figure(figsize=(14,4.5))
@@ -414,6 +418,38 @@ def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sfr_rat, met_evo, m_d
     common.prepare_legend(ax, colors, loc='upper left')
     common.savefig(output_dir, fig, "sigma_dust_predictions.pdf")
 
+    #surface densities of gas
+    fig = plt.figure(figsize=(7,4.5))
+
+    xmin, xmax, ymin, ymax = 6.0, 12.0, 4, 11.1
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit="$\\rm log_{10} (\\Sigma_{\\rm gas}/M_{\odot} kpc^{-2})$"
+
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    subplots = (121, 122)
+    labels = ('disk','bulge')
+
+    for j in range(0,len(subplots)):
+        ax = fig.add_subplot(subplots[j])
+        prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
+        ax.text(xleg, yleg, labels[j])
+
+        for i in range(0,len(sigmag_diff[:,j,0,0])):
+            # Predicted relation
+            ind = np.where(sigmag_diff[i,j,0,:] > 0)
+            xplot = xmf[ind]
+            yplot = sigmag_diff[i,j,0,ind]
+            errdn = sigmag_diff[i,j,1,ind]
+            errup = sigmag_diff[i,j,2,ind]
+            ax.plot(xplot,yplot[0],color=colors[i],label='z=%s' % str(zlist[i]))
+            ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=colors[i], alpha=0.5,interpolate=True)
+            ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colors[i], alpha=0.5,interpolate=True)
+
+    common.prepare_legend(ax, colors, loc='upper left')
+    common.savefig(output_dir, fig, "sigma_gas_predictions.pdf")
+
     #SFR ratio
     fig = plt.figure(figsize=(4.5,4.5))
 
@@ -482,6 +518,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     tau_diff = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
     tau_cloud = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
     sigmad_diff = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
+    sigmag_diff = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
 
     m_diff = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
 
@@ -492,9 +529,11 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
-        prepare_data(hdf5_data, index, tau_diff, tau_cloud, sigmad_diff, sfr_rat, met_evo, m_diff, model_dir, snapshot, subvols, writeon)
+        prepare_data(hdf5_data, index, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, m_diff, model_dir, snapshot, subvols, writeon)
 
-    plot_taus(plt, output_dir, tau_diff, tau_cloud, sigmad_diff, sfr_rat, met_evo, m_diff, zlist)
+    output_dir = os.path.join(output_dir, 'eagle-const')
+
+    plot_taus(plt, output_dir, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, m_diff, zlist)
 
 if __name__ == '__main__':
     main(*common.parse_args())
