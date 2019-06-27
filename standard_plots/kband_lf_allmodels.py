@@ -239,7 +239,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
     file_hdf5_sed2 = "Shark-SED-eagle-rr14.hdf5"
-    file_hdf5_sed3 = "Shark-SED-eagle-rr14.hdf5" # "Shark-SED-eagle-const.hdf5"
+    file_hdf5_sed3 = "Shark-SED-eagle-const.hdf5" 
     file_hdf5_sed4 = "Shark-SED.hdf5"
 
     # Create histogram

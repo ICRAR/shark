@@ -517,15 +517,15 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     xleg = xmin + 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
 
-    fig = plt.figure(figsize=(8.5,12))
+    fig = plt.figure(figsize=(8.5,13))
 
-    subplots = (321, 322, 323, 324, 325, 326)
-    idx = (0, 1, 2, 3, 4, 5, 6)
-    bands = (7, 8, 9, 10, 12, 13) 
+    subplots = (421, 422, 423, 424, 425, 426, 427, 428)
+    idx = (0, 1, 2, 3, 4, 5, 6, 7)
+    bands = (7, 8, 9, 10, 12, 13, 15, 16) 
     obs = ('lf1500', 'lf2300','lfu','lfg','lfr', 'lfi', 'lfz')
-    labels= ('VISTA Y', 'VISTA J', 'VISTA H', 'VISTA K','IRAC 3.6', 'IRAC 4.5')
+    labels= ('VISTA Y', 'VISTA J', 'VISTA H', 'VISTA K','IRAC 3.6', 'IRAC 4.5', 'IRAC 5.8', 'IRAC 8')
     obs_vista = ('lfy', 'lfj','lfh','lfk')
-    obs_irac = (3.6, 4.5)
+    obs_irac = (3.6, 4.5, 5.8, 8.0)
 
     file = obsdir+'/lf/lf_IRAC_zLT0p6_dai2009.data'
     bandI,lm,p,dp = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
@@ -540,11 +540,11 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
         ax = fig.add_subplot(subplot)
         if (idx == 0 or idx == 2):
             ytitplot = ytit
-        elif idx == 4:
+        elif (idx == 4 or idx == 6):
             ytitplot = ytit2
         else:
             ytitplot = ' '
-        if (idx >= 4):
+        if (idx >= 6):
             xtitplot = xtit
         else:
             xtitplot = ' '
@@ -866,14 +866,14 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
     subplots = (311, 312, 313)
     idx = (0, 1, 2)
-    bands = (21, 22, 26)
+    bands = (21, 22,  26)
     labels= ('P160', 'S250', 'JCMT850')
     
     for subplot, idx, b in zip(subplots, idx, bands):
 
         ax = fig.add_subplot(subplot)
         ytitplot = ytit
-        if (idx == 2):
+        if (idx == 3):
             xtitplot = xtit
         else:
             xtitplot = ' '
@@ -938,7 +938,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             yup       = np.log10((p[0:7]+ dp[0:7]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
            
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
-           
+
         if idx == 2:
             hobs = 0.75
             corrhobs = np.log10(hobs/h0)
@@ -987,6 +987,199 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
            common.prepare_legend(ax, ['grey','grey','grey','grey','grey','grey'], loc='lower left')
        
     common.savefig(outdir, fig, "IR_luminosity_functions_reliable_observations.pdf")
+
+    ########################################################
+    fig = plt.figure(figsize=(8.5,12))
+    xmin, xmax, ymin, ymax = -30, -16, -5, -1
+    xleg = xmin + 0.2 * (xmax-xmin)
+    yleg = ymax - 0.1 * (ymax-ymin)
+
+
+    subplots = (321, 322, 323, 324, 325, 326)
+    idx = (0, 1, 2, 3, 4, 5, 6, 7)
+    bands = (21, 22, 23, 25, 26)
+    labels= ('P160', 'S250', 'S350', 'S500', 'JCMT850')
+    
+    for subplot, idx, b in zip(subplots, idx, bands):
+
+        ax = fig.add_subplot(subplot)
+        if (idx == 0 or idx == 3 or idx == 6):
+            ytitplot = ytit
+        else:
+            ytitplot = ' '
+        if (idx == 5 or idx == 6 or idx == 7):
+            xtitplot = xtit
+        else:
+            xtitplot = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytitplot, locators=(2, 2, 1, 1))
+        ax.text(xleg,yleg, labels[idx])
+
+        #Predicted LF
+        if(idx == 4):
+            ind = np.where(LFs_dust[0,4,b,:] < 0.)
+            y = LFs_dust[0,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3, label ='Shark z=0')
+
+            #plot same line to get the right labels
+            ind = np.where(LFs_dust[1,4,b,:] < 0.)
+            y = LFs_dust[1,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'SlateGray', linewidth=2, label ='Shark z=0.25')
+
+            ind = np.where(LFs_dust[0,3,b,:] < 0.)
+            y = LFs_dust[0,3,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted', label ='disks z=0')
+            ind = np.where(LFs_dust[0,1,b,:] < 0.)
+            y = LFs_dust[0,1,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed', label ='merger-driven bulges z=0')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot', label='disk-ins-driven bulges z=0')
+        else:
+            ind = np.where(LFs_dust[0,4,b,:] < 0.)
+            y = LFs_dust[0,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'k', linewidth=3)
+            ind = np.where(LFs_dust[1,4,b,:] < 0.)
+            y = LFs_dust[1,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'SlateGray', linewidth=2)
+ 
+            ind = np.where(LFs_dust[0,3,b,:] < 0.)
+            y = LFs_dust[0,3,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
+            ind = np.where(LFs_dust[0,1,b,:] < 0.)
+            y = LFs_dust[0,1,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
+            ind = np.where(LFs_dust[0,0,b,:] < 0.)
+            y = LFs_dust[0,0,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],'LightSalmon', linewidth=2, linestyle='dashdot')
+
+        if idx == 0:
+           hobs = 0.7
+           corrhobs = np.log10(hobs/h0)
+
+           file = obsdir+'/lf/L160microns.dat'
+           lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+ 
+           dml       = 0.4
+           xm        = [25.0,25.0]
+           xm[1]     = xm[1] + dml
+           tenpctocm = 3.086e19
+           corrpc    = np.log10(tenpctocm)*2.0
+           xobs      = -2.5*(lm[15:21]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+           xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+           dmm       = np.abs(xm[0] - xm[1])
+           yobs      = np.log10(pow(10.0,p[15:21]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           ydn       = np.log10(pow(10.0,dpn[15:21]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           yup       = np.log10(pow(10.0,dpu[15:21]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+          
+           ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='p')
+
+        if idx == 1:
+            hobs = 0.7
+            corrhobs = np.log10(hobs/h0)
+
+            file = obsdir+'/lf/lf250_dye10.data'
+            lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+            lx        = np.log10(lm[0:7])
+            dml       = np.abs(lx[1] - lx[0])
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(np.log10(lm[0:7])-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            dmm       = np.abs(xobs[0] - xobs[1])
+            yobs      = np.log10(p[0:7] * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10((p[0:7]- dp[0:7]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10((p[0:7]+ dp[0:7]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+           
+        if idx == 2:
+            hobs = 0.7
+            corrhobs = np.log10(hobs/h0)
+
+            file = obsdir+'/lf/L350microns.dat'
+            lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+            dml       = 0.3
+            xm        = [25.0,25.0]
+            xm[1]     = xm[1] + dml
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(lm[10:19]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            dmm       = np.abs(xm[0] - xm[1])
+            yobs      = np.log10(pow(10.0,p[10:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn[10:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu[10:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+
+        if idx == 3:
+            hobs = 0.7
+            corrhobs = np.log10(hobs/h0)
+
+            file = obsdir+'/lf/L500microns.dat'
+            lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+
+            dml       = 0.3
+            xm        = [25.0,25.0]
+            xm[1]     = xm[1] + dml
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(lm[11:19]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            dmm       = np.abs(xm[0] - xm[1])
+            yobs      = np.log10(pow(10.0,p[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+
+        if idx == 4:
+            hobs = 0.75
+            corrhobs = np.log10(hobs/h0)
+            file = obsdir+'/lf/lf850_dunne2000.data'
+            lm,p,dp   = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+            dml       = 0.24
+            xm        = [25.0,25.0]
+            xm[1]     = xm[1] + dml
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(lm[7:13]-corrpc+7.0) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0) - 48.6 - hcorr  + 5.0*corrhobs
+            dmm       = np.abs(xm[0] - xm[1])
+            yobs      = np.log10(pow(10.0,np.log10(p[7:13])) * dml/dmm)- 3.0*np.log10(0.677) - 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,np.log10(p[7:13] - dp[7:13])) * dml/dmm)- 3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,np.log10(p[7:13] + dp[7:13])) * dml/dmm)- 3.0*np.log10(0.677)- 3.0 * corrhobs
+            
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='P',label="Dunne+00")
+            
+            file = obsdir+'/lf/lf850_vlahakis05_OS.data'
+            lm,p,dp   = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+            dml       = 0.26
+            xm        = [25.0,25.0]
+            xm[1]     = xm[1] + dml
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(lm-corrpc+7.0) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0) - 48.6 - hcorr + 5.0*corrhobs
+            dmm       = np.abs(xm[0] - xm[1])
+            yobs      = np.log10(pow(10.0,np.log10(p)) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,np.log10(p - dp)) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,np.log10(p + dp)) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Vlahakis+05")
+
+            xobs = np.zeros(shape = 2)
+            xobs[0] = 1.0
+            xobs[1] = 1.0
+            yobs=xobs
+            ydn=xobs
+            yup=xobs
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='p',label="Patel+2013")
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Dye+2010")
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Negrello+2013")
+
+            common.prepare_legend(ax, ['k','SlateGray','k','b','r','LightSalmon','grey','grey','grey','grey','grey','grey'], bbox_to_anchor=[1.1,-0.2])
+
+    common.savefig(outdir, fig, "IR_luminosity_functions_all_with_obs.pdf")
 
 
 def prepare_data(hdf5_data, phot_data, phot_data_nod, LFs_dust, LFs_nodust, index, nbands, 
@@ -1062,7 +1255,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     z = (0, 0.25, 0.5,  2.0, 3.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
-    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5"
+    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
     # Create histogram
     for index, snapshot in enumerate(snapshots):
 
@@ -1099,7 +1292,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14')
+       outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission)

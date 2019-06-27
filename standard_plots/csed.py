@@ -114,22 +114,23 @@ def plot_csed(plt, outdir, obsdir, h0, CSED, CSED_nodust, nbands):
     fig = plt.figure(figsize=(6,16))
 
     subplots = (511, 512, 513, 514, 515)
-    idx = (0, 1, 2, 3, 4)
-    labels= ('z=1.5', 'z=2', 'z=3', 'z=4', 'z=6')
+    idxs = (5, 6, 7, 8, 9)
+    ids = (0, 1, 2, 3, 4)
+    labels= ('z=2', 'z=3', 'z=4', 'z=6', 'z=8')
     colors = ('Indigo','purple','Navy','MediumBlue','Green','MediumAquamarine','LightGreen','YellowGreen','Gold','Orange','Coral','OrangeRed','red','DarkRed','FireBrick','Crimson','IndianRed','LightCoral','Maroon','brown','Sienna','SaddleBrown','Chocolate','Peru','DarkGoldenrod','Goldenrod','SandyBrown')
 
-    for subplot, idx in zip(subplots, idx):
-        xmin, xmax, ymin, ymax = 3.0, 7.0, 30, 36
+    for subplot, idx, i in zip(subplots, idxs, ids):
+        xmin, xmax, ymin, ymax = 3.0, 7.0, 32, 36
         xleg = xmin + 0.1 * (xmax-xmin)
         yleg = ymin + 0.1 * (ymax-ymin)
 
         ax = fig.add_subplot(subplot)
-        if (idx == 4):
+        if (i == 4):
             xtitplot = xtit
         else:
             xtitplot = ' '
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytit, locators=(1, 1, 1, 1))
-        ax.text(xleg,yleg, labels[idx], fontsize=12)
+        ax.text(xleg,yleg, labels[i], fontsize=12)
 
         ax.plot(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands)-np.log10(h0), 'k', linewidth=1)
 
@@ -252,7 +253,7 @@ def prepare_data(hdf5_data, phot_data, phot_data_nodust, CSED, CSED_nodust, nban
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     Variable_Ext = True 
-    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5"
+    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
@@ -262,7 +263,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nodust = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
 
-    z = (0, 0.25, 0.5, 1, 1, 2.0, 3.0, 4.0, 6.0)
+    z = (0, 0.25, 0.5, 1, 1, 2.0, 3.0, 4.0, 6.0, 8.0)
     snapshots = redshift_table[z]
 
     # Create histogram
@@ -291,7 +292,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
             CSED_nodust[index,:]   = CSED_nodust[index,:] / volh * pow(h0,3.0)
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14')
+       outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
     # Take logs
     plot_csed(plt, outdir, obsdir, h0, CSED, CSED_nodust, nbands)

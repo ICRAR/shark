@@ -126,7 +126,7 @@ def run_shark_hpc(particles, *args):
         time.sleep(10)
 
     ss = len(particles)
-    fx = np.zeros([ss, 3])
+    fx = np.zeros([ss, len(opts.constraints)])
     for i in range(ss):
         _, simu, model, _ = common.read_configuration(opts.config)
         particle_outdir = os.path.join(shark_output_base, str(i))
