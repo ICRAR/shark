@@ -175,6 +175,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     plt = common.load_matplotlib()
 
     Variable_Ext = True
+    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
 
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
                            'mvir_subhalo', 'type', 'mean_stellar_age',
@@ -187,7 +188,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     if(Variable_Ext == False):
        seds = common.read_photometry_data(model_dir, redshift_table[0], fields_sed, subvols)
     else:
-       seds = common.read_photometry_data_variable_tau_screen(model_dir, redshift_table[0], fields_sed, subvols)
+       seds = common.read_photometry_data_variable_tau_screen(model_dir, redshift_table[0], fields_sed, subvols, file_hdf5_sed)
  
     nbands = len(seds[0]) 
 
@@ -196,7 +197,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     prepare_data(hdf5_data, seds, colours_dist, nbands)
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'EAGLE-Ext')
+       outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
     plot_colours(plt, outdir, obsdir, colours_dist)
 

@@ -213,7 +213,7 @@ def plot_individual_seds_z2(plt, outdir, obsdir, h0, SEDs_dust_z2, total_sfh_z2,
     common.savefig(outdir, fig, "SEDs_SFRs_z2_threepanel.pdf")
 
     #wavelength in angstroms.
-    xmin, xmax, ymin, ymax = 3.0, 7.0, -1, 6.8
+    xmin, xmax, ymin, ymax = 3.0, 7.0, -1, 6.1
     xleg = xmin + 0.1 * (xmax-xmin)
     yleg = ymax - 0.07 * (ymax-ymin)
 
@@ -227,10 +227,10 @@ def plot_individual_seds_z2(plt, outdir, obsdir, h0, SEDs_dust_z2, total_sfh_z2,
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(2, 2, 1, 1))
     plt.subplots_adjust(bottom = 0.2)
     #ax.text(xleg,yleg, '$\\rm SFR>250 M_{\\odot} yr^{-1}$')
-    ax.text(3,6.9, '13.6', fontsize=12)
-    ax.text(4.7,7.1, 'LBT/Gyr', fontsize=12)
-    ax.text(6.9,6.9, '10.6', fontsize=12)
-    ax.text(7.1, 5.3, '$\\rm log_{10}(SFR/M_{\odot} yr^{-1})$', rotation='vertical', fontsize=12)
+    ax.text(3,6.15, '13.6', fontsize=12)
+    ax.text(4.7,6.3, 'LBT/Gyr', fontsize=12)
+    ax.text(6.9,6.15, '10.6', fontsize=12)
+    ax.text(7.1, 4.3, '$\\rm log_{10}(SFR/M_{\odot} yr^{-1})$', rotation='vertical', fontsize=12)
 
     ind = np.where((gal_props_z2[:,3] > 255) & (gal_props_z2[:,1] > 1e9))
     print gal_props_z2[ind,3],gal_props_z2[ind,1]
@@ -542,6 +542,7 @@ def prepare_data(hdf5_data, sfh, phot_data, phot_data_nod, index, nbands):
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     Variable_Ext = True
+    file_hdf5_sed = "Shark-SED-eagle-rr14-colddust-alpha1p5.hdf5"
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
@@ -568,8 +569,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
            seds = common.read_photometry_data(model_dir, snapshot, fields_sed, subvols)
            seds_nod = common.read_photometry_data(model_dir, snapshot, fields_sed_nod, subvols)
         else:
-           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols)
-           seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, subvols)
+           seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols, file_hdf5_sed)
+           seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
 
         nbands = len(seds[0])
  

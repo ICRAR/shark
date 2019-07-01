@@ -71,7 +71,7 @@ def interp (sdust_eagle, med_eagle, low_eagle, high_eagle):
 (m_med, m_low, m_hig) = interp (sdust_eaglet, taumed_eagle, taulow_eagle, tauhigh_eagle)
 (s_med, s_low, s_hig) = interp (sdust_eaglem, mmed_eagle, mlow_eagle, mhigh_eagle)
 
-# compute dust masses using model of Mattison et al. (2014)
+# compute dust masses
 def dust_mass(mz, mg, h0):
     md = np.zeros(shape = len(mz))
     ind = np.where((mz > 0) & (mg > 0))
@@ -93,10 +93,10 @@ def dust_mass(mz, mg, h0):
          DToM_MW = 1.0 / (10.0**(2.21)) / zsun
     elif(rr14xcoc == True):
          y = np.zeros(shape = len(XHd))
-         highm = np.where(XHd > -0.73)
+         highm = np.where(XHd > -0.15999999999999998)
          y[highm] = 10.0**(2.21 - XHd[highm]) #gas-to-dust mass ratio
-         lowm = np.where(XHd <= -0.73)
-         y[lowm] = 10.0**(0.68 - 3.08 * XHd[lowm]) #gas-to-dust mass ratio
+         lowm = np.where(XHd <= -0.15999999999999998)
+         y[lowm] = 10.0**(1.66 - 4.43 * XHd[lowm]) #gas-to-dust mass ratio
          DToM = 1.0 / y / (mz[ind]/mg[ind])
          DToM = np.clip(DToM, 1e-6, 1)
          md[ind] = mz[ind]/h0 * DToM

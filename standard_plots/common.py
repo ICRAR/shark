@@ -321,14 +321,14 @@ def read_photometry_data(model_dir, snapshot, fields, subvolumes):
 
     return list(data.values())
 
-def read_photometry_data_variable_tau_screen(model_dir, snapshot, fields, subvolumes):
+def read_photometry_data_variable_tau_screen(model_dir, snapshot, fields, subvolumes, file_hdf5_sed):
     """Read the Shark-SED-EAGLE-tau.hdf5 file for the given model/snapshot/subvolume"""
 
     data = collections.OrderedDict()
 
     for subv in subvolumes:
 
-        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED-eagle-rr14.hdf5')
+        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), file_hdf5_sed)
         print('Reading photometry data from %s' % fname)
 
         with h5py.File(fname, 'r') as f:
