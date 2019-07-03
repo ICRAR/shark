@@ -58,7 +58,8 @@ public:
 		BR06 = 0,//!< BR06
 		GD14,    //!< GD14
 		K13,     //!< K13
-		KMT09    //!< KMT09
+		KMT09,   //!< KMT09
+		KD12     //!< KD12
 	};
 
 	StarFormationModel model = BR06;
@@ -72,6 +73,7 @@ public:
 	double sigma_HI_crit = 0;
 	double clump_factor_KMT09 = 1;
 	double sigma_crit_KMT09 = 0;
+	double efficiency_sf = 1;
 
 	bool angular_momentum_transfer = false;
 };
@@ -113,6 +115,8 @@ public:
 	double kmt09_fmol(double zgas, double sigma_gas) const;
 
 	double k13_fmol(double zgas, double sigma_gas) const;
+
+	double kd12_taudep(double sigma_gas, void * params) const;
 
 	std::size_t get_integration_intervals() {
 		return integrator.get_num_intervals();

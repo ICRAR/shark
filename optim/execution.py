@@ -64,9 +64,17 @@ def _to_shark_options(particle, space):
             value = 10 ** value
         yield '%s=%s' % (name, value)
 
+#def _evaluate(constraint, stat_test, modeldir, subvols):
+#    y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
+#    return stat_test(y_obs, y_mod, err) * constraint.weight
+
 def _evaluate(constraint, stat_test, modeldir, subvols):
-    y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
-    return stat_test(y_obs, y_mod, err) * constraint.weight
+    try:
+       y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
+       return stat_test(y_obs, y_mod, err) * constraint.weight
+    except:
+       logger.error('Error while evaluating constraint, returning Inf')
+    return np.inf
 
 count = 0
 def run_shark_hpc(particles, *args):
