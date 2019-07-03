@@ -74,7 +74,7 @@ def _evaluate(constraint, stat_test, modeldir, subvols):
        return stat_test(y_obs, y_mod, err) * constraint.weight
     except:
        logger.error('Error while evaluating constraint, returning Inf')
-    return np.inf
+    return 1e20
 
 count = 0
 def run_shark_hpc(particles, *args):
