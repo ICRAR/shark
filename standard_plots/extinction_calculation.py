@@ -43,7 +43,7 @@ polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238]
 
 #choose dust model between mm14, rr14 and constdust
 m14 = False
-rr14 = True
+rr14 = False
 constdust = False
 rr14xcoc = False
 
@@ -140,14 +140,21 @@ def tau_diff (md, rd, hd, h0):
     return (tau, sigma) 
 
 # define clump tau
-def tau_clump(mz,mg,tdiff, h0):
+
+def tau_clump(mz,mg,tdiff, h0, sigmag):
+    sigmaclump = np.zeros(shape = len(mg))
+    sigmaclump[:] = 100.0*1e6 #in Msun/kpc^3
+    ind = np.where(sigmaclump < sigmag)
+    sigmaclump[ind] = sigmag[ind]
     tau = np.zeros(shape = len(mz))
     ind = np.where((mz > 0) & (mg > 0))
     (md, DToM_MW)  = dust_mass(mz[ind],mg[ind],h0)
-    tau[ind] = 1.5 * (md/mz[ind]/DToM_MW)
+    norm = 100.0*1e6 * zsun #dust surface density of clumps
+    tau[ind] = 1. * (sigmaclump[ind] * mz[ind]/mg[ind] / norm)
     # cap it to maximum and minimum values in EAGLE but also forcing the clump tau to be at least as high as the diffuse tau
     tau = np.clip(tau, 1e-6, 5)
     return tau
+
 
 # define slope diffuse
 def slope_diff (md, rd, hd, h0):
@@ -190,6 +197,9 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
     XH = 0.72
     h0log = np.log10(float(h0))
 
+    sigma_g_d = mgasd/h0/(2.0 * 3.1416 * (rgasd/h0*1e3)**2.0)
+    sigma_g_b = mgasb/h0/(2.0 * 3.1416 * (rgasb/h0*1e3)**2.0)
+
 
     (mdustd, DToM_MW) = dust_mass(mzd, mgasd, h0)
     (mdustb, DToM_MW) = dust_mass(mzb, mgasb, h0)
@@ -202,8 +212,8 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
     (tau_dust_bulge, sigmab) = tau_diff(mdustb, rgasb, rgasb, h0)
     (tau_dust_disk, sigmad) = tau_diff(mdustd, rgasd, bd, h0)
     
-    tau_clump_bulge = tau_clump(mzb, mgasb, tau_dust_bulge, h0)
-    tau_clump_disk  = tau_clump(mzd, mgasd, tau_dust_disk, h0)
+    tau_clump_bulge = tau_clump(mzb, mgasb, tau_dust_bulge, h0, sigma_g_b)
+    tau_clump_disk  = tau_clump(mzd, mgasd, tau_dust_disk, h0, sigma_g_d)
     slope_dust_bulge = slope_diff(mdustb, rgasb, rgasb, h0) 
     slope_dust_disk  = slope_diff(mdustd, rgasd, bd, h0)
 
