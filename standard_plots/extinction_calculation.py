@@ -43,7 +43,7 @@ polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238]
 
 #choose dust model between mm14, rr14 and constdust
 m14 = False
-rr14 = False
+rr14 = True
 constdust = False
 rr14xcoc = False
 
@@ -135,13 +135,13 @@ def tau_diff (md, rd, hd, h0):
         tau[selecinrage] = tau[selecinrage] + pert
 
     # cap it to maximum and minimum values in EAGLE
-    tau = np.clip(tau, 1e-6, 5) 
+    tau = np.clip(tau, 1e-6, 2.5) 
 
     return (tau, sigma) 
 
 # define clump tau
 
-def tau_clump(mz,mg,tdiff, h0, sigmag):
+def tau_clump(mz,mg,tdiff, h0, sigmag, tau_diff):
     sigmaclump = np.zeros(shape = len(mg))
     sigmaclump[:] = 100.0*1e6 #in Msun/kpc^3
     ind = np.where(sigmaclump < sigmag)
@@ -149,10 +149,12 @@ def tau_clump(mz,mg,tdiff, h0, sigmag):
     tau = np.zeros(shape = len(mz))
     ind = np.where((mz > 0) & (mg > 0))
     (md, DToM_MW)  = dust_mass(mz[ind],mg[ind],h0)
-    norm = 100.0*1e6 * zsun #dust surface density of clumps
-    tau[ind] = 1. * (sigmaclump[ind] * mz[ind]/mg[ind] / norm)
+    norm = 100.0*1e6 * DToM_MW * zsun #dust surface density of clumps
+    tau[ind] = 1.5 * (sigmaclump[ind] * md/mg[ind] / norm)
+    ind = np.where(tau < tau_diff)
+    tau[ind] = tau_diff[ind]
     # cap it to maximum and minimum values in EAGLE but also forcing the clump tau to be at least as high as the diffuse tau
-    tau = np.clip(tau, 1e-6, 5)
+    tau = np.clip(tau, 1e-6, 1.5)
     return tau
 
 
@@ -212,8 +214,8 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
     (tau_dust_bulge, sigmab) = tau_diff(mdustb, rgasb, rgasb, h0)
     (tau_dust_disk, sigmad) = tau_diff(mdustd, rgasd, bd, h0)
     
-    tau_clump_bulge = tau_clump(mzb, mgasb, tau_dust_bulge, h0, sigma_g_b)
-    tau_clump_disk  = tau_clump(mzd, mgasd, tau_dust_disk, h0, sigma_g_d)
+    tau_clump_bulge = tau_clump(mzb, mgasb, tau_dust_bulge, h0, sigma_g_b, tau_dust_bulge)
+    tau_clump_disk  = tau_clump(mzd, mgasd, tau_dust_disk, h0, sigma_g_d, tau_dust_disk)
     slope_dust_bulge = slope_diff(mdustb, rgasb, rgasb, h0) 
     slope_dust_disk  = slope_diff(mdustd, rgasd, bd, h0)
 
@@ -221,7 +223,7 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
     # will write the hdf5 files with the CO SLEDs and relevant quantities
     # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
     ind = np.where( (mdisk +  mbulge) > 0)
-    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14.hdf5')
+    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14-testclump3.hdf5')
     print ('Will write extinction to %s' % file_to_write)
     hf = h5py.File(file_to_write, 'w')
     
