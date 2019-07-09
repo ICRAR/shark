@@ -141,7 +141,7 @@ def run_shark_hpc(particles, *args):
         modeldir = common.get_shark_output_dir(particle_outdir, simu, model)
         fx[i] = [_evaluate(c, statTest, modeldir, subvols) for c in opts.constraints]
         if not opts.keep:
-            shutil.rmtree(particle_outdir)
+            shutil.rmtree(particle_outdir, ignore_errors=True)
 
     fx = np.sum(fx, 1)
     logger.info('Particles %r evaluated to %r', particles, fx)
@@ -172,6 +172,6 @@ def run_shark(particle, *args):
     logger.info('Particle %r evaluated to %f', particle, total)
 
     if not opts.keep:
-        shutil.rmtree(shark_output_base)
+        shutil.rmtree(shark_output_base, ignore_errors=True)
 
     return total
