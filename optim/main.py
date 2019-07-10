@@ -44,8 +44,7 @@ import pso
 
 logger = logging.getLogger('main')
 
-def setup_logging(outdir):
-    log_fname = os.path.join(outdir, 'shark_pso.log')
+def setup_logging(outdir=None):
     fmt = '%(asctime)-15s %(name)s#%(funcName)s:%(lineno)s %(message)s'
     fmt = logging.Formatter(fmt)
     fmt.converter = time.gmtime
@@ -53,9 +52,57 @@ def setup_logging(outdir):
     h = logging.StreamHandler(stream=sys.stdout)
     h.setFormatter(fmt)
     logging.root.addHandler(h)
-    h = logging.FileHandler(log_fname)
-    h.setFormatter(fmt)
-    logging.root.addHandler(h)
+    if outdir:
+        log_fname = os.path.join(outdir, 'shark_pso.log')
+        h = logging.FileHandler(log_fname)
+        h.setFormatter(fmt)
+        logging.root.addHandler(h)
+
+
+def add_constraint_argument(parser):
+    parser.add_argument(
+        '-x',
+        '--constraints',
+        default='HIMF,SMF_z0,SMF_z1',
+        type=constraints.parse,
+        help=("Comma-separated list of constraints, any of HIMF, SMF_z0 or "
+              "SMF_z1, defaults to 'HIMF,SMF_z0,SMF_z1'. Can specify a domain "
+              "range after the name (e.g., 'SMF_z0(8-11)') and/or a relative "
+              "weight (e.g. 'HIMF*6,SMF_z0(8-11)*10)'")
+    )
+
+def evaluation_main(parser, args):
+    parser.add_argument('-c', '--config', help='Configuration file used as the basis for running shark', type=_abspath)
+    parser.add_argument('output_dir', help='Directories containing shark outputs', type=_abspath, nargs='+')
+    parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
+    parser.add_argument('-m', '--individual-subvolumes', help='Subvolumes are stored separately (so the output is not coming from a PSO run)', action='store_true')
+    parser.add_argument('-t', '--stat-test', help='Stat function used to calculate the value of a particle, defaults to student-t',
+                      default='student-t', choices=list(analysis.stat_tests.keys()))
+    add_constraint_argument(parser)
+    opts = parser.parse_args(args)
+
+    if not opts.config:
+        parser.error('-c option is mandatory but missing')
+
+    setup_logging()
+
+    stat_test = analysis.stat_tests[opts.stat_test]
+    subvols = common.parse_subvolumes(opts.subvolumes)
+    _, simu, model, redshift_file = common.read_configuration(opts.config)
+    redshift_table = common._redshift_table(redshift_file)
+    for c in opts.constraints:
+        c.redshift_table = redshift_table
+        if opts.individual_subvolumes:
+            c.convert_to_multiple_batches = False
+        c.full_string_repr = False
+
+    results = []
+    for output_dir in opts.output_dir:
+        modeldir = common.get_shark_output_dir(output_dir, simu, model)
+        logger.info('Getting for model %s with subvolumes %r and test function %s',
+                    modeldir, subvols, opts.stat_test)
+        results.append(constraints.evaluate(opts.constraints, stat_test, modeldir, subvols))
+    constraints.log_results(opts.constraints, results)
 
 
 def pso_run_main(parser, args):
@@ -77,10 +124,7 @@ def pso_run_main(parser, args):
                           default='space.txt', type=_abspath)
     pso_opts.add_argument('-t', '--stat-test', help='Stat function used to calculate the value of a particle, defaults to student-t',
                           default='student-t', choices=list(analysis.stat_tests.keys()))
-    pso_opts.add_argument('-x', '--constraints', default='HIMF,SMF_z0,SMF_z1',
-                          help=("Comma-separated list of constraints, any of HIMF, SMF_z0 or SMF_z1, defaults to 'HIMF,SMF_z0,SMF_z1'. "
-                                "Can specify a domain range after the name (e.g., 'SMF_z0(8-11)')"
-                                "and/or a relative weight (e.g. 'HIMF*6,SMF_z0(8-11)*10)'"))
+    add_constraint_argument(pso_opts)
 
     hpc_opts = parser.add_argument_group('HPC options')
     hpc_opts.add_argument('-H', '--hpc-mode', help='Enable HPC mode', action='store_true')
@@ -113,7 +157,6 @@ def pso_run_main(parser, args):
 
     setup_logging(opts.outdir)
 
-    opts.constraints = constraints.parse(opts.constraints)
     for c in opts.constraints:
         c.redshift_table = redshift_table
 
@@ -201,6 +244,7 @@ def pso_run_main(parser, args):
 
 commands = {
     'run': ('Runs the main shark PSO routine', pso_run_main),
+    'offline_eval': ('Evaluates an existing set of shark outputs', evaluation_main)
 }
 
 def print_usage(prgname):
