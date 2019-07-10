@@ -22,13 +22,16 @@
 Constraints for optimizers to evaluate shark models against observations
 """
 
+import logging
 import os
+import re
 
 import common
 import numpy as np
 import smf
-import re
 
+
+logger = logging.getLogger(__name__)
 
 GyrToYr = 1e9
 
@@ -235,6 +238,29 @@ def evaluate(constraints, stat_test, modeldir, subvols):
     """Returns the evaluation of all constraints, as a total number (default)
     or as individual numbers for each constraint"""
     return [_evaluate(c, stat_test, modeldir, subvols) for c in constraints]
+
+
+def log_results(constraints, results):
+    """Emits a log message showing the function evaluation for `constraints`"""
+
+    sums = [sum(result) for result in results]
+    min_idx = min(enumerate(sums), key=lambda enumerated_sum: enumerated_sum[1])[0]
+    min_flags = [idx == min_idx for idx in range(len(sums))]
+
+    n_cols = len(constraints) + 1
+    msg = 'Particle evaluation results per-particle, per-constraint:\n'
+    args = ()
+    msg += ' ' * 3 + ' '.join(["%20.20s"] * n_cols) + ' Min\n'
+    args += tuple(constraints)
+    args += 'Total',
+    msg += ' ' * 3 + ' '.join(["=" * 20] * n_cols) + ' ===\n'
+    for particle_num, (result, min_flag) in enumerate(zip(results, min_flags)):
+        msg += '%2d' + ' ' + ' '.join(['%20e'] * len(constraints)) + ' %20e %2s\n'
+        args += particle_num,
+        args += tuple(result)
+        args += sum(result),
+        args += '*' if min_flag else '',
+    logger.info(msg, *args)
 
 
 _constraint_re = re.compile((r'([0-9_a-zA-Z]+)' # name

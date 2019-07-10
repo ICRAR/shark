@@ -133,6 +133,7 @@ def run_shark_hpc(particles, *args):
         if not opts.keep:
             shutil.rmtree(particle_outdir)
 
+    constraints.log_results(opts.constraints, results)
     results = np.sum(results, axis=1)
     logger.info('Particles %r evaluated to %r', particles, results)
 
@@ -159,6 +160,7 @@ def run_shark(particle, *args):
     _exec_shark('Executing shark instance', cmdline)
 
     results = constraints.evaluate(opts.constraints, statTest, modeldir, subvols)
+    constraints.log_results(constraints, [results])
     total = sum(results)
     logger.info('Particle %r evaluated to %f', particle, total)
 
