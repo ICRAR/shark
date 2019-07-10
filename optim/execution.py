@@ -46,6 +46,29 @@ def job_is_alive(job_id):
         raise RuntimeError("squeue failed with code %d: stdout: %s, stderr: %s" % (code, out, err))
     return len([l for l in out.splitlines() if job_id in l]) > 0
 
+
+def cancel_job(job_id):
+    """Cancels `job_id` by removing it from the queue"""
+    logger.info('Cancelling job %s', job_id)
+    try:
+        out, err, code = common.exec_command(['scancel', job_id])
+    except OSError:
+        raise RuntimeError("Couldn't run scancel, is it installed?")
+    if code:
+        raise RuntimeError("scancel failed with code %d: stdout: %s, stderr: %s" % (code, out, err))
+
+    tries = 0
+    max_tries = 20
+    logger.debug('Checking that job %s has been successfully cancelled', job_id)
+    while job_is_alive(job_id) and tries < max_tries:
+        time.sleep(1)
+        tries += 1
+    if tries == max_tries:
+        logger.warning('Job ID %s is still alive, you will need to cancel it manually', job_id)
+    else:
+        logger.info('Job %s successfully cancelled', job_id)
+
+
 def _exec_shark(msg, cmdline):
     logger.info('%s with command line: %s', msg, subprocess.list2cmdline(cmdline))
     out, err, code = common.exec_command(cmdline)
@@ -120,8 +143,12 @@ def run_shark_hpc(particles, *args):
         raise RuntimeError("Couldn't get the ID of the new submitted job, cannot continue")
 
     # Actually wait for the job to finish...
-    while job_is_alive(job_id):
-        time.sleep(10)
+    try:
+        while job_is_alive(job_id):
+            time.sleep(10)
+    except KeyboardInterrupt:
+        cancel_job(job_id)
+        raise
 
     ss = len(particles)
     results = np.zeros([ss, len(opts.constraints)])
