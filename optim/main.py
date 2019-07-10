@@ -230,16 +230,19 @@ def pso_run_main(parser, args):
     tStart = time.time()
     if opts.hpc_mode:
         os.chdir('../hpc')
-    xopt, fopt = pso.pso(f, space['lb'], space['ub'], args=args, swarmsize=ss,
-                         maxiter=opts.max_iterations, processes=procs,
-                         dumpfile_prefix=os.path.join(tracksdir, 'track_%03d'))
-    tEnd = time.time()
+    try:
+        xopt, fopt = pso.pso(f, space['lb'], space['ub'], args=args, swarmsize=ss,
+                             maxiter=opts.max_iterations, processes=procs,
+                             dumpfile_prefix=os.path.join(tracksdir, 'track_%03d'))
+    except (KeyboardInterrupt, execution.AbortedByUser):
+        logger.info('Execution aborted by user, finishing PSO')
+        return
 
     global count
     logger.info('Number of iterations = %d', count)
     logger.info('xopt = %r', xopt)
     logger.info('fopt = %r', fopt)
-    logger.info('PSO finished in %.3f [s]', tEnd - tStart)
+    logger.info('PSO finished in %.3f [s]', time.time() - tStart)
 
 
 commands = {

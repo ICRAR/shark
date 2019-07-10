@@ -36,6 +36,12 @@ import constraints
 
 logger = logging.getLogger(__name__)
 
+
+class AbortedByUser(Exception):
+    """Signals that the execution was aborted by the user"""
+    pass
+
+
 def job_is_alive(job_id):
     """Returns whether `job_id` is still "alive" (i.e., in the queue) or not"""
     try:
@@ -148,7 +154,7 @@ def run_shark_hpc(particles, *args):
             time.sleep(10)
     except KeyboardInterrupt:
         cancel_job(job_id)
-        raise
+        raise AbortedByUser
 
     ss = len(particles)
     results = np.zeros([ss, len(opts.constraints)])
@@ -184,7 +190,10 @@ def run_shark(particle, *args):
                '-o', 'execution.simulation_batches=%s' % ' '.join(map(str, subvols))]
     for option in _to_shark_options(particle, space):
         cmdline += ['-o', option]
-    _exec_shark('Executing shark instance', cmdline)
+    try:
+        _exec_shark('Executing shark instance', cmdline)
+    except KeyboardInterrupt:
+        raise AbortedByUser
 
     results = constraints.evaluate(opts.constraints, statTest, modeldir, subvols)
     constraints.log_results(constraints, [results])
