@@ -28,11 +28,18 @@ import utilities_statistics as us
 
 ##################################
 # Constants
-mlow = 6.0
-mupp = 12.0
+mlow = 0.0
+mupp = 12.5
 dm = 0.2
 mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
+
+tlow = 0.0
+tupp = 5
+dt = 0.15
+tbins = np.arange(tlow, tupp, dt)
+xtf = tbins + dt/2.0
+
 
 zsun = 0.02 #189
 MpctoKpc = 1e3
@@ -44,8 +51,8 @@ polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238]
 #choose dust model between mm14, rr14 and constdust
 m14 = False
 rr14 = False
-constdust = True
-rr14xcoc = False
+constdust = False
+rr14xcoc = True
 
 #read EAGLE tables
 sdust_eaglet, taumed_eagle, taulow_eagle, tauhigh_eagle = common.load_observation('../data', 'Models/EAGLE/Tau5500-Trayford-EAGLE.dat', [0,1,2,3])
@@ -57,7 +64,7 @@ def interp (sdust_eagle, med_eagle, low_eagle, high_eagle):
     low = np.zeros(shape = (2,len(sdust_eagle)-1))
     hig = np.zeros(shape = (2,len(sdust_eagle)-1))
    
-    for i in range(0,len(sdust_eaglet)-1):
+    for i in range(0,len(sdust_eagle)-1):
         delta_dust = sdust_eagle[i+1] - sdust_eagle[i]
         med[0,i] = (med_eagle[i+1] - med_eagle[i] ) / delta_dust
         med[1,i] =  med_eagle[i+1]- med[0,i] * sdust_eagle[i+1]
@@ -139,7 +146,23 @@ def tau_diff (md, rd, hd, h0):
     return (tau, sigma) 
 
 # define clump tau
-def tau_clump(mz,mg,tdiff, h0):
+def tau_clump(mz,mg, h0, sigmag, tau_diff):
+    sigmaclump = np.zeros(shape = len(mg))
+    sigmaclump[:] = 85.0*1e6 #in Msun/kpc^3
+    ind = np.where(sigmaclump < sigmag)
+    sigmaclump[ind] = sigmag[ind]
+    tau = np.zeros(shape = len(mz))
+    ind = np.where((mz > 0) & (mg > 0))
+    (md, DToM_MW)  = dust_mass(mz[ind],mg[ind],h0)
+    norm = 85.0*1e6 * DToM_MW * zsun #dust surface density of clumps
+    tau[ind] = 0.5 * (sigmaclump[ind] * md/(mg[ind]/h0) / norm)
+    ind = np.where(tau < tau_diff)
+    tau[ind] = tau_diff[ind]
+    # cap it to maximum and minimum values in EAGLE but also forcing the clump tau to be at least as high as the diffuse tau
+    tau = np.clip(tau, 1e-6, 5)
+    return tau
+
+def tau_clump2(mz,mg,h0):
     tau = np.zeros(shape = len(mz))
     ind = np.where((mz > 0) & (mg > 0))
     (md, DToM_MW)  = dust_mass(mz[ind],mg[ind],h0)
@@ -147,6 +170,7 @@ def tau_clump(mz,mg,tdiff, h0):
     # cap it to maximum and minimum values in EAGLE but also forcing the clump tau to be at least as high as the diffuse tau
     tau = np.clip(tau, 1e-6, 5)
     return tau
+
 
 # define slope diffuse
 def slope_diff (md, rd, hd, h0):
@@ -185,12 +209,14 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
     yleg = ymax - 0.1 * (ymax-ymin)
     #ax.text(xleg, yleg, 'z=0')
 
-def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo,  m_diff, model_dir, snapshot, subvol, writeon):
+def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo,  m_diff, hist_sigmad, tau_comp, 
+                 model_dir, snapshot, subvol, writeon):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
+    bin_it_tau = functools.partial(us.wmedians, xbins=xtf)
 
     # Unpack data
-    (h0, _, typeg, rgasd, rgasb, mHId, mH2d, mgasd, mHIb, mH2b, mgasb, mzd, mzb, mdisk, mbulge, sfrd, sfrb, idgal) = hdf5_data
+    (h0, volh, typeg, rgasd, rgasb, mHId, mH2d, mgasd, mHIb, mH2b, mgasb, mzd, mzb, mdisk, mbulge, sfrd, sfrb, idgal) = hdf5_data
     XH = 0.72
     h0log = np.log10(float(h0))
 
@@ -208,11 +234,18 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_
     (tau_dust_bulge, sigmab) = tau_diff(mdustb, rgasb, rgasb, h0)
     (tau_dust_disk, sigmad) = tau_diff(mdustd, rgasd, bd, h0)
     
-    tau_clump_bulge = tau_clump(mzb, mgasb, tau_dust_bulge, h0)
-    tau_clump_disk  = tau_clump(mzd, mgasd, tau_dust_disk, h0)
+    tau_clump_bulge = tau_clump(mzb, mgasb, h0, sigma_g_b, tau_dust_bulge)
+    tau_clump_disk  = tau_clump(mzd, mgasd, h0, sigma_g_d, tau_dust_disk)
     slope_dust_bulge = slope_diff(mdustb, rgasb, rgasb, h0) 
     slope_dust_disk  = slope_diff(mdustd, rgasd, bd, h0)
 
+    tau_clump_bulge2 = tau_clump2(mzb, mgasb, h0)
+    tau_clump_disk2  = tau_clump2(mzd, mgasd, h0)
+
+    ind = np.where((tau_clump_disk > 0) & (tau_clump_disk2 > 0))
+    tau_comp[index,0,:] = bin_it_tau(x=tau_clump_disk2[ind], y=tau_clump_disk[ind])
+    ind = np.where((tau_clump_bulge > 0) & (tau_clump_bulge2 > 0))
+    tau_comp[index,1,:] = bin_it_tau(x=tau_clump_bulge2[ind], y=tau_clump_bulge[ind])
 
     mass = np.log10((mdisk +  mbulge)/h0)
     #ignore these low mass satellites because they are not converged
@@ -226,7 +259,9 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_
     m_diff[index,0,:]  = bin_it(x=mass[ind], y=slope_dust_disk[ind])
     sigmad_diff[index,0,:]  = bin_it(x=mass[ind], y=sigmad[ind])
     sigmag_diff[index,0,:]  = bin_it(x=mass[ind], y=np.log10(sigma_g_d[ind]))
-    print sigmag_diff[index,0,:]
+    H, _ = np.histogram(sigmad[ind],bins=np.append(mbins,mupp))
+    hist_sigmad[0,index,:] = hist_sigmad[0,index,:] + H
+    met_evo[index,0,:] = bin_it(x=mass[ind], y=np.log10((mzd[ind])/(mgasd[ind])/zsun))
 
     ind = np.where((mass >= 6) & (sfrb > 0))
     tdiff[index,1,:]  = bin_it(x=mass[ind], y=tau_dust_bulge[ind])
@@ -234,30 +269,19 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_
     sigmad_diff[index,1,:]  = bin_it(x=mass[ind], y=sigmab[ind])
     m_diff[index,1,:]  = bin_it(x=mass[ind], y=slope_dust_bulge[ind])
     sigmag_diff[index,1,:]  = bin_it(x=mass[ind], y=np.log10(sigma_g_b[ind]))
+    H, _ = np.histogram(sigmad[ind],bins=np.append(mbins,mupp))
+    hist_sigmad[1,index,:] = hist_sigmad[1,index,:] + H
+    #divide by volume and interval
+    hist_sigmad[0,index,:] = hist_sigmad[0,index,:] / volh / dm
+    hist_sigmad[1,index,:] = hist_sigmad[1,index,:] / volh / dm
+    ind = np.where((mass >= 6) & (mgasb > 0))
+    met_evo[index,1,:] = bin_it(x=mass[ind], y=np.log10((mzb[ind])/(mgasb[ind])/zsun))
 
     ind = np.where((mass >= 6) & (sfrd + sfrb > 0))
     sfr_rat[index,:] = bin_it(x=mass[ind], y=sfrb[ind]/(sfrd[ind]+sfrb[ind]))
-    met_evo[index,:] = bin_it(x=mass[ind], y=np.log10((mzd[ind]+mzb[ind])/(mgasd[ind]+mgasb[ind])/zsun))
 
-    if(writeon):
-        # will write the hdf5 files with the CO SLEDs and relevant quantities
-        # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
-        ind = np.where( (mdisk +  mbulge) > 0)
-        file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14.hdf5')
-        print ('Will write extinction to %s' % file_to_write)
-        hf = h5py.File(file_to_write, 'w')
-       
-        hf.create_dataset('galaxies/tau_diff_disk', data=tau_dust_disk[ind])
-        hf.create_dataset('galaxies/tau_diff_bulge', data=tau_dust_bulge[ind])
-        hf.create_dataset('galaxies/tau_clump_disk', data=tau_clump_disk[ind])
-        hf.create_dataset('galaxies/tau_clump_bulge', data=tau_clump_bulge[ind])
-        hf.create_dataset('galaxies/m_diff_disk', data=slope_dust_disk[ind])
-        hf.create_dataset('galaxies/m_diff_bulge', data=slope_dust_bulge[ind])
-        hf.create_dataset('galaxies/id_galaxy', data=idgal[ind])
-        hf.create_dataset('galaxies/inclination', data=inclination[ind])
-        hf.close()
-
-def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, m_diff, zlist):
+def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, m_diff, 
+              hist_sigmad, tau_comp, zlist):
 
     #tau diffuse medium
     fig = plt.figure(figsize=(14,4.5))
@@ -304,15 +328,50 @@ def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat,
                ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colors[i], alpha=0.45,interpolate=True)
         if(s <= 1):
            x=[6,12]
-           y=[0.5,0.5]
+           y=[0.3,0.3]
            ax.plot(x,y,linestyle='solid',color='k')
         else:
            x=[6,12]
-           y=[1.5,1.5]
+           y=[1,1]
            ax.plot(x,y,linestyle='solid',color='k')
 
     common.prepare_legend(ax, colors, loc='lower right')
     common.savefig(output_dir, fig, "extinction_EAGLE_predictions.pdf")
+
+    #tau comparison 
+    fig = plt.figure(figsize=(7,4.5))
+
+    xmin, xmax, ymin, ymax = 0,5, 0.0, 5
+    xtit="$\\tau_{\\rm clump,simple}$"
+    ytit="$\\tau_{\\rm clump, complex}$"
+
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    subplots = (121, 122)
+    labels = ('disk','bulge')
+
+    for j in range(0,len(subplots)):
+        ax = fig.add_subplot(subplots[j])
+        prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
+        ax.text(xleg, yleg, labels[j])
+
+        for i in range(0,len(tau_comp[:,j,0,0])):
+            # Predicted relation
+            ind = np.where(tau_comp[i,j,0,:] > 0)
+            xplot = xtf[ind]
+            yplot = tau_comp[i,j,0,ind]
+            errdn = tau_comp[i,j,1,ind]
+            errup = tau_comp[i,j,2,ind]
+            ax.plot(xplot,yplot[0],color=colors[i],label='z=%s' % str(zlist[i]))
+            #ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=colors[i], alpha=0.5,interpolate=True)
+            #ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colors[i], alpha=0.5,interpolate=True)
+
+        x=[0,5]
+        y=[0,5]
+        ax.plot(x,y,linestyle='solid',color='k')
+    common.prepare_legend(ax, colors, loc='upper left')
+    common.savefig(output_dir, fig, "tau_clumps_comparison.pdf")
 
     #tau clumps 
     fig = plt.figure(figsize=(7,4.5))
@@ -385,23 +444,60 @@ def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat,
         ax.plot(x,y,linestyle='solid',color='k')
     common.savefig(output_dir, fig, "slope_extinction_diffuse_EAGLE_predictions.pdf")
 
+    #distribution of surface densities of dust
+    fig = plt.figure(figsize=(7,4.5))
+
+    xmin, xmax, ymin, ymax = 0.3, 10.5, -6, -1
+    xtit="$\\rm log_{10} (\\Sigma_{\\rm dust}/M_{\odot} kpc^{-2})$"
+    ytit="$\\rm log_{10}(\Phi/dlog_{10}({\\Sigma_{\\rm dust}})/{\\rm Mpc}^{-3} )$"
+
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    subplots = (211, 212)
+    labels = ('disk','bulge')
+
+    for j in range(0,len(subplots)):
+        ax = fig.add_subplot(subplots[j])
+        if(j == 1):
+           ytitle = ''
+        else:
+           ytitle = ytit
+        prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle)
+
+        ax.text(xleg, yleg, labels[j])
+        for i in range(0,len(zlist)):
+            # Predicted relation
+            ind = np.where(hist_sigmad[j,i,:] != 0)
+            xplot = xmf[ind]
+            yplot = hist_sigmad[j,i,ind]
+            errdn = hist_sigmad[j,i,ind]
+            errup = hist_sigmad[j,i,ind]
+            ax.plot(xplot,yplot[0],color=colors[i],label='z=%s' % str(zlist[i]))
+
+    #common.prepare_legend(ax, colors, loc='upper left')
+    common.savefig(output_dir, fig, "sigma_dust_predictions_distribution.pdf")
 
     #surface densities of dust
     fig = plt.figure(figsize=(7,4.5))
 
-    xmin, xmax, ymin, ymax = 6.0, 12.0, 0, 8.1
+    xmin, xmax, ymin, ymax = 6, 12.0, 0, 9
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10} (\\Sigma_{\\rm dust}/M_{\odot} kpc^{-2})$"
 
     xleg = xmax - 0.2 * (xmax - xmin)
-    yleg = ymax - 0.1 * (ymax - ymin)
+    yleg = ymin + 0.1 * (ymax - ymin)
 
     subplots = (121, 122)
     labels = ('disk','bulge')
 
     for j in range(0,len(subplots)):
         ax = fig.add_subplot(subplots[j])
-        prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
+        if(j == 1):
+           ytitle = ''
+        else:
+           ytitle=ytit
+        prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle)
         ax.text(xleg, yleg, labels[j])
 
         for i in range(0,len(sigmad_diff[:,j,0,0])):
@@ -414,8 +510,8 @@ def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat,
             ax.plot(xplot,yplot[0],color=colors[i],label='z=%s' % str(zlist[i]))
             ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=colors[i], alpha=0.5,interpolate=True)
             ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colors[i], alpha=0.5,interpolate=True)
-
-    common.prepare_legend(ax, colors, loc='upper left')
+        if(j == 0):
+           common.prepare_legend(ax, colors, loc='upper left')
     common.savefig(output_dir, fig, "sigma_dust_predictions.pdf")
 
     #surface densities of gas
@@ -478,7 +574,7 @@ def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat,
     common.savefig(output_dir, fig, "sfr_ratio_predictions.pdf")
 
     #metallicity evolution
-    fig = plt.figure(figsize=(4.5,4.5))
+    fig = plt.figure(figsize=(7,4.5))
 
     xmin, xmax, ymin, ymax = 6.0, 12.0, -2, 0.8
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -487,22 +583,26 @@ def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat,
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
-    ax = fig.add_subplot(111)
-    prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
-    plt.subplots_adjust(left=0.2)
+    subplots = (121, 122)
+    labels = ('disk','bulge')
 
-    for i in range(0,len(sfr_rat[:,0,0])):
-        # Predicted relation
-        ind = np.where(met_evo[i,0,:] != 0)
-        xplot = xmf[ind]
-        yplot = met_evo[i,0,ind]
-        errdn = met_evo[i,1,ind]
-        errup = met_evo[i,2,ind]
-        ax.plot(xplot,yplot[0],color=colors[i],label='z=%s' % str(zlist[i]))
-        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=colors[i], alpha=0.5,interpolate=True)
-        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colors[i], alpha=0.5,interpolate=True)
+    for j in range(0,len(subplots)):
+        ax = fig.add_subplot(subplots[j])
+        prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
+        ax.text(xleg, yleg, labels[j])
 
-    common.prepare_legend(ax, colors, loc='lower right')
+        for i in range(0,len(met_evo[:,j,0,0])):
+            # Predicted relation
+            ind = np.where(met_evo[i,j,0,:] != 0)
+            xplot = xmf[ind]
+            yplot = met_evo[i,j,0,ind]
+            errdn = met_evo[i,j,1,ind]
+            errup = met_evo[i,j,2,ind]
+            ax.plot(xplot,yplot[0],color=colors[i],label='z=%s' % str(zlist[i]))
+            ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=colors[i], alpha=0.5,interpolate=True)
+            ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colors[i], alpha=0.5,interpolate=True)
+
+    common.prepare_legend(ax, colors, loc='upper left')
     common.savefig(output_dir, fig, "metallicity_evo_predictions.pdf")
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
@@ -519,21 +619,28 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     tau_cloud = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
     sigmad_diff = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
     sigmag_diff = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
+    hist_sigmad       = np.zeros(shape = (2, len(zlist), len(xmf)))
 
     m_diff = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
+    tau_comp = np.zeros(shape = (len(zlist), 2, 3, len(xtf)))
 
     sfr_rat = np.zeros(shape = (len(zlist), 3, len(xmf)))
-    met_evo = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    met_evo = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
     
     writeon = False
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
-        prepare_data(hdf5_data, index, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, m_diff, model_dir, snapshot, subvols, writeon)
+        prepare_data(hdf5_data, index, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, 
+                     met_evo, m_diff, hist_sigmad, tau_comp, model_dir, snapshot, subvols, writeon)
 
-    output_dir = os.path.join(output_dir, 'eagle-const')
+    ind = np.where(hist_sigmad > 0.)
+    hist_sigmad[ind] = np.log10(hist_sigmad[ind])
 
-    plot_taus(plt, output_dir, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, m_diff, zlist)
+    output_dir = os.path.join(output_dir, 'eagle-rr14-steep')
+
+    plot_taus(plt, output_dir, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, 
+              m_diff, hist_sigmad, tau_comp, zlist)
 
 if __name__ == '__main__':
     main(*common.parse_args())

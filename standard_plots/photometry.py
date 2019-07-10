@@ -1003,11 +1003,11 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     for subplot, idx, b in zip(subplots, idx, bands):
 
         ax = fig.add_subplot(subplot)
-        if (idx == 0 or idx == 3 or idx == 6):
+        if (idx == 0 or idx == 2 or idx == 4):
             ytitplot = ytit
         else:
             ytitplot = ' '
-        if (idx == 5 or idx == 6 or idx == 7):
+        if (idx == 3 or idx == 4):
             xtitplot = xtit
         else:
             xtitplot = ' '
@@ -1023,7 +1023,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             #plot same line to get the right labels
             ind = np.where(LFs_dust[1,4,b,:] < 0.)
             y = LFs_dust[1,4,b,ind]-np.log10(dm)
-            ax.plot(xlf_obs[ind],y[0],'SlateGray', linewidth=2, label ='Shark z=0.25')
+            ax.plot(xlf_obs[ind],y[0],'SlateGray', linewidth=1, label ='Shark z=0.5')
 
             ind = np.where(LFs_dust[0,3,b,:] < 0.)
             y = LFs_dust[0,3,b,ind]-np.log10(dm)
@@ -1038,9 +1038,9 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ind = np.where(LFs_dust[0,4,b,:] < 0.)
             y = LFs_dust[0,4,b,ind]-np.log10(dm)
             ax.plot(xlf_obs[ind],y[0],'k', linewidth=3)
-            ind = np.where(LFs_dust[1,4,b,:] < 0.)
-            y = LFs_dust[1,4,b,ind]-np.log10(dm)
-            ax.plot(xlf_obs[ind],y[0],'SlateGray', linewidth=2)
+            ind = np.where(LFs_dust[2,4,b,:] < 0.)
+            y = LFs_dust[2,4,b,ind]-np.log10(dm)
+            ax.plot(xlf_obs[ind],y[0],linewidth=1)
  
             ind = np.where(LFs_dust[0,3,b,:] < 0.)
             y = LFs_dust[0,3,b,ind]-np.log10(dm)
@@ -1058,6 +1058,19 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
            file = obsdir+'/lf/L160microns.dat'
            lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+           dml       = 0.15
+           xm        = [25.0,25.0]
+           xm[1]     = xm[1] + dml
+           tenpctocm = 3.086e19
+           corrpc    = np.log10(tenpctocm)*2.0
+           xobs      = -2.5*(lm[0:14]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+           xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+           dmm       = np.abs(xm[0] - xm[1])
+           yobs      = np.log10(pow(10.0,p[0:14]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           ydn       = np.log10(pow(10.0,dpn[0:14]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+           yup       = np.log10(pow(10.0,dpu[0:14]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+          
+           ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*')
  
            dml       = 0.4
            xm        = [25.0,25.0]
@@ -1090,7 +1103,23 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             yup       = np.log10((p[0:7]+ dp[0:7]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
            
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+         
+            file = obsdir+'/lf/L250microns.dat'
+            lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+            dml       = 0.15
+            xm        = [25.0,25.0]
+            xm[1]     = xm[1] + dml
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(lm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            pxm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            dmm       = np.abs(xm[0] - xm[1])
+            yobs      = np.log10(pow(10.0,p) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
            
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*')
+  
         if idx == 2:
             hobs = 0.7
             corrhobs = np.log10(hobs/h0)
@@ -1117,6 +1146,19 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
             file = obsdir+'/lf/L500microns.dat'
             lm,p,dpn,dpu = np.loadtxt(file,usecols=[0,1,2,3],unpack=True)
+            dml       = 0.2
+            xm        = [25.0,25.0]
+            xm[1]     = xm[1] + dml
+            tenpctocm = 3.086e19
+            corrpc    = np.log10(tenpctocm)*2.0
+            xobs      = -2.5*(lm[0:11]-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            xm        = -2.5*(xm-corrpc+7.0-np.log10(4.0*PI)) - 48.6 - hcorr + 5.0*corrhobs
+            dmm       = np.abs(xm[0] - xm[1])
+            yobs      = np.log10(pow(10.0,p[0:11]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            ydn       = np.log10(pow(10.0,dpn[0:11]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+            yup       = np.log10(pow(10.0,dpu[0:11]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
+
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*')
 
             dml       = 0.3
             xm        = [25.0,25.0]
@@ -1176,8 +1218,9 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='p',label="Patel+2013")
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Dye+2010")
             ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Negrello+2013")
+            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*',label="Marchetti+2016")
 
-            common.prepare_legend(ax, ['k','SlateGray','k','b','r','LightSalmon','grey','grey','grey','grey','grey','grey'], bbox_to_anchor=[1.1,-0.2])
+            common.prepare_legend(ax, ['k','k','b','r','LightSalmon','grey','grey','grey','grey','grey','grey'], bbox_to_anchor=[1.1,-0.2])
 
     common.savefig(outdir, fig, "IR_luminosity_functions_all_with_obs.pdf")
 
@@ -1255,7 +1298,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     z = (0, 0.25, 0.5,  2.0, 3.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
-    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
+    file_hdf5_sed = "Shark-SED-eagle-rr14-alphas.hdf5" #Shark-SED-eagle-rr14.hdf5"
     # Create histogram
     for index, snapshot in enumerate(snapshots):
 
@@ -1292,7 +1335,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14-steep')
+       outdir = os.path.join(outdir, 'eagle-rr14-alphas')
 
     plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
     plot_flux_contributions(plt, outdir, obsdir, h0, fdisk_emission, fbulge_m_emission, fbulge_d_emission)

@@ -57,7 +57,7 @@ def interp (sdust_eagle, med_eagle, low_eagle, high_eagle):
     low = np.zeros(shape = (2,len(sdust_eagle)-1))
     hig = np.zeros(shape = (2,len(sdust_eagle)-1))
    
-    for i in range(0,len(sdust_eaglet)-1):
+    for i in range(0,len(sdust_eagle)-1):
         delta_dust = sdust_eagle[i+1] - sdust_eagle[i]
         med[0,i] = (med_eagle[i+1] - med_eagle[i] ) / delta_dust
         med[1,i] =  med_eagle[i+1]- med[0,i] * sdust_eagle[i+1]
@@ -135,12 +135,30 @@ def tau_diff (md, rd, hd, h0):
         tau[selecinrage] = tau[selecinrage] + pert
 
     # cap it to maximum and minimum values in EAGLE
-    tau = np.clip(tau, 1e-6, 5) 
+    tau = np.clip(tau, 1e-6, 2.5) 
 
     return (tau, sigma) 
 
 # define clump tau
-def tau_clump(mz,mg,tdiff, h0):
+
+def tau_clump(mz,mg,h0, sigmag, tau_diff):
+    sigmaclump = np.zeros(shape = len(mg))
+    sigmaclump[:] = 85.0*1e6 #in Msun/kpc^3
+    ind = np.where(sigmaclump < sigmag)
+    sigmaclump[ind] = sigmag[ind]
+    tau = np.zeros(shape = len(mz))
+    ind = np.where((mz > 0) & (mg > 0))
+    (md, DToM_MW)  = dust_mass(mz[ind],mg[ind],h0)
+    norm = 85.0*1e6 * DToM_MW * zsun #dust surface density of clumps
+    tau[ind] = 0.5 * (sigmaclump[ind] * md/(mg[ind]/h0) / norm)
+    ind = np.where(tau < tau_diff)
+    tau[ind] = tau_diff[ind]
+    # cap it to maximum and minimum values in EAGLE but also forcing the clump tau to be at least as high as the diffuse tau
+    tau = np.clip(tau, 1e-6, 5)
+    return tau
+
+
+def tau_clump2(mz,mg,h0):
     tau = np.zeros(shape = len(mz))
     ind = np.where((mz > 0) & (mg > 0))
     (md, DToM_MW)  = dust_mass(mz[ind],mg[ind],h0)
@@ -190,6 +208,9 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
     XH = 0.72
     h0log = np.log10(float(h0))
 
+    sigma_g_d = mgasd/h0/(2.0 * 3.1416 * (rgasd/h0*1e3)**2.0)
+    sigma_g_b = mgasb/h0/(2.0 * 3.1416 * (rgasb/h0*1e3)**2.0)
+
 
     (mdustd, DToM_MW) = dust_mass(mzd, mgasd, h0)
     (mdustb, DToM_MW) = dust_mass(mzb, mgasb, h0)
@@ -202,25 +223,28 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
     (tau_dust_bulge, sigmab) = tau_diff(mdustb, rgasb, rgasb, h0)
     (tau_dust_disk, sigmad) = tau_diff(mdustd, rgasd, bd, h0)
     
-    tau_clump_bulge = tau_clump(mzb, mgasb, tau_dust_bulge, h0)
-    tau_clump_disk  = tau_clump(mzd, mgasd, tau_dust_disk, h0)
+    tau_clump_bulge = tau_clump(mzb, mgasb, h0, sigma_g_b, tau_dust_bulge)
+    tau_clump_disk  = tau_clump(mzd, mgasd, h0, sigma_g_d, tau_dust_disk)
     slope_dust_bulge = slope_diff(mdustb, rgasb, rgasb, h0) 
     slope_dust_disk  = slope_diff(mdustd, rgasd, bd, h0)
+
+    tau_clump_bulge2 = tau_clump2(mzb, mgasb, h0)
+    tau_clump_disk2  = tau_clump2(mzd, mgasd, h0)
 
 
     # will write the hdf5 files with the CO SLEDs and relevant quantities
     # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
     ind = np.where( (mdisk +  mbulge) > 0)
-    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14.hdf5')
+    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14-testclump7.hdf5')
     print ('Will write extinction to %s' % file_to_write)
     hf = h5py.File(file_to_write, 'w')
     
-    hf.create_dataset('galaxies/tau_diff_disk', data=tau_dust_disk[ind])
-    hf.create_dataset('galaxies/tau_diff_bulge', data=tau_dust_bulge[ind])
-    hf.create_dataset('galaxies/tau_clump_disk', data=tau_clump_disk[ind])
-    hf.create_dataset('galaxies/tau_clump_bulge', data=tau_clump_bulge[ind])
-    hf.create_dataset('galaxies/m_diff_disk', data=slope_dust_disk[ind])
-    hf.create_dataset('galaxies/m_diff_bulge', data=slope_dust_bulge[ind])
+    hf.create_dataset('galaxies/tau_screen_disk', data=tau_dust_disk[ind])
+    hf.create_dataset('galaxies/tau_screen_bulge', data=tau_dust_bulge[ind])
+    hf.create_dataset('galaxies/tau_birth_disk', data=tau_clump_disk2[ind])
+    hf.create_dataset('galaxies/tau_birth_bulge', data=tau_clump_bulge2[ind])
+    hf.create_dataset('galaxies/pow_screen_disk', data=slope_dust_disk[ind])
+    hf.create_dataset('galaxies/pow_screen_bulge', data=slope_dust_bulge[ind])
     hf.create_dataset('galaxies/id_galaxy', data=idgal[ind])
     hf.create_dataset('galaxies/inclination', data=inclination[ind])
     hf.close()
