@@ -57,9 +57,9 @@ def setup_logging(outdir):
     h.setFormatter(fmt)
     logging.root.addHandler(h)
 
-def main():
 
-    parser = argparse.ArgumentParser()
+def pso_run_main(parser, args):
+
     parser.add_argument('-c', '--config', help='Configuration file used as the basis for running shark', type=_abspath)
     parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
     parser.add_argument('-b', '--shark-binary', help='The shark binary to use, defaults to either "shark" or "../build/shark"',
@@ -91,7 +91,7 @@ def main():
     hpc_opts.add_argument('-q', '--queue', help='Submit jobs to this queue', default=None)
     hpc_opts.add_argument('-w', '--walltime', help='Walltime for each submission, defaults to 1:00:00', default='1:00:00')
 
-    opts = parser.parse_args()
+    opts = parser.parse_args(args)
 
     if not opts.config:
         parser.error('-c option is mandatory but missing')
@@ -197,6 +197,46 @@ def main():
     logger.info('xopt = %r', xopt)
     logger.info('fopt = %r', fopt)
     logger.info('PSO finished in %.3f [s]', tEnd - tStart)
+
+
+commands = {
+    'run': ('Runs the main shark PSO routine', pso_run_main),
+}
+
+def print_usage(prgname):
+    print('Usage: %s [command] [options]' % (prgname))
+    print('')
+    print('\n'.join(['Commands are:'] + ['\t%-25.25s%s' % (cmdname,desc_and_f[0]) for cmdname,desc_and_f in sorted(commands.items())]))
+    print('')
+    print('Try %s [command] --help for more details' % (prgname))
+
+
+def main():
+
+    # Manually parse the first argument, which will be
+    # either -h/--help or a dlg command
+    # In the future we should probably use the argparse module
+    prgname = sys.argv[0]
+    if len(sys.argv) == 1:
+        print_usage(prgname)
+        sys.exit(1)
+
+    cmd = sys.argv[1]
+    sys.argv.pop(0)
+
+    if cmd in ['-h', '--help', 'help']:
+        print_usage(prgname)
+        sys.exit(0)
+
+    if cmd not in commands:
+        print("Unknown command: %s" % (cmd,))
+        print_usage(prgname)
+        sys.exit(1)
+
+    desc = commands[cmd][0]
+    parser = argparse.ArgumentParser(description=desc)
+    commands[cmd][1](parser, sys.argv[1:])
+
 
 if __name__ == '__main__':
     main()
