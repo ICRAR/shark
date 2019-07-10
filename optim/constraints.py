@@ -63,6 +63,8 @@ zeros5 = lambda: np.zeros(shape=(1, len(ssfrbins)))
 class Constraint(object):
     """Base classes for constraint objects"""
 
+    convert_to_multiple_batches = True
+
     def __init__(self):
         self.redshift_table = None
         self.weight = 1
@@ -70,7 +72,7 @@ class Constraint(object):
 
     def _load_model_data(self, modeldir, subvols):
 
-        if  len(subvols) > 1:
+        if  len(subvols) > 1 and self.convert_to_multiple_batches:
             subvols = ["multiple_batches"]
 
         # Histograms we are interested in
