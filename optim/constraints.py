@@ -221,6 +221,22 @@ class SMF_z1(SMF):
 
         return x_obs, y_obs, y_dn, y_up
 
+
+def _evaluate(constraint, stat_test, modeldir, subvols):
+    try:
+        y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
+        return stat_test(y_obs, y_mod, err) * constraint.weight
+    except:
+        logger.exception('Error while evaluating constraint, returning 1e20')
+        return 1e20
+
+
+def evaluate(constraints, stat_test, modeldir, subvols):
+    """Returns the evaluation of all constraints, as a total number (default)
+    or as individual numbers for each constraint"""
+    return [_evaluate(c, stat_test, modeldir, subvols) for c in constraints]
+
+
 _constraint_re = re.compile((r'([0-9_a-zA-Z]+)' # name
                               '(?:\(([0-9\.]+)-([0-9\.]+)\))?' # domain boundaries
                               '(?:\*([0-9\.]+))?')) # weight
