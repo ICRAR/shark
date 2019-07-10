@@ -21,6 +21,7 @@
 
 import argparse
 import collections
+import logging
 import os
 import subprocess
 import sys
@@ -38,6 +39,8 @@ else:
     b2s = lambda b: b.decode('ascii')
     raw_input = input
 
+
+logger = logging.getLogger(__name__)
 
 def _select_closest(i1, i2, z, redshifts):
     i1 = min(i1, len(redshifts) - 1)
@@ -188,7 +191,7 @@ def parse_args(requires_observations=True):
 
 def load_observation(obsdir, fname, cols):
     fname = os.path.join(obsdir, fname)
-    print("Loading observations from %s" % fname)
+    logger.info("Loading observations from %s", fname)
     return np.loadtxt(fname, usecols=cols, unpack=True)
 
 def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1), fontsize=13):
@@ -240,7 +243,7 @@ def errorbars(ax, x, y, yerrdn, yerrup, color, marker,
 
 def savefig(output_dir, fig, plotname):
     plotfile = os.path.join(output_dir, plotname)
-    print('Saving plot to %s' % plotfile)
+    logger.info('Saving plot to %s', plotfile)
     fig.savefig(plotfile, dvi=300, pad_inches=0)
 
 def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
@@ -250,7 +253,7 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     for idx, subv in enumerate(subvolumes):
 
         fname = os.path.join(model_dir, str(snapshot), str(subv), 'galaxies.hdf5')
-        print('Reading galaxies data from %s' % fname)
+        logger.info('Reading galaxies data from %s', fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0 and include_h0_volh:
                 data['h0'] = f['cosmology/h'].value
@@ -276,7 +279,7 @@ def read_sfh(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     for idx, subv in enumerate(subvolumes):
 
         fname = os.path.join(model_dir, str(snapshot), str(subv), 'star_formation_histories.hdf5')
-        print('Reading SFH data from %s' % fname)
+        logger.info('Reading SFH data from %s', fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0:
                 delta_t = f['delta_t'].value
@@ -303,7 +306,7 @@ def read_photometry_data(model_dir, snapshot, fields, subvolumes):
     for subv in subvolumes:
 
         fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED.hdf5')
-        print('Reading photometry data from %s' % fname)
+        logger.info('Reading photometry data from %s', fname)
 
         with h5py.File(fname, 'r') as f:
 
@@ -329,7 +332,7 @@ def read_photometry_data_variable_tau_screen(model_dir, snapshot, fields, subvol
     for subv in subvolumes:
 
         fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), file_hdf5_sed)
-        print('Reading photometry data from %s' % fname)
+        logger.info('Reading photometry data from %s', fname)
 
         with h5py.File(fname, 'r') as f:
 
