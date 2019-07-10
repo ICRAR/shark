@@ -166,11 +166,13 @@ def main():
     while True:
         answer = common.raw_input('\nAre these parameters correct? (Yes/no): ')
         if answer:
-            if answer.lower() in ('n', 'no'):
+            answer = answer.lower()
+            if answer in ('n', 'no'):
                 logger.info('Not starting PSO, check your configuration and try again')
                 return
-            print("Please answer 'yes' or 'no'")
-            continue
+            elif answer not in ('y', 'yes'):
+                print("Please answer 'yes' or 'no'")
+                continue
         break
 
     # Directory where we store the intermediate results
