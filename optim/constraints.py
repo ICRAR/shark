@@ -135,8 +135,11 @@ class Constraint(object):
         return y_obs[ind], y_mod[ind], err
 
     def __str__(self):
-        s = '%s, low=%.1f, up=%.1f, weight=%.2f, rel_weight=%.2f'
-        args = self.__class__.__name__, self.domain[0], self.domain[1], self.weight, self.rel_weight
+        s = '%s(%.1f-%.1f)'
+        args = self.__class__.__name__, self.domain[0], self.domain[1]
+        if self.weight != 1:
+            s += ', weight=%.2f, rel_weight=%.2f'
+            args += self.weight, self.rel_weight
         return s % args
 
 
