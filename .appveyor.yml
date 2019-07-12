@@ -36,6 +36,7 @@ install:
   - cmd: git clone https://github.com/CxxTest/cxxtest
   - cmd: cd c:\tools\vcpkg
   - cmd: git pull
+  - cmd: .\bootstrap-vcpkg.bat
   - cmd: vcpkg upgrade
   - cmd: vcpkg update
   - cmd: vcpkg integrate install
