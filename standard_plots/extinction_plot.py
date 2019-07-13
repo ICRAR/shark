@@ -50,9 +50,9 @@ polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238]
 
 #choose dust model between mm14, rr14 and constdust
 m14 = False
-rr14 = False
+rr14 = True
 constdust = False
-rr14xcoc = True
+rr14xcoc = False
 
 #read EAGLE tables
 sdust_eaglet, taumed_eagle, taulow_eagle, tauhigh_eagle = common.load_observation('../data', 'Models/EAGLE/Tau5500-Trayford-EAGLE.dat', [0,1,2,3])
@@ -334,8 +334,8 @@ def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat,
            x=[6,12]
            y=[1,1]
            ax.plot(x,y,linestyle='solid',color='k')
-
-    common.prepare_legend(ax, colors, loc='lower right')
+        if(s == 2):
+           common.prepare_legend(ax, colors, loc='upper left')
     common.savefig(output_dir, fig, "extinction_EAGLE_predictions.pdf")
 
     #tau comparison 
@@ -637,7 +637,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     ind = np.where(hist_sigmad > 0.)
     hist_sigmad[ind] = np.log10(hist_sigmad[ind])
 
-    output_dir = os.path.join(output_dir, 'eagle-rr14-steep')
+    output_dir = os.path.join(output_dir, 'eagle-rr14')
 
     plot_taus(plt, output_dir, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, 
               m_diff, hist_sigmad, tau_comp, zlist)
