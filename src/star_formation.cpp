@@ -300,7 +300,7 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 	}
 
 	// If the star formation mode is starburst, then apply boosting in star formation.
-	if(props->burst and parameters.model != StarFormationParameters::KD12){
+	if(props->burst && parameters.model != StarFormationParameters::KD12){
 		sfr_density = sfr_density * parameters.boost_starburst;
 	}
 

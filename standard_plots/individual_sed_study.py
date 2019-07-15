@@ -504,15 +504,16 @@ def prepare_data(hdf5_data, sfh, phot_data, phot_data_nod, index, nbands):
     #2: total bulge
     #3: disk
     #4: total
+    #ignore last band which is the top-hat UV of high-z LFs.
     ind = np.where(mdisk + mbulge > 0)
-    SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
-    SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
+    SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands-1))
+    SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands-1))
 
     p = 0
     for c in range(0,5):
         indust = phot_data[p]
         innodust = phot_data_nod[p]
-        for i in range(0,nbands):
+        for i in range(0,nbands-1):
             SEDs_dust[:,c,i] = indust[i,:]
             SEDs_nodust[:,c,i] = innodust[i,:]
         p = p + 1

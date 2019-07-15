@@ -42,7 +42,7 @@ dm = 0.5
 mbins = np.arange(mlow,mupp,dm)
 xlf   = mbins + dm/2.0
 
-def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
+def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
 
     volcorr = 3.0*np.log10(h0)
     xlf_obs  = xlf
@@ -59,7 +59,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     subplots = (411, 412, 413, 414)
     idx = (0, 1, 2, 3)
     zs  = (0, 1, 2, 3)
-    band = 0
+    band = nbands-1
     labels= ('z=3', 'z=4', 'z=6', 'z=8')
   
     corrm_obs = -5.0*np.log10(h0/0.7) 
@@ -222,7 +222,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     z = (3.0, 4.0, 6.0, 8.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
-    file_hdf5_sed = "Shark-SED-eagle-rr14-alphas.hdf5" #Shark-SED-eagle-rr14-steep.hdf5"
+    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5" 
     # Create histogram
     for index, snapshot in enumerate(snapshots):
 
@@ -247,6 +247,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
             LFs_dust[index,:]   = LFs_dust[index,:]/volh
             LFs_nodust[index,:] = LFs_nodust[index,:]/volh
 
+    print ("number of bands %d" % (nbands,))
     # Take logs
     ind = np.where(LFs_dust > 0.)
     LFs_dust[ind] = np.log10(LFs_dust[ind])
@@ -255,9 +256,9 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14-alphas')
+       outdir = os.path.join(outdir, 'eagle-rr14')
 
-    plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust)
+    plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands)
 
 if __name__ == '__main__':
     main(*common.parse_args())
