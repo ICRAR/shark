@@ -130,6 +130,19 @@ class Constraint(object):
 
         x_obs, y_obs, y_dn, y_up, x_mod, y_mod = self._get_raw_data(modeldir, subvols)
 
+        # Both observations and model values don't come necessarily in order,
+        # but if at the end of the day we want to perform array-wise operations
+        # over them (to calculate chi2 or student-t) then they should be both in
+        # ascending order
+        sorted_obs = np.argsort(x_obs)
+        x_obs = x_obs[sorted_obs]
+        y_obs = y_obs[sorted_obs]
+        y_dn = y_dn[sorted_obs]
+        y_up = y_up[sorted_obs]
+        sorted_mod = np.argsort(x_mod)
+        x_mod = x_mod[sorted_mod]
+        y_mod = y_mod[sorted_mod]
+
         # Linearly interpolate model Y values respect to the observations'
         # X values, and only take those within the domain.
         # We also consider the biggest relative error as "the" error, in case
