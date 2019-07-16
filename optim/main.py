@@ -78,6 +78,7 @@ def evaluation_main(parser, args):
     parser.add_argument('-m', '--individual-subvolumes', help='Subvolumes are stored separately (so the output is not coming from a PSO run)', action='store_true')
     parser.add_argument('-t', '--stat-test', help='Stat function used to calculate the value of a particle, defaults to student-t',
                       default='student-t', choices=list(analysis.stat_tests.keys()))
+    parser.add_argument('-p', '--plot-output-dir', help="Output directory where to place evaluation plots", default='.')
     add_constraint_argument(parser)
     opts = parser.parse_args(args)
 
@@ -101,7 +102,9 @@ def evaluation_main(parser, args):
         modeldir = common.get_shark_output_dir(output_dir, simu, model)
         logger.info('Getting for model %s with subvolumes %r and test function %s',
                     modeldir, subvols, opts.stat_test)
-        results.append(constraints.evaluate(opts.constraints, stat_test, modeldir, subvols))
+        result = constraints.evaluate(opts.constraints, stat_test, modeldir,
+                                      subvols, plot_outputdir=opts.plot_output_dir)
+        results.append(result)
     constraints.log_results(opts.constraints, results)
 
 
