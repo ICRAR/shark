@@ -26,6 +26,7 @@ import logging
 import os
 import re
 
+import analysis
 import common
 import numpy as np
 import smf
@@ -62,6 +63,7 @@ zeros2 = lambda: np.zeros(shape=(1, 3, len(xmf2)))
 zeros3 = lambda: np.zeros(shape=(1, len(mbins)))
 zeros4 = lambda: np.empty(shape=(1), dtype=np.bool_)
 zeros5 = lambda: np.zeros(shape=(1, len(ssfrbins)))
+
 
 class Constraint(object):
     """Base classes for constraint objects"""
@@ -126,7 +128,7 @@ class Constraint(object):
         x_mod, y_mod = self.get_model_x_y(hist_smf, hist_HImf)
         return x_obs, y_obs, y_dn, y_up, x_mod, y_mod
 
-    def get_data(self, modeldir, subvols):
+    def get_data(self, modeldir, subvols, plot_outputdir=None):
 
         x_obs, y_obs, y_dn, y_up, x_mod, y_mod = self._get_raw_data(modeldir, subvols)
 
@@ -147,10 +149,41 @@ class Constraint(object):
         # X values, and only take those within the domain.
         # We also consider the biggest relative error as "the" error, in case
         # they are different
-        y_mod = np.interp(x_obs, x_mod, y_mod)
-        ind = np.where((x_obs >= self.domain[0]) & (x_obs <= self.domain[1]))
-        err = np.maximum(np.abs(y_dn[ind]), np.abs(y_up[ind]))
-        return y_obs[ind], y_mod[ind], err
+        y_mod_interp = np.interp(x_obs, x_mod, y_mod)
+        sel = np.where((x_obs >= self.domain[0]) & (x_obs <= self.domain[1]))
+        err = np.maximum(np.abs(y_dn[sel]), np.abs(y_up[sel]))
+        x_obs_sel = x_obs[sel]
+        y_obs_sel = y_obs[sel]
+        y_mod_sel = y_mod_interp[sel]
+
+        if plot_outputdir:
+            self.plot(plot_outputdir,
+                      x_obs, y_obs, y_dn, y_up,
+                      x_mod, y_mod, y_mod_interp,
+                      x_obs_sel, y_obs_sel, y_mod_sel, err)
+
+        return y_obs_sel, y_mod_sel, err
+
+    def plot(self, plot_outputdir, x_obs, y_obs, obs_err_dn, obs_err_up,
+             x_mod, y_mod, y_mod_interp, x_obs_sel, y_obs_sel, y_mod_sel, err):
+        fig = common.load_matplotlib().figure(figsize=(4.5,4.5))
+        ax = fig.add_subplot(111)
+        ax.axvline(self.domain[0], ls='dotted', c='red')
+        ax.axvline(self.domain[1], ls='dotted', c='red')
+        ax.plot(x_obs_sel, y_obs_sel, marker='v', ls='None', c='blue', label="Selected observations")
+        ax.plot(x_mod, y_mod, marker='^', ls='solid', c='orange', label="Model")
+        ax.plot(x_obs, y_mod_interp, ls='solid', c='green', label="Interpolated model")
+        ax.plot(x_obs_sel, y_mod_sel, ls='solid', c='brown', label="Selected model")
+        common.errorbars(ax, x_obs, y_obs, obs_err_dn, obs_err_up, 'black', '+',
+                         err_absolute=False, label="Observations")
+
+        common.prepare_legend(ax, ['blue', 'orange', 'green', 'brown', 'black'])
+
+        chi2 = analysis.chi2(y_obs_sel, y_mod_sel, err)
+        st = analysis.studentT(y_obs_sel, y_mod_sel, err)
+        ax.set_title('%s\nchi2 = %g, student-t = %g' % (str(self), chi2, st))
+
+        common.savefig(plot_outputdir, fig, str(self))
 
     def __str__(self):
         s = '%s(%.1f-%.1f)'
@@ -238,19 +271,21 @@ class SMF_z1(SMF):
         return x_obs, y_obs, y_dn, y_up
 
 
-def _evaluate(constraint, stat_test, modeldir, subvols):
+def _evaluate(constraint, stat_test, modeldir, subvols, plot_outputdir):
     try:
-        y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
+        y_obs, y_mod, err = constraint.get_data(modeldir, subvols,
+                                                plot_outputdir=plot_outputdir)
         return stat_test(y_obs, y_mod, err) * constraint.weight
     except:
         logger.exception('Error while evaluating constraint, returning 1e20')
         return 1e20
 
 
-def evaluate(constraints, stat_test, modeldir, subvols):
+def evaluate(constraints, stat_test, modeldir, subvols, plot_outputdir=None):
     """Returns the evaluation of all constraints, as a total number (default)
     or as individual numbers for each constraint"""
-    return [_evaluate(c, stat_test, modeldir, subvols) for c in constraints]
+    return [_evaluate(c, stat_test, modeldir, subvols, plot_outputdir)
+            for c in constraints]
 
 
 def log_results(constraints, results):
