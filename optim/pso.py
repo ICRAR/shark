@@ -164,7 +164,6 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
     # Store particle's best position (if constraints are satisfied)
     i_update = np.logical_and((fx < fp), fs)
     p[i_update, :] = x[i_update, :].copy()
-    print('fp', fp, 'fx', fx)
     fp[i_update] = fx[i_update]
 
     # Update swarm's best position
