@@ -20,6 +20,7 @@
 
 import collections
 import functools
+import logging
 import math
 
 import numpy as np
@@ -29,6 +30,8 @@ import utilities_statistics as us
 
 
 observation = collections.namedtuple('observation', 'label x y yerrup yerrdn err_absolute')
+
+logger = logging.getLogger(__name__)
 
 ##################################
 # Constants
@@ -1097,7 +1100,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
 
     ind = np.where((mdisk+mbulge) > 0.0)
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
-    print('number of galaxies with mstars>0 and max mass: %d, %d' % (len(mass[ind]), max(mass[ind])))
+    logger.debug('number of galaxies with mstars>0 and max mass: %d, %d', len(mass[ind]), max(mass[ind]))
 
     H, _ = np.histogram(mass,bins=np.append(mbins,mupp))
     hist_smf[index,:] = hist_smf[index,:] + H

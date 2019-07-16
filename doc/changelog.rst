@@ -1,6 +1,13 @@
 Changelog
 =========
 
+.. rubric:: Development version
+
+* Many improvements to the our PSO support.
+  This includes better logging of detailed constraint evaluation information,
+  improved stability in a few corner cases,
+  and offline evaluation of previous shark runs.
+
 .. rubric:: 1.2.1
 
 * Fixed compilation problem related to OpenMP support.

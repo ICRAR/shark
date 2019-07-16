@@ -31,9 +31,16 @@ import time
 import numpy as np
 
 import common
+import constraints
 
 
 logger = logging.getLogger(__name__)
+
+
+class AbortedByUser(Exception):
+    """Signals that the execution was aborted by the user"""
+    pass
+
 
 def job_is_alive(job_id):
     """Returns whether `job_id` is still "alive" (i.e., in the queue) or not"""
@@ -44,6 +51,29 @@ def job_is_alive(job_id):
     if code:
         raise RuntimeError("squeue failed with code %d: stdout: %s, stderr: %s" % (code, out, err))
     return len([l for l in out.splitlines() if job_id in l]) > 0
+
+
+def cancel_job(job_id):
+    """Cancels `job_id` by removing it from the queue"""
+    logger.info('Cancelling job %s', job_id)
+    try:
+        out, err, code = common.exec_command(['scancel', job_id])
+    except OSError:
+        raise RuntimeError("Couldn't run scancel, is it installed?")
+    if code:
+        raise RuntimeError("scancel failed with code %d: stdout: %s, stderr: %s" % (code, out, err))
+
+    tries = 0
+    max_tries = 20
+    logger.debug('Checking that job %s has been successfully cancelled', job_id)
+    while job_is_alive(job_id) and tries < max_tries:
+        time.sleep(1)
+        tries += 1
+    if tries == max_tries:
+        logger.warning('Job ID %s is still alive, you will need to cancel it manually', job_id)
+    else:
+        logger.info('Job %s successfully cancelled', job_id)
+
 
 def _exec_shark(msg, cmdline):
     logger.info('%s with command line: %s', msg, subprocess.list2cmdline(cmdline))
@@ -64,17 +94,6 @@ def _to_shark_options(particle, space):
             value = 10 ** value
         yield '%s=%s' % (name, value)
 
-#def _evaluate(constraint, stat_test, modeldir, subvols):
-#    y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
-#    return stat_test(y_obs, y_mod, err) * constraint.weight
-
-def _evaluate(constraint, stat_test, modeldir, subvols):
-    try:
-       y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
-       return stat_test(y_obs, y_mod, err) * constraint.weight
-    except:
-       logger.error('Error while evaluating constraint, returning Inf')
-    return 1e20
 
 count = 0
 def run_shark_hpc(particles, *args):
@@ -130,26 +149,31 @@ def run_shark_hpc(particles, *args):
         raise RuntimeError("Couldn't get the ID of the new submitted job, cannot continue")
 
     # Actually wait for the job to finish...
-    while job_is_alive(job_id):
-        time.sleep(10)
+    try:
+        while job_is_alive(job_id):
+            time.sleep(10)
+    except KeyboardInterrupt:
+        cancel_job(job_id)
+        raise AbortedByUser
 
     ss = len(particles)
-    fx = np.zeros([ss, len(opts.constraints)])
+    results = np.zeros([ss, len(opts.constraints)])
     for i in range(ss):
         _, simu, model, _ = common.read_configuration(opts.config)
         particle_outdir = os.path.join(shark_output_base, str(i))
         modeldir = common.get_shark_output_dir(particle_outdir, simu, model)
-        fx[i] = [_evaluate(c, statTest, modeldir, subvols) for c in opts.constraints]
+        results[i] = constraints.evaluate(opts.constraints, statTest, modeldir, subvols)
         if not opts.keep:
             shutil.rmtree(particle_outdir, ignore_errors=True)
 
-    fx = np.sum(fx, 1)
-    logger.info('Particles %r evaluated to %r', particles, fx)
+    constraints.log_results(opts.constraints, results)
+    results = np.sum(results, axis=1)
+    logger.info('Particles %r evaluated to %r', particles, results)
 
     # this global count just tracks the number of iterations so they can be saved to different files
     count += 1
 
-    return fx
+    return results
 
 
 def run_shark(particle, *args):
@@ -166,9 +190,14 @@ def run_shark(particle, *args):
                '-o', 'execution.simulation_batches=%s' % ' '.join(map(str, subvols))]
     for option in _to_shark_options(particle, space):
         cmdline += ['-o', option]
-    _exec_shark('Executing shark instance', cmdline)
+    try:
+        _exec_shark('Executing shark instance', cmdline)
+    except KeyboardInterrupt:
+        raise AbortedByUser
 
-    total = sum(_evaluate(c, statTest, modeldir, subvols) for c in opts.constraints)
+    results = constraints.evaluate(opts.constraints, statTest, modeldir, subvols)
+    constraints.log_results(constraints, [results])
+    total = sum(results)
     logger.info('Particle %r evaluated to %f', particle, total)
 
     if not opts.keep:
