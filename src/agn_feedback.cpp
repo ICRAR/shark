@@ -273,7 +273,8 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 
 		// check if bolometric luminosity is larger than the critical luminosity and the gas mass in the bulge is positive. The latter is not always the case becaus equations are solved
 		// numerically and hence negative solutions are in principle possible.
-		if(Lbol > parameters.kappa_qso * Lcrit){
+		//if(Lbol > parameters.kappa_qso * Lcrit){
+		if(Lbol > Lcrit){
 
 			double tsalp = salpeter_timescale(Lbol, mBH);
 			double vout = qso_outflow_velocity(Lbol, mBH, zgas, mgas, mbulge, rbulge);
