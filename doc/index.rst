@@ -11,6 +11,7 @@ shark
    hpc
    output_files
    optim
+   constraints_impl
    changelog
 
 
