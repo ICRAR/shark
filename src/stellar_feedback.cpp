@@ -154,6 +154,10 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 
 	double mreheat = b1 * sfr;
 
+	if(b1<parameters.min_massload){
+		b1=parameters.min_massload;
+	}
+
 	double mejected = eps_halo / energ_halo * sfr - mreheat;
 
 	if(mejected > 0) {
