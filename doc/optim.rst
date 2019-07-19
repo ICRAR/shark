@@ -146,6 +146,12 @@ The following constraints are currently supported:
    Its default domain is ``(8, 13)``.
  * ``SMF_z1``: like ``SMF_z0`` but at ``z=1``.
 
+If you want to add new constraints
+please refer to the
+:doc:`in depth documentation <constraints_impl>`
+about the subject.
+
+
 .. _optim.hpc:
 
 HPC support
