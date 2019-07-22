@@ -83,6 +83,8 @@ class Constraint(object):
         # Histograms we are interested in
         hist_smf = zeros3()
         hist_HImf = zeros3()
+        hist_smf_err = zeros3()
+        hist_HImf_err = zeros3()
 
         fields = {
             'galaxies': (
@@ -104,16 +106,19 @@ class Constraint(object):
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
                              zeros1(), zeros4(), zeros4(), zeros2(), zeros5(),
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
-                             zeros1())
+                             zeros1(), hist_smf_err, hist_HImf_err)
 
         #########################
         # take logs
         ind = np.where(hist_smf > 0.)
+        hist_smf_err[ind] = abs(np.log10(hist_smf[ind]) - np.log10(hist_smf_err[ind]))
         hist_smf[ind] = np.log10(hist_smf[ind])
+
         ind = np.where(hist_HImf > 0.)
+        hist_HImf_err[ind] = abs(np.log10(hist_HImf[ind]) - np.log10(hist_HImf_err[ind]))
         hist_HImf[ind] = np.log10(hist_HImf[ind])
 
-        return h0, hist_smf, hist_HImf
+        return h0, hist_smf, hist_HImf, hist_smf_err, hist_HImf_err
 
     def load_observation(self, *args, **kwargs):
         obsdir = os.path.normpath(os.path.abspath(os.path.join(__file__, '..', '..', 'data')))
@@ -123,14 +128,14 @@ class Constraint(object):
         """Gets the model and observational data for further analysis.
         The model data is interpolated to match the observation's X values."""
 
-        h0, hist_smf, hist_HImf = self._load_model_data(modeldir, subvols)
+        h0, hist_smf, hist_HImf, hist_smf_err, hist_HImf_err = self._load_model_data(modeldir, subvols)
         x_obs, y_obs, y_dn, y_up = self.get_obs_x_y_err(h0)
-        x_mod, y_mod = self.get_model_x_y(hist_smf, hist_HImf)
-        return x_obs, y_obs, y_dn, y_up, x_mod, y_mod
+        x_mod, y_mod, y_mod_err = self.get_model_x_y(hist_smf, hist_smf_err, hist_HImf, hist_HImf_err)
+        return x_obs, y_obs, y_dn, y_up, x_mod, y_mod, y_mod_err
 
     def get_data(self, modeldir, subvols, plot_outputdir=None):
 
-        x_obs, y_obs, y_dn, y_up, x_mod, y_mod = self._get_raw_data(modeldir, subvols)
+        x_obs, y_obs, y_dn, y_up, x_mod, y_mod, y_mod_err = self._get_raw_data(modeldir, subvols)
 
         # Both observations and model values don't come necessarily in order,
         # but if at the end of the day we want to perform array-wise operations
@@ -144,17 +149,23 @@ class Constraint(object):
         sorted_mod = np.argsort(x_mod)
         x_mod = x_mod[sorted_mod]
         y_mod = y_mod[sorted_mod]
+        y_mod_err = y_mod_err[sorted_mod]
 
         # Linearly interpolate model Y values respect to the observations'
-        # X values, and only take those within the domain.
+        # X values, and only take those within the domain. We do the same 
+        # for the errors of the model.
         # We also consider the biggest relative error as "the" error, in case
-        # they are different
+        # they are different and add it in quadrature to the Poisson error
+        # of the model.
         y_mod_interp = np.interp(x_obs, x_mod, y_mod)
+        y_mod_err_interp = np.interp(x_obs, x_mod, y_mod_err)
         sel = np.where((x_obs >= self.domain[0]) & (x_obs <= self.domain[1]))
-        err = np.maximum(np.abs(y_dn[sel]), np.abs(y_up[sel]))
         x_obs_sel = x_obs[sel]
         y_obs_sel = y_obs[sel]
         y_mod_sel = y_mod_interp[sel]
+        y_mod_err_sel = y_mod_err_interp[sel]
+        y_obs_err_sel = np.maximum(np.abs(y_dn[sel]), np.abs(y_up[sel]))
+        err = np.sqrt( y_obs_err_sel ** 2.0 + y_mod_err_sel ** 2.0)
 
         if plot_outputdir:
             self.plot(plot_outputdir,
@@ -212,20 +223,22 @@ class HIMF(Constraint):
         y_up = dpupHI
         return x_obs, y_obs, y_dn, y_up
 
-    def get_model_x_y(self, _, hist_HImf):
+    def get_model_x_y(self, _, __, hist_HImf, hist_HImf_err):
         y = hist_HImf[0]
+        yerr = hist_HImf_err[0]
         ind = np.where(y < 0.)
-        return xmf[ind], y[ind]
+        return xmf[ind], y[ind], yerr[ind]
 
 class SMF(Constraint):
     """Common logic for SMF constraints"""
 
     domain = (8, 13)
 
-    def get_model_x_y(self, hist_smf, _):
+    def get_model_x_y(self, hist_smf, hist_smf_err, _, __):
         y = hist_smf[0,:]
+        yerr = hist_smf_err[0,:]
         ind = np.where(y < 0.)
-        return xmf[ind], y[ind]
+        return xmf[ind], y[ind], yerr[ind]
 
 class SMF_z0(SMF):
     """The SMF constraint at z=0"""

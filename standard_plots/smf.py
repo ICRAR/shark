@@ -62,7 +62,7 @@ ssfrbins = np.arange(ssfrlow,ssfrupp,dssfr)
 xssfr    = ssfrbins + dssfr/2.0
 
 
-def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err, hist_smf_30kpc):
+def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_offset, hist_smf_30kpc):
 
     # Wright et al. (2017, z=0). Chabrier IMF
     z0obs = []
@@ -207,7 +207,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
                 ind = np.where(y < 0.)
                 ax.plot(xmf[ind],y[ind],'k', linestyle='dotted', linewidth=1, label ='30kpc')
             if z >= 1:
-                y = hist_smf_err[idx,:]
+                y = hist_smf_offset[idx,:]
                 ind = np.where(y < 0.)
                 ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.25 dex error')
 
@@ -1072,12 +1072,13 @@ def plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr):
     common.savefig(outdir, fig, 'passive_fraction_z0.pdf')
 
 
-def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_smf_sat, 
+def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist_smf_sat, 
                  hist_smf_30kpc, hist_HImf, hist_HImf_cen, hist_HImf_sat, hist_H2mf, 
                  hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf, sfe, mainseq_cen, 
                  mainseqsf_cen, sfe_cen, mainseq_sat, mainseqsf_sat, sfe_sat, mzr, 
                  fmzr, mzr_cen, mzr_sat, plotz, plotz_HImf, passive_fractions, hist_ssfr, 
-                 mszr, mszr_cen, mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2):
+                 mszr, mszr_cen, mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2, hist_smf_err, 
+                 hist_HImf_err):
 
     (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rstar_disk, mBH, mHI, mH2, 
      mgas_disk, mHI_bulge, mH2_bulge, mgas_bulge, mgas_metals_disk, mgas_metals_bulge, 
@@ -1107,7 +1108,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
     ran_err = np.random.normal(0.0, 0.25, len(mass))
     mass_err = mass + ran_err
     H, _ = np.histogram(mass_err,bins=np.append(mbins,mupp))
-    hist_smf_err[index,:] = hist_smf_err[index,:] + H
+    hist_smf_offset[index,:] = hist_smf_offset[index,:] + H
 
     #Calculate the stellar mass contained in 30pkpc, assuming an exponential profile for the disk and a Plummer profile for the bulge.
     ind = np.where((mdisk > 0.0)  & (rstar_disk > 0))
@@ -1218,12 +1219,15 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
 
     if volh > 0:
         vol = volh/pow(h0,3.)  # In Mpc^3
+        hist_smf_err[index,:]  = (hist_smf[index,:] - np.sqrt(hist_smf[index,:]))/vol/dm
+
         hist_smf[index,:]  = hist_smf[index,:]/vol/dm
         hist_smf_30kpc[index,:]= hist_smf_30kpc[index,:]/vol/dm
-        hist_smf_err[index,:]  = hist_smf_err[index,:]/vol/dm
+        hist_smf_offset[index,:]  = hist_smf_offset[index,:]/vol/dm
         hist_smf_cen[index,:]  = hist_smf_cen[index,:]/vol/dm
         hist_smf_sat[index,:]  = hist_smf_sat[index,:]/vol/dm
 
+        hist_HImf_err[index,:] = (hist_HImf[index,:] - np.sqrt(hist_HImf[index,:]))/vol/dm
         hist_HImf[index,:] = hist_HImf[index,:]/vol/dm
         hist_HImf_cen[index,:] = hist_HImf_cen[index,:]/vol/dm
         hist_HImf_sat[index,:] = hist_HImf_sat[index,:]/vol/dm
@@ -1237,6 +1241,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen, hist_sm
     else:
         plotz[index]     = False
         plotz_HImf[index]= False
+
 
     return mass
 
@@ -1276,9 +1281,10 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     # Histograms
     hist_smf       = np.zeros(shape = (len(zlist), len(mbins)))
     hist_smf_30kpc = np.zeros(shape = (len(zlist), len(mbins)))
-    hist_smf_err   = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf_offset   = np.zeros(shape = (len(zlist), len(mbins)))
     hist_smf_cen   = np.zeros(shape = (len(zlist), len(mbins)))
     hist_smf_sat   = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf_err   = np.zeros(shape = (len(zlist), len(mbins)))
 
     plotz = np.empty(shape=(len(zlist)), dtype=np.bool_)
     hist_HImf = np.zeros(shape = (len(zlist), len(mbins)))
@@ -1288,6 +1294,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     hist_H2mf = np.zeros(shape = (len(zlist), len(mbins)))
     hist_H2mf_cen = np.zeros(shape = (len(zlist), len(mbins)))
     hist_H2mf_sat = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_HImf_err = np.zeros(shape = (len(zlist), len(mbins)))
 
     hist_ssfr = np.zeros(shape = (len(zlist), len(ssfrbins)))
 
@@ -1300,13 +1307,13 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        mass = prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_cen,
+        mass = prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen,
                              hist_smf_sat, hist_smf_30kpc, hist_HImf, hist_HImf_cen, hist_HImf_sat,
                              hist_H2mf, hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf,
                              sfe, mainseq_cen, mainseqsf_cen, sfe_cen, mainseq_sat,
                              mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen, mzr_sat, plotz,
                              plotz_HImf, passive_fractions, hist_ssfr, mszr, mszr_cen, 
-			     mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2)
+			     mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2, hist_smf_err, hist_HImf_err)
 
         h0 = hdf5_data[0]
         if index == 0:
@@ -1328,8 +1335,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     hist_smf_cen[ind] = np.log10(hist_smf_cen[ind])
     ind = np.where(hist_smf_sat > 0.)
     hist_smf_sat[ind] = np.log10(hist_smf_sat[ind])
-    ind = np.where(hist_smf_err > 0.)
-    hist_smf_err[ind] = np.log10(hist_smf_err[ind])
+    ind = np.where(hist_smf_offset > 0.)
+    hist_smf_offset[ind] = np.log10(hist_smf_offset[ind])
 
     ind = np.where(hist_HImf > 0.)
     hist_HImf[ind] = np.log10(hist_HImf[ind])
@@ -1350,7 +1357,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     #    for i,j in zip(xmf,hist_H2mf[z,:]):
     #        print i,j
 
-    plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_err, hist_smf_30kpc)
+    plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_offset, hist_smf_30kpc)
     plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf)
     plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat)
     plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat)
