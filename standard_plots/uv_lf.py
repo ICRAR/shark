@@ -222,7 +222,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     z = (3.0, 4.0, 6.0, 8.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
-    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5" 
+    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5" 
     # Create histogram
     for index, snapshot in enumerate(snapshots):
 
@@ -256,7 +256,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14')
+       outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
     plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands)
 

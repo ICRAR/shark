@@ -205,7 +205,7 @@ def plot_ir_lf_z0(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LFs
         ax.plot(xlf_obs[ind],y[0], colors[idx], linewidth=3, alpha=0.3, linestyle='dashdot')#, label='CF00')
     
         if (ib == 2):
-           common.prepare_legend(ax, ['k','k','k','k'], loc='lower right')
+           common.prepare_legend(ax, ['k','k','k','k'], loc='lower right', handlelength=5)
 
     common.savefig(outdir, fig, "IR_luminosity_function_z0_total.pdf")
 
@@ -285,31 +285,32 @@ def plot_uv_lf_z0(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LFs
             ax.plot(xlf_obs[ind],y[0], colors[idx], linewidth=3, alpha=0.3, linestyle='dashdot', label='CF00')
     
             if (sp == 0):
-                common.prepare_legend(ax, [colors[idx], colors[idx], colors[idx], colors[idx], colors[idx]], bbox_to_anchor=[0.2, 1])
+                common.prepare_legend(ax, [colors[idx], colors[idx], colors[idx], colors[idx], colors[idx]], bbox_to_anchor=[0.6, 1], handlelength=5)
+
             sp = sp + 1
 
     common.savefig(outdir, fig, "UV_luminosity_function_z0_total.pdf")
 
 
-def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LFs_dust3, LFs_dust4):
+def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LFs_dust3, LFs_dust4, nbands):
 
     volcorr = 3.0*np.log10(h0)
     xlf_obs  = xlf
  
-    xtit="$\\rm 1500\\AA\, mag\, (AB)$ GALEX FUV band"
+    xtit="$\\rm 1500\\AA\, mag\, (AB)$ top-hat $100\\AA$"
     ytit="$\\rm log_{10}(\Phi/{\\rm dex^{-1}} {\\rm Mpc}^{-3})$"
 
     xmin, xmax, ymin, ymax = -25, -15, -6, -1
     xleg = xmin + 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
 
-    fig = plt.figure(figsize=(5,14))
+    fig = plt.figure(figsize=(5,16))
 
-    subplots = (411, 412, 413, 414)
-    idxs = (0, 1, 2, 3)
-    zs  = (1, 2, 3, 4)
-    band = 0
-    labels= ('z=3', 'z=4', 'z=6', 'z=8')
+    subplots = (511, 512, 513, 514, 515)
+    idxs = (0, 1, 2, 3, 4)
+    zs  = (1, 2, 3, 4, 5)
+    band = nbands-1
+    labels= ('z=3', 'z=4', 'z=6', 'z=8', 'z=10')
   
     corrm_obs = -5.0*np.log10(h0/0.7) 
     corry_obs = 3.0*np.log10(h0/0.7)
@@ -317,7 +318,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
 
         ax = fig.add_subplot(subplot)
         ytitplot = ytit
-        if (idx == 3):
+        if (idx == 4):
             xtitplot = xtit
         else:
             xtitplot = ' '
@@ -386,6 +387,11 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
            yup  = np.log10(pF8*1e-3+dpuF8*1e-3)
            ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
 
+        if(idx == 4):
+           file = obsdir+'/lf/lf1500_z10_oesch2018.data'
+           lm,p,dpu,dpd = np.loadtxt(file,usecols=[0,1, 2, 3],unpack=True)
+           ax.errorbar(lm+corrm_obs, p+corry_obs, yerr=[p-dpu,dpd-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*', label='Oesch+2018')
+
         #Predicted LF
         ind = np.where(LFs_nodust[z,4,band,:] < 0.)
         y = LFs_nodust[z,4,band,ind]+volcorr-np.log10(dm)
@@ -405,7 +411,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
         ax.plot(xlf_obs[ind],y[0],'Indigo', linewidth=3, alpha=0.3, linestyle='dashdot', label='CF00')
 
         if (idx == 0):
-            common.prepare_legend(ax, ['Indigo','Indigo','Indigo','Indigo','Indigo'], bbox_to_anchor=[0.2, 1])
+            common.prepare_legend(ax, ['Indigo','Indigo','Indigo','Indigo','Indigo'], bbox_to_anchor=[0.1, 1], handlelength=5)
         #ind = np.where(LFs_dust[z,3,band,:] < 0.)
         #y = LFs_dust[z,3,band,ind]+volcorr-np.log10(dm)
         #ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
@@ -416,12 +422,12 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
     common.savefig(outdir, fig, "UV_luminosity_function_evolution_total.pdf")
 
     #now plot disks only
-    fig = plt.figure(figsize=(5,14))
+    fig = plt.figure(figsize=(5,16))
     for subplot, idx, z in zip(subplots, idxs, zs):
 
         ax = fig.add_subplot(subplot)
         ytitplot = ytit
-        if (idx == 3):
+        if (idx == 4):
             xtitplot = xtit
         else:
             xtitplot = ' '
@@ -489,6 +495,10 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
            ydn  = np.log10(pF8*1e-3-dpdF8*1e-3)
            yup  = np.log10(pF8*1e-3+dpuF8*1e-3)
            ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
+        if(idx == 4):
+           file = obsdir+'/lf/lf1500_z10_oesch2018.data'
+           lm,p,dpu,dpd = np.loadtxt(file,usecols=[0,1, 2, 3],unpack=True)
+           ax.errorbar(lm+corrm_obs, p+corry_obs, yerr=[p-dpu,dpd-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*', label='Oesch+2018')
 
         #Predicted LF
         ind = np.where(LFs_nodust[z,3,band,:] < 0.)
@@ -509,7 +519,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
         ax.plot(xlf_obs[ind],y[0],'Teal', linewidth=3, alpha=0.3, linestyle='dashdot', label='CF00')
 
         if (idx == 0):
-            common.prepare_legend(ax, ['Teal','Teal','Teal','Teal','Teal'], bbox_to_anchor=[0.2, 1])
+            common.prepare_legend(ax, ['Teal','Teal','Teal','Teal','Teal'], bbox_to_anchor=[0.1, 1], handlelength=5)
         #ind = np.where(LFs_dust[z,3,band,:] < 0.)
         #y = LFs_dust[z,3,band,ind]+volcorr-np.log10(dm)
         #ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
@@ -520,12 +530,12 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
     common.savefig(outdir, fig, "UV_luminosity_function_evolution_disk.pdf")
 
     #now plot bulges only
-    fig = plt.figure(figsize=(5,14))
+    fig = plt.figure(figsize=(5,16))
     for subplot, idx, z in zip(subplots, idxs, zs):
 
         ax = fig.add_subplot(subplot)
         ytitplot = ytit
-        if (idx == 3):
+        if (idx == 4):
             xtitplot = xtit
         else:
             xtitplot = ' '
@@ -595,6 +605,11 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
            yup  = np.log10(pF8*1e-3+dpuF8*1e-3)
            ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
 
+        if(idx == 4):
+           file = obsdir+'/lf/lf1500_z10_oesch2018.data'
+           lm,p,dpu,dpd = np.loadtxt(file,usecols=[0,1, 2, 3],unpack=True)
+           ax.errorbar(lm+corrm_obs, p+corry_obs, yerr=[p-dpu,dpd-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*', label='Oesch+2018')
+
         #Predicted LF
         ind = np.where(LFs_nodust[z,2,band,:] < 0.)
         y = LFs_nodust[z,2,band,ind]+volcorr-np.log10(dm)
@@ -614,7 +629,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
         ax.plot(xlf_obs[ind],y[0],'OrangeRed', linewidth=3, alpha=0.3, linestyle='dashdot', label='CF00')
 
         if (idx == 0):
-            common.prepare_legend(ax, ['OrangeRed','OrangeRed','OrangeRed','OrangeRed','OrangeRed'], bbox_to_anchor=[0.2, 1])
+            common.prepare_legend(ax, ['OrangeRed','OrangeRed','OrangeRed','OrangeRed','OrangeRed'], bbox_to_anchor=[0.1, 1], handlelength=5)
         #ind = np.where(LFs_dust[z,3,band,:] < 0.)
         #y = LFs_dust[z,3,band,ind]+volcorr-np.log10(dm)
         #ax.plot(xlf_obs[ind],y[0],'b', linewidth=2, linestyle='dotted')
@@ -703,13 +718,13 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
-    z = (0.0, 3.0, 4.0, 6.0, 8.0) #, 1.0, 1.5, 2.0)
+    z = (0.0, 3.0, 4.0, 6.0, 8.0, 10.0) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
-    file_hdf5_sed = "Shark-SED-eagle-rr14-steep-alphas.hdf5"
-    file_hdf5_sed2 = "Shark-SED-eagle-rr14-alphas.hdf5"
-    file_hdf5_sed3 = "Shark-SED-eagle-const-alphas.hdf5"
-    file_hdf5_sed4 = "Shark-SED-alphas.hdf5"
+    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
+    file_hdf5_sed2 = "Shark-SED-eagle-rr14.hdf5"
+    file_hdf5_sed3 = "Shark-SED-eagle-const.hdf5"
+    file_hdf5_sed4 = "Shark-SED.hdf5"
 
     # Create histogram
     for index, snapshot in enumerate(snapshots):
@@ -763,7 +778,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     if(Variable_Ext):
        outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
-    plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, LFs_dust2, LFs_dust3, LFs_dust4)
+    plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, LFs_dust2, LFs_dust3, LFs_dust4, nbands)
     plot_uv_lf_z0(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, LFs_dust2, LFs_dust3, LFs_dust4)
     plot_ir_lf_z0(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, LFs_dust2, LFs_dust3, LFs_dust4)
 

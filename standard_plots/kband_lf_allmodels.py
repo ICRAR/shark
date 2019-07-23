@@ -150,7 +150,7 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, LFs_dust2, LFs_
 
 
         if (idx == 0):
-            common.prepare_legend(ax, ['Indigo','Indigo','Indigo','Indigo','Indigo'], bbox_to_anchor=[0.2, 1])
+            common.prepare_legend(ax, ['Indigo','Indigo','Indigo','Indigo','Indigo'], bbox_to_anchor=[0.2, 1], handlelength=5)
 
     common.savefig(outdir, fig, "Kband_luminosity_function_evolution_allmodels.pdf")
 
@@ -292,7 +292,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_dust4[ind] = np.log10(LFs_dust4[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14')
+       outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
     plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LFs_dust3, LFs_dust4)
 
