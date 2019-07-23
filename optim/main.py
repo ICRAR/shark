@@ -176,6 +176,10 @@ def pso_run_main(parser, args):
     args = (opts, space, subvols, analysis.stat_tests[opts.stat_test])
 
     if opts.hpc_mode:
+        if opts.nodes is not None and opts.nodes > ss:
+            logger.warning('Requested %d nodes, but swarm size is %d. '
+                           'Reducing number of nodes to %d', opts.nodes, ss, ss)
+            opts.nodes = ss
         procs = 0
         f = execution.run_shark_hpc
     else:
