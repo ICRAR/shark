@@ -52,7 +52,7 @@ public:
 	double nu_smbh = 0;
 
 	bool qso_feedback = false;
-	double kappa_qso = 0;
+	double kappa_radio = 0;
 	double epsilon_qso = 0;
 
 	enum AGNFeedbackModel {

@@ -53,7 +53,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 
 	// control QSO feedback.
 	options.load("agn_feedback.qso_feedback", qso_feedback, false);
-	options.load("agn_feedback.kappa_qso", kappa_qso);
+	options.load("agn_feedback.kappa_radio", kappa_radio);
 	options.load("agn_feedback.epsilon_qso", epsilon_qso);
 
 }
@@ -273,7 +273,6 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 
 		// check if bolometric luminosity is larger than the critical luminosity and the gas mass in the bulge is positive. The latter is not always the case becaus equations are solved
 		// numerically and hence negative solutions are in principle possible.
-		//if(Lbol > parameters.kappa_qso * Lcrit){
 		if(Lbol > Lcrit){
 
 			double tsalp = salpeter_timescale(Lbol, mBH);
