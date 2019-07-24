@@ -343,8 +343,8 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double zhot = 0;
 	if(mhot > 0){
 		zhot = (mzhot/mhot);
-		if(zhot > min_z_cooling){
-			zhot = min_z_cooling;
+		if(zhot > parameters.min_z_cooling){
+			zhot = parameters.min_z_cooling;
 			mzhot = mhot * zhot;
 		}
 	}
