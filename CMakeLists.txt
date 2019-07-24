@@ -297,6 +297,7 @@ set(SHARKLIB_SRCS
    "${data_cpp}"
    "${git_revision_cpp}"
    include/agn_feedback.h
+   include/baryon.h
    include/components.h
    include/cosmology.h
    include/dark_matter_halos.h
@@ -306,14 +307,17 @@ set(SHARKLIB_SRCS
    include/evolve_halos.h
    include/exceptions.h
    include/execution.h
+   include/galaxy.h
    include/galaxy_creator.h
    include/galaxy_mergers.h
    include/galaxy_writer.h
    include/gas_cooling.h
    include/git_revision.h
+   include/halo.h
    include/integrator.h
    include/interpolator.h
    include/logging.h
+   include/merger_tree.h
    include/merger_tree_reader.h
    include/mixins.h
    include/naming_convention.h
@@ -326,13 +330,14 @@ set(SHARKLIB_SRCS
    include/recycling.h
    include/reincorporation.h
    include/reionisation.h
-   include/sharkfwd.h
    include/shark.h
    include/shark_runner.h
    include/simulation.h
    include/star_formation.h
    include/stellar_feedback.h
+   include/subhalo.h
    include/timer.h
+   include/total_baryon.h
    include/tree_builder.h
    include/utils.h
    include/hdf5/iobase.h
@@ -340,7 +345,6 @@ set(SHARKLIB_SRCS
    include/hdf5/traits.h
    include/hdf5/writer.h
    src/agn_feedback.cpp
-   src/components.cpp
    src/cosmology.cpp
    src/execution.cpp
    src/dark_matter_halos.cpp
@@ -351,6 +355,7 @@ set(SHARKLIB_SRCS
    src/galaxy_mergers.cpp
    src/galaxy_writer.cpp
    src/gas_cooling.cpp
+   src/halo.cpp
    src/integrator.cpp
    src/interpolator.cpp
    src/logging.cpp
@@ -366,6 +371,8 @@ set(SHARKLIB_SRCS
    src/simulation.cpp
    src/star_formation.cpp
    src/stellar_feedback.cpp
+   src/subhalo.cpp
+   src/total_baryon.cpp
    src/tree_builder.cpp
    src/utils.cpp
    src/hdf5/iobase.cpp

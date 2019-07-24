@@ -352,6 +352,10 @@ def read_photometry_data_variable_tau_screen(model_dir, snapshot, fields, subvol
 
     return list(data.values())
 
+def safe_log10(x):
+    """x -> np.log10(x) only for x > 0"""
+    selection = np.where(x > 0)
+    x[selection] = np.log10(x[selection])
 
 # If called as a program, print information taken from a configuration file
 # This simple functionality is used by shark-submit to easily find out where

@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <ios>
 #include <iostream>
+#include <ostream>
 #include <vector>
 
 #include "config.h"
@@ -37,10 +38,12 @@
 #include <boost/program_options.hpp>
 #include <gsl/gsl_errno.h>
 
-#include "components.h"
+#include "galaxy.h"
+#include "merger_tree.h"
 #include "logging.h"
 #include "options.h"
 #include "shark_runner.h"
+#include "subhalo.h"
 #include "git_revision.h"
 #include "timer.h"
 
@@ -66,6 +69,14 @@ void show_help(const char *prog, const boost::program_options::options_descripti
 	out << " It loads options from config_file1.txt first and then from config_file2.txt. On top of that" << endl;;
 	out << " it also loads options 'group1.option1' and 'group1.option2' from the command-line." << endl;;
 	out << endl;
+}
+
+template <typename T>
+void report_size_of_things(std::basic_ostream<T> &os)
+{
+	os << "Main structure/class sizes follow. ";
+	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
+	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
 }
 
 static
@@ -107,11 +118,8 @@ void log_startup_information(int argc, char **argv)
 	std::copy(argv, argv + argc, std::ostream_iterator<char *>(os, " "));
 	LOG(info) << "shark started with command line: " << os.str();
 
-	// Inform the size of things
 	os = std::ostringstream();
-	os << "Main structure/class sizes follow. ";
-	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
-	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
+	report_size_of_things(os);
 	LOG(info) << os.str();
 }
 
@@ -163,6 +171,8 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 #else
 		std::cout << "No" << std::endl;
 #endif
+		report_size_of_things(std::cout);
+		std::cout << '\n';
 	}
 	else if (vm.count("config-file") == 0 ) {
 		throw boost::program_options::error("At least one <config-file> option must be given. Use -h to see the help");

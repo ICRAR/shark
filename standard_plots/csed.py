@@ -290,21 +290,21 @@ def prepare_data(hdf5_data, phot_data, phot_data_nodust, CSED, CSED_nodust, nban
     #3: disk
     #4: total
     ind = np.where(mdisk + mbulge > 0)
-    SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
-    SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
+    SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands-1))
+    SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands-1))
 
     p = 0
     for c in range(0,5):
         indust = phot_data[p]
         nodust = phot_data_nodust[p]
 
-        for i in range(0,nbands):
+        for i in range(0,nbands-1):
             SEDs_dust[:,c,i] = indust[i,:]
             SEDs_nodust[:,c,i] = nodust[i,:]
 
         p = p + 1
 
-    for i in range(0,nbands):
+    for i in range(0,nbands-1):
         for c in range(0,5):
             #calculate LF with bands with dust
             ind = np.where((SEDs_dust[:,c,i] < 0) & (SEDs_dust[:,c,i] > -50))
@@ -330,7 +330,7 @@ def prepare_data(hdf5_data, phot_data, phot_data_nodust, CSED, CSED_nodust, nban
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     Variable_Ext = True 
-    file_hdf5_sed = "Shark-SED-eagle-rr14-alphas.hdf5"
+    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
@@ -358,8 +358,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
         nbands = len(seds[0]) 
 
         if(index == 0):
-            CSED = np.zeros(shape = (len(z), 5, nbands))
-            CSED_nodust = np.zeros(shape = (len(z), 5, nbands))
+            CSED = np.zeros(shape = (len(z), 5, nbands-1))
+            CSED_nodust = np.zeros(shape = (len(z), 5, nbands-1))
             beta_uv = np.zeros(shape = (len(z)))
 
         prepare_data(hdf5_data, seds, seds_nodust, CSED, CSED_nodust, nbands, index, obsdir, beta_uv)
@@ -370,7 +370,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
             CSED_nodust[index,:]   = CSED_nodust[index,:] / volh * pow(h0,3.0)
             
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14-alphas')
+       outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
     # Take logs
     plot_csed(plt, outdir, obsdir, h0, CSED, CSED_nodust, nbands)

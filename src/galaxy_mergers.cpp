@@ -21,6 +21,7 @@
  * @file
  */
 
+#include <algorithm>
 #include <cmath>
 #include <random>
 #include <vector>
@@ -30,10 +31,12 @@
 #include <gsl/gsl_roots.h>
 
 #include "agn_feedback.h"
-#include "components.h"
+#include "galaxy.h"
 #include "galaxy_mergers.h"
+#include "halo.h"
 #include "numerical_constants.h"
 #include "physical_model.h"
+#include "subhalo.h"
 
 namespace shark {
 
@@ -121,62 +124,66 @@ double GalaxyMergers::merging_timescale_mass(double mp, double ms){
 	return 0.3722 * mass_ratio/std::log(1+mass_ratio);
 }
 
+void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, SubhaloPtr &secondary,
+		double mp, double tau_dyn, int snapshot, bool transfer_types2)
+{
+	// Define merging timescale and redefine type of galaxy.
+	if(parameters.tau_delay > 0){
+		double mgal = galaxy.baryon_mass();
+		double ms = secondary->Mvir + mgal;
+		if(transfer_types2){
+			ms = galaxy.msubhalo_type2 + mgal;
+		}
+		double tau_mass = merging_timescale_mass(mp, ms);
+		double tau_orbits = merging_timescale_orbital();
+
+		galaxy.tmerge = parameters.tau_delay * tau_mass * tau_orbits* tau_dyn;
+	}
+	else{
+		galaxy.tmerge = parameters.tau_delay;
+	}
+
+	//check if this galaxy will merge on the second consecutive snapshot instead, and if so, redefine their descendant_id.
+	double z1 = simparams.redshifts[snapshot+1];
+	double z2 = simparams.redshifts[snapshot+2];
+	if(snapshot+1 > simparams.max_snapshot){
+		z2 = 0;
+	}
+	double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
+	if(galaxy.tmerge <= delta_t_next){
+		galaxy.descendant_id = primary->central_galaxy()->id;
+	}
+	else{
+		//As this is the last time this is calculated before going to write the output at this snapshot, we make sure that the galaxy
+		//has no descendant_id in the rare eventuality it was defined during merging_galaxies (before this step).
+		galaxy.descendant_id = -1;
+	}
+
+	//Only define the following parameters if the galaxies were not type=2.
+	if(!transfer_types2){
+		galaxy.concentration_type2 = secondary->concentration;
+		galaxy.msubhalo_type2 = secondary->Mvir;
+		galaxy.lambda_type2 = secondary->lambda;
+		galaxy.vvir_type2 = secondary->Vvir;
+	}
+}
+
 void GalaxyMergers::merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, int snapshot, bool transfer_types2)
 {
-	auto satellites = secondary->galaxies;
-	if(transfer_types2){
-		satellites = secondary->all_type2_galaxies();
-	}
-
 	auto halo = primary->host_halo;
-
 	double tau_dyn = darkmatterhalo->halo_dynamical_time(halo, z);
-
 	double mp = primary->Mvir + primary->central_galaxy()->baryon_mass();
 
-	for (auto &galaxy: satellites){
-
-		// Define merging timescale and redefine type of galaxy.
-		if(parameters.tau_delay > 0){
-			double mgal = galaxy->baryon_mass();
-			double ms = secondary->Mvir + mgal;
-			if(transfer_types2){
-				ms = galaxy->msubhalo_type2 + mgal;
-			}
-			double tau_mass = merging_timescale_mass(mp, ms);
-			double tau_orbits = merging_timescale_orbital();
-
-			galaxy->tmerge = parameters.tau_delay * tau_mass * tau_orbits* tau_dyn;
-		}
-		else{
-			galaxy->tmerge = parameters.tau_delay;
-		}
-
-		//check if this galaxy will merge on the second consecutive snapshot instead, and if so, redefine their descendant_id.
-		double z1 = simparams.redshifts[snapshot+1];
-		double z2 = simparams.redshifts[snapshot+2];
-		if(snapshot+1 > simparams.max_snapshot){
-			z2 = 0;
-		}
-		double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
-		if(galaxy->tmerge <= delta_t_next){
-			galaxy->descendant_id = primary->central_galaxy()->id;
-		}
-		else{
-			//As this is the last time this is calculated before going to write the output at this snapshot, we make sure that the galaxy
-			//has no descendant_id in the rare eventuality it was defined during merging_galaxies (before this step).
-			galaxy->descendant_id = -1;
-		}
-
-		//Only define the following parameters if the galaxies were not type=2.
-		if(!transfer_types2){
-			galaxy->concentration_type2 = secondary->concentration;
-			galaxy->msubhalo_type2 = secondary->Mvir;
-			galaxy->lambda_type2 = secondary->lambda;
-			galaxy->vvir_type2 = secondary->Vvir;
+	if (transfer_types2) {
+		for (auto &galaxy: secondary->type2_galaxies()) {
+			merging_timescale(galaxy, primary, secondary, mp, tau_dyn, snapshot, true);
 		}
 	}
-
+	else {
+		for (auto &galaxy: secondary->galaxies) {
+			merging_timescale(galaxy, primary, secondary, mp, tau_dyn, snapshot, false);
+		}
+	}
 }
 
 void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z, int snapshot)
@@ -211,7 +218,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z, int snapshot)
 
 			// Change type of galaxies to type=2 before transferring them to the central_subhalo.
 			for (auto &galaxy: satellite_subhalo->galaxies){
-				galaxy->galaxy_type = Galaxy::TYPE2;
+				galaxy.galaxy_type = Galaxy::TYPE2;
 			}
 
 			// Any transfer of halo baryons from satellite to central happens in environment.cpp
@@ -260,7 +267,7 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z, int snapshot)
 			std::copy(ascendants.begin(), ascendants.end(), std::ostream_iterator<SubhaloPtr>(os, " "));
 			os << ". Galaxies are: ";
 			auto &galaxies = primary_subhalo->galaxies;
-			std::copy(galaxies.begin(), galaxies.end(), std::ostream_iterator<GalaxyPtr>(os, " "));
+			std::copy(galaxies.begin(), galaxies.end(), std::ostream_iterator<Galaxy>(os, " "));
 			throw invalid_argument(os.str());
 		}
 
@@ -296,7 +303,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 	/**
 	 * First find central galaxy of central subhalo.
 	 */
-	GalaxyPtr central_galaxy = central_subhalo->central_galaxy();
+	auto central_galaxy = central_subhalo->central_galaxy();
 	if(!central_galaxy){
 		std::ostringstream os;
 		os << central_subhalo << " has no central galaxy - in merging_galaxies. Number of galaxies " << central_subhalo->galaxy_count() << ".\n";
@@ -306,20 +313,20 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 		throw exception(os.str());
 	}
 
-	std::vector<GalaxyPtr> all_sats_to_delete;
+	std::vector<Galaxy::id_t> all_sats_to_delete;
 
 	for (auto &galaxy: central_subhalo->galaxies){
-		if(galaxy->galaxy_type == Galaxy::TYPE2){
+		if(galaxy.galaxy_type == Galaxy::TYPE2){
 			/**
 			 * If merging timescale is less than the duration of this snapshot, then proceed to merge. Otherwise, update merging timescale.
 			 */
-			if(galaxy->tmerge < delta_t){
-				create_merger(central_galaxy, galaxy, halo, snapshot);
+			if(galaxy.tmerge < delta_t){
+				create_merger(*central_galaxy, galaxy, halo, snapshot);
 				// Accumulate all satellites that we need to delete at the end.
-				all_sats_to_delete.push_back(galaxy);
+				all_sats_to_delete.push_back(galaxy.id);
 			}
 			else{
-				galaxy->tmerge = galaxy->tmerge - delta_t;
+				galaxy.tmerge = galaxy.tmerge - delta_t;
 				//check if this galaxy will merge on the second consecutive snapshot instead, and if so, redefine their descendant_id.
 				double z1 = simparams.redshifts[snapshot+1];
 				double z2 = simparams.redshifts[snapshot+2];
@@ -327,8 +334,8 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 					z2 = 0;
 				}
 				double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
-				if(galaxy->tmerge <= delta_t_next){
-					galaxy->descendant_id = central_galaxy->id;
+				if(galaxy.tmerge <= delta_t_next){
+					galaxy.descendant_id = central_galaxy->id;
 				}
 			}
 		}
@@ -345,8 +352,8 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 
 }
 
-void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot){
-
+void GalaxyMergers::create_merger(Galaxy &central, const Galaxy &satellite, HaloPtr &halo, int snapshot) const
+{
 	/**
 	 * This function classifies the merger and transfer all the baryon masses to the right component of the central.
 	 * Inputs:
@@ -360,9 +367,9 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 
 	//First define central subhalo.
 
-	double mbar_central = central->baryon_mass();
+	double mbar_central = central.baryon_mass();
 
-	double mbar_satellite = satellite->baryon_mass();
+	double mbar_satellite = satellite.baryon_mass();
 
 	//Create merger only if the galaxies have a baryon_mass > 0.
 	if(mbar_central <= 0 && mbar_satellite <=0 ){
@@ -377,22 +384,22 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	}
 
 	// define gas mass ratio of the merger.
-	double ms = central->stellar_mass() + satellite->stellar_mass();
+	double ms = central.stellar_mass() + satellite.stellar_mass();
 	double mgas_ratio  = 1;
 	if(ms > 0){
-		mgas_ratio = (central->gas_mass() + satellite->gas_mass()) / ms;
+		mgas_ratio = (central.gas_mass() + satellite.gas_mass()) / ms;
 	}
 
 	/**
 	 * First, calculate remnant galaxy's bulge size based on merger properties. Assume both stars and gas
 	 * settle in the same configuration.
 	 */
-	central->bulge_gas.rscale   = bulge_size_merger(mass_ratio, mgas_ratio, central, satellite, halo);
-	central->bulge_stars.rscale = central->bulge_gas.rscale;
+	central.bulge_gas.rscale   = bulge_size_merger(mass_ratio, mgas_ratio, central, satellite, halo);
+	central.bulge_stars.rscale = central.bulge_gas.rscale;
 
 
 	// Black holes merge regardless of the merger type.
-	central->smbh += satellite->smbh;
+	central.smbh += satellite.smbh;
 
 	//satellite stellar mass is always transferred to the bulge.
 	transfer_history_satellite_to_bulge(central, satellite, snapshot);
@@ -407,27 +414,27 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		/**
  		* Count number of major mergers.
  		*/ 
-		central->interaction.major_mergers += 1;
+		central.interaction.major_mergers += 1;
 
 		/**
 		 * Transfer mass. In the case of major mergers, transfer all stars and gas to the bulge.
 		 */
 
-		central->bulge_stars.mass += central->disk_stars.mass + satellite->stellar_mass();
-		central->bulge_stars.mass_metals += central->disk_stars.mass_metals + satellite->stellar_mass_metals();
+		central.bulge_stars.mass += central.disk_stars.mass + satellite.stellar_mass();
+		central.bulge_stars.mass_metals += central.disk_stars.mass_metals + satellite.stellar_mass_metals();
 
 		// Keep track of stars being transfered to the bulge via assembly.
-		central->galaxymergers_assembly_stars.mass += central->disk_stars.mass + satellite->stellar_mass();
-		central->galaxymergers_assembly_stars.mass_metals += central->disk_stars.mass_metals + satellite->stellar_mass_metals();
+		central.galaxymergers_assembly_stars.mass += central.disk_stars.mass + satellite.stellar_mass();
+		central.galaxymergers_assembly_stars.mass_metals += central.disk_stars.mass_metals + satellite.stellar_mass_metals();
 
-		central->bulge_gas.mass += central->disk_gas.mass + satellite->gas_mass();
-		central->bulge_gas.mass_metals +=  central->disk_gas.mass_metals + satellite->gas_mass_metals();
+		central.bulge_gas.mass += central.disk_gas.mass + satellite.gas_mass();
+		central.bulge_gas.mass_metals +=  central.disk_gas.mass_metals + satellite.gas_mass_metals();
 
 		transfer_history_disk_to_bulge(central, snapshot);
 
 		//Make all disk values 0.
-		central->disk_stars.restore_baryon();
-		central->disk_gas.restore_baryon();
+		central.disk_stars.restore_baryon();
+		central.disk_gas.restore_baryon();
 
 	}
 	else{//minor mergers
@@ -435,57 +442,57 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 		/**
  		* Count number of minor mergers.
  		*/ 
-		central->interaction.minor_mergers += 1;
+		central.interaction.minor_mergers += 1;
 
 		/**
 		 * Transfer mass. In the case of minor mergers, transfer the satellite' stars to the central bulge, and the satellite' gas to the central's disk.
 		 */
 
-		double mgas_old_central = central->disk_gas.mass;
+		double mgas_old_central = central.disk_gas.mass;
 
 		// Transfer mass to bulge.
-		central->bulge_stars.mass += satellite->stellar_mass();
-		central->bulge_stars.mass_metals += satellite->stellar_mass_metals();
+		central.bulge_stars.mass += satellite.stellar_mass();
+		central.bulge_stars.mass_metals += satellite.stellar_mass_metals();
 
 		// Keep track of stars being transfered to the bulge via assembly.
-		central->galaxymergers_assembly_stars.mass += satellite->stellar_mass();
-		central->galaxymergers_assembly_stars.mass_metals += satellite->stellar_mass_metals();
+		central.galaxymergers_assembly_stars.mass += satellite.stellar_mass();
+		central.galaxymergers_assembly_stars.mass_metals += satellite.stellar_mass_metals();
 
 		// Calculate new angular momentum by adding up the two galaxies.
-		double tot_am = satellite->disk_gas.angular_momentum() + satellite->bulge_gas.angular_momentum();
+		double tot_am = satellite.disk_gas.angular_momentum() + satellite.bulge_gas.angular_momentum();
 		double new_disk_sAM = 0;
 		if(tot_am > 0){
-			new_disk_sAM = (central->disk_gas.angular_momentum() + tot_am) / (central->disk_gas.mass + satellite->gas_mass());
+			new_disk_sAM = (central.disk_gas.angular_momentum() + tot_am) / (central.disk_gas.mass + satellite.gas_mass());
 		}
 		// Modify specific AM and size based on new values.
 		if(tot_am > 0){
-			central->disk_gas.sAM = new_disk_sAM;
-			central->disk_gas.rscale =  central->disk_gas.sAM / (2.0 * central->vmax) * constants::RDISK_HALF_SCALE;
+			central.disk_gas.sAM = new_disk_sAM;
+			central.disk_gas.rscale =  central.disk_gas.sAM / (2.0 * central.vmax) * constants::RDISK_HALF_SCALE;
 
-			if (std::isnan(central->disk_gas.sAM) || std::isnan(central->disk_gas.rscale)) {
+			if (std::isnan(central.disk_gas.sAM) || std::isnan(central.disk_gas.rscale)) {
 				throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - in create_merger gas-rich minor merger");
 			}
 		}
 
 		// Transfer gas mass to central disk.
-		central->disk_gas.mass += satellite->gas_mass();
-		central->disk_gas.mass_metals +=  satellite->gas_mass_metals();
+		central.disk_gas.mass += satellite.gas_mass();
+		central.disk_gas.mass_metals +=  satellite.gas_mass_metals();
 
 		if(mass_ratio >= parameters.minor_merger_burst_ratio && mgas_ratio > parameters.gas_fraction_burst_ratio){
 
-			central->bulge_gas += central->disk_gas;
+			central.bulge_gas += central.disk_gas;
 
 			//Make gas disk values 0.
-			central->disk_gas.restore_baryon();
+			central.disk_gas.restore_baryon();
 		}
 		else{
 			//Check cases where there is no disk in the central but the satellite is bringing gas.
-			if(satellite->gas_mass() > 0 && mgas_old_central <= 0){
-				double tot_am = satellite->disk_gas.angular_momentum() + satellite->bulge_gas.angular_momentum();
-				central->disk_gas.sAM = tot_am / satellite->gas_mass();
-				central->disk_gas.rscale = central->disk_gas.sAM / (2.0 * central->vmax) * constants::RDISK_HALF_SCALE;
+			if(satellite.gas_mass() > 0 && mgas_old_central <= 0){
+				double tot_am = satellite.disk_gas.angular_momentum() + satellite.bulge_gas.angular_momentum();
+				central.disk_gas.sAM = tot_am / satellite.gas_mass();
+				central.disk_gas.rscale = central.disk_gas.sAM / (2.0 * central.vmax) * constants::RDISK_HALF_SCALE;
 
-				if (std::isnan(central->disk_gas.sAM) || std::isnan(central->disk_gas.rscale)) {
+				if (std::isnan(central.disk_gas.sAM) || std::isnan(central.disk_gas.rscale)) {
 					throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - in create_merger gas-poor minor merger");
 				}
 			}
@@ -493,16 +500,16 @@ void GalaxyMergers::create_merger(GalaxyPtr &central, GalaxyPtr &satellite, Halo
 	}
 
 	//Assume both stars and gas mix up well during mergers.
-	if(central->bulge_mass() > 0){
-		double v_pseudo = std::sqrt(constants::G * central->bulge_mass() / central->bulge_gas.rscale);
-		central->bulge_gas.sAM   = central->bulge_gas.rscale * v_pseudo;
-		central->bulge_stars.sAM = central->bulge_gas.sAM;
+	if(central.bulge_mass() > 0){
+		double v_pseudo = std::sqrt(constants::G * central.bulge_mass() / central.bulge_gas.rscale);
+		central.bulge_gas.sAM   = central.bulge_gas.rscale * v_pseudo;
+		central.bulge_stars.sAM = central.bulge_gas.sAM;
 	}
 
 	// Calculate specific angular momentum after mass was transferred to the bulge.
 	auto subhalo = halo->central_subhalo;
 
-	if(std::isnan(central->bulge_stars.mass)){
+	if(std::isnan(central.bulge_stars.mass)){
 		std::ostringstream os;
 		os << central << " has a bulge mass not well defined";
 		throw invalid_data(os.str());
@@ -515,38 +522,38 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 	for (auto &subhalo: halo->all_subhalos()){
 		for (auto &galaxy: subhalo->galaxies){
 			// Trigger starburst only in case there is gas in the bulge.
-			if(galaxy->bulge_gas.mass > parameters.mass_min){
+			if(galaxy.bulge_gas.mass > parameters.mass_min){
 
 				// Calculate black hole growth due to starburst.
-				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy->bulge_gas.mass, subhalo->Vvir);
+				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir);
 				double delta_mzbh = 0;
 
-				if(galaxy->bulge_gas.mass > 0){
-					delta_mzbh = delta_mbh/galaxy->bulge_gas.mass * galaxy->bulge_gas.mass_metals;
+				if(galaxy.bulge_gas.mass > 0){
+					delta_mzbh = delta_mbh/galaxy.bulge_gas.mass * galaxy.bulge_gas.mass_metals;
 				}
 
-				double tdyn = agnfeedback->smbh_accretion_timescale(*galaxy, z);
+				double tdyn = agnfeedback->smbh_accretion_timescale(galaxy, z);
 
 				// Define accretion rate.
-				galaxy->smbh.macc_sb = delta_mbh/tdyn;
+				galaxy.smbh.macc_sb = delta_mbh/tdyn;
 
 				// Reduce gas available for star formation due to black hole growth.
-				galaxy->bulge_gas.mass -= delta_mbh;
-				galaxy->bulge_gas.mass_metals -= delta_mzbh;
+				galaxy.bulge_gas.mass -= delta_mbh;
+				galaxy.bulge_gas.mass_metals -= delta_mzbh;
 
 				// Trigger starburst.
-				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t, true);
+				physicalmodel->evolve_galaxy_starburst(*subhalo, galaxy, z, delta_t, true);
 
 				// Grow SMBH after starbursts, as during it we need a realistical measurement of Ledd the BH had before the starburst.
-				galaxy->smbh.mass += delta_mbh;
-				galaxy->smbh.mass_metals += delta_mzbh;
+				galaxy.smbh.mass += delta_mbh;
+				galaxy.smbh.mass_metals += delta_mzbh;
 
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
-				if(galaxy->bulge_gas.mass > 0 && galaxy->bulge_gas.mass < parameters.mass_min){
+				if(galaxy.bulge_gas.mass > 0 && galaxy.bulge_gas.mass < parameters.mass_min){
 					transfer_bulge_gas(galaxy);
 				}
 			}
-			else if (galaxy->bulge_gas.mass > 0){
+			else if (galaxy.bulge_gas.mass > 0){
 				transfer_bulge_gas(galaxy);
 			}
 		}
@@ -554,8 +561,8 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
 }
 
-double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo){
-
+double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, const Galaxy &central, const Galaxy &satellite, HaloPtr &halo) const
+{
 	/**
 	 * This function calculates the bulge sizes resulting from a galaxy mergers following Cole et al. (2000). This assumes
 	 * that the internal energy of the remnant spheroid just after the mergers is equal to the sum of the internal and relative
@@ -571,16 +578,16 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 	double mbar_central = 0;
 	double enc_mass = 0;
 
-	double mbar_satellite = satellite->baryon_mass();
+	double mbar_satellite = satellite.baryon_mass();
 
-	double rsatellite = satellite->composite_size();
+	double rsatellite = satellite.composite_size();
 
 	// Define central properties depending on whether merger is major or minor merger.
 	if(mass_ratio >= parameters.major_merger_ratio){
 
- 		mbar_central = central->baryon_mass();
+		mbar_central = central.baryon_mass();
 
- 		rcentral = central->composite_size();
+		rcentral = central.composite_size();
 
  		auto subhalo_central = halo->central_subhalo;
 
@@ -595,13 +602,13 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 		// bulge and an effective size (as in Lacey+16).
 		if(mass_ratio >= parameters.minor_merger_burst_ratio && mgas_ratio > parameters.gas_fraction_burst_ratio){
 
-			mtotal_central = central->bulge_mass() + central->disk_gas.mass;
-			rcentral = (central->bulge_size() * central->bulge_mass() + central->disk_gas.mass * central->disk_gas.rscale) / mtotal_central;
+			mtotal_central = central.bulge_mass() + central.disk_gas.mass;
+			rcentral = (central.bulge_size() * central.bulge_mass() + central.disk_gas.mass * central.disk_gas.rscale) / mtotal_central;
 		}
 		else{
 
-			mtotal_central = central->bulge_mass();
-			rcentral = central->bulge_size();
+			mtotal_central = central.bulge_mass();
+			rcentral = central.bulge_size();
 		}
 
 	}
@@ -620,8 +627,8 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 	set by the user.**/
 	if(parameters.fgas_dissipation > 0 && mass_ratio > parameters.merger_ratio_dissipation){
 
-		double mstars = central->stellar_mass() + satellite->stellar_mass();
-		double mgas = central->gas_mass() + satellite->gas_mass();
+		double mstars = central.stellar_mass() + satellite.stellar_mass();
+		double mgas = central.gas_mass() + satellite.gas_mass();
 		double rnew = r;
 
 		if(mgas > 0 && mstars > 0){
@@ -658,8 +665,8 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, Ga
 }
 
 
-double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
-
+double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs) const
+{
 	/**
 	 * Input variables:
 	 * mc: mass central.
@@ -696,25 +703,25 @@ double GalaxyMergers::r_remnant(double mc, double ms, double rc, double rs){
 	return r;
 }
 
-void GalaxyMergers::transfer_bulge_gas(GalaxyPtr &galaxy)
+void GalaxyMergers::transfer_bulge_gas(Galaxy &galaxy)
 {
-	galaxy->disk_gas += galaxy->bulge_gas;
+	galaxy.disk_gas += galaxy.bulge_gas;
 
-	if(galaxy->disk_gas.rscale == 0){
-		galaxy->disk_gas.rscale = galaxy->bulge_gas.rscale;
-		galaxy->disk_gas.sAM    = galaxy->bulge_gas.sAM;
+	if(galaxy.disk_gas.rscale == 0){
+		galaxy.disk_gas.rscale = galaxy.bulge_gas.rscale;
+		galaxy.disk_gas.sAM    = galaxy.bulge_gas.sAM;
 
-		if (std::isnan(galaxy->disk_gas.sAM) || std::isnan(galaxy->disk_gas.rscale)) {
+		if (std::isnan(galaxy.disk_gas.sAM) || std::isnan(galaxy.disk_gas.rscale)) {
 			throw invalid_argument("rgas or sAM are NaN, cannot continue at galaxy mergers - transfer_bulge_gas");
 		}
 	}
 
-	galaxy->bulge_gas.restore_baryon();
+	galaxy.bulge_gas.restore_baryon();
 
 }
 
-void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot){
-
+void GalaxyMergers::transfer_history_satellite_to_bulge(Galaxy &central, const Galaxy &satellite, int snapshot) const
+{
 	/**
 	 * Function transfers the satellite stellar mass history to the bulge of the central galaxy.
 	 */
@@ -722,11 +729,11 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 	//Transfer history of stellar mass growth until the previous snapshot.
 	for(int s=simparams.min_snapshot; s <= snapshot-1; s++) {
 
-		auto it_sat = std::find_if(satellite->history.begin(), satellite->history.end(), [s](const HistoryItem &hitem) {
+		auto it_sat = std::find_if(satellite.history.begin(), satellite.history.end(), [s](const HistoryItem &hitem) {
 			return hitem.snapshot == s;
 		});
 
-		auto it_cen = std::find_if(central->history.begin(), central->history.end(), [s](const HistoryItem &hitem) {
+		auto it_cen = std::find_if(central.history.begin(), central.history.end(), [s](const HistoryItem &hitem) {
 			return hitem.snapshot == s;
 		});
 
@@ -736,13 +743,13 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 			3) that the central didn't exist but the satellite did. In this create a new entry for the history of the central with the data of the satellite.
 			4) none of the galaxies existed. In this case do nothing.
 		**/
-		if (it_sat == satellite->history.end() && it_cen == central->history.end()){ //neither satellite or central existed.
+		if (it_sat == satellite.history.end() && it_cen == central.history.end()){ //neither satellite or central existed.
 			//no-opt.
 		}
-		else if (it_sat == satellite->history.end() && it_cen != central->history.end()){ // satellite didn't exist but central did.
+		else if (it_sat == satellite.history.end() && it_cen != central.history.end()){ // satellite didn't exist but central did.
 			//no-opt.
 		}
-		else if (it_sat != satellite->history.end() && it_cen == central->history.end()){ // central didn't exist but satellite did.
+		else if (it_sat != satellite.history.end() && it_cen == central.history.end()){ // central didn't exist but satellite did.
 			auto hist_item = *it_sat;
 
 			//transfer all data to the bulge formed via mergers, which is where all of this mass ends up being at.
@@ -757,7 +764,7 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 			hist_item.sfr_bulge_diskins = 0;
 			hist_item.sfr_z_bulge_diskins = 0;
 
-			central->history.push_back(hist_item);
+			central.history.push_back(hist_item);
 		}
 		else { // both galaxies exist at this snapshot
 			auto hist_sat = *it_sat;
@@ -771,8 +778,8 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(GalaxyPtr &central, Gala
 
 }
 
-void GalaxyMergers::transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot){
-
+void GalaxyMergers::transfer_history_disk_to_bulge(Galaxy &central, int snapshot) const
+{
 	/**
 	 * Function transfers the disk stellar mass history to bulge of the central galaxy.
 	 */
@@ -780,11 +787,11 @@ void GalaxyMergers::transfer_history_disk_to_bulge(GalaxyPtr &central, int snaps
 	//Transfer history of stellar mass growth until the previous snapshot.
 	for(int s=simparams.min_snapshot; s <= snapshot-1; s++) {
 
-		auto it_cen = std::find_if(central->history.begin(), central->history.end(), [s](const HistoryItem &hitem) {
+		auto it_cen = std::find_if(central.history.begin(), central.history.end(), [s](const HistoryItem &hitem) {
 			return hitem.snapshot == s;
 		});
 
-		if (it_cen == central->history.end()){ //central didn't exist.
+		if (it_cen == central.history.end()){ //central didn't exist.
 			//no-opt.
 		}
 		else { // both galaxies exist at this snapshot
