@@ -47,7 +47,7 @@ public:
 	 * @param snapshot The snapshot number
 	 * @return A list of populated Subhalos
 	 */
-	virtual const std::vector<Subhalo> read_subhalos(int snapshot) = 0;
+	virtual std::vector<Subhalo> read_subhalos(int snapshot) = 0;
 
 };
 

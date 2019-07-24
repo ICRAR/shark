@@ -47,7 +47,7 @@ public:
 	 */
 	VELOCIraptorReader(std::shared_ptr<DescendantReader> &descendant_reader, const std::string &trees_dir);
 
-	const std::vector<Subhalo> read_subhalos(int snapshot) override;
+	std::vector<Subhalo> read_subhalos(int snapshot) override;
 
 private:
 
@@ -58,7 +58,7 @@ private:
 	std::string trees_dir;
 
 	const std::string get_filename(int snapshot, int batch);
-	const std::vector<Subhalo> read_subhalos_batch(int snapshot, int batch);
+	std::vector<Subhalo> read_subhalos_batch(int snapshot, int batch);
 };
 
 }  // namespace importer

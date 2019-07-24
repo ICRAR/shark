@@ -23,7 +23,9 @@
 
 #include <cmath>
 
+#include "halo.h"
 #include "reincorporation.h"
+#include "subhalo.h"
 
 namespace shark {
 

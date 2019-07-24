@@ -33,12 +33,14 @@
 #include <gsl/gsl_odeiv2.h>
 #include "agn_feedback.h"
 #include "components.h"
+#include "galaxy.h"
 #include "gas_cooling.h"
 #include "numerical_constants.h"
 #include "ode_solver.h"
 #include "recycling.h"
 #include "stellar_feedback.h"
 #include "star_formation.h"
+#include "subhalo.h"
 
 namespace shark {
 

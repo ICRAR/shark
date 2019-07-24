@@ -33,10 +33,12 @@
 
 #include "dark_matter_halos.h"
 #include "exceptions.h"
+#include "halo.h"
 #include "logging.h"
 #include "merger_tree_reader.h"
 #include "omp_utils.h"
 #include "simulation.h"
+#include "subhalo.h"
 #include "timer.h"
 #include "utils.h"
 #include "hdf5/reader.h"
