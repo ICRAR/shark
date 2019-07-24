@@ -42,13 +42,13 @@ class TreeBuilder {
 public:
 	TreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 	virtual ~TreeBuilder();
-	std::vector<MergerTreePtr> build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons);
+	std::vector<MergerTreePtr> build_trees(std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons);
 
 protected:
 
 	ExecutionParameters &get_exec_params();
 
-	virtual void loop_through_halos(const std::vector<HaloPtr> &halos) = 0;
+	virtual void loop_through_halos(std::vector<HaloPtr> &halos) = 0;
 
 	void link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_subhalo,
 	          const HaloPtr &parent_halo, const HaloPtr &desc_halo);
@@ -76,7 +76,8 @@ public:
 	HaloBasedTreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 
 protected:
-	void loop_through_halos(const std::vector<HaloPtr> &halos) override;
+	void loop_through_halos(std::vector<HaloPtr> &halos) override;
+	SubhaloPtr find_descendant_subhalo(const HaloPtr &halo, const SubhaloPtr &subhalo, const HaloPtr &descendant_halo);
 
 };
 

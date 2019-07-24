@@ -33,15 +33,18 @@
 #include <boost/filesystem.hpp>
 
 #include "hdf5/writer.h"
-#include "components.h"
 #include "config.h"
 #include "cosmology.h"
 #include "exceptions.h"
+#include "galaxy.h"
 #include "galaxy_writer.h"
+#include "halo.h"
 #include "git_revision.h"
 #include "logging.h"
 #include "star_formation.h"
+#include "subhalo.h"
 #include "timer.h"
+#include "total_baryon.h"
 #include "utils.h"
 
 
@@ -334,13 +337,13 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			L_y_subhalo.push_back(subhalo->L.y);
 			L_z_subhalo.push_back(subhalo->L.z);
 
-			for (const auto &galaxy: subhalo->galaxies){
+			for (auto &galaxy: subhalo->galaxies){
 
 				id_halo_tree.push_back(halo->id);
 				id_subhalo_tree.push_back(subhalo->id);
 
 				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
-				auto &molecular_gas = molgas_per_gal.at(galaxy);
+				auto &molecular_gas = molgas_per_gal.at(galaxy.id);
 				// Gas components separated into HI and H2.
 				mmol_disk.push_back(molecular_gas.m_mol);
 				mmol_bulge.push_back(molecular_gas.m_mol_b);
@@ -348,53 +351,53 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				matom_bulge.push_back(molecular_gas.m_atom_b);
 
 				// Stellar components
-				mstars_disk.push_back(galaxy->disk_stars.mass);
-				mstars_bulge.push_back(galaxy->bulge_stars.mass);
-				mstars_burst_mergers.push_back(galaxy->galaxymergers_burst_stars.mass);
-				mstars_bulge_mergers_assembly.push_back(galaxy->galaxymergers_assembly_stars.mass);
-				mstars_burst_diskinstabilities.push_back(galaxy->diskinstabilities_burst_stars.mass);
-				mstars_bulge_diskins_assembly.push_back(galaxy->diskinstabilities_assembly_stars.mass);
+				mstars_disk.push_back(galaxy.disk_stars.mass);
+				mstars_bulge.push_back(galaxy.bulge_stars.mass);
+				mstars_burst_mergers.push_back(galaxy.galaxymergers_burst_stars.mass);
+				mstars_bulge_mergers_assembly.push_back(galaxy.galaxymergers_assembly_stars.mass);
+				mstars_burst_diskinstabilities.push_back(galaxy.diskinstabilities_burst_stars.mass);
+				mstars_bulge_diskins_assembly.push_back(galaxy.diskinstabilities_assembly_stars.mass);
 
-				mean_stellar_age.push_back(galaxy->mean_stellar_age / galaxy->total_stellar_mass_ever_formed);
+				mean_stellar_age.push_back(galaxy.mean_stellar_age / galaxy.total_stellar_mass_ever_formed);
 
 				// Gas components
-				mgas_disk.push_back(galaxy->disk_gas.mass);
-				mgas_bulge.push_back(galaxy->bulge_gas.mass);
+				mgas_disk.push_back(galaxy.disk_gas.mass);
+				mgas_bulge.push_back(galaxy.bulge_gas.mass);
 
 				// Metals of the stellar components.
-				mstars_metals_disk.push_back(galaxy->disk_stars.mass_metals);
-				mstars_metals_bulge.push_back(galaxy->bulge_stars.mass_metals);
-				mstars_metals_burst_mergers.push_back(galaxy->galaxymergers_burst_stars.mass_metals);
-				mstars_metals_bulge_mergers_assembly.push_back(galaxy->galaxymergers_assembly_stars.mass_metals);
-				mstars_metals_burst_diskinstabilities.push_back(galaxy->diskinstabilities_burst_stars.mass);
-				mstars_metals_bulge_diskins_assembly.push_back(galaxy->diskinstabilities_burst_stars.mass_metals);
+				mstars_metals_disk.push_back(galaxy.disk_stars.mass_metals);
+				mstars_metals_bulge.push_back(galaxy.bulge_stars.mass_metals);
+				mstars_metals_burst_mergers.push_back(galaxy.galaxymergers_burst_stars.mass_metals);
+				mstars_metals_bulge_mergers_assembly.push_back(galaxy.galaxymergers_assembly_stars.mass_metals);
+				mstars_metals_burst_diskinstabilities.push_back(galaxy.diskinstabilities_burst_stars.mass);
+				mstars_metals_bulge_diskins_assembly.push_back(galaxy.diskinstabilities_burst_stars.mass_metals);
 
 				// Metals of the gas components.
-				mgas_metals_disk.push_back(galaxy->disk_gas.mass_metals);
-				mgas_metals_bulge.push_back(galaxy->bulge_gas.mass_metals);
+				mgas_metals_disk.push_back(galaxy.disk_gas.mass_metals);
+				mgas_metals_bulge.push_back(galaxy.bulge_gas.mass_metals);
 
 				// SFRs in disks and bulges.
-				sfr_disk.push_back(galaxy->sfr_disk);
-				sfr_burst.push_back(galaxy->sfr_bulge_mergers + galaxy->sfr_bulge_diskins);
+				sfr_disk.push_back(galaxy.sfr_disk);
+				sfr_burst.push_back(galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins);
 
 				// Black hole properties.
-				mBH.push_back(galaxy->smbh.mass);
-				mBH_acc_hh.push_back(galaxy->smbh.macc_hh);
-				mBH_acc_sb.push_back(galaxy->smbh.macc_sb);
+				mBH.push_back(galaxy.smbh.mass);
+				mBH_acc_hh.push_back(galaxy.smbh.macc_hh);
+				mBH_acc_sb.push_back(galaxy.smbh.macc_sb);
 
 				// Sizes and specific angular momentum of disks and bulges.
 
-				rdisk_gas.push_back(galaxy->disk_gas.rscale);
-				rbulge_gas.push_back(galaxy->bulge_gas.rscale);
-				sAM_disk_gas.push_back(galaxy->disk_gas.sAM);
+				rdisk_gas.push_back(galaxy.disk_gas.rscale);
+				rbulge_gas.push_back(galaxy.bulge_gas.rscale);
+				sAM_disk_gas.push_back(galaxy.disk_gas.sAM);
 				sAM_disk_gas_atom.push_back(molecular_gas.j_atom);
 				sAM_disk_gas_mol.push_back(molecular_gas.j_mol);
-				sAM_bulge_gas.push_back(galaxy->bulge_gas.sAM);
+				sAM_bulge_gas.push_back(galaxy.bulge_gas.sAM);
 
-				rdisk_star.push_back(galaxy->disk_stars.rscale);
-				rbulge_star.push_back(galaxy->bulge_stars.rscale);
-				sAM_disk_star.push_back(galaxy->disk_stars.sAM);
-				sAM_bulge_star.push_back(galaxy->bulge_stars.sAM);
+				rdisk_star.push_back(galaxy.disk_stars.rscale);
+				rbulge_star.push_back(galaxy.bulge_stars.rscale);
+				sAM_disk_star.push_back(galaxy.disk_stars.sAM);
+				sAM_bulge_star.push_back(galaxy.bulge_stars.sAM);
 
 				// Halo properties below.
 				double mhot_gal = 0;
@@ -405,8 +408,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				double lostzm = 0;
 
 				double rcool = 0;
-				int t = galaxy->galaxy_type;
-				if(galaxy->galaxy_type == Galaxy::CENTRAL){
+				int t = galaxy.galaxy_type;
+				if(galaxy.galaxy_type == Galaxy::CENTRAL){
 					mhot_gal = hot_subhalo.mass + cold_subhalo.mass;
 					mzhot_gal = hot_subhalo.mass_metals + cold_subhalo.mass_metals;
 					mreheat = reheated_subhalo.mass;
@@ -435,37 +438,37 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				xyz<float> vel;
 				xyz<float> L;
 
-				if(galaxy->galaxy_type == Galaxy::CENTRAL || galaxy->galaxy_type == Galaxy::TYPE1){
+				if(galaxy.galaxy_type == Galaxy::CENTRAL || galaxy.galaxy_type == Galaxy::TYPE1){
 					mvir_gal = msubhalo;
 					c_sub    = cnfw;
 					l_sub    = lambda;
 					pos      = subhalo->position;
 					vel      = subhalo->velocity;
-					L        = subhalo->L.unit() * galaxy->angular_momentum();
+					L        = subhalo->L.unit() * galaxy.angular_momentum();
 					vvir_subhalo.push_back(vvir_sh);
 					mvir_subhalo.push_back(mvir_gal);
 					cnfw_subhalo.push_back(c_sub);
 					lambda_subhalo.push_back(l_sub);
 					redshift_of_merger.push_back(-1);
-					if(galaxy->descendant_id < 0 && snapshot < sim_params.max_snapshot){
-						galaxy->descendant_id = galaxy->id;
+					if(galaxy.descendant_id < 0 && snapshot < sim_params.max_snapshot){
+						galaxy.descendant_id = galaxy.id;
 					}
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
-					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy->angular_momentum(), halo);
-					mvir_subhalo.push_back(galaxy->msubhalo_type2);
-					cnfw_subhalo.push_back(galaxy->concentration_type2);
-					lambda_subhalo.push_back(galaxy->lambda_type2);
-					vvir_subhalo.push_back(galaxy->vvir_type2);
+					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy.angular_momentum(), halo);
+					mvir_subhalo.push_back(galaxy.msubhalo_type2);
+					cnfw_subhalo.push_back(galaxy.concentration_type2);
+					lambda_subhalo.push_back(galaxy.lambda_type2);
+					vvir_subhalo.push_back(galaxy.vvir_type2);
 
 					// calculate the age of the universe by the time this galaxy will merge.
-					double tmerge  = cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot-1]) + galaxy->tmerge;
+					double tmerge  = cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot-1]) + galaxy.tmerge;
 					double redshift_merger = cosmology->convert_age_to_redshift_lcdm(tmerge);
 					redshift_of_merger.push_back(redshift_merger);
 
-					if(galaxy->descendant_id < 0 ){
-						galaxy->descendant_id = galaxy->id;
+					if(galaxy.descendant_id < 0 ){
+						galaxy.descendant_id = galaxy.id;
 					}
 
 				}
@@ -473,18 +476,18 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 				//force the descendant Id to be = -1 if this is the last snapshot. If not, check that all descendant_ids are positive.
 				if(snapshot == sim_params.max_snapshot){
-					galaxy->descendant_id = -1;
+					galaxy.descendant_id = -1;
 				}
-				else if (galaxy->descendant_id < 0){
+				else if (galaxy.descendant_id < 0){
 					std::ostringstream os;
 					os << "Descendant_id of galaxy to be written is negative";
 					throw invalid_argument(os.str());
 				}
 
-				id_galaxy.push_back(galaxy->id);
-				descendant_id_galaxy.push_back(galaxy->descendant_id);
+				id_galaxy.push_back(galaxy.id);
+				descendant_id_galaxy.push_back(galaxy.descendant_id);
 
-				vmax_subhalo.push_back(galaxy->vmax);
+				vmax_subhalo.push_back(galaxy.vmax);
 
 				// Galaxy position and velocity.
 				position_x.push_back(pos.x);
@@ -1010,24 +1013,24 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 						bool star_gal_bulge_exists = false;
 						for(int s=sim_params.min_snapshot+1; s <= snapshot; s++) {
 
-							auto it = std::find_if(galaxy->history.begin(), galaxy->history.end(), [s](const HistoryItem &hitem) {
+							auto it = std::find_if(galaxy.history.begin(), galaxy.history.end(), [s](const HistoryItem &hitem) {
 								//information in snapshot corresponds to the end of it, so effectively, when writing, we need to
 								//compare to s-1.
 								return hitem.snapshot == s-1;
 							});
 
-							if (it == galaxy->history.end()) {
+							if (it == galaxy.history.end()) {
 								if (star_gal_bulge_exists) {
 									std::ostringstream os;
 									os << "The history of the StellarMass of the bulge of " << galaxy << " ceased to exist (temporarily). ";
 									os << "These are the snapshots for which there is a history item: ";
-									vector<int> hsnaps(galaxy->history.size());
-									std::transform(galaxy->history.begin(), galaxy->history.end(), hsnaps.begin(), [](const HistoryItem &hitem) {
+									vector<int> hsnaps(galaxy.history.size());
+									std::transform(galaxy.history.begin(), galaxy.history.end(), hsnaps.begin(), [](const HistoryItem &hitem) {
 										return hitem.snapshot;
 									});
 									std::copy(hsnaps.begin(), hsnaps.end(), std::ostream_iterator<int>(os, " "));
 									LOG(warning) << os.str();
-									for (auto &item: galaxy->history){
+									for (auto &item: galaxy.history){
 										std::ostringstream os;
 										os << "snap history: "<< item.snapshot;
 										LOG(warning) << os.str();
@@ -1075,7 +1078,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 						}
 
 						// save galaxies only if they have a stellar mass >0 by the output snapshot.
-						if(galaxy->stellar_mass() > 0){
+						if(galaxy.stellar_mass() > 0){
 							sfhs_disk.emplace_back(std::move(sfh_gal_disk));
 							stellar_metals_disk.emplace_back(std::move(star_metals_gal_disk));
 
@@ -1085,7 +1088,7 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 							sfhs_bulge_diskins.emplace_back(std::move(sfh_gal_bulge_diskins));
 							stellar_metals_bulge_diskins.emplace_back(std::move(star_metals_gal_bulge_diskins));
 
-							id_galaxy.push_back(galaxy->id);
+							id_galaxy.push_back(galaxy.id);
 						}
 					}
 				}
@@ -1167,16 +1170,16 @@ void ASCIIGalaxyWriter::write(int snapshot, const std::vector<HaloPtr> &halos, T
 	output.close();
 }
 
-void ASCIIGalaxyWriter::write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f, const molgas_per_galaxy &molgas_per_gal)
+void ASCIIGalaxyWriter::write_galaxy(const Galaxy &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f, const molgas_per_galaxy &molgas_per_gal)
 {
-	auto mstars_disk = galaxy->disk_stars.mass;
-	auto mstars_bulge = galaxy->bulge_stars.mass;
-	auto mgas_disk = galaxy->disk_gas.mass;
-	auto mgas_metals_disk = galaxy->disk_gas.mass_metals;
-	auto mBH = galaxy->smbh.mass;
-	auto rdisk = galaxy->disk_stars.rscale;
-	auto rbulge = galaxy->bulge_stars.rscale;
-	auto &molecular_gas = molgas_per_gal.at(galaxy);
+	auto mstars_disk = galaxy.disk_stars.mass;
+	auto mstars_bulge = galaxy.bulge_stars.mass;
+	auto mgas_disk = galaxy.disk_gas.mass;
+	auto mgas_metals_disk = galaxy.disk_gas.mass_metals;
+	auto mBH = galaxy.smbh.mass;
+	auto rdisk = galaxy.disk_stars.rscale;
+	auto rbulge = galaxy.bulge_stars.rscale;
+	auto &molecular_gas = molgas_per_gal.at(galaxy.id);
 
 	f << mstars_disk << " " << mstars_bulge << " " <<  molecular_gas.m_atom + molecular_gas.m_atom_b
 	  << " " << mBH << " " << mgas_metals_disk / mgas_disk << " "

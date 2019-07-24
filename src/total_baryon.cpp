@@ -1,6 +1,6 @@
 //
 // ICRAR - International Centre for Radio Astronomy Research
-// (c) UWA - The University of Western Australia, 2017
+// (c) UWA - The University of Western Australia, 2019
 // Copyright by UWA (in the framework of the ICRAR)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -17,38 +17,28 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-/**
- * @file
- *
- * Forward definition of commonly-used structural component classes
- */
+#include <algorithm>
 
-#ifndef SHARK_COMPONENTS_H_
-#define SHARK_COMPONENTS_H_
-
-#include <cstdint>
-#include <memory>
+#include "total_baryon.h"
 
 namespace shark {
 
-using galaxy_id_t = int;
-using subhalo_id_t = std::int64_t;
-using halo_id_t = std::int64_t;
-using merger_tree_id_t = std::int32_t;
+std::vector<double> TotalBaryon::get_masses (const std::vector<BaryonBase> &B) const
+{
+	std::vector<double> masses(B.size());
+	std::transform(B.begin(), B.end(), masses.begin(), [](const BaryonBase &b) {
+		return b.mass;
+	});
+	return masses;
+}
 
-class Galaxy;
-class Subhalo;
-class Halo;
-class MergerTree;
-class TotalBaryon;
+std::vector<double> TotalBaryon::get_metals (const std::vector<BaryonBase> &B) const
+{
+	std::vector<double> masses(B.size());
+	std::transform(B.begin(), B.end(), masses.begin(), [](const BaryonBase &b) {
+		return b.mass_metals;
+	});
+	return masses;
+}
 
-using GalaxyPtr = Galaxy *;
-using ConstGalaxyPtr = const Galaxy *;
-using SubhaloPtr = std::shared_ptr<Subhalo>;
-using HaloPtr = std::shared_ptr<Halo>;
-using MergerTreePtr = std::shared_ptr<MergerTree>;
-using galaxies_size_type = std::size_t;
-
-} // namespace shark
-
-#endif // SHARK_COMPONENTS_H_
+}  // namespace shark

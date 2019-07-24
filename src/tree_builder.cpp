@@ -30,9 +30,14 @@
 
 #include "cosmology.h"
 #include "exceptions.h"
+#include "halo.h"
 #include "logging.h"
+#include "merger_tree.h"
 #include "omp_utils.h"
+#include "ranges.h"
+#include "subhalo.h"
 #include "timer.h"
+#include "total_baryon.h"
 #include "tree_builder.h"
 
 
@@ -54,13 +59,11 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const
 {
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
-		for (auto &snapshot_and_halos: tree->halos) {
-			for (auto &halo: snapshot_and_halos.second) {
-				if (halo->merger_tree != tree) {
-					std::ostringstream os;
-					os << halo << " is not actually part of " << tree;
-					throw invalid_data(os.str());
-				}
+		for (auto &halo: tree->halos) {
+			if (halo->merger_tree != tree) {
+				std::ostringstream os;
+				os << halo << " is not actually part of " << tree;
+				throw invalid_data(os.str());
 			}
 		}
 	});
@@ -79,7 +82,7 @@ void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, S
 }
 
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
 {
 
 	auto last_snapshot_to_consider = exec_params.last_output_snapshot();
@@ -122,6 +125,13 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	}
 
 	loop_through_halos(halos);
+	{
+		Timer t;
+		omp_static_for(trees, threads, [](MergerTreePtr &tree, int thread_idx) {
+			tree->consolidate();
+		});
+		LOG(info) << "Took " << t << " to consolidate all trees";
+	}
 
 	// Ignore massive halos that pop in for the first time at low redshift. 
 	// These generally are flaws of the merger tree builder.
@@ -461,23 +471,95 @@ HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params, unsi
 	// no-op
 }
 
-void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
+static std::vector<SubhaloPtr>::const_iterator find_by_id(const std::vector<SubhaloPtr> &subhalos, Subhalo::id_t id)
+{
+	return std::find_if(subhalos.begin(), subhalos.end(), [id](const SubhaloPtr &subhalo)
+	{
+		return subhalo->id == id;
+	});
+}
+
+SubhaloPtr HaloBasedTreeBuilder::find_descendant_subhalo(
+    const HaloPtr &halo, const SubhaloPtr &subhalo, const HaloPtr &descendant_halo)
+{
+	// if the descendant subhalo is not found in the descendant halos'
+	// subhalos then we error
+	bool subhalo_descendant_found = false;
+	auto descendant_subhalos = descendant_halo->all_subhalos();
+	auto descendant_subhalo_found = find_by_id(descendant_subhalos, subhalo->descendant_id);
+
+	if (descendant_subhalo_found == descendant_subhalos.end()) {
+		std::ostringstream os;
+		auto exec_params = get_exec_params();
+		if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
+			os << "Descendant Subhalo id=" << subhalo->descendant_id;
+			os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
+			os << " in the Subhalo's descendant Halo " << descendant_halo << std::endl;
+			os << "Subhalos in " << descendant_halo << ": " << std::endl << "  ";
+			auto all_subhalos = descendant_halo->all_subhalos();
+			std::copy(all_subhalos.begin(), all_subhalos.end(),
+					  std::ostream_iterator<SubhaloPtr>(os, "\n  "));
+		}
+
+		// Users can choose whether to continue in these situations
+		// (with or without a warning) or if it should be considered an error
+		if (!get_exec_params().skip_missing_descendants) {
+			throw subhalo_not_found(os.str(), subhalo->descendant_id);
+		}
+
+		if (get_exec_params().warn_on_missing_descendants) {
+			LOG(warning) << os.str();
+		}
+		halo->remove_subhalo(subhalo);
+		return nullptr;
+	}
+
+	// We support only direct parentage; that is, descendants must be
+	// in the snapshot directly after ours
+	auto descendant_subhalo = *descendant_subhalo_found;
+	if (subhalo->snapshot != descendant_subhalo->snapshot - 1) {
+		std::ostringstream os;
+		os << "Subhalo " << descendant_subhalo << " (snapshot " << subhalo->snapshot << ") ";
+		os << "is not a direct descendant of " << subhalo << " (" << descendant_subhalo->snapshot << ").";
+		throw invalid_data(os.str());
+	}
+
+	return descendant_subhalo;
+}
+
+static void sort_by_id(std::vector<HaloPtr> &halos)
+{
+	std::sort(halos.begin(), halos.end(), [](const HaloPtr &x, const HaloPtr &y) {
+		return x->id < y->id;
+	});
+}
+
+static std::vector<HaloPtr>::iterator find_by_id(std::vector<HaloPtr> &halos, Halo::id_t id)
+{
+	auto lo = std::lower_bound(halos.begin(), halos.end(), id, [](const HaloPtr &x, Halo::id_t id)
+	{
+		return x->id < id;
+	});
+	auto up = std::upper_bound(halos.begin(), halos.end(), id, [](const Halo::id_t id, const HaloPtr &x)
+	{
+		return id < x->id;
+	});
+	if (lo == up) {
+		return halos.end();
+	}
+	return lo;
+}
+
+void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 {
 
-	// Index all halos by snapshot and by ID, we'll need them later
-	std::map<int, std::vector<HaloPtr>> halos_by_snapshot;
-	std::map<Halo::id_t, HaloPtr> halos_by_id;
-	for(const auto &halo: halos) {
-		halos_by_snapshot[halo->snapshot].push_back(halo);
-		halos_by_id[halo->id] = halo;
-	}
+	sort_by_id(halos);
 
 	// To find subhalos/halos that correspond to each other, we do the following
 	//  1. Iterate over snapshots in descending order
 	//  2. For each snapshot S we iterate over its halos
 	//  3. For each halo H we iterate over its subhalos
 	//  4. For each subhalo SH we find the halo with subhalo.descendant_halo_id
-	//     (which we globally keep at the halos_by_id map)
 	//  5. When the descendant halo DH is found, we find the particular subhalo
 	//     DSH inside DH that matches SH's descendant_id
 	//  6. Now we have SH, H, DSH and DH. We link them all together,
@@ -502,8 +584,8 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
 
 		int ignored = 0;
-		for(auto &halo: halos_by_snapshot[snapshot]) {
-
+		auto halos_in_snapshot = make_range_filter(halos, in_snapshot(snapshot));
+		for(auto &halo: halos_in_snapshot) {
 			bool halo_linked = false;
 			for(const auto &subhalo: halo->all_subhalos()) {
 
@@ -518,64 +600,26 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 
 				// if the descendant halo is not found, we don't consider this
 				// halo anymore (and all its progenitors)
-				auto it = halos_by_id.find(subhalo->descendant_halo_id);
-				if (it == halos_by_id.end()) {
+				auto descendant_halo_position = find_by_id(halos, subhalo->descendant_halo_id);
+				if (descendant_halo_position == halos.end()) {
 					if (LOG_ENABLED(debug)) {
 						LOG(debug) << subhalo << " points to descendant halo/subhalo "
 						           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
 						           << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
 					}
-					halos_by_id.erase(halo->id);
 					ignored++;
 					break;
 				}
-
-				// if the descendant subhalo is not found in the descendant halos'
-				// subhalos then we error
-				bool subhalo_descendant_found = false;
-				const auto &d_halo = halos_by_id[subhalo->descendant_halo_id];
-				for(auto &d_subhalo: d_halo->all_subhalos()) {
-					if (d_subhalo->id == subhalo->descendant_id) {
-
-						// We support only direct parentage; that is, descendants must be
-						// in the snapshot directly after ours
-						if (subhalo->snapshot != d_subhalo->snapshot - 1) {
-							std::ostringstream os;
-							os << "Subhalo " << d_subhalo << " (snapshot " << subhalo->snapshot << ") ";
-							os << "is not a direct descendant of " << subhalo << " (" << d_subhalo->snapshot << ").";
-							throw invalid_data(os.str());
-						}
-
-						link(subhalo, d_subhalo, halo, d_halo);
-						subhalo_descendant_found = true;
-						halo_linked = true;
-						break;
-					}
+				auto descendant_halo = *descendant_halo_position;
+				// hasn't been put in any merger tree, so it was ignored
+				if (!descendant_halo->merger_tree) {
+					continue;
 				}
-				if (!subhalo_descendant_found) {
 
-					std::ostringstream os;
-					auto exec_params = get_exec_params();
-					if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
-						os << "Descendant Subhalo id=" << subhalo->descendant_id;
-						os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
-						os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
-						os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
-						auto all_subhalos = d_halo->all_subhalos();
-						std::copy(all_subhalos.begin(), all_subhalos.end(),
-								  std::ostream_iterator<SubhaloPtr>(os, "\n  "));
-					}
-
-					// Users can choose whether to continue in these situations
-					// (with or without a warning) or if it should be considered an error
-					if (!get_exec_params().skip_missing_descendants) {
-						throw subhalo_not_found(os.str(), subhalo->descendant_id);
-					}
-
-					if (get_exec_params().warn_on_missing_descendants) {
-						LOG(warning) << os.str();
-					}
-					halo->remove_subhalo(subhalo);
+				auto descendant_subhalo = find_descendant_subhalo(halo, subhalo, descendant_halo);
+				if (descendant_subhalo) {
+					link(subhalo, descendant_subhalo, halo, descendant_halo);
+					halo_linked = true;
 				}
 			}
 
@@ -586,14 +630,13 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 					LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
 					           << " descendants, ignoring it (and the rest of its progenitors)";
 				}
-				halos_by_id.erase(halo->id);
 				ignored++;
 			}
 
 		}
 
-		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
 		if (LOG_ENABLED(debug)) {
+			auto n_snapshot_halos = halos_in_snapshot.size();
 			LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
 			           << std::setprecision(2) << std::setiosflags(std::ios::fixed)
 			           << ignored * 100. / n_snapshot_halos << "%)"
