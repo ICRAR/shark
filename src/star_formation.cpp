@@ -466,7 +466,7 @@ double StarFormation::kd12_taudep(double sigma_gas, void * params) const{
 	// in Gyr
 	double tdep = 3.5 * props->torb / parameters.efficiency_sf;
 
-	double sigma_gmc = 1e14; //in Msun/Mpc^2
+	double sigma_gmc = 85*1e12; //in Msun/Mpc^2
 	if(sigma_gmc < sigma_gas){
 		sigma_gmc= sigma_gas;
 	}
