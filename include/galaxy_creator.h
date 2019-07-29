@@ -27,6 +27,7 @@
 #include "cosmology.h"
 #include "components.h"
 #include "dark_matter_halos.h"
+#include "galaxy.h"
 #include "gas_cooling.h"
 #include "simulation.h"
 

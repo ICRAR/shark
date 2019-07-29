@@ -28,7 +28,6 @@
 #include <ostream>
 #include <vector>
 
-#include "components.h"
 #include "evolve_halos.h"
 #include "execution.h"
 #include "disk_instability.h"
@@ -37,12 +36,15 @@
 #include "galaxy_mergers.h"
 #include "galaxy_writer.h"
 #include "logging.h"
+#include "merger_tree.h"
 #include "merger_tree_reader.h"
 #include "omp_utils.h"
 #include "options.h"
 #include "physical_model.h"
 #include "shark_runner.h"
+#include "subhalo.h"
 #include "timer.h"
+#include "total_baryon.h"
 #include "tree_builder.h"
 
 namespace shark {
@@ -251,7 +253,7 @@ void _get_molecular_gas(const HaloPtr &halo, molgas_per_galaxy &molgas, StarForm
 {
 	for (auto &subhalo: halo->all_subhalos()) {
 		for (auto &galaxy: subhalo->galaxies) {
-			molgas[galaxy] = star_formation.get_molecular_gas(galaxy, z, calc_j);
+			molgas[galaxy.id] = star_formation.get_molecular_gas(galaxy, z, calc_j);
 		}
 	}
 }
@@ -314,7 +316,7 @@ evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree,
 		Timer t3;
 		for(auto &subhalo: halo->all_subhalos()) {
 			for(auto &galaxy: subhalo->galaxies) {
-				physical_model->evolve_galaxy(*subhalo, *galaxy, z, delta_t);
+				physical_model->evolve_galaxy(*subhalo, galaxy, z, delta_t);
 			}
 		}
 		times.galaxy_evolution += t3.get();
@@ -361,7 +363,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 
 	std::vector<HaloPtr> all_halos_this_snapshot;
 	for (auto &tree: merger_trees) {
-		auto &halos = tree->halos_at(snapshot);
+		const auto &halos = tree->halos_at(snapshot);
 		all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halos.begin(), halos.end());
 	}
 

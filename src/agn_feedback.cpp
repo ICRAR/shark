@@ -25,6 +25,9 @@
 #include <memory>
 
 #include "agn_feedback.h"
+#include "galaxy.h"
+#include "halo.h"
+#include "subhalo.h"
 #include "numerical_constants.h"
 #include "utils.h"
 

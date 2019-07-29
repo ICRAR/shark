@@ -105,7 +105,7 @@ public:
 
 	double star_formation_rate_surface_density(double r, void * params) const;
 
-	double manual_integral(func_t f, void * params, double rmin, double rmax);
+	double manual_integral(func_t f, void * params, double rmin, double rmax) const;
 
 	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r) const;
 
@@ -131,9 +131,9 @@ public:
 
 	double molecular_surface_density(double r, void * params) const;
 
-	molecular_gas get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc);
+	molecular_gas get_molecular_gas(const Galaxy &galaxy, double z, bool jcalc);
 
-	double ionised_gas_fraction(double mgas, double rgas, double z);
+	double ionised_gas_fraction(double mgas, double rgas, double z) const;
 
 private:
 	StarFormationParameters parameters;
@@ -144,7 +144,7 @@ private:
 };
 
 /// A collection of galaxy-indexed molecular gas objects
-using molgas_per_galaxy = std::map<GalaxyPtr, StarFormation::molecular_gas>;
+using molgas_per_galaxy = std::map<Galaxy::id_t, StarFormation::molecular_gas>;
 
 }  // namespace shark
 

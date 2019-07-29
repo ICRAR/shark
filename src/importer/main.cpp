@@ -28,6 +28,7 @@
 
 #include "timer.h"
 #include "options.h"
+#include "subhalo.h"
 #include "importer/descendants.h"
 #include "importer/velociraptor.h"
 

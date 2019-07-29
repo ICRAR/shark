@@ -115,7 +115,7 @@ public:
 
 	void bulge_sAM(Subhalo &subhalo, Galaxy &galaxy);
 
-	void transfer_bulge_am(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z);
+	void transfer_bulge_am(SubhaloPtr &subhalo, Galaxy &galaxy, double z);
 
 	double v2halo (double x, double m, double c, double r);
 	double v2disk (double x, double m, double c, double r);

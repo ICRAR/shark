@@ -21,6 +21,7 @@
 #include <cmath>
 
 #include "environment.h"
+#include "subhalo.h"
 
 namespace shark {
 
