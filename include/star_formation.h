@@ -74,6 +74,7 @@ public:
 	double clump_factor_KMT09 = 1;
 	double sigma_crit_KMT09 = 0;
 	double efficiency_sf = 1;
+        double gmc_surface_density = 85.0; //in Msun/pc^2
 
 	bool angular_momentum_transfer = false;
 };

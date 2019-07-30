@@ -58,9 +58,11 @@ StarFormationParameters::StarFormationParameters(const Options &options)
 	options.load("star_formation.clump_factor_kmt09", clump_factor_KMT09);
 
 	options.load("star_formation.efficiency_sf_kd12", efficiency_sf);
+	options.load("star_formation.gmc_surface_density", gmc_surface_density);
 
 	// Convert surface density to internal code units.
 	sigma_HI_crit = sigma_HI_crit * std::pow(constants::MEGA,2.0);
+        gmc_surface_density = gmc_surface_density * std::pow(constants::MEGA,2.0);
 
 	// Define critical density for the normal to starburst SF transition for the KMT09 model in Msun/Mpc^2.
 	sigma_crit_KMT09 = 85.0 * std::pow(constants::MEGA , 2.0);
@@ -466,7 +468,7 @@ double StarFormation::kd12_taudep(double sigma_gas, void * params) const{
 	// in Gyr
 	double tdep = 3.5 * props->torb / parameters.efficiency_sf;
 
-	double sigma_gmc = 1e14; //in Msun/Mpc^2
+	double sigma_gmc = parameters.gmc_surface_density; 
 	if(sigma_gmc < sigma_gas){
 		sigma_gmc= sigma_gas;
 	}
