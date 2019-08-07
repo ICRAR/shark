@@ -18,8 +18,8 @@
 //
 
 /**
- * @file
- */
+* @file
+*/
 
 #include <cmath>
 #include <fstream>
@@ -93,6 +93,7 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 	options.load("gas_cooling.lambdamodel", lambdamodel, true);
 	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
 	options.load("gas_cooling.tau_cooling", tau_cooling);
+	options.load("gas_cooling.min_z_cooling", min_z_cooling);
 
 	auto cooling_tables_dir = get_static_data_filepath("cooling");
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
@@ -344,6 +345,10 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double zhot = 0;
 	if(mhot > 0){
 		zhot = (mzhot/mhot);
+		if(zhot > parameters.min_z_cooling){
+			zhot = parameters.min_z_cooling;
+			mzhot = mhot * zhot;
+		}
 	}
 
 	// Check for undefined cases.
@@ -457,7 +462,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of BOWER06 AGN feedback model.
 
-	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
+	else if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19 || agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
 		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
 		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
@@ -466,17 +471,22 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 
 		//Mass heating rate from AGN in units of Msun/Gyr.
-		double mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
+		double mheatrate = 0;
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19){
+			mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh.macc_hh+central_galaxy->smbh.macc_sb,central_galaxy->smbh.mass) * agnfeedback->parameters.kappa_radio * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
+		}
+		else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
+			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh,central_galaxy->smbh.mass) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
+		}
 
 		// Calculate heating radius
 		double rheat = mheatrate/coolingrate * r_cool;
 
-		/*if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+		if(subhalo.cooling_subhalo_tracking.rheat < rheat){
 			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
 
-		double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;*/
-		double r_ratio = rheat/r_cool;
+		double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
 		if(r_ratio > agnfeedback->parameters.alpha_cool){
 			r_ratio = 1;
@@ -616,9 +626,9 @@ double GasCooling::density_shell(double mhot, double rvir, double r) {
 	using namespace constants;
 
 	/**
-	 * rho_shell as defined by an isothermal profile.
-	 * Any other hot gas profile should modify rho_shell.
-	 */
+	* rho_shell as defined by an isothermal profile.
+	* Any other hot gas profile should modify rho_shell.
+	*/
 	return mhot*MSOLAR_g /PI4 /(rvir*MPC2CM) / std::pow(r*MPC2CM,2.0) / (M_Atomic_g*mu_Primordial); //in cgs.
 
 }
@@ -626,17 +636,17 @@ double GasCooling::density_shell(double mhot, double rvir, double r) {
 double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, double mhot){
 
 	/**
-	 *  This function calculates the cooling luminosity for a given cooling function
-	 *  and a notional gas density profile. Units are returned in 10^40 erg/s.
-	 *
-	 */
+	*  This function calculates the cooling luminosity for a given cooling function
+	*  and a notional gas density profile. Units are returned in 10^40 erg/s.
+	*
+	*/
 	using namespace constants;
 
 	if(rcool < rvir){
 
 		/**
-		 * For an isothermal profile, we define a small core radius.
-		 */
+		* For an isothermal profile, we define a small core radius.
+		*/
 		double rcore = 0.01 * rvir;
 
 		double r1 = rvir/rcore;
