@@ -482,11 +482,12 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		// Calculate heating radius
 		double rheat = mheatrate/coolingrate * r_cool;
 
-		if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+		/*if(subhalo.cooling_subhalo_tracking.rheat < rheat){
 			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
 
-		double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
+		double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;*/
+		double r_ratio = rheat/r_cool;
 
 		if(r_ratio > agnfeedback->parameters.alpha_cool){
 			r_ratio = 1;
