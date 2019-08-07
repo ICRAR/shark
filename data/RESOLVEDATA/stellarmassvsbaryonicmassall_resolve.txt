@@ -1,0 +1,15 @@
+      #Written out 11-24-2015
+      #relations between stellar mass vs. baryonic mass
+      #c1 bin half way point, 0.5 dex bins (baryonic mass)
+      #c2 16th% stellar mass 
+      #c3 50th% stellar mass 
+      #c4 84th% stellar mass 
+      #c5 number of galaxies in bin
+ 8.25   0.00   0.00   0.00    0.0
+ 8.75   0.00   0.00   0.00    0.0
+ 9.25   8.39   8.89   9.21  127.0
+ 9.75   8.89   9.39   9.75  110.0
+10.25   9.83  10.11  10.37   87.0
+10.75  10.53  10.73  10.89   43.0
+11.25  10.99  11.07  11.24   10.0
+11.75   0.00   0.00   0.00    0.0

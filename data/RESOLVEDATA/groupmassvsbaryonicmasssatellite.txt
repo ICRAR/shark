@@ -1,0 +1,15 @@
+FORPRINT: Thu Dec 11 18:07:24 2014
+ 	  # relations for group mass vs. baryonic mass for satellite galaxies
+	  #c1 bin half way point, 0.5dex bins (baryonic)	
+	  #c2 median group mass
+	  #c3 mean group mass
+	  #c4 sigma in bin
+	  #c5 number of galaxies in bin
+      10.2500      0.00000      0.00000      0.00000      0.00000
+      10.7500      0.00000      0.00000      0.00000      0.00000
+      11.2500      8.99000      9.02280     0.167394      25.0000
+      11.7500      9.27000      9.34692     0.370047      26.0000
+      12.2500      9.41000      9.47868     0.546961      53.0000
+      12.7500      9.15000      9.53667     0.818780      21.0000
+      13.2500      9.59000      9.65480     0.658043      25.0000
+      13.7500      0.00000      0.00000      0.00000      0.00000

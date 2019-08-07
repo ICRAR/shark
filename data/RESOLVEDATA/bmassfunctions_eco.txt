@@ -1,0 +1,42 @@
+      #Written out 2-1-2015
+      #log baryonic (stars+cold gas) mass, 0.2dex binsize
+      #number of ECO galaxies in each bin
+      #number of ECO galaxies in halos with mass < 10^11.4 Msun in each bin
+      #number of ECO galaxies in halos with 10^11.4 < mass < 10^12.0 Msun in each bin
+      #number of ECO galaxies in halos with 10^12.0 < mass < 10^13.5 Msun in each bin
+      #number of ECO galaxies in halos with  mass > 10^13.5 Msun in each bin
+      #number of ECO central galaxies in halos with mass < 10^11.4 Msun in each bin
+      #number of ECO central galaxies in halos with 10^11.4 < mass < 10^12.0 Msun in each bin
+      #number of ECO central galaxies in halos with 10^12.0 < mass < 10^13.5 Msun in each bin
+      #number of ECO central galaxies in halos with  mass > 10^13.5 Msun in each bin
+      #number of ECO satellite galaxies in halos with mass < 10^11.4 Msun in each bin
+      #number of ECO satellite galaxies in halos with 10^11.4 < mass < 10^12.0 Msun in each bin
+      #number of ECO satellite galaxies in halos with 10^12.0 < mass < 10^13.5 Msun in each bin
+      #number of ECO satellite galaxies in halos with  mass > 10^13.5 Msun in each bin
+      #ECO volume: 457956 Mpc^3 (H0=70km/s)
+ 7.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+ 7.2     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+ 7.4     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+ 7.6     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+ 7.8     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+ 8.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+ 8.2     2.0     1.0     1.0     0.0     0.0     1.0     0.0     0.0     0.0     0.0     1.0     0.0     0.0
+ 8.4     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+ 8.6    19.0    14.0     1.0     3.0     1.0    12.0     0.0     0.0     0.0     2.0     1.0     3.0     1.0
+ 8.8   490.0   372.0    35.0    61.0    22.0   337.0     0.0     0.0     0.0    35.0    35.0    61.0    22.0
+ 9.0  1148.0   780.0   134.0   152.0    82.0   682.0     1.0     0.0     0.0    98.0   133.0   152.0    82.0
+ 9.2  1340.0   975.0   131.0   130.0   104.0   893.0     3.0     1.0     0.0    82.0   128.0   129.0   104.0
+ 9.4  1409.0   994.0   142.0   169.0   104.0   949.0    11.0     1.0     1.0    45.0   131.0   168.0   103.0
+ 9.6  1277.0   829.0   204.0   171.0    73.0   817.0    62.0     0.0     0.0    12.0   142.0   171.0    73.0
+ 9.8  1025.0   390.0   397.0   153.0    85.0   389.0   324.0     2.0     1.0     1.0    73.0   151.0    84.0
+10.0   852.0    71.0   543.0   148.0    90.0    71.0   506.0     9.0     0.0     0.0    37.0   139.0    90.0
+10.2   698.0     7.0   446.0   183.0    62.0     7.0   438.0    53.0     0.0     0.0     8.0   130.0    62.0
+10.4   473.0     0.0   240.0   179.0    54.0     0.0   239.0   107.0     0.0     0.0     1.0    72.0    54.0
+10.6   358.0     0.0    74.0   238.0    46.0     0.0    74.0   200.0     1.0     0.0     0.0    38.0    45.0
+10.8   205.0     0.0     3.0   172.0    30.0     0.0     3.0   154.0     1.0     0.0     0.0    18.0    29.0
+11.0   107.0     0.0     0.0    94.0    13.0     0.0     0.0    93.0     4.0     0.0     0.0     1.0     9.0
+11.2    39.0     0.0     0.0    23.0    16.0     0.0     0.0    22.0     7.0     0.0     0.0     1.0     9.0
+11.4    13.0     0.0     0.0     3.0    10.0     0.0     0.0     3.0     6.0     0.0     0.0     0.0     4.0
+11.6     6.0     0.0     0.0     0.0     6.0     0.0     0.0     0.0     3.0     0.0     0.0     0.0     3.0
+11.8     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+12.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0

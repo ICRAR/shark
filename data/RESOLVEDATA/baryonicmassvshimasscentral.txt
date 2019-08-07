@@ -1,0 +1,15 @@
+FORPRINT: Thu Dec 11 17:52:05 2014
+	  # relations for baryonic mass vs. 1.4*hi mass for central galaxies
+	  #c1 bin half way point, 0.5dex bins (1.4*HI mass)	
+	  #c2 median baryonic mass
+	  #c3 mean baryonic mass
+	  #c4 sigma in bin
+	  #c5 number of galaxies in bin
+      7.25000      0.00000      0.00000      0.00000      0.00000
+      7.75000      9.11000      9.03833     0.252427      12.0000
+      8.25000      9.11000      9.19146     0.428798      41.0000
+      8.75000      9.11000      9.38244     0.548788      82.0000
+      9.25000      9.53000      9.80568     0.615228      111.000
+      9.75000      10.0300      10.1641     0.470302      78.0000
+      10.2500      10.8300      10.7286     0.311296      14.0000
+      10.7500      0.00000      0.00000      0.00000      0.00000

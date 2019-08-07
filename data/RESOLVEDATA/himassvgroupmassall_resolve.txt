@@ -1,0 +1,18 @@
+      #Written out 11-24-2015
+      #relations between 1.4*MHI vs. group mass
+      #c1 bin half way point, 0.5 dex bins (group mass)
+      #c2 16th% 1.4*HI mass using upper limit value
+      #c3 16th% 1.4*HI mass using 0.05Mstar
+      #c4 50th% 1.4*HI mass using upper limit value
+      #c5 50th% 1.4*HI mass using 0.05Mstar
+      #c6 84th% 1.4*HI mass using upper limit value
+      #c7 84th% 1.4*HI mass using 0.05Mstar
+      #c8 number of galaxies in bin
+10.25   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+10.75   9.01   9.01   9.27   9.27   9.42    9.42   45.0
+11.25   8.52   8.48   9.28   9.28   9.68    9.68  139.0
+11.75   8.95   8.92   9.25   9.24   9.80    9.80   76.0
+12.25   8.38   8.31   9.35   9.33   9.74    9.74   71.0
+12.75   9.05   9.05   9.60   9.60   9.97    9.97   22.0
+13.25   8.03   8.03   9.08   9.02   9.75    9.75   24.0
+13.75   0.00   0.00   0.00   0.00   0.00    0.00    0.0
