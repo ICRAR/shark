@@ -1,0 +1,15 @@
+      #Written out 11-24-2015
+      #relations between baryonic mass vs. group mass for central galaxies
+      #c1 bin half way point, 0.5 dex bins (group mass)
+      #c2 16th% baryonic mass 
+      #c3 50th% baryonic mass 
+      #c4 84th% baryonic mass 
+      #c5 number of galaxies in bin
+10.25   0.00   0.00   0.00    0.0
+10.75   9.13   9.31   9.46   45.0
+11.25   9.39   9.69   9.98  131.0
+11.75  10.05  10.31  10.48   55.0
+12.25  10.62  10.81  10.97   31.0
+12.75  10.79  10.93  11.18    9.0
+13.25  11.09  11.28  11.36    3.0
+13.75   0.00   0.00   0.00    0.0
