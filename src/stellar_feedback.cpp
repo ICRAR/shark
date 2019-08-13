@@ -153,6 +153,11 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 		const_sn = b1/parameters.eps_disk;
         }
 
+        if(b1 < parameters.min_beta){
+		b1 = parameters.min_beta;
+		const_sn = b1/parameters.eps_disk;
+	}
+
 	double eps_halo = parameters.eps_halo * const_sn *  0.5 * std::pow(vsn,2.0);
 
 	double energ_halo = 0.5 * std::pow(v,2.0);
