@@ -246,7 +246,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	halo->cooling_rate = 0;
 
 	/**
-	* For now assume that gas can cool only in central subhalos and to central galaxies.
+	* For now assume that gas can cool only in central subhalos and to central galaxies unless the process_satellite_subhalo_environment tells us otherwise.
 	*/
 
 	if(subhalo.subhalo_type == Subhalo::SATELLITE){
@@ -291,7 +291,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	*/
 	agnfeedback->plant_seed_smbh(*halo);
 
-	// Calculate Eddington luminosity of BH in central galaxy.
+	// Calculate Eddington luminosity of BH in galaxy.
 
 	double Ledd = agnfeedback->eddington_luminosity(central_galaxy->smbh.mass);
 
@@ -482,12 +482,14 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		// Calculate heating radius
 		double rheat = mheatrate/coolingrate * r_cool;
 
-		/*if(subhalo.cooling_subhalo_tracking.rheat < rheat){
-			subhalo.cooling_subhalo_tracking.rheat = rheat;
-		}
-
-		double r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;*/
 		double r_ratio = rheat/r_cool;
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
+			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+				subhalo.cooling_subhalo_tracking.rheat = rheat;
+			}
+
+			r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
+		}
 
 		if(r_ratio > agnfeedback->parameters.alpha_cool){
 			r_ratio = 1;
