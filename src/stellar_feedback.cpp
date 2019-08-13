@@ -53,6 +53,7 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options)
 	options.load("stellar_feedback.eta_cc",eta_cc);
 	options.load("stellar_feedback.epsilon_cc",epsilon_cc);
 	options.load("stellar_feedback.beta_halo", beta_halo);
+	options.load("stellar_feedback.min_beta", min_beta);
 
 	//convert energy of SNe into Msun (km/s)^2
 	e_sn = epsilon_cc * energy *std::pow(constants::MSOLAR_g, -1.0) * std::pow(constants::KILO, -2.0);
@@ -147,6 +148,11 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 	}
 
 	b1 = parameters.eps_disk * const_sn;
+
+        if(b1 < parameters.min_beta){
+		b1 = parameters.min_beta;
+		const_sn = b1/parameters.eps_disk;
+	}
 
 	double eps_halo = parameters.eps_halo * const_sn *  0.5 * std::pow(vsn,2.0);
 

@@ -93,6 +93,9 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 		zhot = params->zcool;
 	}
 
+	// compute modified yield
+	double yield_eff = yield - zcold*0.25; //from Robotham et al. (2019)
+	
 	// Calculate SFR.
 	double SFR   = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, zcold, params->redshift, params->burst, params->vgal, jrate, jgas);
 
@@ -122,7 +125,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	// Metallicity transfer equations.
 	f[6] = rsub * zcold * SFR;
-	f[7] = mcoolrate * zhot + SFR * (yield - (rsub + beta1 + beta_qso1) * zcold);
+	f[7] = mcoolrate * zhot + SFR * (yield_eff - (rsub + beta1 + beta_qso1) * zcold);
 	f[8] = - mcoolrate * zhot;
 	f[9] = ((beta1 + beta_qso1) - (beta2 + beta_qso2) ) * SFR * zcold;
 	f[10] = beta2 * zcold * SFR;
@@ -236,15 +239,15 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	galaxy.disk_gas.mass   			= y[1];
 	subhalo.cold_halo_gas.mass 		= y[2];
 	subhalo.hot_halo_gas.mass               = y[3];
-	subhalo.ejected_galaxy_gas.mass 		= y[4];
-	subhalo.lost_galaxy_gas.mass			= y[5];
+	subhalo.ejected_galaxy_gas.mass 	= y[4];
+	subhalo.lost_galaxy_gas.mass		= y[5];
 
 	// Assign new mass in metals.
 	galaxy.disk_stars.mass_metals 			= y[6];
 	galaxy.disk_gas.mass_metals 			= y[7];
 	subhalo.cold_halo_gas.mass_metals 		= y[8];
-	subhalo.hot_halo_gas.mass_metals        = y[9];
-	subhalo.ejected_galaxy_gas.mass_metals 	= y[10];
+	subhalo.hot_halo_gas.mass_metals                = y[9];
+	subhalo.ejected_galaxy_gas.mass_metals 	        = y[10];
 	subhalo.lost_galaxy_gas.mass_metals		= y[11];
 
 	// Calculate average SFR and metallicity of newly formed stars.
@@ -306,6 +309,25 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	}
 	if(subhalo.lost_galaxy_gas.mass_metals < tolerance){
 		subhalo.lost_galaxy_gas.mass_metals = 0;
+	}
+
+	/**
+	 * Check that metallicities are not bigger than the gas mass. If they are, mass in metals to gas mass.
+	 */
+	if(galaxy.disk_gas.mass_metals > galaxy.disk_gas.mass){
+		galaxy.disk_gas.mass_metals = galaxy.disk_gas.mass;
+	}
+	if(subhalo.cold_halo_gas.mass_metals > subhalo.cold_halo_gas.mass){
+		subhalo.cold_halo_gas.mass_metals = subhalo.cold_halo_gas.mass;
+	}
+	if(subhalo.hot_halo_gas.mass_metals > subhalo.hot_halo_gas.mass){
+		subhalo.hot_halo_gas.mass_metals = subhalo.hot_halo_gas.mass;
+	}
+	if(subhalo.ejected_galaxy_gas.mass_metals > subhalo.ejected_galaxy_gas.mass){
+		subhalo.ejected_galaxy_gas.mass_metals = subhalo.ejected_galaxy_gas.mass;
+	}
+	if(subhalo.lost_galaxy_gas.mass_metals > subhalo.lost_galaxy_gas.mass){
+		subhalo.lost_galaxy_gas.mass_metals = subhalo.lost_galaxy_gas.mass;
 	}
 
 	/**
@@ -456,6 +478,22 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	}
 	if(subhalo.lost_galaxy_gas.mass_metals < tolerance){
 		subhalo.lost_galaxy_gas.mass_metals = 0;
+	}
+
+	/**
+	 * Check that metallicities are not bigger than the gas mass. If they are, mass in metals to gas mass.
+	 */
+	if(galaxy.bulge_gas.mass_metals > galaxy.bulge_gas.mass){
+		galaxy.bulge_gas.mass_metals = galaxy.bulge_gas.mass;
+	}
+	if(subhalo.hot_halo_gas.mass_metals > subhalo.hot_halo_gas.mass){
+		subhalo.hot_halo_gas.mass_metals = subhalo.hot_halo_gas.mass;
+	}
+	if(subhalo.ejected_galaxy_gas.mass_metals > subhalo.ejected_galaxy_gas.mass){
+		subhalo.ejected_galaxy_gas.mass_metals = subhalo.ejected_galaxy_gas.mass;
+	}
+	if(subhalo.lost_galaxy_gas.mass_metals > subhalo.lost_galaxy_gas.mass){
+		subhalo.lost_galaxy_gas.mass_metals = subhalo.lost_galaxy_gas.mass;
 	}
 
 	/**

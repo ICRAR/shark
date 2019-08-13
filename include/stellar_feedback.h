@@ -69,6 +69,7 @@ public:
 	double eps_disk = 1;
 	double e_sn = 0;
 	double eta_cc = 0;
+	double min_beta = 0;
 	bool galaxy_scaling = false;
 	bool radial_feedback = false;
 
