@@ -54,10 +54,13 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
-	// control QSO feedback.
-	options.load("agn_feedback.qso_feedback", qso_feedback, false);
+	// relevant for Bravo 19 model.
 	options.load("agn_feedback.kappa_radio", kappa_radio);
+
+	// control QSO feedback - relevant for Bravo 19 model.
+	options.load("agn_feedback.qso_feedback", qso_feedback, false);
 	options.load("agn_feedback.epsilon_qso", epsilon_qso);
+	options.load("agn_feedback.eta_superedd", eta_superedd);
 
 }
 
@@ -75,7 +78,7 @@ Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, c
 		return AGNFeedbackParameters::BRAVO19;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are Bower06, Croton16 and Bravo19";
+	os << name << " option value invalid: " << value << ". Supported values are bower06, croton16 and bravo19";
 	throw invalid_option(os.str());
 }
 
@@ -144,15 +147,22 @@ double AGNFeedback::accretion_rate_ratio(double macc, double mBH){
 	//return the ratio between the physical and Eddington mass accretion rates.
 	using namespace constants;
 
-	double LEdd = eddington_luminosity(mBH);
-	double M_dot_Edd = 1e40 * LEdd / (parameters.accretion_eff_cooling * std::pow(c_light_cm,2.0));
-	double m_dot = (macc/MACCRETION_cgs_simu) / M_dot_Edd;
-	return m_dot;
+	if(macc > 0){
+		double LEdd = eddington_luminosity(mBH);
+		double M_dot_Edd = 1e40 * LEdd / (parameters.accretion_eff_cooling * std::pow(c_light_cm,2.0));
+		double m_dot = (macc/MACCRETION_cgs_simu) / M_dot_Edd;
+		return m_dot;
+	}
+	else{
+		return 0;
+	}
 }
 
 double AGNFeedback::agn_bolometric_luminosity(double macc, double mBH){
 
 	//return bolometric luminosity in units of 10^40 erg/s.
+	//Follows equations from Amarantidis et al. (2019).
+
 	using namespace constants;
 
 	double Lbol = 0;
@@ -162,14 +172,13 @@ double AGNFeedback::agn_bolometric_luminosity(double macc, double mBH){
 		
 		if(m_dot >= 0.01){
 			Lbol = parameters.nu_smbh * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
-			double eta = 4;
-			if(Lbol > eta * LEdd){
-				Lbol = eta * (1 + std::log(m_dot / eta)) * LEdd;
+			if(Lbol > parameters.eta_superedd * LEdd){
+				Lbol = parameters.eta_superedd * (1.0 + std::log(m_dot / parameters.eta_superedd)) * LEdd;
 			}
 		}
 		else{
-			if(m_dot > (7.5e-6)){
-				Lbol = (44 * m_dot) * parameters.accretion_eff_cooling * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
+			if(m_dot > 7.5e-6){
+				Lbol = (44.0 * m_dot) * parameters.accretion_eff_cooling * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
 			}
 			else{
 				Lbol = 6.3e-5 * parameters.accretion_eff_cooling * (macc/MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
@@ -188,7 +197,7 @@ double AGNFeedback::agn_mechanical_luminosity(double macc, double mBH){
 	//return mechanical luminosity in units of 10^40 erg/s.
 	using namespace constants;
 	
-	double m_dot = accretion_rate_ratio(macc,mBH) * 100;
+	double m_dot = accretion_rate_ratio(macc,mBH) * 100.0;
 	double Lmech = 0;
 	if(m_dot >= 1.0){
 		Lmech = 2.5e3 * std::pow(mBH/1e9,1.1) * std::pow(m_dot,1.2) * std::pow(0.67,2);
@@ -292,9 +301,6 @@ void AGNFeedback::qso_outflow_rate(double mgas, double macc, double mBH, double 
 			if(mejec_rate <  0 || std::isnan(mejec_rate)){
 				mejec_rate = 0;
 			}
-			/*if(mejec_rate > mout_rate){
-				mejec_rate = mout_rate;
-			}*/
 
 			beta_halo = mout_rate/sfr;
 			beta_ejec = mejec_rate/sfr;

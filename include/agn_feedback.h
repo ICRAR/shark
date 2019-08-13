@@ -54,6 +54,7 @@ public:
 	bool qso_feedback = false;
 	double kappa_radio = 0;
 	double epsilon_qso = 0;
+	double eta_superedd = 4;
 
 	enum AGNFeedbackModel {
 		BRAVO19 = 0,
