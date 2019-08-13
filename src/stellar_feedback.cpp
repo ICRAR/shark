@@ -148,10 +148,6 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 	}
 
 	b1 = parameters.eps_disk * const_sn;
-	if(b1 < parameters.min_beta){
-		b1 = parameters.min_beta;
-		const_sn = b1/parameters.eps_disk;
-        }
 
         if(b1 < parameters.min_beta){
 		b1 = parameters.min_beta;
