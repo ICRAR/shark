@@ -199,11 +199,23 @@ double AGNFeedback::agn_mechanical_luminosity(double macc, double mBH){
 	
 	double m_dot = accretion_rate_ratio(macc,mBH) * 100.0;
 	double Lmech = 0;
+
+	// testing a dependence of the spin on the BH mass from Volonteri+2007.
+	double logmbh = std::log10(mBH);
+	double spin =   0.305 * logmbh - 1.7475; //0.05*std::pow(logmbh, 2.0) -0.38*logmbh + 0.5475;
+
+        if(spin < 0){
+		spin =0;
+	}
+	else if(spin > 1){
+		spin = 1;
+	}
+
 	if(m_dot >= 1.0){
-		Lmech = 2.5e3 * std::pow(mBH/1e9,1.1) * std::pow(m_dot,1.2) * std::pow(0.67,2);
+		Lmech = 2.5e3 * std::pow(mBH/1e9,1.1) * std::pow(m_dot,1.2) * std::pow(spin,2);
 	}
 	else{
-		Lmech = 2e5 * (mBH/1e9) * m_dot  * std::pow(0.67,2);
+		Lmech = 2e5 * (mBH/1e9) * m_dot  * std::pow(spin,2);
 	}
 
 	return Lmech;
