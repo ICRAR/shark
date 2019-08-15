@@ -628,6 +628,23 @@ def plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat):
 
     common.savefig(outdir, fig, "cosmic_sfe.pdf")
 
+    fig = plt.figure(figsize=(5,5))
+    xmin, xmax, ymin, ymax = 0, 6, 0, 5
+
+    # panel 1
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm \\Omega_{\\rm mol}/\\Omega_{\\rm atom}$"
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ind = np.where(mhrat > 0)
+    ax.plot(redshifts[ind],mhrat[ind], 'r', label='Shark')
+    common.prepare_legend(ax, ['r'],loc='upper left')
+    common.savefig(outdir, fig, "cosmic_H2HIrat.pdf")
+
 
 def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
 

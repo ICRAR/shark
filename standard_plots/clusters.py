@@ -20,6 +20,7 @@
 import functools
 
 import numpy as np
+import h5py
 
 import common
 import utilities_statistics as us
@@ -131,14 +132,20 @@ def plot_fractions_radii(plt, output_dir, fradii):
     lines = ('dotted', 'dashed', 'solid')
     xmin, xmax, ymin, ymax = 0, 5, -0.05, 1.05
 
-    xleg = xmax - 0.3 * (xmax - xmin)
-    yleg = ymin + 0.1 * (ymax - ymin)
+    xleg = xmin + 0.3 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
 
     xtitle = '$\\rm d_{\\rm proj}/cMpc$'
     ytitle = '$\\rm fraction$'
 
     labels = ('Main sequence', 'Gas rich')
     labelsz = ('z=0', 'z=0.3', 'z=0.5')
+
+    #read C-EAGLE data
+    ceagledata = h5py.File('../../BuffaloFigure_C-EAGLE_Jul19_longMS.hdf5','r')
+    a_group_key = list(ceagledata.keys())[0]
+    # Get the data
+    databahe = list(ceagledata[a_group_key])
 
     p = 0
     for i in range(0, len(xmf)-1):
@@ -157,21 +164,29 @@ def plot_fractions_radii(plt, output_dir, fradii):
                 ytit = ''
             common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1))
             ax.text(xleg, yleg, '$M_{\\star}$=%s' % str(xmf[i]))
-        
+
+            if(j == 0):
+               for z in range(0,3):
+                   for c in range(0,10):
+                       x = databahe[i][z][c][0]
+                       y = databahe[i][z][c][1]
+                       ind = np.where(y > 0)
+                       ax.plot(x[ind],y[ind],linewidth=0.8, linestyle=lines[z], color=cols[z])
+            
             #predicted fraction
             for z in range (0,3):
                 ind = np.where(fradii[j,0,z,i,:] > 0)
                 xplot = xrf[ind]
                 yplot = fradii[j,0,z,i,ind]
                 err   = fradii[j,1,z,i,ind]
-                if(p == 0):
-                   ax.plot(xplot, yplot[0], color=cols[z], linestyle=lines[z], label=labelsz[z])
+                if(p == 1):
+                   ax.plot(xplot, yplot[0], color=cols[z], linestyle=lines[z], label=labelsz[z], linewidth=3)
                 else:
-                   ax.plot(xplot, yplot[0], color=cols[z], linestyle=lines[z])
+                   ax.plot(xplot, yplot[0], color=cols[z], linestyle=lines[z], linewidth=3)
                 ax.fill_between(xplot,yplot[0],yplot[0]-err[0], facecolor=cols[z], alpha=0.5,interpolate=True)
                 ax.fill_between(xplot,yplot[0],yplot[0]+err[0], facecolor=cols[z], alpha=0.5,interpolate=True)
 
-            if(p == 0):
+            if(p == 1):
                ax.legend(['z=0','z=0.3','z=0.5'],loc='lower center',fontsize='small')
             p = p + 1
 

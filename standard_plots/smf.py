@@ -74,6 +74,14 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
     yup = np.log10(p[indx]+dpup[indx]) - yobs
     z0obs.append((observation("Wright+2017", xobs[indx], yobs, ydn, yup, err_absolute=False), 'o'))
 
+    lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/SMF_Bernardi2013_SerExp.data', [0,1,2,3])
+    xobs = lm
+    indx = np.where(p > 0)
+    yobs = np.log10(p[indx])
+    ydn = yobs - np.log10(p[indx]-dpdn[indx])
+    yup = np.log10(p[indx]+dpup[indx]) - yobs
+    z0obs.append((observation("Bernardi+2013", xobs[indx], yobs, ydn, yup, err_absolute=False), 's'))
+
     # Moustakas (Chabrier IMF), ['Moustakas+2013, several redshifts']
     zdnM13, lmM13, pM13, dp_dn_M13, dp_up_M13 = common.load_observation(obsdir, 'mf/SMF/SMF_Moustakas2013.dat', [0,3,5,6,7])
     xobsM13 = lmM13 
@@ -416,6 +424,50 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
 
     common.savefig(outdir, fig, 'HImf_z0_resolution.pdf')
 
+    fig = plt.figure(figsize=(5,4.5))
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm HI}/M_{\odot})$"
+    ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\rm HI}}/{\\rm Mpc}^{-3} )$"
+    xmin, xmax, ymin, ymax = 7.1, 12, -6, 0
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    labels=('z=0','z=0.5','z=1','z=2','z=3','z=4')
+    cols=('red','LightSalmon','LimeGreen','DarkGreen','DarkTurquoise','blue')
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    #HIPASS
+    lmHI, pHI, dpHIdn, dpHIup = common.load_observation(obsdir, 'mf/GasMF/HIMF_Zwaan2005.dat', [0,1,2,3])
+
+    #correct data for their choice of cosmology
+    hobs = 0.75
+    xobs = lmHI + np.log10(pow(hobs,2)/pow(h0,2))
+    yobs = pHI + np.log10(pow(h0,3)/pow(hobs,3))
+    ax.errorbar(xobs, yobs, yerr=[dpHIdn,dpHIup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Zwaan+2005")
+
+    #ALFALFA.40
+    lmHI, pHI, pdnHI, pduHI = common.load_observation(obsdir, 'mf/GasMF/HIMF_Jones18.dat', [0,1,2,3])
+
+    #correct data for their choice of cosmology
+    dpdnHI = pHI - pdnHI
+    dpduHI = pduHI - pHI
+    hobs = 0.7
+    xobs = lmHI + np.log10(pow(hobs,2)/pow(h0,2))
+    yobs = pHI + np.log10(pow(h0,3)/pow(hobs,3))
+
+    ax.errorbar(xobs, yobs, yerr=[dpdnHI,dpduHI], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='x',label="Jones+2018")
+
+
+    # Predicted HIMF
+    for z in range(0,len(hist_HImf[:,0])):
+        y = hist_HImf[z,:]
+        ind = np.where(y < 0.)
+        ax.plot(xmf[ind],y[ind],color=cols[z],  label =labels[z])
+
+    common.prepare_legend(ax, cols)
+    common.savefig(outdir, fig, 'HImf_evo.pdf')
 
 def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat):
 
@@ -997,6 +1049,8 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
 
 def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
 
+    bin_it = functools.partial(us.wmedians, xbins=xmf)
+
     fig = plt.figure(figsize=(5,5))
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
@@ -1012,6 +1066,10 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
     xdata = sfr_seq[0,ind]
     ydata = sfr_seq[1,ind]
     us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
+
+    ind = np.where(sfr_seq[0,:] > 0)
+    toplot = bin_it(x=sfr_seq[0,ind], y=sfr_seq[1,ind])
+    ax.plot(xmf, toplot[0],color='k',linestyle='dotted', linewidth = 3) #, **contour_kwargs)
 
     ind = np.where(mainseqsf[0,0,:] != 0)
     xplot = xmf[ind]

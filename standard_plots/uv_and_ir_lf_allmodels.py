@@ -264,8 +264,13 @@ def plot_uv_lf_z0(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LFs
             if(band == 0): 
                ax.text(-23, -1.5, labelsc[idx], fontsize=16, color=colors[idx])
 
-            ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'Black', mec='Black',marker='o')
-    
+            if(c == 4):
+               ax.errorbar(lm[indx], yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'Black', mec='Black',marker='o')
+            else:
+               ind = np.where(LFs_dust[0,4,band,:] < 0.)
+               y = LFs_dust[0,4,band,ind]
+               ax.plot(xlf_obs[ind],y[0], 'Indigo', linewidth=3, alpha=0.5)
+
             #Predicted LF
             ind = np.where(LFs_nodust[z,c,band,:] < 0.)
             y = LFs_nodust[z,c,band,ind]
@@ -436,69 +441,10 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
 
         if(idx == 0):
            ax.text(-24.5, -2.5, 'Disk', fontsize=16, color='Teal')
-           file = obsdir+'/lf/lf1700_z3_sawicki06.data'
-           lm,p,dp = np.loadtxt(file,usecols=[0,2,3],unpack=True)
-           indx = np.where(p > 0)
-           yobs = np.log10(p[indx])
-           ydn  = np.log10(p[indx]-dp[indx])
-           yup  = np.log10(p[indx]+dp[indx])
-           ax.errorbar(lm[indx]+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o') #,label="Sawicki+2006")
 
-           file = obsdir+'/lf/lf1700_z3_reddy09.data'
-           lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
-           indx = np.where(p > 0)
-           yobs = np.log10(p[indx])
-           ydn  = np.log10(p[indx]-dp[indx])
-           yup  = np.log10(p[indx]+dp[indx])
-           ax.errorbar(lm[indx]+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s') #,label="Reddy+2009")
-
-        if(idx == 1):
-           file = obsdir+'/lf/lf1500_z4_adams19.data'
-           lmA19z4,Ap4,Adp4 = np.loadtxt(file,usecols=[0, 1, 2],unpack=True)
-           yobs = np.log10(Ap4*1e-4)
-           ydn  = np.log10(Ap4*1e-4 - Adp4*1e-4)
-           yup  = np.log10(Ap4*1e-4 + Adp4*1e-4)
-           ax.errorbar(lmA19z4+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='d',label="Adams+2019")
-
-           file = obsdir+'/lf/lf1600_z4-10_Bouwens2015.data'
-           lmB15z4,p4,dp4,lmB15z6,p6,dp6,lmB15z8,p8,dp8 = np.loadtxt(file,usecols=[0, 1, 2, 6, 7, 8, 12, 13, 14],unpack=True)
-           yobs = np.log10(p4)
-           ydn  = np.log10(p4-dp4)
-           yup  = np.log10(p4+dp4)
-           ax.errorbar(lmB15z4+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Bouwens+2015")
-
-           file = obsdir+'/lf/lf1500_z4-8_Finkelstein2015.data'
-           lmF15,pF4,dpuF4,dpdF4,pF6,dpuF6,dpdF6,pF8,dpuF8,dpdF8 = np.loadtxt(file,usecols=[0,1, 2, 3, 7, 8, 9, 13, 14, 15],unpack=True)
-           yobs = np.log10(pF4*1e-3)
-           ydn  = np.log10(pF4*1e-3-dpdF4*1e-3)
-           yup  = np.log10(pF4*1e-3+dpuF4*1e-3)
-           ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v',label="Finkelstein+2015")
-
-        if(idx == 2):
-           yobs = np.log10(p6)
-           ydn  = np.log10(p6-dp6)
-           yup  = np.log10(p6+dp6)
-           ax.errorbar(lmB15z6+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
-
-           yobs = np.log10(pF6*1e-3)
-           ydn  = np.log10(pF6*1e-3-dpdF6*1e-3)
-           yup  = np.log10(pF6*1e-3+dpuF6*1e-3)
-           ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
-
-        if(idx == 3):
-           yobs = np.log10(p8)
-           ydn  = np.log10(p8-dp8)
-           yup  = np.log10(p8+dp8)
-           ax.errorbar(lmB15z8+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
-
-           yobs = np.log10(pF8*1e-3)
-           ydn  = np.log10(pF8*1e-3-dpdF8*1e-3)
-           yup  = np.log10(pF8*1e-3+dpuF8*1e-3)
-           ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
-        if(idx == 4):
-           file = obsdir+'/lf/lf1500_z10_oesch2018.data'
-           lm,p,dpu,dpd = np.loadtxt(file,usecols=[0,1, 2, 3],unpack=True)
-           ax.errorbar(lm+corrm_obs, p+corry_obs, yerr=[p-dpu,dpd-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*', label='Oesch+2018')
+        ind = np.where(LFs_dust[z,4,band,:] < 0.)
+        y = LFs_dust[z,4,band,ind]+volcorr-np.log10(dm)
+        ax.plot(xlf_obs[ind],y[0],'Indigo', linewidth=3, alpha=0.5)
 
         #Predicted LF
         ind = np.where(LFs_nodust[z,3,band,:] < 0.)
@@ -544,71 +490,10 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust,  LFs_dust2, LF
 
         if(idx == 0):
            ax.text(-24.5, -2.5, 'Bulge', fontsize=16, color='OrangeRed')
+        ind = np.where(LFs_dust[z,4,band,:] < 0.)
+        y = LFs_dust[z,4,band,ind]+volcorr-np.log10(dm)
+        ax.plot(xlf_obs[ind],y[0],'Indigo', linewidth=3, alpha=0.5)
 
-           file = obsdir+'/lf/lf1700_z3_sawicki06.data'
-           lm,p,dp = np.loadtxt(file,usecols=[0,2,3],unpack=True)
-           indx = np.where(p > 0)
-           yobs = np.log10(p[indx])
-           ydn  = np.log10(p[indx]-dp[indx])
-           yup  = np.log10(p[indx]+dp[indx])
-           ax.errorbar(lm[indx]+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o') #,label="Sawicki+2006")
-
-           file = obsdir+'/lf/lf1700_z3_reddy09.data'
-           lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
-           indx = np.where(p > 0)
-           yobs = np.log10(p[indx])
-           ydn  = np.log10(p[indx]-dp[indx])
-           yup  = np.log10(p[indx]+dp[indx])
-           ax.errorbar(lm[indx]+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s') #,label="Reddy+2009")
-
-        if(idx == 1):
-           file = obsdir+'/lf/lf1500_z4_adams19.data'
-           lmA19z4,Ap4,Adp4 = np.loadtxt(file,usecols=[0, 1, 2],unpack=True)
-           yobs = np.log10(Ap4*1e-4)
-           ydn  = np.log10(Ap4*1e-4 - Adp4*1e-4)
-           yup  = np.log10(Ap4*1e-4 + Adp4*1e-4)
-           ax.errorbar(lmA19z4+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='d',label="Adams+2019")
-
-           file = obsdir+'/lf/lf1600_z4-10_Bouwens2015.data'
-           lmB15z4,p4,dp4,lmB15z6,p6,dp6,lmB15z8,p8,dp8 = np.loadtxt(file,usecols=[0, 1, 2, 6, 7, 8, 12, 13, 14],unpack=True)
-           yobs = np.log10(p4)
-           ydn  = np.log10(p4-dp4)
-           yup  = np.log10(p4+dp4)
-           ax.errorbar(lmB15z4+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Bouwens+2015")
-
-           file = obsdir+'/lf/lf1500_z4-8_Finkelstein2015.data'
-           lmF15,pF4,dpuF4,dpdF4,pF6,dpuF6,dpdF6,pF8,dpuF8,dpdF8 = np.loadtxt(file,usecols=[0,1, 2, 3, 7, 8, 9, 13, 14, 15],unpack=True)
-           yobs = np.log10(pF4*1e-3)
-           ydn  = np.log10(pF4*1e-3-dpdF4*1e-3)
-           yup  = np.log10(pF4*1e-3+dpuF4*1e-3)
-           ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v',label="Finkelstein+2015")
-
-        if(idx == 2):
-           yobs = np.log10(p6)
-           ydn  = np.log10(p6-dp6)
-           yup  = np.log10(p6+dp6)
-           ax.errorbar(lmB15z6+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
-
-           yobs = np.log10(pF6*1e-3)
-           ydn  = np.log10(pF6*1e-3-dpdF6*1e-3)
-           yup  = np.log10(pF6*1e-3+dpuF6*1e-3)
-           ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
-
-        if(idx == 3):
-           yobs = np.log10(p8)
-           ydn  = np.log10(p8-dp8)
-           yup  = np.log10(p8+dp8)
-           ax.errorbar(lmB15z8+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
-
-           yobs = np.log10(pF8*1e-3)
-           ydn  = np.log10(pF8*1e-3-dpdF8*1e-3)
-           yup  = np.log10(pF8*1e-3+dpuF8*1e-3)
-           ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
-
-        if(idx == 4):
-           file = obsdir+'/lf/lf1500_z10_oesch2018.data'
-           lm,p,dpu,dpd = np.loadtxt(file,usecols=[0,1, 2, 3],unpack=True)
-           ax.errorbar(lm+corrm_obs, p+corry_obs, yerr=[p-dpu,dpd-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*', label='Oesch+2018')
 
         #Predicted LF
         ind = np.where(LFs_nodust[z,2,band,:] < 0.)

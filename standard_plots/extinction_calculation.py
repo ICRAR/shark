@@ -251,7 +251,7 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
-    zlist = (0, 0.25, 0.5, 1, 2, 3, 4, 6, 8)
+    zlist = (0, 0.25, 0.5, 1, 2, 3, 4, 6, 8, 9, 10)
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('type', 'rgas_disk', 'rgas_bulge', 'matom_disk', 'mmol_disk', 'mgas_disk',
