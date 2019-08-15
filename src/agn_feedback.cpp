@@ -56,6 +56,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 
 	// relevant for Bravo 19 model.
 	options.load("agn_feedback.kappa_radio", kappa_radio);
+	options.load("agn_feedback.spin_v07", spin_v07);
 
 	// control QSO feedback - relevant for Bravo 19 model.
 	options.load("agn_feedback.qso_feedback", qso_feedback);
@@ -202,7 +203,11 @@ double AGNFeedback::agn_mechanical_luminosity(double macc, double mBH){
 
 	// testing a dependence of the spin on the BH mass from Volonteri+2007.
 	double logmbh = std::log10(mBH);
-	double spin =   0.305 * logmbh - 1.7475; //0.05*std::pow(logmbh, 2.0) -0.38*logmbh + 0.5475;
+	double spin = 0.67;
+
+	if(parameters.spin_v07){
+		spin =   0.305 * logmbh - 1.7475; //0.05*std::pow(logmbh, 2.0) -0.38*logmbh + 0.5475;
+	}
 
         if(spin < 0){
 		spin =0;

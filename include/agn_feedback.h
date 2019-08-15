@@ -52,6 +52,7 @@ public:
 	double nu_smbh = 0;
 
 	bool qso_feedback = false;
+	bool spin_v07 = false;
 	double kappa_radio = 0;
 	double epsilon_qso = 0;
 	double eta_superedd = 4;
