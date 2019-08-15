@@ -81,7 +81,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
 
-			// Make sure all SFRs (in mass and metals) are set to 0 for the next snapshot
+			// Make sure all SFRs and BH accretion rates (in mass and metals) are set to 0 for the next snapshot
 			for (auto &galaxy: subhalo->galaxies) {
 				galaxy.sfr_bulge_mergers  = 0;
 				galaxy.sfr_z_bulge_mergers= 0;
@@ -89,6 +89,9 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 				galaxy.sfr_z_bulge_diskins= 0;
 				galaxy.sfr_z_disk         = 0;
 				galaxy.sfr_disk           = 0;
+				galaxy.smbh.macc_sb       = 0;
+				galaxy.smbh.macc_hh       = 0;
+
 				//restart counter of mergers and disk instabilities.
 				galaxy.interaction.restore_interaction_item();
 				//restart descendant_id
