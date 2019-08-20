@@ -247,7 +247,7 @@ class SMF_z0(SMF):
 
     def get_obs_x_y_err(self, _):
 
-        lm, p, dpdn, dpup = self.load_observation('mf/SMF/GAMAII_BBD_GSMFs.dat', cols=[0,1,2,3])
+        lm, p, dpdn, dpup = self.load_observation('mf/SMF/SMF_Bernardi2013_SerExp.data', cols=[0,1,2,3])
         indx = np.where(p > 0)
         x_obs = lm[indx]
         y_obs = np.log10(p[indx])
