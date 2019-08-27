@@ -212,15 +212,22 @@ class HIMF(Constraint):
     z = [0]
 
     def get_obs_x_y_err(self, h0):
-        # Load Jones18 data and correct data for their choice of cosmology
-        lmHI, pHI, pdnHI, pduHI = self.load_observation('mf/GasMF/HIMF_Jones18.dat', cols=[0,1,2,3])
-        dpdnHI = pHI - pdnHI
-        dpupHI = pduHI - pHI
-        hobs = 0.7
-        x_obs = lmHI + np.log10(pow(hobs, 2) / pow(h0, 2))
-        y_obs = pHI + np.log10(pow(h0, 3) / pow(hobs, 3))
-        y_dn = dpdnHI
-        y_up = dpupHI
+        # Load Zwaan05 data and correct data for their choice of cosmology
+        lmHI, pHI, dpHIdn, dpHIup = common.load_observation(obsdir, 'mf/GasMF/HIMF_Zwaan2005.dat', [0,1,2,3])
+    
+        #correct data for their choice of cosmology
+        hobs = 0.75
+        xobs = lmHI + np.log10(pow(hobs,2)/pow(h0,2))
+        yobs = pHI + np.log10(pow(h0,3)/pow(hobs,3))
+        y_dn = dpHIdn
+        y_up = dpHIup
+        #lmHI, pHI, pdnHI, pduHI = self.load_observation('mf/GasMF/HIMF_Jones18.dat', cols=[0,1,2,3])
+        #dpdnHI = pHI - pdnHI
+        #dpupHI = pduHI - pHI
+        #hobs = 0.7
+        #x_obs = lmHI + np.log10(pow(hobs, 2) / pow(h0, 2))
+        #y_obs = pHI + np.log10(pow(h0, 3) / pow(hobs, 3))
+
         return x_obs, y_obs, y_dn, y_up
 
     def get_model_x_y(self, _, __, hist_HImf, hist_HImf_err):

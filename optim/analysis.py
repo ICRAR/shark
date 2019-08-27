@@ -68,7 +68,7 @@ def studentT(obs, mod, err):
         / ((nu * math.pi) ** (0.5) * scipy.special.gamma(nu / 2.0))
         * (1 + x / nu) ** (-1 * (nu + 1) / 2.0)
     )
-    return np.log(t)
+    return -1.0 * np.log(t)
 
 stat_tests = {
     'student-t': studentT,
