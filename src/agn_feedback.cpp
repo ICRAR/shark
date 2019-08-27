@@ -57,6 +57,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	// relevant for Bravo 19 model.
 	options.load("agn_feedback.kappa_radio", kappa_radio);
 	options.load("agn_feedback.spin_v07", spin_v07);
+	options.load("agn_feedback.hot_halo_threshold", hot_halo_threshold);
 
 	// control QSO feedback - relevant for Bravo 19 model.
 	options.load("agn_feedback.qso_feedback", qso_feedback);

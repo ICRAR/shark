@@ -56,11 +56,12 @@ public:
 	double kappa_radio = 0;
 	double epsilon_qso = 0;
 	double eta_superedd = 4;
+	double hot_halo_threshold = 0;
 
 	enum AGNFeedbackModel {
-		BRAVO19 = 0,
-		CROTON16,
-		BOWER06
+		CROTON16 = 0,
+		BOWER06,
+		BRAVO19
 	};
 
 	AGNFeedbackModel model = CROTON16;

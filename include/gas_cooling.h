@@ -83,7 +83,6 @@ public:
 
 	double pre_enrich_z = 1e-7;
 	double tau_cooling = 1;
-	double min_z_cooling = 10;
 
 	LambdaCoolingModel lambdamodel = CLOUDY;
 	CoolingModel model = CROTON06;
@@ -117,6 +116,8 @@ public:
 	double cooling_radius(double mhot, double rvir, double tcharac, double logl, double Tvir);
 	double density_shell(double mhot, double rvir, double r);
 	double cooling_luminosity(double logl, double rcool, double rvir, double mhot);
+	bool quasi_hydrostatic_halo(double mhot, double lambda, double nh_density,
+			double mass, double Tvir, double rvir, double redshift);
 
 private:
 

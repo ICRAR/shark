@@ -93,7 +93,6 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 	options.load("gas_cooling.lambdamodel", lambdamodel, true);
 	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
 	options.load("gas_cooling.tau_cooling", tau_cooling);
-	options.load("gas_cooling.min_z_cooling", min_z_cooling);
 
 	auto cooling_tables_dir = get_static_data_filepath("cooling");
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
@@ -345,10 +344,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double zhot = 0;
 	if(mhot > 0){
 		zhot = (mzhot/mhot);
-		if(zhot > parameters.min_z_cooling){
-			zhot = parameters.min_z_cooling;
-			mzhot = mhot * zhot;
-		}
 	}
 
 	// Check for undefined cases.
@@ -473,10 +468,18 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		//Mass heating rate from AGN in units of Msun/Gyr.
 		double mheatrate = 0;
 		if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19){
-			mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh.macc_hh,central_galaxy->smbh.mass) * agnfeedback->parameters.kappa_radio * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
+			// decide whether this halo is in a quasi-hydrostatic regime or not.
+			bool hothalo = quasi_hydrostatic_halo(mhot, std::pow(10.0,logl), nh_density, halo->Mvir, Tvir, Rvir, z);
+
+			// radio mode feedback only applies in situations where there is a hot halo
+			if(hothalo){
+				mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh.macc_sb + central_galaxy->smbh.macc_hh , central_galaxy->smbh.mass) * agnfeedback->parameters.kappa_radio
+						* 1e40 / (0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
+			}
 		}
 		else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
-			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh,central_galaxy->smbh.mass) * 1e40 / (0.5*std::pow(vvir*KM2CM,2.0)) * MACCRETION_cgs_simu;
+			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh,central_galaxy->smbh.mass) * 1e40 /
+					(0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
 		}
 
 		// Calculate heating radius
@@ -670,5 +673,36 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 		return 0;
 	}
 }
+
+bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_density, double mass, double Tvir, double rvir, double redshift){
+		/**
+		 *  This function uses the model of Correa et al. (2018) to determine if a hot halo has formed or not.
+		 **/
+
+		using namespace constants;
+
+		double massrat = mhot/mass;
+
+		// cooling rate in cgs.
+		double gamma_cool = mhot * MSOLAR_g * lambda * nh_density / (M_Atomic_g * mu_Primordial * 0.1);
+
+		double omega_term = std::sqrt(cosmology->parameters.OmegaM * std::pow(redshift + 1.0, 3.0) + cosmology->parameters.OmegaL);
+
+		// growth rate of halo in Msun/Gyr.
+		double mdot = 71.6 * GIGA * (cosmology->comoving_to_physical_mass(mass) / 1e12) * (cosmology->parameters.Hubble_h/0.7)  * (-0.24 + 0.75 * (redshift + 1.0)) * omega_term;
+
+		// heating rate in cgs.
+		double gamma_heat = 1.5 * k_Boltzmann_erg * Tvir / (M_Atomic_g * mu_Primordial) * cosmology->universal_baryon_fraction() * mdot / MACCRETION_cgs_simu * 0.8333;
+
+		double ratio = gamma_cool/gamma_heat;
+		if(ratio <  agnfeedback->parameters.hot_halo_threshold){
+			return true;
+		}
+		else{
+			return false;
+		}
+
+}
+
 
 }  // namespace shark
