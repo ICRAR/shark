@@ -213,8 +213,8 @@ class HIMF(Constraint):
 
     def get_obs_x_y_err(self, h0):
         # Load Zwaan05 data and correct data for their choice of cosmology
-        lmHI, pHI, dpHIdn, dpHIup = common.load_observation(obsdir, 'mf/GasMF/HIMF_Zwaan2005.dat', [0,1,2,3])
-    
+        lmHI, pHI, dpHIdn, dpHIup = self.load_observation('mf/GasMF/HIMF_Zwaan2005.dat', [0,1,2,3])
+
         #correct data for their choice of cosmology
         hobs = 0.75
         xobs = lmHI + np.log10(pow(hobs,2)/pow(h0,2))
