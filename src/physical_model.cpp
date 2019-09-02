@@ -93,9 +93,15 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 		zhot = params->zcool;
 	}
 
-	// compute modified yield
-	double yield_eff = yield - zcold*0.25; //from Robotham et al. (2019)
-	
+	// compute modified yield if user sets that option
+	double yield_eff = 0.0;
+	if(model.recycling_parameters.evolving_yield){
+		yield - zcold*0.25; //from Robotham et al. (2019)
+	}
+	else{
+		yield_eff  = yield;
+	}
+
 	// Calculate SFR.
 	double SFR   = model.star_formation.star_formation_rate(y[1], y[0], params->rgas, params->rstar, zcold, params->redshift, params->burst, params->vgal, jrate, jgas);
 

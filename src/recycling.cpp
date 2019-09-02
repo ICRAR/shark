@@ -30,6 +30,8 @@ RecyclingParameters::RecyclingParameters(const Options &options)
 	options.load("recycling.yield", yield, true);
 	options.load("recycling.recycle", recycle, true);
 	options.load("recycling.zsun", zsun, true);
+	options.load("recycling.evolving_yield", evolving_yield);
+
 }
 
 }
