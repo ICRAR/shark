@@ -1,0 +1,8 @@
+# Cumulative number counts at 1.2mm presented in Table 4 in Hatsukade et al. 2018
+# flux(1.2mm) n(>flux) err   err
+# mJy         deg^(-2)      deg^(-2) deg^(-2)
+0.180 213e2 64e2 43e2
+0.341 116e2 26e2 20e2
+0.568 60e2 15e2 12e2  
+0.878 16e2 7.5e2 4.9e2
+1.828 4.2e2 4.1e2 2.3e2

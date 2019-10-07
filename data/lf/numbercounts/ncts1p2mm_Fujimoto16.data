@@ -1,0 +1,11 @@
+# Cumulative number counts at 1.2mm presented in Table 4 in Fujimoto et al. 2016, ApJS, 222, 1
+# flux(1.2mm) log(n(>flux)) lo_err   up_err
+# mJy         deg^(-2)      deg^(-2) deg^(-2)
+ 0.015        5.5   		0.4 	  0.3
+ 0.027        5.3   		0.3 	  0.2
+ 0.047        5.0 	    	0.2 	  0.2
+ 0.084        4.8    		0.2 	  0.1      
+ 0.150        4.6    		0.1 	  0.1      
+ 0.267        4.2   		0.2 	  0.2      
+ 0.474        3.7   		0.3 	  0.2      
+ 0.843        2.8   		0.5 	  0.6
