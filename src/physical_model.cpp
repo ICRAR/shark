@@ -96,7 +96,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	// compute modified yield if user sets that option
 	double yield_eff = 0.0;
 	if(model.recycling_parameters.evolving_yield){
-		yield - zcold*0.25; //from Robotham et al. (2019)
+		yield_eff  = yield - zcold*0.25; //from Robotham et al. (2019)
 	}
 	else{
 		yield_eff  = yield;
