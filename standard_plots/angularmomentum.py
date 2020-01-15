@@ -60,13 +60,48 @@ xlf   = lbins + dl/2.0
 
 def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, sam_ratio_halo_disk, sam_ratio_halo_gal, 
                  sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
-                 sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal):
+                 sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal, phot_data, phot_data_nod, nbands):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
-     mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
+     mBH, rdisk, rbulge, rg_disk, rg_bulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mvir, matom_disk, mmol_disk, mgas_disk,
      matom_bulge, mmol_bulge, mgas_bulge, sfr_disk, sfr_bulge, vmax) = hdf5_data
+
+
+    ind = np.where(mdisk + mbulge > 0)
+    SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
+    SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
+    mstartot = mdisk[ind] + mbulge[ind]
+    rgal_star = (rdisk * mdisk + rbulge * mbulge ) / ( mdisk + mbulge)
+    rgal_gas  = (rg_disk * mgas_disk + rg_bulge * mgas_bulge ) / ( mgas_disk + mgas_bulge)
+    
+    p = 0
+    for c in range(0,5):
+        indust = phot_data[p]
+        innodust = phot_data_nod[p]
+        for i in range(0,nbands):
+            SEDs_dust[:,c,i] = indust[i,:]
+            SEDs_nodust[:,c,i] = innodust[i,:]
+        p = p + 1
+
+    write = True
+    if((index == 0) & (write == True)):
+       print "magnitudes"
+       for a,b,c,d in zip(SEDs_dust[:,4,1],SEDs_nodust[:,4,1],SEDs_dust[:,4,4],SEDs_nodust[:,4,4]):
+           print a,b,c,d
+       print "masses"
+       for a,b,c,d,e,f in zip (mdisk[ind],mbulge[ind],matom_disk[ind], mmol_disk[ind], matom_bulge[ind], mmol_bulge[ind]):
+           print a/h0, b/h0, c/h0, d/h0, e/h0, f/h0
+       print "sizes and type"
+       for a,b,c,d,e,f,g in zip (rgal_star[ind], rgal_gas[ind], rdisk[ind], rbulge[ind], rg_disk[ind], rg_bulge[ind], typeg[ind]):
+           print a*1e3/h0,b*1e3/h0, c*1e3/h0, d*1e3/h0, e*1e3/h0, f*1e3/h0, g
+       print "SFRs"
+       for a,b in zip(sfr_disk[ind], sfr_bulge[ind]):
+           print a/h0/1e9, b/h0/1e9
+       print "specific AM"
+       for a,b,c,d in zip (specific_angular_momentum_disk_star[ind], specific_angular_momentum_disk_gas[ind], specific_angular_momentum_bulge_star[ind], specific_angular_momentum_bulge_gas[ind]):
+           print a*1e3/h0,b*1e3/h0,c*1e3/h0,d*1e3/h0
 
     #specific_angular_momentum_disk_gas_mol = specific_angular_momentum_disk_gas
     #specific_angular_momentum_disk_gas_atom = specific_angular_momentum_disk_gas
@@ -939,14 +974,19 @@ def plot_lambda(plt, outdir, obsdir, lambdaH,  lambda_jiang, lambda_mass, bt, ms
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
+    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5"
+
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities',
-                           'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly', 'm_bh', 'rstar_disk', 'rstar_bulge', 'type', 
+                           'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly', 'm_bh', 'rstar_disk', 'rstar_bulge', 
+                           'rgas_disk', 'rgas_bulge','type', 
                            'specific_angular_momentum_disk_star', 'specific_angular_momentum_bulge_star',
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo', 'mvir_hosthalo', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge','sfr_disk', 'sfr_burst','vmax_subhalo')}
+    fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
+    fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
     # Loop over redshift and subvolumes
     sam_stars_disk    = np.zeros(shape = (len(zlist), 3, len(xmf),2))
@@ -971,9 +1011,14 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
+        seds = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed, subvols, file_hdf5_sed)
+        seds_nod = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
+        nbands = len(seds[0])
+
         (lh, lj, lm, bt, ms, ssfr)  = prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, sam_ratio_halo_disk, 
                      sam_ratio_halo_gal, sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
-                     sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal)
+                     sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal, seds, seds_nod, nbands)
+
         if(index  == 0):
 		lambdaH = lh
 		lambda_jiang = lj

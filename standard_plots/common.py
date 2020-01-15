@@ -326,6 +326,30 @@ def read_photometry_data(model_dir, snapshot, fields, subvolumes):
 
     return list(data.values())
 
+def read_co_data(model_dir, snapshot, fields, subvolumes):
+    """Read the CO_SLED.hdf5 file for the given model/snapshot/subvolume"""
+
+    data = collections.OrderedDict()
+
+    for idx, subv in enumerate(subvolumes):
+
+        fname = os.path.join(model_dir, str(snapshot), str(subv), 'CO_SLED.hdf5')
+        logger.info('Reading galaxies data from %s', fname)
+        with h5py.File(fname, 'r') as f:
+            for gname, dsnames in fields.items():
+                group = f[gname]
+                for dsname in dsnames:
+                    full_name = '%s/%s' % (gname, dsname)
+                    l = data.get(full_name, None)
+                    if l is None:
+                        l = group[dsname].value
+                    else:
+                        l = np.concatenate([l, group[dsname].value])
+                    data[full_name] = l
+
+    return list(data.values())
+
+
 def read_photometry_data_variable_tau_screen(model_dir, snapshot, fields, subvolumes, file_hdf5_sed):
     """Read the Shark-SED-EAGLE-tau.hdf5 file for the given model/snapshot/subvolume"""
 

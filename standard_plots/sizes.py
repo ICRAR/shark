@@ -53,7 +53,7 @@ xv    = vbins + dv/2.0
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
-                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF):
+                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
@@ -130,7 +130,11 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     ind = np.where(mbulge > 0)
     BH[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
-    
+ 
+    ind = np.where(mBH > 0)
+    BHSM[index,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
+                    y=np.log10(mBH[ind]) - np.log10(float(h0)))
+   
     ind = np.where((mbulge > 0) & (mbulge/mdisk > 0.5))
     bulge_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                     y=np.log10(vbulge[ind]))
@@ -358,7 +362,7 @@ def plot_sizes_combined(plt, outdir, rcomb):
     common.savefig(outdir, fig, 'sizes_combined.pdf')
 
 
-def plot_bulge_BH(plt, outdir, obsdir, BH):
+def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM):
 
     fig = plt.figure(figsize=(5,4.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm bulge}/M_{\odot})$"
@@ -374,7 +378,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg, yleg, 'z=0')
 
-    #Predicted SMHM
+    #Predicted BH-bulge mass relation
     ind = np.where(BH[0,0,:] != 0)
     if(len(xmf[ind]) > 0):
         xplot = xmf[ind]
@@ -429,6 +433,29 @@ def plot_bulge_BH(plt, outdir, obsdir, BH):
     common.prepare_legend(ax, ['k','Goldenrod','Orange','r','maroon'], loc=2)
     common.savefig(outdir, fig, 'bulge-BH.pdf')
 
+    #stellar mass-black hole mass relation
+    fig = plt.figure(figsize=(5,4.5))
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    ax.text(xleg, yleg, 'z=0')
+
+    #Predicted BH-stellar mass relation
+    ind = np.where(BHSM[0,0,:] != 0)
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = BH[0,0,ind]
+        errdn = BH[0,1,ind]
+        errup = BH[0,2,ind]
+        ax.plot(xplot,yplot[0],color='k',label="Shark")
+        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
+        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
+
+    common.prepare_legend(ax, ['k'], loc=2)
+    common.savefig(outdir, fig, 'stellarmass-BH.pdf')
 
 def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites):
 
@@ -512,6 +539,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     bulge_size_diskins = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
     BH = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    BHSM = np.zeros(shape = (len(zlist), 3, len(xmf)))
     disk_size_sat = np.zeros(shape = (len(zlist), 3, len(xmf)))
     disk_size_cen = np.zeros(shape = (len(zlist), 3, len(xmf)))
     BT_fractions = np.zeros(shape = (len(zlist), len(xmf)))
@@ -526,12 +554,12 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF)
+                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM)
 
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins)
     plot_velocities(plt, outdir, disk_vel, bulge_vel, baryonic_TF)
     plot_sizes_combined(plt, outdir, rcomb)
-    plot_bulge_BH(plt, outdir, obsdir, BH)
+    plot_bulge_BH(plt, outdir, obsdir, BH, BHSM)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
 
 
