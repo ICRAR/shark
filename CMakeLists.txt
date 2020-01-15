@@ -173,6 +173,12 @@ endmacro()
 # which is a hard requirement -- if it's not there we fail misserably
 #
 macro(find_boost)
+	# Boost 1.71's own CMake config file doesn't respect the
+	# Boost_USE_MULTITHREADED setting, which is important in environments where
+	# both single- and multi-threaded libraries are installed (e.g., MacOS Mojave
+	# with homebrew). Let's thus not use Boost's cmake config file and stick to
+	# cmake's own version of it for the time being
+	set(Boost_NO_BOOST_CMAKE ON)
 	find_package(Boost 1.54 COMPONENTS filesystem log program_options system REQUIRED)
 	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LIBRARIES})
 	include_directories(${Boost_INCLUDE_DIRS})
