@@ -66,26 +66,27 @@ def load_smf_observations(obsdir, h0):
     # Wright et al. (2017, z=0). Chabrier IMF
     z0obs = []
     lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/GAMAII_BBD_GSMFs.dat', [0,1,2,3])
-    xobs = lm
+    hobs = 0.7
+    xobs = lm + 2.0 * np.log10(hobs/h0)
     indx = np.where(p > 0)
-    yobs = np.log10(p[indx])
+    yobs = np.log10(p[indx]) - 3.0 * np.log10(hobs/h0)
     ydn = yobs - np.log10(p[indx]-dpdn[indx])
     yup = np.log10(p[indx]+dpup[indx]) - yobs
     z0obs.append((observation("Wright+2017", xobs[indx], yobs, ydn, yup, err_absolute=False), 'o'))
 
     lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/SMF_Bernardi2013_SerExp.data', [0,1,2,3])
-    xobs = lm
+    xobs = lm + 2.0 * np.log10(hobs/h0)
     indx = np.where(p > 0)
-    yobs = np.log10(p[indx])
+    yobs = np.log10(p[indx]) - 3.0 * np.log10(hobs/h0)
     ydn = yobs - np.log10(p[indx]-dpdn[indx])
     yup = np.log10(p[indx]+dpup[indx]) - yobs
     z0obs.append((observation("Bernardi+2013", xobs[indx], yobs, ydn, yup, err_absolute=False), 's'))
 
     # Moustakas (Chabrier IMF), ['Moustakas+2013, several redshifts']
     zdnM13, lmM13, pM13, dp_dn_M13, dp_up_M13 = common.load_observation(obsdir, 'mf/SMF/SMF_Moustakas2013.dat', [0,3,5,6,7])
-    xobsM13 = lmM13 
+    xobsM13 = lmM13 + 2.0 * np.log10(hobs/h0)
 
-    yobsM13 = np.full(xobsM13.shape, -999.)
+    yobsM13 = np.full(xobsM13.shape, -999.) - 3.0 * np.log10(hobs/h0)
     lerrM13 = np.full(xobsM13.shape, -999.)
     herrM13 = np.full(xobsM13.shape, 999.)
     indx = np.where( pM13 < 1)
@@ -98,8 +99,8 @@ def load_smf_observations(obsdir, h0):
     # Muzzin (Kroupa IMF), ['Moustakas+2013, several redshifts']
     zdnMu13,zupMu13,lmMu13,pMu13,dp_dn_Mu13,dp_up_Mu13 = common.load_observation(obsdir, 'mf/SMF/SMF_Muzzin2013.dat', [0,1,2,4,5,5])
     # -0.09 corresponds to the IMF correction
-    xobsMu13 = lmMu13 - 0.09
-    yobsMu13 = np.full(xobsMu13.shape, -999.)
+    xobsMu13 = lmMu13 - 0.09 + 2.0 * np.log10(hobs/h0) 
+    yobsMu13 = np.full(xobsMu13.shape, -999.) - 3.0 * np.log10(hobs/h0)
     lerrMu13 = np.full(xobsMu13.shape, -999.)
     herrMu13 = np.full(xobsMu13.shape, 999.)
     indx = np.where( pMu13 < 1)
@@ -111,14 +112,13 @@ def load_smf_observations(obsdir, h0):
 
     # Santini 2012 (Salpeter IMF)
     zdnS12, lmS12, pS12, dp_dn_S12, dp_up_S12 = common.load_observation(obsdir, 'mf/SMF/SMF_Santini2012.dat', [0,2,3,4,5])
-    hobs = 0.7
     # factor 0.24 corresponds to the IMF correction.
-    xobsS12 = lmS12 - 0.24 +  np.log10(hobs/h0)
+    xobsS12 = lmS12 - 0.24 +  2.0 * np.log10(hobs/h0)
     yobsS12 = np.full(xobsS12.shape, -999.)
     lerrS12 = np.full(xobsS12.shape, -999.)
     herrS12 = np.full(xobsS12.shape, 999.)
     indx = np.where( pS12 < 1)
-    yobsS12[indx] = (pS12[indx]) + np.log10(pow(h0/hobs,3.0))
+    yobsS12[indx] = (pS12[indx]) - 3.0 * np.log10(hobs/h0)
     indx = np.where( dp_dn_S12 > 0)
     lerrS12[indx]  = dp_dn_S12[indx]
     indx = np.where( dp_up_S12 > 0)
@@ -126,9 +126,8 @@ def load_smf_observations(obsdir, h0):
 
     # Wright et al. (2018, several reshifts). Assumes Chabrier IMF.
     zD17, lmD17, pD17, dp_dn_D17, dp_up_D17 = common.load_observation(obsdir, 'mf/SMF/Wright18_CombinedSMF.dat', [0,1,2,3,4])
-    hobs = 0.7
-    pD17 = pD17 - 3.0*np.log10(hobs) 
-    lmD17= lmD17 - np.log10(hobs)
+    pD17 = pD17 - 3.0*np.log10(h0) 
+    lmD17= lmD17 - np.log10(h0)
 
     # z0.5 obs
     z05obs = []
