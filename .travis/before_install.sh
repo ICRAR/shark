@@ -36,16 +36,12 @@ cd ${TRAVIS_BUILD_DIR}
 if [ "${TRAVIS_OS_NAME}" = "osx" ]
 then
 
-	# cxxtest pulls python@2, so we need to unlink
-	# the pre-installed python first
-	brew unlink python || fail "cannot unlink python"
+	# cxxtest pulls python, so we need to unlink
+	# the pre-installed python@2 first
+	brew unlink python@2 || fail "cannot unlink python@2"
 
 	# Minimal dependencies for testing
-	pkgs="gsl hdf5 cxxtest"
-	if [ "$PYTHON" = "venv" ]
-	then
-		pkgs="$pkgs python3"
-	fi
+	pkgs="gsl cxxtest"
 
 	# "install" seems to be "update"-ing too, which is failing
 	# with a "don't worry, [...] everything is [...] fine now"
