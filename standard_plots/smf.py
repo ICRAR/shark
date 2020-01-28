@@ -126,8 +126,9 @@ def load_smf_observations(obsdir, h0):
 
     # Wright et al. (2018, several reshifts). Assumes Chabrier IMF.
     zD17, lmD17, pD17, dp_dn_D17, dp_up_D17 = common.load_observation(obsdir, 'mf/SMF/Wright18_CombinedSMF.dat', [0,1,2,3,4])
-    pD17 = pD17 - 3.0*np.log10(h0) 
-    lmD17= lmD17 - np.log10(h0)
+    binobs = 0.25
+    pD17 = pD17 +  2.0 * np.log10(hobs/h0) - np.log10(binobs)
+    lmD17= lmD17 - 3.0 * np.log10(hobs/h0) - np.log10(binobs)
 
     # z0.5 obs
     z05obs = []
