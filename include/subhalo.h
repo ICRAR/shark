@@ -206,6 +206,8 @@ public:
 	float Mvir = 0;
 	/// gas mass in the subhalo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
 	float Mgas = 0;
+	/// number of dark matter particles in the halo
+	int Npart = 0;
 	/// angular momentum of subhalo [Msun/h km/s Mpc/h]
 	xyz<float> L {0, 0, 0};
 	/// maximum circular velocity of the subhalo [km/s]

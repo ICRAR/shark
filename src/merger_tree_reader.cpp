@@ -106,8 +106,9 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	std::vector<float> position = batch_file.read_dataset_v_2<float>("haloTrees/position");
 	std::vector<float> velocity = batch_file.read_dataset_v_2<float>("haloTrees/velocity");
 
-	//Read mass, circular velocity and angular momentum.
+	//Read mass, npart, circular velocity and angular momentum.
 	std::vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
+	std::vector<int> Npart = batch_file.read_dataset_v<int>("haloTrees/particleNumber");
 	std::vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
 	std::vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
 
@@ -195,6 +196,9 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		if(simulation_params.hydrorun){
 			subhalo->Mgas = Mgas[i];
 		}
+
+		//Assign npart
+		subhalo->Npart = Npart[i];
 
 		//Assign position
 		subhalo->position.x = position[3 * i];

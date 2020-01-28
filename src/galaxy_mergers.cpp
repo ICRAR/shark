@@ -53,10 +53,12 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 	options.load("galaxy_mergers.cgal", cgal);
 	options.load("galaxy_mergers.fgas_dissipation", fgas_dissipation);
 	options.load("galaxy_mergers.merger_ratio_dissipation", merger_ratio_dissipation);
+	options.load("galaxy_mergers.merger_timescale_model", model);
 }
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 		CosmologyPtr cosmology,
+		CosmologicalParameters cosmo_params,
 		const ExecutionParameters &execparams,
 		SimulationParameters simparams,
 		DarkMatterHalosPtr darkmatterhalo,
@@ -64,6 +66,7 @@ GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 		AGNFeedbackPtr agnfeedback) :
 	parameters(parameters),
 	cosmology(std::move(cosmology)),
+	cosmo_params(std::move(cosmo_params)),
 	simparams(std::move(simparams)),
 	darkmatterhalo(std::move(darkmatterhalo)),
 	physicalmodel(std::move(physicalmodel)),
@@ -74,6 +77,20 @@ GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 	// no-op
 }
 
+template <>
+GalaxyMergerParameters::GalaxyMergerTimescaleModel
+Options::get<GalaxyMergerParameters::GalaxyMergerTimescaleModel>(const std::string &name, const std::string &value) const {
+	auto lvalue = lower(value);
+	if (lvalue == "lacey93") {
+		return GalaxyMergerParameters::LACEY93;
+	}
+	else if (lvalue == "poulton20") {
+		return GalaxyMergerParameters::POULTON20;
+	}
+	std::ostringstream os;
+	os << name << " option value invalid: " << value << ". Supported values are lacey93 and poulton20";
+	throw invalid_option(os.str());
+};
 
 void GalaxyMergers::orbital_parameters(double &vr, double &vt, double f){
 
@@ -128,7 +145,57 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 		double mp, double tau_dyn, int snapshot, bool transfer_types2)
 {
 	// Define merging timescale and redefine type of galaxy.
-	if(parameters.tau_delay > 0){
+	if(parameters.model==GalaxyMergerParameters::POULTON20){
+
+		// Find the objects physical position
+		double conversion_factor = cosmo_params.Hubble_h * (1 +  simparams.redshifts[snapshot]);
+		double xrel = (secondary->position.x - primary->position.x) * conversion_factor;
+		double yrel = (secondary->position.y - primary->position.y) * conversion_factor;
+		double zrel = (secondary->position.z - primary->position.z) * conversion_factor;
+		double r = sqrt(xrel*xrel + yrel*yrel + zrel*zrel);
+
+		// Find the physical velocity + the hubble flow
+		double hubble_flow = r * cosmology->hubble_parameter(simparams.redshifts[snapshot]);
+		double vxrel = secondary->velocity.x - primary->velocity.x + hubble_flow;
+		double vyrel = secondary->velocity.y - primary->velocity.y + hubble_flow;
+		double vzrel = secondary->velocity.z - primary->velocity.z + hubble_flow;
+		double vrel = sqrt(vxrel*vxrel + vyrel*vyrel + vzrel*vzrel);
+
+		// Get the host virial radius and enclose mass at r
+		double host_rvir = darkmatterhalo->halo_virial_radius(*primary) * conversion_factor;
+		double enc_mass = primary->Mvir * darkmatterhalo->enclosed_mass(r/host_rvir, primary->concentration);
+
+		// The satellites mass including its baryon mass
+		double mgal = galaxy.baryon_mass();
+		double ms = simparams.particle_mass * secondary->Npart + mgal;
+		if(transfer_types2){
+			ms = galaxy.msubhalo_type2 + mgal;
+		}
+
+		//Determine the dynamical friction timescale
+		double tau_dtyn = sqrt(pow(r,3)/(constants::G * enc_mass)) * constants::MPCKM2GYR;
+
+		// Get the merging objects orbital energy and angular momentum
+		double mu = (enc_mass*ms)/(enc_mass+ms);
+		double E = 0.5 * mu * vrel*vrel - constants::G *enc_mass *ms/r;
+		double lx = (yrel * vzrel) - (zrel * vyrel);
+		double ly = -((xrel * vzrel) - (zrel * vxrel));
+		double lz = (xrel * vyrel) - (yrel * vxrel);
+		double L = mu * sqrt(lx*lx + ly*ly + lz*lz);
+
+		// Get the predicted radius of pericentre
+		double e = sqrt(1.0 + ((2.0 * E * L*L)/((constants::G * ms * enc_mass)*(constants::G * ms * enc_mass) * mu)));
+		double rperi = (L*L)/((1.0+e) * constants::G * ms *enc_mass  * mu);
+
+		//Calculate the merger timescale
+		if(r/host_rvir<1.0)
+			galaxy.tmerge = pow(10,0.75) * tau_dtyn  * pow(r/host_rvir,-0.5) * pow(rperi/r,0.21);
+		else
+			galaxy.tmerge = pow(10,0.73) * tau_dtyn  * pow(r/host_rvir,-1.05) * pow(rperi/r,0.21);
+
+	}
+
+	else if(parameters.tau_delay > 0){
 		double mgal = galaxy.baryon_mass();
 		double ms = secondary->Mvir + mgal;
 		if(transfer_types2){

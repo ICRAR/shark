@@ -70,6 +70,13 @@ class GalaxyMergerParameters {
 		float merger_ratio_dissipation = 0;
 		double fgas_dissipation = 0;
 
+		enum GalaxyMergerTimescaleModel{
+			LACEY93 = 0,
+			POULTON20
+		};
+
+		GalaxyMergerTimescaleModel model = POULTON20;
+
 };
 
 
@@ -79,6 +86,7 @@ class GalaxyMergers{
 public:
 	GalaxyMergers(GalaxyMergerParameters parameters,
 			CosmologyPtr cosmology,
+			CosmologicalParameters cosmo_params,
 			const ExecutionParameters &execparams,
 			SimulationParameters simparams,
 			DarkMatterHalosPtr darkmatterhalo,
@@ -143,6 +151,7 @@ public:
 private:
 	GalaxyMergerParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
+	CosmologicalParameters cosmo_params;
 	SimulationParameters simparams;
 	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
