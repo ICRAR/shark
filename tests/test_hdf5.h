@@ -126,8 +126,8 @@ public:
 	{
 		// Single-named attributes are not supported
 		auto writer = get_writer();
-		TS_ASSERT_THROWS(writer.write_attribute("/attr_name", 1), invalid_argument);
-		TS_ASSERT_THROWS(writer.write_attribute("/attr_name", std::string("1")), invalid_argument);
+		TS_ASSERT_THROWS(writer.write_attribute("/attr_name", 1), invalid_argument &);
+		TS_ASSERT_THROWS(writer.write_attribute("/attr_name", std::string("1")), invalid_argument &);
 	}
 
 	template <typename T>
@@ -161,9 +161,9 @@ public:
 			auto basename = std::string("/") + name;
 			auto repeated = basename + std::string("/") + name;
 			auto tailname = goodname + "/" + goodname + "/" + name;
-			TS_ASSERT_THROWS(writer.write_attribute(basename + "/my_attribute", 1), invalid_argument);
-			TS_ASSERT_THROWS(writer.write_attribute(repeated + "/my_attribute", 1), invalid_argument);
-			TS_ASSERT_THROWS(writer.write_attribute(tailname + "/my_attribute", 1), invalid_argument);
+			TS_ASSERT_THROWS(writer.write_attribute(basename + "/my_attribute", 1), invalid_argument &);
+			TS_ASSERT_THROWS(writer.write_attribute(repeated + "/my_attribute", 1), invalid_argument &);
+			TS_ASSERT_THROWS(writer.write_attribute(tailname + "/my_attribute", 1), invalid_argument &);
 			writer.close();
 			remove_file();
 		});
@@ -173,9 +173,9 @@ public:
 	{
 		_assert_invalid_names([this](const std::string &name, naming_convention convention) {
 			auto writer = get_writer(false, naming_convention::SNAKE_CASE, convention, naming_convention::SNAKE_CASE);
-			TS_ASSERT_THROWS(writer.write_dataset("/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
-			TS_ASSERT_THROWS(writer.write_dataset("/group/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
-			TS_ASSERT_THROWS(writer.write_dataset("/group1/group2/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument);
+			TS_ASSERT_THROWS(writer.write_dataset("/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument &);
+			TS_ASSERT_THROWS(writer.write_dataset("/group/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument &);
+			TS_ASSERT_THROWS(writer.write_dataset("/group1/group2/" + name, std::vector<int>{1, 2, 3, 4}), invalid_argument &);
 			writer.close();
 			remove_file();
 		});
@@ -186,8 +186,8 @@ public:
 		_assert_invalid_names([this](const std::string &name, naming_convention convention) {
 			auto writer = get_writer(false, naming_convention::SNAKE_CASE, naming_convention::SNAKE_CASE, convention);
 			writer.write_dataset("/group/integers", std::vector<int>{1, 2, 3, 4});
-			TS_ASSERT_THROWS(writer.write_attribute(std::string("/group/") + name, 1), invalid_argument);
-			TS_ASSERT_THROWS(writer.write_attribute(std::string("/group/integers") + name, 1), invalid_argument);
+			TS_ASSERT_THROWS(writer.write_attribute(std::string("/group/") + name, 1), invalid_argument &);
+			TS_ASSERT_THROWS(writer.write_attribute(std::string("/group/integers") + name, 1), invalid_argument &);
 			writer.close();
 			remove_file();
 		});

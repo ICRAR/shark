@@ -681,8 +681,6 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 
 		using namespace constants;
 
-		double massrat = mhot/mass;
-
 		// cooling rate in cgs.
 		double gamma_cool = mhot * MSOLAR_g * lambda * nh_density / (M_Atomic_g * mu_Primordial * 0.1);
 

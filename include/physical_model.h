@@ -230,13 +230,13 @@ public:
 	void from_galaxy_starburst(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy) override;
 	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger) override;
 
-	AGNFeedback agn_feedback;
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;
+	AGNFeedback agn_feedback;
 
-	AGNFeedbackParameters agn_parameters;
 	RecyclingParameters recycling_parameters;
 	GasCoolingParameters gas_cooling_parameters;
+	AGNFeedbackParameters agn_parameters;
 
 	void reset_ode_evaluations() override {
 		PhysicalModel::reset_ode_evaluations();

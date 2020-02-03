@@ -484,7 +484,6 @@ SubhaloPtr HaloBasedTreeBuilder::find_descendant_subhalo(
 {
 	// if the descendant subhalo is not found in the descendant halos'
 	// subhalos then we error
-	bool subhalo_descendant_found = false;
 	auto descendant_subhalos = descendant_halo->all_subhalos();
 	auto descendant_subhalo_found = find_by_id(descendant_subhalos, subhalo->descendant_id);
 

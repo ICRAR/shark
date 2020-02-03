@@ -50,7 +50,7 @@ public:
 
 	void _test_invalid_parse_option(const std::string &optspec) {
 		std::string name, value;
-		TS_ASSERT_THROWS(Options::parse_option(optspec, name, value), invalid_option);
+		TS_ASSERT_THROWS(Options::parse_option(optspec, name, value), invalid_option &);
 	}
 
 	void test_parse_options_invalid() {
@@ -108,7 +108,7 @@ public:
 	{
 		auto _test_invalid_option_name = [](const std::string &optspec) {
 			Options opt;
-			TS_ASSERT_THROWS(opt.add(optspec + " = value"), invalid_option);
+			TS_ASSERT_THROWS(opt.add(optspec + " = value"), invalid_option &);
 		};
 		_test_invalid_option_name("CamelCase");
 		_test_invalid_option_name("group.CamelCase");
