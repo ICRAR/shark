@@ -41,7 +41,7 @@ then
 	brew unlink python@2 || fail "cannot unlink python@2"
 
 	# Minimal dependencies for testing
-	pkgs="gsl cxxtest"
+	pkgs="gsl cxxtest libomp"
 
 	# "install" seems to be "update"-ing too, which is failing
 	# with a "don't worry, [...] everything is [...] fine now"
