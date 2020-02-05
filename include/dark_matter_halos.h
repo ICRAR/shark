@@ -128,8 +128,6 @@ protected:
 	CosmologyPtr cosmology;
 	SimulationParameters sim_params;
 	ExecutionParameters exec_params;
-	std::lognormal_distribution<double> distribution;
-	std::uniform_real_distribution<float> flat_distribution;
 
 private:
 	xyz<float> random_point_in_sphere(float r, std::default_random_engine &generator);

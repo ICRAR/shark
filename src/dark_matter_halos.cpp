@@ -107,9 +107,7 @@ DarkMatterHalos::DarkMatterHalos(
 	params(params),
 	cosmology(std::move(cosmology)),
 	sim_params(sim_params),
-	exec_params(std::move(exec_params)),
-	distribution(std::log(0.03), std::abs(std::log(0.5))),
-	flat_distribution(0,1)
+	exec_params(std::move(exec_params))
 {
 	// no-op
 }
@@ -161,6 +159,7 @@ float DarkMatterHalos::halo_lambda (const Subhalo &subhalo, float m, double z, d
 
 	// Prime the generator with a known seed to allow for reproducible runs
 	std::default_random_engine generator(exec_params.seed + subhalo.id);
+	std::lognormal_distribution<double> distribution(std::log(0.03), std::abs(std::log(0.5)));
 	auto lambda_random = distribution(generator);
 
 	// Avoid zero values. In that case assume small lambda value.
@@ -433,6 +432,7 @@ xyz<float> DarkMatterHalos::random_point_in_sphere(float r, std::default_random_
 {
 	// We distribute cos_theta flatly instead of theta itself to end up with a
 	// more uniform distribution of points in the sphere
+	std::uniform_real_distribution<float> flat_distribution(0, 1);
 	float cos_theta = flat_distribution(generator) * 2.0 - 1; //flat between -1 and 1.
 	float theta = std::acos(cos_theta);
 	float sin_theta = std::sin(theta);
