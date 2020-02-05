@@ -83,7 +83,7 @@ def main():
     args = read_args()
     exclusions = args.exclude_dataset or []
     check = lenient_dataset_equality if args.lenient else full_dataset_equality
-    model_one, model_two = h5py.File(args.models[0]), h5py.File(args.models[1])
+    model_one, model_two = h5py.File(args.models[0], 'r'), h5py.File(args.models[1], 'r')
     galaxies_one, galaxies_two = model_one['galaxies'], model_two['galaxies']
 
     if args.expect_unequal:
