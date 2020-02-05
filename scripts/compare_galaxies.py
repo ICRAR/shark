@@ -57,23 +57,29 @@ def read_args():
     arg_parser.add_argument(
         '-E', '--exclude-dataset', action='append',
         help='Datasets to exclude from comparison')
+    arg_parser.add_argument(
+        '-i', '--include-dataset', action='append',
+        help='Datasets to include in comparison')
     return arg_parser.parse_args()
 
 
-def assert_galaxies_equal(check, galaxy1, galaxy2, exclusions):
+def assert_galaxies_equal(check, galaxy1, galaxy2, inclusions, exclusions):
     """Raise an AssertionError if two galaxies are not equal."""
-    names1 = set(galaxy1.keys()) - set(exclusions)
-    names2 = set(galaxy2.keys()) - set(exclusions)
+    if inclusions:
+        names1 = names2 = inclusions
+    else:
+        names1 = set(galaxy1.keys()) - set(exclusions)
+        names2 = set(galaxy2.keys()) - set(exclusions)
     if names1 != names2:
         raise AssertionError('Galaxy datasets unequal')
     for name in names1:
         check(name, galaxy1[name], galaxy2[name])
 
 
-def assert_galaxies_not_equal(check, galaxy1, galaxy2, exclusions):
+def assert_galaxies_not_equal(check, galaxy1, galaxy2, inclusions, exclusions):
     """Raise an AssertionError if two galaxies are equal."""
     try:
-        assert_galaxies_equal(check, galaxy1, galaxy2, exclusions)
+        assert_galaxies_equal(check, galaxy1, galaxy2, inclusions, exclusions)
     except AssertionError as e:
         pass
     else:
@@ -82,14 +88,15 @@ def assert_galaxies_not_equal(check, galaxy1, galaxy2, exclusions):
 def main():
     args = read_args()
     exclusions = args.exclude_dataset or []
+    inclusions = args.include_dataset or []
     check = lenient_dataset_equality if args.lenient else full_dataset_equality
     model_one, model_two = h5py.File(args.models[0], 'r'), h5py.File(args.models[1], 'r')
     galaxies_one, galaxies_two = model_one['galaxies'], model_two['galaxies']
 
     if args.expect_unequal:
-        assert_galaxies_not_equal(check, galaxies_one, galaxies_two, exclusions)
+        assert_galaxies_not_equal(check, galaxies_one, galaxies_two, inclusions, exclusions)
     else:
-        assert_galaxies_equal(check, galaxies_one, galaxies_two, exclusions)
+        assert_galaxies_equal(check, galaxies_one, galaxies_two, inclusions, exclusions)
 
 if __name__ == '__main__':
     main()
