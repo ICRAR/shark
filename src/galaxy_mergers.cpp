@@ -92,18 +92,6 @@ Options::get<GalaxyMergerParameters::GalaxyMergerTimescaleModel>(const std::stri
 	throw invalid_option(os.str());
 };
 
-void GalaxyMergers::orbital_parameters(double &vr, double &vt, double f){
-
-	//double f2 = 1+1/std::max(mass_ratio,1+tolerance);
-
-	//Now generate two random numbers between 0 and 3.
-	std::default_random_engine generator;
-	std::uniform_real_distribution<double> distribution(0, 3);
-
-	vr = distribution(generator);
-	vt = distribution(generator);
-}
-
 double GalaxyMergers::merging_timescale_orbital(){
 
 	/**

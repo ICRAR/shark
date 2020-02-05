@@ -93,8 +93,6 @@ public:
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
 			AGNFeedbackPtr agnfeedback);
 
-	void orbital_parameters(double &vr, double &vt, double f);
-
 	double mass_ratio_function(double mp, double ms);
 
 	double merging_timescale_mass(double mp, double ms);
