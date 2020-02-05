@@ -22,20 +22,21 @@ import h5py
 import numpy as np
 
 
+def _check(name, a, b, equality_condition):
+    if not all(equality_condition):
+        not_equal = np.logical_not(equality_condition)
+        raise AssertionError(
+            'Galaxies dataset %s not equal: %r / %r'
+            % (name, a[not_equal], b[not_equal])
+        )
+
 def full_dataset_equality(name, a, b):
-    if not np.array_equal(a, b):
-        raise AssertionError('Galaxies dataset %s not equal' % name)
+    _check(name, a, b, np.equal(a, b))
 
 
 def lenient_dataset_equality(name, a, b):
     a, b = np.sort(a), np.sort(b)
-    isclose = np.isclose(a, b, equal_nan=True)
-    if not all(isclose):
-        not_close = np.logical_not(isclose)
-        raise AssertionError(
-            "Galaxies dataset %s not equal: %r / %r"
-            % (name, a[not_close], b[not_close])
-        )
+    _check(name, a, b, np.isclose(a, b, equal_nan=True))
 
 
 def read_args():
