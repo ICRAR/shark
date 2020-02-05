@@ -103,11 +103,11 @@ DarkMatterHalos::DarkMatterHalos(
 	const DarkMatterHaloParameters &params,
 	CosmologyPtr cosmology,
 	SimulationParameters &sim_params,
-	const ExecutionParameters &exec_params) :
+	ExecutionParameters exec_params) :
 	params(params),
 	cosmology(std::move(cosmology)),
 	sim_params(sim_params),
-	generator(exec_params.seed),
+	exec_params(std::move(exec_params)),
 	distribution(std::log(0.03), std::abs(std::log(0.5))),
 	flat_distribution(0,1)
 {
@@ -149,16 +149,18 @@ double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
 	return constants::G * subhalo.Mvir / std::pow(subhalo.Vvir,2);
 }
 
-float DarkMatterHalos::halo_lambda (xyz<float> L, float m, double z, double npart){
+float DarkMatterHalos::halo_lambda (const Subhalo &subhalo, float m, double z, double npart){
 
 	//Spin parameter either read from the DM files or assumed a random distribution.
 	double H0 = cosmology->hubble_parameter(z);
-	double lambda = L.norm() / m * 1.5234153 / std::pow(constants::G * m, 0.666) * std::pow(H0,0.33);
+	double lambda = subhalo.L.norm() / m * 1.5234153 / std::pow(constants::G * m, 0.666) * std::pow(H0,0.33);
 
 	if(lambda > 1){
 			lambda = 1;
 	}
 
+	// Prime the generator with a known seed to allow for reproducible runs
+	std::default_random_engine generator(exec_params.seed + subhalo.id);
 	auto lambda_random = distribution(generator);
 
 	// Avoid zero values. In that case assume small lambda value.
@@ -427,7 +429,7 @@ struct lambert_w0<double>
 	}
 };
 
-xyz<float> DarkMatterHalos::random_point_in_sphere(float r)
+xyz<float> DarkMatterHalos::random_point_in_sphere(float r, std::default_random_engine &generator)
 {
 	// We distribute cos_theta flatly instead of theta itself to end up with a
 	// more uniform distribution of points in the sphere
@@ -442,7 +444,11 @@ xyz<float> DarkMatterHalos::random_point_in_sphere(float r)
 	};
 }
 
-void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo){
+void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo)
+{
+
+	// Prime the generator with a known seed to allow for reproducible runs
+	std::default_random_engine generator(exec_params.seed + halo->id);
 
 	double c = halo->concentration;
 
@@ -451,7 +457,7 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	// Assign positions based on an NFW halo of concentration c.
 	nfw_distribution<double> r(c);
 	double rproj = r(generator);
-	pos = halo->position + random_point_in_sphere(rvir * rproj);
+	pos = halo->position + random_point_in_sphere(rvir * rproj, generator);
 
 	// Assign velocities using NFW velocity dispersion at the radius in which the galaxy is and assuming isotropy.
 	double sigma = std::sqrt(0.333 * constants::G * halo->Mvir * enclosed_mass(rproj, c) / (rvir * rproj));
@@ -466,7 +472,7 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	v = halo->velocity + delta_v;
 
 	// Assign angular momentum based on random angles,
-	L = random_point_in_sphere(total_am);
+	L = random_point_in_sphere(total_am, generator);
 
 }
 

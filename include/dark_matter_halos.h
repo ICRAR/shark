@@ -82,7 +82,7 @@ public:
 		const DarkMatterHaloParameters &params,
 		CosmologyPtr cosmology,
 		SimulationParameters &sim_params,
-		const ExecutionParameters &exec_params);
+		ExecutionParameters exec_params);
 	virtual ~DarkMatterHalos() = default;
 
 	virtual double grav_potential_halo(double r, double c) const = 0;
@@ -99,7 +99,7 @@ public:
 
 	double halo_virial_velocity (double mvir, double redshift);
 
-	float halo_lambda (xyz<float> L, float m, double z, double npart);
+	float halo_lambda (const Subhalo &subhalo, float m, double z, double npart);
 
 	double disk_size_theory (Subhalo &subhalo, double z);
 
@@ -127,12 +127,12 @@ protected:
 	DarkMatterHaloParameters params;
 	CosmologyPtr cosmology;
 	SimulationParameters sim_params;
-	std::default_random_engine generator;
+	ExecutionParameters exec_params;
 	std::lognormal_distribution<double> distribution;
 	std::uniform_real_distribution<float> flat_distribution;
 
 private:
-	xyz<float> random_point_in_sphere(float r);
+	xyz<float> random_point_in_sphere(float r, std::default_random_engine &generator);
 };
 
 /// Type used by users to keep track o

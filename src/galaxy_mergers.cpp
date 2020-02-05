@@ -59,7 +59,7 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 		CosmologyPtr cosmology,
 		CosmologicalParameters cosmo_params,
-		const ExecutionParameters &execparams,
+		ExecutionParameters exec_params,
 		SimulationParameters simparams,
 		DarkMatterHalosPtr darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
@@ -67,11 +67,11 @@ GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 	parameters(parameters),
 	cosmology(std::move(cosmology)),
 	cosmo_params(std::move(cosmo_params)),
+	exec_params(std::move(exec_params)),
 	simparams(std::move(simparams)),
 	darkmatterhalo(std::move(darkmatterhalo)),
 	physicalmodel(std::move(physicalmodel)),
 	agnfeedback(std::move(agnfeedback)),
-	generator(execparams.seed),
 	distribution(-0.14, 0.26)
 {
 	// no-op
@@ -92,17 +92,11 @@ Options::get<GalaxyMergerParameters::GalaxyMergerTimescaleModel>(const std::stri
 	throw invalid_option(os.str());
 };
 
-double GalaxyMergers::merging_timescale_orbital(){
-
-	/**
-	 * Uses function calculated in Lacey & Cole (1993), who found that it was best described by a log
-	 * normal distribution with median value -0.14 and dispersion 0.26.
-	 */
-
+double GalaxyMergers::merging_timescale_orbital(const Galaxy &galaxy)
+{
 	//TODO: add other dynamical friction timescales.
-
+	std::default_random_engine generator(exec_params.seed + galaxy.id);
 	return distribution(generator);
-
 }
 
 double GalaxyMergers::mass_ratio_function(double mp, double ms){
@@ -190,7 +184,7 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 			ms = galaxy.msubhalo_type2 + mgal;
 		}
 		double tau_mass = merging_timescale_mass(mp, ms);
-		double tau_orbits = merging_timescale_orbital();
+		double tau_orbits = merging_timescale_orbital(galaxy);
 
 		galaxy.tmerge = parameters.tau_delay * tau_mass * tau_orbits* tau_dyn;
 	}

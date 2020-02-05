@@ -87,7 +87,7 @@ public:
 	GalaxyMergers(GalaxyMergerParameters parameters,
 			CosmologyPtr cosmology,
 			CosmologicalParameters cosmo_params,
-			const ExecutionParameters &execparams,
+			ExecutionParameters execparams,
 			SimulationParameters simparams,
 			DarkMatterHalosPtr darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
@@ -97,7 +97,11 @@ public:
 
 	double merging_timescale_mass(double mp, double ms);
 
-	double merging_timescale_orbital();
+	/**
+	 * Uses function calculated in Lacey & Cole (1993), who found that it was best described by a log
+	 * normal distribution with median value -0.14 and dispersion 0.26.
+	 */
+	double merging_timescale_orbital(const Galaxy &galaxy);
 
 	/**
 	 * Calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary,
@@ -150,12 +154,12 @@ private:
 	GalaxyMergerParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
 	CosmologicalParameters cosmo_params;
+	ExecutionParameters exec_params;
 	SimulationParameters simparams;
 	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
 	AGNFeedbackPtr agnfeedback;
 
-	std::default_random_engine generator;
 	std::lognormal_distribution<double> distribution;
 
 };
