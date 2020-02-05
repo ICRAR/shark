@@ -81,7 +81,7 @@ class GalaxyMergerParameters {
 
 
 
-class GalaxyMergers{
+class GalaxyMergers {
 
 public:
 	GalaxyMergers(GalaxyMergerParameters parameters,
