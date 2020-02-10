@@ -112,3 +112,37 @@ Using OpenMP will result in a speed up in most cases,
 but only up to certain threshold
 when using more CPUs will not necessarily improve
 the runtime of |s|.
+
+Reproducibility
+---------------
+
+|s| uses random number generators (RNGs)
+for drawing values out of certain probability distributions
+as part of some of its calculations,
+and hence it is inherently stochastic.
+However, the *seed* used to prime the RNGs
+can be manipulated in order to fully reproduce a previous execution.
+In particular:
+
+ * If no explicit seed is given,
+   a different random seed is used each time.
+   As a consequence, all runs will produce different outputs by default,
+   regardless of any other factor.
+ * If a seed is given
+   (via the ``execution.seed`` configuration option)
+   |s| guarantees that the exact same results will be produced
+   each time the same seed value is given,
+   for the same given inputs, configuration
+   and software version.
+
+The second point,
+combined with the fact that the seed of an execution
+is always recorded under the ``run_info`` group
+of the :ref:`galaxies.hdf5 <output.galaxies>` outputs
+means that executions are **fully** reproducible.
+Note also that the number of threads
+used to execute |s|
+has no relevance on the reproducibility of results:
+executions using different number of threads
+but the same seed, inputs, configuration and software version
+will yield the same results.

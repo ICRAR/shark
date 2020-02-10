@@ -15,6 +15,9 @@ Changelog
   and PSO executions.
   Several experiments with our mini-SURFS and medi-SURFS datasets
   show a decrease of about 20% on peak memory usage.
+* Made |s| fully reproducible in multi-threaded mode,
+  even when running a different number of threads
+  than a previous execution.
 
 .. rubric:: 1.2.1
 
