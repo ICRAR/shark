@@ -36,17 +36,15 @@ cd ${TRAVIS_BUILD_DIR}
 if [ "${TRAVIS_OS_NAME}" = "osx" ]
 then
 
+	export HOMEBREW_NO_AUTO_UPDATE=1
+	export HOMEBREW_NO_INSTALL_CLEANUP=1
+
 	# cxxtest pulls python, so we need to unlink
 	# the pre-installed python@2 first
 	brew unlink python@2 || fail "cannot unlink python@2"
 
 	# Minimal dependencies for testing
 	pkgs="gsl cxxtest libomp"
-
-	# "install" seems to be "update"-ing too, which is failing
-	# with a "don't worry, [...] everything is [...] fine now"
-	# message. Let's follow that advice more explicitly
-	brew update || true
 	brew install $pkgs || fail "cannot install packages: $pkgs"
 
 	# PYTHON==venv means that we are going to use a virtualenv'd python
