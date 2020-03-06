@@ -170,7 +170,7 @@ std::size_t report_vsize(const std::vector<T> &v, std::ostringstream &os, const 
 	const std::size_t amount = sizeof(T) * v.size();
 	os << " " << name << ": " << memory_amount(amount);
 	return amount;
-};
+}
 
 void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos, const molgas_per_galaxy &molgas_per_gal){
 

@@ -44,10 +44,14 @@ public:
 	xyz() = default;
 
 	template <typename U>
-	xyz(U x, U y, U z) : x(T(x)), y(T(y)), z(T(z)) {};
+	xyz(U x, U y, U z) : x(T(x)), y(T(y)), z(T(z))
+	{
+	}
 
 	template <typename U>
-	explicit xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z)) {};
+	explicit xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z))
+	{
+	}
 
 	/**
 	 * The value in the X coordinate

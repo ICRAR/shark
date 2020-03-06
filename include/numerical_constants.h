@@ -40,12 +40,12 @@ namespace constants {
 	template <int __exp>
 	constexpr double pow (double base) {
 		return base * pow<__exp - 1>(base);
-	};
+	}
 
 	template <>
 	constexpr double pow<1>(double base) {
 		return base;
-	};
+	}
 
 	/** @name Numerical constants */
 	// @{

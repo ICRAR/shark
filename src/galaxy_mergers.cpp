@@ -90,7 +90,7 @@ Options::get<GalaxyMergerParameters::GalaxyMergerTimescaleModel>(const std::stri
 	std::ostringstream os;
 	os << name << " option value invalid: " << value << ". Supported values are lacey93 and poulton20";
 	throw invalid_option(os.str());
-};
+}
 
 double GalaxyMergers::merging_timescale_orbital(const Galaxy &galaxy)
 {

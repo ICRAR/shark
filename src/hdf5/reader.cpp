@@ -65,7 +65,11 @@ static H5::Attribute _get_attribute(const CommonFG &file_or_group, const std::ve
 	// This is the attribute name
 	if (parts.size() == 1) {
 		// This is a group (we don't support attributes in files)
+#ifdef HDF5_NEWER_THAN_1_10_0
+		return _get_attribute(file_or_group, parts[0]);
+#else
 		return _get_attribute(static_cast<const H5::Group &>(file_or_group), parts[0]);
+#endif
 	}
 
 	auto n_groups = file_or_group.getNumObjs();
