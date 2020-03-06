@@ -134,7 +134,7 @@ private:
 	void create_per_thread_objects();
 	std::vector<MergerTreePtr> import_trees();
 	void evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot);
-	evolution_times evolve_merger_tree(const MergerTreePtr &tree, int thread_idx, int snapshot, double z, double delta_t);
+	evolution_times evolve_merger_tree(const MergerTreePtr &tree, unsigned int thread_idx, int snapshot, double z, double delta_t);
 	molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, double z, bool calc_j);
 
 };
@@ -264,7 +264,7 @@ molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr
 	std::vector<StarFormation> star_formations(threads, star_formation);
 	std::vector<molgas_per_galaxy> local_molgas(threads);
 
-	omp_static_for(halos, threads, [&](const HaloPtr &halo, int idx){
+	omp_static_for(halos, threads, [&](const HaloPtr &halo, unsigned int idx){
 		_get_molecular_gas(halo, local_molgas[idx], star_formations[idx], z, calc_j);
 	});
 
@@ -279,7 +279,7 @@ molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr
 
 }
 
-evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, int thread_idx, int snapshot, double z, double delta_t)
+evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, unsigned int thread_idx, int snapshot, double z, double delta_t)
 {
 	// Get the thread-specific objects needed to run the evolution
 	// In the non-OpenMP case we simply have one
@@ -355,7 +355,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 
 	Timer evolution_t;
 	std::vector<evolution_times> times(threads);
-	omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, int thread_idx) {
+	omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, unsigned int thread_idx) {
 		times[thread_idx] += evolve_merger_tree(merger_tree, thread_idx, snapshot, simulation_params.redshifts[snapshot], delta_t);
 	});
 	LOG(info) << "Evolved galaxies in " << evolution_t;

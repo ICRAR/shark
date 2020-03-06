@@ -54,9 +54,7 @@ private:
 
 	const std::vector<HaloPtr> read_halos(unsigned int batch);
 	const std::vector<SubhaloPtr> read_subhalos(unsigned int batch);
-	const std::string get_filename(int batch);
-	const std::vector<Subhalo> read_subhalos_batch(int batch);
-
+	const std::string get_filename(unsigned int batch);
 
 };
 

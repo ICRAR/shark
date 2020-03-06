@@ -29,6 +29,7 @@
 #ifndef SHARK_RANGES_H_
 #define SHARK_RANGES_H_
 
+#include <cassert>
 #include <iterator>
 #include <type_traits>
 #include <tuple>
@@ -153,7 +154,9 @@ public:
 
 	std::size_t size() const
 	{
-		return std::distance(begin(), end());
+		auto distance = std::distance(begin(), end());
+		assert(distance >= 0);
+		return std::size_t(distance);
 	}
 
 private:
@@ -203,7 +206,9 @@ public:
 
 	std::size_t size() const
 	{
-		return std::distance(begin(), end());
+		auto distance = std::distance(begin(), end());
+		assert(distance >= 0);
+		return std::size_t(distance);
 	}
 };
 

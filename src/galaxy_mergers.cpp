@@ -95,7 +95,7 @@ Options::get<GalaxyMergerParameters::GalaxyMergerTimescaleModel>(const std::stri
 double GalaxyMergers::merging_timescale_orbital(const Galaxy &galaxy)
 {
 	//TODO: add other dynamical friction timescales.
-	std::default_random_engine generator(exec_params.seed + galaxy.id);
+	std::default_random_engine generator(exec_params.get_seed(galaxy));
 	return distribution(generator);
 }
 

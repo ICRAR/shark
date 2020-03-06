@@ -158,7 +158,7 @@ float DarkMatterHalos::halo_lambda (const Subhalo &subhalo, float m, double z, d
 	}
 
 	// Prime the generator with a known seed to allow for reproducible runs
-	std::default_random_engine generator(exec_params.seed + subhalo.id);
+	std::default_random_engine generator(exec_params.get_seed(subhalo));
 	std::lognormal_distribution<double> distribution(std::log(0.03), std::abs(std::log(0.5)));
 	auto lambda_random = distribution(generator);
 
@@ -448,7 +448,7 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 {
 
 	// Prime the generator with a known seed to allow for reproducible runs
-	std::default_random_engine generator(exec_params.seed + halo->id);
+	std::default_random_engine generator(exec_params.get_seed(halo));
 
 	double c = halo->concentration;
 

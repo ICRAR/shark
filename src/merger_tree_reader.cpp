@@ -55,7 +55,7 @@ SURFSReader::SURFSReader(const std::string &prefix, DarkMatterHalosPtr dark_matt
 
 }
 
-const std::string SURFSReader::get_filename(int batch)
+const std::string SURFSReader::get_filename(unsigned int batch)
 {
 	std::ostringstream os;
 	os << prefix << "." << batch << ".hdf5";
@@ -146,7 +146,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		subhalos.reserve(n_subhalos / threads);
 	}
 
-	omp_static_for(0, n_subhalos, threads, [&](std::size_t i, int thread_idx) {
+	omp_static_for(0, n_subhalos, threads, [&](std::size_t i, unsigned int thread_idx) {
 
 		if (snap[i] < simulation_params.min_snapshot) {
 			return;
@@ -293,7 +293,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 
 	// Calculate halos' vvir and concentration
 	t = Timer();
-	omp_dynamic_for(halos, threads, 10000, [&](const HaloPtr &halo, int thread_idx) {
+	omp_dynamic_for(halos, threads, 10000, [&](const HaloPtr &halo, unsigned int thread_idx) {
 		auto z = simulation_params.redshifts[halo->snapshot];
 		halo->Vvir = dark_matter_halos->halo_virial_velocity(halo->Mvir, z);
 		halo->concentration = dark_matter_halos->nfw_concentration(halo->Mvir,z);

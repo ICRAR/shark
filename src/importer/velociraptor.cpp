@@ -58,7 +58,7 @@ VELOCIraptorReader::VELOCIraptorReader(std::shared_ptr<DescendantReader> &reader
 	}
 }
 
-const std::string VELOCIraptorReader::get_filename(int snapshot, int batch)
+const std::string VELOCIraptorReader::get_filename(int snapshot, unsigned int batch)
 {
 	std::ostringstream os;
 	os << trees_dir << "/snapshot_" << snapshot << ".VELOCIraptor.hdf.properties." << batch;
@@ -85,7 +85,7 @@ std::vector<Subhalo> VELOCIraptorReader::read_subhalos(int snapshot)
 	return subhalos;
 }
 
-std::vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, int batch)
+std::vector<Subhalo> VELOCIraptorReader::read_subhalos_batch(int snapshot, unsigned int batch)
 {
 	hdf5::Reader batch_file(get_filename(snapshot, batch));
 	auto n_subhalos = batch_file.read_dataset<unsigned int>("Num_of_groups");

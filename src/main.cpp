@@ -186,7 +186,7 @@ Options read_options(const boost::program_options::variables_map &vm, unsigned i
 #ifdef SHARK_OPENMP
 	threads = vm["threads"].as<unsigned int>();
 	if (threads == 0) {
-		threads = omp_get_max_threads();
+		threads = static_cast<unsigned int>(omp_get_max_threads());
 	}
 #else
 	threads = 1;

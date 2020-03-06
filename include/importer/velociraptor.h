@@ -57,8 +57,8 @@ private:
 	std::string descendants_file;
 	std::string trees_dir;
 
-	const std::string get_filename(int snapshot, int batch);
-	std::vector<Subhalo> read_subhalos_batch(int snapshot, int batch);
+	const std::string get_filename(int snapshot, unsigned int batch);
+	std::vector<Subhalo> read_subhalos_batch(int snapshot, unsigned int batch);
 };
 
 }  // namespace importer
