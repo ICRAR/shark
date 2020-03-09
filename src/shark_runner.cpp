@@ -23,6 +23,8 @@
  * Main shark runner class
  */
 
+#include <algorithm>
+#include <functional>
 #include <memory>
 #include <numeric>
 #include <ostream>
@@ -46,6 +48,7 @@
 #include "timer.h"
 #include "total_baryon.h"
 #include "tree_builder.h"
+#include "utils.h"
 
 namespace shark {
 
@@ -81,7 +84,7 @@ struct evolution_times {
 		return *this;
 	}
 
-	evolution_times operator +(const evolution_times &rhs)
+	evolution_times operator +(const evolution_times &rhs) const
 	{
 		evolution_times sum = *this;
 		return sum += rhs;
@@ -95,6 +98,7 @@ public:
 	/// @see SharkRunner::SharkRunner(const Options &, unsigned int)
 	impl(const Options &options, unsigned int threads) :
 	    options(options), threads(threads),
+	    total_evolution_times(threads),
 	    cosmo_params(options), dark_matter_halo_params(options),
 	    environment_params(options), exec_params(options),
 	    gas_cooling_params(options),recycling_params(options), reincorporation_params(options),
@@ -111,9 +115,13 @@ public:
 	/// @see SharkRunner::run
 	void run();
 
+	/// @see SharkRunner::report_total_times
+	void report_total_times();
+
 private:
 	Options options;
 	unsigned int threads;
+	std::vector<evolution_times> total_evolution_times;
 	CosmologicalParameters cosmo_params;
 	DarkMatterHaloParameters dark_matter_halo_params;
 	EnvironmentParameters environment_params;
@@ -130,13 +138,14 @@ private:
 	StarFormation star_formation;
 	std::vector<PerThreadObjects> thread_objects;
 	TotalBaryon all_baryons;
+	Timer::duration evolution_time_total = 0;
 
 	void create_per_thread_objects();
 	std::vector<MergerTreePtr> import_trees();
 	void evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot);
 	evolution_times evolve_merger_tree(const MergerTreePtr &tree, unsigned int thread_idx, int snapshot, double z, double delta_t);
 	molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, double z, bool calc_j);
-
+	void add_to_total(const std::vector<evolution_times> &snapshot_evolution_times);
 };
 
 // Wiring pimpl to the original class
@@ -152,9 +161,15 @@ void SharkRunner::run()
 	pimpl->run();
 }
 
+void SharkRunner::report_total_times()
+{
+	pimpl->report_total_times();
+}
+
 struct SnapshotStatistics {
 
 	int snapshot;
+	unsigned int threads;
 	std::size_t starform_integration_intervals;
 	std::size_t galaxy_ode_evaluations;
 	std::size_t starburst_ode_evaluations;
@@ -168,6 +183,14 @@ struct SnapshotStatistics {
 			return 0;
 		}
 		return static_cast<double>(galaxy_ode_evaluations) / n_galaxies;
+	}
+
+	double evolution_rate() const
+	{
+		if (n_galaxies == 0) {
+			return 0;
+		}
+		return double(duration_millis) / n_galaxies;
 	}
 
 	double starburst_ode_evaluations_per_galaxy() const {
@@ -192,6 +215,8 @@ std::basic_ostream<T> &operator<<(std::basic_ostream<T> &os, const SnapshotStati
 	   << "  Number of halos:                      " << stats.n_halos << "\n"
 	   << "  Number of subhalos:                   " << stats.n_subhalos << "\n"
 	   << "  Number of galaxies:                   " << stats.n_galaxies << "\n"
+	   << "  Evolution rate, global:               " << fixed<3>(stats.evolution_rate()) << " [ms/gal]\n"
+	   << "  Evolution rate, per thread:           " << fixed<3>(stats.evolution_rate() * stats.threads) << " [ms/gal]\n"
 	   << "  Galaxy evolution ODE evaluations:     " << stats.galaxy_ode_evaluations
 	   << " (" << fixed<3>(stats.galaxy_ode_evaluations_per_galaxy()) << " [evals/gal])" << "\n"
 	   << "  Starburst ODE evaluations:            " << stats.starburst_ode_evaluations
@@ -279,6 +304,14 @@ molgas_per_galaxy SharkRunner::impl::get_molecular_gas(const std::vector<HaloPtr
 
 }
 
+void SharkRunner::impl::add_to_total(const std::vector<evolution_times> &times)
+{
+	transform(times.begin(), times.end(),
+	          total_evolution_times.begin(), total_evolution_times.begin(),
+	          std::plus<evolution_times>{}
+	);
+}
+
 evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree, unsigned int thread_idx, int snapshot, double z, double delta_t)
 {
 	// Get the thread-specific objects needed to run the evolution
@@ -358,8 +391,11 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 	omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, unsigned int thread_idx) {
 		times[thread_idx] += evolve_merger_tree(merger_tree, thread_idx, snapshot, simulation_params.redshifts[snapshot], delta_t);
 	});
-	LOG(info) << "Evolved galaxies in " << evolution_t;
-	LOG(info) << "Detailed times: " << std::accumulate(times.begin(), times.end(), evolution_times{});
+	auto evolution_duration = evolution_t.get();
+	evolution_time_total += evolution_duration;
+	LOG(info) << "Evolved galaxies in " << ns_time(evolution_duration);
+	LOG(info) << "Detailed times: " << sum(times);
+	add_to_total(times);
 
 	std::vector<HaloPtr> all_halos_this_snapshot;
 	for (auto &tree: merger_trees) {
@@ -411,7 +447,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 		return n_galaxies + halo->galaxy_count();
 	});
 
-	SnapshotStatistics stats {snapshot, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
+	SnapshotStatistics stats {snapshot, threads, starform_integration_intervals, galaxy_ode_evaluations, starburst_ode_evaluations,
 							  n_halos, n_subhalos, n_galaxies, duration_millis};
 	LOG(info) << "Statistics for snapshot " << snapshot << "\n" << stats;
 
@@ -420,6 +456,16 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 	LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
 	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, snapshot, all_baryons);
 
+}
+
+void SharkRunner::impl::report_total_times()
+{
+	for (unsigned int thread = 0; thread != threads; thread++) {
+		LOG(info) << "Total evolution times in thread " << thread << ": "
+				  << total_evolution_times[thread];
+	}
+	LOG(info) << "Total evolution times, combined: " << sum(total_evolution_times);
+	LOG(info) << "Total evolution walltime: " << ns_time(evolution_time_total);
 }
 
 void SharkRunner::impl::run() {
@@ -438,6 +484,8 @@ void SharkRunner::impl::run() {
 	for(int snapshot = simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot - 1; snapshot++) {
 		evolve_merger_trees(merger_trees, snapshot);
 	}
+
+	report_total_times();
 }
 
 } // namespace shark
