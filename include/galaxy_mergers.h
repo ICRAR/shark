@@ -41,41 +41,41 @@ namespace shark {
 
 class GalaxyMergerParameters {
 
-	public:
-		explicit GalaxyMergerParameters(const Options &options);
+public:
+	explicit GalaxyMergerParameters(const Options &options);
 
-		/**
-		 * Merger parameters:
-		 * - major_merger_ratio: threshold M2/M1 to consider major mergers. In this case we convert disks to spheroids.
-		 * - minor_merger_burst_ratio: threshold M2/M1 for triggering bursts in minor mergers.
-		 * - tau_delay: controls delays from the standard merging timescale for testing purposes.
-		 * - min_mass: minimum mass allowed in bulges. This is to avoid long tails in the star formation histories of bulges.
-		 */
-		float major_merger_ratio = 0;
-		float minor_merger_burst_ratio = 0;
-		float gas_fraction_burst_ratio = 0;
-		float tau_delay = 0.05;
-		float mass_min = 1e5;
+	/**
+	 * Merger parameters:
+	 * - major_merger_ratio: threshold M2/M1 to consider major mergers. In this case we convert disks to spheroids.
+	 * - minor_merger_burst_ratio: threshold M2/M1 for triggering bursts in minor mergers.
+	 * - tau_delay: controls delays from the standard merging timescale for testing purposes.
+	 * - min_mass: minimum mass allowed in bulges. This is to avoid long tails in the star formation histories of bulges.
+	 */
+	float major_merger_ratio = 0;
+	float minor_merger_burst_ratio = 0;
+	float gas_fraction_burst_ratio = 0;
+	float tau_delay = 0.05;
+	float mass_min = 1e5;
 
-		/**
-		 * Sizes parameters:
-		 * - f_orbit: orbital factor defining orbital energy. It should be =1 for two point masses in a circular orbit separation rgal,1+rgal,2. Lacey et al. (2016) Eq. 18.
-		 * - cgal: parameter that defines internal energy of galaxy. It depends weekly on density profile. =0.49 for a pure exponential disk; =0.45 for a De Vacouleurs profile.
-		 * - fgas_dissipation: parameter that defines how much dissipation there is when calculating the galaxy sizes in mergers. A value of 0 is adopted if no dissipation takes place.
-		 * - merger_ratio_dissipation: parameter that defines the merger mass ratio above which dissipation is triggered.
-		 */
+	/**
+	 * Sizes parameters:
+	 * - f_orbit: orbital factor defining orbital energy. It should be =1 for two point masses in a circular orbit separation rgal,1+rgal,2. Lacey et al. (2016) Eq. 18.
+	 * - cgal: parameter that defines internal energy of galaxy. It depends weekly on density profile. =0.49 for a pure exponential disk; =0.45 for a De Vacouleurs profile.
+	 * - fgas_dissipation: parameter that defines how much dissipation there is when calculating the galaxy sizes in mergers. A value of 0 is adopted if no dissipation takes place.
+	 * - merger_ratio_dissipation: parameter that defines the merger mass ratio above which dissipation is triggered.
+	 */
 
-		float f_orbit = 1;
-		float cgal = 0.5;
-		float merger_ratio_dissipation = 0;
-		double fgas_dissipation = 0;
+	float f_orbit = 1;
+	float cgal = 0.5;
+	float merger_ratio_dissipation = 0;
+	double fgas_dissipation = 0;
 
-		enum GalaxyMergerTimescaleModel{
-			LACEY93 = 0,
-			POULTON20
-		};
+	enum GalaxyMergerTimescaleModel{
+		LACEY93 = 0,
+		POULTON20
+	};
 
-		GalaxyMergerTimescaleModel model = POULTON20;
+	GalaxyMergerTimescaleModel model = POULTON20;
 
 };
 
