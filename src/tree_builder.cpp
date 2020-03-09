@@ -439,6 +439,7 @@ void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, Sim
 						while(main_prog && subhalo->infall_t == 0){
 							if(main_prog->subhalo_type == Subhalo::CENTRAL){
 								subhalo->infall_t = sim_params.redshifts[snap];
+								subhalo->Mvir_infall = main_prog->Mvir;
 							}
 							snap --;
 							main_prog = main_prog->main();

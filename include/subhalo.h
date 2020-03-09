@@ -218,6 +218,9 @@ public:
 	float lambda = 0;
 	/// redshift at which the subhalo became a type > 0.
 	float infall_t = 0;
+	/// halo mass and stellar mass of central galaxy at infall_t;
+	float Mvir_infall = 0;
+	BaryonBase star_central_infall;
 	/// The accreted baryonic mass onto the subhalo. This information comes from the merger tree
 	float accreted_mass = 0;
 	/// information of the virial temperature, total halo gas and cooling time history.
@@ -230,6 +233,8 @@ public:
 	RotatingBaryonBase ejected_galaxy_gas;
 	/// Lost gas reservoir which tracks the gas that is outflowing due to QSO feedback and that has escaped the halo.
 	BaryonBase lost_galaxy_gas;
+	/// Intra-halo stellar component - produced by tidal interactions of satellites with halo.
+	BaryonBase stellar_halo;
 	/// The snapshot at which this subhalo is found
 	int snapshot;
 	/// The snapshot at which the descendant of this subhalo can be found

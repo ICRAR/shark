@@ -142,7 +142,8 @@ public:
 	float vvir_type2 = 0;
 	/// subhalo spin parameter of this galaxy before it became type 2, only relevant for type 2 galaxies
 	float lambda_type2 = 0;
-
+	/// tracking of mass lost due to tidal stripping
+	BaryonBase stars_tidal_stripped;
 	/// The ID of the descendant of this galaxy, -1 if no descendant is defined
 	id_t descendant_id = -1;
 	/// The type of this galaxy

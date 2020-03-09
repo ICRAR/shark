@@ -60,6 +60,10 @@
 * ``mstars_metals_burst_diskinstabilities``: mass of metals locked in stars that formed via starbursts driven by disk instabilities [Msun/h]
 * ``mstars_metals_burst_mergers``: mass of metals locked in stars that formed via starbursts driven by galaxy mergers [Msun/h]
 * ``mstars_metals_disk``: mass of metals locked in stars in the disk [Msun/h]
+* ``mstars_metals_tidally_stripped``: mass of metals locked in stars that was tidally stripped from this galaxy [Msun/h]
+* ``mstars_tidally_stripped``: stellar mass that was tidally stripped from this galaxy [Msun/h]
+* ``mstellar_halo``: stellar mass in the halo built by tidal stripping [Msun/h]
+* ``mstellar_halo_metals``: mass of metals locked up in the stellar halo built by tidal stripping [Msun/h]
 * ``mvir_hosthalo``: Dark matter mass of the host halo in which this galaxy resides [Msun/h]
 * ``mvir_subhalo``: Dark matter mass of the subhalo in which this galaxy resides [Msun/h]. In the case of type 2 satellites, this corresponds to the mass its subhalo had before disappearing from the subhalo catalogs.
 * ``position_x``: position component x of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.

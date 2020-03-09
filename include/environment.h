@@ -42,6 +42,8 @@ public:
 
 	bool gradual_stripping = false;
 	bool stripping = true;
+	bool tidal_stripping = false;
+	float minimum_halo_mass_fraction = 0.01;
 
 };
 
@@ -51,10 +53,12 @@ public:
 	explicit Environment(const EnvironmentParameters &parameters);
 
 	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, Subhalo &central_subhalo);
+	void remove_tidal_stripped_stars(Galaxy &galaxy, float lost_stellar_mass, float lost_stellar_mass_metals);
 
 private:
 
 	EnvironmentParameters parameters;
+
 };
 
 using EnvironmentPtr = std::shared_ptr<Environment>;
