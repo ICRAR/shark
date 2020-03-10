@@ -30,6 +30,7 @@
 #include <iosfwd>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <vector>
 
 #include "halo.h"
@@ -101,6 +102,17 @@ public:
 	root_subrange roots()
 	{
 		return {halos};
+	}
+
+	/**
+	 * Calculate and return the number of galaxies contained in this merger tree
+	 * @return The number of galaxies contained in this merger tree
+	 */
+	std::size_t galaxy_count()
+	{
+		return accumulate(halos.begin(), halos.end(), size_t(0), [](const size_t n, const HaloPtr &halo) {
+			return n + halo->galaxy_count();
+		});
 	}
 
 	/// All halos contained in this merger tree
