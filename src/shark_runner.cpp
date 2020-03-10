@@ -24,12 +24,14 @@
  */
 
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <numeric>
 #include <ostream>
 #include <vector>
 
+#include "components/algorithms.h"
 #include "evolve_halos.h"
 #include "execution.h"
 #include "disk_instability.h"
@@ -142,7 +144,7 @@ private:
 
 	void create_per_thread_objects();
 	std::vector<MergerTreePtr> import_trees();
-	void evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot);
+	void evolve_merger_trees(const std::vector<std::vector<MergerTreePtr>> &all_trees, int snapshot);
 	evolution_times evolve_merger_tree(const MergerTreePtr &tree, unsigned int thread_idx, int snapshot, double z, double delta_t);
 	molgas_per_galaxy get_molecular_gas(const std::vector<HaloPtr> &halos, double z, bool calc_j);
 	void add_to_total(const std::vector<evolution_times> &snapshot_evolution_times);
@@ -271,6 +273,12 @@ std::vector<MergerTreePtr> SharkRunner::impl::import_trees()
 	auto halos = reader.read_halos(exec_params.simulation_batches);
 	auto trees = tree_builder.build_trees(halos, simulation_params, gas_cooling_params, dark_matter_halo_params, cosmology, all_baryons);
 	LOG(info) << trees.size() << " Merger trees imported in " << t;
+
+	// Create the first generation of galaxies if halo is first appearing
+	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
+	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, simulation_params);
+	galaxy_creator.create_galaxies(trees, all_baryons);
+
 	return trees;
 }
 
@@ -366,7 +374,7 @@ evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree,
 	return times;
 }
 
-void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &merger_trees, int snapshot)
+void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<MergerTreePtr>> &all_trees, int snapshot)
 {
 	Timer t;
 
@@ -388,8 +396,10 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 
 	Timer evolution_t;
 	std::vector<evolution_times> times(threads);
-	omp_static_for(merger_trees, threads, [&](const MergerTreePtr &merger_tree, unsigned int thread_idx) {
-		times[thread_idx] += evolve_merger_tree(merger_tree, thread_idx, snapshot, simulation_params.redshifts[snapshot], delta_t);
+	omp_static_for(all_trees, threads, [&](const std::vector<MergerTreePtr> &merger_trees, unsigned int thread_idx) {
+		for (auto &tree: merger_trees) {
+			times[thread_idx] += evolve_merger_tree(tree, thread_idx, snapshot, simulation_params.redshifts[snapshot], delta_t);
+		}
 	});
 	auto evolution_duration = evolution_t.get();
 	evolution_time_total += evolution_duration;
@@ -397,11 +407,17 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<MergerTreePtr> &me
 	LOG(info) << "Detailed times: " << sum(times);
 	add_to_total(times);
 
+	// Collect this snapshot's halos across all merger trees
+	// We keep them sorted so when output files are created the order in which
+	// information appears is the same regardless of how many threads were used
 	std::vector<HaloPtr> all_halos_this_snapshot;
-	for (auto &tree: merger_trees) {
-		const auto &halos = tree->halos_at(snapshot);
-		all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halos.begin(), halos.end());
+	for (auto &merger_trees: all_trees) {
+		for (auto &tree: merger_trees) {
+			const auto &halos = tree->halos_at(snapshot);
+			all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halos.begin(), halos.end());
+		}
 	}
+	sort_by_id(all_halos_this_snapshot);
 
 	bool write_galaxies = exec_params.output_snapshot(snapshot + 1);
 
@@ -468,21 +484,53 @@ void SharkRunner::impl::report_total_times()
 	LOG(info) << "Total evolution walltime: " << ns_time(evolution_time_total);
 }
 
+/// Produce similarly-weighted partitions of merger trees based on galaxy count
+static std::vector<std::vector<MergerTreePtr>> partition_trees(std::vector<MergerTreePtr> &trees, unsigned int n_partitions)
+{
+	Timer partitioning_t;
+
+	// Small structure to cache the result from tree->galaxy_count()
+	struct tree_and_count {
+		tree_and_count(MergerTreePtr &tree)
+		    : tree(tree), galaxy_count(tree->galaxy_count())
+		{
+		}
+		MergerTreePtr tree;
+		size_t galaxy_count;
+	};
+
+	// Sort merger trees by galaxy count
+	std::vector<tree_and_count> trees_and_counts(trees.begin(), trees.end());
+	sort(trees_and_counts.begin(), trees_and_counts.end(), [](const tree_and_count &lhs, const tree_and_count &rhs) {
+		return lhs.galaxy_count > rhs.galaxy_count;
+	});
+
+	// simple greedy partitioning
+	std::vector<std::vector<MergerTreePtr>> partitions(n_partitions);
+	std::vector<size_t> galaxy_counts(n_partitions);
+	for (auto &tree_and_count: trees_and_counts) {
+		auto distance = std::distance(galaxy_counts.begin(), std::min_element(galaxy_counts.begin(), galaxy_counts.end()));
+		assert(distance >= 0);
+		auto target = size_t(distance);
+		partitions[target].push_back(tree_and_count.tree);
+		galaxy_counts[target] += tree_and_count.galaxy_count;
+	}
+
+	LOG(info) << "Created tree partitions in " << partitioning_t;
+	return partitions;
+}
+
 void SharkRunner::impl::run() {
 
 	std::vector<MergerTreePtr> merger_trees = import_trees();
-
-	/* Create the first generation of galaxies if halo is first appearing.*/
-	LOG(info) << "Creating initial galaxies in central subhalos across all merger trees";
-	GalaxyCreator galaxy_creator(cosmology, gas_cooling_params, simulation_params);
-	galaxy_creator.create_galaxies(merger_trees, all_baryons);
+	auto tree_partitions = partition_trees(merger_trees, threads);
 
 	// Go, go, go!
 	// Note that we evolve galaxies in merger tress in the snapshot range [min, max)
 	// This is because at snapshot "i" we don't evolve galaxies AT snapshot "i",
 	// but rather FROM snapshot "i" TO snapshot "i+1".
 	for(int snapshot = simulation_params.min_snapshot; snapshot <= simulation_params.max_snapshot - 1; snapshot++) {
-		evolve_merger_trees(merger_trees, snapshot);
+		evolve_merger_trees(tree_partitions, snapshot);
 	}
 
 	report_total_times();
