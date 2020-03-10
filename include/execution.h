@@ -52,7 +52,7 @@ public:
 
 	bool skip_missing_descendants = true;
 	bool warn_on_missing_descendants = true;
-        bool ensure_mass_growth = true;
+	bool ensure_mass_growth = true;
 	bool ignore_late_massive_halos  = false;
 
 	/**
