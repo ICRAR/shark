@@ -39,9 +39,9 @@ then
 	export HOMEBREW_NO_AUTO_UPDATE=1
 	export HOMEBREW_NO_INSTALL_CLEANUP=1
 
-	# cxxtest pulls python, so we need to unlink
-	# the pre-installed python@2 first
-	brew unlink python@2 || fail "cannot unlink python@2"
+	# cxxtest pulls python, so we need to unlink the pre-installed python@2 first
+	# (not in xcode11 though, it doesn't come installed there)
+	test "${TRAVIS_OSX_IMAGE}" == xcode11 || brew unlink python@2 || fail "cannot unlink python@2"
 
 	# Minimal dependencies for testing
 	pkgs="gsl cxxtest libomp"
