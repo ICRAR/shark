@@ -453,6 +453,10 @@ void GalaxyMergers::create_merger(Galaxy &central, const Galaxy &satellite, Halo
 	//satellite stellar mass is always transferred to the bulge.
 	transfer_history_satellite_to_bulge(central, satellite, snapshot);
 
+	//transfer memory of mass lost to tidal stripping.
+	central.stars_tidal_stripped += satellite.stars_tidal_stripped;
+
+
 	/**
 	 * Depending on the mass ratio, the baryonic components of the satellite and the disk of the major galaxy are going to be transferred differently.
 	 */
