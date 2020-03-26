@@ -76,6 +76,11 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 	// 2. A satellite subhalo that does not have a central. In this case we have to check the type II satellites
 	// in the halo of the central to see if they have been stripped accordingly.
 	if(parameters.tidal_stripping){
+
+		// mass in metals to be tidally stripped is computed inside the function remove_tidal_stripped_stars.
+		float lost_stellar_mass = 0;
+		float lost_stellar_mass_metals = 0;
+
 		if(satellite_subhalo.central_galaxy()){
 			// Apply here model of Errani et al. (2015).
 			float ratio_mass = satellite_subhalo.Mvir / satellite_subhalo.Mvir_infall;
@@ -86,14 +91,12 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 
 			// compute how much has been lost since galaxy infall
 			float ratio_sm = std::pow(2, 3.43) * std::pow(ratio_mass, 1.86) / std::pow( 1 + ratio_mass, 3.43);
-			float lost_stellar_mass = (1 - ratio_sm) * satellite_subhalo.star_central_infall.mass;
-			float lost_stellar_mass_metals = (1 - ratio_sm) * satellite_subhalo.star_central_infall.mass_metals;
+			lost_stellar_mass = (1 - ratio_sm) * satellite_subhalo.star_central_infall.mass;
 			// now remove what has already been lost in previous snapshots to compute what should be subtracted from
 			// the central galaxy in the satellite subhalo now.
 			lost_stellar_mass = lost_stellar_mass - satellite_subhalo.central_galaxy()->stars_tidal_stripped.mass;
-			lost_stellar_mass_metals = lost_stellar_mass_metals - satellite_subhalo.central_galaxy()->stars_tidal_stripped.mass_metals;
 
-			if(lost_stellar_mass > 0 && lost_stellar_mass_metals > 0){
+			if(lost_stellar_mass > 0){
 				remove_tidal_stripped_stars(*satellite_subhalo.central_galaxy(), lost_stellar_mass, lost_stellar_mass_metals);
 
 				// add the stripped material to central subhalo
@@ -111,8 +114,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 				// is stars_tidal_stripped.mass>0 is because stripping should have occurred already.
 				if(satellite.stars_tidal_stripped.mass == 0){
 					// compute how much has been lost since galaxy infall
-					float lost_stellar_mass = (1 - ratio_sm) * satellite.stellar_mass();
-					float lost_stellar_mass_metals = (1 - ratio_sm) * satellite.stellar_mass_metals();
+					lost_stellar_mass = (1 - ratio_sm) * satellite.stellar_mass();
 
 					remove_tidal_stripped_stars(satellite, lost_stellar_mass, lost_stellar_mass_metals);
 
@@ -141,15 +143,14 @@ void Environment::remove_tidal_stripped_stars(Galaxy &galaxy, float lost_stellar
 		// strip first the disk of the galaxy and then the bulge:
 		if(lost_stellar_mass < galaxy.disk_stars.mass){
 			// in this case we strip material from the disk but not the bulge
-			float frac_lost = lost_stellar_mass / galaxy.disk_stars.mass;
-			lost_stellar_mass_metals = (1 - frac_lost) * galaxy.disk_stars.mass_metals;
+			lost_stellar_mass_metals = lost_stellar_mass / galaxy.disk_stars.mass * galaxy.disk_stars.mass_metals;
 			galaxy.disk_stars.mass -= lost_stellar_mass;
 			galaxy.disk_stars.mass_metals -= lost_stellar_mass_metals;
 		}
 		else{
 			// in this case we strip all the disk and remove a fraction of the bulge.
 			float lost_bulge_mass = lost_stellar_mass - galaxy.disk_stars.mass;
-			float lost_bulge_metals = (1 - lost_bulge_mass / galaxy.bulge_stars.mass) * galaxy.bulge_stars.mass_metals;
+			float lost_bulge_metals = lost_bulge_mass / galaxy.bulge_stars.mass * galaxy.bulge_stars.mass_metals;
 			lost_stellar_mass_metals = galaxy.disk_stars.mass_metals + lost_bulge_metals;
 			galaxy.disk_stars.restore_baryon();
 
@@ -165,6 +166,7 @@ void Environment::remove_tidal_stripped_stars(Galaxy &galaxy, float lost_stellar
 			galaxy.bulge_stars.restore_baryon();
 		}
 	}
+
 	// accummulate what has been lost to tidal stripping in this galaxy.
 	galaxy.stars_tidal_stripped.mass += lost_stellar_mass;
 	galaxy.stars_tidal_stripped.mass_metals += lost_stellar_mass_metals;
