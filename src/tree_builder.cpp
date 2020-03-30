@@ -28,6 +28,7 @@
 #include <numeric>
 #include <vector>
 
+#include "components/algorithms.h"
 #include "cosmology.h"
 #include "exceptions.h"
 #include "halo.h"
@@ -527,13 +528,6 @@ SubhaloPtr HaloBasedTreeBuilder::find_descendant_subhalo(
 	return descendant_subhalo;
 }
 
-static void sort_by_id(std::vector<HaloPtr> &halos)
-{
-	std::sort(halos.begin(), halos.end(), [](const HaloPtr &x, const HaloPtr &y) {
-		return x->id < y->id;
-	});
-}
-
 static std::vector<HaloPtr>::iterator find_by_id(std::vector<HaloPtr> &halos, Halo::id_t id)
 {
 	auto lo = std::lower_bound(halos.begin(), halos.end(), id, [](const HaloPtr &x, Halo::id_t id)
@@ -552,7 +546,6 @@ static std::vector<HaloPtr>::iterator find_by_id(std::vector<HaloPtr> &halos, Ha
 
 void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 {
-
 	sort_by_id(halos);
 
 	// To find subhalos/halos that correspond to each other, we do the following

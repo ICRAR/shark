@@ -51,6 +51,34 @@ get_id(const T &x)
 	return x->id;
 }
 
+/**
+ * Template function that compares two component objects (of the same type) by
+ * their IDs.
+ * @param x The first component
+ * @param y The second component
+ * @return true if the ID of the first component is less than the ID of the
+ * second, false otherwise
+ */
+template <typename T>
+enable_if_component_t<T, bool>
+less_by_id(const T &x, const T &y)
+{
+	return get_id(x) < get_id(y);
+}
+
+/**
+ * Sorts the given collection of identifiable components by their IDs in
+ * ascending order.
+ * @param identifiables The objects to sort by ID
+ */
+template <typename Range>
+enable_if_component_t<typename Range::value_type>
+sort_by_id(Range &identifiables)
+{
+	using value_type = typename Range::value_type;
+	std::sort(identifiables.begin(), identifiables.end(), less_by_id<value_type>);
+}
+
 }  // namespace shark
 
 #endif /* INCLUDE_COMPONENTS_ALGORITHMS_H_ */
