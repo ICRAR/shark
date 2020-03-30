@@ -29,6 +29,7 @@
 #include <memory>
 #include <utility>
 
+#include "baryon.h"
 #include "components.h"
 #include "dark_matter_halos.h"
 #include "options.h"
@@ -53,7 +54,7 @@ public:
 	explicit Environment(const EnvironmentParameters &parameters);
 
 	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, Subhalo &central_subhalo);
-	void remove_tidal_stripped_stars(Galaxy &galaxy, float lost_stellar_mass, float lost_stellar_mass_metals);
+	BaryonBase remove_tidal_stripped_stars(Galaxy &galaxy, BaryonBase lost_stellar);
 
 private:
 
