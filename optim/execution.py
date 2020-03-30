@@ -46,6 +46,7 @@ def job_is_alive(job_id):
     """Returns whether `job_id` is still "alive" (i.e., in the queue) or not"""
     try:
         out, err, code = common.exec_command(['squeue', '--noheader', '-j', job_id])
+        out = common.b2s(out)
     except OSError:
         raise RuntimeError("Couldn't run squeue, is it installed?")
     if code:
@@ -83,7 +84,7 @@ def _exec_shark(msg, cmdline):
                      'stdout:\n%s\nstderr:\n%s', cmdline[0], code,
                      common.b2s(out), common.b2s(err))
         raise RuntimeError('%s error' % cmdline[0])
-    return out
+    return common.b2s(out)
 
 
 def _to_shark_options(particle, space):
