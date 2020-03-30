@@ -135,7 +135,6 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 		for (auto &gal: central_subhalo.galaxies){
 			total_mshalo += gal.stars_tidal_stripped;
 		}
-		double mess=1;
 	}
 
 }
