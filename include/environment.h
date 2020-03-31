@@ -54,7 +54,7 @@ public:
 	explicit Environment(const EnvironmentParameters &parameters);
 
 	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, Subhalo &central_subhalo);
-	BaryonBase remove_tidal_stripped_stars(Galaxy &galaxy, BaryonBase lost_stellar);
+	BaryonBase remove_tidal_stripped_stars(Subhalo &subhalo, Galaxy &galaxy, BaryonBase lost_stellar);
 
 private:
 

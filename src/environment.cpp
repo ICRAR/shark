@@ -104,7 +104,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 			lost_stellar.mass -= satellite_subhalo.type1_galaxy()->stars_tidal_stripped.mass;
 
 			if(lost_stellar.mass > 0){
-				lost_stellar = remove_tidal_stripped_stars(*satellite_subhalo.type1_galaxy(), lost_stellar);
+				lost_stellar = remove_tidal_stripped_stars(central_subhalo, *satellite_subhalo.type1_galaxy(), lost_stellar);
 
 				// add the stripped material to central subhalo
 				central_subhalo.stellar_halo += lost_stellar;
@@ -122,7 +122,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 					// compute how much has been lost since galaxy infall
 					lost_stellar.mass = (1 - ratio_sm) * satellite.stellar_mass();
 
-					lost_stellar = remove_tidal_stripped_stars(satellite, lost_stellar);
+					lost_stellar = remove_tidal_stripped_stars(central_subhalo, satellite, lost_stellar);
 
 					// add the stripped material to central subhalo
 					central_subhalo.stellar_halo += lost_stellar;
@@ -139,10 +139,13 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 
 }
 
-BaryonBase Environment::remove_tidal_stripped_stars(Galaxy &galaxy, BaryonBase lost_stellar){
+BaryonBase Environment::remove_tidal_stripped_stars(Subhalo &subhalo, Galaxy &galaxy, BaryonBase lost_stellar){
 
 
 	if(lost_stellar.mass > 0){
+
+		BaryonBase lost_cold_gas;
+
 		//check that lost mass does not exceed the total stellar mass of the galaxy to be stripped.
 		if(lost_stellar.mass > galaxy.stellar_mass()){
 			lost_stellar.mass = galaxy.stellar_mass();
@@ -155,19 +158,39 @@ BaryonBase Environment::remove_tidal_stripped_stars(Galaxy &galaxy, BaryonBase l
 			// strip first the disk of the galaxy and then the bulge:
 			if(lost_stellar.mass < galaxy.disk_stars.mass){
 				// in this case we strip material from the disk but not the bulge
-				lost_stellar.mass_metals = lost_stellar.mass / galaxy.disk_stars.mass * galaxy.disk_stars.mass_metals;
+				float frac_lost = lost_stellar.mass/galaxy.disk_stars.mass;
+				lost_stellar.mass_metals = frac_lost * galaxy.disk_stars.mass_metals;
+
+				// compute how much is lost of the cold gas reservoir
+				lost_cold_gas.mass = frac_lost * galaxy.disk_gas.mass;
+				lost_cold_gas.mass_metals = frac_lost * galaxy.disk_gas.mass_metals;
+
+				// add lost cold gas reservoir to hot halo and remove it from disk.
+				subhalo.hot_halo_gas += lost_cold_gas;
 				galaxy.disk_stars -= lost_stellar;
+				galaxy.disk_gas -= lost_cold_gas;
 			}
 			else{
 				// in this case we strip all the disk and remove a fraction of the bulge.
 				BaryonBase lost_bulge;
 
+				// compute mass lost in bulge
 				lost_bulge.mass = lost_stellar.mass - galaxy.disk_stars.mass;
-				lost_bulge.mass_metals = lost_bulge.mass / galaxy.bulge_stars.mass * galaxy.bulge_stars.mass_metals;
+				float frac_lost = lost_bulge.mass / galaxy.bulge_stars.mass;
+				lost_bulge.mass_metals = frac_lost * galaxy.bulge_stars.mass_metals;
 				lost_stellar.mass_metals = galaxy.disk_stars.mass_metals + lost_bulge.mass_metals;
 
+				//compute loss of gas in the bulge;
+				lost_cold_gas.mass = frac_lost * galaxy.bulge_gas.mass;
+				lost_cold_gas.mass_metals = frac_lost * galaxy.bulge_gas.mass_metals;
+
+				// compute mass lost to the hot gas
+				subhalo.hot_halo_gas += (galaxy.disk_gas + lost_cold_gas);
 				galaxy.disk_stars.restore_baryon();
+				galaxy.disk_gas.restore_baryon();
+				//remove mass from bulge
 				galaxy.bulge_stars -= lost_bulge;
+				galaxy.bulge_gas -= lost_cold_gas;
 			}
 
 			// sanity checks
@@ -176,6 +199,12 @@ BaryonBase Environment::remove_tidal_stripped_stars(Galaxy &galaxy, BaryonBase l
 			}
 			if(galaxy.bulge_stars.mass < 0){
 				galaxy.bulge_stars.restore_baryon();
+			}
+			if(galaxy.disk_gas.mass < 0){
+				galaxy.disk_gas.restore_baryon();
+			}
+			if(galaxy.bulge_gas.mass < 0){
+				galaxy.bulge_gas.restore_baryon();
 			}
 		}
 
