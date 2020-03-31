@@ -49,11 +49,12 @@ GalaxyMergerParameters::GalaxyMergerParameters(const Options &options)
 	options.load("galaxy_mergers.tau_delay", tau_delay);
 	options.load("galaxy_mergers.mass_min", mass_min);
 
+	options.load("galaxy_mergers.merger_timescale_model", model);
+
 	options.load("galaxy_mergers.f_orbit", f_orbit);
 	options.load("galaxy_mergers.cgal", cgal);
 	options.load("galaxy_mergers.fgas_dissipation", fgas_dissipation);
 	options.load("galaxy_mergers.merger_ratio_dissipation", merger_ratio_dissipation);
-	options.load("galaxy_mergers.merger_timescale_model", model);
 }
 
 GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
@@ -127,21 +128,21 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 		double mp, double tau_dyn, int snapshot, bool transfer_types2)
 {
 	// Define merging timescale and redefine type of galaxy.
-	if(parameters.model==GalaxyMergerParameters::POULTON20){
+	if(parameters.tau_delay > 0 && parameters.model == GalaxyMergerParameters::POULTON20){
 
 		// Find the objects physical position
 		double conversion_factor = cosmo_params.Hubble_h * (1 +  simparams.redshifts[snapshot]);
 		double xrel = (secondary->position.x - primary->position.x) * conversion_factor;
 		double yrel = (secondary->position.y - primary->position.y) * conversion_factor;
 		double zrel = (secondary->position.z - primary->position.z) * conversion_factor;
-		double r = sqrt(xrel*xrel + yrel*yrel + zrel*zrel);
+		double r = std::sqrt(xrel*xrel + yrel*yrel + zrel*zrel);
 
 		// Find the physical velocity + the hubble flow
 		double hubble_flow = r * cosmology->hubble_parameter(simparams.redshifts[snapshot]);
 		double vxrel = secondary->velocity.x - primary->velocity.x + hubble_flow;
 		double vyrel = secondary->velocity.y - primary->velocity.y + hubble_flow;
 		double vzrel = secondary->velocity.z - primary->velocity.z + hubble_flow;
-		double vrel = sqrt(vxrel*vxrel + vyrel*vyrel + vzrel*vzrel);
+		double vrel = std::sqrt(vxrel*vxrel + vyrel*vyrel + vzrel*vzrel);
 
 		// Get the host virial radius and enclose mass at r
 		double host_rvir = darkmatterhalo->halo_virial_radius(*primary) * conversion_factor;
@@ -155,7 +156,7 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 		}
 
 		//Determine the dynamical friction timescale
-		double tau_dtyn = sqrt(pow(r,3)/(constants::G * enc_mass)) * constants::MPCKM2GYR;
+		double tau_dtyn = std::sqrt(pow(r,3)/(constants::G * enc_mass)) * constants::MPCKM2GYR;
 
 		// Get the merging objects orbital energy and angular momentum
 		double mu = (enc_mass*ms)/(enc_mass+ms);
@@ -163,11 +164,11 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 		double lx = (yrel * vzrel) - (zrel * vyrel);
 		double ly = -((xrel * vzrel) - (zrel * vxrel));
 		double lz = (xrel * vyrel) - (yrel * vxrel);
-		double L = mu * sqrt(lx*lx + ly*ly + lz*lz);
+		double L = mu * std::sqrt(lx*lx + ly*ly + lz*lz);
 
 		// Get the predicted radius of pericentre
-		double e = sqrt(1.0 + ((2.0 * E * L*L)/((constants::G * ms * enc_mass)*(constants::G * ms * enc_mass) * mu)));
-		double rperi = (L*L)/((1.0+e) * constants::G * ms *enc_mass  * mu);
+		double e = std::sqrt(1.0 + ((2.0 * E * L*L)/((constants::G * ms * enc_mass)*(constants::G * ms * enc_mass) * mu)));
+		double rperi = (L*L)/((1.0 + e) * constants::G * ms *enc_mass  * mu);
 
 		//Calculate the merger timescale
 		if(r/host_rvir<1.0)
@@ -176,8 +177,7 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 			galaxy.tmerge = pow(10,0.73) * tau_dtyn  * pow(r/host_rvir,-1.05) * pow(rperi/r,0.21);
 
 	}
-
-	else if(parameters.tau_delay > 0){
+	else if(parameters.tau_delay > 0 && parameters.model == GalaxyMergerParameters::LACEY93){
 		double mgal = galaxy.baryon_mass();
 		double ms = secondary->Mvir + mgal;
 		if(transfer_types2){

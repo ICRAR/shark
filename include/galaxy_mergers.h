@@ -75,7 +75,7 @@ public:
 		POULTON20
 	};
 
-	GalaxyMergerTimescaleModel model = POULTON20;
+	GalaxyMergerTimescaleModel model = LACEY93;
 
 };
 
