@@ -257,6 +257,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> vmax_subhalo;
 	vector<float> vvir_hosthalo;
 	vector<float> vvir_subhalo;
+	vector<float> mvir_infall_subhalo;
 
 	vector<float> cnfw_subhalo;
 	vector<float> lambda_subhalo;
@@ -328,6 +329,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto reheated_subhalo = subhalo->ejected_galaxy_gas;
 			auto lost_subhalo = subhalo->lost_galaxy_gas;
 			auto stellarhalo = subhalo->stellar_halo;
+			auto msub_infall = subhalo->Mvir_infall;
 
 			descendant_id.push_back(subhalo->descendant_id);
 			infall_time_subhalo.push_back(subhalo->infall_t);
@@ -448,6 +450,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				double mvir_gal = 0 ;
 				double c_sub = 0;
 				double l_sub = 0;
+				double m_infall = 0;
 				xyz<float> pos;
 				xyz<float> vel;
 				xyz<float> L;
@@ -466,6 +469,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					redshift_of_merger.push_back(-1);
 					if(galaxy.descendant_id < 0 && snapshot < sim_params.max_snapshot){
 						galaxy.descendant_id = galaxy.id;
+					}
+					if(galaxy.galaxy_type == Galaxy::TYPE1){
+						m_infall = msub_infall;
 					}
 				}
 				else{
@@ -486,7 +492,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					}
 
 				}
-
+				mvir_infall_subhalo.push_back(m_infall);
 
 				//force the descendant Id to be = -1 if this is the last snapshot. If not, check that all descendant_ids are positive.
 				if(snapshot == sim_params.max_snapshot){
@@ -599,6 +605,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(vvir_subhalo);
 	REPORT(cnfw_subhalo);
 	REPORT(lambda_subhalo);
+	REPORT(mvir_infall_subhalo);
 	REPORT(L_x_subhalo);
 	REPORT(L_y_subhalo);
 	REPORT(L_z_subhalo);
@@ -839,6 +846,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "Spin parameter of the dark matter subhalo in which this galaxy resides [dimensionless].  In the case of type 2 satellites, this corresponds to the lambda its subhalo had before disappearing from the subhalo catalogs.";
 	file.write_dataset("galaxies/lambda_subhalo", lambda_subhalo, comment);
+
+	comment = "Dark matter mass at infall of the host halo in which this galaxy reside when it was last central [Msun/h]";
+	file.write_dataset("galaxies/mvir_infall_subhalo", mvir_infall_subhalo, comment);
 
 	//Galaxy position
 	comment = "position component x of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.";
