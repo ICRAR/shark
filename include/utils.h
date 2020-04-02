@@ -292,6 +292,9 @@ typename Container::value_type sum(Container &c)
 	return std::accumulate(c.begin(), c.end(), value_type{}, std::plus<value_type>{});
 }
 
+/// Returns the maximum amount of memory used by this process
+std::size_t peak_rss();
+
 }  // namespace shark
 
 #endif // SHARK_UTILS

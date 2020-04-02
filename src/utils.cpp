@@ -27,18 +27,25 @@
 #include <cctype>
 #include <cerrno>
 #include <cstring>
+#include <fstream>
 #include <functional>
 #include <locale>
 #include <string>
 #include <sstream>
 
-// gethostname
+// gethostname, getrusage
 #ifdef _WIN32
+# include <windows.h> // include this first, others are not self-contained
+# include <psapi.h>
 # include <winsock.h>
-#else
+#elif defined(__MACH__)
+# include <sys/resource.h>
+# include <unistd.h>
+#else // linux
 # include <unistd.h>
 #endif // _WIN32
 
+#include "exceptions.h"
 #include "utils.h"
 
 namespace shark {
@@ -119,5 +126,44 @@ std::string gethostname()
 	return std::string(the_hostname);
 }
 
+
+std::size_t peak_rss()
+{
+#ifdef __MACH__
+	struct rusage ru;
+	int err = getrusage(RUSAGE_SELF, &ru);
+	if (err != 0) {
+		throw exception("Couldn't get resource usage");
+	}
+return ru.ru_maxrss;
+#elif defined(__linux__)
+	std::stringstream ss;
+	ss << "/proc/" << getpid() << "/status";
+	std::ifstream file(ss.str());
+	if (!file) {
+		throw exception("Couldn't open " + ss.str());
+	}
+	while (file.good()) {
+		std::string token;
+		file >> token;
+		if (token == "VmHWM:") {
+			std::size_t rsspeak;
+			file >> rsspeak;
+			file >> token;
+			if (token != "kB") {
+				throw exception("Unexpected memory unit: " + token);
+			}
+			return rsspeak * 1024;
+		}
+	}
+	throw exception("Didn't find highwater mark information in " + ss.str());
+#else // windows
+	PROCESS_MEMORY_COUNTERS info;
+	if (!GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info))) {
+		throw exception("error when running GetProcessMemoryInfo()");
+	}
+	return std::size_t(info.PeakWorkingSetSize);
+#endif // __MACH__
+}
 
 }  // namespace shark

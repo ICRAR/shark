@@ -223,6 +223,7 @@ int main(int argc, char **argv) {
 		auto options = read_options(vm, threads);
 		SharkRunner(options, threads).run();
 		LOG(info) << "Successfully finished in " << timer;
+		LOG(info) << "Maximum memory usage: " << memory_amount(peak_rss());
 
 		return 0;
 	} catch (const shark::missing_option &e) {
