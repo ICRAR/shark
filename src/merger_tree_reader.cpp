@@ -137,7 +137,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 
 	std::ostringstream os;
 	os << "File " << fname << " has " << n_subhalos << " subhalos. ";
-	os << "After reading we should be using ~" << memory_amount(n_subhalos * sizeof(Subhalo)) << " of memory";
+	os << "After reading we should be using ~" << memory_amount(n_subhalos * (sizeof(Subhalo) + sizeof(SubhaloPtr))) << " of memory";
 	LOG(info) << os.str();
 
 	t = Timer();
@@ -288,7 +288,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 
 	std::ostringstream os;
 	os << "Created " << halos.size() << " Halos from these Subhalos in " << t << ". ";
-	os << "This should take another ~" << memory_amount(halos.size() * sizeof(Halo)) << " of memory";
+	os << "This should take another ~" << memory_amount(halos.size() * (sizeof(Halo) + sizeof(HaloPtr))) << " of memory";
 	LOG(info) << os.str();
 
 	// Calculate halos' vvir and concentration
