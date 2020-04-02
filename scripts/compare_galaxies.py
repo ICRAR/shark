@@ -73,7 +73,11 @@ def assert_galaxies_equal(check, galaxy1, galaxy2, inclusions, exclusions):
     if names1 != names2:
         raise AssertionError('Galaxy datasets unequal')
     for name in names1:
-        check(name, galaxy1[name], galaxy2[name])
+        ds1 = galaxy1[name]
+        ds2 = galaxy2[name]
+        if ds1.shape != ds2.shape:
+            raise AssertionError('Dataset shapes unequal: %r / %r' % (ds1.shape, ds2.shape))
+        check(name, ds1, ds2)
 
 
 def assert_galaxies_not_equal(check, galaxy1, galaxy2, inclusions, exclusions):
