@@ -140,14 +140,6 @@ def prepare_data(hdf5_data, redshifts):
     mHI_dm_plot[ind] = np.log10(mHI[ind]/(mDM[ind]+massbar[ind]))
     mH2_dm_plot[ind] = np.log10(mH2[ind]/(mDM[ind]+massbar[ind]))
 
-    #print "HI, H2, sfr, stellar mass"
-    #for i,j,p,q in zip(omegaHI,mH2den,sfr,mstarden):
-    #	print np.log10(i*pow(h0,2.0)) + np.log10(XH), np.log10(j*pow(h0,2.0)) + np.log10(XH), np.log10(p*pow(h0,2.0)), np.log10(q*pow(h0,2.0)) 
-
-    #print "HI, H2, sfr, stellar mass"
-    #for z,i in zip(redshifts,omegaHI):
-    #	print z,np.log10(i*pow(h0,2.0)) + np.log10(XH)
-
     return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
      sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
@@ -533,6 +525,7 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ind = np.where(mstarbden_diskins > 0)
     ax.plot(redshifts[ind],np.log10(mstarbden_diskins[ind]*pow(h0,2.0)), 'b', linestyle='dotted')
 
+    mstardisk = mstarden - (mstarbden_mergers+mstarbden_diskins)
 
     z, sm_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 4])
     sm_modelvar_burst3  = sm_modelvar[0:179]
@@ -854,9 +847,6 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     hdf5_data[1] = hdf5_data[1] * len(subvols)
 
     h0, redshifts = hdf5_data[0], hdf5_data[2]
-
-    #for z, m in zip(redshifts, max_smbh):
-    #    print z,m/h0
 
     (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,

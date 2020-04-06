@@ -136,8 +136,8 @@ def load_smf_observations(obsdir, h0):
     z05obs.append((observation("Moustakas+2013", xobsM13[in_redshift], yobsM13[in_redshift], lerrM13[in_redshift], herrM13[in_redshift], err_absolute=False), 'o'))
     in_redshift = np.where(zdnMu13 == 0.5)
     z05obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
-    in_redshift = np.where(zD17 == 0.5)
-    z05obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    #in_redshift = np.where(zD17 == 0.5)
+    #z05obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
 
     # z1 obs
     z1obs = []
@@ -145,8 +145,8 @@ def load_smf_observations(obsdir, h0):
     z1obs.append((observation("Moustakas+2013", xobsM13[in_redshift], yobsM13[in_redshift], lerrM13[in_redshift], herrM13[in_redshift], err_absolute=False), 'o'))
     in_redshift = np.where(zdnMu13 == 1)
     z1obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
-    in_redshift = np.where(zD17 == 1)
-    z1obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    #in_redshift = np.where(zD17 == 1)
+    #z1obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
 
     #z2 obs
     z2obs = []
@@ -154,8 +154,8 @@ def load_smf_observations(obsdir, h0):
     z2obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
     in_redshift = np.where(zdnS12 == 1.8)
     z2obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
-    in_redshift = np.where(zD17 == 2)
-    z2obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    #in_redshift = np.where(zD17 == 2)
+    #z2obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
 
     # z3 obs
     z3obs = []
@@ -163,8 +163,8 @@ def load_smf_observations(obsdir, h0):
     z3obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
     in_redshift = np.where(zdnS12 == 2.5)
     z3obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
-    in_redshift = np.where(zD17 == 3)
-    z3obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    #in_redshift = np.where(zD17 == 3)
+    #z3obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
 
     # z4 obs
     z4obs = []
@@ -172,8 +172,8 @@ def load_smf_observations(obsdir, h0):
     z4obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
     in_redshift = np.where(zdnS12 == 3.5)
     z4obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
-    in_redshift = np.where(zD17 == 4)
-    z4obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    #in_redshift = np.where(zD17 == 4)
+    #z4obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
     
     return (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs)
 
@@ -1216,6 +1216,11 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     mass_mol = np.zeros(shape = len(mdisk))
     mass_mol_cen = np.zeros(shape = len(mdisk))
     mass_mol_sat = np.zeros(shape = len(mdisk))
+
+    #if (index == 0):
+    #    ind = np.where((mdisk+mbulge)/h0 > 1e8)
+    #    for a,b,c,d,e,f,g,h in zip(sfr_disk[ind]/h0/1e9, sfr_burst[ind]/h0/1e9, mdisk[ind]/h0, mbulge[ind]/h0, mHI[ind]/h0*XH, mH2[ind]/h0*XH, mHI_bulge[ind]/h0*XH, mH2_bulge[ind]/h0*XH):
+    #        print (a,b,c,d,e,f,g,h)
 
     ind = np.where((mdisk+mbulge) > 0.0)
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))

@@ -513,9 +513,11 @@ def prepare_data(hdf5_data, sfh, phot_data, phot_data_nod, phot_data_app, index,
     #4: total
     #ignore last band which is the top-hat UV of high-z LFs.
     ind = np.where(mdisk + mbulge > 0)
-    SEDs_dust   = np.zeros(shape = (len(mdisk[ind]), 5, nbands-1))
-    SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands-1))
-    SEDs_app    = np.zeros(shape = (len(mdisk[ind]), 5, nbands-1))
+    SEDs_dust   = np.zeros(shape = (len(mdisk[ind]), 5, nbands - 1))
+    SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands - 1))
+    SEDs_app    = np.zeros(shape = (len(mdisk[ind]), 5, nbands - 1))
+    print ("number of galaxies with mstar>0 %d" % len(mdisk[ind]))
+    # print ("number of input galaxies in photometry file %d", len(phot_data[5]))
 
     p = 0
     for c in range(0,5):

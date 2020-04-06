@@ -74,8 +74,8 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir):
 
     nh   = dataPDR[:,3]
     ind = np.where(nh == 1e4)
-    interpolator = interpolate.LinearNDInterpolator(zip(Zmod[ind], GUV[ind], CRs[ind]), np.squeeze(Xconv_Av3[ind]))
-    interpolator_nn = interpolate.NearestNDInterpolator(zip(Zmod[ind], GUV[ind], CRs[ind]), np.squeeze(Xconv_Av3[ind]))
+    interpolator = interpolate.LinearNDInterpolator(list(zip(Zmod[ind], GUV[ind], CRs[ind])), np.squeeze(Xconv_Av3[ind]))
+    interpolator_nn = interpolate.NearestNDInterpolator(list(zip(Zmod[ind], GUV[ind], CRs[ind])), np.squeeze(Xconv_Av3[ind]))
 
     MinZ = min(Zmod) #define minimum metallicity probed by the models.
     MaxZ = max(Zmod) #define maximum metallicity probed by the models.
@@ -188,9 +188,9 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir):
 	# Interpolate linearly first
         # If extrapolation is needed we use the nearest neighbour interpolator
         xco = np.zeros(shape)
-        xco[ind, :] = 10.0 ** interpolator(zip(zcoldg[ind], guv[ind], CRRayFlux[ind]))
+        xco[ind, :] = 10.0 ** interpolator(list(zip(zcoldg[ind], guv[ind], CRRayFlux[ind])))
         isnan = np.where(np.isnan(xco[:, 0]))
-        xco[isnan, :] = 10.0 ** interpolator_nn(zip(zcoldg[isnan], guv[isnan], CRRayFlux[isnan]))
+        xco[isnan, :] = 10.0 ** interpolator_nn(list(zip(zcoldg[isnan], guv[isnan], CRRayFlux[isnan])))
 
         lco = np.zeros(shape)
         lco[ind, :] = mcold[ind] * XH / 313./ xco[ind]

@@ -236,7 +236,7 @@ def plot_smf_resolve(plt, outdir, obsdir, hist_smf, hist_smf_sat):
     fig = plt.figure(figsize=(9.5,10.5))
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10}(\\rm dn/dM / Mpc^{-3} dex^{-1})$"
-    xmin, xmax, ymin, ymax = 9, 12, -6, -1
+    xmin, xmax, ymin, ymax = 8, 12, -6, -1
 
     # all halos ##################################
     ax = fig.add_subplot(321)

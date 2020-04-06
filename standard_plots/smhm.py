@@ -35,11 +35,16 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside):
 
     (h0, _, mdisk, mbulge, mBH, mgas, mgas_bulge, mhot,
      mreheated, mhalo, typeg) = hdf5_data
-     
+
     ind = np.where((typeg <= 0) & (mdisk+mbulge > 0))
-    massgal[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
+    massgal[index,:] = us.wmedians_2sigma(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                    y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                    xbins=xmf)
+    ind = np.where((mhalo > 9e11) & (mhalo < 2e12) & (mdisk+mbulge > 0) & (mdisk+mbulge < 1.5e9))
+    #print index, np.median(mBH[ind]/(mdisk[ind]+mbulge[ind]))
+    ind = np.where((mhalo > 9e11) & (mhalo < 2e12) & (mdisk+mbulge > 1.5e9))
+    #print index, np.median(mBH[ind]/(mdisk[ind]+mbulge[ind]))
+
     massbar[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                    y=np.log10(mdisk[ind]+mbulge[ind]+mBH[ind]+mgas[ind]+mgas_bulge[ind]+mhot[ind]+mreheated[ind]) - np.log10(mhalo[ind]) - np.log10(Omegab/(OmegaM-Omegab)),
                                    xbins=xmf)

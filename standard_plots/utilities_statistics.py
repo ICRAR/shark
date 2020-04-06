@@ -45,6 +45,26 @@ def wmedians_2sigma(x=None, y=None, xbins=None):
 
     return result
 
+def gpercentiles(x=None):
+
+    result = np.zeros(shape = (3))
+
+    ind = np.where(x != 0)
+    if (len(x[ind]) > 0):    
+       x = x[ind]
+       result[0] = np.median(x)
+       if(len(x) > 9):
+          IDs = np.argsort(x,kind='quicksort')
+          obj_bin = len(x)
+          ID16th = int(np.floor(obj_bin*0.16))+1   #take the lower edge.
+          ID84th = int(np.floor(obj_bin*0.84))-1   #take the upper edge.
+          result[1] = np.abs(result[0] - x[IDs[ID16th]])
+          result[2] = np.abs(x[IDs[ID84th]] - result[0])
+       else:
+          result[1] = np.abs(result[0] - min(x))
+          result[2] = np.abs(max(x) - result[0])
+
+    return result
 
 def wmedians(x=None, y=None, xbins=None, low_numbers=False):
 
