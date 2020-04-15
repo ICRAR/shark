@@ -131,7 +131,7 @@ void HDF5GalaxyWriter::write_header(hdf5::Writer &file, int snapshot){
 	// Calculate effective volume of the run
 	float volume = sim_params.volume * exec_params.simulation_batches.size();
 
-	comment = "effective volume of this run [cMpc/h]";
+	comment = "effective volume of this run [(cMpc/h)^3]";
 	file.write_dataset("run_info/effective_volume", volume, comment);
 
 	comment = "dark matter particle mass of this simulation [Msun/h]";
