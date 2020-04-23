@@ -231,7 +231,7 @@ print_usage() {
 submit_slurm() {
 
 	# Each SHArk instance will be ran as a task
-	cmd="sbatch --ntasks $n_tasks"
+	cmd="sbatch --export ALL --ntasks $n_tasks"
 	cmd="$cmd -o shark-run.log"
 
 	# Get the ID of the new job
