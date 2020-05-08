@@ -27,8 +27,8 @@ import utilities_statistics as us
 
 # Initialize arguments
 zlow = 0
-zupp = 6
-dz = 0.05
+zupp = 1
+dz = 0.1
 zbins = np.arange(zlow,zupp,dz)
 xz   = zbins + dz/2.0
 zlist = xz
@@ -64,7 +64,7 @@ btbins2 = np.arange(btlow,btupp,dbt)
 xbt    = btbins2 + dbt/2.0
 
 
-def prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution):
+def prepare_data(hdf5_data, seds, index, BT_fractions, BT_fractions_distribution):
 
     (h0, volh, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
@@ -72,8 +72,14 @@ def prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution):
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, 
      mmol_bulge, mbh_acc_hh, mbh_acc_sb) = hdf5_data
 
+    
     mstars_tot = (mdisk+mbulge)/h0
     bt = mbulge / (mdisk+mbulge)
+    ind = np.where(mstars_tot > 0)
+    mstars = mstars_tot[ind]
+    SEDs_dust_total = seds[1]
+    SEDs_dust_bulge = seds[0]
+
 
     mall = np.sum(mstars_tot[ind])
     BT_fractions[index, 0] = np.sum(mall)/volh * h0**2.0
@@ -87,30 +93,16 @@ def prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution):
     #normalize to get PDF
     BT_fractions_distribution[0,index,:] = BT_fractions_distribution[0,index,:] / (len(bt[ind]) * dbt)
 
+    btr = 10.0**(SEDs_dust_bulge[4,:]/(-2.5)) / 10.0**(SEDs_dust_total[4,:]/(-2.5))
+    ind = np.where(SEDs_dust_bulge[4,:] == -999)
+    btr[ind] = 0
+    ind = np.where(mstars > 1e9)
+    H, _ = np.histogram(btr[ind],bins=np.append(btbins2, btupp))
+    BT_fractions_distribution[1,index,:] = BT_fractions_distribution[1,index,:] + H
+    #normalize to get PDF
+    BT_fractions_distribution[1,index,:] = BT_fractions_distribution[1,index,:] / (len(mstars[ind]) * dbt)
+
 def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_distribution):
-
-    fig = plt.figure(figsize=(5,4.5))
-    ytit = "$\\rm log_{10} (\\rm \\rho_{\\star}/ M_{\\odot} cMpc^{-3})$"
-    xtit = "lookback time/Gyr"
-    xmin, xmax, ymin, ymax = 0, 12, 6, 9
-    xleg = xmax - 0.2 * (xmax - xmin)
-    yleg = ymax - 0.1 * (ymax - ymin)
-
-    ax = fig.add_subplot(111)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-
-    #Predicted relation
-    cols = ['k','DarkSlateBlue','GreenYellow', 'Crimson']
-    labels = ['total', '$\\rm  B/T <0.05$', '$\\rm  0.05<B/T<0.95$', '$\\rm  B/T>0.95$']
-
-    print (us.look_back_time(zlist), zlist)
-    for i in range(0,len(cols)):
-        ax.plot(us.look_back_time(zlist), np.log10(BT_fractions[:,i]), linestyle='solid',color=cols[i], label=labels[i])
-        for a,b in zip(us.look_back_time(zlist), np.log10(BT_fractions[:,i])):
-            print (a,b)
-    common.prepare_legend(ax, cols, loc=4)
-    common.savefig(outdir, fig, 'morphology_evolution.pdf')
-
 
     p= [0,1]
     names = ['stellar','rband']
@@ -156,12 +148,16 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'lambda_subhalo', 'mvir_subhalo', 'mgas_disk', 'mgas_bulge','matom_disk', 'mmol_disk', 
                            'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
 
+    fields_sed = {'SED/ab_dust': ('bulge_t','total'),}
+    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5"
+
     BT_fractions = np.zeros(shape = (len(zlist), len(btbins)))
     BT_fractions_distribution = np.zeros(shape = (2, len(zlist), len(btbins2)))
   
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution)
+        seds = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed, subvols, file_hdf5_sed)
+        prepare_data(hdf5_data, seds, index, BT_fractions, BT_fractions_distribution)
 
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_distribution)
 

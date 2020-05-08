@@ -65,7 +65,7 @@ def prepare_data(hdf5_data):
     morpho_type = np.zeros(shape = (n_typeg))
     morpho_type_stellar = np.zeros(shape = (n_typeg))
 
-    mHI_halos_stacking = np.zeros(shape = (len(xmf))) 
+    mHI_halos_stacking = np.zeros(shape = (3,len(xmf)))
 
     (unique_elements, counts_elements) = np.unique(id_halo, return_counts=True)
 
@@ -76,6 +76,7 @@ def prepare_data(hdf5_data):
 
   
     mHI_halo   = np.zeros(shape = len(counts_elements))
+    mHI_halo_all   = np.zeros(shape = len(counts_elements))
     mmass_halo = np.zeros(shape = len(counts_elements))
     rvir_halo  = np.zeros(shape = len(counts_elements))
     vvir_halo  = np.zeros(shape = len(counts_elements))
@@ -88,16 +89,27 @@ def prepare_data(hdf5_data):
     for i in range(0, len(counts_elements)):
 	#select galaxies that belong to this halo
         ind = np.where(id_halo == unique_elements[i])
+        indc = np.where((typeg == 0) & (id_halo == unique_elements[i]))
+        xyz_halo[0,i] = x[indc]
+        xyz_halo[1,i] = y[indc]
+        xyz_halo[2,i] = z[indc]
+        mHIallgals_halo = mHI[ind] + mHI_bulge[ind]
+        vvir_halo[i]    = vvir[indc]
+        rvir_halo[i]    = G * mhalo[indc] / pow(vvir_halo[i], 2.0)
+        dist_to_cen = np.sqrt((x[ind] - xyz_halo[0,i])**2.0 + (y[ind] - xyz_halo[1,i])**2.0)
+        inr = np.where(dist_to_cen/rvir_halo[i] < 1.0)
+
         if(len(mhalo[ind]) > 0):
                 total_bar_mass = sum(mdisk[ind]) + sum(mbulge[ind]) + sum(mgas[ind]) + sum(mgas_bulge[ind]) + sum(mhot[ind])
                 mhalo_all      = mhalo[ind]
                 vvir_all       = vvir[ind]
-	        mmass_halo[i]  = mhalo_all[0] + total_bar_mass
-	        mHI_halo[i]    = (sum(mHI[ind]) * XH) #only HI
+	        mmass_halo[i]  = mhalo_all[0]# + total_bar_mass
+	        mHI_halo[i]    = (sum(mHIallgals_halo[inr]) * XH) #only HI
+                mHI_halo_all[i] = (sum(mHI[ind] + mHI_bulge[ind]) * XH)
                 vvir_halo[i]   = vvir[0]
                 rvir_halo[i]   = G * mmass_halo[i] / pow(vvir_halo[i], 2.0)
                 id_unique_halo[i] = unique_elements[i]
-        #select central galaxy of this hal to assign positions and velocities to this halo.
+        #select central galaxy of this halo to assign positions and velocities to this halo.
         ind = np.where((typeg == 0) & (id_halo == unique_elements[i]))
         if(len(mhalo[ind]) > 0):
            xyz_halo[0,i] = x[ind]
@@ -114,7 +126,10 @@ def prepare_data(hdf5_data):
 	#select halos in the mass range above
         ind = np.where((np.log10(mmass_halo) >= mlow_r) & (np.log10(mmass_halo) < mhigh_r))
         if(len(mmass_halo[ind]) > 0):
-		mHI_halos_stacking[i] = np.log10(np.mean(mHI_halo[ind]))
+                mHI_halos_stacking[0,i] = np.median(np.log10(mmass_halo[ind]))
+		mHI_halos_stacking[1,i] = np.log10(np.mean(mHI_halo[ind]))
+		mHI_halos_stacking[2,i] = np.log10(np.mean(mHI_halo_all[ind]))
+
 
     #select all satellite galaxies in halos with masses > 10^13.
     ind = np.where((mhalo > 1e12) & (typeg > 0))
@@ -157,13 +172,13 @@ def plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking):
     prepare_ax(ax, 10, 15, -5, -0.5, xtit, ytit)
 
     #Predicted SMHM
-    ind = np.where((mHI_halos_stacking > 0) & (xmf > 10.3))
+    ind = np.where((mHI_halos_stacking[1,:] > 0) & (xmf > 10.3))
     xplot = xmf[ind]
-    yplot = mHI_halos_stacking[ind]-xmf[ind]
-    for i,j in zip (xplot,yplot):
-    	print i,j
+    yplot = mHI_halos_stacking[1,ind]-mHI_halos_stacking[0,ind]
+    for i,j,x,y in zip (mHI_halos_stacking[0,ind],yplot,mHI_halos_stacking[1,ind],mHI_halos_stacking[2,ind]):
+    	print i, j, x + np.log10(0.6751), y+ np.log10(0.6751)
 
-    ax.plot(xplot,yplot, color='k', linestyle='solid', label='Shark')
+    ax.plot(xplot,yplot[0], color='k', linestyle='solid', label='Shark')
 
 
     common.prepare_legend(ax, ['k'])
@@ -211,7 +226,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     (mHI_halos_stacking, sats_vproj, sats_rproj, sats_type) = prepare_data(hdf5_data)
 
     plot_HI_gas_fraction_groups(plt, output_dir, obs_dir, mHI_halos_stacking)
-    plot_caustic_halos(plt, output_dir, sats_vproj, sats_rproj, sats_type)
+    #plot_caustic_halos(plt, output_dir, sats_vproj, sats_rproj, sats_type)
 
 if __name__ == '__main__':
     main(*common.parse_args())

@@ -29,11 +29,12 @@ import utilities_statistics as us
 # Constants
 mlow = 7.0
 mupp = 13.0
-dm = 0.25
+dm = 0.5
 mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
-rbins = np.array([2.5, 5, 7.5])
+rbins = np.array([1, 2.730045591676135, 5]) #Mpc/h
+zdepth = 11.0 #Mpc/h
 
 GyrtoYr  = 1e9
 MpcToKpc = 1e3
@@ -78,6 +79,9 @@ def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco):
     sfrb = sfrb[ind]
     typeg = typeg[ind]
 
+    pos = np.where(co_total > 1e10)
+    print(np.median((mH2[pos]+mH2_bulge[pos])/h0/co_total[pos]))
+
     XH = 0.72
     h0log = np.log10(float(h0))
 
@@ -101,13 +105,14 @@ def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco):
     print ('number of clusters %d'% len(x_cen))
     #xyz distance
     for g in range(0,len(x_cen)):
-        d_all = np.sqrt(pow(x - x_cen[g], 2.0) + pow(y - y_cen[g], 2.0) + pow(z - z_cen[g], 2.0))/h0
-        ind   = np.where((d_all < 7.6) & (co_total > 0))
+        d_all = np.sqrt(pow(x - x_cen[g], 2.0) + pow(y - y_cen[g], 2.0))
+        z_all = np.absolute(z - z_cen[g])
+        ind   = np.where((d_all < 1.5) & (co_total > 0) & (z_all < zdepth))
         co_total_in = co_total[ind]
         mh2total_in = (mH2[ind] + mH2_bulge[ind]) / h0 * XH
         d_all_in = d_all[ind]
         for r in range(0, len(rbins)):
-            vol = 4.0/3.0 * PI * (rbins[r] * rvir_cen[g])**3.0
+            vol = PI * (rbins[r])**2.0 * (2.0 * zdepth)
             inr = (d_all_in < rbins[r])
             H, _ = np.histogram(np.log10(co_total_in[inr]),bins=np.append(mbins,mupp))
             lfco_ind_this_z[r,g,:] = lfco_ind_this_z[r,g,:] + H 
@@ -172,7 +177,7 @@ def plot_clusters_lco(plt, output_dir, zlist, lfco):
     #   Plots global mass densities
     fig = plt.figure(figsize=(6,7))
     plt.subplots_adjust(bottom=0.15, left=0.15)
-    xmin, xmax, ymin, ymax = 6, 12, -3, 1
+    xmin, xmax, ymin, ymax = 6, 12, -4, 1
     xleg = xmax - 1 * (xmax - xmin)
     yleg = ymin + 0.1 * (ymax - ymin)
 
@@ -183,12 +188,13 @@ def plot_clusters_lco(plt, output_dir, zlist, lfco):
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitle, ytitle, locators=(1, 1, 1))
     #ax.text(xleg, yleg, '$\\rm M_{\\rm halo} > 10^{14} M_{\odot}$')
 
+    r = 1
     cols = ['b', 'DarkTurquoise', 'Orange', 'DarkRed']
     for z in range(0, len(zlist)):
-        ind = np.where(lfco[0,z,:,1] != 0)
-        yplot = lfco[0,z,ind,1]
-        yerrdn= lfco[1,z,ind,1]
-        yerrup= lfco[2,z,ind,1]
+        ind = np.where(lfco[0,z,:,r] != 0)
+        yplot = lfco[0,z,ind,r]
+        yerrdn= lfco[1,z,ind,r]
+        yerrup= lfco[2,z,ind,r]
         print('will co lf at z=%s' % str(zlist[z]))
         for a,b,c,d in zip(xmf[ind], yplot[0], yerrdn[0], yerrup[0]):
             print(a,b,c,d)

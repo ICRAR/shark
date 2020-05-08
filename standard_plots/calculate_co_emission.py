@@ -42,10 +42,6 @@ sigma_gas = 20.0 #km/s for CO
 thresh_thin_disk = 0.01
 thresh_super_edd = 1.0
 
-#the parameter below considers the difference between 
-#the peak flux and the maximum in a box-shaped emission line
-boost_box_profile = 1.5
-
 gammaSFR = 1.0
 alphaFx  = 1.0 
 Av = 4
