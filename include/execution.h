@@ -56,7 +56,7 @@ public:
 	std::random_device::result_type get_seed(const Component &component)
 	{
 		auto id = get_id(component);
-		assert(id > 0);
+		assert(id >= 0);
 		return seed + std::random_device::result_type(id);
 	}
 
