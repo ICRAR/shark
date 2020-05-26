@@ -156,6 +156,13 @@ public:
 	{
 	}
 
+	gsl_error(int gsl_errno, const char *errmsg) :
+		math_error(std::string("GSL error: ") + errmsg +
+		           " (" + std::to_string(gsl_errno) + ")"),
+		gsl_errno(gsl_errno)
+	{
+	}
+
 	std::string get_reason() {
 		return reason;
 	}
@@ -175,7 +182,7 @@ public:
 private:
 	std::string reason;
 	std::string file;
-	int line;
+	int line = 0;
 	int gsl_errno;
 };
 
