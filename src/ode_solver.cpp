@@ -34,12 +34,26 @@
 
 namespace shark {
 
-ODESolver::ODESolver(ode_evaluator evaluator, size_t dimension, double precision, void *params) :
-	ode_system(),
-	driver()
+static int ode_gsl_evaluator(double t, const double y[], double f[], void *data) noexcept
 {
+	auto eval_and_params = static_cast<ODESolver::evaluator_and_params *>(data);
+	try {
+		return eval_and_params->evaluator(t, y, f, eval_and_params->user_params);
+	} catch (std::exception &e) {
+		LOG(error) << "Error while evaluating physical model function: " << e.what();
+		return GSL_EBADFUNC;
+	} catch (...) {
+		LOG(error) << "Unexpected error while evaluating physical model function";
+		return GSL_EBADFUNC;
+	}
+}
+
+ODESolver::ODESolver(ode_evaluator evaluator, size_t dimension, double precision, void *params)
+{
+	wrapped_params.evaluator = evaluator;
+	wrapped_params.user_params = params;
+	ode_system = std::unique_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{ode_gsl_evaluator, nullptr, dimension, &wrapped_params});
 	// "42" is a dummy hstart, we need something != 0
-	ode_system = std::unique_ptr<gsl_odeiv2_system>(new gsl_odeiv2_system{evaluator, nullptr, dimension, params});
 	driver.reset(gsl_odeiv2_driver_alloc_y_new(ode_system.get(), gsl_odeiv2_step_rkck, 42, 0, precision));
 }
 
