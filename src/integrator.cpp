@@ -23,6 +23,7 @@
  * Integrator class implementation
  */
 
+#include "gsl_utils.h"
 #include "integrator.h"
 
 
@@ -56,7 +57,7 @@ double Integrator::integrate(func_t f, void *params, double from, double to, dou
 	double result, abserr;
 	// Adopt a 15 point Gauss-Kronrod rule
 	int key = GSL_INTEG_GAUSS15;
-	gsl_integration_qag(&F, from, to, epsabs, epsrel, max_intervals, key, workspace.get(), &result, &abserr);
+	gsl_invoke(gsl_integration_qag, &F, from, to, epsabs, epsrel, max_intervals, key, workspace.get(), &result, &abserr);
 
 	num_intervals += workspace->size;
 	return result;

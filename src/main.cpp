@@ -96,13 +96,8 @@ void setup_logging(const boost::program_options::variables_map &vm) {
 	});
 }
 
-void throw_exception_gsl_handler(const char *reason, const char *file, int line, int gsl_errno)
-{
-	throw gsl_error(reason, file, line, gsl_errno, gsl_strerror(gsl_errno));
-}
-
 void install_gsl_error_handler() {
-	gsl_set_error_handler(&throw_exception_gsl_handler);
+	gsl_set_error_handler_off();
 }
 
 void log_startup_information(int argc, char **argv)

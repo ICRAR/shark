@@ -26,6 +26,7 @@
 #include <sstream>
 
 #include "exceptions.h"
+#include "gsl_utils.h"
 #include "logging.h"
 #include "ode_solver.h"
 
@@ -46,7 +47,7 @@ void ODESolver::evolve(std::vector<double> &y, double delta_t)
 {
 	double t0 = 0;
 	double t1 = t0 + delta_t;
-	gsl_odeiv2_driver_reset_hstart(driver.get(), delta_t);
+	gsl_invoke(gsl_odeiv2_driver_reset_hstart, driver.get(), delta_t);
 	int status = gsl_odeiv2_driver_apply(driver.get(), &t0, t1, y.data());
 
 	// TODO: add compiler-dependent likelihood macro
@@ -70,7 +71,7 @@ void ODESolver::evolve(std::vector<double> &y, double delta_t)
 	}
 	else if (status == GSL_EBADFUNC) {
 		os << "user function signaled an error";
-		gsl_odeiv2_driver_reset(driver.get());
+		gsl_invoke(gsl_odeiv2_driver_reset, driver.get());
 	}
 	else if (status == GSL_EMAXITER) {
 		os << "maximum number of steps reached";
