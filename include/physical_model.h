@@ -30,7 +30,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <gsl/gsl_odeiv2.h>
 #include "agn_feedback.h"
 #include "components.h"
 #include "galaxy.h"

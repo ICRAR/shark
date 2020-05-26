@@ -28,6 +28,8 @@
 #include <stdexcept>
 #include <tuple>
 
+#include <gsl/gsl_sf_lambert.h>
+
 #include "cosmology.h"
 #include "dark_matter_halos.h"
 #include "galaxy.h"

@@ -30,8 +30,6 @@
 #include <utility>
 #include <vector>
 
-#include <gsl/gsl_sf_lambert.h>
-
 #include "mixins.h"
 #include "numerical_constants.h"
 #include "components.h"

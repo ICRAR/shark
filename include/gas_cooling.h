@@ -29,11 +29,6 @@
 #include <string>
 #include <vector>
 
-
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_interp2d.h>
-#include <gsl/gsl_spline2d.h>
-
 #include "agn_feedback.h"
 #include "components.h"
 #include "dark_matter_halos.h"
