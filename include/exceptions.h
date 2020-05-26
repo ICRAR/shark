@@ -152,8 +152,7 @@ public:
 		reason(reason),
 		file(file),
 		line(line),
-		gsl_errno(gsl_errno),
-		errmsg(errmsg)
+		gsl_errno(gsl_errno)
 	{
 	}
 
@@ -178,7 +177,6 @@ private:
 	std::string file;
 	int line;
 	int gsl_errno;
-	std::string errmsg;
 };
 
 }  // namespace shark
