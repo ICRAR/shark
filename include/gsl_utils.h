@@ -25,6 +25,7 @@
 #define SHARK_GSL_UTILS_H
 
 
+#include <cassert>
 #include <utility>
 
 #include <gsl/gsl_errno.h>
@@ -32,6 +33,17 @@
 #include "exceptions.h"
 
 namespace shark {
+
+/**
+ * Takes a GSL error number and turns it into a gsl_error exception
+ * @param status the GSL status, must be something other than GSL_SUCCESS
+ */
+inline gsl_error to_gsl_error(int status)
+{
+	assert(status != GSL_SUCCESS);
+	throw gsl_error(status, gsl_strerror(status));
+}
+
 
 /**
  * Invokes a GSL function and throws an exception if the return code is anything
@@ -44,7 +56,7 @@ void gsl_invoke(Func && func, Args ... args)
 {
 	int status = func(std::forward<Args>(args)...);
 	if (status != GSL_SUCCESS) {
-		throw gsl_error(status, gsl_strerror(status));
+		throw to_gsl_error(status);
 	}
 }
 
