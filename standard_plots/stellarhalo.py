@@ -47,9 +47,9 @@ def prepare_data(hdf5_data, index, massstellarh, massstellarh_v2, hist_smf, hist
     OmegaM = 0.3121
 
     (h0, volh, mdisk, mbulge, ms_halo, mhalo, typeg, ms_tidally_stripped, 
-    id_halo, mvir_infall, mvir_subhalo) = hdf5_data
-    vol = volh/pow(h0,3.)  # In Mpc^3
+    id_halo, mvir_infall, mvir_subhalo, id_subhalo) = hdf5_data
 
+    vol = volh/pow(h0,3.)  # In Mpc^3
 
     ids_halo = np.unique(id_halo)
 
@@ -240,9 +240,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstellar_halo', 'mvir_hosthalo',
                            'type','mstars_tidally_stripped','id_halo_tree', 'mvir_infall_subhalo',
-                           'mvir_subhalo')}
+                           'mvir_subhalo', 'id_subhalo_tree')}
 
-    zlist = (0, 0.5, 1, 2, 3, 4)
+    zlist = [0, 0.5, 1, 2, 3, 4]
     snapshots = redshift_table[zlist]
     massstellarh    = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massstellarh_v2 = np.zeros(shape = (len(zlist), 3, len(xmf)))

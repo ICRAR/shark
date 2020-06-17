@@ -1,0 +1,4 @@
+#units of rho in Msun/Mpc^3
+#zlow zup rhoH25th rhoH2mid rhoH295th
+1.95 2.85 1.1e7 2.7e7 5.6e7
+4.9 6.7 0.14e7 0.47e7 1.1e7
