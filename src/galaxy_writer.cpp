@@ -476,7 +476,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
-					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy.angular_momentum(), halo);
+					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy.angular_momentum(), halo, galaxy);
 					mvir_subhalo.push_back(galaxy.msubhalo_type2);
 					cnfw_subhalo.push_back(galaxy.concentration_type2);
 					lambda_subhalo.push_back(galaxy.lambda_type2);

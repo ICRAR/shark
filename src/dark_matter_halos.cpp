@@ -446,11 +446,11 @@ xyz<float> DarkMatterHalos::random_point_in_sphere(float r, std::default_random_
 	};
 }
 
-void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo)
+void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo, const Galaxy &galaxy)
 {
 
 	// Prime the generator with a known seed to allow for reproducible runs
-	std::default_random_engine generator(exec_params.get_seed(halo));
+	std::default_random_engine generator(exec_params.get_seed(galaxy));
 
 	double c = halo->concentration;
 
