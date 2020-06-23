@@ -59,6 +59,9 @@ dr = 0.005
 rbins = np.arange(rlow,rupp,dr)
 xrf = rbins + dr/2.0
 
+use_r50_aperture = True
+r50_aperture = 10.0
+
 def prepare_data(hdf5_data, index, rcomb, rcomb_icl):
 
     (h0, _, mdisk, mbulge, rdisk, rbulge, typeg, mstellar_halo, cnfw, vvir, mvir) = hdf5_data
@@ -97,9 +100,14 @@ def prepare_data(hdf5_data, index, rcomb, rcomb_icl):
     cnfw_in = cnfw[ind]
     rvir_in = rvir[ind]
     rho_icl = mstellar_halo[ind]/ (4.0 * PI * (cnfw_in * rvir_in)**3.0) / concen_factor[ind]
+    rcombined_in = rcombined[ind] #in Mpc
 
     #compute aperture at which ther half-mass of the ICL will be computed.
-    x = r_ap/rvir_in
+    x = r_ap / rvir_in #fixed aperture
+
+    if(use_r50_aperture == True): #compute aperture based on r50
+       x = r50_aperture * rcombined_in / rvir_in
+
     micl_apperture = np.zeros(shape = len(rho_icl))
     for i in range(0, len(rho_icl)):
         micl_apperture[i] = enclosed_mass_icl(x[i], rho_icl[i], cnfw_in[i], rvir_in[i])
