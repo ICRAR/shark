@@ -300,30 +300,40 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
+		auto current_halo = halo;
+		if(halo->descendant){
+			current_halo = halo->descendant;
+		}
+
 		// assign properties of host halo
-		auto mhalo = halo->Mvir;
-		auto vhalo = halo->Vvir;
+		auto mhalo = current_halo->Mvir;
+		auto vhalo = current_halo->Vvir;
 
 		halo_m.push_back(mhalo);
 		halo_v.push_back(vhalo);
-		halo_lambda.push_back(halo->lambda);
-		halo_concentration.push_back(halo->concentration);
-		age_80_halo.push_back(halo->age_80);
-		age_50_halo.push_back(halo->age_50);
-		halo_id.push_back(halo->id);
+		halo_lambda.push_back(current_halo->lambda);
+		halo_concentration.push_back(current_halo->concentration);
+		age_80_halo.push_back(current_halo->age_80);
+		age_50_halo.push_back(current_halo->age_50);
+		halo_id.push_back(current_halo->id);
 		halo_final_m.push_back(halo->final_halo()->Mvir);
 
 		for (auto &subhalo: halo->all_subhalos()){
 
-			host_id.push_back(halo->id);
+			auto current_subhalo = subhalo;
+			if(subhalo->descendant){
+				current_subhalo = subhalo->descendant;
+			}
 
-			// assign properties of host subhalo
-			auto msubhalo = subhalo->Mvir;
-			auto cnfw     = subhalo->concentration;
-			auto lambda   = subhalo->lambda;
-			auto vvir_sh  = subhalo->Vvir;
+			host_id.push_back(current_halo->id);
 
-			// Assign baryon properties of subhalo
+			// assign properties of host subhalo (note that if these subhalos have descendants, then we assign those properties)
+			auto msubhalo = current_subhalo->Mvir;
+			auto cnfw     = current_subhalo->concentration;
+			auto lambda   = current_subhalo->lambda;
+			auto vvir_sh  = current_subhalo->Vvir;
+
+			// Assign baryon properties of subhalo (note that here we use the subhalo as galaxies and baryons have not yet been transferred to the descendant)
 			auto hot_subhalo = subhalo->hot_halo_gas;
 			auto cold_subhalo = subhalo->cold_halo_gas;
 			auto reheated_subhalo = subhalo->ejected_galaxy_gas;
@@ -331,24 +341,24 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto stellarhalo = subhalo->stellar_halo;
 			auto msub_infall = subhalo->Mvir_infall;
 
-			descendant_id.push_back(subhalo->descendant_id);
-			infall_time_subhalo.push_back(subhalo->infall_t);
+			descendant_id.push_back(current_subhalo->descendant_id);
+			infall_time_subhalo.push_back(current_subhalo->infall_t);
 
 			int m = 0;
-			if(subhalo->main_progenitor){
+			if(current_subhalo->main_progenitor){
 				m = 1;
 			}
 			main.push_back(m);
-			id.push_back(subhalo->id);
+			id.push_back(current_subhalo->id);
 
-			L_x_subhalo.push_back(subhalo->L.x);
-			L_y_subhalo.push_back(subhalo->L.y);
-			L_z_subhalo.push_back(subhalo->L.z);
+			L_x_subhalo.push_back(current_subhalo->L.x);
+			L_y_subhalo.push_back(current_subhalo->L.y);
+			L_z_subhalo.push_back(current_subhalo->L.z);
 
 			for (auto &galaxy: subhalo->galaxies){
 
-				id_halo_tree.push_back(halo->id);
-				id_subhalo_tree.push_back(subhalo->id);
+				id_halo_tree.push_back(current_halo->id);
+				id_subhalo_tree.push_back(current_subhalo->id);
 
 				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
 				auto &molecular_gas = molgas_per_gal.at(galaxy.id);
@@ -459,9 +469,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					mvir_gal = msubhalo;
 					c_sub    = cnfw;
 					l_sub    = lambda;
-					pos      = subhalo->position;
-					vel      = subhalo->velocity;
-					L        = subhalo->L.unit() * galaxy.angular_momentum();
+					pos      = current_subhalo->position;
+					vel      = current_subhalo->velocity;
+					L        = current_subhalo->L.unit() * galaxy.angular_momentum();
 					vvir_subhalo.push_back(vvir_sh);
 					mvir_subhalo.push_back(mvir_gal);
 					cnfw_subhalo.push_back(c_sub);
@@ -476,7 +486,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
-					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy.angular_momentum(), halo);
+					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy.angular_momentum(), current_halo);
 					mvir_subhalo.push_back(galaxy.msubhalo_type2);
 					cnfw_subhalo.push_back(galaxy.concentration_type2);
 					lambda_subhalo.push_back(galaxy.lambda_type2);
