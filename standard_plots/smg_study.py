@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 
-zlist=np.array([0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.0, 1.10447, 1.20911, 1.28174, 1.39519, 1.51429, 1.59696, 1.68234, 1.81572, 1.90829, 2.00392, 3.01916, 3.95972, 5.96593, 8.02352, 9.95655])
+zlist=np.array([0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988, 5.02220991014863, 5.2202206934302, 5.52950356184419, 5.74417977285603, 5.96593, 6.19496927748119, 6.55269895697227, 7.05756323172746, 7.45816170313544, 7.73629493731708, 8.02352,8.32018565809831, 8.47220854014322, 8.78358705435761, 8.94312532315157, 9.27010372804765, 9.437541750167, 9.78074128377067, 9.95655])
 
 ##################################
 #Constants
@@ -58,11 +58,19 @@ dbt   = 0.05
 btbins2 = np.arange(btlow,btupp,dbt)
 xbt    = btbins2 + dbt/2.0
 
+def smooth(x, y, ndeg):
+    fit = np.polyfit(x,y,ndeg)
+    print(fit) 
+    y_smooth = np.zeros(shape = len(x))
+    for j in range(0,ndeg+1):
+        y_smooth[:] = y_smooth[:] + fit[j] * x[:]**(ndeg -j)
 
-def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma):
+    return y_smooth
+
+def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation):
 
     (h0, volh, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
-     sfr_disk, sfr_bulge, typeg,  mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, mmol_bulge) = hdf5_data
+     sfr_disk, sfr_bulge, typeg,  mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, mmol_bulge, mvir_hosthalo, idtree) = hdf5_data
     
     sfr_tot[index] = np.sum((sfr_disk + sfr_bulge) / 1e9 / h0)
     mmol_tot[index] = np.sum((mmol_bulge + mmol_disk) / h0)
@@ -78,27 +86,56 @@ def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_t
     print(SEDs_app.shape)
     ind = np.where(mstars_tot > 0)
     sfrs_gals = (sfr_disk[ind] + sfr_bulge[ind]) / 1e9 / h0
-
+    mmol_gals = (mmol_bulge[ind] + mmol_disk[ind])/h0
+    types = typeg[ind]
+    mvir = mvir_hosthalo[ind]
+    idtrees = idtree[ind]
     #calculate total SFR of galaxies selected in different ALMA bands and different fluxes
     #np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
     for b in range(0,len(selec_alma)):
         flux_gals_band = 10.0**(SEDs_app[selec_alma[b],:] / -2.5) * 3631.0 * 1e3 #in mJy
-        print("maximum flux ", max(flux_gals_band))
         for f in range(0,len(flux_selec)):
             if (f < 3):
                 ind = np.where((flux_gals_band > flux_selec[f]) & (flux_gals_band <= flux_selec[f+1]))
             else:
                 ind = np.where((flux_gals_band > flux_selec[f]) & (flux_gals_band < 1e10))
             sfr_z[b,f,index] = np.sum(sfrs_gals[ind])
+            mmol_z[b,f,index] = np.sum(mmol_gals[ind])
+
+    Calculate_ocuppation = False
+    if(Calculate_ocuppation == True):
+       print("number of unique halos", len(np.unique(idtrees)))
+       #select most massive halos
+       centrals = np.where(types == 0)
+       print("number of halos with types==0", len(mvir[centrals]))
+       mvir_centrals = mvir[centrals]
+       id_mhalos = np.argsort(1.0/mvir_centrals) #sort from most massive to least massive
+       ids_centrals = idtrees[centrals]
+       idtree_sorted = ids_centrals[id_mhalos]
+       mvir_sorted = mvir_centrals[id_mhalos]
+       ids_mostmassive = idtree_sorted[0:20]
+       mvir_occupation[index] = mvir_sorted[19]
+       ngals = np.zeros(shape = (len(selec_alma)))
+       for i in range(0,len(ids_mostmassive)):
+           selec_group = np.where(idtrees == ids_mostmassive[i])
+           if(len(idtrees[selec_group]) > 0):
+              for b in range(0,len(selec_alma)):
+                  flux_gals_band = 10.0**(SEDs_app[selec_alma[b],selec_group] / -2.5) * 3631.0 * 1e3 #in mJy
+                  bright = np.where((flux_gals_band > max(flux_selec)) & (flux_gals_band < 1e10))
+                  if(len(flux_gals_band[bright]) > 0):
+                     ngals[b] = ngals[b] + 1
+              
+       for b in range(0,len(selec_alma)):
+           frac_mvir_occupation[b,index] = ngals[b] / (len(ids_mostmassive) + 0.0)
 
     return(volh, h0)
     
-def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot):
+def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot, h0):
 
     fig = plt.figure(figsize=(12,4.5))
     ytit = "$\\rm log_{10} (\\rm \\rho_{\\rm SFR}/ M_{\\odot} yr^{-1} cMpc^{-3})$"
     xtit = "redshift"
-    xmin, xmax, ymin, ymax = 0, 10, -5, 0
+    xmin, xmax, ymin, ymax = 0, 10, -6, -1
     xleg = xmax - 0.3 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -106,6 +143,50 @@ def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot):
     bands = ['band-7', 'band-6', 'band-4']
     cols = ['DarkBlue','MediumTurquoise','YellowGreen', 'Crimson']
     labels = ['$\\rm <0.01\\rm mJy$', '$\\rm  0.01-0.1\\rm mJy$', '$\\rm  0.1-1\\rm mJy$', '$\\rm  >1\\rm mJy$']
+
+    def load_observations(ax, obsdir, h0):
+        #Driver (Chabrier IMF), ['Baldry+2012, z<0.06']
+        redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_sfr.dat', [0,1,2,3,4,5,6])
+        hobs = 0.7
+        xobsD17 = (redD17d+redD17u)/2.0
+        yobsD17 = sfrD17 + np.log10(hobs/h0)
+        errD17 = yobsD17*0. - 999.
+        errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
+        ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o', label="Driver+18")
+
+        redB12, sfrB12, errB12 = common.load_observation(obsdir, 'Global/Bouwens2012.dat', [0,1,2])
+        hobs = 0.7
+        yobsB12 = sfrB12 + np.log10(hobs/h0)
+        ax.errorbar(redB12, yobsB12, yerr=[errB12,errB12], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s', label="Bouwens+12")
+
+    for b in range(0,len(bands)):
+        ax = fig.add_subplot(subplots[b])
+        ytitle = ytit
+        if(b > 0):
+           ytitle=" "
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle, locators=(0.1, 1, 0.1, 1))
+        ax.text(xleg,yleg,bands[b],fontsize=12) 
+        for i in range(0,len(labels)):
+            inp = np.where(sfr_z[b,i,:] != 0)
+            x = zlist[inp]
+            y = sfr_z[b,i,inp]
+            print("SFR - Will print fitting parameters for band %s and selection %s" % (str(b), labels[i]))
+            y_smooth = smooth(x, y[0], 3)
+            ax.plot(x, y[0], linestyle='dotted',color=cols[i])
+            ax.plot(x, y_smooth, linestyle='solid',color=cols[i], label=labels[i])
+        ax.plot(zlist, sfr_tot,  linestyle='solid',color='k')
+        load_observations(ax, obsdir, h0)
+        if(b == 0):
+           common.prepare_legend(ax, cols, loc=3)
+    common.savefig(outdir, fig, 'SFR_evolution_SMG_contribution.pdf')
+
+
+    fig = plt.figure(figsize=(12,2.5))
+    ytit = "$\\rm log_{10}(fraction)$"
+    xtit = "redshift"
+    xmin, xmax, ymin, ymax = 0, 10, -2.5, 0
+    xleg = xmax - 0.3 * (xmax - xmin)
+    yleg = ymin + 0.1 * (ymax - ymin)
 
     for b in range(0,len(bands)):
         ax = fig.add_subplot(subplots[b])
@@ -117,10 +198,144 @@ def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot):
         for i in range(0,len(labels)):
             inp = np.where(sfr_z[b,i,:] != 0)
             y = sfr_z[b,i,inp]
-            ax.plot(zlist[inp], y[0], linestyle='solid',color=cols[i], label=labels[i])
-        ax.plot(zlist, sfr_tot,  linestyle='solid',color='k')
-        common.prepare_legend(ax, cols, loc=4)
-    common.savefig(outdir, fig, 'SFR_evolution_SMG_contribution.pdf')
+            y_smooth = smooth(zlist[inp], y[0], 3)
+            y1 = sfr_z[b,i,inp] - sfr_tot[inp]
+            y2 = y_smooth - sfr_tot[inp]
+            ax.plot(zlist[inp], y1[0], linestyle='dotted',color=cols[i])
+            ax.plot(zlist[inp], y2, linestyle='solid',color=cols[i])
+        x=[0,10]
+        y=[-1,-1]
+        ax.plot(x,y,linestyle='dotted',color='k')
+        fig.subplots_adjust(bottom=0.25)
+
+    common.savefig(outdir, fig, 'fractional_SFR_evolution_SMG_contribution.pdf')
+
+    fig = plt.figure(figsize=(12,4.5))
+    ytit = "$\\rm log_{10} (\\rm \\rho_{\\rm H_2}/ M_{\\odot} cMpc^{-3})$"
+    xtit = "redshift"
+    xmin, xmax, ymin, ymax = -0.1, 10, 3.3, 8.3
+    xleg = xmax - 0.3 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    def load_observations_h2(ax, obsdir, h0, caption=False):
+        #Walter ASPECS ALMA program
+        zloD16, zupD16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Decarli19_H2.dat', [0,1,2,3])
+        zD16 =(zupD16 + zloD16)/2.0
+        rhoH2D16 = (rhoH2loD16 + rhoH2upD16)/2.0
+        hobs = 0.7
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = rhoH2D16 + np.log10(pow(hobs/h0,3.0))
+        errylow = rhoH2D16 - rhoH2loD16
+        erryup  = rhoH2upD16 - rhoH2D16
+        ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='d',label="Decarli+19" if caption == True else None)
+
+        #COLDz
+        zloD16, zupD16, rhoH2loD16, rhoH2D16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Riechers19_H2.dat', [0,1,2,3,4])
+        zD16 =(zupD16 + zloD16)/2.0
+        hobs = 0.7
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = np.log10(rhoH2D16) + np.log10(pow(hobs/h0,3.0))
+        errylow = np.log10(rhoH2D16) - np.log10(rhoH2loD16)
+        erryup  = np.log10(rhoH2upD16) - np.log10(rhoH2D16)
+        ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Riechers+19" if caption == True else None)
+
+        #z0 data
+        zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/H2_z0.dat', [0,1,2,3,4,5])
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = np.log10(rhoH2D16) + np.log10(pow(hobs/h0,3.0))
+        errylow = np.log10(rhoH2D16) - np.log10(rhoH2loD16)
+        erryup  = np.log10(rhoH2upD16) - np.log10(rhoH2D16)
+        ax.errorbar(xobs[0:1], yobs[0:1], xerr=[errxlow[0:1],errxup[0:1]], yerr=[errylow[0:1],erryup[0:1]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Boselli+14" if caption == True else None)
+        ax.errorbar(xobs[1:2], yobs[1:2], xerr=[errxlow[1:2],errxup[1:2]], yerr=[errylow[1:2],erryup[1:2]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*',label="Fletcher+20" if caption == True else None)
+
+    for b in range(0,len(bands)):
+        ax = fig.add_subplot(subplots[b])
+        ytitle = ytit
+        if(b > 0):
+           ytitle=" "
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle, locators=(0.1, 1, 0.1, 1))
+        ax.text(xleg,yleg,bands[b],fontsize=12) 
+        for i in range(0,len(labels)):
+            inp = np.where(mmol_z[b,i,:] != 0)
+            x = zlist[inp]
+            y = mmol_z[b,i,inp]
+            print("H2 - Will print fitting parameters for band %s and selection %s" % (str(b), labels[i]))
+            y_smooth = smooth(x, y[0], 3)
+            ax.plot(x, y[0], linestyle='dotted',color=cols[i])
+            ax.plot(x, y_smooth, linestyle='solid',color=cols[i], label=labels[i] if b == 0 else None)
+
+        ax.plot(zlist, mmol_tot,  linestyle='solid',color='k')
+        if(b == 1):
+           load_observations_h2(ax, obsdir, h0, caption=True)
+        else:
+           load_observations_h2(ax, obsdir, h0, caption=False)
+        if(b == 0):
+           common.prepare_legend(ax, cols, loc=3)
+        if(b == 1):
+           common.prepare_legend(ax, ['k','k','k','k'], loc=3)
+
+    common.savefig(outdir, fig, 'H2_evolution_SMG_contribution.pdf')
+
+
+    fig = plt.figure(figsize=(12,2.5))
+    ytit = "$\\rm log_{10}(fraction)$"
+    xtit = "redshift"
+    xmin, xmax, ymin, ymax = 0, 10, -2.5, 0
+    xleg = xmax - 0.3 * (xmax - xmin)
+    yleg = ymin + 0.1 * (ymax - ymin)
+
+    for b in range(0,len(bands)):
+        ax = fig.add_subplot(subplots[b])
+        ytitle = ytit
+        if(b > 0):
+           ytitle=" "
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle, locators=(0.1, 1, 0.1, 1))
+        ax.text(xleg,yleg,bands[b],fontsize=12) 
+        for i in range(0,len(labels)):
+            inp = np.where(mmol_z[b,i,:] != 0)
+            y = mmol_z[b,i,inp]
+            y_smooth = smooth(zlist[inp], y[0], 3)
+            y1 = mmol_z[b,i,inp] - mmol_tot[inp]
+            y2 = y_smooth - mmol_tot[inp]
+            ax.plot(zlist[inp], y1[0], linestyle='dotted',color=cols[i])
+            ax.plot(zlist[inp], y2, linestyle='solid',color=cols[i])
+        x=[0,10]
+        y=[-1,-1]
+        ax.plot(x,y,linestyle='dotted',color='k')
+        fig.subplots_adjust(bottom=0.25)
+
+    common.savefig(outdir, fig, 'fractional_H2_evolution_SMG_contribution.pdf')
+
+
+def plot_occupation_massive_halos(plt, outdir, obsdir, frac_mvir_occupation):
+
+    fig = plt.figure(figsize=(5,4.5))
+    ytit = "$\\rm f_{\\rm occupation}$"
+    xtit = "redshift"
+    xmin, xmax, ymin, ymax = 0, 10, 0, 1
+    xleg = xmax - 0.3 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    subplots = [131, 132, 133]
+    bands = ['band-7', 'band-6', 'band-4']
+    cols = ['MediumTurquoise','YellowGreen', 'Crimson']
+
+    ax = fig.add_subplot(111)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 0.1))
+    ax.text(xleg,yleg,'S>1 mJy',fontsize=12) 
+
+    for b in range(0,len(bands)):
+        ax.plot(zlist, frac_mvir_occupation[b,:], linestyle='solid',color=cols[b], label=bands[b])
+    common.prepare_legend(ax, cols, loc=3)
+    common.savefig(outdir, fig, 'MassiveHalosContribution.pdf')
+
+
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
@@ -128,7 +343,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities',
                            'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly', 'sfr_disk', 'sfr_burst', 'type', 
                            'mgas_disk', 'mgas_bulge','matom_disk', 'mmol_disk', 
-                           'matom_bulge', 'mmol_bulge')}
+                           'matom_bulge', 'mmol_bulge', 'mvir_hosthalo', 'id_halo_tree')}
 
     file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5"
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
@@ -137,33 +352,38 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     #bands of interest band-7, band-6, band-4
     selec_alma = (29, 30, 32)
-    flux_selec = (1e-10, 1e-2, 1e-1, 0.5) #to look at 0.01<S<0.1, 0.1<S<1, S>1mJy
+    flux_selec = (1e-10, 1e-2, 1e-1, 1.0) #to look at 0.01<S<0.1, 0.1<S<1, S>1mJy
 
     sfr_z = np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
     mmol_z = np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
     sfr_tot = np.zeros(shape = (len(zlist)))
     mmol_tot = np.zeros(shape = (len(zlist)))
+    frac_mvir_occupation = np.zeros(shape = (len(selec_alma), len(zlist)))
+    mvir_occupation = np.zeros(shape = (len(zlist)))
 
     for index, snapshot in enumerate(redshift_table[zlist]):
+        print("Will read snapshot %s" % (str(snapshot)))
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         seds = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed, subvols, file_hdf5_sed)
         seds_nod = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
         seds_ap = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_ap, subvols, file_hdf5_sed)
 
-        (volh, h0) = prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma)
+        (volh, h0) = prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation)
 
     def take_log(x,v,h):
-        x = x / (v * h**3.0)
+        x = x / (v / h**3.0)
         ind = np.where(x > 0)
         x[ind] = np.log10(x[ind])
         return x
 
     sfr_z = take_log(sfr_z, volh, h0)
+    mmol_z = take_log(mmol_z, volh, h0)
     sfr_tot = take_log(sfr_tot, volh, h0)
     mmol_tot = take_log(mmol_tot, volh, h0)
 
-    print(sfr_z[2,0,:], sfr_z[2,1,:], sfr_z[2,2,:])
-    plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot)
+    #print(zlist,sfr_z[2,3,:])
+    plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot, h0)
+    #plot_occupation_massive_halos(plt, outdir, obsdir, frac_mvir_occupation)
 
 if __name__ == '__main__':
     main(*common.parse_args())

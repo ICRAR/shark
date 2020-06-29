@@ -1,0 +1,4 @@
+#The z=0 point is from Boselli et al. (2014, A&A, 564, A66) and Saintonge et al. (2018)
+#z zlow zup rhoH2[Msun/Mpc^3] rhoH2low rhoH2up
+0.02 0.01 0.05 1.023774E7 5492827.0 1.6768329E7
+0.030 0 0.06 2.2e7 1.4e7 3e7

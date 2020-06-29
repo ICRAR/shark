@@ -93,7 +93,8 @@ class Constraint(object):
                 'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                 'mgas_metals_disk', 'mgas_metals_bulge',
                 'mstars_metals_disk', 'mstars_metals_bulge', 'type',
-                'mvir_hosthalo', 'rstar_bulge')
+                'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers',
+                'mstars_burst_diskinstabilities')
         }
 
         for index, z in enumerate(self.z):
@@ -106,7 +107,7 @@ class Constraint(object):
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
                              zeros1(), zeros4(), zeros4(), zeros2(), zeros5(),
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
-                             zeros1(), hist_smf_err, hist_HImf_err)
+                             zeros1(), hist_smf_err, hist_HImf_err, zeros3())
 
         #########################
         # take logs
@@ -254,10 +255,12 @@ class SMF_z0(SMF):
 
     def get_obs_x_y_err(self, _):
 
+        hobs = 0.7
+        h0 = 0.6751
         lm, p, dpdn, dpup = self.load_observation('mf/SMF/SMF_Bernardi2013_SerExp.data', cols=[0,1,2,3])
         indx = np.where(p > 0)
-        x_obs = lm[indx]
-        y_obs = np.log10(p[indx])
+        x_obs = lm[indx] + 2.0 * np.log10(hobs/h0)
+        y_obs = np.log10(p[indx]) - 3.0 * np.log10(hobs/h0)
         ytemp = p[indx] - dpdn[indx]
         temp = np.less(ytemp, 0)
 

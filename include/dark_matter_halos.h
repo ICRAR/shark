@@ -30,8 +30,6 @@
 #include <utility>
 #include <vector>
 
-#include <gsl/gsl_sf_lambert.h>
-
 #include "mixins.h"
 #include "numerical_constants.h"
 #include "components.h"
@@ -121,7 +119,7 @@ public:
 	double v2disk (double x, double m, double c, double r);
 	double v2bulge (double x, double m, double c, double r);
 
-	void generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo);
+	void generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo, const Galaxy &galaxy);
 
 protected:
 	DarkMatterHaloParameters params;

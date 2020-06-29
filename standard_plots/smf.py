@@ -209,6 +209,9 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
             y = hist_smf[idx,:]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'r', label='all galaxies' if idx == 0 else None)
+            print('#redshift', z)
+            for a,b in zip(xmf[ind],y[ind]):
+                print(a,b)
             y = hist_smf_cen[idx,:]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'b', linestyle='dotted', label ='centrals' if idx == 0 else None)
@@ -433,12 +436,16 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
         y = hist_HImf[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'k',  label ='all galaxies')
+        print("Will print the HI MF")
+        for a,b in zip(xmf[ind],y[ind]):
+            print(a,b)
         y = hist_HImf_cen[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'b', linestyle='dotted', label ='centrals')
         y = hist_HImf_sat[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='satellites')
+
 
     pHI_GD14 = common.load_observation(obsdir, 'Models/SharkVariations/HIH2MassFunctions_OtherModels.dat', [0])
 
@@ -572,6 +579,10 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
         y = hist_H2mf[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'k')
+        print("Will print the H2 MF")
+        for a,b in zip(xmf[ind],y[ind]):
+            print(a,b)
+
         y = hist_H2mf_cen[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'b', linestyle='dotted')
@@ -1225,7 +1236,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     ind = np.where((mdisk+mbulge) > 0.0)
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
     logger.debug('number of galaxies with mstars>0 and max mass: %d, %d', len(mass[ind]), max(mass[ind]))
-
+    
     H, _ = np.histogram(mass,bins=np.append(mbins,mupp))
     hist_smf[index,:] = hist_smf[index,:] + H
     ran_err = np.random.normal(0.0, 0.25, len(mass))

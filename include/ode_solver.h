@@ -61,6 +61,12 @@ public:
 	 */
 	using ode_evaluator = int (*)(double, const double y[], double f[], void *);
 
+	/// Simple structure holding a user-provided evaluation function and params
+	struct evaluator_and_params {
+		ode_evaluator evaluator;
+		void *user_params;
+	};
+
 	/**
 	 * Creates a new ODESolver
 	 *
@@ -91,6 +97,7 @@ public:
 private:
 	std::unique_ptr<gsl_odeiv2_system> ode_system;
 	std::unique_ptr<gsl_odeiv2_driver, gsl_odeiv2_driver_deleter> driver;
+	evaluator_and_params wrapped_params;
 };
 
 }  // namespace shark

@@ -34,7 +34,13 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside):
     OmegaM = 0.3121
 
     (h0, _, mdisk, mbulge, mBH, mgas, mgas_bulge, mhot,
-     mreheated, mhalo, typeg) = hdf5_data
+     mreheated, mhalo, typeg, idtree) = hdf5_data
+
+    print("number of unique halos", len(np.unique(idtree)))
+    #select most massive halos
+    centrals = np.where(typeg == 0)
+    print("number of halos with types==0", len(mhalo[centrals]))
+
 
     ind = np.where((typeg <= 0) & (mdisk+mbulge > 0))
     massgal[index,:] = us.wmedians_2sigma(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
@@ -262,7 +268,7 @@ def main(modeldir, outdir, redshift_table, subvols):
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'm_bh', 'mgas_disk',
                            'mgas_bulge', 'mhot', 'mreheated', 'mvir_hosthalo',
-                           'type')}
+                           'type', 'id_halo_tree')}
 
     zlist = (0, 0.5, 1, 2, 3, 4)
     snapshots = redshift_table[zlist]
