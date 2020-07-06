@@ -95,7 +95,11 @@ public:
 	Galaxy &emplace_galaxy(Ts && ... args)
 	{
 		galaxies.emplace_back(std::forward<Ts>(args)...);
-		return galaxies.back();
+
+		auto &new_galaxy = galaxies.back();
+		new_galaxy.birth_snapshot = snapshot;
+		return new_galaxy;
+
 	}
 
 	/** Returns a pointer to the central galaxy. If no central galaxy is found

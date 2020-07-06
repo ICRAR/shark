@@ -433,16 +433,6 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 	/*Here you could include the physics that allow halos to speak to each other. This could be useful e.g. during reionisation.*/
 	//do_stuff_at_halo_level(all_halos_this_snapshot);
 
-	if (write_galaxies)
-	{
-		// Note that the output is being done at "snapshot + 1". This is because
-		// we don't evolve galaxies AT snapshot "i" but FROM snapshot "i" TO
-		// snapshot "i+1", and therefore at this point in time (after the actual
-		// evolution) we consider our galaxies to be at snapshot "i+1"
-		LOG(info) << "Write output files for evolution from snapshot " << snapshot << " to " << snapshot + 1;
-		writer->write(snapshot + 1, all_halos_this_snapshot, all_baryons, molgas_per_gal);
-	}
-
 	auto duration_millis = t.get() / 1000 / 1000;
 
 	// Some high-level ODE and integration iteration count statistics
@@ -471,6 +461,31 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 	/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 	LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
 	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, snapshot, all_baryons);
+
+	// Collect next snapshot's halos across all merger trees
+	// We keep them sorted so when output files are created the order in which
+	// information appears is the same regardless of how many threads were used
+	std::vector<HaloPtr> all_halos_next_snapshot;
+	for (auto &merger_trees: all_trees) {
+		for (auto &tree: merger_trees) {
+			const auto &halos = tree->halos_at(snapshot + 1);
+			all_halos_next_snapshot.insert(all_halos_next_snapshot.end(), halos.begin(), halos.end());
+		}
+	}
+
+	if (write_galaxies)
+	{
+		// Note that the output is being done at "snapshot + 1". This is because
+		// we don't evolve galaxies AT snapshot "i" but FROM snapshot "i" TO
+		// snapshot "i+1", and therefore at this point in time (after the actual
+		// evolution) we consider our galaxies to be at snapshot "i+1"
+		LOG(info) << "Write output files for evolution from snapshot " << snapshot << " to " << snapshot + 1;
+		writer->write(snapshot + 1, all_halos_next_snapshot, all_baryons, molgas_per_gal);
+	}
+
+	/*reset instantaneous galaxy properties to 0 to initiate calculation at subsequent snapshot*/
+	LOG(debug) << "Reseting all instantaneous galaxy properties to 0 at snapshot " << snapshot;
+	reset_instantaneous_galaxy_properties(all_halos_next_snapshot, snapshot);
 
 }
 
