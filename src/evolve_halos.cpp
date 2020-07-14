@@ -90,17 +90,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 
 			// Make sure all SFRs and BH accretion rates (in mass and metals) are set to 0 for the next snapshot
 			for (auto &galaxy: subhalo->galaxies) {
-				galaxy.sfr_bulge_mergers  = 0;
-				galaxy.sfr_z_bulge_mergers= 0;
-				galaxy.sfr_bulge_diskins  = 0;
-				galaxy.sfr_z_bulge_diskins= 0;
-				galaxy.sfr_z_disk         = 0;
-				galaxy.sfr_disk           = 0;
-				galaxy.smbh.macc_sb       = 0;
-				galaxy.smbh.macc_hh       = 0;
-
-				//restart counter of mergers and disk instabilities.
-				galaxy.interaction.restore_interaction_item();
 				//restart descendant_id
 				galaxy.descendant_id = -1;
 			}
@@ -168,6 +157,32 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 
 }
 
+void reset_instantaneous_galaxy_properties(const std::vector<HaloPtr> &halos, int snapshot)
+{
+	// This function resets to 0 all galaxy properties that are instantaneous to the snapshot. This is done after the writing.
+
+	for(auto &halo: halos){
+		for(auto &subhalo: halo->all_subhalos()) {
+
+			// Make sure all SFRs and BH accretion rates (in mass and metals) are set to 0 for the next snapshot
+			for (auto &galaxy: subhalo->galaxies) {
+				galaxy.sfr_bulge_mergers  = 0;
+				galaxy.sfr_z_bulge_mergers= 0;
+				galaxy.sfr_bulge_diskins  = 0;
+				galaxy.sfr_z_bulge_diskins= 0;
+				galaxy.sfr_z_disk         = 0;
+				galaxy.sfr_disk           = 0;
+				galaxy.smbh.macc_sb       = 0;
+				galaxy.smbh.macc_hh       = 0;
+
+				//restart counter of mergers and disk instabilities.
+				galaxy.interaction.restore_interaction_item();
+			}
+		}
+	}
+
+}
+
 void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, SimulationParameters simulation_params, const std::vector<HaloPtr> &halos,
 		TotalBaryon &AllBaryons, int snapshot, const molgas_per_galaxy &molgas, double deltat){
 
@@ -185,7 +200,7 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
 	BaryonBase mH2_total;
 	BaryonBase mDM_total;
 
-        float SMBH_max = 0;
+	float SMBH_max = 0;
 
 	double SFR_total_disk = 0;
 	double SFR_total_burst = 0;

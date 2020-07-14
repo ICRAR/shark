@@ -107,6 +107,9 @@ public:
 	BaryonBase diskinstabilities_assembly_stars;
 	BlackHole smbh;
 
+	// save first snapshot in which galaxy appears.
+	int birth_snapshot;
+
 	//save average star formation rates and metallicities of the newly formed stars.
 	float sfr_disk = 0;
 	float sfr_bulge_mergers = 0;

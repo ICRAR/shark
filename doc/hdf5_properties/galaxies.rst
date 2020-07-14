@@ -76,6 +76,8 @@
 * ``rstar_bulge``: half-mass radius of the stellar bulge [cMpc/h]
 * ``rstar_disk``: half-mass radius of the stellar disk [cMpc/h]
 * ``sfr_burst``: star formation rate in the bulge [Msun/Gyr/h]
+* ``sfr_burst_diskins``: star formation rate in the bulge driven by disk instabilities [Msun/Gyr/h]
+* ``sfr_burst_mergers``: star formation rate in the bulge driven by galaxy mergers [Msun/Gyr/h]
 * ``sfr_disk``: star formation rate in the disk [Msun/Gyr/h]
 * ``specific_angular_momentum_bulge_gas``: specific angular momentum of the gas bulge [km/s * cMpc/h]
 * ``specific_angular_momentum_bulge_star``: specific angular momentum of the stellar bulge [km/s * cMpc/h]

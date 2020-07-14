@@ -222,6 +222,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	vector<float> sfr_disk;
 	vector<float> sfr_burst;
+	vector<float> sfr_burst_mergers;
+	vector<float> sfr_burst_diskins;
 	vector<float> mean_stellar_age;
 
 	vector<float> rdisk_gas;
@@ -300,38 +302,29 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	// Loop over all halos and subhalos to write galaxy properties
 	for (auto &halo: halos){
 
-		auto current_halo = halo;
-		if(halo->descendant){
-			current_halo = halo->descendant;
-		}
 
 		// assign properties of host halo
-		auto mhalo = current_halo->Mvir;
-		auto vhalo = current_halo->Vvir;
+		auto mhalo = halo->Mvir;
+		auto vhalo = halo->Vvir;
 
 		halo_m.push_back(mhalo);
 		halo_v.push_back(vhalo);
-		halo_lambda.push_back(current_halo->lambda);
-		halo_concentration.push_back(current_halo->concentration);
-		age_80_halo.push_back(current_halo->age_80);
-		age_50_halo.push_back(current_halo->age_50);
-		halo_id.push_back(current_halo->id);
+		halo_lambda.push_back(halo->lambda);
+		halo_concentration.push_back(halo->concentration);
+		age_80_halo.push_back(halo->age_80);
+		age_50_halo.push_back(halo->age_50);
+		halo_id.push_back(halo->id);
 		halo_final_m.push_back(halo->final_halo()->Mvir);
 
 		for (auto &subhalo: halo->all_subhalos()){
 
-			auto current_subhalo = subhalo;
-			if(subhalo->descendant){
-				current_subhalo = subhalo->descendant;
-			}
-
-			host_id.push_back(current_halo->id);
+			host_id.push_back(halo->id);
 
 			// assign properties of host subhalo (note that if these subhalos have descendants, then we assign those properties)
-			auto msubhalo = current_subhalo->Mvir;
-			auto cnfw     = current_subhalo->concentration;
-			auto lambda   = current_subhalo->lambda;
-			auto vvir_sh  = current_subhalo->Vvir;
+			auto msubhalo = subhalo->Mvir;
+			auto cnfw     = subhalo->concentration;
+			auto lambda   = subhalo->lambda;
+			auto vvir_sh  = subhalo->Vvir;
 
 			// Assign baryon properties of subhalo (note that here we use the subhalo as galaxies and baryons have not yet been transferred to the descendant)
 			auto hot_subhalo = subhalo->hot_halo_gas;
@@ -341,24 +334,27 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto stellarhalo = subhalo->stellar_halo;
 			auto msub_infall = subhalo->Mvir_infall;
 
-			descendant_id.push_back(current_subhalo->descendant_id);
-			infall_time_subhalo.push_back(current_subhalo->infall_t);
+			descendant_id.push_back(subhalo->descendant_id);
+			infall_time_subhalo.push_back(subhalo->infall_t);
 
 			int m = 0;
-			if(current_subhalo->main_progenitor){
+			if(subhalo->main_progenitor){
 				m = 1;
 			}
 			main.push_back(m);
-			id.push_back(current_subhalo->id);
+			id.push_back(subhalo->id);
 
-			L_x_subhalo.push_back(current_subhalo->L.x);
-			L_y_subhalo.push_back(current_subhalo->L.y);
-			L_z_subhalo.push_back(current_subhalo->L.z);
+			L_x_subhalo.push_back(subhalo->L.x);
+			L_y_subhalo.push_back(subhalo->L.y);
+			L_z_subhalo.push_back(subhalo->L.z);
 
 			for (auto &galaxy: subhalo->galaxies){
+				//ignore this galaxy if it will appear for the first time in the coming snapshot.
+				if(galaxy.birth_snapshot == snapshot) continue;
 
-				id_halo_tree.push_back(current_halo->id);
-				id_subhalo_tree.push_back(current_subhalo->id);
+
+				id_halo_tree.push_back(halo->id);
+				id_subhalo_tree.push_back(subhalo->id);
 
 				//Calculate molecular gas mass of disk and bulge, and specific angular momentum in atomic/molecular disk.
 				auto &molecular_gas = molgas_per_gal.at(galaxy.id);
@@ -394,10 +390,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				// Metals of the gas components.
 				mgas_metals_disk.push_back(galaxy.disk_gas.mass_metals);
 				mgas_metals_bulge.push_back(galaxy.bulge_gas.mass_metals);
-
 				// SFRs in disks and bulges.
 				sfr_disk.push_back(galaxy.sfr_disk);
 				sfr_burst.push_back(galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins);
+				sfr_burst_mergers.push_back(galaxy.sfr_bulge_mergers);
+				sfr_burst_diskins.push_back(galaxy.sfr_bulge_diskins);
 
 				// Black hole properties.
 				mBH.push_back(galaxy.smbh.mass);
@@ -453,7 +450,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				stellar_halo.push_back(mstellarhalo);
 				stellar_halo_metals.push_back(mzstellarhalo);
 
-
 				mvir_hosthalo.push_back(mhalo);
 				vvir_hosthalo.push_back(vhalo);
 
@@ -469,9 +465,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					mvir_gal = msubhalo;
 					c_sub    = cnfw;
 					l_sub    = lambda;
-					pos      = current_subhalo->position;
-					vel      = current_subhalo->velocity;
-					L        = current_subhalo->L.unit() * galaxy.angular_momentum();
+					pos      = subhalo->position;
+					vel      = subhalo->velocity;
+					L        = subhalo->L.unit() * galaxy.angular_momentum();
 					vvir_subhalo.push_back(vvir_sh);
 					mvir_subhalo.push_back(mvir_gal);
 					cnfw_subhalo.push_back(c_sub);
@@ -486,7 +482,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				}
 				else{
 					// In case of type 2 galaxies assign negative positions, velocities and angular momentum.
-					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy.angular_momentum(), current_halo, galaxy);
+					darkmatterhalo->generate_random_orbits(pos, vel, L, galaxy.angular_momentum(), halo, galaxy);
 					mvir_subhalo.push_back(galaxy.msubhalo_type2);
 					cnfw_subhalo.push_back(galaxy.concentration_type2);
 					lambda_subhalo.push_back(galaxy.lambda_type2);
@@ -536,7 +532,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 				id_halo.push_back(j);
 				id_subhalo.push_back(i);
-
 			}
 			i++;
 		}
@@ -589,6 +584,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mBH_acc_sb);
 	REPORT(sfr_disk);
 	REPORT(sfr_burst);
+	REPORT(sfr_burst_mergers);
+	REPORT(sfr_burst_diskins);
 	REPORT(rdisk_gas);
 	REPORT(rbulge_gas);
 	REPORT(sAM_disk_gas);
@@ -766,6 +763,12 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "star formation rate in the bulge [Msun/Gyr/h]";
 	file.write_dataset("galaxies/sfr_burst", sfr_burst, comment);
+
+	comment = "star formation rate in the bulge driven by galaxy mergers [Msun/Gyr/h]";
+	file.write_dataset("galaxies/sfr_burst_mergers", sfr_burst_mergers, comment);
+
+	comment = "star formation rate in the bulge driven by disk instabilities [Msun/Gyr/h]";
+	file.write_dataset("galaxies/sfr_burst_diskins", sfr_burst_diskins, comment);
 
 	comment = "black hole mass [Msun/h]";
 	file.write_dataset("galaxies/m_bh", mBH, comment);
@@ -995,6 +998,7 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot
 
 	comment = "total halo cold gas in the simulated box [Msun/h]";
 	file.write_dataset("global/mcold_halo",AllBaryons.get_masses(AllBaryons.mcold_halo), comment);
+
 	comment = "total mass of metals in the halo cold gas mass in the simulated box [Msun/h]";
 	file.write_dataset("global/mcold_halo_metals",AllBaryons.get_metals(AllBaryons.mcold_halo), comment);
 
@@ -1052,6 +1056,8 @@ void HDF5GalaxyWriter::write_histories (int snapshot, const std::vector<HaloPtr>
 			for (auto &halo: halos){
 				for (auto &subhalo: halo->all_subhalos()){
 					for (auto &galaxy: subhalo->galaxies){
+						//ignore this galaxy if it will appear for the first time in the coming snapshot.
+						if(galaxy.birth_snapshot == snapshot) continue;
 
 						vector<float> sfh_gal_disk;
 						vector<float> star_metals_gal_disk;
