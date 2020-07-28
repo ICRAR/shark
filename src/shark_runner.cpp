@@ -470,6 +470,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 	// We keep them sorted so when output files are created the order in which
 	// information appears is the same regardless of how many threads were used
 	auto all_halos_next_snapshot = all_halos_at_snapshot(all_trees, snapshot + 1);
+	sort_by_id(all_halos_next_snapshot);
 
 	if (write_galaxies)
 	{
