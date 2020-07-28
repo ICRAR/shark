@@ -18,14 +18,18 @@
 
 import argparse
 import functools
+import logging
 
 import h5py
 import numpy as np
 
 
+logger = logging.getLogger(__name__)
+
 def _check(sort, name, a, b, equality_condition):
     if sort:
         a, b = np.sort(a), np.sort(b)
+    logger.info("Comparing %s", name)
     are_equal = equality_condition(a, b)
     if not all(are_equal):
         not_equal = np.logical_not(are_equal)
@@ -111,4 +115,5 @@ def main():
         assert_galaxies_equal(check, galaxies_one, galaxies_two, inclusions, exclusions)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     main()
