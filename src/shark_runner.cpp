@@ -449,7 +449,6 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 
 	// Collect this snapshot's halos across all merger trees
 	auto all_halos_this_snapshot = all_halos_at_snapshot(all_trees, snapshot);
-	sort_by_id(all_halos_this_snapshot);
 
 	bool write_galaxies = exec_params.output_snapshot(snapshot + 1);
 
