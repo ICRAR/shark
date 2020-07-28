@@ -416,7 +416,7 @@ std::vector<HaloPtr> all_halos_at_snapshot(const std::vector<std::vector<MergerT
 
 void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<MergerTreePtr>> &all_trees, int snapshot)
 {
-	Timer t;
+	Timer snapshot_evolution_t;
 
 	for(auto &o: thread_objects) {
 		o.physical_model->reset_ode_evaluations();
@@ -462,7 +462,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 	track_total_baryons(*cosmology, exec_params, simulation_params, all_halos_this_snapshot, all_baryons, snapshot, molgas_per_gal, delta_t);
 	LOG(info) << "Total baryon amounts tracked in " << tracking_t;
 
-	log_snapshot_statistics(snapshot, all_halos_this_snapshot, t);
+	log_snapshot_statistics(snapshot, all_halos_this_snapshot, snapshot_evolution_t);
 
 	/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 	LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
