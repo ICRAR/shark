@@ -17,26 +17,30 @@
 #
 
 import argparse
+import functools
 
 import h5py
 import numpy as np
 
 
-def _check(name, a, b, equality_condition):
-    if not all(equality_condition):
-        not_equal = np.logical_not(equality_condition)
+def _check(sort, name, a, b, equality_condition):
+    if sort:
+        a, b = np.sort(a), np.sort(b)
+    are_equal = equality_condition(a, b)
+    if not all(are_equal):
+        not_equal = np.logical_not(are_equal)
         raise AssertionError(
             'Galaxies dataset %s not equal: %r / %r'
             % (name, a[not_equal], b[not_equal])
         )
 
-def full_dataset_equality(name, a, b):
-    _check(name, a, b, np.equal(a, b))
+def full_dataset_equality(sort, name, a, b):
+    _check(sort, name, a, b, np.equal)
 
 
-def lenient_dataset_equality(name, a, b):
-    a, b = np.sort(a), np.sort(b)
-    _check(name, a, b, np.isclose(a, b, equal_nan=True))
+def lenient_dataset_equality(sort, name, a, b):
+    isclose = lambda a, b: np.isclose(a, b, equal_nan=True)
+    _check(sort, name, a, b, isclose)
 
 
 def read_args():
@@ -60,6 +64,9 @@ def read_args():
     arg_parser.add_argument(
         '-i', '--include-dataset', action='append',
         help='Datasets to include in comparison')
+    arg_parser.add_argument(
+        '-s', '--sort', action='store_true',
+        help='Sort each dataset before comparison')
     return arg_parser.parse_args()
 
 
@@ -94,6 +101,7 @@ def main():
     exclusions = args.exclude_dataset or []
     inclusions = args.include_dataset or []
     check = lenient_dataset_equality if args.lenient else full_dataset_equality
+    check = functools.partial(check, args.sort)
     model_one, model_two = h5py.File(args.models[0], 'r'), h5py.File(args.models[1], 'r')
     galaxies_one, galaxies_two = model_one['galaxies'], model_two['galaxies']
 
