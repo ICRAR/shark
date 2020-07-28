@@ -374,6 +374,18 @@ evolution_times SharkRunner::impl::evolve_merger_tree(const MergerTreePtr &tree,
 	return times;
 }
 
+std::vector<HaloPtr> all_halos_at_snapshot(const std::vector<std::vector<MergerTreePtr>> &all_trees, int snapshot)
+{
+	std::vector<HaloPtr> halos_at_snapshot;
+	for (auto &merger_trees: all_trees) {
+		for (auto &tree: merger_trees) {
+			const auto &halos = tree->halos_at(snapshot);
+			halos_at_snapshot.insert(halos_at_snapshot.end(), halos.begin(), halos.end());
+		}
+	}
+	return halos_at_snapshot;
+}
+
 void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<MergerTreePtr>> &all_trees, int snapshot)
 {
 	Timer t;
@@ -408,15 +420,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 	add_to_total(times);
 
 	// Collect this snapshot's halos across all merger trees
-	// We keep them sorted so when output files are created the order in which
-	// information appears is the same regardless of how many threads were used
-	std::vector<HaloPtr> all_halos_this_snapshot;
-	for (auto &merger_trees: all_trees) {
-		for (auto &tree: merger_trees) {
-			const auto &halos = tree->halos_at(snapshot);
-			all_halos_this_snapshot.insert(all_halos_this_snapshot.end(), halos.begin(), halos.end());
-		}
-	}
+	auto all_halos_this_snapshot = all_halos_at_snapshot(all_trees, snapshot);
 	sort_by_id(all_halos_this_snapshot);
 
 	bool write_galaxies = exec_params.output_snapshot(snapshot + 1);
@@ -465,13 +469,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 	// Collect next snapshot's halos across all merger trees
 	// We keep them sorted so when output files are created the order in which
 	// information appears is the same regardless of how many threads were used
-	std::vector<HaloPtr> all_halos_next_snapshot;
-	for (auto &merger_trees: all_trees) {
-		for (auto &tree: merger_trees) {
-			const auto &halos = tree->halos_at(snapshot + 1);
-			all_halos_next_snapshot.insert(all_halos_next_snapshot.end(), halos.begin(), halos.end());
-		}
-	}
+	auto all_halos_next_snapshot = all_halos_at_snapshot(all_trees, snapshot + 1);
 
 	if (write_galaxies)
 	{
