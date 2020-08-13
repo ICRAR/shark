@@ -33,6 +33,8 @@ zlist=np.array([0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20
 RExp     = 1.67
 MpcToKpc = 1e3
 G        = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
+c_light  = 299792458.0 #m/s
+PI       = 3.141592654
 
 mlow = 6.5
 mupp = 12.5
@@ -67,31 +69,65 @@ def smooth(x, y, ndeg):
 
     return y_smooth
 
-def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation):
+def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zsnap, obsdir):
 
+    #read properties from hdf5 file
     (h0, volh, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      sfr_disk, sfr_bulge, typeg,  mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, mmol_bulge, mvir_hosthalo, idtree) = hdf5_data
     
+    #compute the total SFR and molecular gas mass in the box
     sfr_tot[index] = np.sum((sfr_disk + sfr_bulge) / 1e9 / h0)
     mmol_tot[index] = np.sum((mmol_bulge + mmol_disk) / h0)
 
+    #define total stellar mass, bulde-to-total stellar mass ratio and read in SED files
     mstars_tot = (mdisk+mbulge)/h0
     bt = mbulge / (mdisk+mbulge)
     ind = np.where(mstars_tot > 0)
     mstars = mstars_tot[ind]
-    SEDs_dust_total = seds[4]
-    SEDs_vodust_total = seds_nod[1]
-    SEDs_app = seds_ap[4]
+    SEDs_dust_total = seds[4] #total absolute magnitudes with dust
+    SEDs_vodust_total = seds_nod[1] #total absolute magnitudes no dust
+    SEDs_app = seds_ap[4] #apparent magnitudes with dust
 
-    print(SEDs_app.shape)
+    #print some various properties of H-dropout galaxies (band = 9 is H-band and 13 is IRAC4.5microns)
+    ind = np.where((SEDs_app[9,:] > 27) & (SEDs_app[13,:] < 24))
+    print("Number of H-dropouts", len(mdisk[ind]))
+    print("Volume density of H-dropouts", len(mdisk[ind])/(volh/h0**3.0))
+    print("median stellar mass", np.median(mdisk[ind] + mbulge[ind])/h0)
+    print("median SFR", np.median(sfr_disk[ind] + sfr_bulge[ind])/h0/1e9)
+
+
+    #select galaxies with stellar masses > 0
     ind = np.where(mstars_tot > 0)
     sfrs_gals = (sfr_disk[ind] + sfr_bulge[ind]) / 1e9 / h0
     mmol_gals = (mmol_bulge[ind] + mmol_disk[ind])/h0
     types = typeg[ind]
     mvir = mvir_hosthalo[ind]
     idtrees = idtree[ind]
+
     #calculate total SFR of galaxies selected in different ALMA bands and different fluxes
-    #np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
+    def calculate_lir(SEDs_dust_total, obsdir):
+        file = obsdir+'/Models/Shark_SED_bands.dat'
+        lambda_bands = np.loadtxt(file,usecols=[0],unpack=True)
+        freq_bands   = c_light / (lambda_bands * 1e-10) #in Hz
+
+        bands = [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 30] #from 8mu to 1000mu
+        lir = np.zeros(shape = (len(SEDs_app[0,:])))
+        fluxes = 10.0**(SEDs_dust_total[:,0,:] / -2.5) * 3631.0 * 1e-23 * 4.0 * PI * (3.086e19)**2.0 / 3.846e33 #in Lsun Hz−1
+        print(fluxes.shape) 
+        for i in range(0,len(fluxes[0,:])):
+            for b in range(0,len(bands)-1):
+                delta_freq = abs(freq_bands[bands[b]] - freq_bands[bands[b+1]])
+                lir[i] = lir[i] + fluxes[bands[b], i] * delta_freq + abs(fluxes[bands[b+1], i] - fluxes[bands[b], i]) * delta_freq
+        return lir
+    ind = np.where(sfrs_gals > 50)
+    lir_50sfr = calculate_lir(SEDs_dust_total[:,ind], obsdir)
+
+    #compute the number density of bright IR galaxies (LIR > 3e12Lsun)
+    ind = np.where(lir_50sfr > 3e12)
+    numberdensity = (len(lir_50sfr[ind]) + 0.0) / (volh * h0**3.0)
+    print('number density of galaxies with LIR>3e12Msun is', numberdensity, ' at redshift ', zsnap)
+
+    #compute the total SFR and molecular gas mass contriubution of galaxies selected in different ALMA bands
     for b in range(0,len(selec_alma)):
         flux_gals_band = 10.0**(SEDs_app[selec_alma[b],:] / -2.5) * 3631.0 * 1e3 #in mJy
         for f in range(0,len(flux_selec)):
@@ -243,6 +279,20 @@ def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot,
         erryup  = np.log10(rhoH2upD16) - np.log10(rhoH2D16)
         ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Riechers+19" if caption == True else None)
 
+        #ALMACAL-CO
+        zloD16, zupD16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Hamanowicz20_H2.dat', [0,1,3,4])
+        zD16 =(zupD16 + zloD16)/2.0
+        rhoH2D16 = (rhoH2loD16 + rhoH2upD16)/2.0
+        hobs = 0.7
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = rhoH2D16 + np.log10(pow(hobs/h0,3.0))
+        errylow = rhoH2D16 - rhoH2loD16
+        erryup  = rhoH2upD16 - rhoH2D16
+        ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Hamanowicz+20" if caption == True else None)
+
+
         #z0 data
         zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/H2_z0.dat', [0,1,2,3,4,5])
         xobs    = zD16
@@ -350,6 +400,15 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     fields_sed_nod = {'SED/ab_nodust': ('disk','total')}
     fields_sed_ap = {'SED/ap_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
 
+    #Bands information:
+    #(0): "FUV_GALEX", "NUV_GALEX", "u_SDSS", "g_SDSS", "r_SDSS", "i_SDSS",
+    #(6): "z_SDSS", "Y_VISTA", "J_VISTA", "H_VISTA", "K_VISTA", "W1_WISE",
+    #(12): "I1_Spitzer", "I2_Spitzer", "W2_WISE", "I3_Spitzer", "I4_Spitzer",
+    #(17): "W3_WISE", "W4_WISE", "P70_Herschel", "P100_Herschel",
+    #(21): "P160_Herschel", "S250_Herschel", "S350_Herschel", "S450_JCMT",
+    #(25): "S500_Herschel", "S850_JCMT", "Band9_ALMA", "Band8_ALMA",
+    #(29): "Band7_ALMA", "Band6_ALMA", "Band5_ALMA", "Band4_ALMA"
+
     #bands of interest band-7, band-6, band-4
     selec_alma = (29, 30, 32)
     flux_selec = (1e-10, 1e-2, 1e-1, 1.0) #to look at 0.01<S<0.1, 0.1<S<1, S>1mJy
@@ -368,7 +427,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         seds_nod = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
         seds_ap = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_ap, subvols, file_hdf5_sed)
 
-        (volh, h0) = prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation)
+        (volh, h0) = prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zlist[index], obsdir)
 
     def take_log(x,v,h):
         x = x / (v / h**3.0)
@@ -381,9 +440,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     sfr_tot = take_log(sfr_tot, volh, h0)
     mmol_tot = take_log(mmol_tot, volh, h0)
 
-    #print(zlist,sfr_z[2,3,:])
     plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot, h0)
-    #plot_occupation_massive_halos(plt, outdir, obsdir, frac_mvir_occupation)
+    plot_occupation_massive_halos(plt, outdir, obsdir, frac_mvir_occupation)
 
 if __name__ == '__main__':
     main(*common.parse_args())
