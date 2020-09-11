@@ -406,6 +406,9 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfr > 0)
     ax.plot(redshifts[ind], np.log10(sfr[ind]*pow(h0,2.0)), 'k', linewidth=1, label ='total')
+    print("SFR density of the Universe")
+    for a,b in zip(redshifts[ind],  np.log10(sfr[ind]*pow(h0,2.0))):
+        print(a,b)
 
     ind = np.where(sfrd > 0)
     ax.plot(redshifts[ind], np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='dashed', linewidth=1, label ='quiescent')
@@ -662,6 +665,10 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mH2den > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r')
+
+    print("H2 density of the Universe")
+    for a,b in zip(redshifts[ind],  np.log10(mH2den[ind]*pow(h0,2.0))):
+        print(a,b)
 
     z, h2_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 2])
     h2_modelvar_burst3 = h2_modelvar[0:179]

@@ -46,9 +46,12 @@ def prepare_data(hdf5_data, hdf5_data_subh, index):
     Omegab = 0.0491
     OmegaM = 0.3121
 
-    (h0, volh, mdisk, mbulge, mhalo, typeg, id_halo, mvir_subhalo, id_subhalo,  mHId, mHIb, m_bh) = hdf5_data
+    (h0, volh, mdisk, mbulge, mhalo, typeg, id_halo, mvir_subhalo, id_subhalo,  mHId, mHIb, m_bh, x, y, z) = hdf5_data
     (h0, volh, zinfall, idsubh) = hdf5_data_subh
     mHI = mHId + mHIb
+
+    ind = np.where(typeg == 2)
+    print(x[ind], y[ind], z[ind])
 
     ind = np.where((typeg == 0) & (mdisk+mbulge > 0) & (m_bh <= 0) & (mvir_subhalo > 1e11))
     print(np.median(mvir_subhalo[ind]), len(mvir_subhalo[ind]), np.median(mdisk[ind]+mbulge[ind]))
@@ -91,7 +94,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
                            'type','id_halo_tree', 
-                           'mvir_subhalo', 'id_subhalo_tree', 'matom_disk', 'matom_bulge','m_bh')}
+                           'mvir_subhalo', 'id_subhalo_tree', 'matom_disk', 'matom_bulge','m_bh',  'position_x', 'position_y', 'position_z')}
 
     fields_subh = {'subhalo': ('infall_time_subhalo', 'id')}
 

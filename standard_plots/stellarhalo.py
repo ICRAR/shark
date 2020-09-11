@@ -49,6 +49,17 @@ def prepare_data(hdf5_data, index, massstellarh, massstellarh_v2, hist_smf, hist
     (h0, volh, mdisk, mbulge, ms_halo, mhalo, typeg, ms_tidally_stripped, 
     id_halo, mvir_infall, mvir_subhalo, id_subhalo) = hdf5_data
 
+
+    ind = np.where(ms_tidally_stripped >= 0)
+    print(len(typeg[ind]))
+    ind = np.where((ms_tidally_stripped > 0) & (typeg == 0))
+    print(len(typeg[ind]))
+    ind = np.where((ms_tidally_stripped > 0) & (typeg == 1))
+    print(len(typeg[ind]))
+    ind = np.where((ms_tidally_stripped > 0) & (typeg == 2))
+    print(len(typeg[ind]))
+
+
     vol = volh/pow(h0,3.)  # In Mpc^3
 
     ids_halo = np.unique(id_halo)

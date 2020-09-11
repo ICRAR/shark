@@ -1211,10 +1211,12 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rstar_disk, mBH, mHI, mH2, 
      mgas_disk, mHI_bulge, mH2_bulge, mgas_bulge, mgas_metals_disk, mgas_metals_bulge, 
      mstars_metals_disk, mstars_metals_bulge, typeg, mvir_hosthalo, rstar_bulge, 
-     mbulge_mergers, mbulge_diskins) = hdf5_data
+     mbulge_mergers, mbulge_diskins, mbulge_mergers_assembly, mbulge_diskins_assembly) = hdf5_data
 
+    zstar = (mstars_metals_disk + mstars_metals_bulge) / (mdisk + mbulge)
+    rcomb = (rstar_disk * mdisk + rstar_bulge * mbulge) / (mdisk + mbulge) / h0 * 1e3
     mgas = mgas_disk+mgas_bulge
-    mgas_metals = mgas_metals_disk+mgas_metals_bulge
+    mgas_metals = mgas_metals_disk + mgas_metals_bulge
 
     mass          = np.zeros(shape = len(mdisk))
     mass_30kpc    = np.zeros(shape = len(mdisk))
@@ -1228,10 +1230,15 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     mass_mol_cen = np.zeros(shape = len(mdisk))
     mass_mol_sat = np.zeros(shape = len(mdisk))
 
-    #if (index == 0):
-    #    ind = np.where((mdisk+mbulge)/h0 > 1e8)
-    #    for a,b,c,d,e,f,g,h in zip(sfr_disk[ind]/h0/1e9, sfr_burst[ind]/h0/1e9, mdisk[ind]/h0, mbulge[ind]/h0, mHI[ind]/h0*XH, mH2[ind]/h0*XH, mHI_bulge[ind]/h0*XH, mH2_bulge[ind]/h0*XH):
-    #        print (a,b,c,d,e,f,g,h)
+    if (index == 0):
+        #ind = np.where((mdisk+mbulge)/h0 > 1e8)
+        #print('#sfr_disk sfr_bulge mdisk mbulge mHI_disk mH2_disk mHI_bulge mH2_bulge mburst_mergers mburst_diskins mbulge_mergers_assembly mbulge_diskins_assembly')
+        #for a,b,c,d,e,f,g,h,i,j,q,l in zip(sfr_disk[ind]/h0/1e9, sfr_burst[ind]/h0/1e9, mdisk[ind]/h0, mbulge[ind]/h0, mHI[ind]/h0*XH, mH2[ind]/h0*XH, mHI_bulge[ind]/h0*XH, mH2_bulge[ind]/h0*XH, mbulge_mergers[ind]/h0, mbulge_diskins[ind]/h0, mbulge_mergers_assembly[ind]/h0, mbulge_diskins_assembly[ind]/h0):
+        #    print (a,b,c,d,e,f,g,h,i,j,q,l)
+        ind = np.where((mdisk+mbulge)/h0 > 1e8)
+        print('#sfr mstellar zstar r50 type_galaxy')
+        for a,b,c,d,e in zip((sfr_disk[ind]+sfr_burst[ind])/h0/1e9, (mdisk[ind]+mbulge[ind])/h0, zstar[ind], rcomb[ind], typeg[ind]):
+            print (a,b,c,d,e)
 
     ind = np.where((mdisk+mbulge) > 0.0)
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
@@ -1456,7 +1463,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'mgas_metals_disk', 'mgas_metals_bulge',
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type', 
 			   'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers', 
-                           'mstars_burst_diskinstabilities')}
+                           'mstars_burst_diskinstabilities', 'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly')}
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)

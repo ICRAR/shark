@@ -52,7 +52,7 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
     yleg = ymax - 0.1 * (ymax-ymin)
     #ax.text(xleg, yleg, 'z=0')
 
-def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco):
+def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco, rhosfr):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
     stack  = functools.partial(us.stacking, xbins=xmf)
@@ -101,6 +101,7 @@ def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco):
     lfco_ind_this_z = np.zeros(shape = (len(rbins), len(x_cen), len(mbins)))
     codensity_ind_this_z = np.zeros(shape = (len(rbins), len(x_cen)))
     h2density_ind_this_z = np.zeros(shape = (len(rbins), len(x_cen)))
+    sfrdensity_ind_this_z = np.zeros(shape = (len(rbins), len(x_cen)))
 
     print ('number of clusters %d'% len(x_cen))
     #xyz distance
@@ -110,6 +111,7 @@ def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco):
         ind   = np.where((d_all < 1.5) & (co_total > 0) & (z_all < zdepth))
         co_total_in = co_total[ind]
         mh2total_in = (mH2[ind] + mH2_bulge[ind]) / h0 * XH
+        sfrtotal_in = sfr_tot[ind]
         d_all_in = d_all[ind]
         for r in range(0, len(rbins)):
             vol = PI * (rbins[r])**2.0 * (2.0 * zdepth)
@@ -121,33 +123,36 @@ def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco):
             lfco_ind_this_z[r,g,pos] = np.log10(lfco_ind_this_z[r,g,pos]/vol/dm)
             codensity_ind_this_z[r,g] = np.log10(np.sum(co_total_in[inr])/vol)
             h2density_ind_this_z[r,g] = np.log10(np.sum(mh2total_in[inr])/vol)
+            sfrdensity_ind_this_z[r,g] = np.log10(np.sum(sfrtotal_in[inr])/vol)
 
-    
+
     for r in range(0, len(rbins)):
         rhoco[:,index,r] = us.gpercentiles(x=codensity_ind_this_z[r,:])
-        rhoh2[:,index,r] = us.gpercentiles(x=h2density_ind_this_z[r,:]) 
+        rhoh2[:,index,r] = us.gpercentiles(x=h2density_ind_this_z[r,:])
+        rhosfr[:,index,r] = us.gpercentiles(x=sfrdensity_ind_this_z[r,:])
+ 
         for b in range(0, len(mbins)):
             lfco[:,index,b,r] = us.gpercentiles(x=lfco_ind_this_z[r,:,b])
 
     return (lfco_ind_this_z, codensity_ind_this_z)
 
-def plot_density_radii(plt, output_dir, zlist, rhoh2, rhoco):
+def plot_density_radii(plt, output_dir, zlist, rhoh2, rhoco, rhosfr):
 
     ###################################
     #   Plots global mass densities
-    fig = plt.figure(figsize=(6,7))
+    fig = plt.figure(figsize=(6,8))
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
-    xmin, xmax, ymin, ymax = 0.5, 3, 6, 13
+    xmin, xmax, ymin, ymax = 0.5, 5, 6, 13
     xtitle = [' ', '$\\rm redshift$']
-    ytitle = ['$\\rm log_{10}(\\rho_{\\rm LCO(1-0)} [K\\, km/s\\, pc^{2}\\, Mpc^{-3}])$', '$\\rm log_{10}(\\rho_{\\rm H_2} [M_{\\odot}\\, Mpc^{-3}])$']
+    ytitle = ['$\\rm log_{10}(\\rho_{\\rm LCO(1-0)} [K\\, km/s\\, pc^{2}\\, Mpc^{-3}])$', '$\\rm log_{10}(\\rho_{\\rm H_2} [M_{\\odot}\\, Mpc^{-3}])$', '$\\rm log_{10}(\\rho_{\\rm SFR} [M_{\\odot}\\, yr^{-1}\\, Mpc^{-3}]$)']
     xleg = xmax - 0.1 * (xmax - xmin)
     yleg = ymin + 0.1 * (ymax - ymin)
 
     cols = ('Crimson','Green','blue')
     labels = ('$r<2.5\\, \\rm cMpc$', '$r<5\\, \\rm cMpc$','$r<7.5\\, \\rm cMpc}$')
 
-    ax = fig.add_subplot(211)
+    ax = fig.add_subplot(311)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitle[0], ytitle[0], locators=(1, 1, 1))
 
     #ax.text(xleg, yleg, '$\\rm M_{\\rm halo} > 10^{14} M_{\odot}$')
@@ -160,14 +165,23 @@ def plot_density_radii(plt, output_dir, zlist, rhoh2, rhoco):
         ax.errorbar(zlist, rhoco[0,:,r], yerr=[rhoco[1,:,r], rhoco[2,:,r]], ls='None', mfc='None', ecolor =cols[r],  mec=cols[r],  marker='o', label=labels[r])
     common.prepare_legend(ax, cols, loc = 4)
 
-    ax = fig.add_subplot(212)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitle[1], ytitle[1], locators=(1, 1, 1))
+    ax = fig.add_subplot(312)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitle[0], ytitle[1], locators=(1, 1, 1))
     print('will print H2 density')
     for r in range(0, len(rbins)):
         for a,b,c,d in zip(zlist,  rhoh2[0,:,r], rhoh2[1,:,r], rhoh2[2,:,r]):
             print(a,b,c,d)
 
         ax.errorbar(zlist, rhoh2[0,:,r], yerr=[rhoh2[1,:,r], rhoh2[2,:,r]], ls='None', mfc='None', ecolor =cols[r],  mec=cols[r],  marker='o')
+
+    ax = fig.add_subplot(313)
+    common.prepare_ax(ax, xmin, xmax, -2, 1, xtitle[1], ytitle[2], locators=(1, 1, 1))
+    print('will print SFR density')
+    for r in range(0, len(rbins)):
+        for a,b,c,d in zip(zlist,  rhosfr[0,:,r], rhosfr[1,:,r], rhosfr[2,:,r]):
+            print(a,b,c,d)
+
+        ax.errorbar(zlist, rhosfr[0,:,r], yerr=[rhosfr[1,:,r], rhosfr[2,:,r]], ls='None', mfc='None', ecolor =cols[r],  mec=cols[r],  marker='o')
 
     common.savefig(output_dir, fig, "cluster_H2CO10density.pdf")
 
@@ -209,7 +223,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     plt = common.load_matplotlib()
 
-    zlist = (1, 1.5, 2, 2.5)
+    zlist = (0.5, 1, 1.5, 2, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)
 
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge',
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
@@ -221,15 +235,16 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     lfco = np.zeros(shape = (3, len(zlist), len(mbins), len(rbins)))
     rhoco = np.zeros(shape = (3, len(zlist), len(rbins)))
     rhoh2 = np.zeros(shape = (3, len(zlist), len(rbins)))
+    rhosfr = np.zeros(shape = (3, len(zlist), len(rbins)))
 
     for index, snapshot in enumerate(redshift_table[zlist]):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
         hdf5_data_co = common.read_co_data(model_dir, snapshot, fields_co, subvols)
-        (lfco_ind_this_z, codensity_ind_this_z) = prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco)
+        (lfco_ind_this_z, codensity_ind_this_z) = prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco, rhosfr)
 
-    plot_density_radii(plt, output_dir, zlist, rhoh2, rhoco)
-    plot_clusters_lco(plt, output_dir, zlist, lfco)
+    plot_density_radii(plt, output_dir, zlist, rhoh2, rhoco, rhosfr)
+    #plot_clusters_lco(plt, output_dir, zlist, lfco)
 
 if __name__ == '__main__':
     main(*common.parse_args())
