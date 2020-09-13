@@ -30,6 +30,9 @@ import analysis
 import common
 import numpy as np
 import smf
+import sizes
+import sizes_with_icl
+import global_quantities
 
 
 logger = logging.getLogger(__name__)
@@ -85,6 +88,7 @@ class Constraint(object):
         hist_HImf = zeros3()
         hist_smf_err = zeros3()
         hist_HImf_err = zeros3()
+        hist_smf_comp = np.zeros(shape = (1, 4, len(mbins)))
 
         fields = {
             'galaxies': (
@@ -93,7 +97,7 @@ class Constraint(object):
                 'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                 'mgas_metals_disk', 'mgas_metals_bulge',
                 'mstars_metals_disk', 'mstars_metals_bulge', 'type',
-                'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers',
+                'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers', 
                 'mstars_burst_diskinstabilities')
         }
 
@@ -107,7 +111,7 @@ class Constraint(object):
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
                              zeros1(), zeros4(), zeros4(), zeros2(), zeros5(),
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
-                             zeros1(), hist_smf_err, hist_HImf_err, zeros3())
+                             zeros1(), hist_smf_err, hist_HImf_err, hist_smf_comp)
 
         #########################
         # take logs
@@ -119,7 +123,68 @@ class Constraint(object):
         hist_HImf_err[ind] = abs(np.log10(hist_HImf[ind]) - np.log10(hist_HImf_err[ind]))
         hist_HImf[ind] = np.log10(hist_HImf[ind])
 
-        return h0, hist_smf, hist_HImf, hist_smf_err, hist_HImf_err
+	#### Read CSFR model data ####
+        fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
+                         'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
+                         'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo', 'number_major_mergers', 
+                         'number_minor_mergers', 'number_disk_instabilities', 'smbh_maximum')}
+
+    	# Read data from each subvolume at a time and add it up
+    	# rather than appending it all together
+        for idx, subvol in enumerate(subvols):
+            subvol_data = common.read_data(modeldir, self.redshift_table[0], fields, [subvol])
+            max_bhs_subvol = subvol_data[20].copy()
+            if idx == 0:
+                hdf5_data_sfr        = subvol_data
+                max_smbh         = max_bhs_subvol
+            else:
+                max_smbh = np.maximum(max_smbh, max_bhs_subvol)
+                for subvol_datum, hdf5_datum in zip(subvol_data[3:], hdf5_data_sfr[3:]):
+                    hdf5_datum += subvol_datum
+                    #select the most massive black hole from the last list item
+
+        # Also make sure that the total volume takes into account the number of subvolumes read
+        hdf5_data_sfr[1] = hdf5_data_sfr[1] * len(subvols)
+
+        h0_sfr, redshifts = hdf5_data_sfr[0], hdf5_data_sfr[2]
+
+        (mstar_plot, mcold_plot, mhot_plot, meje_plot,
+        mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
+        sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
+        mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden,
+        mejeden, history_interactions, mDMden) = global_quantities.prepare_data(hdf5_data_sfr, redshifts)
+
+	#### Size-mass relation ####
+        mlow3 = 6.5
+        mupp3 = 12.5
+        dm3 = 0.2
+        mbins3 = np.arange(mlow3,mupp3,dm3)
+        xmf_rm = mbins3 + dm3/2.0
+  
+        dmobs = 0.4
+        mbins_obs = np.arange(mlow,mupp,dmobs)
+        xmf_obs = mbins_obs + dmobs/2.0
+
+        vlow = 1.0
+        vupp = 3.0
+        dv   = 0.1
+        vbins = np.arange(vlow, vupp, dv)
+        xv_rm = vbins + dv/2.0
+ 	
+        fields_icl = {'galaxies': ('mstars_disk', 'mstars_bulge', 'rstar_disk', 'rstar_bulge', 'type',
+                    'mstellar_halo', 'cnfw_subhalo', 'vvir_hosthalo', 'mvir_hosthalo')}
+	
+        # Loop over redshift and subvolumes
+        rcomb = np.zeros(shape = (len(self.z), 3, len(xmf_rm)))
+        rcomb_icl = np.zeros(shape = (len(self.z), 3, len(xmf_rm)))
+        bs_error = np.zeros(shape = (len(self.z), len(xmf_rm)))
+
+        for index, z in enumerate(self.z):
+            hdf5_data = common.read_data(modeldir, self.redshift_table[z], fields_icl, subvols)
+            # constrain to sizes without icl component (rcomb) 
+            sizes_with_icl.prepare_data(hdf5_data, index, rcomb, rcomb_icl, bs_error)
+        # change rcomb to rcomb_icl below to constrain to sizes+icl component (10*r50)
+        return h0, hist_smf, hist_HImf, hist_smf_err, hist_HImf_err, redshifts, sfr, xmf_rm, rcomb, bs_error
 
     def load_observation(self, *args, **kwargs):
         obsdir = os.path.normpath(os.path.abspath(os.path.join(__file__, '..', '..', 'data')))
@@ -129,9 +194,9 @@ class Constraint(object):
         """Gets the model and observational data for further analysis.
         The model data is interpolated to match the observation's X values."""
 
-        h0, hist_smf, hist_HImf, hist_smf_err, hist_HImf_err = self._load_model_data(modeldir, subvols)
+        h0, hist_smf, hist_HImf, hist_smf_err, hist_HImf_err, redshifts, sfr, xmf_rm, rcomb, bs_error = self._load_model_data(modeldir, subvols)
         x_obs, y_obs, y_dn, y_up = self.get_obs_x_y_err(h0)
-        x_mod, y_mod, y_mod_err = self.get_model_x_y(hist_smf, hist_smf_err, hist_HImf, hist_HImf_err)
+        x_mod, y_mod, y_mod_err = self.get_model_x_y(h0, hist_smf, hist_smf_err, hist_HImf, hist_HImf_err, redshifts, sfr, xmf_rm, rcomb, bs_error)
         return x_obs, y_obs, y_dn, y_up, x_mod, y_mod, y_mod_err
 
     def get_data(self, modeldir, subvols, plot_outputdir=None):
@@ -231,7 +296,7 @@ class HIMF(Constraint):
 
         return x_obs, y_obs, y_dn, y_up
 
-    def get_model_x_y(self, _, __, hist_HImf, hist_HImf_err):
+    def get_model_x_y(self, _, __, ___, hist_HImf, hist_HImf_err, ____, _____, ______, _______, ________):
         y = hist_HImf[0]
         yerr = hist_HImf_err[0]
         ind = np.where(y < 0.)
@@ -242,34 +307,56 @@ class SMF(Constraint):
 
     domain = (8, 13)
 
-    def get_model_x_y(self, hist_smf, hist_smf_err, _, __):
+    def get_model_x_y(self, _, hist_smf, hist_smf_err, __, ___, ____, _____, ______, _______, ________):
         y = hist_smf[0,:]
         yerr = hist_smf_err[0,:]
         ind = np.where(y < 0.)
         return xmf[ind], y[ind], yerr[ind]
 
 class SMF_z0(SMF):
-    """The SMF constraint at z=0"""
+    """The Bernardi SMF constraint at z=0"""
 
     z = [0]
 
-    def get_obs_x_y_err(self, _):
+    def get_obs_x_y_err(self, h0):
 
-        hobs = 0.7
-        h0 = 0.6751
         lm, p, dpdn, dpup = self.load_observation('mf/SMF/SMF_Bernardi2013_SerExp.data', cols=[0,1,2,3])
+        hobs = 0.7
+
+        x_obs = lm + 2.0 * np.log10(hobs/h0)
         indx = np.where(p > 0)
-        x_obs = lm[indx] + 2.0 * np.log10(hobs/h0)
+
+        x_obs = x_obs[indx]
         y_obs = np.log10(p[indx]) - 3.0 * np.log10(hobs/h0)
-        ytemp = p[indx] - dpdn[indx]
-        temp = np.less(ytemp, 0)
-
-        # fixing a problem where there were undefined values due to log of
-        # negative values; negative values were given a minimum of 0.0001
-        fixed = 0.0001 * temp + ytemp * np.invert(temp)
-
-        y_dn = y_obs - np.log10(fixed)
+        y_dn = y_obs - np.log10(p[indx] - dpdn[indx])
         y_up = np.log10(p[indx]+dpup[indx]) - y_obs
+	
+        return x_obs, y_obs, y_dn, y_up
+
+class SMF_z0p5(SMF):
+    """The SMF constraint at z=0.5"""
+
+    z = [0.5]
+
+    def get_obs_x_y_err(self, h0):
+
+        # Wright et al. (2018, several reshifts). Assumes Chabrier IMF.
+        zD17, lmD17, pD17, dp_dn_D17, dp_up_D17, dp_cv = self.load_observation('mf/SMF/Wright18_CombinedSMF.dat', cols=[0,1,2,3,4,5])
+        hobs = 0.7
+        binobs = 0.25
+        pD17 = pD17 + 2.0 * np.log10(hobs/h0) - np.log10(binobs)
+        lmD17 = lmD17 - 3.0 * np.log10(hobs/h0) - np.log10(binobs)
+        in_redshift = np.where(zD17 == 0.5)
+
+        x_obs = lmD17[in_redshift]
+        y_obs = pD17[in_redshift]
+        y_dn = dp_dn_D17[in_redshift]
+        y_up = dp_up_D17[in_redshift]
+        cv = np.log10(1 + dp_cv[in_redshift]) 
+
+        # combine cosmic variance and model variance in quadrature
+        y_dn = np.sqrt(y_dn**2 + cv**2)
+        y_up = np.sqrt(y_up**2 + cv**2)
 
         return x_obs, y_obs, y_dn, y_up
 
@@ -278,21 +365,88 @@ class SMF_z1(SMF):
 
     z = [1]
 
-    def get_obs_x_y_err(self, _):
+    def get_obs_x_y_err(self, h0):
 
         # Wright et al. (2018, several reshifts). Assumes Chabrier IMF.
-        zD17, lmD17, pD17, dp_dn_D17, dp_up_D17 = self.load_observation('mf/SMF/Wright18_CombinedSMF.dat', cols=[0,1,2,3,4])
+        zD17, lmD17, pD17, dp_dn_D17, dp_up_D17, dp_cv = self.load_observation('mf/SMF/Wright18_CombinedSMF.dat', cols=[0,1,2,3,4,5])
         hobs = 0.7
-        pD17 = pD17 - 3.0 * np.log10(hobs)
-        lmD17 = lmD17 - np.log10(hobs)
+        binobs = 0.25
+        pD17 = pD17 + 2.0 * np.log10(hobs/h0) - np.log10(binobs)
+        lmD17 = lmD17 - 3.0 * np.log10(hobs/h0) - np.log10(binobs)
         in_redshift = np.where(zD17 == 1)
         x_obs = lmD17[in_redshift]
         y_obs = pD17[in_redshift]
         y_dn = dp_dn_D17[in_redshift]
         y_up = dp_up_D17[in_redshift]
+        cv = np.log10(1 + dp_cv[in_redshift])
+
+        # combine cosmic variance and model variance in quadrature
+        y_dn = np.sqrt(y_dn**2 + cv**2)
+        y_up = np.sqrt(y_up**2 + cv**2)
+
+        # take first set of values
+        ind = np.arange(0,12)
+        x_obs = x_obs[ind]
+        y_obs = y_obs[ind]
+        y_dn = y_dn[ind]
+        y_up = y_up[ind]
+
+        return x_obs, y_obs, y_dn, y_up
+ 
+
+class CSFR(Constraint):
+    """The Cosmic Star Formation Rate constraint"""
+
+    domain = (0, 5)
+    z = [0]
+
+    def get_obs_x_y_err(self, h0):
+	#Driver (Chabrier IMF), ['Baldry+2012, z<0.06']
+        redD17d, redD17u, sfrD17, err1, err2, err3, err4 = self.load_observation('Global/Driver18_sfr.dat', [0,1,2,3,4,5,6])
+
+        hobs = 0.7
+        xobsD17 = (redD17d+redD17u)/2.0
+        yobsD17 = sfrD17 + np.log10(hobs/h0)
+        errD17 = yobsD17*0. - 999.
+        errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
+        y_dn, y_up = errD17, errD17 # symmetric error
+        x_obs = xobsD17
+        y_obs = yobsD17
 
         return x_obs, y_obs, y_dn, y_up
 
+    def get_model_x_y(self, h0,_, __, ___, ____, redshifts, sfr, _____, ______, _______):
+	#note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+        ind = np.where(sfr > 0)
+        y = np.log10(sfr[ind]*pow(h0,2.0))
+        xz = redshifts[ind]
+
+        # y error - zero for now to avoid breaking things
+        yerr = y*0.0
+        
+        return xz, y, yerr
+
+class RM(Constraint):
+    """The combined size-mass relation"""
+    domain = (7,12)
+    z = [0]
+
+    def get_obs_x_y_err(self, h0):
+        # use the semi-major axis sizes
+        x_obs, y_obs, count, y_err = self.load_observation('SizeMass/GAMA_H-band_dlogM_0.25_reff.txt', [0,1,2,3])
+        y_dn = y_err
+        y_up = y_err
+
+        return x_obs, y_obs, y_dn, y_up
+
+    def get_model_x_y(self, _, __, ___, ____, _____, ______, _______, xmf_rm, rcomb,bs_error):
+
+        ind = np.where(rcomb[0,0,:] != 0)
+        x_mod = xmf_rm[ind]
+        y_mod = rcomb[0,0,ind][0]
+        y_err = bs_error[0][ind]
+
+        return x_mod, y_mod, y_err
 
 def _evaluate(constraint, stat_test, modeldir, subvols, plot_outputdir):
     try:
@@ -309,6 +463,33 @@ def evaluate(constraints, stat_test, modeldir, subvols, plot_outputdir=None):
     or as individual numbers for each constraint"""
     return [_evaluate(c, stat_test, modeldir, subvols, plot_outputdir)
             for c in constraints]
+
+def _get_y_mod(constraint, modeldir, subvols, plot_outputdir):
+    try:
+        y_obs, y_mod, err = constraint.get_data(modeldir, subvols,
+						plot_outputdir=plot_outputdir)
+        return y_mod
+    except:
+        logger.exception('Error')
+        return [1e20]
+
+def get_y_mod(constraints, modeldir, subvols, plot_outputdir=None):
+    return[_get_y_mod(c, modeldir, subvols, plot_outputdir)
+            for c in constraints]
+
+
+def _get_y_err(constraint, modeldir, subvols, plot_outputdir):
+    try:
+        y_obs, y_mod, err = constraint.get_data(modeldir, subvols,
+                                                plot_outputdir=plot_outputdir)
+        return err
+    except:
+        logger.exception('Error')
+        return [1e20]
+
+def get_y_err(constraints, modeldir, subvols, plot_outputdir=None):
+    return[_get_y_err(c, modeldir, subvols, plot_outputdir)
+                for c in constraints]
 
 
 def log_results(constraints, results):
@@ -344,7 +525,10 @@ def parse(spec):
     _constraints = {
         'HIMF': HIMF,
         'SMF_z0': SMF_z0,
+	'SMF_z0p5': SMF_z0p5,
         'SMF_z1': SMF_z1,
+	'CSFR': CSFR,
+	'RM': RM
     }
 
     def _parse(s):
