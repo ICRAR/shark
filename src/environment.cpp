@@ -46,10 +46,12 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 	central_subhalo.ejected_galaxy_gas += satellite_subhalo.ejected_galaxy_gas;
 	central_subhalo.lost_galaxy_gas += satellite_subhalo.lost_galaxy_gas;
 	central_subhalo.stellar_halo += satellite_subhalo.stellar_halo;
+	central_subhalo.mean_galaxy_making_stellar_halo += satellite_subhalo.mean_galaxy_making_stellar_halo;
 
 	satellite_subhalo.ejected_galaxy_gas.restore_baryon();
 	satellite_subhalo.lost_galaxy_gas.restore_baryon();
 	satellite_subhalo.stellar_halo.restore_baryon();
+	satellite_subhalo.mean_galaxy_making_stellar_halo = 0;
 
 	// Remove hot halo gas only if stripping is applied
 	if(parameters.stripping){
@@ -81,7 +83,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 		BaryonBase lost_stellar;
 
 		if(satellite_subhalo.type1_galaxy()){
-			// Apply here model of Errani et al. (2015).
+			// Apply here model of Errani et al. (2015) with rstar/a=0.2.
 			float ratio_mass = satellite_subhalo.Mvir / satellite_subhalo.Mvir_infall;
 			// Apply a maximum stripping of 99% in halo mass and on the other and a maximum of 1 in the ratio..
 			if(ratio_mass < parameters.minimum_halo_mass_fraction){
@@ -150,10 +152,13 @@ BaryonBase Environment::remove_tidal_stripped_stars(Subhalo &subhalo, Galaxy &ga
 		if(lost_stellar.mass > galaxy.stellar_mass()){
 			lost_stellar.mass = galaxy.stellar_mass();
 			lost_stellar.mass_metals = galaxy.stellar_mass_metals();
+			subhalo.mean_galaxy_making_stellar_halo += galaxy.stellar_mass() * lost_stellar.mass;
+
 			galaxy.disk_stars.restore_baryon();
 			galaxy.bulge_stars.restore_baryon();
 		}
 		else{
+			subhalo.mean_galaxy_making_stellar_halo += galaxy.stellar_mass() * lost_stellar.mass;
 
 			// strip first the disk of the galaxy and then the bulge:
 			if(lost_stellar.mass < galaxy.disk_stars.mass){
@@ -208,7 +213,7 @@ BaryonBase Environment::remove_tidal_stripped_stars(Subhalo &subhalo, Galaxy &ga
 			}
 		}
 
-		// accummulate what has been lost to tidal stripping in this galaxy.
+		// accumulate what has been lost to tidal stripping in this galaxy.
 		galaxy.stars_tidal_stripped += lost_stellar;
 
 	}

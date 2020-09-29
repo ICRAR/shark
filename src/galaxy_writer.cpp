@@ -248,6 +248,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	vector<float> stellar_halo;
 	vector<float> stellar_halo_metals;
+	vector<float> mean_stellar_mass_galaxies_ihsc;
 
 	vector<float> mlost;
 	vector<float> mlost_metals;
@@ -333,6 +334,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto lost_subhalo = subhalo->lost_galaxy_gas;
 			auto stellarhalo = subhalo->stellar_halo;
 			auto msub_infall = subhalo->Mvir_infall;
+			auto mmeanstellarhalo = subhalo->mean_galaxy_making_stellar_halo;
 
 			descendant_id.push_back(subhalo->descendant_id);
 			infall_time_subhalo.push_back(subhalo->infall_t);
@@ -424,6 +426,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				double lostzm = 0;
 				double mstellarhalo = 0;
 				double mzstellarhalo = 0;
+				double ms_mean_stellarhalo = 0;
 
 				double rcool = 0;
 				int t = galaxy.galaxy_type;
@@ -437,6 +440,12 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					rcool = halo->cooling_rate;
 					mstellarhalo = stellarhalo.mass;
 					mzstellarhalo = stellarhalo.mass_metals;
+					if(stellarhalo.mass > 0){
+						ms_mean_stellarhalo = mmeanstellarhalo / stellarhalo.mass;
+					}
+					else{
+						ms_mean_stellarhalo = 0;
+					}
 				}
 
 				cooling_rate.push_back(rcool);
@@ -449,6 +458,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mlost_metals.push_back(lostzm);
 				stellar_halo.push_back(mstellarhalo);
 				stellar_halo_metals.push_back(mzstellarhalo);
+				mean_stellar_mass_galaxies_ihsc.push_back(ms_mean_stellarhalo);
 
 				mvir_hosthalo.push_back(mhalo);
 				vvir_hosthalo.push_back(vhalo);
@@ -604,6 +614,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mlost_metals);
 	REPORT(stellar_halo);
 	REPORT(stellar_halo_metals);
+	REPORT(mean_stellar_mass_galaxies_ihsc);
 	REPORT(cooling_rate);
 	REPORT(mvir_hosthalo);
 	REPORT(mvir_subhalo);
@@ -835,6 +846,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "mass of metals locked up in the stellar halo built by tidal stripping [Msun/h]";
 	file.write_dataset("galaxies/mstellar_halo_metals", stellar_halo_metals, comment);
+
+	comment = "mass weighted stellar mass of the galaxies that contributed to building the stellar halo [Msun/h]";
+	file.write_dataset("galaxies/mean_mstellar_galaxies_stellarhalo", mean_stellar_mass_galaxies_ihsc, comment);
 
 	comment = "cooling rate of the hot halo component [Msun/Gyr/h].";
 	file.write_dataset("galaxies/cooling_rate", cooling_rate, comment);

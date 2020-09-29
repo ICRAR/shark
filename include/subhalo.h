@@ -239,7 +239,9 @@ public:
 	BaryonBase lost_galaxy_gas;
 	/// Intra-halo stellar component - produced by tidal interactions of satellites with halo.
 	BaryonBase stellar_halo;
-	/// The snapshot at which this subhalo is found
+	/// mass-weighted mean stellar mass and metallicity of the galaxies that contribute to the stellar halo.
+	float mean_galaxy_making_stellar_halo = 0;
+	/// The snapshot at which this subhalo is found.
 	int snapshot;
 	/// The snapshot at which the descendant of this subhalo can be found
 	int descendant_snapshot = -1;

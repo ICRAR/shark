@@ -45,10 +45,15 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 	auto main_galaxy = (parent_is_central ? parent->central_galaxy() : parent->type1_galaxy());
 
 	// Define the stellar content of the central at the moment of infall. So this applied only to subhalos that are currently centrail but will become
-	// satellite in the next snapshot.
+	// satellite in the next snapshot. In this case also transfer stellar halo of the subhalo to the main progenitor subhalo.
 	if(parent_is_central && !desc_is_central){
 		descendant->star_central_infall.mass = main_galaxy->stellar_mass();
 		descendant->star_central_infall.mass_metals = main_galaxy->stellar_mass_metals();
+		//if subhalo will become a satellite subhalo then transfer the stellar_halo.
+		descendant->host_halo->central_subhalo->stellar_halo += parent->stellar_halo;
+		descendant->host_halo->central_subhalo->mean_galaxy_making_stellar_halo += parent->mean_galaxy_making_stellar_halo;
+		parent->stellar_halo.restore_baryon();
+		parent->mean_galaxy_making_stellar_halo = 0;
 	}
 
 	if (!main_galaxy) {
@@ -130,8 +135,9 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			descendant_subhalo->hot_halo_gas += subhalo->hot_halo_gas;
 			descendant_subhalo->ejected_galaxy_gas += subhalo->ejected_galaxy_gas;
 			descendant_subhalo->lost_galaxy_gas += subhalo->lost_galaxy_gas;
-			descendant_subhalo->stellar_halo += subhalo->stellar_halo;
 			descendant_subhalo->star_central_infall = subhalo->star_central_infall;
+			descendant_subhalo->stellar_halo += subhalo->stellar_halo;
+			descendant_subhalo->mean_galaxy_making_stellar_halo += subhalo->mean_galaxy_making_stellar_halo;
 
 			if (subhalo->main_progenitor) {
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
