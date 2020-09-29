@@ -139,7 +139,7 @@ public:
 
 	void create_starbursts(HaloPtr &halo, double z, double delta_t);
 
-	double bulge_size_merger(double mass_ratio, double mgas_ratio, const Galaxy &central, const Galaxy &satellite, HaloPtr &halo) const;
+	double bulge_size_merger(double mass_ratio, double mgas_ratio, const Galaxy &central, const Galaxy &satellite, HaloPtr &halo, double z) const;
 
 	double r_remnant(double mc, double ms, double rc, double rs) const;
 

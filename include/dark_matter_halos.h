@@ -93,7 +93,7 @@ public:
 
 	double subhalo_dynamical_time (Subhalo &subhalo, double z);
 
-	double halo_virial_radius(Subhalo &subhalo);
+	double halo_virial_radius(HaloPtr &halo, double z);
 
 	double halo_virial_velocity (double mvir, double redshift);
 
@@ -109,9 +109,9 @@ public:
 
 	void cooling_gas_sAM(Subhalo &subhalo, double z);
 
-	void disk_sAM(Subhalo &subhalo, Galaxy &galaxy);
+	void disk_sAM(Subhalo &subhalo, Galaxy &galaxy, double z);
 
-	void bulge_sAM(Subhalo &subhalo, Galaxy &galaxy);
+	void bulge_sAM(Subhalo &subhalo, Galaxy &galaxy, double z);
 
 	void transfer_bulge_am(SubhaloPtr &subhalo, Galaxy &galaxy, double z);
 

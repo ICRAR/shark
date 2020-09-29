@@ -360,7 +360,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	double Tvir   = 97.48*std::pow(vvir,2.0); //in K.
 	double lgTvir = log10(Tvir); //in K.
-	double Rvir   = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(subhalo), z);//physical Mpc
+	double Rvir   = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(halo, z), z);//physical Mpc
 
 	/**
 	* Calculates the cooling Lambda function for the metallicity and temperature of this halo.
@@ -382,7 +382,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	*/
 	if(parameters.model == GasCoolingParameters::CROTON06)
 	{
-		tcool = parameters.tau_cooling * darkmatterhalos->subhalo_dynamical_time(subhalo, z); //in Gyr.
+		tcool = parameters.tau_cooling * darkmatterhalos->halo_dynamical_time(halo, z); 
 		tcharac = tcool*constants::GYR2S; //in seconds.
 	}
 
