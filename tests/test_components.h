@@ -92,8 +92,8 @@ private:
 	{
 		auto subhalo = make_subhalo(galaxy_types, subhalo_type);
 		if (!valid) {
-			TSM_ASSERT_THROWS(galaxy_types, subhalo->check_subhalo_galaxy_composition(), invalid_data);
-			TS_ASSERT_THROWS(specific_check(subhalo), invalid_data);
+			TSM_ASSERT_THROWS(galaxy_types, subhalo->check_subhalo_galaxy_composition(), const invalid_data &);
+			TS_ASSERT_THROWS(specific_check(subhalo), const invalid_data &);
 		}
 		else {
 			subhalo->check_subhalo_galaxy_composition();
