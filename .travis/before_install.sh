@@ -54,7 +54,7 @@ then
 	then
 		python3 -mvenv "${TRAVIS_BUILD_DIR}/shark-venv" || fail "cannot create virtualenv"
 		source "${TRAVIS_BUILD_DIR}/shark-venv/bin/activate"
-		pip install -U pip wheel setuptools h5py matplotlib scipy || fail "cannot install python packages in virtualenv"
+		pip install -U pip wheel setuptools h5py matplotlib!=3.4 scipy || fail "cannot install python packages in virtualenv"
 		deactivate
 		PYTHON="${TRAVIS_BUILD_DIR}/shark-venv/bin/python3"
 	fi
