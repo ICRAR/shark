@@ -184,17 +184,19 @@ public:
 	 */
 	std::size_t subhalo_count() const
 	{
-		std::size_t count = (central_subhalo ? 1 : 0);
-		return count + satellite_subhalos.size();
+		return all_subhalos().size();
 	}
 
 	/**
-	 * Returns a new vector containing pointers to all subhalos contained in
+	 * Returns a collection containing pointers to all subhalos contained in
 	 * this halo (i.e., the central and satellite subhalos).
 	 *
-	 * @return A vector with all subhalos
+	 * @return A collection with all subhalos of this halo
 	 */
-	std::vector<SubhaloPtr> all_subhalos() const;
+	all_subhalos_view all_subhalos() const
+	{
+		return all_subhalos_view(*this);
+	}
 
 	/**
 	 * Removes @a subhalo from this Halo. If the subhalo is not part of this

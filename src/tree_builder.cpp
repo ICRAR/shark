@@ -188,30 +188,42 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 	add_parent(desc_halo, parent_halo);
 }
 
-SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo)
+SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo)
 {
-	// point central subhalo to this subhalo.
-	halo->central_subhalo = subhalo;
-	halo->position = subhalo->position;
-	halo->velocity = subhalo->velocity;
+	// The most massive subhalo becomes the central subhalo
+	// We first find such subhalo, remove it from the list of satellites,
+	// and declare it as the central subhalo of the halo
 
-	halo->concentration = subhalo->concentration;
-	halo->lambda = subhalo->lambda;
+	assert(!halo->satellite_subhalos.empty());
+	std::vector<SubhaloPtr> satellites = halo->satellite_subhalos;
+	std::sort(satellites.begin(), satellites.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
+		return lhs->Mvir > rhs->Mvir;
+	});
+
+	auto central_subhalo = satellites[0];
+	return define_central_subhalo(halo, central_subhalo);
+}
+
+SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &central_subhalo)
+{
+	central_subhalo->subhalo_type = Subhalo::CENTRAL;
+	halo->central_subhalo = central_subhalo;
+	halo->position = central_subhalo->position;
+	halo->velocity = central_subhalo->velocity;
+	halo->concentration = central_subhalo->concentration;
+	halo->lambda = central_subhalo->lambda;
 
 	/** If virial velocity of halo (which is calculated from the total mass
 	and redshift) is smaller than the virial velocity of the central subhalo, which is
 	directly calculated in VELOCIraptor, then adopt the VELOCIraptor one.**/
-	if(halo->Vvir < subhalo->Vvir){
-		halo->Vvir = subhalo->Vvir;
+	if (halo->Vvir < central_subhalo->Vvir) {
+		halo->Vvir = central_subhalo->Vvir;
 	}
 
-	//remove subhalo from satellite list.
-	remove_satellite(halo, subhalo);
+	// remove central_subhalo from satellite list
+	remove_satellite(halo, central_subhalo);
 
-	//define subhalo as central.
-	subhalo->subhalo_type = Subhalo::CENTRAL;
-
-	return subhalo;
+	return central_subhalo;
 }
 
 void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, DarkMatterHaloParameters &dark_matter_params){
@@ -229,8 +241,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 					continue;
 				}
 
-				auto central_subhalo = halo->all_subhalos()[0];
-				auto subhalo = define_central_subhalo(halo, central_subhalo);
+				auto subhalo = define_central_subhalo(halo);
 
 				// save value of lambda to make sure that all main progenitors of this subhalo have the same lambda value. This is done for consistency 
 				// throughout time.
@@ -473,7 +484,7 @@ HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params, unsi
 	// no-op
 }
 
-static std::vector<SubhaloPtr>::const_iterator find_by_id(const std::vector<SubhaloPtr> &subhalos, Subhalo::id_t id)
+static Halo::all_subhalos_view::iterator find_by_id(const Halo::all_subhalos_view &subhalos, Subhalo::id_t id)
 {
 	return std::find_if(subhalos.begin(), subhalos.end(), [id](const SubhaloPtr &subhalo)
 	{
@@ -580,7 +591,8 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 		auto halos_in_snapshot = make_range_filter(halos, in_snapshot(snapshot));
 		for(auto &halo: halos_in_snapshot) {
 			bool halo_linked = false;
-			for(const auto &subhalo: halo->all_subhalos()) {
+			std::vector<SubhaloPtr> all_subhalos(halo->all_subhalos().begin(), halo->all_subhalos().end());
+			for(const auto &subhalo: all_subhalos) {
 
 				// this subhalo has no descendants, let's not even try
 				if (!subhalo->has_descendant) {

@@ -47,28 +47,6 @@ HaloPtr Halo::final_halo() const
 	return *final_halos.begin();
 }
 
-
-std::vector<SubhaloPtr> Halo::all_subhalos() const
-{
-
-	std::vector<SubhaloPtr> all;
-
-	if (central_subhalo) {
-		all.push_back(central_subhalo);
-	}
-	all.insert(all.end(), satellite_subhalos.begin(), satellite_subhalos.end());
-
-	// If there are more than one subhalo, then return them ordered by mass in decreasing order.
-	if(all.size() > 1){
-		std::sort(all.begin(), all.end(), [](const SubhaloPtr &lhs, const SubhaloPtr &rhs) {
-			return lhs->Mvir > rhs->Mvir;
-		});
-	}
-
-	assert(all.size() == satellite_subhalos.size() + (central_subhalo ? 1 : 0));
-	return all;
-}
-
 void Halo::add_subhalo(SubhaloPtr &&subhalo)
 {
 	// Add subhalo mass to halo
@@ -100,24 +78,17 @@ void Halo::remove_subhalo(const SubhaloPtr &subhalo)
 
 double Halo::total_baryon_mass() const
 {
-	double mass= 0.0;
-
-	for (auto &subhalo: all_subhalos()){
-		mass += subhalo->total_baryon_mass();
-	}
-
-	return mass;
+	auto subhalos = all_subhalos();
+	return std::accumulate(subhalos.begin(), subhalos.end(), 0., [](double baryon_mass, const SubhaloPtr &subhalo) {
+		return baryon_mass + subhalo->total_baryon_mass();
+	});
 }
 
 galaxies_size_type Halo::galaxy_count() const
 {
+	auto subhalos = all_subhalos();
 	galaxies_size_type count = 0;
-	if (central_subhalo) {
-		count = central_subhalo->galaxy_count();
-	}
-
-	const auto &sats = satellite_subhalos;
-	return std::accumulate(sats.begin(), sats.end(), count, [](galaxies_size_type galaxy_count, const SubhaloPtr &subhalo) {
+	return std::accumulate(subhalos.begin(), subhalos.end(), count, [](galaxies_size_type galaxy_count, const SubhaloPtr &subhalo) {
 		return galaxy_count + subhalo->galaxy_count();
 	});
 }

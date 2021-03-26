@@ -51,6 +51,13 @@ SubhaloPtr make_subhalo(const std::string &types, Subhalo::subhalo_type_t subhal
 	return subhalo;
 }
 
+SubhaloPtr make_subhalo(Subhalo::subhalo_type_t subhalo_type, Subhalo::id_t id)
+{
+	auto subhalo = make_subhalo("", subhalo_type);
+	subhalo->id = id;
+	return subhalo;
+}
+
 class TestBaryons : public CxxTest::TestSuite {
 
 public:
@@ -234,6 +241,53 @@ public:
 		TS_ASSERT_EQUALS(2, tree->halos_at(1).size());
 		TS_ASSERT_EQUALS(2, tree->halos_at(2).size());
 		TS_ASSERT_EQUALS(1, tree->halos_at(3).size());
+	}
+
+	void _test_all_subhalos(bool first_is_central)
+	{
+		auto halo = make_halo(1, 1);
+		auto first_subhalo_type = first_is_central ? Subhalo::CENTRAL : Subhalo::SATELLITE;
+		halo->add_subhalo(make_subhalo(first_subhalo_type, 0));
+		halo->add_subhalo(make_subhalo(Subhalo::SATELLITE, 1));
+		halo->add_subhalo(make_subhalo(Subhalo::SATELLITE, 2));
+		halo->add_subhalo(make_subhalo(Subhalo::SATELLITE, 3));
+
+		TS_ASSERT_EQUALS(4, halo->subhalo_count());
+		TS_ASSERT_EQUALS(4, halo->all_subhalos().size());
+		std::vector<SubhaloPtr> subhalos(halo->all_subhalos().begin(), halo->all_subhalos().end());
+		TS_ASSERT_EQUALS(4, subhalos.size());
+		TS_ASSERT_EQUALS(first_subhalo_type, subhalos[0]->subhalo_type);
+		TS_ASSERT_EQUALS(Subhalo::SATELLITE, subhalos[1]->subhalo_type);
+		TS_ASSERT_EQUALS(Subhalo::SATELLITE, subhalos[2]->subhalo_type);
+		TS_ASSERT_EQUALS(Subhalo::SATELLITE, subhalos[3]->subhalo_type);
+	}
+
+	void test_all_subhalos_with_central()
+	{
+		_test_all_subhalos(true);
+	}
+
+	void test_all_subhalos_without_central()
+	{
+		_test_all_subhalos(false);
+	}
+
+	void test_all_subhalos_only_central()
+	{
+		auto halo = make_halo(1, 1);
+		halo->add_subhalo(make_subhalo(Subhalo::CENTRAL, 0));
+		TS_ASSERT_EQUALS(1, halo->all_subhalos().size());
+		TS_ASSERT_EQUALS(1, halo->subhalo_count());
+		auto subhalo = *halo->all_subhalos().begin();
+		TS_ASSERT_EQUALS(0, subhalo->id);
+		TS_ASSERT_EQUALS(Subhalo::CENTRAL, subhalo->subhalo_type);
+	}
+
+	void test_all_subhalos_without_subhalos()
+	{
+		auto halo = make_halo(1, 1);
+		TS_ASSERT_EQUALS(0, halo->all_subhalos().size());
+		TS_ASSERT_EQUALS(0, halo->subhalo_count());
 	}
 
 };
