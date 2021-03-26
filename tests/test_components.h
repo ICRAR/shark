@@ -31,6 +31,26 @@
 
 using namespace shark;
 
+SubhaloPtr make_subhalo(const std::string &types, Subhalo::subhalo_type_t subhalo_type, Galaxy::id_t id=0)
+{
+	SubhaloPtr subhalo = std::make_shared<Subhalo>(0, 0);
+	subhalo->subhalo_type = subhalo_type;
+	for(auto t: types) {
+		auto &g = subhalo->emplace_galaxy(id++);
+		if (t == 'C') {
+			g.galaxy_type = Galaxy::CENTRAL;
+		}
+		else if (t == '1') {
+			g.galaxy_type = Galaxy::TYPE1;
+		}
+		else if (t == '2') {
+			g.galaxy_type = Galaxy::TYPE2;
+		}
+	}
+	TS_ASSERT_EQUALS(types.size(), subhalo->galaxy_count());
+	return subhalo;
+}
+
 class TestBaryons : public CxxTest::TestSuite {
 
 public:
@@ -66,26 +86,6 @@ public:
 class TestSubhalos : public CxxTest::TestSuite
 {
 private:
-
-	SubhaloPtr make_subhalo(const std::string &types, Subhalo::subhalo_type_t subhalo_type, Galaxy::id_t id=0)
-	{
-		SubhaloPtr subhalo = std::make_shared<Subhalo>(0, 0);
-		subhalo->subhalo_type = subhalo_type;
-		for(auto t: types) {
-			auto &g = subhalo->emplace_galaxy(id++);
-			if (t == 'C') {
-				g.galaxy_type = Galaxy::CENTRAL;
-			}
-			else if (t == '1') {
-				g.galaxy_type = Galaxy::TYPE1;
-			}
-			else if (t == '2') {
-				g.galaxy_type = Galaxy::TYPE2;
-			}
-		}
-		TS_ASSERT_EQUALS(types.size(), subhalo->galaxy_count());
-		return subhalo;
-	}
 
 	template <typename SpecificCheck>
 	void _test_valid_galaxy_composition(const std::string &galaxy_types, Subhalo::subhalo_type_t subhalo_type, SpecificCheck specific_check, bool valid)
