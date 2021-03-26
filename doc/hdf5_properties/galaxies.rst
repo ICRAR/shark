@@ -35,6 +35,7 @@
 * ``m_bh``: black hole mass [Msun/h]
 * ``matom_bulge``: atomic gas mass (helium plus hydrogen) in the bulge [Msun/h]
 * ``matom_disk``: atomic gas mass (helium plus hydrogen) in the disk [Msun/h]
+* ``mean_mstellar_galaxies_stellarhalo``: mass weighted stellar mass of the galaxies that contributed to building the stellar halo [Msun/h]
 * ``mean_stellar_age``: stellar mass-weighted stellar age [Gyr]
 * ``mgas_bulge``: gas mass in the bulge [Msun/h]
 * ``mgas_disk``: total gas mass in the disk [Msun/h]
