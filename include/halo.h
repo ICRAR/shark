@@ -26,6 +26,7 @@
 #ifndef INCLUDE_HALO_H_
 #define INCLUDE_HALO_H_
 
+#include <cassert>
 #include <iosfwd>
 #include <memory>
 #include <vector>
@@ -42,6 +43,132 @@ namespace shark {
  * must contain at least one subhalo inside.
  */
 class Halo : public Identifiable<halo_id_t>, public Spatial<float> {
+
+public:
+
+	/**
+	 * Utility class to iterate over all subhalos of a halo
+	 * without having to create a vector to contain them.
+	 *
+	 * The original implementation of Halo::all_subhalos was unnecessarily
+	 * expensive. It always created a std::vector where the central halo
+	 * (if present) was added, and then the satellites appended. The list
+	 * was sorted by decreasing mass, then finally returned to the user.
+	 * This class allows comes to replace that old implementation. It offers
+	 * begin() and end() member functions that return iterators, and therefore
+	 * can be used in range for loops without problems. The core logic of
+	 * advancing through the subhalos in the halo is encoded in the iterator
+	 * class. These are forward-only iterators, but can also be compared
+	 * and thus can be used in several algorithms if necessary.
+	 */
+	class all_subhalos_view
+	{
+
+	public:
+		class iterator {
+
+		public:
+			using iterator_category = std::input_iterator_tag;
+			using value_type = SubhaloPtr;
+			using difference_type = std::ptrdiff_t;
+			using reference = value_type &;
+			using const_reference = const value_type &;
+			using pointer = const value_type *;
+
+		private:
+			const all_subhalos_view *m_view;
+			typename std::vector<SubhaloPtr>::const_iterator m_pos;
+			typename std::vector<SubhaloPtr>::const_iterator m_end;
+			bool m_central_visited;
+
+
+		public:
+			iterator(const all_subhalos_view *view, bool is_end)
+			 : m_view(view),
+			   m_pos(is_end ? view->m_halo.satellite_subhalos.end() : view->m_halo.satellite_subhalos.begin()),
+			   m_end(view->m_halo.satellite_subhalos.end()),
+			   m_central_visited(!view->m_halo.central_subhalo || is_end)
+			{
+			}
+
+			bool operator==(const iterator &other)
+			{
+				return m_central_visited == other.m_central_visited &&
+				       m_pos == other.m_pos;
+			}
+
+			bool operator!=(const iterator &other)
+			{
+				return !(*this == other);
+			}
+
+			iterator &operator++()
+			{
+				if (!m_central_visited) {
+					m_central_visited = true;
+				}
+				else {
+					m_pos++;
+				}
+				return *this;
+			}
+
+			const_reference operator*() const
+			{
+				if (!m_central_visited) {
+					assert(m_view->m_halo.central_subhalo);
+					return m_view->m_halo.central_subhalo;
+				}
+				return *m_pos;
+			}
+
+			reference operator*()
+			{
+				return const_cast<reference>(
+				    *(const_cast<const iterator &>(*this))
+				);
+			}
+		};
+
+	public:
+		/**
+		 * Creates an all_subhalos_view for @p halo.
+		 * @param range The halo whose subhalos will be iterated over
+		 */
+		all_subhalos_view(const Halo &halo)
+		 : m_halo(halo)
+		{
+		}
+
+		iterator begin() const
+		{
+			return {this, false};
+		}
+
+		iterator end() const
+		{
+			return {this, true};
+		}
+
+		iterator begin()
+		{
+			return {this, false};
+		}
+
+		iterator end()
+		{
+			return {this, true};
+		}
+
+		std::size_t size() const
+		{
+			std::size_t count = (m_halo.central_subhalo ? 1 : 0);
+			return count + m_halo.satellite_subhalos.size();
+		}
+
+	private:
+		const Halo &m_halo;
+	};
 
 public:
 
