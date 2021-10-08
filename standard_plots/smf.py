@@ -209,9 +209,9 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
             y = hist_smf[idx,:]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'r', label='all galaxies' if idx == 0 else None)
-            print('#redshift', z)
-            for a,b in zip(xmf[ind],y[ind]):
-                print(a,b)
+            #print('#redshift', z)
+            #for a,b in zip(xmf[ind],y[ind]):
+            #    print(a,b)
             y = hist_smf_cen[idx,:]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'b', linestyle='dotted', label ='centrals' if idx == 0 else None)
@@ -436,9 +436,9 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
         y = hist_HImf[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'k',  label ='all galaxies')
-        print("Will print the HI MF")
-        for a,b in zip(xmf[ind],y[ind]):
-            print(a,b)
+        #print("Will print the HI MF")
+        #for a,b in zip(xmf[ind],y[ind]):
+        #    print(a,b)
         y = hist_HImf_cen[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'b', linestyle='dotted', label ='centrals')
@@ -579,9 +579,9 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
         y = hist_H2mf[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'k')
-        print("Will print the H2 MF")
-        for a,b in zip(xmf[ind],y[ind]):
-            print(a,b)
+        #print("Will print the H2 MF")
+        #for a,b in zip(xmf[ind],y[ind]):
+        #    print(a,b)
 
         y = hist_H2mf_cen[0,:]
         ind = np.where(y < 0.)
@@ -1028,7 +1028,7 @@ def plot_fmzr(plt, outdir, fmzr):
     common.savefig(outdir, fig, 'fmzr.pdf')
 
 
-def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat):
+def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat, mzr):
 
     fig = plt.figure(figsize=(4.5,8))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -1058,6 +1058,16 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
     #correction for Tremonti is the same.
     lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/Tremonti04.dat', [0,1,2,3])
     common.errorbars(ax, lm+ corr_cos, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 'o', label="Tremonti+04")
+
+    ind = np.where(mzr[0,0,:] != 0)
+    yplot = (mzr[0,0,ind])
+    errdn = (mzr[0,1,ind])
+    errup = (mzr[0,2,ind])
+    xplot = xmf[ind]
+
+    #print("mass metallicity relation at z=0 for the gas")
+    #for a,b,c,d in zip(xplot,yplot[0],errdn[0],errup[0]):
+    #    print(a,b,c,d)
 
     ind = np.where(mzr_cen[0,0,:] != 0)
     yplot = (mzr_cen[0,0,ind])
@@ -1236,9 +1246,10 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
         #for a,b,c,d,e,f,g,h,i,j,q,l in zip(sfr_disk[ind]/h0/1e9, sfr_burst[ind]/h0/1e9, mdisk[ind]/h0, mbulge[ind]/h0, mHI[ind]/h0*XH, mH2[ind]/h0*XH, mHI_bulge[ind]/h0*XH, mH2_bulge[ind]/h0*XH, mbulge_mergers[ind]/h0, mbulge_diskins[ind]/h0, mbulge_mergers_assembly[ind]/h0, mbulge_diskins_assembly[ind]/h0):
         #    print (a,b,c,d,e,f,g,h,i,j,q,l)
         ind = np.where((mdisk+mbulge)/h0 > 1e8)
-        print('#sfr mstellar zstar r50 type_galaxy')
-        for a,b,c,d,e in zip((sfr_disk[ind]+sfr_burst[ind])/h0/1e9, (mdisk[ind]+mbulge[ind])/h0, zstar[ind], rcomb[ind], typeg[ind]):
-            print (a,b,c,d,e)
+        #print('#sfr mstellar zstar r50 type_galaxy')
+        #for a,b,c,d,e in zip((sfr_disk[ind]+sfr_burst[ind])/h0/1e9, (mdisk[ind]+mbulge[ind])/h0, zstar[ind], rcomb[ind], typeg[ind]):
+        #    print (a,b,c,d,e)
+
 
     ind = np.where((mdisk+mbulge) > 0.0)
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
@@ -1515,7 +1526,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat, mainseqsf_1s, mainseqHI, mainseqH2)
     plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat)
     plot_fmzr(plt, outdir, fmzr)
-    plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat)
+    plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat, mzr)
     plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf)
     plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr) 
 

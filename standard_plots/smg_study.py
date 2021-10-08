@@ -60,6 +60,50 @@ dbt   = 0.05
 btbins2 = np.arange(btlow,btupp,dbt)
 xbt    = btbins2 + dbt/2.0
 
+zsun = 0.0189
+#choose dust model between mm14, rr14 and constdust
+m14 = False
+rr14 = False
+constdust = False
+rr14xcoc = True
+
+
+# compute dust masses
+def dust_mass(mz, mg, h0):
+    md = np.zeros(shape = len(mz))
+    ind = np.where((mz > 0) & (mg > 0))
+    XHd = np.log10(mz[ind]/mg[ind]/zsun)
+    if(m14 == True):
+        DToM = (polyfit_dm[0] * XHd**4.0 + polyfit_dm[1] * XHd**3.0 + polyfit_dm[2] * XHd**2.0 + polyfit_dm[3] * XHd + polyfit_dm[4])/corrfactor_dm
+        DToM = np.clip(DToM, 1e-6, 0.5)
+        md[ind] = mz[ind]/h0 * DToM
+        DToM_MW = polyfit_dm[4]/corrfactor_dm
+    elif(rr14 == True):
+         y = np.zeros(shape = len(XHd))
+         highm = np.where(XHd > -0.59)
+         y[highm] = 10.0**(2.21 - XHd[highm]) #gas-to-dust mass ratio
+         lowm = np.where(XHd <= -0.59)
+         y[lowm] = 10.0**(0.96 - (3.1) * XHd[lowm]) #gas-to-dust mass ratio
+         DToM = 1.0 / y / (mz[ind]/mg[ind])
+         DToM = np.clip(DToM, 1e-6, 1)
+         md[ind] = mz[ind]/h0 * DToM
+         DToM_MW = 1.0 / (10.0**(2.21)) / zsun
+    elif(rr14xcoc == True):
+         y = np.zeros(shape = len(XHd))
+         highm = np.where(XHd > -0.15999999999999998)
+         y[highm] = 10.0**(2.21 - XHd[highm]) #gas-to-dust mass ratio
+         lowm = np.where(XHd <= -0.15999999999999998)
+         y[lowm] = 10.0**(1.66 - 4.43 * XHd[lowm]) #gas-to-dust mass ratio
+         DToM = 1.0 / y / (mz[ind]/mg[ind])
+         DToM = np.clip(DToM, 1e-6, 1)
+         md[ind] = mz[ind]/h0 * DToM
+         DToM_MW = 1.0 / (10.0**(2.21)) / zsun
+    elif(constdust == True):
+         md[ind] = 0.33 * mz[ind]/h0
+         DToM_MW = 0.33
+   
+    return (md, DToM_MW)
+
 def smooth(x, y, ndeg):
     fit = np.polyfit(x,y,ndeg)
     print(fit) 
@@ -69,15 +113,21 @@ def smooth(x, y, ndeg):
 
     return y_smooth
 
-def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zsnap, obsdir):
+def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, mdust_z, sfr_tot, mmol_tot, mdust_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zsnap, obsdir):
 
     #read properties from hdf5 file
     (h0, volh, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
-     sfr_disk, sfr_bulge, typeg,  mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, mmol_bulge, mvir_hosthalo, idtree) = hdf5_data
-    
-    #compute the total SFR and molecular gas mass in the box
+     sfr_disk, sfr_bulge, typeg,  mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, mmol_bulge, mvir_hosthalo, 
+     idtree, mzd, mzb) = hdf5_data
+ 
+    #compute dust masses
+    (mdustd, DToM_MW) = dust_mass(mzd, mgas_disk, h0)
+    (mdustb, DToM_MW) = dust_mass(mzb, mgas_bulge, h0)
+   
+    #compute the total SFR,  molecular gas and dust masses in the box
     sfr_tot[index] = np.sum((sfr_disk + sfr_bulge) / 1e9 / h0)
     mmol_tot[index] = np.sum((mmol_bulge + mmol_disk) / h0)
+    mdust_tot[index] = np.sum(mdustd + mdustb)
 
     #define total stellar mass, bulde-to-total stellar mass ratio and read in SED files
     mstars_tot = (mdisk+mbulge)/h0
@@ -87,6 +137,9 @@ def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_t
     SEDs_dust_total = seds[4] #total absolute magnitudes with dust
     SEDs_vodust_total = seds_nod[1] #total absolute magnitudes no dust
     SEDs_app = seds_ap[4] #apparent magnitudes with dust
+    A_nuv = SEDs_dust_total[1,:] - SEDs_vodust_total[1,:]
+    negav = np.where(A_nuv < 0)
+    A_nuv[negav] = 0.0
 
     #print some various properties of H-dropout galaxies (band = 9 is H-band and 13 is IRAC4.5microns)
     ind = np.where((SEDs_app[9,:] > 27) & (SEDs_app[13,:] < 24))
@@ -100,6 +153,7 @@ def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_t
     ind = np.where(mstars_tot > 0)
     sfrs_gals = (sfr_disk[ind] + sfr_bulge[ind]) / 1e9 / h0
     mmol_gals = (mmol_bulge[ind] + mmol_disk[ind])/h0
+    mdust_gals = (mdustb[ind] + mdustd[ind])/h0
     types = typeg[ind]
     mvir = mvir_hosthalo[ind]
     idtrees = idtree[ind]
@@ -137,6 +191,7 @@ def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_t
                 ind = np.where((flux_gals_band > flux_selec[f]) & (flux_gals_band < 1e10))
             sfr_z[b,f,index] = np.sum(sfrs_gals[ind])
             mmol_z[b,f,index] = np.sum(mmol_gals[ind])
+            mdust_z[b,f,index] = np.sum(mdust_gals[ind])
 
     Calculate_ocuppation = False
     if(Calculate_ocuppation == True):
@@ -166,8 +221,9 @@ def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_t
 
     return(volh, h0)
     
-def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot, h0):
+def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot, mdust_z, mdust_tot, h0):
 
+    #plot cosmic evolution of the SFR
     fig = plt.figure(figsize=(12,4.5))
     ytit = "$\\rm log_{10} (\\rm \\rho_{\\rm SFR}/ M_{\\odot} yr^{-1} cMpc^{-3})$"
     xtit = "redshift"
@@ -246,6 +302,7 @@ def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot,
 
     common.savefig(outdir, fig, 'fractional_SFR_evolution_SMG_contribution.pdf')
 
+    # plot cosmic evolution of molecular gas
     fig = plt.figure(figsize=(12,4.5))
     ytit = "$\\rm log_{10} (\\rm \\rho_{\\rm H_2}/ M_{\\odot} cMpc^{-3})$"
     xtit = "redshift"
@@ -362,6 +419,38 @@ def plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot,
 
     common.savefig(outdir, fig, 'fractional_H2_evolution_SMG_contribution.pdf')
 
+    #plot cosmic evolution of dust mass
+    fig = plt.figure(figsize=(12,4.5))
+    ytit = "$\\rm log_{10} (\\rm \\rho_{\\rm dust}/ M_{\\odot} cMpc^{-3})$"
+    xtit = "redshift"
+    xmin, xmax, ymin, ymax = -0.1, 5, 3., 6
+    xleg = xmax - 0.3 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    for b in range(0,len(bands)):
+        ax = fig.add_subplot(subplots[b])
+        ytitle = ytit
+        if(b > 0):
+           ytitle=" "
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle, locators=(0.1, 1, 0.1, 1))
+        ax.text(xleg,yleg,bands[b],fontsize=12) 
+        for i in range(0,len(labels)):
+            inp = np.where(mdust_z[b,i,:] != 0)
+            x = zlist[inp]
+            y = mdust_z[b,i,inp]
+            y_smooth = smooth(x, y[0], 3)
+            ax.plot(x, y[0], linestyle='dotted',color=cols[i])
+            ax.plot(x, y_smooth, linestyle='solid',color=cols[i], label=labels[i] if b == 0 else None)
+
+        ax.plot(zlist, mdust_tot,  linestyle='solid',color='k')
+        print("Cosmic dust mass density")
+        for a,b in zip(zlist, mdust_tot):
+            print(a,b)
+        if(b == 0):
+           common.prepare_legend(ax, cols, loc=3)
+
+    common.savefig(outdir, fig, 'dust_evolution_SMG_contribution.pdf')
+
 
 def plot_occupation_massive_halos(plt, outdir, obsdir, frac_mvir_occupation):
 
@@ -393,7 +482,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities',
                            'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly', 'sfr_disk', 'sfr_burst', 'type', 
                            'mgas_disk', 'mgas_bulge','matom_disk', 'mmol_disk', 
-                           'matom_bulge', 'mmol_bulge', 'mvir_hosthalo', 'id_halo_tree')}
+                           'matom_bulge', 'mmol_bulge', 'mvir_hosthalo', 'id_halo_tree', 'mgas_metals_disk', 'mgas_metals_bulge')}
 
     file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5"
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
@@ -415,8 +504,10 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     sfr_z = np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
     mmol_z = np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
+    mdust_z = np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
     sfr_tot = np.zeros(shape = (len(zlist)))
     mmol_tot = np.zeros(shape = (len(zlist)))
+    mdust_tot = np.zeros(shape = (len(zlist)))
     frac_mvir_occupation = np.zeros(shape = (len(selec_alma), len(zlist)))
     mvir_occupation = np.zeros(shape = (len(zlist)))
 
@@ -427,7 +518,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         seds_nod = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
         seds_ap = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_ap, subvols, file_hdf5_sed)
 
-        (volh, h0) = prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, sfr_tot, mmol_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zlist[index], obsdir)
+        (volh, h0) = prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, mdust_z, sfr_tot, mmol_tot, mdust_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zlist[index], obsdir)
 
     def take_log(x,v,h):
         x = x / (v / h**3.0)
@@ -437,10 +528,12 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     sfr_z = take_log(sfr_z, volh, h0)
     mmol_z = take_log(mmol_z, volh, h0)
+    mdust_z = take_log(mdust_z, volh, h0)
     sfr_tot = take_log(sfr_tot, volh, h0)
     mmol_tot = take_log(mmol_tot, volh, h0)
+    mdust_tot = take_log(mdust_tot, volh, h0)
 
-    plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot, h0)
+    plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot, mdust_z, mdust_tot, h0)
     plot_occupation_massive_halos(plt, outdir, obsdir, frac_mvir_occupation)
 
 if __name__ == '__main__':

@@ -33,8 +33,9 @@ dm = 0.5
 mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
-rbins = np.array([1, 2.730045591676135, 5]) #Mpc/h
-zdepth = 11.0 #Mpc/h
+#rbins = np.array([1, 2.730045591676135, 5]) #Mpc/h
+rbins = np.array([1, 2.8315841879187973, 5]) #Mpc/h
+zdepth = 40.30959350543804 #Mpc/h
 
 GyrtoYr  = 1e9
 MpcToKpc = 1e3
@@ -79,8 +80,6 @@ def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco, rhosfr):
     sfrb = sfrb[ind]
     typeg = typeg[ind]
 
-    pos = np.where(co_total > 1e10)
-    print(np.median((mH2[pos]+mH2_bulge[pos])/h0/co_total[pos]))
 
     XH = 0.72
     h0log = np.log10(float(h0))
@@ -91,8 +90,13 @@ def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco, rhosfr):
     sfr_tot = (sfrd + sfrb) / h0 / GyrtoYr
 
     #define main sequence first
-
-    indcen = np.where((mvir/h0 > 2e13) & (typeg == 0))
+    indcen = np.where((mvir/h0 > 1e12) & (typeg == 0))
+    mvir_in = mvir[indcen]/h0
+    sortedmass = np.argsort(1.0/mvir_in)
+    mass_ordered = mvir_in[sortedmass]
+    mass_tresh  = mass_ordered[9]
+    print(mass_tresh)
+    indcen = np.where((mvir/h0 >= mass_tresh) & (typeg == 0))
     x_cen = x[indcen]
     y_cen = y[indcen]
     z_cen = z[indcen]
@@ -108,13 +112,13 @@ def prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco, rhosfr):
     for g in range(0,len(x_cen)):
         d_all = np.sqrt(pow(x - x_cen[g], 2.0) + pow(y - y_cen[g], 2.0))
         z_all = np.absolute(z - z_cen[g])
-        ind   = np.where((d_all < 1.5) & (co_total > 0) & (z_all < zdepth))
+        ind   = np.where((d_all < 10) & (co_total > 0) & (z_all < zdepth))
         co_total_in = co_total[ind]
         mh2total_in = (mH2[ind] + mH2_bulge[ind]) / h0 * XH
         sfrtotal_in = sfr_tot[ind]
         d_all_in = d_all[ind]
         for r in range(0, len(rbins)):
-            vol = PI * (rbins[r])**2.0 * (2.0 * zdepth)
+            vol = PI * (rbins[r]/h0)**2.0 * (2.0 * zdepth/h0)
             inr = (d_all_in < rbins[r])
             H, _ = np.histogram(np.log10(co_total_in[inr]),bins=np.append(mbins,mupp))
             lfco_ind_this_z[r,g,:] = lfco_ind_this_z[r,g,:] + H 
@@ -223,7 +227,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     plt = common.load_matplotlib()
 
-    zlist = (0.5, 1, 1.5, 2, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)
+    zlist = (0.5, 1, 1.5, 2, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0)
 
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge',
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
@@ -244,7 +248,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
         (lfco_ind_this_z, codensity_ind_this_z) = prepare_data(hdf5_data, hdf5_data_co, index, lfco, rhoh2, rhoco, rhosfr)
 
     plot_density_radii(plt, output_dir, zlist, rhoh2, rhoco, rhosfr)
-    #plot_clusters_lco(plt, output_dir, zlist, lfco)
+    plot_clusters_lco(plt, output_dir, zlist, lfco)
 
 if __name__ == '__main__':
     main(*common.parse_args())

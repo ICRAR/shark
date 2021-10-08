@@ -85,6 +85,18 @@ def prepare_data(hdf5_data, fradii, index):
     z_cen = z[indcen]
     rvir_cen = rvir[indcen]
 
+    #find the closest central to the centrals in massive clusters
+    for g in range(0,len(x_cen)):
+        selec_cens = np.where((typeg == 0) & (mstar_tot > 1e9))
+        d_all = np.sqrt(pow(x[selec_cens] - x_cen[g], 2.0) + pow(y[selec_cens] - y_cen[g], 2.0) + pow(z[selec_cens] - z_cen[g], 2.0))/h0/rvir_cen[g]
+        ms_all = mstar_tot[selec_cens]
+        selec_cens = np.where(d_all > 0)
+        d_all_in = d_all[selec_cens]
+        ms_all_in = ms_all[selec_cens]
+        ids = np.argsort(d_all_in)
+        
+        print ("minimum distance to a central %s of mass %s" % (str(d_all_in[ids[0]]), str(ms_all_in[ids[0]])))
+        
     print ('number of clusters %d'% len(x_cen))
     nradii_this_z = np.zeros(shape = (3, len(xmf), len(xrf), len(x_cen)))
     #xy projection
@@ -145,7 +157,7 @@ def plot_fractions_radii(plt, output_dir, fradii):
     #ceagledata = h5py.File('../../BuffaloFigure_C-EAGLE_Jul19_longMS.hdf5','r')
     ceagledatasf = h5py.File('../../BuffaloFigure_C-EAGLE_30Jul19_longMS_ssfr_Hydrangea.hdf5', 'r')
     a_group_key = list(ceagledatasf.keys())[1]
-    print a_group_key
+    print (a_group_key)
     # Get the data
     databahesf = list(ceagledatasf[a_group_key])
     ceagledatagas = h5py.File('../../BuffaloFigure_C-EAGLE_30Jul19_longMS_hn_Hydrangea.hdf5', 'r')
