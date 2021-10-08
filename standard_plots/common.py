@@ -258,8 +258,8 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
         logger.info('Reading galaxies data from %s', fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0 and include_h0_volh:
-                data['h0'] = f['cosmology/h'].value
-                data['vol'] = f['run_info/effective_volume'].value * len(subvolumes)
+                data['h0'] = f['cosmology/h'][()]
+                data['vol'] = f['run_info/effective_volume'][()] * len(subvolumes)
 
             for gname, dsnames in fields.items():
                 group = f[gname]
@@ -267,9 +267,9 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
                     full_name = '%s/%s' % (gname, dsname)
                     l = data.get(full_name, None)
                     if l is None:
-                        l = group[dsname].value
+                        l = group[dsname][()]
                     else:
-                        l = np.concatenate([l, group[dsname].value])
+                        l = np.concatenate([l, group[dsname][()]])
                     data[full_name] = l
 
     return list(data.values())
@@ -284,17 +284,17 @@ def read_sfh(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
         logger.info('Reading SFH data from %s', fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0:
-                delta_t = f['delta_t'].value
-                LBT     = f['lbt_mean'].value
+                delta_t = f['delta_t'][()]
+                LBT     = f['lbt_mean'][()]
 
             for gnames, dsname in fields.items():
                 group = f[gnames]
                 full_name = '%s/%s' % (gnames, dsname)
                 l = data.get(full_name, None)
                 if l is None:
-                    l = group[dsname].value
+                    l = group[dsname][()]
                 else:
-                    l = np.concatenate([l, group[dsname].value])
+                    l = np.concatenate([l, group[dsname][()]])
                 data[full_name] = l
 
     return list(data.values()), delta_t, LBT
@@ -319,9 +319,9 @@ def read_photometry_data(model_dir, snapshot, fields, subvolumes):
                     full_name = '%s/%s' % (gname, dsname)
                     l = data.get(full_name, None)
                     if l is None:
-                        l = group[dsname].value
+                        l = group[dsname][()]
                     else:
-                        l = np.concatenate([l, group[dsname].value], axis=1)
+                        l = np.concatenate([l, group[dsname][()]], axis=1)
                     data[full_name] = l
 
     return list(data.values())
@@ -342,9 +342,9 @@ def read_co_data(model_dir, snapshot, fields, subvolumes):
                     full_name = '%s/%s' % (gname, dsname)
                     l = data.get(full_name, None)
                     if l is None:
-                        l = group[dsname].value
+                        l = group[dsname][()]
                     else:
-                        l = np.concatenate([l, group[dsname].value])
+                        l = np.concatenate([l, group[dsname][()]])
                     data[full_name] = l
 
     return list(data.values())
@@ -369,9 +369,9 @@ def read_photometry_data_variable_tau_screen(model_dir, snapshot, fields, subvol
                     full_name = '%s/%s' % (gname, dsname)
                     l = data.get(full_name, None)
                     if l is None:
-                        l = group[dsname].value
+                        l = group[dsname][()]
                     else:
-                        l = np.concatenate([l, group[dsname].value], axis=1)
+                        l = np.concatenate([l, group[dsname][()]], axis=1)
                     data[full_name] = l
 
     return list(data.values())
