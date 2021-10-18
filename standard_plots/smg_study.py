@@ -38,7 +38,7 @@ PI       = 3.141592654
 
 mlow = 6.5
 mupp = 12.5
-dm = 0.2
+dm = 0.25
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
 
@@ -113,13 +113,14 @@ def smooth(x, y, ndeg):
 
     return y_smooth
 
-def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, mdust_z, sfr_tot, mmol_tot, mdust_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zsnap, obsdir):
+def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, mdust_z, sfr_tot, mmol_tot, mdust_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zsnap, obsdir, mstar_mf):
 
     #read properties from hdf5 file
     (h0, volh, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      sfr_disk, sfr_bulge, typeg,  mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, mmol_bulge, mvir_hosthalo, 
      idtree, mzd, mzb) = hdf5_data
- 
+
+    sim_size = volh * h0**3.0 
     #compute dust masses
     (mdustd, DToM_MW) = dust_mass(mzd, mgas_disk, h0)
     (mdustb, DToM_MW) = dust_mass(mzb, mgas_bulge, h0)
@@ -141,13 +142,33 @@ def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, mdust
     negav = np.where(A_nuv < 0)
     A_nuv[negav] = 0.0
 
+    color1 = SEDs_dust_total[1] - SEDs_dust_total[4]
+    color2 = SEDs_dust_total[4] - SEDs_dust_total[8]
+
+    quench_flag = np.zeros(shape = len(color1))
+    quench = np.where((color1 > 3.0 * color2 + 1) & (color1 > 3.1))
+    quench_flag[quench] = 1.0
+    H, _ = np.histogram(np.log10(mstars[quench]), bins=np.append(mbins,mupp))
+    mstar_mf[0,:,index+1] = mstar_mf[0,:,index+1] + H
+    mstar_mf[0,:,index+1] = mstar_mf[0,:,index+1] / float(sim_size) / dm
+
+    #select non-quenched galaxies
+    non_quench = np.where(quench_flag == 0)
+    H, _ = np.histogram(np.log10(mstars[non_quench]), bins=np.append(mbins,mupp))
+    mstar_mf[1,:,index+1] = mstar_mf[1,:,index+1] + H
+    mstar_mf[1,:,index+1] = mstar_mf[1,:,index+1] / float(sim_size) / dm
+
+    # all galaxies
+    H, _ = np.histogram(np.log10(mstars), bins=np.append(mbins,mupp))
+    mstar_mf[2,:,index+1] = mstar_mf[2,:,index+1] + H
+    mstar_mf[2,:,index+1] = mstar_mf[2,:,index+1] / float(sim_size) / dm
+
     #print some various properties of H-dropout galaxies (band = 9 is H-band and 13 is IRAC4.5microns)
     ind = np.where((SEDs_app[9,:] > 27) & (SEDs_app[13,:] < 24))
     print("Number of H-dropouts", len(mdisk[ind]))
     print("Volume density of H-dropouts", len(mdisk[ind])/(volh/h0**3.0))
     print("median stellar mass", np.median(mdisk[ind] + mbulge[ind])/h0)
     print("median SFR", np.median(sfr_disk[ind] + sfr_bulge[ind])/h0/1e9)
-
 
     #select galaxies with stellar masses > 0
     ind = np.where(mstars_tot > 0)
@@ -474,6 +495,26 @@ def plot_occupation_massive_halos(plt, outdir, obsdir, frac_mvir_occupation):
     common.prepare_legend(ax, cols, loc=3)
     common.savefig(outdir, fig, 'MassiveHalosContribution.pdf')
 
+def plot_smf(plt, outdir, obsdir, mstar_mf):
+
+    fig = plt.figure(figsize=(5,12))
+    xtit = "log$_{10}$ M$_{*}$ [M$_{\odot}$]"
+    ytit = "log$_{10}$ dn/dlog$_{10}$(M$_{*}$) [cMpc$^{-3}$]"
+    xmin, xmax, ymin, ymax = 8, 12.5, -7, 0
+    xleg = xmax - 0.3 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    subplots = [311, 312, 313]
+
+    for s, subplot in enumerate(subplots):
+        ax = fig.add_subplot(subplot)
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.5, 0.5, 0.5, 0.5))
+    
+        for b in range(0,len(zlist)): 
+            ax.plot(xmf, np.log10(mstar_mf[s,:,b+1]), linestyle='solid')
+    #common.prepare_legend(ax, cols, loc=3)
+    common.savefig(outdir, fig, 'smf_quiescent_sf.pdf')
+
 
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
@@ -502,6 +543,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     selec_alma = (29, 30, 32)
     flux_selec = (1e-10, 1e-2, 1e-1, 1.0) #to look at 0.01<S<0.1, 0.1<S<1, S>1mJy
 
+    mstar_mf = np.zeros(shape = (3, len(xmf), len(zlist) + 1))
     sfr_z = np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
     mmol_z = np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
     mdust_z = np.zeros(shape = (len(selec_alma), len(flux_selec), len(zlist)))
@@ -518,7 +560,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         seds_nod = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
         seds_ap = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_ap, subvols, file_hdf5_sed)
 
-        (volh, h0) = prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, mdust_z, sfr_tot, mmol_tot, mdust_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zlist[index], obsdir)
+        (volh, h0) = prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, mdust_z, sfr_tot, mmol_tot, mdust_tot, flux_selec, selec_alma, frac_mvir_occupation, mvir_occupation, zlist[index], obsdir, mstar_mf)
 
     def take_log(x,v,h):
         x = x / (v / h**3.0)
@@ -533,8 +575,20 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     mmol_tot = take_log(mmol_tot, volh, h0)
     mdust_tot = take_log(mdust_tot, volh, h0)
 
+    mstar_mf[0,:,0] = xmf
+    mstar_mf[1,:,0] = xmf
+    mstar_mf[2,:,0] = xmf
+
+    fname = 'Lagos19_quenched_smf.txt'
+    np.savetxt(fname, mstar_mf[0,:], fmt='%.8e', delimiter=' ', newline='\n', header='', footer='', comments='# ')
+    fname = 'Lagos19_starforming_smf.txt'
+    np.savetxt(fname, mstar_mf[1,:], fmt='%.8e', delimiter=' ', newline='\n', header='', footer='', comments='# ')
+    fname = 'Lagos19_allgals_smf.txt'
+    np.savetxt(fname, mstar_mf[2,:], fmt='%.8e', delimiter=' ', newline='\n', header='', footer='', comments='# ')
+
     plot_sfr_contribution(plt, outdir, obsdir, sfr_z, sfr_tot, mmol_z, mmol_tot, mdust_z, mdust_tot, h0)
     plot_occupation_massive_halos(plt, outdir, obsdir, frac_mvir_occupation)
+    plot_smf(plt, outdir, obsdir, mstar_mf)
 
 if __name__ == '__main__':
     main(*common.parse_args())
