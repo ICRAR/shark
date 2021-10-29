@@ -244,10 +244,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	halo->cooling_rate = 0;
 
-	/**
-	* For now assume that gas can cool only in central subhalos and to central galaxies unless the process_satellite_subhalo_environment tells us otherwise.
-	*/
-
 	if(subhalo.subhalo_type == Subhalo::SATELLITE){
 		//Compute how much hot gas there is in this satellite_subhalo based on the environmental processes applied to it.
 		environment->process_satellite_subhalo_environment(subhalo, *subhalo.host_halo->central_subhalo);
@@ -272,7 +268,39 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		return 0;
 	}
 
-	// Include accreted gas only if the subhalo is central.
+
+	/**
+	 * Calculate reincorporated mass and metals.
+	 */
+	double mreinc_mass = reincorporation->reincorporated_mass(*halo, subhalo, z, deltat);
+
+	if(mreinc_mass > subhalo.ejected_galaxy_gas.mass){
+		mreinc_mass = subhalo.ejected_galaxy_gas.mass;
+	}
+
+	double mreinc_mass_metals = 0.0;
+	// If reincorporation mass is >0 then modify gas budget.
+	if(mreinc_mass > 0){
+		mreinc_mass_metals = mreinc_mass/subhalo.ejected_galaxy_gas.mass * subhalo.ejected_galaxy_gas.mass_metals;
+		subhalo.ejected_galaxy_gas.mass -= mreinc_mass;
+		subhalo.ejected_galaxy_gas.mass_metals -= mreinc_mass_metals;
+		subhalo.hot_halo_gas.mass += mreinc_mass;
+		subhalo.hot_halo_gas.mass_metals += mreinc_mass_metals;
+	}
+
+	// Avoid negative values.
+	if(subhalo.ejected_galaxy_gas.mass < constants::tolerance){
+		subhalo.ejected_galaxy_gas.mass = 0;
+		subhalo.ejected_galaxy_gas.mass_metals = 0;
+	}
+	if(subhalo.ejected_galaxy_gas.mass_metals < 0){
+		subhalo.ejected_galaxy_gas.mass_metals = 0;
+	}
+
+
+	/**
+	 * Include accreted gas only if the subhalo is central.
+	 */
 	if (subhalo.subhalo_type == Subhalo::CENTRAL) {
 		// Calculate maximum accreted mass allowed by the universal baryon fraction.
 		float max_allowed_baryon_accreted = halo->Mvir * cosmology->universal_baryon_fraction() - halo->total_baryon_mass();
@@ -303,31 +331,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		return 0;
 	}
 
-	// Calculate reincorporated mass and metals.
-	double mreinc_mass = reincorporation->reincorporated_mass(*halo, subhalo, z, deltat);
-
-	if(mreinc_mass > subhalo.ejected_galaxy_gas.mass){
-		mreinc_mass = subhalo.ejected_galaxy_gas.mass;
-	}
-
-	double mreinc_mass_metals = 0.0;
-	// If reincorporation mass is >0 then modify gas budget.
-	if(mreinc_mass > 0){
-		mreinc_mass_metals = mreinc_mass/subhalo.ejected_galaxy_gas.mass * subhalo.ejected_galaxy_gas.mass_metals;
-		subhalo.ejected_galaxy_gas.mass -= mreinc_mass;
-		subhalo.ejected_galaxy_gas.mass_metals -= mreinc_mass_metals;
-		subhalo.hot_halo_gas.mass += mreinc_mass;
-		subhalo.hot_halo_gas.mass_metals += mreinc_mass_metals;
-	}
-
-	// Avoid negative values.
-	if(subhalo.ejected_galaxy_gas.mass < constants::tolerance){
-		subhalo.ejected_galaxy_gas.mass = 0;
-		subhalo.ejected_galaxy_gas.mass_metals = 0;
-	}
-	if(subhalo.ejected_galaxy_gas.mass_metals < 0){
-		subhalo.ejected_galaxy_gas.mass_metals = 0;
-	}
 
 	//Assume hot halo has the same specific angular momentum of DM halo.
 	subhalo.hot_halo_gas.sAM = subhalo.L.norm() / subhalo.Mvir;
