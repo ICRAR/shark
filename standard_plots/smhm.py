@@ -46,23 +46,19 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside):
     massgal[index,:] = us.wmedians_2sigma(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                    y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                    xbins=xmf)
-    ind = np.where((mhalo > 9e11) & (mhalo < 2e12) & (mdisk+mbulge > 0) & (mdisk+mbulge < 1.5e9))
-    #print index, np.median(mBH[ind]/(mdisk[ind]+mbulge[ind]))
-    ind = np.where((mhalo > 9e11) & (mhalo < 2e12) & (mdisk+mbulge > 1.5e9))
-    #print index, np.median(mBH[ind]/(mdisk[ind]+mbulge[ind]))
 
     massbar[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
-                                   y=np.log10(mdisk[ind]+mbulge[ind]+mBH[ind]+mgas[ind]+mgas_bulge[ind]+mhot[ind]+mreheated[ind]) - np.log10(mhalo[ind]) - np.log10(Omegab/(OmegaM-Omegab)),
+                                   y=np.log10(mdisk[ind]+mbulge[ind]+mBH[ind]+mgas[ind]+mgas_bulge[ind]+mhot[ind]+mreheated[ind]) - np.log10(mhalo[ind]) - np.log10(Omegab/OmegaM),
                                    xbins=xmf)
     massbar_inside[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
-                                   y=np.log10(mdisk[ind]+mbulge[ind]+mBH[ind]+mgas[ind]+mgas_bulge[ind]+mhot[ind]) - np.log10(mhalo[ind]) - np.log10(Omegab/(OmegaM-Omegab)),
+                                   y=np.log10(mdisk[ind]+mbulge[ind]+mBH[ind]+mgas[ind]+mgas_bulge[ind]+mhot[ind]) - np.log10(mhalo[ind]) - np.log10(Omegab/OmegaM),
                                    xbins=xmf)
 
 
 def plot_SMHM_z(plt, outdir, z, massgal):
 
     fig = plt.figure(figsize=(9.7,11.7))
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm halo, DM}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm halo}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     xmin, xmax, ymin, ymax = 10.5, 15, 7, 13
     xleg = xmin + 0.2 * (xmax - xmin)
@@ -206,7 +202,7 @@ def plot_BMHM_z(plt, outdir, massbar, massbar_inside):
     # z=1 ##################################
     ax = fig.add_subplot(312)
     xtit = ""
-    ytit = "$\\rm log_{10} (\\rm M_{\\rm bar}(\\Omega_{\\rm DM}/\\Omega_{\\rm b})/\\rm M_{\\rm halo, DM})$"
+    ytit = "$\\rm log_{10} (\\rm M_{\\rm bar}(\\Omega_{\\rm M}/\\Omega_{\\rm b})/\\rm M_{\\rm halo})$"
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg, yleg, 'z=1')
@@ -234,7 +230,7 @@ def plot_BMHM_z(plt, outdir, massbar, massbar_inside):
 
     # z=1 ##################################
     ax = fig.add_subplot(313)
-    xtit = "$\\rm log_{10} (\\rm M_{\\rm halo, DM}/M_{\odot})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm halo}/M_{\odot})$"
     ytit = ""
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))

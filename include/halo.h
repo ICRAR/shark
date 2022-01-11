@@ -101,6 +101,17 @@ public:
 	double total_baryon_mass() const;
 
 	/**
+	 * @return The baryon mass contained inside this Halo (exclusing ejected and lost mass)
+	 */
+	double inside_halo_baryon_mass() const;
+
+	/**
+	 * @return total mass of ascendants of this Halo
+	 */
+	double total_mass_ascendants() const;
+
+
+	/**
 	 * @return The main progenitor of this halo
 	 */
 	HaloPtr main_progenitor() const;

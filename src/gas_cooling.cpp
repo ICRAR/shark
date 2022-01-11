@@ -268,7 +268,6 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		return 0;
 	}
 
-
 	/**
 	 * Calculate reincorporated mass and metals.
 	 */
@@ -313,6 +312,24 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}
 	}
 
+	/*
+	 * Before proceeding we will ensure halos have a baryon fraction inside the halo is at maximum the baryon fraction.
+	 * In that case remove hot halo gas until we reach the universal baryon fraction (move to ejected)
+	 */
+	if(halo->inside_halo_baryon_mass() > halo->Mvir * cosmology->universal_baryon_fraction()){
+		float mass_remove = halo->inside_halo_baryon_mass() - halo->Mvir * cosmology->universal_baryon_fraction();
+		auto frac_remove = std::min(mass_remove, subhalo.hot_halo_gas.mass) / subhalo.hot_halo_gas.mass;
+		subhalo.ejected_galaxy_gas.mass_metals += frac_remove * subhalo.hot_halo_gas.mass_metals;
+		subhalo.ejected_galaxy_gas.mass += mass_remove;
+		subhalo.hot_halo_gas.mass_metals -= frac_remove * subhalo.hot_halo_gas.mass_metals;
+		subhalo.hot_halo_gas.mass -= mass_remove;
+
+		if(subhalo.hot_halo_gas.mass <= 0){
+			subhalo.hot_halo_gas.restore_baryon();
+			return 0;
+		}
+
+	}
 	/**
 	* Plant black hole seed if necessary.
 	*/

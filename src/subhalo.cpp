@@ -237,4 +237,19 @@ double Subhalo::total_baryon_mass() const
 
 	return mass;
 }
+
+double Subhalo::inside_subhalo_baryon_mass() const
+{
+	double mass= 0.0;
+
+	// add subhalo components.
+	mass += hot_halo_gas.mass + cold_halo_gas.mass;
+
+	for (const auto &galaxy: galaxies){
+		mass += galaxy.baryon_mass() + galaxy.smbh.mass;
+	}
+
+	return mass;
+}
+
 }  // namespace shark

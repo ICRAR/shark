@@ -172,6 +172,12 @@ public:
 	 */
 	double total_baryon_mass() const;
 
+
+	/**
+	 * @return The baryon mass contained inside this Subhalo (excluding ejected and lost mass)
+	 */
+	double inside_subhalo_baryon_mass() const;
+
 	/**
 	 * Checks whether this subhalo has the correct composition of galaxies
 	 * depending on its type

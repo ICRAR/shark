@@ -91,6 +91,10 @@ public:
 		return parameters.OmegaB/parameters.OmegaM;
 	};
 
+	double universal_baryon_fraction_relative_to_dm() const {
+		return parameters.OmegaB/(parameters.OmegaM - parameters.OmegaB);
+	};
+
 	double hubble_parameter (double z) const;
 
 	CosmologicalParameters parameters;

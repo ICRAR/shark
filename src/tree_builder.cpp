@@ -321,12 +321,21 @@ void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &tree
 
 	//This function loops over merger trees and halos to make sure that descendant halos are at least as massive as their progenitors.
 	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, unsigned int thread_idx) {
-		for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
+		/*for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
 
 			for(auto &halo: tree->halos_at(snapshot)){
 				// Check if current mass of halo is larger than descendant. If so, redefine descendant Mvir to that of the progenitor.
 				if(halo->Mvir > halo->descendant->Mvir){
 					halo->descendant->Mvir = halo->Mvir;
+				}
+			}
+		}*/
+		for(int snapshot=sim_params.max_snapshot; snapshot > sim_params.min_snapshot; snapshot--) {
+
+			for(auto &halo: tree->halos_at(snapshot)){
+				// Check if current mass of halo is smaller than the total of its ascendants. If so, redefine Mvir to that total.
+				if(halo->Mvir < halo->total_mass_ascendants()){
+					halo->Mvir = halo->total_mass_ascendants();
 				}
 			}
 		}
@@ -376,9 +385,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 					const auto &ascendants = halo->ascendants;
 
-					auto Mvir_asc = std::accumulate(ascendants.begin(), ascendants.end(), 0., [](double mass, const HaloPtr &halo) {
-						return mass + halo->Mvir;
-					});
+					auto Mvir_asc = halo->total_mass_ascendants();
 
 					// Define accreted baryonic mass.
 					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * universal_baryon_fraction;

@@ -109,6 +109,28 @@ double Halo::total_baryon_mass() const
 	return mass;
 }
 
+double Halo::inside_halo_baryon_mass() const
+{
+	double mass= 0.0;
+
+	for (auto &subhalo: all_subhalos()){
+		mass += subhalo->inside_subhalo_baryon_mass();
+	}
+
+	return mass;
+}
+
+double Halo::total_mass_ascendants() const
+{
+	double mass= 0.0;
+
+	for (auto &halo: ascendants){
+		mass += halo->Mvir;
+	}
+
+	return mass;
+}
+
 galaxies_size_type Halo::galaxy_count() const
 {
 	galaxies_size_type count = 0;
