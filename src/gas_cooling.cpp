@@ -398,7 +398,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	/**
 	* This corresponds to the very simple model of Croton06, in which the cooling time is assumed to be equal to the
 	* dynamical timescale of the halo. With that assumption, and using an isothermal halo, the calculation of rcool and mcool
-	* is trivial.
+	* is trivial. 
 	*/
 	if(parameters.model == GasCoolingParameters::CROTON06)
 	{
@@ -477,7 +477,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of BOWER06 AGN feedback model.
 
-	else if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19 || agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
+	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19){
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
 		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
 		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
@@ -506,13 +506,13 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		double rheat = mheatrate/coolingrate * r_cool;
 
 		double r_ratio = rheat/r_cool;
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
-			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
-				subhalo.cooling_subhalo_tracking.rheat = rheat;
-			}
 
-			r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
+		// Track heating radius. Croton16 and Bravo19 assume that the heating radius only increases.
+		if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
+
+		r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
 		if(r_ratio > agnfeedback->parameters.alpha_cool){
 			r_ratio = 1;
