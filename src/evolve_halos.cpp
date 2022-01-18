@@ -247,10 +247,10 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
 				number_minor_mergers += galaxy.interaction.minor_mergers;
 				number_disk_instabil += galaxy.interaction.disk_instabilities;
 
+				galaxy.mean_stellar_age += (galaxy.sfr_disk + galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins) * deltat * mean_age;
+				galaxy.total_stellar_mass_ever_formed += (galaxy.sfr_disk + galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins) * deltat;
+
 				if(execparams.output_sf_histories){
-        
-					galaxy.mean_stellar_age += (galaxy.sfr_disk + galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins) * deltat * mean_age;
-					galaxy.total_stellar_mass_ever_formed += (galaxy.sfr_disk + galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins) * deltat;
 
 					HistoryItem hist_galaxy;
 					hist_galaxy.sfr_disk            = galaxy.sfr_disk;
