@@ -498,7 +498,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 			}
 		}
 		else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
-			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh,central_galaxy->smbh.mass) * 1e40 /
+			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh, central_galaxy->smbh.mass) * 1e40 /
 					(0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
 		}
 
