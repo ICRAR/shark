@@ -383,8 +383,6 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 				for(auto &halo: tree->halos_at(snapshot)){
 
-					const auto &ascendants = halo->ascendants;
-
 					auto Mvir_asc = halo->total_mass_ascendants();
 
 					// Define accreted baryonic mass.
