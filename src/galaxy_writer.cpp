@@ -374,7 +374,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mstars_burst_diskinstabilities.push_back(galaxy.diskinstabilities_burst_stars.mass);
 				mstars_bulge_diskins_assembly.push_back(galaxy.diskinstabilities_assembly_stars.mass);
 				mstars_stripped.push_back(galaxy.stars_tidal_stripped.mass);
-				mean_stellar_age.push_back(galaxy.mean_stellar_age / galaxy.total_stellar_mass_ever_formed);
+				auto age = 0;
+				if(galaxy.total_stellar_mass_ever_formed > 0){
+					age = galaxy.mean_stellar_age / galaxy.total_stellar_mass_ever_formed;
+				}
+				mean_stellar_age.push_back(age);
 
 				// Gas components
 				mgas_disk.push_back(galaxy.disk_gas.mass);
