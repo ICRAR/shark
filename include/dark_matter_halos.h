@@ -109,6 +109,8 @@ public:
 
 	void cooling_gas_sAM(Subhalo &subhalo, double z);
 
+	float enclosed_total_mass(Subhalo &subhalo, double z, float r);
+
 	void disk_sAM(Subhalo &subhalo, Galaxy &galaxy, double z);
 
 	void bulge_sAM(Subhalo &subhalo, Galaxy &galaxy, double z);

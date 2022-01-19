@@ -282,6 +282,23 @@ void DarkMatterHalos::cooling_gas_sAM(Subhalo &subhalo, double z){
 
 }
 
+float DarkMatterHalos::enclosed_total_mass(Subhalo &subhalo, double z, float r){
+
+	auto rvir = halo_virial_radius(subhalo.host_halo, z);
+	auto rnorm = r/rvir;
+
+	//calculate enclosed DM mass
+	auto mdm = enclosed_mass(rvir, subhalo.concentration);
+
+	//calculate enclosed hot gas mass (only relevant for isothermal sphere)
+	auto mhot = subhalo.hot_halo_gas.mass * std::pow(rnorm,2);
+
+	//calculate enclosed galaxy mass
+	auto mgal = subhalo.central_galaxy()->enclosed_bulge_mass(r) + subhalo.central_galaxy()->enclosed_mass_disk(r);
+
+	return mdm + mhot + mgal;
+}
+
 void DarkMatterHalos::disk_sAM(Subhalo &subhalo, Galaxy &galaxy, double z){
 
 	double rvir = halo_virial_radius(subhalo.host_halo, z);

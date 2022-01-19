@@ -251,7 +251,7 @@ void SharkRunner::impl::create_per_thread_objects()
 	StellarFeedbackParameters stellar_feedback_params(options);
 
 	auto agnfeedback = make_agn_feedback(agn_params, cosmology, recycling_params);
-	auto environment = make_environment(environment_params);
+	auto environment = make_environment(environment_params, dark_matter_halos);
 	auto reionisation = make_reionisation(reio_params);
 	auto reincorporation = make_reincorporation(reinc_params, dark_matter_halos);
 	StellarFeedback stellar_feedback {stellar_feedback_params};

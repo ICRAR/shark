@@ -34,7 +34,8 @@ EnvironmentParameters::EnvironmentParameters(const Options &options)
 	options.load("environment.minimum_halo_mass_fraction", minimum_halo_mass_fraction);
 }
 
-Environment::Environment(const EnvironmentParameters &parameters):
+Environment::Environment(const EnvironmentParameters &parameters,
+		DarkMatterHalosPtr darkmatterhalos):
 	parameters(parameters){
 	//no-opt
 }

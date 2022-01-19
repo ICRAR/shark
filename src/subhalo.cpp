@@ -252,4 +252,5 @@ double Subhalo::inside_subhalo_baryon_mass() const
 	return mass;
 }
 
+
 }  // namespace shark

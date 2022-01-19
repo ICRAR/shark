@@ -51,7 +51,7 @@ public:
 class Environment{
 
 public:
-	explicit Environment(const EnvironmentParameters &parameters);
+	explicit Environment(const EnvironmentParameters &parameters, DarkMatterHalosPtr darkmatterhalos);
 
 	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, Subhalo &central_subhalo);
 	BaryonBase remove_tidal_stripped_stars(Subhalo &subhalo, Galaxy &galaxy, BaryonBase lost_stellar);
