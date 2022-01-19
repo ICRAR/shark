@@ -30,6 +30,7 @@
 
 #include "components/algorithms.h"
 #include "cosmology.h"
+#include "dark_matter_halos.h"
 #include "exceptions.h"
 #include "halo.h"
 #include "logging.h"
@@ -83,7 +84,13 @@ void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, S
 }
 
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
+std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos,
+		SimulationParameters sim_params,
+		GasCoolingParameters gas_cooling_params,
+		DarkMatterHaloParameters dark_matter_params,
+		const DarkMatterHalosPtr &darkmatterhalos,
+		const CosmologyPtr &cosmology,
+		TotalBaryon &AllBaryons)
 {
 
 	auto last_snapshot_to_consider = exec_params.last_output_snapshot();
@@ -162,7 +169,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos,
 
 	// Define halo and subhalos ages and other relevant properties
 	LOG(info) << "Defining ages of halos and subhalos";
-	define_ages_halos(trees, sim_params);
+	define_ages_halos(trees, sim_params, darkmatterhalos);
 
 	return trees;
 }
@@ -374,7 +381,11 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 }
 
 
-void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, GasCoolingParameters &gas_cooling_params, Cosmology &cosmology, TotalBaryon &AllBaryons){
+void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees,
+		SimulationParameters &sim_params,
+		GasCoolingParameters &gas_cooling_params,
+		Cosmology &cosmology,
+		TotalBaryon &AllBaryons){
 
 
 	//Loop over trees.
@@ -411,7 +422,9 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 }
 
-void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
+void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees,
+		SimulationParameters &sim_params,
+		const DarkMatterHalosPtr &darkmatterhalos){
 
 
 	//Loop over trees.
@@ -446,6 +459,7 @@ void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, Sim
 							if(main_prog->subhalo_type == Subhalo::CENTRAL){
 								subhalo->infall_t = sim_params.redshifts[snap];
 								subhalo->Mvir_infall = main_prog->Mvir;
+								subhalo->rvir_infall = darkmatterhalos->halo_virial_radius(main_prog->host_halo, sim_params.redshifts[snap]);
 							}
 							snap --;
 							main_prog = main_prog->main();

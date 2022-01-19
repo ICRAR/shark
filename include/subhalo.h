@@ -230,6 +230,8 @@ public:
 	float infall_t = 0;
 	/// halo mass and stellar mass of central galaxy at infall_t;
 	float Mvir_infall = 0;
+	/// halo virial radius at infall_t;
+	float rvir_infall = 0;
 	BaryonBase star_central_infall;
 	/// The accreted baryonic mass onto the subhalo. This information comes from the merger tree
 	float accreted_mass = 0;

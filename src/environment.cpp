@@ -23,6 +23,9 @@
 #include "environment.h"
 #include "subhalo.h"
 #include "galaxy.h"
+#include "cosmology.h"
+#include "dark_matter_halos.h"
+#include "simulation.h"
 
 namespace shark {
 
@@ -35,8 +38,17 @@ EnvironmentParameters::EnvironmentParameters(const Options &options)
 }
 
 Environment::Environment(const EnvironmentParameters &parameters,
-		DarkMatterHalosPtr darkmatterhalos):
-	parameters(parameters){
+		DarkMatterHalosPtr &darkmatterhalos,
+		CosmologyPtr &cosmology,
+		CosmologicalParameters cosmo_params,
+		SimulationParameters simparams
+		):
+	parameters(parameters),
+	darkmatterhalos(std::move(darkmatterhalos)),
+	cosmology(std::move(cosmology)),
+	cosmo_params(cosmo_params),
+	simparams(simparams)
+	{
 	//no-opt
 }
 
@@ -221,6 +233,41 @@ BaryonBase Environment::remove_tidal_stripped_stars(Subhalo &subhalo, Galaxy &ga
 
 	return lost_stellar;
 
+}
+
+double Environment::ram_pressure_stripping_hot_gas(const SubhaloPtr &primary,
+		const SubhaloPtr &secondary,
+		double r,
+		int snapshot){
+	/* here we evaluate the function that needs to go to zero to find the best R_RPS solution for the hot gas
+	this comes from the following equation:
+	rho_hot_cen(Rsat) * vsat^2.0 = G * Msat(<r)*mhot_sat / (8 * Rvir_sat * r^3)
+	Here, Rsat is the distance from the halo centre to the satellite galaxy; vsat is the relative velocity of the subhalo and r what we need to solve for.
+	*/
+
+	// Find the objects physical position
+	double conversion_factor = cosmo_params.Hubble_h * (1 +  simparams.redshifts[snapshot]);
+	double xrel = (secondary->position.x - primary->position.x) * conversion_factor;
+	double yrel = (secondary->position.y - primary->position.y) * conversion_factor;
+	double zrel = (secondary->position.z - primary->position.z) * conversion_factor;
+	double rsat = std::sqrt(xrel*xrel + yrel*yrel + zrel*zrel);
+
+	// Find the physical velocity + the hubble flow
+	double hubble_flow = rsat * cosmology->hubble_parameter(simparams.redshifts[snapshot]);
+	double vxrel = secondary->velocity.x - primary->velocity.x + hubble_flow;
+	double vyrel = secondary->velocity.y - primary->velocity.y + hubble_flow;
+	double vzrel = secondary->velocity.z - primary->velocity.z + hubble_flow;
+	double vrel = std::sqrt(vxrel*vxrel + vyrel*vyrel + vzrel*vzrel);
+
+	auto rvir_prim = darkmatterhalos->halo_virial_radius(primary->host_halo, simparams.redshifts[snapshot]);
+	auto rho_cen = primary->hot_halo_gas.mass / (shark::constants::PI4 * std::pow(rvir_prim,2) * rsat);
+
+	double func = shark::constants::G *
+			darkmatterhalos->enclosed_total_mass(*secondary, simparams.redshifts[snapshot], r) *
+			secondary->hot_halo_gas.mass / (8 * secondary->rvir_infall * std::pow(r,3)) -
+			rho_cen * std::pow(vrel,2);
+
+	return func;
 }
 
 } // namespace shark

@@ -32,6 +32,8 @@
 #include "baryon.h"
 #include "components.h"
 #include "dark_matter_halos.h"
+#include "cosmology.h"
+#include "simulation.h"
 #include "options.h"
 
 namespace shark {
@@ -51,14 +53,26 @@ public:
 class Environment{
 
 public:
-	explicit Environment(const EnvironmentParameters &parameters, DarkMatterHalosPtr darkmatterhalos);
+	explicit Environment(const EnvironmentParameters &parameters,
+			DarkMatterHalosPtr &darkmatterhalos,
+			CosmologyPtr &cosmology,
+			CosmologicalParameters cosmo_params,
+			SimulationParameters simparams);
 
 	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, Subhalo &central_subhalo);
 	BaryonBase remove_tidal_stripped_stars(Subhalo &subhalo, Galaxy &galaxy, BaryonBase lost_stellar);
+	double ram_pressure_stripping_hot_gas(const SubhaloPtr &primary,
+			const SubhaloPtr &secondary,
+			double r,
+			int snapshot);
 
 private:
 
 	EnvironmentParameters parameters;
+	DarkMatterHalosPtr darkmatterhalos;
+	CosmologyPtr cosmology;
+	CosmologicalParameters cosmo_params;
+	SimulationParameters simparams;
 
 };
 

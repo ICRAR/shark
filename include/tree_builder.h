@@ -42,7 +42,13 @@ class TreeBuilder {
 public:
 	TreeBuilder(ExecutionParameters exec_params, unsigned int threads);
 	virtual ~TreeBuilder();
-	std::vector<MergerTreePtr> build_trees(std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, DarkMatterHaloParameters dark_matter_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons);
+	std::vector<MergerTreePtr> build_trees(std::vector<HaloPtr> &halos,
+			SimulationParameters sim_params,
+			GasCoolingParameters gas_cooling_params,
+			DarkMatterHaloParameters dark_matter_params,
+			const DarkMatterHalosPtr &darkmatterhalos,
+			const CosmologyPtr &cosmology,
+			TotalBaryon &AllBaryons);
 
 protected:
 
@@ -61,7 +67,7 @@ private:
 	SubhaloPtr define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo);
 	void define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, GasCoolingParameters &gas_cooling_params, Cosmology &cosmology, TotalBaryon &AllBaryons);
 	void remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo);
- 	void define_ages_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params);
+ 	void define_ages_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, const DarkMatterHalosPtr &darkmatterhalos);
 	void ignore_late_massive_halos(std::vector<MergerTreePtr> &trees,  SimulationParameters sim_params, ExecutionParameters exec_params);
 
 private:

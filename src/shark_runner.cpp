@@ -251,7 +251,7 @@ void SharkRunner::impl::create_per_thread_objects()
 	StellarFeedbackParameters stellar_feedback_params(options);
 
 	auto agnfeedback = make_agn_feedback(agn_params, cosmology, recycling_params);
-	auto environment = make_environment(environment_params, dark_matter_halos);
+	auto environment = make_environment(environment_params, dark_matter_halos, cosmology, cosmo_params, simulation_params);
 	auto reionisation = make_reionisation(reio_params);
 	auto reincorporation = make_reincorporation(reinc_params, dark_matter_halos);
 	StellarFeedback stellar_feedback {stellar_feedback_params};
@@ -272,7 +272,7 @@ std::vector<MergerTreePtr> SharkRunner::impl::import_trees()
 	SURFSReader reader(simulation_params.tree_files_prefix, dark_matter_halos, simulation_params, threads);
 	HaloBasedTreeBuilder tree_builder(exec_params, threads);
 	auto halos = reader.read_halos(exec_params.simulation_batches);
-	auto trees = tree_builder.build_trees(halos, simulation_params, gas_cooling_params, dark_matter_halo_params, cosmology, all_baryons);
+	auto trees = tree_builder.build_trees(halos, simulation_params, gas_cooling_params, dark_matter_halo_params, dark_matter_halos, cosmology, all_baryons);
 	LOG(info) << trees.size() << " Merger trees imported in " << t;
 
 	// Create the first generation of galaxies if halo is first appearing
