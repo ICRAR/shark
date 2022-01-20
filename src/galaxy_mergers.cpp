@@ -128,9 +128,9 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 
 		// Find the objects physical position
 		double conversion_factor = cosmo_params.Hubble_h * (1 +  simparams.redshifts[snapshot]);
-		double xrel = (secondary->position.x - primary->position.x) * conversion_factor;
-		double yrel = (secondary->position.y - primary->position.y) * conversion_factor;
-		double zrel = (secondary->position.z - primary->position.z) * conversion_factor;
+		double xrel = (secondary->position.x - primary->position.x) / conversion_factor;
+		double yrel = (secondary->position.y - primary->position.y) / conversion_factor;
+		double zrel = (secondary->position.z - primary->position.z) / conversion_factor;
 		double r = std::sqrt(xrel*xrel + yrel*yrel + zrel*zrel);
 
 		// Find the physical velocity + the hubble flow
@@ -267,8 +267,10 @@ void GalaxyMergers::merging_subhalos(HaloPtr &halo, double z, int snapshot)
 			}
 
 			// Any transfer of halo baryons from satellite to central happens in environment.cpp
+
 			// Transfer the galaxies in this subhalo to the central subhalo. Note that this implies a horizontal transfer of information.
 			satellite_subhalo->transfer_galaxies_to(central_subhalo);
+			satellite_subhalo->transfer_halo_gas_to(central_subhalo);
 		}
 		else {
 			//In cases where the subhalo does not disappear, we search for type=2 galaxies and transfer them to the central subhalo,
