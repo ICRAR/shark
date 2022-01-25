@@ -393,7 +393,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double Rvir = 0;
 
 	if(subhalo.subhalo_type == Subhalo::CENTRAL){
-		Rvir   = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(halo, z), z);//physical Mpc
+		Rvir = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(halo, z), z);//physical Mpc
 	}
 	else {
 		//If subhalo is a satellite, then adopt virial radius at infall.

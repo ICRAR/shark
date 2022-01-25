@@ -44,7 +44,8 @@ class EnvironmentParameters{
 public:
 	explicit EnvironmentParameters(const Options &options);
 
-	bool gradual_stripping = false;
+	bool gradual_stripping_halo = false;
+	bool gradual_stripping_ism = false;
 	bool stripping = true;
 	bool tidal_stripping = false;
 	float minimum_halo_mass_fraction = 0.01;

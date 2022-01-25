@@ -40,7 +40,8 @@ struct galaxy_properties_for_root_solver {
 EnvironmentParameters::EnvironmentParameters(const Options &options)
 {
 	options.load("environment.stripping", stripping, true);
-	options.load("environment.gradual_stripping", gradual_stripping);
+	options.load("environment.gradual_stripping_halo", gradual_stripping_halo);
+	options.load("environment.gradual_stripping_ism", gradual_stripping_ism);
 	options.load("environment.tidal_stripping", tidal_stripping);
 	options.load("environment.minimum_halo_mass_fraction", minimum_halo_mass_fraction);
 }
@@ -85,7 +86,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 		if(parameters.stripping){
 
 			if(satellite_subhalo.hot_halo_gas.mass > 0 || satellite_subhalo.cold_halo_gas.mass > 0){
-				if(parameters.gradual_stripping){
+				if(parameters.gradual_stripping_halo){
 					//first check whether the function is positive at Rvir_infall. In that case, the satellite subhalo experiences no stripping:
 					//second, check whether function is negative at Rvir_infall/100. In that case assume all hot gas is stripped.
 					double mhot_removed = 0;
