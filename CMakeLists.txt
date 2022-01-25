@@ -336,6 +336,7 @@ set(SHARKLIB_SRCS
    include/recycling.h
    include/reincorporation.h
    include/reionisation.h
+   include/root_solver.h
    include/shark.h
    include/shark_runner.h
    include/simulation.h
@@ -373,6 +374,7 @@ set(SHARKLIB_SRCS
    src/recycling.cpp
    src/reincorporation.cpp
    src/reionisation.cpp
+   src/root_solver.cpp
    src/shark_runner.cpp
    src/simulation.cpp
    src/star_formation.cpp

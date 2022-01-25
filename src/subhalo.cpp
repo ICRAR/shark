@@ -224,6 +224,19 @@ void Subhalo::remove_galaxies(const std::vector<Galaxy::id_t> &to_remove)
 	}
 }
 
+
+void Subhalo::transfer_halo_gas_to(SubhaloPtr &target)
+{
+
+	target->hot_halo_gas += hot_halo_gas;
+	target->cold_halo_gas += cold_halo_gas;
+
+	// After transferring, we make these baryon components zero.
+	hot_halo_gas.restore_baryon();
+	cold_halo_gas.restore_baryon();
+
+}
+
 double Subhalo::total_baryon_mass() const
 {
 	double mass= 0.0;

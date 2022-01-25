@@ -31,10 +31,11 @@
 
 #include "baryon.h"
 #include "components.h"
-#include "dark_matter_halos.h"
 #include "cosmology.h"
-#include "simulation.h"
+#include "dark_matter_halos.h"
 #include "options.h"
+#include "root_solver.h"
+#include "simulation.h"
 
 namespace shark {
 
@@ -47,6 +48,7 @@ public:
 	bool stripping = true;
 	bool tidal_stripping = false;
 	float minimum_halo_mass_fraction = 0.01;
+	float Accuracy_RPS = 0.05;
 
 };
 
@@ -54,17 +56,22 @@ class Environment{
 
 public:
 	explicit Environment(const EnvironmentParameters &parameters,
-			DarkMatterHalosPtr &darkmatterhalos,
-			CosmologyPtr &cosmology,
+			DarkMatterHalosPtr darkmatterhalos,
+			CosmologyPtr cosmology,
 			CosmologicalParameters cosmo_params,
 			SimulationParameters simparams);
 
-	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, Subhalo &central_subhalo);
-	BaryonBase remove_tidal_stripped_stars(Subhalo &subhalo, Galaxy &galaxy, BaryonBase lost_stellar);
+	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, SubhaloPtr &central_subhalo, double z);
+	BaryonBase remove_tidal_stripped_stars(SubhaloPtr &subhalo, Galaxy &galaxy, BaryonBase lost_stellar);
+	double process_ram_pressure_stripping(const SubhaloPtr &primary,
+			Subhalo &secondary,
+			double z);
 	double ram_pressure_stripping_hot_gas(const SubhaloPtr &primary,
-			const SubhaloPtr &secondary,
+			Subhalo &secondary,
 			double r,
-			int snapshot);
+			double z);
+
+	using func_x = double (*)(double x, void *);
 
 private:
 
@@ -73,6 +80,7 @@ private:
 	CosmologyPtr cosmology;
 	CosmologicalParameters cosmo_params;
 	SimulationParameters simparams;
+	Root_Solver root_solver;
 
 };
 

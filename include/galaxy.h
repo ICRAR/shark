@@ -282,26 +282,40 @@ public:
 
 	double enclosed_mass_disk(float r) const
 	{
+
 		return enclosed_mass_exponential(r, disk_gas.mass, disk_gas.rscale) +
 				enclosed_mass_exponential(r, disk_stars.mass, disk_stars.rscale);
 	}
 
 	double enclosed_bulge_mass(float r) const
 	{
+
 		return enclosed_mass_exponential(r, bulge_gas.mass, bulge_gas.rscale) +
 				enclosed_mass_plummer(r, bulge_stars.mass, bulge_stars.rscale);
+
 	}
 
 	double enclosed_mass_exponential(float r, float m, float r50) const
 	{
-		auto re = r50/1.67;
-		return m * (1 - (1 + r/re * std::exp(-r/re)));
+		if(m == 0){
+			return 0;
+		}
+		else{
+			auto rnorm = r/(r50/1.67);
+			auto mass = m * (1 - (1 + rnorm) * std::exp(-rnorm));
+			return mass;
+		}
 	}
 
 	double enclosed_mass_plummer(float r, float m, float r50) const
 	{
-		auto re = r50/1.3;
-		return m * std::pow(r, 3) / std::pow( std::pow(r,2) + std::pow(re,2), 1.5);
+		if(m ==0){
+			return 0;
+		}
+		else{
+			auto re = r50/1.3;
+			return m * std::pow(r, 3) / std::pow( std::pow(r,2) + std::pow(re,2), 1.5);
+		}
 	}
 
 };

@@ -92,15 +92,23 @@ AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr c
 	// no-op
 }
 
-void AGNFeedback::plant_seed_smbh(Halo &halo){
+void AGNFeedback::plant_seed_smbh(Subhalo &subhalo){
 
-	if (halo.Mvir > parameters.mhalo_seed) {
-		auto central = halo.central_subhalo->central_galaxy();
-		if (central && central->smbh.mass == 0) {
-			central->smbh.mass = parameters.mseed;
-			central->smbh.mass_metals = 0;
+	auto central = subhalo.central_galaxy();
+
+	if(central){
+		float mvir = 0;
+		if(subhalo.subhalo_type == Subhalo::CENTRAL){
+			mvir = subhalo.host_halo->Mvir;
+		}
+		else{
+			mvir = subhalo.Mvir_infall;
+		}
+		if (mvir > parameters.mhalo_seed && central->smbh.mass ==0){
+				central->smbh.mass = parameters.mseed;
 		}
 	}
+
 
 }
 

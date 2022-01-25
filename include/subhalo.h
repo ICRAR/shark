@@ -161,6 +161,13 @@ public:
 	 */
 	void remove_galaxies(const std::vector<Galaxy::id_t> &to_remove);
 
+	/**
+	 * Removes halo gas this Subhalo
+	 *
+	 * @param target subhalo that will acquire the halo gas.
+	 */
+	void transfer_halo_gas_to(SubhaloPtr &target);
+
 	/// Returns the number of galaxies contained in this Halo
 	galaxies_size_type galaxy_count() const
 	{
@@ -171,7 +178,6 @@ public:
 	 * @return The total baryon mass contained in this Subhalo
 	 */
 	double total_baryon_mass() const;
-
 
 	/**
 	 * @return The baryon mass contained inside this Subhalo (excluding ejected and lost mass)
@@ -228,13 +234,17 @@ public:
 	float lambda = 0;
 	/// redshift at which the subhalo became a type > 0.
 	float infall_t = 0;
-	/// halo mass and stellar mass of central galaxy at infall_t;
+	/// halo mass and stellar mass of central galaxy at infall_t.
 	float Mvir_infall = 0;
-	/// halo virial radius at infall_t;
+	/// halo virial radius at infall_t.
 	float rvir_infall = 0;
+	/// ram-pressurte tripping radius of the hot gas.
+	float hot_halo_gas_r_rps = 0;
 	BaryonBase star_central_infall;
 	/// The accreted baryonic mass onto the subhalo. This information comes from the merger tree
 	float accreted_mass = 0;
+	/// cooling rate experienced by this subhalo [Msun/Gyr/h]
+	float cooling_rate = 0;
 	/// information of the virial temperature, total halo gas and cooling time history.
 	CoolingSubhaloTracking cooling_subhalo_tracking;
 	/// Hot gas component of the halo and outside the galaxies that is allowed to cool down and/or fall onto the galaxy.
@@ -247,6 +257,8 @@ public:
 	BaryonBase lost_galaxy_gas;
 	/// Intra-halo stellar component - produced by tidal interactions of satellites with halo.
 	BaryonBase stellar_halo;
+	/// Hot halo has mass at infall.
+	BaryonBase hot_halo_gas_stripped;
 	/// mass-weighted mean stellar mass and metallicity of the galaxies that contribute to the stellar halo.
 	float mean_galaxy_making_stellar_halo = 0;
 	/// The snapshot at which this subhalo is found.

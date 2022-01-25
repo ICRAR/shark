@@ -142,8 +142,6 @@ public:
 	float concentration = 0;
 	/// spin parameter of halo
 	float lambda = 0;
-	/// cooling rate experienced by this halo [Msun/Gyr/h]
-	float cooling_rate = 0;
 	/// redshift at which the halo had 80% of its mass in place
 	float age_80 = 0;
 	/// redshift at which the halo had 50% of its mass in place

@@ -31,6 +31,7 @@
 #include "cosmology.h"
 #include "options.h"
 #include "recycling.h"
+#include "subhalo.h"
 
 namespace shark {
 
@@ -77,7 +78,7 @@ public:
 	 * All input quantities should be in comoving units.
 	 */
 
-	void plant_seed_smbh(Halo &halo);
+	void plant_seed_smbh(Subhalo &subhalo);
 	double eddington_luminosity(double mbh);
 	double accretion_rate_hothalo_smbh(double Lcool, double mbh);
 	double accretion_rate_ratio(double macc, double mBH);

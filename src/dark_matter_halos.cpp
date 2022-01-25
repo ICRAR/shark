@@ -131,17 +131,28 @@ double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
 
 double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo, double z)
 {
-        double v = halo_virial_velocity(halo->Mvir, z);
-        double r = constants::G * halo->Mvir / std::pow(v,2);
-        double t = constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / v;
-        return t;
+	double v = halo_virial_velocity(halo->Mvir, z);
+	double r = constants::G * halo->Mvir / std::pow(v,2);
+	double t = constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / v;
+	return t;
 }
+
 
 double DarkMatterHalos::subhalo_dynamical_time (Subhalo &subhalo, double z){
 
-	double r = halo_virial_radius(subhalo.host_halo, z);
+	double r = 0;
+	double v = 0;
 
-	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / subhalo.Vvir;
+	if(subhalo.subhalo_type == Subhalo::CENTRAL){
+		r = halo_virial_radius(subhalo.host_halo, z);
+		v = subhalo.Vvir;
+	}
+	else{
+		r = subhalo.rvir_infall;
+		v = halo_virial_velocity(subhalo.Mvir_infall, subhalo.infall_t);
+	}
+
+	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / v;
 }
 
 double DarkMatterHalos::halo_virial_radius(HaloPtr &halo, double z){
@@ -284,17 +295,28 @@ void DarkMatterHalos::cooling_gas_sAM(Subhalo &subhalo, double z){
 
 float DarkMatterHalos::enclosed_total_mass(Subhalo &subhalo, double z, float r){
 
+	GalaxyPtr galaxy;
+	if(subhalo.subhalo_type == Subhalo::SATELLITE){
+		galaxy = subhalo.type1_galaxy();
+	}
+	else{
+		galaxy = subhalo.central_galaxy();
+	}
+	double mgal = 0;
+
 	auto rvir = halo_virial_radius(subhalo.host_halo, z);
 	auto rnorm = r/rvir;
 
 	//calculate enclosed DM mass
-	auto mdm = enclosed_mass(rvir, subhalo.concentration);
+	auto mdm = subhalo.Mvir * enclosed_mass(rvir, subhalo.concentration);
 
 	//calculate enclosed hot gas mass (only relevant for isothermal sphere)
 	auto mhot = subhalo.hot_halo_gas.mass * std::pow(rnorm,2);
 
 	//calculate enclosed galaxy mass
-	auto mgal = subhalo.central_galaxy()->enclosed_bulge_mass(r) + subhalo.central_galaxy()->enclosed_mass_disk(r);
+	if(galaxy){
+		mgal = galaxy->enclosed_mass_disk(r) + galaxy->enclosed_bulge_mass(r);
+	}
 
 	return mdm + mhot + mgal;
 }

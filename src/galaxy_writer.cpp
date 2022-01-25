@@ -434,6 +434,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 				double rcool = 0;
 				int t = galaxy.galaxy_type;
+
+				// Define cooling rate only if subhalo is not a type 2.
+				if(galaxy.galaxy_type != Galaxy::TYPE2){
+					rcool = subhalo->cooling_rate;
+				}
 				if(galaxy.galaxy_type == Galaxy::CENTRAL){
 					mhot_gal = hot_subhalo.mass + cold_subhalo.mass;
 					mzhot_gal = hot_subhalo.mass_metals + cold_subhalo.mass_metals;
@@ -441,7 +446,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					mzreheat = reheated_subhalo.mass_metals;
 					lostm = lost_subhalo.mass;
 					lostzm = lost_subhalo.mass_metals;
-					rcool = halo->cooling_rate;
 					mstellarhalo = stellarhalo.mass;
 					mzstellarhalo = stellarhalo.mass_metals;
 					if(stellarhalo.mass > 0){

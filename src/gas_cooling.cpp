@@ -237,27 +237,29 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	using namespace constants;
 
-	double coolingrate = 0;
-
-	//Define host halo
-	auto halo = subhalo.host_halo;
-
-	halo->cooling_rate = 0;
-
-	if(subhalo.subhalo_type == Subhalo::SATELLITE){
-		//Compute how much hot gas there is in this satellite_subhalo based on the environmental processes applied to it.
-		environment->process_satellite_subhalo_environment(subhalo, *subhalo.host_halo->central_subhalo);
-	}
 
 	// If galaxy is type 2, then they don't have a hot halo.
 	if ( galaxy.galaxy_type == Galaxy::TYPE2) {
 		return 0;
 	}
 
+	double coolingrate = 0;
+
+	//Define host halo
+	auto halo = subhalo.host_halo;
+
+	subhalo.cooling_rate = 0;
+
+	if(subhalo.subhalo_type == Subhalo::SATELLITE){
+		//Compute how much hot gas there is in this satellite_subhalo based on the environmental processes applied to it.
+		environment->process_satellite_subhalo_environment(subhalo, subhalo.host_halo->central_subhalo, z);
+	}
+
+
 	// Define main galaxy, which would accrete the cooled gas if any.
 	Galaxy *central_galaxy = &galaxy;
 
-	// If subhalo does not have a main galaxy (which could happen in satellite subhalos), or subhalo does not have a hot halo, return 0.
+	// If subhalo does not have a hot halo, return 0.
 	if(subhalo.hot_halo_gas.mass <= 0){
 		return 0;
 	}
@@ -269,11 +271,11 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	}
 
 	/**
-	 * Calculate reincorporated mass and metals.
+	 * Calculate reincorporated mass and metals. This returns 0 if subhalo is a satellite.
 	 */
 	double mreinc_mass = reincorporation->reincorporated_mass(*halo, subhalo, z, deltat);
 
-	if(mreinc_mass > subhalo.ejected_galaxy_gas.mass){
+	if(mreinc_mass > subhalo.ejected_galaxy_gas.mass && mreinc_mass > 0){
 		mreinc_mass = subhalo.ejected_galaxy_gas.mass;
 	}
 
@@ -289,8 +291,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	// Avoid negative values.
 	if(subhalo.ejected_galaxy_gas.mass < constants::tolerance){
-		subhalo.ejected_galaxy_gas.mass = 0;
-		subhalo.ejected_galaxy_gas.mass_metals = 0;
+		subhalo.ejected_galaxy_gas.restore_baryon();
 	}
 	if(subhalo.ejected_galaxy_gas.mass_metals < 0){
 		subhalo.ejected_galaxy_gas.mass_metals = 0;
@@ -314,9 +315,9 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	/*
 	 * Before proceeding we will ensure halos have a baryon fraction inside the halo is at maximum the baryon fraction.
-	 * In that case remove hot halo gas until we reach the universal baryon fraction (move to ejected)
+	 * In that case remove hot halo gas until we reach the universal baryon fraction (move to ejected). This only applies to central subhalos.
 	 */
-	if(halo->inside_halo_baryon_mass() > halo->Mvir * cosmology->universal_baryon_fraction()){
+	if(subhalo.subhalo_type == Subhalo::CENTRAL && halo->inside_halo_baryon_mass() > halo->Mvir * cosmology->universal_baryon_fraction()){
 		float mass_remove = halo->inside_halo_baryon_mass() - halo->Mvir * cosmology->universal_baryon_fraction();
 		auto frac_remove = std::min(mass_remove, subhalo.hot_halo_gas.mass) / subhalo.hot_halo_gas.mass;
 		subhalo.ejected_galaxy_gas.mass_metals += frac_remove * subhalo.hot_halo_gas.mass_metals;
@@ -333,21 +334,19 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	/**
 	* Plant black hole seed if necessary.
 	*/
-	agnfeedback->plant_seed_smbh(*halo);
+	agnfeedback->plant_seed_smbh(subhalo);
 
 	// Calculate Eddington luminosity of BH in galaxy.
 
 	double Ledd = agnfeedback->eddington_luminosity(central_galaxy->smbh.mass);
 
 	/**
-	* Test for subhalos that are affected by reionisation
+	* Test for subhalos that are affected by reionisation (this depends on the virial velocity of the host halo).
 	*/
-	auto reionised_halo = reionisation->reionised_halo(subhalo.Vvir, z);
-
+	auto reionised_halo = reionisation->reionised_halo(subhalo.host_halo->Vvir, z);
 	if(reionised_halo){
 		return 0;
 	}
-
 
 	//Assume hot halo has the same specific angular momentum of DM halo.
 	subhalo.hot_halo_gas.sAM = subhalo.L.norm() / subhalo.Mvir;
@@ -359,7 +358,18 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double mhot_ejec = cosmology->comoving_to_physical_mass(subhalo.ejected_galaxy_gas.mass);
 	double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals + subhalo.cold_halo_gas.mass_metals);
 
+	// if subhalo is a satellite, we include the gas mass that has been stripped as the assumption is that the RPS does not affected the gas density.
+	if(subhalo.subhalo_type == Subhalo::SATELLITE){
+		mhot += subhalo.hot_halo_gas_stripped.mass;
+		mzhot += subhalo.hot_halo_gas_stripped.mass_metals;
+	}
+
 	double vvir = subhalo.Vvir;
+
+	// If subhalo is a satellite, then use the virial velocity the subhalo had at infall.
+	if(subhalo.subhalo_type != Subhalo::CENTRAL){
+		vvir = darkmatterhalos->halo_virial_velocity(subhalo.Mvir_infall, subhalo.infall_t);
+	}
 
 	double zhot = 0;
 	if(mhot > 0){
@@ -380,7 +390,15 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	double Tvir   = 97.48*std::pow(vvir,2.0); //in K.
 	double lgTvir = log10(Tvir); //in K.
-	double Rvir   = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(halo, z), z);//physical Mpc
+	double Rvir = 0;
+
+	if(subhalo.subhalo_type == Subhalo::CENTRAL){
+		Rvir   = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(halo, z), z);//physical Mpc
+	}
+	else {
+		//If subhalo is a satellite, then adopt virial radius at infall.
+		Rvir = cosmology->comoving_to_physical_size(subhalo.rvir_infall, z);//physical Mpc
+	}
 
 	/**
 	* Calculates the cooling Lambda function for the metallicity and temperature of this halo.
@@ -402,7 +420,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	*/
 	if(parameters.model == GasCoolingParameters::CROTON06)
 	{
-		tcool = parameters.tau_cooling * darkmatterhalos->halo_dynamical_time(halo, z); 
+		tcool = parameters.tau_cooling * darkmatterhalos->subhalo_dynamical_time(subhalo, z);
 		tcharac = tcool*constants::GYR2S; //in seconds.
 	}
 
@@ -579,6 +597,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		*/
 		subhalo.hot_halo_gas.mass -= mcooled;
 		subhalo.hot_halo_gas.mass_metals -= mcooled * mzhot/mhot;
+
 	}
 	else {
 		//avoid negative numbers.
@@ -608,7 +627,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	}
 
 	// Save net cooling rate.
-	halo->cooling_rate = coolingrate;
+	subhalo.cooling_rate = coolingrate;
 
 	if(coolingrate > 0){
 		// define cooled gas angular momentum.
