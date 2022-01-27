@@ -202,6 +202,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> mstars_stripped;
 	vector<float> mgas_disk;
 	vector<float> mgas_bulge;
+	vector<float> mgas_stripped;
+
 	vector<float> mstars_metals_disk;
 	vector<float> mstars_metals_bulge;
 	vector<float> mstars_metals_burst_mergers;
@@ -211,6 +213,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> mstars_metals_stripped;
 	vector<float> mgas_metals_disk;
 	vector<float> mgas_metals_bulge;
+	vector<float> mgas_stripped_metals;
+
 	vector<float> mmol_disk;
 	vector<float> mmol_bulge;
 	vector<float> matom_disk;
@@ -228,6 +232,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	vector<float> rdisk_gas;
 	vector<float> rbulge_gas;
+	vector<float> r_stripped_ism;
 	vector<float> sAM_disk_gas;
 	vector<float> sAM_disk_gas_atom;
 	vector<float> sAM_disk_gas_mol;
@@ -245,6 +250,10 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	vector<float> mreheated;
 	vector<float> mreheated_metals;
+
+	vector<float> mhot_stripped;
+	vector<float> mhot_stripped_metals;
+	vector<float> r_stripped;
 
 	vector<float> stellar_halo;
 	vector<float> stellar_halo_metals;
@@ -335,6 +344,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto stellarhalo = subhalo->stellar_halo;
 			auto msub_infall = subhalo->Mvir_infall;
 			auto mmeanstellarhalo = subhalo->mean_galaxy_making_stellar_halo;
+			auto stripped_subhalo = subhalo->hot_halo_gas_stripped;
+			auto r_rps_halo = subhalo->hot_halo_gas_r_rps;
 
 			descendant_id.push_back(subhalo->descendant_id);
 			infall_time_subhalo.push_back(subhalo->infall_t);
@@ -383,6 +394,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				// Gas components
 				mgas_disk.push_back(galaxy.disk_gas.mass);
 				mgas_bulge.push_back(galaxy.bulge_gas.mass);
+				mgas_stripped.push_back(galaxy.ram_pressure_stripped_gas.mass);
 
 				// Metals of the stellar components.
 				mstars_metals_disk.push_back(galaxy.disk_stars.mass_metals);
@@ -396,6 +408,8 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				// Metals of the gas components.
 				mgas_metals_disk.push_back(galaxy.disk_gas.mass_metals);
 				mgas_metals_bulge.push_back(galaxy.bulge_gas.mass_metals);
+				mgas_stripped_metals.push_back(galaxy.ram_pressure_stripped_gas.mass_metals);
+
 				// SFRs in disks and bulges.
 				sfr_disk.push_back(galaxy.sfr_disk);
 				sfr_burst.push_back(galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins);
@@ -411,6 +425,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 				rdisk_gas.push_back(galaxy.disk_gas.rscale);
 				rbulge_gas.push_back(galaxy.bulge_gas.rscale);
+				r_stripped_ism.push_back(galaxy.r_rps);
 				sAM_disk_gas.push_back(galaxy.disk_gas.sAM);
 				sAM_disk_gas_atom.push_back(molecular_gas.j_atom);
 				sAM_disk_gas_mol.push_back(molecular_gas.j_mol);
@@ -433,19 +448,31 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				double ms_mean_stellarhalo = 0;
 
 				double rcool = 0;
+				double mhalo_stripped = 0;
+				double mhalo_stripped_metals = 0;
+				double r_rps_subhalo = 0;
 				int t = galaxy.galaxy_type;
 
-				// Define cooling rate only if subhalo is not a type 2.
+				// Define cooling rate, halo gas and related properties only if subhalo is not a type 2.
 				if(galaxy.galaxy_type != Galaxy::TYPE2){
-					rcool = subhalo->cooling_rate;
+					rcool		= subhalo->cooling_rate;
+					mhot_gal	= hot_subhalo.mass + cold_subhalo.mass;
+					mzhot_gal	= hot_subhalo.mass_metals + cold_subhalo.mass_metals;
+					mreheat		= reheated_subhalo.mass;
+					mzreheat 	= reheated_subhalo.mass_metals;
+					lostm 		= lost_subhalo.mass;
+					lostzm 		= lost_subhalo.mass_metals;
 				}
+
+				// the properties below can only be > 0 for type 1 galaxies.
+				if(galaxy.galaxy_type == Galaxy::TYPE1){
+					mhalo_stripped			= stripped_subhalo.mass;
+					mhalo_stripped_metals 	= stripped_subhalo.mass_metals;
+					r_rps_subhalo 			= r_rps_halo;
+				}
+
+				//stellar halo is >0 only in central galaxies.
 				if(galaxy.galaxy_type == Galaxy::CENTRAL){
-					mhot_gal = hot_subhalo.mass + cold_subhalo.mass;
-					mzhot_gal = hot_subhalo.mass_metals + cold_subhalo.mass_metals;
-					mreheat = reheated_subhalo.mass;
-					mzreheat = reheated_subhalo.mass_metals;
-					lostm = lost_subhalo.mass;
-					lostzm = lost_subhalo.mass_metals;
 					mstellarhalo = stellarhalo.mass;
 					mzstellarhalo = stellarhalo.mass_metals;
 					if(stellarhalo.mass > 0){
@@ -457,6 +484,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				}
 
 				cooling_rate.push_back(rcool);
+				mhot_stripped.push_back(mhalo_stripped);
+				mhot_stripped_metals.push_back(mhalo_stripped_metals);
+				r_stripped.push_back(r_rps_subhalo);
 
 				mhot.push_back(mhot_gal);
 				mhot_metals.push_back(mzhot_gal);
@@ -464,6 +494,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mreheated_metals.push_back(mzreheat);
 				mlost.push_back(lostm);
 				mlost_metals.push_back(lostzm);
+
 				stellar_halo.push_back(mstellarhalo);
 				stellar_halo_metals.push_back(mzstellarhalo);
 				mean_stellar_mass_galaxies_ihsc.push_back(ms_mean_stellarhalo);
@@ -583,6 +614,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mstars_stripped);
 	REPORT(mgas_disk);
 	REPORT(mgas_bulge);
+	REPORT(mgas_stripped);
 	REPORT(mstars_metals_disk);
 	REPORT(mstars_metals_bulge);
 	REPORT(mstars_metals_burst_mergers);
@@ -593,6 +625,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mean_stellar_age);
 	REPORT(mgas_metals_disk);
 	REPORT(mgas_metals_bulge);
+	REPORT(mgas_stripped_metals);
 	REPORT(mmol_disk);
 	REPORT(mmol_bulge);
 	REPORT(matom_disk);
@@ -606,6 +639,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(sfr_burst_diskins);
 	REPORT(rdisk_gas);
 	REPORT(rbulge_gas);
+	REPORT(r_stripped_ism);
 	REPORT(sAM_disk_gas);
 	REPORT(sAM_disk_gas_atom);
 	REPORT(sAM_disk_gas_mol);
@@ -624,12 +658,15 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(stellar_halo_metals);
 	REPORT(mean_stellar_mass_galaxies_ihsc);
 	REPORT(cooling_rate);
+	REPORT(mhot_stripped);
+	REPORT(mhot_stripped_metals);
 	REPORT(mvir_hosthalo);
 	REPORT(mvir_subhalo);
 	REPORT(vmax_subhalo);
 	REPORT(vvir_hosthalo);
 	REPORT(vvir_subhalo);
 	REPORT(cnfw_subhalo);
+	REPORT(r_stripped);
 	REPORT(lambda_subhalo);
 	REPORT(mvir_infall_subhalo);
 	REPORT(L_x_subhalo);
@@ -735,6 +772,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "gas mass in the bulge [Msun/h]";
 	file.write_dataset("galaxies/mgas_bulge", mgas_bulge, comment);
 
+	comment = "gas mass that has been stripped out of the ISM due to ram pressure stripping [Msun/h]";
+	file.write_dataset("galaxies/mism_stripped", mgas_stripped, comment);
+
 	comment = "mass of metals locked in stars in the disk [Msun/h]";
 	file.write_dataset("galaxies/mstars_metals_disk",mstars_metals_disk, comment);
 
@@ -764,6 +804,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "mass of metals locked in the gas of the bulge [Msun/h]";
 	file.write_dataset("galaxies/mgas_metals_bulge", mgas_metals_bulge, comment);
+
+	comment = "mass of metals that has been stripped out of the ISM due to ram pressure stripping [Msun/h]";
+	file.write_dataset("galaxies/mism_metals_stripped", mgas_stripped_metals, comment);
 
 	comment = "molecular gas mass (helium plus hydrogen) in the disk [Msun/h]";
 	file.write_dataset("galaxies/mmol_disk",mmol_disk, comment);
@@ -816,6 +859,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "half-mass radius of the gas bulge [cMpc/h]";
 	file.write_dataset("galaxies/rgas_bulge", rbulge_gas, comment);
 
+	comment = "ram pressure stripping radius of the ISM [cMpc/h]";
+	file.write_dataset("galaxies/r_ism_stripped", r_stripped_ism, comment);
+
 	comment = "specific angular momentum of the gas disk [km/s * cMpc/h]";
 	file.write_dataset("galaxies/specific_angular_momentum_disk_gas", sAM_disk_gas, comment);
 
@@ -861,6 +907,12 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "cooling rate of the hot halo component [Msun/Gyr/h].";
 	file.write_dataset("galaxies/cooling_rate", cooling_rate, comment);
 
+	comment = "gas mass that has been stripped out of this subhalo due to ram pressure stripping [Msun/h].";
+	file.write_dataset("galaxies/mhot_stripped", mhot_stripped, comment);
+
+	comment = "mass of metals that has been stripped out of this subhalo due to ram pressure stripping [Msun/h].";
+	file.write_dataset("galaxies/mhot_metals_stripped", mhot_stripped_metals, comment);
+
 	comment = "Dark matter mass of the host halo in which this galaxy resides [Msun/h]";
 	file.write_dataset("galaxies/mvir_hosthalo", mvir_hosthalo, comment);
 
@@ -875,6 +927,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "Virial velocity of the dark matter host halo in which this galaxy resides [km/s].";
 	file.write_dataset("galaxies/vvir_hosthalo", vvir_hosthalo, comment);
+
+	comment = "ram pressure stripping radius of the halo gas [cMpc/h]";
+	file.write_dataset("galaxies/r_halo_stripped", r_stripped, comment);
 
 	comment = "NFW concentration parameter of the dark matter subhalo in which this galaxy resides [dimensionless]. In the case of type 2 satellites, this corresponds to the concentration its subhalo had before disappearing from the subhalo catalogs.";
 	file.write_dataset("galaxies/cnfw_subhalo", cnfw_subhalo, comment);
