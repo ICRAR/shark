@@ -93,7 +93,7 @@ public:
 
 	double subhalo_dynamical_time (Subhalo &subhalo, double z);
 
-	double halo_virial_radius(HaloPtr &halo, double z);
+	double halo_virial_radius(const HaloPtr &halo, double z);
 
 	double halo_virial_velocity (double mvir, double redshift);
 
@@ -109,7 +109,7 @@ public:
 
 	void cooling_gas_sAM(Subhalo &subhalo, double z);
 
-	float enclosed_total_mass(Subhalo &subhalo, double z, float r);
+	float enclosed_total_mass(const Subhalo &subhalo, double z, float r);
 
 	void disk_sAM(Subhalo &subhalo, Galaxy &galaxy, double z);
 

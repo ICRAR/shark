@@ -33,6 +33,10 @@ namespace shark {
 
 struct galaxy_properties_for_root_solver {
 	double z;
+	double ram_pressure;
+	double x_low;
+	bool halo_strip;
+	bool ism_strip;
 	SubhaloPtr primary;
 	Subhalo &secondary;
 };
@@ -44,6 +48,8 @@ EnvironmentParameters::EnvironmentParameters(const Options &options)
 	options.load("environment.gradual_stripping_ism", gradual_stripping_ism);
 	options.load("environment.tidal_stripping", tidal_stripping);
 	options.load("environment.minimum_halo_mass_fraction", minimum_halo_mass_fraction);
+	options.load("environment.alpha_rps_halo", alpha_rps_halo);
+
 }
 
 Environment::Environment(const EnvironmentParameters &parameters,
@@ -76,103 +82,155 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 	satellite_subhalo.stellar_halo.restore_baryon();
 	satellite_subhalo.mean_galaxy_making_stellar_halo = 0;
 
+	double ram_press = 0;
+	double r_rps = 0;
+
+	auto satellite_galaxy = satellite_subhalo.type1_galaxy();
+
 	// Assume halo gas of subhalos that will disappear in the next snapshot is fully stripped.
-	if(satellite_subhalo.infall_t == z){
+	if(parameters.stripping && satellite_subhalo.infall_t == z){
 		satellite_subhalo.transfer_halo_gas_to(central_subhalo);
 	}
-	else{
+
+	if(parameters.stripping && satellite_subhalo.infall_t != z){
+		// If I'm computing gradial ram pressure stripping of any form, then compute the ram pressure the satellite feels.
+		if(parameters.gradual_stripping_halo || parameters.gradual_stripping_ism){
+			ram_press = ram_pressure(central_subhalo, satellite_subhalo, z);
+		}
+	}
+
+	if(parameters.stripping && satellite_subhalo.infall_t != z){
 		// Treatment for all satellite subhalos.
 		// Remove hot halo gas only if stripping is applied.
-		if(parameters.stripping){
 
-			if(satellite_subhalo.hot_halo_gas.mass > 0 || satellite_subhalo.cold_halo_gas.mass > 0){
-				if(parameters.gradual_stripping_halo){
-					//first check whether the function is positive at Rvir_infall. In that case, the satellite subhalo experiences no stripping:
-					//second, check whether function is negative at Rvir_infall/100. In that case assume all hot gas is stripped.
-					double mhot_removed = 0;
-					double r_rps = 0;
+		auto mhot_tot = satellite_subhalo.cold_halo_gas.mass + satellite_subhalo.hot_halo_gas.mass + satellite_subhalo.hot_halo_gas_stripped.mass;
+		if(mhot_tot > 0){
+			if(parameters.gradual_stripping_halo){
+				//first check whether the function is positive at Rvir_infall. In that case, the satellite subhalo experiences no stripping:
+				//second, check whether function is negative at Rvir_infall/100. In that case assume all hot gas is stripped.
+				auto func_rvir = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall, z, ram_press);
+				auto func_rvirdiv100 = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall/100, z, ram_press);
 
-					auto func_rvir = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall, z);
-					auto func_rvirdiv100 = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall/100, z);
-
-					if(func_rvir > 0){
-						r_rps = satellite_subhalo.hot_halo_gas_r_rps;
-					}
-					else if (func_rvir < 0 && func_rvirdiv100 > 0){
-						r_rps = process_ram_pressure_stripping(central_subhalo, satellite_subhalo, z);
-					}
-					else if (func_rvir < 0 && func_rvirdiv100 < 0){
-						r_rps = 0;
-					}
-
-					auto mhot_tot = satellite_subhalo.cold_halo_gas.mass + satellite_subhalo.hot_halo_gas.mass + satellite_subhalo.hot_halo_gas_stripped.mass;
-
-					// If the ram-pressure stripping radius has decreased from previous timesteps, then compute how much new gas is lost.
-					if(r_rps < satellite_subhalo.hot_halo_gas_r_rps && r_rps > 0){
-						// 1. compute hot gas outside r_rps
-						// 2. update satellite subhalo r_rps
-						// 3. update hot gas that has been stripped.
-						// 4. move that extra hot gas to central subhalo's reservoir.
-
-						mhot_removed = mhot_tot * (1 - std::pow(r_rps/satellite_subhalo.rvir_infall,2)) - satellite_subhalo.hot_halo_gas_stripped.mass;
-						if(mhot_removed < 0){
-							mhot_removed = 0;
-						}
-
-						if(mhot_removed > satellite_subhalo.hot_halo_gas.mass + satellite_subhalo.cold_halo_gas.mass) {
-							mhot_removed = satellite_subhalo.hot_halo_gas.mass + satellite_subhalo.cold_halo_gas.mass;
-						}
-
-
-						// remove halo gas in the proportion of the cold-to-hot halo mass ratio
-						auto frac_gas_phase = satellite_subhalo.hot_halo_gas.mass / (satellite_subhalo.hot_halo_gas.mass + satellite_subhalo.cold_halo_gas.mass);
-						float metals_removed_hot = 0;
-						float metals_removed_cold = 0;
-
-						if(satellite_subhalo.cold_halo_gas.mass > 0){
-							auto zcold = satellite_subhalo.cold_halo_gas.mass_metals / satellite_subhalo.cold_halo_gas.mass;
-							metals_removed_cold = zcold * mhot_removed * (1 - frac_gas_phase);
-
-							satellite_subhalo.cold_halo_gas.mass -= mhot_removed * (1 - frac_gas_phase);
-							satellite_subhalo.cold_halo_gas.mass_metals -= metals_removed_cold;
-
-							if(satellite_subhalo.cold_halo_gas.mass < 0){
-								satellite_subhalo.cold_halo_gas.restore_baryon();
-							}
-
-						}
-						auto zhot = satellite_subhalo.hot_halo_gas.mass_metals / satellite_subhalo.hot_halo_gas.mass;
-						metals_removed_hot = zhot * mhot_removed * frac_gas_phase;
-
-						// track removed hot halo gas and ram-pressure stripping radius.
-						satellite_subhalo.hot_halo_gas_r_rps = r_rps;
-						satellite_subhalo.hot_halo_gas_stripped.mass += mhot_removed;
-						satellite_subhalo.hot_halo_gas_stripped.mass_metals += metals_removed_cold + metals_removed_hot;
-
-						// remove hot gas from satellite subhalo
-						satellite_subhalo.hot_halo_gas.mass -= mhot_removed * frac_gas_phase;
-						satellite_subhalo.hot_halo_gas.mass_metals -= metals_removed_hot;
-
-						// check mass is larger than 0. If not, then restore baryon.
-						if(satellite_subhalo.hot_halo_gas.mass < 0){
-							satellite_subhalo.hot_halo_gas.restore_baryon();
-						}
-
-						central_subhalo->hot_halo_gas.mass += mhot_removed;
-						central_subhalo->hot_halo_gas.mass_metals += metals_removed_cold + metals_removed_hot;
-
-					}
-					else if(r_rps == 0){
-						satellite_subhalo.transfer_halo_gas_to(central_subhalo);
-					}
+				if(func_rvir > 0){
+					r_rps = satellite_subhalo.hot_halo_gas_r_rps;
 				}
-				else{
+				else if (func_rvir < 0 && func_rvirdiv100 > 0){
+					r_rps = process_ram_pressure_stripping_gas(central_subhalo, satellite_subhalo, z, ram_press, true, false);
+				}
+				else if (func_rvir < 0 && func_rvirdiv100 < 0){
+					r_rps = 0;
+				}
+
+				// If the ram-pressure stripping radius has decreased from previous timesteps, then compute how much new gas is lost.
+				if(r_rps < satellite_subhalo.hot_halo_gas_r_rps && r_rps > 0){
+					// 1. compute hot gas outside r_rps
+					// 2. update satellite subhalo r_rps
+					// 3. update hot gas that has been stripped.
+					// 4. move that extra hot gas to central subhalo's reservoir.
+
+					auto mhot_removed = mhot_tot * (1 - std::pow(r_rps/satellite_subhalo.rvir_infall,2)) - satellite_subhalo.hot_halo_gas_stripped.mass;
+					if(mhot_removed < 0){
+						mhot_removed = 0;
+					}
+
+					if(mhot_removed > satellite_subhalo.hot_halo_gas.mass + satellite_subhalo.cold_halo_gas.mass) {
+						mhot_removed = satellite_subhalo.hot_halo_gas.mass + satellite_subhalo.cold_halo_gas.mass;
+					}
+
+					// remove halo gas in the proportion of the cold-to-hot halo mass ratio
+					auto frac_gas_phase = satellite_subhalo.hot_halo_gas.mass / (satellite_subhalo.hot_halo_gas.mass + satellite_subhalo.cold_halo_gas.mass);
+					auto metals_removed_hot = remove_gas(satellite_subhalo.hot_halo_gas, mhot_removed, frac_gas_phase);
+					auto metals_removed_cold = remove_gas(satellite_subhalo.cold_halo_gas, mhot_removed, (1-frac_gas_phase));
+
+
+					// track removed hot halo gas and ram-pressure stripping radius.
+					satellite_subhalo.hot_halo_gas_r_rps = r_rps;
+					satellite_subhalo.hot_halo_gas_stripped.mass += mhot_removed;
+					satellite_subhalo.hot_halo_gas_stripped.mass_metals += metals_removed_cold + metals_removed_hot;
+
+					central_subhalo->hot_halo_gas.mass += mhot_removed;
+					central_subhalo->hot_halo_gas.mass_metals += metals_removed_cold + metals_removed_hot;
+
+				}
+				else if(r_rps == 0){
+					// track stripping of gas
+					satellite_subhalo.hot_halo_gas_stripped += (satellite_subhalo.hot_halo_gas + satellite_subhalo.cold_halo_gas);
+					satellite_subhalo.hot_halo_gas_r_rps = satellite_subhalo.rvir_infall/100;
+
+					//now transfer gas mass
 					satellite_subhalo.transfer_halo_gas_to(central_subhalo);
 				}
 			}
+			else{
+				// instantaneous stripping assumed here. All halo gas is transferred.
+				satellite_subhalo.transfer_halo_gas_to(central_subhalo);
+			}
+		}
 
+		// Compute ram-pressure stripping of ISM gas if this option is turned on by the user.
+		if(parameters.gradual_stripping_ism){
+			auto mgal_gas = satellite_galaxy->disk_gas.mass + satellite_galaxy->bulge_gas.mass;
+			auto mgal_gas_metals = satellite_galaxy->disk_gas.mass_metals + satellite_galaxy->bulge_gas.mass_metals;
+
+			if(mgal_gas > 0){
+				//first check whether the function is positive at Rvir_infall. In that case, the satellite subhalo experiences no stripping:
+				//second, check whether function is negative at Rvir_infall/100. In that case assume all hot gas is stripped.
+				auto func_rvir = ram_pressure_stripping_galaxy_gas(satellite_galaxy, satellite_subhalo.rvir_infall, z, ram_press);
+				auto func_rvirdiv500 = ram_pressure_stripping_galaxy_gas(satellite_galaxy, satellite_subhalo.rvir_infall/500, z, ram_press);
+
+				if(func_rvir > 0){
+					r_rps = satellite_galaxy->r_rps;
+				}
+				else if (func_rvir < 0 && func_rvirdiv500 > 0){
+					r_rps = process_ram_pressure_stripping_gas(central_subhalo, satellite_subhalo, z, ram_press, false, true);
+				}
+				else if (func_rvir < 0 && func_rvirdiv500 < 0){
+					r_rps = 0;
+				}
+
+				// If the ram-pressure stripping radius has decreased from previous timesteps, then compute how much new gas is lost.
+				if(r_rps < satellite_galaxy->r_rps && r_rps > 0){
+
+					auto mism_removed = mgal_gas - satellite_galaxy->enclosed_mass_gas(r_rps);
+
+					if(mism_removed < 0){
+						mism_removed = 0;
+					}
+
+					if(mism_removed > mgal_gas) {
+						mism_removed = mgal_gas;
+					}
+
+					//stripped gas mass in proportion to the mass ratio of gas.
+					auto frac_ism = satellite_galaxy->bulge_gas.mass / mgal_gas;
+					auto metals_removed_bulge = remove_gas(satellite_galaxy->bulge_gas, mism_removed, frac_ism);
+					auto metals_removed_disk = remove_gas(satellite_galaxy->disk_gas, mism_removed, (1-frac_ism));
+
+					// Transfer mass to halo gas of central subhalo
+					central_subhalo->hot_halo_gas.mass += mism_removed;
+					central_subhalo->hot_halo_gas.mass_metals += metals_removed_bulge + metals_removed_disk;
+
+					// Keep track of mass loss and ram pressure stripping radii.
+					satellite_galaxy->ram_pressure_stripped_gas.mass += mism_removed;
+					satellite_galaxy->ram_pressure_stripped_gas.mass_metals += metals_removed_bulge + metals_removed_disk;
+					satellite_galaxy->r_rps = r_rps;
+				}
+				else if(r_rps == 0){
+					// in this case all gas is transferred to the ISM gas to the central subhalo and restore baryon components.
+					central_subhalo->hot_halo_gas.mass += mgal_gas;
+					central_subhalo->hot_halo_gas.mass_metals += mgal_gas_metals;
+					satellite_galaxy->disk_gas.restore_baryon();
+					satellite_galaxy->bulge_gas.restore_baryon();
+
+					// track mass loss
+					satellite_galaxy->ram_pressure_stripped_gas.mass += mgal_gas;
+					satellite_galaxy->ram_pressure_stripped_gas.mass_metals += mgal_gas_metals;
+					satellite_galaxy->r_rps = satellite_subhalo.rvir_infall/500;
+				}
+			}
 		}
 	}
+
 
 	// Remove part of the stellar content of satellite if relevant.
 	// Cases to consider:
@@ -324,14 +382,30 @@ BaryonBase Environment::remove_tidal_stripped_stars(SubhaloPtr &subhalo, Galaxy 
 
 }
 
-double Environment::process_ram_pressure_stripping(const SubhaloPtr &primary,
+double Environment::process_ram_pressure_stripping_gas(const SubhaloPtr &primary,
 		Subhalo &secondary,
-		double z){
+		double z,
+		double ram_press,
+		bool halo_strip,
+		bool ism_strip){
+
+	double x_low = 0;
+
+	if(halo_strip){
+		x_low = secondary.rvir_infall/100.0;
+	}
+	else if(ism_strip){
+		x_low = secondary.rvir_infall/500.0;
+	}
 
 	galaxy_properties_for_root_solver props = {
 		z,
+		ram_press,
+		x_low,
+		halo_strip,
+		ism_strip,
 		primary,
-		secondary
+		secondary,
 	};
 
 	struct EnvironmentProcessAndProps {
@@ -341,13 +415,30 @@ double Environment::process_ram_pressure_stripping(const SubhaloPtr &primary,
 
 	auto f = [](double r, void *ctx) -> double {
 		auto *env_and_props = static_cast<EnvironmentProcessAndProps *>(ctx);
-		return env_and_props->environment->ram_pressure_stripping_hot_gas(env_and_props->props->primary, env_and_props->props->secondary, r, env_and_props->props->z);
+		if(env_and_props->props->halo_strip){
+			return env_and_props->environment->ram_pressure_stripping_hot_gas(env_and_props->props->primary,
+						env_and_props->props->secondary,
+						r,
+						env_and_props->props->z,
+						env_and_props->props->ram_pressure);
+		}
+		else if(env_and_props->props->ism_strip){
+			return env_and_props->environment->ram_pressure_stripping_galaxy_gas(env_and_props->props->secondary.type1_galaxy(),
+						r,
+						env_and_props->props->z,
+						env_and_props->props->ram_pressure);
+		}
+		else{
+			std::ostringstream os;
+			os << " ram pressure stripping calculation requires either halo_trip or ism_strip to be true";
+			throw invalid_data(os.str());
+		}
 	};
 
 	EnvironmentProcessAndProps env_and_props = {this, &props};
 	double result = 0;
 	try{
-		result = root_solver.root_solver_function(f, &env_and_props, env_and_props.props->secondary.rvir_infall/100.0, env_and_props.props->secondary.rvir_infall, 0, parameters.Accuracy_RPS);
+		result = root_solver.root_solver_function(f, &env_and_props, env_and_props.props->x_low, env_and_props.props->secondary.rvir_infall, 0, parameters.Accuracy_RPS);
 	} catch (gsl_error &e) {
 		auto gsl_errno = e.get_gsl_errno();
 		std::ostringstream os;
@@ -361,46 +452,92 @@ double Environment::process_ram_pressure_stripping(const SubhaloPtr &primary,
 		result = 0.0;
 	}
 
-	result = cosmology->physical_to_comoving_size(result, z);
-
 	return result;
 
-
 }
+
 double Environment::ram_pressure_stripping_hot_gas(const SubhaloPtr &primary,
-		Subhalo &secondary,
+		const Subhalo &secondary,
 		double r,
-		double z){
+		double z,
+		double ram_press){
 	/* here we evaluate the function that needs to go to zero to find the best R_RPS solution for the hot gas
 	this comes from the following equation:
 	rho_hot_cen(Rsat) * vsat^2.0 = G * Msat(<r)*mhot_sat / (8 * Rvir_sat * r^3)
 	Here, Rsat is the distance from the halo centre to the satellite galaxy; vsat is the relative velocity of the subhalo and r what we need to solve for.
 	*/
 
-	// Find the objects physical position
-	double conversion_factor = cosmo_params.Hubble_h * (1 +  z);
-	double xrel = (secondary.position.x - primary->position.x) / conversion_factor;
-	double yrel = (secondary.position.y - primary->position.y) / conversion_factor;
-	double zrel = (secondary.position.z - primary->position.z) / conversion_factor;
-	double rsat = std::sqrt(xrel*xrel + yrel*yrel + zrel*zrel);
-
-	// Find the physical velocity + the hubble flow
-	double hubble_flow = rsat * cosmology->hubble_parameter(z);
-	double vxrel = secondary.velocity.x - primary->velocity.x + hubble_flow;
-	double vyrel = secondary.velocity.y - primary->velocity.y + hubble_flow;
-	double vzrel = secondary.velocity.z - primary->velocity.z + hubble_flow;
-	double vrel = std::sqrt(vxrel*vxrel + vyrel*vyrel + vzrel*vzrel);
-
-	auto rvir_prim = darkmatterhalos->halo_virial_radius(primary->host_halo, z);
-	auto rho_cen = primary->hot_halo_gas.mass / (shark::constants::PI4 * std::pow(rvir_prim,2) * rsat) / 1e18 ; //in Msun/pc^3
 	// Here use the sum of the current hot halo gas plus what has been stripped. This assumed that the density of gas is only affected by cooling
 	// and not ram pressure stripping.
 	auto enc_mass = darkmatterhalos->enclosed_total_mass(secondary, z, r);
-	double func = shark::constants::G * enc_mass *
+	double func = parameters.alpha_rps_halo * shark::constants::G * enc_mass *
 			(secondary.hot_halo_gas.mass + secondary.hot_halo_gas_stripped.mass) / (8 * secondary.rvir_infall * std::pow(r,3)) / 1e18 -
-			rho_cen * std::pow(vrel,2);
+			ram_press;
 
 	return func;
+}
+
+double Environment::ram_pressure_stripping_galaxy_gas(const GalaxyPtr &galaxy,
+		double r,
+		double z,
+		double ram_press){
+	/* here we evaluate the function that needs to go to zero to find the best R_RPS solution for the hot gas
+	this comes from the following equation:
+	rho_hot_cen(Rsat) * vsat^2.0 = 2 * PI * G * Sigma_gas(r) * (Sigma_gas(r) + Sigma_star(r))
+	Here, Rsat is the distance from the halo centre to the satellite galaxy; vsat is the relative velocity of the subhalo and r what we need to solve for.
+	*/
+
+	// Here use the sum of the current hot halo gas plus what has been stripped. This assumed that the density of gas is only affected by cooling
+	// and not ram pressure stripping.
+
+	auto sigma_gas = galaxy->surface_density_gas(r) / 1e12; //In Msun/pc^2
+	auto sigma_gal = (galaxy->surface_density_bulge(r) + galaxy->surface_density_disk(r)) / 1e12; //In Msun/pc^2
+	double func = shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_gal -
+			ram_press;
+
+	return func;
+}
+
+double Environment::ram_pressure(const SubhaloPtr &primary,
+		const Subhalo &secondary,
+		double z)
+{
+	// Compute ram pressure in units of Msun/pc^3 * (km/s)^2
+
+	// Find the objects physical position
+	double conversion_factor = cosmo_params.Hubble_h * (1 +  z);
+	auto pos_rel = (secondary.position - primary->position) / conversion_factor;
+	auto rsat = pos_rel.norm();
+
+	// Find the physical velocity + the hubble flow
+	double hubble_flow = rsat * cosmology->hubble_parameter(z);
+	auto vrel = secondary.velocity - primary->velocity + hubble_flow;
+	auto vrel_norm = vrel.norm();
+
+	auto rvir_prim = darkmatterhalos->halo_virial_radius(primary->host_halo, z);
+	auto rho_cen = primary->hot_halo_gas.mass / (shark::constants::PI4 * std::pow(rvir_prim,2) * rsat) / 1e18 ; //in Msun/pc^3
+
+	return rho_cen * std::pow(vrel_norm,2);
+}
+
+float Environment::remove_gas(BaryonBase &component, double m_removed, float f_gas){
+
+	if(component.mass > 0){
+		auto z = component.mass_metals / component.mass;
+		auto metals_removed = z * m_removed * f_gas;
+		component.mass_metals -= metals_removed;
+		component.mass -= f_gas * m_removed;
+
+		if(component.mass < 0){
+			component.restore_baryon();
+		}
+
+		return metals_removed;
+	}
+	else{
+		return 0;
+	}
+
 }
 
 

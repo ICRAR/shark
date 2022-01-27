@@ -32,6 +32,7 @@
 #include "baryon.h"
 #include "components.h"
 #include "mixins.h"
+#include "numerical_constants.h"
 
 namespace shark {
 
@@ -128,6 +129,10 @@ public:
 
 	/// maximum circular velocity.
 	float vmax = 0;
+
+	// ram-pressure stripping radius
+	float r_rps = 0;
+	BaryonBase ram_pressure_stripped_gas;
 
 	/// star formation and gas history of this galaxy across snapshots
 	std::vector<HistoryItem> history;
@@ -295,6 +300,13 @@ public:
 
 	}
 
+	double enclosed_mass_gas(float r) const
+	{
+
+		return enclosed_mass_exponential(r, disk_gas.mass, disk_gas.rscale) +
+				enclosed_mass_exponential(r, bulge_gas.mass, bulge_gas.rscale);
+	}
+
 	double enclosed_mass_exponential(float r, float m, float r50) const
 	{
 		if(m == 0){
@@ -302,8 +314,7 @@ public:
 		}
 		else{
 			auto rnorm = r/(r50/1.67);
-			auto mass = m * (1 - (1 + rnorm) * std::exp(-rnorm));
-			return mass;
+			return m * (1 - (1 + rnorm) * std::exp(-rnorm));
 		}
 	}
 
@@ -315,6 +326,49 @@ public:
 		else{
 			auto re = r50/1.3;
 			return m * std::pow(r, 3) / std::pow( std::pow(r,2) + std::pow(re,2), 1.5);
+		}
+	}
+
+	double surface_density_disk(float r){
+		return surface_density_exponential(r, disk_gas.mass, disk_gas.rscale) +
+				surface_density_exponential(r, disk_stars.mass, disk_stars.rscale);
+	}
+
+	double surface_density_bulge(float r){
+		return surface_density_exponential(r, bulge_gas.mass, bulge_gas.rscale) +
+				surface_density_plummer(r, bulge_stars.mass, bulge_stars.rscale);
+	}
+
+	double surface_density_gas(float r){
+		return surface_density_exponential(r, disk_gas.mass, disk_gas.rscale) +
+				surface_density_exponential(r, bulge_gas.mass, bulge_gas.rscale);
+	}
+
+	double surface_density_stars(float r){
+		return surface_density_exponential(r, disk_stars.mass, disk_stars.rscale) +
+				surface_density_plummer(r, bulge_stars.mass, bulge_stars.rscale);
+	}
+
+	double surface_density_exponential(float r, float m, float r50) const
+	{
+		if(m == 0){
+			return 0;
+		}
+		else{
+			auto re = r50/1.67;
+			auto rnorm = r/re;
+			return m / (constants::PI2 * std::pow(re,2)) * std::exp(-rnorm);
+		}
+	}
+
+	double surface_density_plummer(float r, float m, float r50) const
+	{
+		if(m ==0){
+			return 0;
+		}
+		else{
+			auto re = r50/1.3;
+			return m * std::pow(re, 2) / (constants::PI * std::pow( std::pow(r,2) + std::pow(re,2), 2));
 		}
 	}
 

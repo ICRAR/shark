@@ -155,7 +155,7 @@ double DarkMatterHalos::subhalo_dynamical_time (Subhalo &subhalo, double z){
 	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / v;
 }
 
-double DarkMatterHalos::halo_virial_radius(HaloPtr &halo, double z){
+double DarkMatterHalos::halo_virial_radius(const HaloPtr &halo, double z){
 
 	/**
 	 * Function to calculate the halo virial radius. Returns virial radius in physical Mpc/h.
@@ -293,9 +293,9 @@ void DarkMatterHalos::cooling_gas_sAM(Subhalo &subhalo, double z){
 
 }
 
-float DarkMatterHalos::enclosed_total_mass(Subhalo &subhalo, double z, float r){
+float DarkMatterHalos::enclosed_total_mass(const Subhalo &subhalo, double z, float r){
 
-	GalaxyPtr galaxy;
+	ConstGalaxyPtr galaxy;
 	if(subhalo.subhalo_type == Subhalo::SATELLITE){
 		galaxy = subhalo.type1_galaxy();
 	}

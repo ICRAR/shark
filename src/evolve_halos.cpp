@@ -73,6 +73,11 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 		main_galaxy->lambda_type2 = parent->lambda;
 	}
 
+	// If main_galaxy is type 1 and the ram pressure stripping radius has not been defined, then define it to be equal to the descendant subhalo rvir_infall.
+	if (main_galaxy->galaxy_type == Galaxy::TYPE1 && main_galaxy->r_rps == 0){
+		main_galaxy->r_rps = descendant->rvir_infall;
+	}
+
 }
 
 void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons)

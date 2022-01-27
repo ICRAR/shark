@@ -49,6 +49,7 @@ public:
 	bool stripping = true;
 	bool tidal_stripping = false;
 	float minimum_halo_mass_fraction = 0.01;
+	float alpha_rps_halo = 1;
 	float Accuracy_RPS = 0.05;
 
 };
@@ -64,12 +65,27 @@ public:
 
 	void process_satellite_subhalo_environment (Subhalo &satellite_subhalo, SubhaloPtr &central_subhalo, double z);
 	BaryonBase remove_tidal_stripped_stars(SubhaloPtr &subhalo, Galaxy &galaxy, BaryonBase lost_stellar);
-	double process_ram_pressure_stripping(const SubhaloPtr &primary,
+
+	double process_ram_pressure_stripping_gas(const SubhaloPtr &primary,
 			Subhalo &secondary,
-			double z);
+			double z,
+			double ram_press,
+			bool halo_strip,
+			bool ism_strip);
+
 	double ram_pressure_stripping_hot_gas(const SubhaloPtr &primary,
-			Subhalo &secondary,
+			const Subhalo &secondary,
 			double r,
+			double z,
+			double ram_press);
+
+	double ram_pressure_stripping_galaxy_gas(const GalaxyPtr &galaxy,
+			double r,
+			double z,
+			double ram_press);
+
+	double ram_pressure(const SubhaloPtr &primary,
+			const Subhalo &secondary,
 			double z);
 
 	using func_x = double (*)(double x, void *);
@@ -82,6 +98,8 @@ private:
 	CosmologicalParameters cosmo_params;
 	SimulationParameters simparams;
 	Root_Solver root_solver;
+
+	float remove_gas(BaryonBase &component, double m_removed, float f_gas);
 
 };
 
