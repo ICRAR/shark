@@ -362,10 +362,11 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double mhot_ejec = cosmology->comoving_to_physical_mass(subhalo.ejected_galaxy_gas.mass);
 	double mzhot = cosmology->comoving_to_physical_mass(subhalo.hot_halo_gas.mass_metals + subhalo.cold_halo_gas.mass_metals);
 
+	// we will compute the density of the hot gas with mhot_density, which for centrals is = mhot, but for satellites type1 is not.
+	auto mhot_density = mhot;
 	// if subhalo is a satellite, we include the gas mass that has been stripped as the assumption is that the RPS does not affected the gas density.
 	if(subhalo.subhalo_type == Subhalo::SATELLITE){
-		mhot += subhalo.hot_halo_gas_stripped.mass;
-		mzhot += subhalo.hot_halo_gas_stripped.mass_metals;
+		mhot_density += subhalo.hot_halo_gas_stripped.mass;
 	}
 
 	double vvir = subhalo.Vvir;
@@ -412,7 +413,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	/**
 	 * Calculate mean density for notional cooling profile.
 	 */
-	double nh_density  = mean_density(mhot, Rvir); //in units of cm^-3.
+	double nh_density  = mean_density(mhot_density, Rvir); //in units of cm^-3.
 
 	double tcool = 0;
 	double tcharac = 0;
