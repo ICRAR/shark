@@ -191,27 +191,33 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 				// If the ram-pressure stripping radius has decreased from previous timesteps, then compute how much new gas is lost.
 				if(r_rps < satellite_galaxy->r_rps && r_rps > 0){
 
-					auto mism_removed = mgal_gas - satellite_galaxy->enclosed_mass_gas(r_rps);
+					auto mism_removed_disk = satellite_galaxy->disk_gas.mass - satellite_galaxy->enclosed_mass_exponential(r_rps, satellite_galaxy->disk_gas.mass, satellite_galaxy->disk_gas.rscale);
+					auto mism_removed_bulge = satellite_galaxy->bulge_gas.mass - satellite_galaxy->enclosed_mass_exponential(r_rps, satellite_galaxy->bulge_gas.mass, satellite_galaxy->bulge_gas.rscale);
 
-					if(mism_removed < 0){
-						mism_removed = 0;
+					if(mism_removed_disk < 0){
+						mism_removed_disk = 0;
+					}
+					if(mism_removed_bulge < 0){
+						mism_removed_bulge = 0;
 					}
 
-					if(mism_removed > mgal_gas) {
-						mism_removed = mgal_gas;
+					if(mism_removed_disk > satellite_galaxy->disk_gas.mass) {
+						mism_removed_disk = satellite_galaxy->disk_gas.mass;
+					}
+					if(mism_removed_bulge > satellite_galaxy->bulge_gas.mass) {
+						mism_removed_bulge = satellite_galaxy->bulge_gas.mass;
 					}
 
 					//stripped gas mass in proportion to the mass ratio of gas.
-					auto frac_ism = satellite_galaxy->bulge_gas.mass / mgal_gas;
-					auto metals_removed_bulge = remove_gas(satellite_galaxy->bulge_gas, mism_removed, frac_ism);
-					auto metals_removed_disk = remove_gas(satellite_galaxy->disk_gas, mism_removed, (1-frac_ism));
+					auto metals_removed_bulge = remove_gas(satellite_galaxy->bulge_gas, mism_removed_bulge, 1);
+					auto metals_removed_disk = remove_gas(satellite_galaxy->disk_gas, mism_removed_disk, 1);
 
 					// Transfer mass to halo gas of central subhalo
-					central_subhalo->hot_halo_gas.mass += mism_removed;
+					central_subhalo->hot_halo_gas.mass += mism_removed_disk + mism_removed_bulge;
 					central_subhalo->hot_halo_gas.mass_metals += metals_removed_bulge + metals_removed_disk;
 
 					// Keep track of mass loss and ram pressure stripping radii.
-					satellite_galaxy->ram_pressure_stripped_gas.mass += mism_removed;
+					satellite_galaxy->ram_pressure_stripped_gas.mass += mism_removed_disk + mism_removed_bulge;
 					satellite_galaxy->ram_pressure_stripped_gas.mass_metals += metals_removed_bulge + metals_removed_disk;
 					satellite_galaxy->r_rps = r_rps;
 				}
