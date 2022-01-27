@@ -93,6 +93,7 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 	options.load("gas_cooling.lambdamodel", lambdamodel, true);
 	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
 	options.load("gas_cooling.tau_cooling", tau_cooling);
+	options.load("gas_cooling.limit_fbar", limit_fbar);
 
 	auto cooling_tables_dir = get_static_data_filepath("cooling");
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
@@ -314,23 +315,26 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	}
 
 	/*
-	 * Before proceeding we will ensure halos have a baryon fraction inside the halo is at maximum the baryon fraction.
+	 * Before proceeding we will ensure halos have a baryon fraction inside the halo is at maximum the baryon fraction. This is done only if limit_fbar = True.
 	 * In that case remove hot halo gas until we reach the universal baryon fraction (move to ejected). This only applies to central subhalos.
 	 */
-	if(subhalo.subhalo_type == Subhalo::CENTRAL && halo->inside_halo_baryon_mass() > halo->Mvir * cosmology->universal_baryon_fraction()){
-		float mass_remove = halo->inside_halo_baryon_mass() - halo->Mvir * cosmology->universal_baryon_fraction();
-		auto frac_remove = std::min(mass_remove, subhalo.hot_halo_gas.mass) / subhalo.hot_halo_gas.mass;
-		subhalo.ejected_galaxy_gas.mass_metals += frac_remove * subhalo.hot_halo_gas.mass_metals;
-		subhalo.ejected_galaxy_gas.mass += mass_remove;
-		subhalo.hot_halo_gas.mass_metals -= frac_remove * subhalo.hot_halo_gas.mass_metals;
-		subhalo.hot_halo_gas.mass -= mass_remove;
-
-		if(subhalo.hot_halo_gas.mass <= 0){
-			subhalo.hot_halo_gas.restore_baryon();
-			return 0;
+	if(parameters.limit_fbar){
+		if(subhalo.subhalo_type == Subhalo::CENTRAL && halo->inside_halo_baryon_mass() > halo->Mvir * cosmology->universal_baryon_fraction()){
+			float mass_remove = halo->inside_halo_baryon_mass() - halo->Mvir * cosmology->universal_baryon_fraction();
+			auto frac_remove = std::min(mass_remove, subhalo.hot_halo_gas.mass) / subhalo.hot_halo_gas.mass;
+			subhalo.ejected_galaxy_gas.mass_metals += frac_remove * subhalo.hot_halo_gas.mass_metals;
+			subhalo.ejected_galaxy_gas.mass += mass_remove;
+			subhalo.hot_halo_gas.mass_metals -= frac_remove * subhalo.hot_halo_gas.mass_metals;
+			subhalo.hot_halo_gas.mass -= mass_remove;
+        
+			if(subhalo.hot_halo_gas.mass <= 0){
+				subhalo.hot_halo_gas.restore_baryon();
+				return 0;
+			}
+        
 		}
-
 	}
+
 	/**
 	* Plant black hole seed if necessary.
 	*/
