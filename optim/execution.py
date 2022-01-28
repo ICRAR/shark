@@ -125,6 +125,8 @@ def run_shark_hpc(particles, *args):
     # Submit the execution of multiple shark instances, one for each particle
     job_name = 'PSOSMF_%d' % count
     shark_output_base = os.path.join(opts.outdir, job_name)
+    os.makedirs(shark_output_base)
+    np.save(os.path.join(shark_output_base, 'particles.npy'), particles)
     cmdline = ['./shark-submit', '-S', opts.shark_binary, '-w', opts.walltime,
                '-n', job_name, '-O', shark_output_base, '-E', positions_fname,
                '-V', ' '.join(map(str, subvols))]
@@ -159,15 +161,26 @@ def run_shark_hpc(particles, *args):
 
     ss = len(particles)
     results = np.zeros([ss, len(opts.constraints)])
+
+    # create arrays to save each constraint evaluation   
+    ymodarr = []
+    yerrarr = []
     for i in range(ss):
         _, simu, model, _ = common.read_configuration(opts.config)
         particle_outdir = os.path.join(shark_output_base, str(i))
         modeldir = common.get_shark_output_dir(particle_outdir, simu, model)
         results[i] = constraints.evaluate(opts.constraints, statTest, modeldir, subvols)
+	
+        ymodarr.append(constraints.get_y_mod(opts.constraints, modeldir, subvols))
+        yerrarr.append(constraints.get_y_err(opts.constraints, modeldir, subvols)) 
+
         if not opts.keep:
             shutil.rmtree(particle_outdir, ignore_errors=True)
-
+	
     constraints.log_results(opts.constraints, results)
+    np.save(os.path.join(shark_output_base, 'modelvals.npy'), ymodarr)
+    np.save(os.path.join(shark_output_base, 'modelerrorvals.npy'), yerrarr)
+    
     results = np.sum(results, axis=1)
     logger.info('Particles %r evaluated to %r', particles, results)
 
@@ -200,6 +213,7 @@ def run_shark(particle, *args):
     constraints.log_results(constraints, [results])
     total = sum(results)
     logger.info('Particle %r evaluated to %f', particle, total)
+    logger.info('test statement')
 
     if not opts.keep:
         shutil.rmtree(shark_output_base, ignore_errors=True)

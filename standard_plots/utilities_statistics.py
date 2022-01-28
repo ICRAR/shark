@@ -276,3 +276,32 @@ def redshift(lbt, h=0.6751, omegam=0.3121, omegal=0.6879):
 		z[i] = round(z[i], 2)
 
 	return z
+
+
+def bootstrap_error(x=None, y=None, xbins = None, iterations=50):
+
+    nbins = len(xbins)
+    len_subsample = 100 # same as used in observational data
+
+    # initialise array, one row per mass bin
+    medians = np.zeros(shape = [nbins,iterations])
+
+    #define size of bins, assuming bins are all equally spaced.
+    dx = xbins[1] - xbins[0]
+
+    for i in range (0,nbins):
+        xlow = xbins[i]-dx/2.0
+        xup  = xbins[i]+dx/2.0
+        ind  = np.where((x > xlow) & (x< xup))
+        #if(len(x[ind]) > 9):
+         #   ybin    = y[ind]
+        ybin = y[ind]
+        if len(ybin) < 2:
+            ybin = [0,0] # sample function behaves weirdly when len(ybin) =1, allocate sd = 0 for low number cases
+        for j in range(iterations):
+             # calculate median size 30 times
+             subsample = np.random.choice(ybin, size=len_subsample)
+             medians[i,j] = np.median(subsample)
+
+    # return stddev of sample medians for each mass bin
+    return np.std(medians, axis=1)

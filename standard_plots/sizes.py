@@ -22,6 +22,7 @@ import functools
 
 import numpy as np
 
+import os
 import common
 import utilities_statistics as us
 
@@ -53,7 +54,7 @@ xv    = vbins + dv/2.0
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
-                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM):
+                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
@@ -84,6 +85,10 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     ind = np.where(mdisk+mbulge > 0)
     rcomb[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                             y=np.log10((mdisk[ind]*rdisk[ind]  + mbulge[ind]*rbulge[ind])*MpcToKpc / (mdisk[ind]+mbulge[ind]))- np.log10(float(h0)))
+
+    bs_error[index] = us.bootstrap_error(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                            y=np.log10((mdisk[ind]*rdisk[ind]  + mbulge[ind]*rbulge[ind])*MpcToKpc / (mdisk[ind]+mbulge[ind])) - np.log10(float(h0)), xbins=xmf)
+
     BT_fractions[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),y=mbulge[ind]/(mdisk[ind]+mbulge[ind]), xbins=xmf)
 
     BT_fractions_nodiskins[index] = us.fractional_contribution(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
@@ -336,14 +341,16 @@ def plot_velocities(plt, outdir, disk_vel, bulge_vel, baryonic_TF):
 
     common.savefig(outdir, fig, 'baryon-TF.pdf')
 
-def plot_sizes_combined(plt, outdir, rcomb):
+def plot_sizes_combined(plt, outdir, obsdir, rcomb):
+
+    lm, lr, count, bs_err = common.load_observation(obsdir, 'SizeMass/GAMA_H-band_dlogM_0.25_reff.txt', [0,1,2,3])
 
     fig = plt.figure(figsize=(5,4.5))
 
     # Total ##################################
     xtit="$\\rm log_{10} (\\rm M_{\\rm stars, total}/M_{\odot})$"
-    ytit="$\\rm log_{10} (\\rm r_{\\rm 50, comb}/kpc)$"
-    xmin, xmax, ymin, ymax = 8, 12, -0.5, 2
+    ytit="$\\rm log_{10} (\\rm med(r_{50})/kpc)$"
+    xmin, xmax, ymin, ymax = 8, 11.5, -0.1, 1
 
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
@@ -356,7 +363,14 @@ def plot_sizes_combined(plt, outdir, rcomb):
     yplot = rcomb[0,0,ind]
     errdn = rcomb[0,1,ind]
     errup = rcomb[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark disk+bulge combined")
+    #np.save(os.path.join(outdir,'sizemass.npy'), np.array([xplot, yplot[0]]))
+    ax.plot(xplot,yplot[0], color = '#2A9D8F', 
+            linewidth=2,label="Shark galaxies")
+    
+    # Add GAMA H-band observations with bootstrapped error
+    ax.errorbar(lm, lr,yerr = [bs_err, bs_err], marker ='v',
+             ls = 'none', mfc = 'None', markersize=5, 
+             color = 'gray', label = 'Lange+2015')
 
     common.prepare_legend(ax, ['k','k','k'], loc=2)
     common.savefig(outdir, fig, 'sizes_combined.pdf')
@@ -549,16 +563,18 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     disk_vel =  np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_vel =  np.zeros(shape = (len(zlist), 3, len(xmf)))
     baryonic_TF =  np.zeros(shape = (len(zlist), 3, len(xv))) 
-   
+  
+    bs_error = np.zeros(shape = (len(zlist), len(xmf))) 
+    
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM)
+                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error)
 
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins)
     plot_velocities(plt, outdir, disk_vel, bulge_vel, baryonic_TF)
-    plot_sizes_combined(plt, outdir, rcomb)
+    plot_sizes_combined(plt, outdir, obsdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH, BHSM)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
 
