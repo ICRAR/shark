@@ -127,7 +127,7 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 	if(parameters.tau_delay > 0 && parameters.model == GalaxyMergerParameters::POULTON20){
 
 		// Find the objects physical position
-		double conversion_factor = cosmo_params.Hubble_h * (1 +  simparams.redshifts[snapshot]);
+		double conversion_factor = cosmo_params.Hubble_h; // * (1 +  simparams.redshifts[snapshot]);
 		double xrel = (secondary->position.x - primary->position.x) / conversion_factor;
 		double yrel = (secondary->position.y - primary->position.y) / conversion_factor;
 		double zrel = (secondary->position.z - primary->position.z) / conversion_factor;

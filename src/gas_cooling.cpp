@@ -396,13 +396,16 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double Tvir   = 97.48*std::pow(vvir,2.0); //in K.
 	double lgTvir = log10(Tvir); //in K.
 	double Rvir = 0;
+	double Mvir = 0;
 
 	if(subhalo.subhalo_type == Subhalo::CENTRAL){
 		Rvir = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(halo, z), z);//physical Mpc
+		Mvir = halo->Mvir;
 	}
 	else {
 		//If subhalo is a satellite, then adopt virial radius at infall.
 		Rvir = cosmology->comoving_to_physical_size(subhalo.rvir_infall, z);//physical Mpc
+		Mvir = subhalo.Mvir_infall;
 	}
 
 	/**
@@ -512,7 +515,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		double mheatrate = 0;
 		if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19){
 			// decide whether this halo is in a quasi-hydrostatic regime or not.
-			bool hothalo = quasi_hydrostatic_halo(mhot, std::pow(10.0,logl), nh_density, halo->Mvir, Tvir, Rvir, z);
+			bool hothalo = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density, Mvir, Tvir, Rvir, z);
 
 			// radio mode feedback only applies in situations where there is a hot halo
 			if(hothalo){
@@ -564,7 +567,12 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		double delta_mass_bh = central_galaxy->smbh.macc_hh * deltat;
 		double delta_metals_bh = 0;
 		if(mhot > 0) {
-			delta_metals_bh = delta_mass_bh/mhot * mzhot;
+			delta_metals_bh = delta_mass_bh / mhot * mzhot;
+		}
+
+		if(delta_mass_bh > subhalo.hot_halo_gas.mass){
+			delta_mass_bh = subhalo.hot_halo_gas.mass;
+			delta_metals_bh = subhalo.hot_halo_gas.mass_metals;
 		}
 
 		central_galaxy->smbh.mass += delta_mass_bh;
@@ -575,6 +583,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		*/
 		subhalo.hot_halo_gas.mass -= delta_mass_bh;
 		subhalo.hot_halo_gas.mass_metals -= delta_metals_bh;
+
 	}
 
 	if(coolingrate > 0){//perform calculations below ONLY if cooling rate >0.

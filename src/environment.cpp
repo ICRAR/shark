@@ -537,6 +537,9 @@ float Environment::remove_gas(BaryonBase &component, double m_removed, float f_g
 		if(component.mass < 0){
 			component.restore_baryon();
 		}
+		if(component.mass_metals < 0){
+			component.mass_metals = 0;
+		}
 
 		return metals_removed;
 	}
