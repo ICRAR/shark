@@ -52,6 +52,9 @@ namespace constants {
 	/** Square root of 2 */
 	constexpr double SQRT2 = 1.4142135623730951;
 
+	/** Square root of 3 */
+	constexpr double SQRT3 = 1.7320508075688772;
+
 	/** pi */
 	constexpr double PI = 3.14159265358979323846;
 

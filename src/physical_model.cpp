@@ -116,7 +116,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	model.stellar_feedback.outflow_rate(SFR, params->vsubh, params->vgal, params->redshift, beta1, beta2, betaj_1, betaj_2); /*mass loading parameter*/
 
 	// Calculate the mass and metal loading from QSO feedback.
-	model.agn_feedback.qso_outflow_rate(y[1], params->mBHacc, params->mBH, zcold, params->vgal, SFR, y[0]+y[1], params->rstar, beta_qso1, beta_qso2);
+	model.agn_feedback.qso_outflow_rate(y[1], params->smbh, zcold, params->vgal, SFR, y[0]+y[1], params->rstar, beta_qso1, beta_qso2);
 
 	// Retained fraction.
 	double rsub = 1.0-R;

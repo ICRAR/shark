@@ -29,6 +29,8 @@
 #include <cstdint>
 #include <memory>
 
+#include "galaxy.h"
+
 namespace shark {
 
 using galaxy_id_t = int;

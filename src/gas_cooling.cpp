@@ -490,7 +490,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 				double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot + mhot_ejec);
 	
 				if(Lcool < agnfeedback->parameters.f_edd * Ledd && Lcool > 0){
-					central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lcool, central_galaxy->smbh.mass);
+					central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lcool, deltat, central_galaxy->smbh);
 					//now convert mass accretion rate to comoving units.
 					central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 					// set cooling rate to 0.
@@ -503,28 +503,28 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of BOWER06 AGN feedback model.
 
-	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19){
+	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO22){
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
 		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
-		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, central_galaxy->smbh.mass);
+		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, deltat, central_galaxy->smbh);
 
 		//now convert mass accretion rate to comoving units.
 		central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 
 		//Mass heating rate from AGN in units of Msun/Gyr.
 		double mheatrate = 0;
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO19){
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO22){
 			// decide whether this halo is in a quasi-hydrostatic regime or not.
 			bool hothalo = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density, Mvir, Tvir, Rvir, z);
 
 			// radio mode feedback only applies in situations where there is a hot halo
 			if(hothalo){
-				mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh.macc_sb + central_galaxy->smbh.macc_hh , central_galaxy->smbh.mass) * agnfeedback->parameters.kappa_radio
+				mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh) * agnfeedback->parameters.kappa_radio
 						* 1e40 / (0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
 			}
 		}
 		else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
-			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh.macc_hh, central_galaxy->smbh.mass) * 1e40 /
+			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh) * 1e40 /
 					(0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
 		}
 
@@ -533,7 +533,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 		double r_ratio = rheat/r_cool;
 
-		// Track heating radius. Croton16 and Bravo19 assume that the heating radius only increases.
+		// Track heating radius. Croton16 and Bravo22 assume that the heating radius only increases.
 		if(subhalo.cooling_subhalo_tracking.rheat < rheat){
 			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
@@ -544,7 +544,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 			r_ratio = 1;
 			//Redefine mheatrate and macc_h accordingly.
 			mheatrate = r_ratio * coolingrate;
-			central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh_limit(mheatrate,vvir);
+			central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh_limit(mheatrate, vvir, central_galaxy->smbh);
 		}
 
 		//modify cooling rate according to heating rate.

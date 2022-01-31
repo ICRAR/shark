@@ -62,7 +62,7 @@ xrf = rbins + dr/2.0
 use_r50_aperture = True
 r50_aperture = 10.0
 
-def prepare_data(hdf5_data, index, rcomb, rcomb_icl):
+def prepare_data(hdf5_data, index, rcomb, rcomb_icl, bs_error):
 
     (h0, _, mdisk, mbulge, rdisk, rbulge, typeg, mstellar_halo, cnfw, vvir, mvir) = hdf5_data
 
@@ -85,7 +85,6 @@ def prepare_data(hdf5_data, index, rcomb, rcomb_icl):
     ind = np.where(mdisk+mbulge > 0)
     rcomb[index,:] = bin_it(x=np.log10(mstars_tot[ind]),
                             y=np.log10(rcombined[ind]*MpcToKpc))
-
 
     #model inclusion of ICL in sizes
     rnew = np.zeros(shape = len(rcombined))
@@ -112,7 +111,7 @@ def prepare_data(hdf5_data, index, rcomb, rcomb_icl):
     for i in range(0, len(rho_icl)):
         micl_apperture[i] = enclosed_mass_icl(x[i], rho_icl[i], cnfw_in[i], rvir_in[i])
     micl_apperture_50 = micl_apperture * 0.5
-
+    
     #use a linear interpolation to find r50, between log10(mass) and r/rvir.
     def find_r50_icl(xrf, yrf, mass):
         find_nearest = np.argsort(abs(yrf-mass))
@@ -122,29 +121,33 @@ def prepare_data(hdf5_data, index, rcomb, rcomb_icl):
 
     #compute r50_icl for each galaxy
     r50_icl = np.zeros(shape = len(rho_icl))
+    
     for i in range(0, len(rho_icl)):
         r50_icl[i] = find_r50_icl(xrf, np.log10(enclosed_mass_icl(xrf, rho_icl[i], cnfw_in[i], rvir_in[i])), np.log10(micl_apperture_50[i]))
-
+    
+    
     #compute a new size doing a stellar mass weighted size
     rnew[ind] = (rcombined[ind] * mstars_tot[ind] + r50_icl * micl_apperture) / (mstars_tot[ind] + micl_apperture)
-
+    
     #for galaxies that have not been assigned an rnew, we use rcombined (those include satellites and centrals without stellar halos)
-    ind = np.where(rnew  == 0)
+    ind = np.where(rnew == 0)
     rnew[ind] = rcombined[ind]
-
+   
     #compute the size-mass relation now including the icl.
     ind = np.where(mdisk+mbulge > 0)
     rcomb_icl[index,:] = bin_it(x=np.log10(mstars_tot[ind]),
                             y=np.log10(rnew[ind]*MpcToKpc))
+    # compute bootstrapped error on updated median sizes
+    bs_error[index] = us.bootstrap_error(x=np.log10(mstars_tot[ind]),
+                            y=np.log10(rnew[ind]*MpcToKpc), xbins=xmf)
+   
 
-
-def plot_sizes_combined(plt, outdir, rcomb, rcomb_icl):
-
+def plot_sizes_combined(plt, outdir, rcomb, rcomb_icl, bs_error, obsdir):
     fig = plt.figure(figsize=(5,4.5))
-
+    
     # Total ##################################
     xtit="$\\rm log_{10} (\\rm M_{\\rm stars, total}/M_{\odot})$"
-    ytit="$\\rm log_{10} (\\rm r_{\\rm 50, comb}/kpc)$"
+    ytit="$\\rm log_{10} (\\rm r_{\\rm eff, comb}/kpc)$"
     xmin, xmax, ymin, ymax = 8, 12, -0.5, 2
 
     ax = fig.add_subplot(111)
@@ -155,20 +158,29 @@ def plot_sizes_combined(plt, outdir, rcomb, rcomb_icl):
     #Predicted size-mass for disks
     ind = np.where(rcomb[0,0,:] != 0)
     xplot = xmf[ind]
-    yplot = rcomb[0,0,ind]
+    yplot = rcomb[0,0,ind] # z=0 and median only
     errdn = rcomb[0,1,ind]
     errup = rcomb[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark galaxies")
+    #ax.errorbar(xplot,yplot[0],yerr=bs_error[:,0,ind][0], ls='None', mfc='None', ecolor = 'k', mec='k',marker='o',label="Shark galaxies")
+    ax.plot(xplot, yplot[0],  ls='None', mfc='None', mec='k',marker='o',label="Shark galaxies")
 
     ind = np.where(rcomb_icl[0,0,:] != 0)
     xplot = xmf[ind]
-    yplot = rcomb_icl[0,0,ind]
-    errdn = rcomb_icl[0,1,ind]
-    errup = rcomb_icl[0,2,ind]
-    ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Shark galaxies+icl")
+    yplot = rcomb_icl[0,0,ind] # z=0 and median only
+    #errdn = rcomb_icl[0,1,ind]
+    #errup = rcomb_icl[0,2,ind]
+    ax.errorbar(xplot,yplot[0],yerr=bs_error[0,ind], ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Shark galaxies+icl")
 
+    # load semi-major sizes
+    obs = common.load_observation(obsdir,'SizeMass/GAMA_H-band_dlogM_0.25_reff.txt', [0,1,2,3])
+    xobs = obs[0]
+    yobs = obs[1]
+    errobs = obs[3]
+    ax.plot(xobs, yobs, color = 'teal', label = 'GAMA H-band')
+    ax.fill_between(xobs, yobs-errobs, yobs+errobs, color = 'teal', alpha=0.4)
+    
     common.prepare_legend(ax, ['k','k','k'], loc=2)
-    common.savefig(outdir, fig, 'sizes_combined.pdf')
+    common.savefig(outdir, fig, 'sizes_combined_ICL.pdf')
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
@@ -178,12 +190,12 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
     rcomb_icl = np.zeros(shape = (len(zlist), 3, len(xmf)))
-  
+    bs_error = np.zeros(shape = (len(zlist), len(xmf)))
+
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        prepare_data(hdf5_data, index, rcomb, rcomb_icl)
-
-    plot_sizes_combined(plt, outdir, rcomb, rcomb_icl)
-
+        prepare_data(hdf5_data, index, rcomb, rcomb_icl, bs_error)
+ 
+    plot_sizes_combined(plt, outdir, rcomb, rcomb_icl, bs_error, obsdir)
 if __name__ == '__main__':
     main(*common.parse_args())

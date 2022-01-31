@@ -160,6 +160,10 @@ public:
 
 	/** macc_sb: accretion rate onto the black hole during starbursts. */
 	float macc_sb = 0;
+
+	/** spin: black hole spin. */
+	float spin = 0;
+
 };
 
 }  // namespace shark
