@@ -25,10 +25,13 @@
 #define INCLUDE_AGN_FEEDBACK_H_
 
 #include <memory>
+#include <random>
 #include <utility>
 
 #include "components.h"
 #include "cosmology.h"
+#include "execution.h"
+#include "galaxy.h"
 #include "options.h"
 #include "recycling.h"
 #include "subhalo.h"
@@ -50,22 +53,43 @@ public:
 	double tau_fold = 0;
 	double accretion_eff_cooling = 0;
 	double kappa_agn = 0;
-	double nu_smbh = 0;
+	double nu_smbh = 0.1;
 
 	bool qso_feedback = false;
-	bool spin_v07 = false;
-	double kappa_radio = 0;
 	double epsilon_qso = 0;
-	double eta_superedd = 4;
-	double hot_halo_threshold = 0;
+
+	// Parameters relevant to Bravo22 model
+	float kappa_radio = 1;
+	float eta_superedd = 4;
+	float hot_halo_threshold = 1;
+	float alpha_adaf = 0.1;
+	float alpha_td = 0.1;
+	float delta_adaf = 0.2;
+	float mdotcrit_adaf = 0.01;
+	float low_accretion_adaf = 1e-4;
+	float constant_lowlum_adaf = 0;
+	float constant_highlum_adaf = 0;
 
 	enum AGNFeedbackModel {
 		CROTON16 = 0,
 		BOWER06,
-		BRAVO19
+		BRAVO22
+	};
+
+	enum SpinModel{
+		VOLONTERI07 = 0,
+		GRIFFIN20,
+		CONSTANTSPIN
+	};
+
+	enum AccretionDiskModel{
+		WARPEDDISK = 0,
+		SELFGRAVITYDISK
 	};
 
 	AGNFeedbackModel model = CROTON16;
+	SpinModel spin_model = VOLONTERI07;
+	AccretionDiskModel accretion_disk_model;
 };
 
 
@@ -80,19 +104,22 @@ public:
 
 	void plant_seed_smbh(Subhalo &subhalo);
 	double eddington_luminosity(double mbh);
-	double accretion_rate_hothalo_smbh(double Lcool, double mbh);
+	double accretion_rate_hothalo_smbh(double Lcool, double tacc, BlackHole &smbh);
+	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir, BlackHole &smbh);
 	double accretion_rate_ratio(double macc, double mBH);
-	double agn_bolometric_luminosity(double macc, double mBH);
-	double agn_mechanical_luminosity(double macc, double mBH);
-	double smbh_growth_starburst(double mgas, double vvir);
+	double agn_bolometric_luminosity(BlackHole &smbh);
+	double agn_mechanical_luminosity(BlackHole &smbh);
+	double smbh_growth_starburst(double mgas, double vvir, double tacc, BlackHole &smbh);
 	double smbh_accretion_timescale(Galaxy &galaxy, double z);
-	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir);
 	double qso_critical_luminosity(double mgas, double m, double r);
 	double salpeter_timescale(double Lbol, double mbh);
 	double qso_outflow_velocity(double Lbol, double mbh, double zgas, double mgas, double mbulge, double rbulge);
-	void qso_outflow_rate(double mgas, double macc, double mBH, double zgas, double vcirc,
+	void qso_outflow_rate(double mgas, BlackHole &smbh, double zgas, double vcirc,
 			double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec);
-
+	void griffin20_spinup_accretion(double delta_mbh, double tau_acc, BlackHole &smbh);
+	void griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary);
+	void volonteri07_spin(BlackHole &smbh);
+	float efficiency_luminosity_agn(float spin, float r_lso);
 
 	// TODO: move this to private when possible
 	AGNFeedbackParameters parameters;
@@ -100,6 +127,13 @@ public:
 private:
 	CosmologyPtr cosmology;
 	RecyclingParameters recycle_params;
+	ExecutionParameters exec_params;
+
+	std::uniform_real_distribution<double> distribution;
+
+	double angle_acc_disk(const BlackHole &smbh);
+	double phi_acc_disk(const BlackHole &smbh);
+	double final_spin(const double mbh, const double mfin, const double r_lso);
 
 };
 

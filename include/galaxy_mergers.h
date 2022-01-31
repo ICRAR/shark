@@ -88,6 +88,7 @@ public:
 			CosmologyPtr cosmology,
 			CosmologicalParameters cosmo_params,
 			ExecutionParameters execparams,
+			AGNFeedbackParameters agn_params,
 			SimulationParameters simparams,
 			DarkMatterHalosPtr darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
@@ -155,6 +156,7 @@ private:
 	std::shared_ptr<Cosmology> cosmology;
 	CosmologicalParameters cosmo_params;
 	ExecutionParameters exec_params;
+	AGNFeedbackParameters agn_params;
 	SimulationParameters simparams;
 	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;

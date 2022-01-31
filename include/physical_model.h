@@ -63,8 +63,7 @@ public:
 	 * redshift: current redshift.
 	 * vsubh: subhalo virial velocity.
 	 * vgal: galaxy velocity at the half-mass radius of disk or bulge.
-	 * mBHacc: BH accretion rate in the case of starbursts.
-	 * mBH: supermassive black hole mass.
+	 * smbh: supermassive black hole mass.
 	 * burst: whether this is a starburst or not.
 	 */
 	struct solver_params {
@@ -79,16 +78,15 @@ public:
 		double redshift;
 		double vsubh;
 		double vgal;
-		double mBHacc;
-		double mBH;
+		BlackHole &smbh;
 	};
 
 	PhysicalModel(
 			double ode_solver_precision,
 			ODESolver::ode_evaluator evaluator,
 			GasCooling gas_cooling) :
-		params {*this, false, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.},
-		starburst_params {*this, true, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.},
+		params {*this, false, 0., 0., 0., 0., 0., 0., 0., 0., 0., nullptr},
+		starburst_params {*this, true, 0., 0., 0., 0., 0., 0., 0., 0., 0., nullptr},
 		ode_solver(evaluator, NC, ode_solver_precision, &params),
 		starburst_ode_solver(evaluator, NC, ode_solver_precision, &starburst_params),
 		ode_values(NC), starburst_ode_values(NC),
@@ -112,8 +110,7 @@ public:
 		 * rstar: half-stellar mass radius of the disk [Mpc/h]
 		 * vsubh: virial velocity of the host subhalo [km/s]
 		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
-		 * mBHacc: BH accretion rate due to starbursts; \equiv 0 in the case of star formation in disks.
-		 * mBH: supermassive black hole mass.
+		 * smbh: supermassive black hole class.
 		 * burst: boolean parameter indicating if this is a starburst or not.
 		 */
 
@@ -140,7 +137,7 @@ public:
 		params.vsubh      = subhalo.Vvir;
 		params.jcold_halo = subhalo.cold_halo_gas.sAM;
 		params.delta_t = delta_t;
-		params.mBH = galaxy.smbh.mass;
+		params.smbh = galaxy.smbh;
 		params.redshift = z;
 
 		from_galaxy(ode_values, subhalo, galaxy);
@@ -161,8 +158,7 @@ public:
 		 * rstar: half-stellar mass radius of the bulge [Mpc/h]
 		 * vsubh: virial velocity of the host subhalo [km/s]
 		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
-		 * mBHacc: BH accretion rate in [Msun/Gyr/h]
-		 * mBH: supermassive black hole mass [Msun/h]
+		 * smbh: supermassive black hole class.
 		 * burst: boolean parameter indicating if this is a starburst or not.
 		 */
 
@@ -170,10 +166,9 @@ public:
 		starburst_params.rstar = galaxy.bulge_stars.rscale; //stellar scale radius.
 		starburst_params.vsubh = subhalo.Vvir;
 		starburst_params.vgal = galaxy.bulge_gas.sAM / galaxy.bulge_gas.rscale;
-		starburst_params.mBHacc = galaxy.smbh.macc_sb;
-		starburst_params.mBH = galaxy.smbh.mass;
 		starburst_params.delta_t = delta_t;
 		starburst_params.redshift = z;
+		starburst_params.smbh = galaxy.smbh;
 
 		from_galaxy_starburst(starburst_ode_values, subhalo, galaxy);
 		starburst_ode_solver.evolve(starburst_ode_values, delta_t);

@@ -57,6 +57,7 @@ GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 		CosmologyPtr cosmology,
 		CosmologicalParameters cosmo_params,
 		ExecutionParameters exec_params,
+		AGNFeedbackParameters agn_params,
 		SimulationParameters simparams,
 		DarkMatterHalosPtr darkmatterhalo,
 		std::shared_ptr<BasicPhysicalModel> physicalmodel,
@@ -65,6 +66,7 @@ GalaxyMergers::GalaxyMergers(GalaxyMergerParameters parameters,
 	cosmology(std::move(cosmology)),
 	cosmo_params(std::move(cosmo_params)),
 	exec_params(std::move(exec_params)),
+	agn_params(std::move(agn_params)),
 	simparams(std::move(simparams)),
 	darkmatterhalo(std::move(darkmatterhalo)),
 	physicalmodel(std::move(physicalmodel)),
@@ -448,7 +450,11 @@ void GalaxyMergers::create_merger(Galaxy &central, const Galaxy &satellite, Halo
 
 
 	// Black holes merge regardless of the merger type.
+	if(agn_params.model == AGNFeedbackParameters::BRAVO22 && agn_params.spin_model == AGNFeedbackParameters::GRIFFIN20){
+		agnfeedback->griffin20_spinup_mergers(central.smbh, satellite.smbh);
+	}
 	central.smbh += satellite.smbh;
+
 
 	//satellite stellar mass is always transferred to the bulge.
 	transfer_history_satellite_to_bulge(central, satellite, snapshot);
@@ -578,14 +584,14 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 			if(galaxy.bulge_gas.mass > parameters.mass_min){
 
 				// Calculate black hole growth due to starburst.
-				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir);
+				double tdyn = agnfeedback->smbh_accretion_timescale(galaxy, z);
+				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir, tdyn, galaxy.smbh);
 				double delta_mzbh = 0;
 
 				if(galaxy.bulge_gas.mass > 0){
 					delta_mzbh = delta_mbh/galaxy.bulge_gas.mass * galaxy.bulge_gas.mass_metals;
 				}
 
-				double tdyn = agnfeedback->smbh_accretion_timescale(galaxy, z);
 
 				// Define accretion rate.
 				galaxy.smbh.macc_sb = delta_mbh/tdyn;
