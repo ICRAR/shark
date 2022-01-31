@@ -96,7 +96,7 @@ public:
 class AGNFeedback {
 
 public:
-	AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology, RecyclingParameters recycle_params);
+	AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology, RecyclingParameters recycle_params, ExecutionParameters exec_params);
 
 	/**
 	 * All input quantities should be in comoving units.
@@ -104,20 +104,20 @@ public:
 
 	void plant_seed_smbh(Subhalo &subhalo);
 	double eddington_luminosity(double mbh);
-	double accretion_rate_hothalo_smbh(double Lcool, double tacc, BlackHole &smbh);
-	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir, BlackHole &smbh);
+	double accretion_rate_hothalo_smbh(double Lcool, double tacc, Galaxy &galaxy);
+	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir, const BlackHole &smbh);
 	double accretion_rate_ratio(double macc, double mBH);
-	double agn_bolometric_luminosity(BlackHole &smbh);
-	double agn_mechanical_luminosity(BlackHole &smbh);
-	double smbh_growth_starburst(double mgas, double vvir, double tacc, BlackHole &smbh);
+	double agn_bolometric_luminosity(const BlackHole &smbh);
+	double agn_mechanical_luminosity(const BlackHole &smbh);
+	double smbh_growth_starburst(double mgas, double vvir, double tacc, Galaxy &galaxy);
 	double smbh_accretion_timescale(Galaxy &galaxy, double z);
 	double qso_critical_luminosity(double mgas, double m, double r);
 	double salpeter_timescale(double Lbol, double mbh);
 	double qso_outflow_velocity(double Lbol, double mbh, double zgas, double mgas, double mbulge, double rbulge);
-	void qso_outflow_rate(double mgas, BlackHole &smbh, double zgas, double vcirc,
+	void qso_outflow_rate(double mgas, const BlackHole &smbh, double zgas, double vcirc,
 			double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec);
-	void griffin20_spinup_accretion(double delta_mbh, double tau_acc, BlackHole &smbh);
-	void griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary);
+	void griffin20_spinup_accretion(double delta_mbh, double tau_acc, Galaxy &galaxy);
+	void griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary, const Galaxy &galaxy);
 	void volonteri07_spin(BlackHole &smbh);
 	float efficiency_luminosity_agn(float spin, float r_lso);
 
@@ -131,8 +131,9 @@ private:
 
 	std::uniform_real_distribution<double> distribution;
 
-	double angle_acc_disk(const BlackHole &smbh);
-	double phi_acc_disk(const BlackHole &smbh);
+	double angle_acc_disk(const Galaxy &galaxy);
+	double angle_acc_disk(std::default_random_engine &generator);
+	double phi_acc_disk(std::default_random_engine &generator);
 	double final_spin(const double mbh, const double mfin, const double r_lso);
 
 };

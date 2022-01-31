@@ -451,7 +451,7 @@ void GalaxyMergers::create_merger(Galaxy &central, const Galaxy &satellite, Halo
 
 	// Black holes merge regardless of the merger type.
 	if(agn_params.model == AGNFeedbackParameters::BRAVO22 && agn_params.spin_model == AGNFeedbackParameters::GRIFFIN20){
-		agnfeedback->griffin20_spinup_mergers(central.smbh, satellite.smbh);
+		agnfeedback->griffin20_spinup_mergers(central.smbh, satellite.smbh, central);
 	}
 	central.smbh += satellite.smbh;
 
@@ -585,7 +585,7 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 
 				// Calculate black hole growth due to starburst.
 				double tdyn = agnfeedback->smbh_accretion_timescale(galaxy, z);
-				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir, tdyn, galaxy.smbh);
+				double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir, tdyn, galaxy);
 				double delta_mzbh = 0;
 
 				if(galaxy.bulge_gas.mass > 0){

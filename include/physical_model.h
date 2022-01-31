@@ -78,15 +78,15 @@ public:
 		double redshift;
 		double vsubh;
 		double vgal;
-		BlackHole &smbh;
+		BlackHole smbh;
 	};
 
 	PhysicalModel(
 			double ode_solver_precision,
 			ODESolver::ode_evaluator evaluator,
 			GasCooling gas_cooling) :
-		params {*this, false, 0., 0., 0., 0., 0., 0., 0., 0., 0., nullptr},
-		starburst_params {*this, true, 0., 0., 0., 0., 0., 0., 0., 0., 0., nullptr},
+		params {*this, false, 0., 0., 0., 0., 0., 0., 0., 0., 0., {}},
+		starburst_params {*this, true, 0., 0., 0., 0., 0., 0., 0., 0., 0., {}},
 		ode_solver(evaluator, NC, ode_solver_precision, &params),
 		starburst_ode_solver(evaluator, NC, ode_solver_precision, &starburst_params),
 		ode_values(NC), starburst_ode_values(NC),

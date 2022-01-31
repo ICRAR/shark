@@ -129,7 +129,7 @@ Options::get<AGNFeedbackParameters::AccretionDiskModel>(const std::string &name,
 	throw invalid_option(os.str());
 }
 
-AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology, RecyclingParameters recycle_params) :
+AGNFeedback::AGNFeedback(const AGNFeedbackParameters &parameters, CosmologyPtr cosmology, RecyclingParameters recycle_params, ExecutionParameters exec_params) :
 	parameters(parameters),
 	cosmology(std::move(cosmology)),
 	recycle_params(std::move(recycle_params)),
@@ -172,7 +172,7 @@ double AGNFeedback::eddington_luminosity(double mbh){
 	}
 }
 
-double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, BlackHole &smbh) {
+double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, Galaxy &galaxy) {
 
 	/**
 	 * Function calculates the accretion rate onto the central black hole based on a cooling luminosity.
@@ -182,6 +182,8 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, Black
 	 */
 
 	using namespace constants;
+
+	auto &smbh = galaxy.smbh;
 
 	if (Lcool > 0 && Lcool < MAXLUM) {
 
@@ -200,7 +202,7 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, Black
 				volonteri07_spin(smbh);
 			}
 			else if (parameters.spin_model == AGNFeedbackParameters::GRIFFIN20){
-				griffin20_spinup_accretion(macc * MACCRETION_cgs_simu * tacc, tacc, smbh);
+				griffin20_spinup_accretion(macc * MACCRETION_cgs_simu * tacc, tacc, galaxy);
 			}
 		}
 
@@ -228,7 +230,7 @@ double AGNFeedback::accretion_rate_ratio(double macc, double mBH){
 	}
 }
 
-double AGNFeedback::agn_bolometric_luminosity(BlackHole &smbh){
+double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh){
 
 	//return bolometric luminosity in units of 10^40 erg/s.
 	//Follows equations from Griffin et al. (2020).
@@ -275,7 +277,7 @@ double AGNFeedback::agn_bolometric_luminosity(BlackHole &smbh){
 	return Lbol;
 }
 
-double AGNFeedback::agn_mechanical_luminosity(BlackHole &smbh){
+double AGNFeedback::agn_mechanical_luminosity(const BlackHole &smbh){
 	
 	//return mechanical luminosity in units of 10^40 erg/s.
 	using namespace constants;
@@ -296,7 +298,7 @@ double AGNFeedback::agn_mechanical_luminosity(BlackHole &smbh){
 	return Lmech;
 }
 
-double AGNFeedback::accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir, BlackHole &smbh){
+double AGNFeedback::accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir, const BlackHole &smbh){
 
 	using namespace constants;
 
@@ -310,9 +312,11 @@ double AGNFeedback::accretion_rate_hothalo_smbh_limit(double mheatrate, double v
 
 }
 
-double AGNFeedback::smbh_growth_starburst(double mgas, double vvir, double tacc, BlackHole &smbh){
+double AGNFeedback::smbh_growth_starburst(double mgas, double vvir, double tacc, Galaxy &galaxy){
 
 	double m = 0;
+
+	auto &smbh = galaxy.smbh;
 
 	if(mgas > 0){
 		m =  parameters.f_smbh * mgas / (1 + std::pow(parameters.v_smbh/vvir, 2.0));
@@ -325,7 +329,7 @@ double AGNFeedback::smbh_growth_starburst(double mgas, double vvir, double tacc,
 			volonteri07_spin(smbh);
 		}
 		else if (parameters.spin_model == AGNFeedbackParameters::GRIFFIN20){
-			griffin20_spinup_accretion(m, tacc, smbh);
+			griffin20_spinup_accretion(m, tacc, galaxy);
 		}
 	}
 
@@ -375,7 +379,7 @@ double AGNFeedback::qso_outflow_velocity(double Lbol, double mbh, double zgas, d
 
 }
 
-void AGNFeedback::qso_outflow_rate(double mgas, BlackHole &smbh, double zgas, double vcirc,
+void AGNFeedback::qso_outflow_rate(double mgas, const BlackHole &smbh, double zgas, double vcirc,
 		double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec){
 
 	double macc = cosmology->comoving_to_physical_mass(smbh.macc_sb + smbh.macc_hh);
@@ -432,7 +436,7 @@ void AGNFeedback::volonteri07_spin(BlackHole &smbh){
 
 }
 
-void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, BlackHole &smbh){
+void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, Galaxy &galaxy){
 
 	/*Function computes the black hole spin resulting from the black hole accretion during starbursts.
 	Model follows that published by Griffin et al. (2020).*/
@@ -448,6 +452,8 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, B
 	double R_angm = 0;
 	bool retrograde_accretion;
 
+	// define supermassive black hole
+	auto &smbh = galaxy.smbh;
 
 	// Compute quantities in physical units before proceeding.
 	auto M_outer_disk = cosmology->comoving_to_physical_mass(delta_mbh);
@@ -457,7 +463,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, B
 
 	do {
 		// Initialise angle between accretion disk and total one (assume random orientations)
-		auto theta = angle_acc_disk(smbh);
+		auto theta = angle_acc_disk(galaxy);
 		auto cos_theta_i = std::cos(theta);
 
 		float r_lso = 0;
@@ -602,7 +608,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, B
 
 }
 
-void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary){
+void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary, const Galaxy &galaxy){
 
 	double t0 = -2.686,
 			t2 = -3.454,
@@ -618,9 +624,10 @@ void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackH
 	if ( m1 > 0 && m2 > 0){
 
 		// The subscript 1 refers to the spin of black hole 1
-		// We are using spherical polar coordinates.
-		auto theta_1 = angle_acc_disk(smbh_primary);
-		auto theta_2 = angle_acc_disk(smbh_secondary);
+		// We are using spherical polar coordinates
+		std::default_random_engine generator(exec_params.get_seed(galaxy));
+		auto theta_1 = angle_acc_disk(generator);
+		auto theta_2 = angle_acc_disk(generator);
 
 		auto cos_theta_1 = std::cos(theta_1);
 		auto sin_theta_1 = std::sin(theta_1);
@@ -628,7 +635,7 @@ void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackH
 		auto cos_theta_2 = std::cos(theta_2);
 		auto sin_theta_2 = std::sin(theta_2);
 
-		auto phi_2 = phi_acc_disk(smbh_secondary);
+		auto phi_2 = phi_acc_disk(generator);
 		auto cos_phi_2 = std::cos(phi_2);
 
 		// alpha is the cos of the angle between spin 1 and spin 2
@@ -675,22 +682,16 @@ void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackH
 
 }
 
-double AGNFeedback::angle_acc_disk(const BlackHole &smbh){
-
-	// returns a random angle in radians.
-
-	//std::default_random_engine generator(exec_params.get_seed(smbh));
-	std::default_random_engine generator(1);
-	return std::acos(distribution(generator));
-
+double AGNFeedback::angle_acc_disk(const Galaxy &galaxy){
+	std::default_random_engine generator(exec_params.get_seed(galaxy));
+	return angle_acc_disk(generator);
 }
 
-double AGNFeedback::phi_acc_disk(const BlackHole &smbh){
+double AGNFeedback::angle_acc_disk(std::default_random_engine &generator) {
+	return std::acos(distribution(generator));
+}
 
-	// returns a random phi angle between 0 and 2PI radians.
-
-	//std::default_random_engine generator(exec_params.get_seed(smbh));
-	std::default_random_engine generator(1);
+double AGNFeedback::phi_acc_disk(std::default_random_engine &generator){
 	return constants::PI2 * (1 + distribution(generator));
 
 }

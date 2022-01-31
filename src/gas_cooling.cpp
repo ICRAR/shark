@@ -490,7 +490,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 				double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot + mhot_ejec);
 	
 				if(Lcool < agnfeedback->parameters.f_edd * Ledd && Lcool > 0){
-					central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lcool, deltat, central_galaxy->smbh);
+					central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lcool, deltat, *central_galaxy);
 					//now convert mass accretion rate to comoving units.
 					central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 					// set cooling rate to 0.
@@ -506,7 +506,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO22){
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
 		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
-		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, deltat, central_galaxy->smbh);
+		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, deltat, *central_galaxy);
 
 		//now convert mass accretion rate to comoving units.
 		central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);

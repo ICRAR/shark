@@ -180,7 +180,7 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, Galaxy &galaxy, doub
 
 		// Calculate black hole growth due to starburst.
 		double tdyn = agnfeedback->smbh_accretion_timescale(galaxy, z);
-		double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir, tdyn, galaxy.smbh);
+		double delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir, tdyn, galaxy);
 		double delta_mzbh = 0;
 		if(galaxy.bulge_gas.mass > 0){
 			delta_mzbh = delta_mbh/galaxy.bulge_gas.mass * galaxy.bulge_gas.mass_metals;
