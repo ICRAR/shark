@@ -549,7 +549,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 		//modify cooling rate according to heating rate.
 		coolingrate = (1 - r_ratio) * coolingrate;
-		if(coolingrate < 0){
+		if(coolingrate < 0  || subhalo.cold_halo_gas.mass < 0){
 			coolingrate = 0;
 		}
 
