@@ -382,7 +382,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	}
 
 	// Check for undefined cases.
-	if(mhot < 0 || mhot >1e17 || std::isnan(mhot)){
+	if(mhot < 0 || mhot > 1e17 || std::isnan(mhot)){
 		std::ostringstream os;
 		os << halo << " has hot halo gas mass not well defined";
 		throw invalid_data(os.str());
@@ -524,7 +524,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 			}
 		}
 		else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
-			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh) * 1e40 /
+			mheatrate = agnfeedback->agn_bolometric_luminosity(central_galaxy->smbh, false) * 1e40 /
 					(0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
 		}
 

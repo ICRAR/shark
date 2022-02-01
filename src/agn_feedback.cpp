@@ -58,13 +58,13 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.kappa_radio", kappa_radio);
 	options.load("agn_feedback.hot_halo_threshold", hot_halo_threshold);
 	options.load("agn_feedback.spin_model", spin_model);
+	options.load("agn_feedback.eta_superedd", eta_superedd);
 
 	// parameters below are relevant for the Griffin 2020's spin model.
 	options.load("agn_feedback.alpha_adaf", alpha_adaf);
 	options.load("agn_feedback.alpha_td", alpha_td);
 	options.load("agn_feedback.delta_adaf", delta_adaf);
 	options.load("agn_feedback.mdotcrit_adaf", mdotcrit_adaf);
-	options.load("agn_feedback.eta_superedd", eta_superedd);
 	options.load("agn_feedback.accretion_disk_model", accretion_disk_model);
 
 	auto beta = 1 - alpha_adaf / 0.55;
@@ -153,6 +153,7 @@ void AGNFeedback::plant_seed_smbh(Subhalo &subhalo){
 		}
 		if (mvir > parameters.mhalo_seed && central->smbh.mass ==0){
 				central->smbh.mass = parameters.mseed;
+				central->smbh.spin = 0.67;
 		}
 	}
 
@@ -230,7 +231,7 @@ double AGNFeedback::accretion_rate_ratio(double macc, double mBH){
 	}
 }
 
-double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh){
+double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh, bool starburst){
 
 	//return bolometric luminosity in units of 10^40 erg/s.
 	//Follows equations from Griffin et al. (2020).
@@ -241,7 +242,7 @@ double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh){
 
 	auto macc = cosmology->comoving_to_physical_mass(smbh.macc_hh);
 
-	if(parameters.model == AGNFeedbackParameters::BRAVO22){
+	if(parameters.model == AGNFeedbackParameters::BRAVO22 || starburst){
 		//In this case also sum the starburst accretion rate
 		macc += cosmology->comoving_to_physical_mass(smbh.macc_sb);
 	}
@@ -252,21 +253,20 @@ double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh){
 		double LEdd = eddington_luminosity(mBH);
 		double m_dot_norm = accretion_rate_ratio(macc,mBH);
 		
-		float r_lso;
-		auto eff = efficiency_luminosity_agn(smbh.spin, r_lso);
+		auto eff = efficiency_luminosity_agn(smbh.spin);
 
 		if(m_dot_norm >= parameters.mdotcrit_adaf){
-			Lbol = eff * (macc / MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
+			Lbol = eff[0] * (macc / MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
 			if(Lbol > parameters.eta_superedd * LEdd){
 				Lbol = parameters.eta_superedd * (1.0 + std::log(m_dot_norm / parameters.eta_superedd)) * LEdd;
 			}
 		}
 		else{
 			if(m_dot_norm > parameters.low_accretion_adaf){
-				Lbol = 0.2 * eff * (macc / MACCRETION_cgs_simu)  * std::pow(c_light_cm, 2.0) * parameters.constant_highlum_adaf / r_lso / 1e40;
+				Lbol = 0.2 * eff[0] * (macc / MACCRETION_cgs_simu)  * std::pow(c_light_cm, 2.0) * parameters.constant_highlum_adaf / eff[1] / 1e40;
 			}
 			else{
-				Lbol = 0.0002 * eff * (macc / MACCRETION_cgs_simu) * std::pow(c_light_cm, 2.0) / r_lso / 1e40;
+				Lbol = 0.0002 * eff[0] * (macc / MACCRETION_cgs_simu) * std::pow(c_light_cm, 2.0) / eff[1] / 1e40;
 			}
 		}
 	}
@@ -289,10 +289,10 @@ double AGNFeedback::agn_mechanical_luminosity(const BlackHole &smbh){
 	double Lmech = 0;
 
 	if(m_dotdiv0p01 >= 1.0){
-		Lmech = 2.5e3 * std::pow(mBH/1e9,1.1) * std::pow(m_dotdiv0p01,1.2) * std::pow(smbh.spin,2);
+		Lmech = 2.5e3 * std::pow(mBH/1e9,1.1) * std::pow(m_dotdiv0p01,1.2) * std::pow(smbh.spin, 2);
 	}
 	else{
-		Lmech = 2e5 * (mBH/1e9) * m_dotdiv0p01  * std::pow(smbh.spin,2);
+		Lmech = 2e5 * (mBH/1e9) * m_dotdiv0p01  * std::pow(smbh.spin, 2);
 	}
 
 	return Lmech;
@@ -304,9 +304,8 @@ double AGNFeedback::accretion_rate_hothalo_smbh_limit(double mheatrate, double v
 
 	double Lbol = mheatrate * (0.5*std::pow(vvir*KM2CM,2.0)) / MACCRETION_cgs_simu / 1e40;
 
-	float r_lso = 0;
-	auto eff = efficiency_luminosity_agn(smbh.spin, r_lso);
-	double macc = Lbol / eff / std::pow(c_light_cm,2.0) * 1e40 * MACCRETION_cgs_simu;
+	auto eff = efficiency_luminosity_agn(smbh.spin);
+	double macc = Lbol / eff[0] / std::pow(c_light_cm,2.0) * 1e40 * MACCRETION_cgs_simu;
 
 	return macc;
 
@@ -387,7 +386,7 @@ void AGNFeedback::qso_outflow_rate(double mgas, const BlackHole &smbh, double zg
 
 	// QSO feedback only acts if the accretion rate is >0, BH mass is > 0 and QSO feedback is activated by the user.
 	if(macc > 0 && mBH > 0 && sfr > 0 && mgas > 0 && parameters.qso_feedback){
-		double Lbol = agn_bolometric_luminosity(smbh);
+		double Lbol = agn_bolometric_luminosity(smbh, true);
 		double Lcrit = qso_critical_luminosity(mgas, mbulge, rbulge);
 
 		// check if bolometric luminosity is larger than the critical luminosity and the gas mass in the bulge is positive. The latter is not always the case becaus equations are solved
@@ -469,7 +468,9 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 		float r_lso = 0;
 
 		if(mbh > 0){
-			eff = efficiency_luminosity_agn(smbh.spin, r_lso);
+			auto efficiency = efficiency_luminosity_agn(smbh.spin);
+			eff = efficiency[0];
+			r_lso = efficiency[1];
 			mdot_norm = accretion_rate_ratio(mdot, mbh);
 
 			// Self-gravity radius based on King, Pringle, Hofmann 2008 equation 10 but with different constant at the front.
@@ -496,7 +497,9 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 					accretion efficiency more realistic.*/
 					auto ichunk = n_accretion_chunks;
 					do{
-						eff = efficiency_luminosity_agn(smbh.spin, r_lso);
+						efficiency = efficiency_luminosity_agn(smbh.spin);
+						eff = efficiency[0];
+						r_lso = efficiency[1];
 						mfin = mbh + (1 - eff) * (M_inner_disk / n_accretion_chunks);
 						spin = final_spin(mbh, mfin, r_lso);
 						mbh = mbh + (1- eff) * (M_inner_disk / n_accretion_chunks);
@@ -511,7 +514,9 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 					accretion disk system will be subject to Lens-Thirring precession. In this case it is
 					necessary to follow the evolution of the misalignment angle phi since it is expected to
 					affect the final spin acquired by the BH.*/
-					eff = efficiency_luminosity_agn(smbh.spin, r_lso);
+					efficiency = efficiency_luminosity_agn(smbh.spin);
+					eff = efficiency[0];
+					r_lso = efficiency[1];
 
 					// Warp radius based on Volonteri 2007 equation 2, with a slightly different constant at the front.
 					auto R_warp = 3413 * std::pow( std::abs(spin), 0.625) *
@@ -567,13 +572,15 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 					if (cos_theta_i > -1 * angular_momentum_ratio){
 						// Prograde accretion
 						retrograde_accretion = false;
-						eff = efficiency_luminosity_agn(spin, r_lso);
+						efficiency = efficiency_luminosity_agn(spin);
 					}
 					else{
 						// Retrograde accretion
 						retrograde_accretion = true;
-						eff = efficiency_luminosity_agn(-1 * spin, r_lso);
+						efficiency = efficiency_luminosity_agn(-1 * spin);
 					}
+					eff = efficiency[0];
+					r_lso = efficiency[1];
 					spin = final_spin(mbh, mfin, r_lso);
 
 					spin = std::abs(spin); // Spin set to magnitude of spin.
@@ -605,6 +612,13 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 	}
 
 	smbh.spin = spin;
+
+	// Check for undefined cases.
+	if(spin < -1 || spin > 1 || std::isnan(spin)){
+		std::ostringstream os;
+		os << "SMBH in accretion routine has spin not well defined";
+		throw invalid_data(os.str());
+	}
 
 }
 
@@ -673,6 +687,13 @@ void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackH
 		}
 
 		smbh_primary.spin = new_spin;
+
+		// Check for undefined cases.
+		if(new_spin < -1 || new_spin > 1 || std::isnan(new_spin)){
+			std::ostringstream os;
+			os << " SMBH in merging black holes has spin not well defined";
+			throw invalid_data(os.str());
+		}
 	}
 	else{
 		if(m1 == 0){
@@ -696,11 +717,17 @@ double AGNFeedback::phi_acc_disk(std::default_random_engine &generator){
 
 }
 
-float AGNFeedback::efficiency_luminosity_agn(float spin, float r_lso){
+std::vector<float> AGNFeedback::efficiency_luminosity_agn(float spin){
+
+	std::vector<float> efficiency;
 
 	if(parameters.spin_model == AGNFeedbackParameters::CONSTANTSPIN){
-		return parameters.nu_smbh;
+		efficiency.push_back(parameters.nu_smbh);
+		efficiency.push_back(0);
+		return efficiency;
 	}
+
+	double eff, r_lso;
 
 	// Calculate the radiation efficiency in the thin disk approximation
 
@@ -717,7 +744,7 @@ float AGNFeedback::efficiency_luminosity_agn(float spin, float r_lso){
 		r_lso = 3 + z2 - std::sqrt((3 - z1) * (3 + z1 + 2 * z2));
 	}
 
-	auto eff = 1 - std::sqrt(1 - 2 / (3 * r_lso));
+	eff = 1 - std::sqrt(1 - 2 / (3 * r_lso));
 
 	if(eff < 0){
 		eff = 0.07;
@@ -726,7 +753,10 @@ float AGNFeedback::efficiency_luminosity_agn(float spin, float r_lso){
 		eff = 0.5;
 	}
 
-	return eff;
+	efficiency.push_back(eff);
+	efficiency.push_back(r_lso);
+
+	return efficiency;
 
 }
 
