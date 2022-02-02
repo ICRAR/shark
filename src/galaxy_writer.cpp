@@ -223,6 +223,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> mBH;
 	vector<float> mBH_acc_hh;
 	vector<float> mBH_acc_sb;
+	vector<float> bh_spin;
 
 	vector<float> sfr_disk;
 	vector<float> sfr_burst;
@@ -420,6 +421,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mBH.push_back(galaxy.smbh.mass);
 				mBH_acc_hh.push_back(galaxy.smbh.macc_hh);
 				mBH_acc_sb.push_back(galaxy.smbh.macc_sb);
+				bh_spin.push_back(galaxy.smbh.spin);
 
 				// Sizes and specific angular momentum of disks and bulges.
 
@@ -633,6 +635,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mBH);
 	REPORT(mBH_acc_hh);
 	REPORT(mBH_acc_sb);
+	REPORT(bh_spin);
 	REPORT(sfr_disk);
 	REPORT(sfr_burst);
 	REPORT(sfr_burst_mergers);
@@ -840,6 +843,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "accretion rate onto the black hole during the starburst mode [Msun/Gyr/h]";
 	file.write_dataset("galaxies/bh_accretion_rate_sb", mBH_acc_sb, comment);
+
+	comment = "black hole spin [dimensionless]";
+	file.write_dataset("galaxies/bh_spin", bh_spin, comment);
 
 	comment = "half-mass radius of the stellar disk [cMpc/h]";
 	file.write_dataset("galaxies/rstar_disk", rdisk_star, comment);

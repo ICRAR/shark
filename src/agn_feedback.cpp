@@ -153,7 +153,7 @@ void AGNFeedback::plant_seed_smbh(Subhalo &subhalo){
 		}
 		if (mvir > parameters.mhalo_seed && central->smbh.mass ==0){
 				central->smbh.mass = parameters.mseed;
-				central->smbh.spin = 0.67;
+				central->smbh.spin = 0;
 		}
 	}
 
@@ -222,7 +222,7 @@ double AGNFeedback::accretion_rate_ratio(double macc, double mBH){
 
 	if(macc > 0){
 		double LEdd = eddington_luminosity(mBH);
-		double M_dot_Edd = 1e40 * LEdd / (parameters.accretion_eff_cooling * std::pow(c_light_cm,2.0));
+		double M_dot_Edd = 1e40 * LEdd / (parameters.nu_smbh * std::pow(c_light_cm,2.0));
 		double m_dot = (macc/MACCRETION_cgs_simu) / M_dot_Edd;
 		return m_dot;
 	}
@@ -474,7 +474,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 			mdot_norm = accretion_rate_ratio(mdot, mbh);
 
 			// Self-gravity radius based on King, Pringle, Hofmann 2008 equation 10 but with different constant at the front.
-			auto R_sg = 4390.0 * std::pow(parameters.alpha_td, 14.0/27.0) * std::pow(mdot_norm / 0.1, -8.0/27.0) * std::pow(mbh/1.e8, -26.0/27.0); //This is in units of R_Schw
+			auto R_sg = 4790.0 * std::pow(parameters.alpha_td, 0.5185) * std::pow(mdot_norm, -0.2962) * std::pow(mbh/1.e8, -0.9629); //This is in units of R_Schw
 			double M_sg = 0;
 
 			if(mdot_norm < parameters.mdotcrit_adaf){
@@ -485,7 +485,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 				/* Self-gravity mass based on King, Pringle, Hofmann 2008 equation 7
 				but with different constant at the front.
 				M_sg = M_BH * (H/R) is the expression used.*/
-				M_sg = 1.35 * std::pow(parameters.alpha_td, -0.8) * std::pow(mdot_norm/0.1, 0.6) * std::pow(mbh / 1e8, 2.2) * std::pow(R_sg, 1.4); // In Msun
+				M_sg = 1.35 * std::pow(parameters.alpha_td, -0.8) * std::pow(mdot_norm, 0.6) * std::pow(mbh / 1e8, 2.2) * std::pow(R_sg, 1.4); // In Msun
 			}
 
 			M_inner_disk = std::min(M_sg , M_outer_disk);
@@ -514,12 +514,12 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 					accretion disk system will be subject to Lens-Thirring precession. In this case it is
 					necessary to follow the evolution of the misalignment angle phi since it is expected to
 					affect the final spin acquired by the BH.*/
-					efficiency = efficiency_luminosity_agn(smbh.spin);
+					efficiency = efficiency_luminosity_agn(spin);
 					eff = efficiency[0];
 					r_lso = efficiency[1];
 
 					// Warp radius based on Volonteri 2007 equation 2, with a slightly different constant at the front.
-					auto R_warp = 3413 * std::pow( std::abs(spin), 0.625) *
+					auto R_warp = 3410 * std::pow( std::abs(spin), 0.625) *
 							std::pow(mbh/1e8, 0.125) *
 							std::pow(mdot_norm/0.1, -0.25) *
 							std::pow(nu2_nu1, -0.625) *
@@ -527,12 +527,19 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 
 					// M_warp equal to Sigma R**2, as based on King, Pringle, Hofmann 2008 equation 7, but with a different constant at the front.
 					auto m_warp = 1.35 * std::pow(parameters.alpha_td, -0.8) *
-							std::pow(mdot_norm/0.1, 0.6) *
+							std::pow(mdot_norm, 0.6) *
 							std::pow(mbh/1e8, 2.2) *
 							std::pow(R_warp, 1.4); //Msun
 
 					if(parameters.accretion_disk_model == AGNFeedbackParameters::WARPEDDISK){
 						Delta_M = m_warp;
+
+						// check is mass is too small and apply a lower limit to both mass and radius.
+						if(Delta_M < M_inner_disk/n_accretion_chunks){
+							auto frac = Delta_M/(M_inner_disk/n_accretion_chunks);
+							Delta_M = M_inner_disk/n_accretion_chunks;
+							R_warp = R_warp * std::pow((1/frac), 0.71);
+						}
 
 						// check that warped mass isn't larger than the available accreting mass.
 						if(Delta_M > M_inner_disk){
@@ -547,13 +554,12 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 						R_angm = R_sg;
 					}
 
-
 					mfin = mbh + (1 - eff) * Delta_M;
 
 					//compute angular momentum ratio
 					angular_momentum_ratio = (Delta_M / (constants::SQRT2 * mbh * std::abs(spin))) * std::sqrt(R_angm);
 
-					auto J_SMBH = std::abs(spin) * std::pow(mbh, 2);
+					auto J_SMBH = std::abs(spin) * std::pow(mbh, 2) * constants::G / constants::c_light_km;
 					auto J_disk = 2 * angular_momentum_ratio * J_SMBH;
 
 					// Angle evolution
@@ -653,13 +659,13 @@ void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackH
 		auto cos_phi_2 = std::cos(phi_2);
 
 		// alpha is the cos of the angle between spin 1 and spin 2
-		auto alpha = sin_theta_1 * sin_theta_2 * cos_phi_2
-				+ cos_theta_1 * cos_theta_2;
+		auto alpha = std::abs(sin_theta_1 * sin_theta_2 * cos_phi_2
+				+ cos_theta_1 * cos_theta_2);
 
 		//beta is the cos of the angle between the angular momentum of the orbit and spin 1
-		auto beta = cos_theta_1;
+		auto beta = std::abs(cos_theta_1);
 		// gama is the cos of the angle between the angular momentum of the orbit and spin 2
-		auto gama = cos_theta_2;
+		auto gama = std::abs(cos_theta_2);
 
 		auto symm_mr = m1 * m2 / std::pow(m1 + m2, 2);
 
@@ -672,6 +678,9 @@ void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackH
 			s1 = smbh_secondary.spin;
 			s2 = smbh_primary.spin;
 		}
+
+		s1 = std::abs(s1);
+		s2 = std::abs(s2);
 
 		auto ang_mom = s4 / std::pow(1 + mrO2, 2) * (std::pow(s1, 2) + std::pow(s2, 2) * mrO4 + 2 * s1 * s2 * mrO2 * alpha) +
 				(s5 * symm_mr + t0 + 2) / (1 + mrO2) * (s1 * beta + s2 * mrO2 * gama) +
@@ -721,7 +730,7 @@ std::vector<float> AGNFeedback::efficiency_luminosity_agn(float spin){
 
 	std::vector<float> efficiency;
 
-	if(parameters.spin_model == AGNFeedbackParameters::CONSTANTSPIN){
+	if(parameters.spin_model == AGNFeedbackParameters::CONSTANTSPIN || parameters.model == AGNFeedbackParameters::CROTON16){
 		efficiency.push_back(parameters.nu_smbh);
 		efficiency.push_back(0);
 		return efficiency;

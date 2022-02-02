@@ -140,6 +140,9 @@ namespace constants {
 	/** Speed of light in m/s (Allen's Astrophysical Quantities, page 8) */
 	constexpr double c_light = 2.99792458e8;
 
+	/** Speed of light in m/s (Allen's Astrophysical Quantities, page 8) */
+	constexpr double c_light_km = 2.99792458e8 / KILO;
+
 	/** Speed of light in cm/s (Allen's Astrophysical Quantities, page 8) */
 	constexpr double c_light_cm = c_light * 100;
 
