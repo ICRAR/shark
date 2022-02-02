@@ -433,6 +433,14 @@ void AGNFeedback::volonteri07_spin(BlackHole &smbh){
 		smbh.spin = 0;
 	}
 
+	// putting physical limits to spin
+	if(smbh.spin > 1){
+		smbh.spin = 1;
+	}
+	else if (smbh.spin < -1){
+		smbh.spin = -1;
+	}
+
 }
 
 void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, Galaxy &galaxy){
