@@ -85,7 +85,8 @@ public:
 
 	enum AccretionDiskModel{
 		WARPEDDISK = 0,
-		SELFGRAVITYDISK
+		SELFGRAVITYDISK,
+		PROLONGED
 	};
 
 	AGNFeedbackModel model = CROTON16;
