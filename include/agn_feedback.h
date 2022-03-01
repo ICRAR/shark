@@ -70,6 +70,7 @@ public:
 	float low_accretion_adaf = 1e-4;
 	float constant_lowlum_adaf = 0;
 	float constant_highlum_adaf = 0;
+	float nu2_nu1 = 0;
 
 	enum AGNFeedbackModel {
 		CROTON16 = 0,

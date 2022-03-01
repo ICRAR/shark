@@ -68,9 +68,10 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.accretion_disk_model", accretion_disk_model);
 
 	auto beta = 1 - alpha_adaf / 0.55;
-	auto low_accretion_adaf = 0.001 * (delta_adaf / 0.0005) * (1 - beta) / beta * std::pow(alpha_adaf, 2.0);
-	auto constant_lowlum_adaf = (delta_adaf / 0.0005) * (1 - beta) * 6;
-	auto constant_highlum_adaf = beta / 0.5 / std::pow(alpha_adaf, 2) * 6;
+	low_accretion_adaf = 0.001 * (delta_adaf / 0.0005) * (1 - beta) / beta * std::pow(alpha_adaf, 2.0);
+	constant_lowlum_adaf = (delta_adaf / 0.0005) * (1 - beta) * 6;
+	constant_highlum_adaf = beta / 0.5 / std::pow(alpha_adaf, 2) * 6;
+	nu2_nu1 = std::pow(alpha_td, 2.0);
 
 	// control QSO feedback.
 	options.load("agn_feedback.qso_feedback", qso_feedback);
@@ -156,7 +157,7 @@ void AGNFeedback::plant_seed_smbh(Subhalo &subhalo){
 		}
 		if (mvir > parameters.mhalo_seed && central->smbh.mass ==0){
 				central->smbh.mass = parameters.mseed;
-				central->smbh.spin = 0.01;
+				central->smbh.spin = 0;
 		}
 	}
 
@@ -452,7 +453,6 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 	/*Function computes the black hole spin resulting from the black hole accretion during starbursts.
 	Model follows that published by Griffin et al. (2020).*/
 
-	float nu2_nu1 = 1;
 	double M_inner_disk = 0;
 	int n_accretion_chunks = 10;
 	double eff = 0;
@@ -485,7 +485,6 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 			auto cos_theta_i = std::cos(theta);
 
 			float r_lso = 0;
-			float mass_accreted = 0;
 
 			if(mbh > 0){
 				auto efficiency = efficiency_luminosity_agn(spin);
@@ -494,7 +493,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 				mdot_norm = accretion_rate_ratio(mdot, mbh);
 
 				// Self-gravity radius based on King, Pringle, Hofmann 2008 equation 10 but with different constant at the front.
-				auto R_sg = 4790.0 * std::pow(parameters.alpha_td, 0.5185) * std::pow(mdot_norm, -0.2962) * std::pow(mbh/1.e8, -0.9629); //This is in units of R_Schw
+				auto R_sg = 4790.0 * std::pow(parameters.alpha_td, 0.5185) * std::pow(mdot_norm, -0.2962) * std::pow(mbh/1e8, -0.9629); //This is in units of R_Schw
 				double M_sg = 0;
 
 				if(mdot_norm < parameters.mdotcrit_adaf){
@@ -526,7 +525,6 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 							ichunk --;
 						}
 						while (ichunk > 0);
-						mass_accreted += M_inner_disk;
 						M_inner_disk = -1; //To stop the loop
 					}
 					else{
@@ -542,7 +540,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 						auto R_warp = 3410 * std::pow( std::abs(spin), 0.625) *
 								std::pow(mbh/1e8, 0.125) *
 								std::pow(mdot_norm, -0.25) *
-								std::pow(nu2_nu1, -0.625) *
+								std::pow(parameters.nu2_nu1, -0.625) *
 								std::pow(parameters.alpha_td, -0.5); // Units of R_Schw
 
 						// M_warp equal to Sigma R**2, as based on King, Pringle, Hofmann 2008 equation 7, but with a different constant at the front.
@@ -555,11 +553,11 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 							Delta_M = m_warp;
 
 							// check if mass is too small and apply a lower limit to both mass and radius.
-							if(Delta_M < M_inner_disk/n_accretion_chunks){
+							/*if(Delta_M < M_inner_disk/n_accretion_chunks){
 								auto frac = Delta_M/(M_inner_disk/n_accretion_chunks);
 								Delta_M = M_inner_disk/n_accretion_chunks;
 								R_warp = R_warp * std::pow((1/frac), 0.71);
-							}
+							}*/
 
 							// check that warped mass isn't larger than the available accreting mass.
 							if(Delta_M > M_inner_disk){
@@ -617,7 +615,6 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 
 						mbh = mbh + (1 - eff) * Delta_M; // Not all mass accreted on, some lost as radiation.
 						M_inner_disk = M_inner_disk - Delta_M;
-						mass_accreted += Delta_M;
 					}
 				}
 				while(M_inner_disk > 0);
