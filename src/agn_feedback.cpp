@@ -553,11 +553,11 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 							Delta_M = m_warp;
 
 							// check if mass is too small and apply a lower limit to both mass and radius.
-							/*if(Delta_M < M_inner_disk/n_accretion_chunks){
+							if(Delta_M < M_inner_disk/n_accretion_chunks){
 								auto frac = Delta_M/(M_inner_disk/n_accretion_chunks);
 								Delta_M = M_inner_disk/n_accretion_chunks;
 								R_warp = R_warp * std::pow((1/frac), 0.71);
-							}*/
+							}
 
 							// check that warped mass isn't larger than the available accreting mass.
 							if(Delta_M > M_inner_disk){
