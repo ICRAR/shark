@@ -182,6 +182,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	string comment;
 
+	// compute universe age at this redshift:
+	double age_uni = std::abs(cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot]));
+
 	// Crate all subhalo properties to write.
 
 	vector<Subhalo::id_t> descendant_id;
@@ -388,7 +391,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mstars_stripped.push_back(galaxy.stars_tidal_stripped.mass);
 				auto age = 0;
 				if(galaxy.total_stellar_mass_ever_formed > 0){
-					age = galaxy.mean_stellar_age / galaxy.total_stellar_mass_ever_formed;
+					age = age_uni - galaxy.mean_stellar_age / galaxy.total_stellar_mass_ever_formed;
 				}
 				mean_stellar_age.push_back(age);
 
