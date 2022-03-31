@@ -1,3 +1,4 @@
+#From Katsianis et al. (2021; MNRAS.500.2036)
 #Log10 (sSFR)[yr−1]  φ(sSFR)[Mpc−3 dex−1]
 #ssfr_bin phi_9.5−10 err phi_10−10.5 err phi_10.5−11 err phi_11−11.5
 -12.900000      0         0                0          0            0          0             1.38E-08   1.17E-08
