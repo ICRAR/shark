@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 
-zlist=np.array([5.02220991014863, 5.52950356184419, 5.96593, 6.55269895697227, 7.05756323172746, 7.45816170313544, 8.02352, 9.95655])
+zlist=np.array([0, 0.909822023685613, 2, 3, 4, 5])
 
 ##################################
 #Constants
@@ -41,18 +41,80 @@ mupp = 12.5
 dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
+Lsunwatts = 3.846e26
 
-
-def prepare_data(hdf5_data, seds, index, LFs_dust, obsdir):
+def prepare_data(hdf5_data, seds, seds_bands, fields_sed_bc, index, LFs_dust, obsdir):
 
     (h0, volh, mdisk, mbulge, sfr_disk, sfr_burst) = hdf5_data
 
-    lir_total = seds[1] #total absolute magnitudes with dust
+    ind = np.where(mdisk + mbulge > 0)
+    mstar = mdisk[ind] + mbulge[ind]
+
+    bin_it = functools.partial(us.wmedians, xbins=xmf)
+
+    seds_total = seds_bands[2]
+
+    lir_disk = seds[0]
+    lir_bulge = seds[1]
+    lir_total = seds[2] #total absolute magnitudes with dust
+    lir_bc_cont = fields_sed_bc[2]
+    d2 = 4.0 * PI * (10 * 3.086e18)**2.0 #cm^2
+    lir_1p4GHz = 10**((seds_total[37,:] + 48.6) / (-2.5)) / 1e7 * d2 #in W/Hz
+    lir_3GHz = 10**((seds_total[38,:] + 48.6) / (-2.5)) / 1e7 * d2 #in W/Hz
+
+
+    qIR = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(lir_1p4GHz)
+    qIR_3GHz = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(lir_3GHz)
+    ind = np.where((qIR > 0) & (qIR < 10))
+    print(max(qIR[ind]), min(qIR[ind]), min(qIR_3GHz[ind]), max(qIR_3GHz[ind]), np.median(qIR[ind]))
+    mstarbins = [8.5,9.5,10.5,11.5]
+    dbin = 0.5
+    for ms in mstarbins:
+        ind = np.where((np.log10(mstar) >= ms - dbin) & (np.log10(mstar) < ms + dbin) & (qIR > 0) & (qIR < 10))
+        print("Median qIR for stellar masses,", ms, " is", np.median(qIR[ind]))
+
+    for ms in mstarbins:
+        ind = np.where((np.log10(lir_total[0,:]) >= ms - dbin) & (np.log10(lir_total[0,:]) < ms + dbin) & (qIR > 0) & (qIR < 10))
+        print("Median qIR for LIR,", ms, " is", np.median(qIR[ind]))
+
+    temp_bc = 57.0
+    temp_diff = 22.0
+    temp_eff =  temp_bc * lir_bc_cont + temp_diff * (1.0 - lir_bc_cont)
+
+    temp_eff = temp_eff[0]
+    ind = np.where(temp_eff > temp_bc-1)
+    print("number of galaxies with T=T_bc", len(temp_eff[ind]))
+    print("all galaxies", len(temp_eff))
+    ind = np.where(temp_eff < temp_diff+1)
+    print("number of galaxies with T=T_diff", len(temp_eff[ind]))
+
+    print(lir_total.shape)
+    lir_total = lir_total[0]
+    ind = np.where((lir_total > 1e9) & (temp_eff > temp_bc-1))
+    print("number of galaxies with T=T_bc", len(temp_eff[ind]))
+    ind = np.where((lir_total > 1e9))
+    print("number of all galaxies", len(temp_eff[ind]))
+    ind = np.where((lir_total > 1e9) & (temp_eff < temp_diff+1))
+    print("number of galaxies with T=T_diff", len(temp_eff[ind]))
+
+
+
+
+ 
+    seds_disk = seds_bands[0]
+    seds_bulge = seds_bands[1]
+    seds_total = seds_bands[2]
+
+    L1p4radio = seds_total[37,:]
 
     #compute luminosity function
     ind = np.where((lir_total > 0) & (lir_total < 1e20))
     H, bins_edges = np.histogram(np.log10(lir_total[ind]),bins=np.append(mbins,mupp))
     LFs_dust[index,:] = LFs_dust[index,:] + H
+
+    #median Lradio vs LIR
+    ind = np.where((lir_total > 1e6) & (lir_total < 1e20))
+    meds_radio = bin_it(x=lir_total[ind], y=L1p4radio[ind])
   
     return(volh, h0)
     
@@ -87,28 +149,37 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
 
-    file_name = "eagle-rr14"
+    file_name = "eagle-rr14-radio"
     file_hdf5_sed = "Shark-SED-" + file_name + ".hdf5"
-    fields_sed = {'SED/lir_dust': ('disk','total'),}
+
+    fields_sed = {'SED/lir_dust': ('disk','bulge_t','total'),}
+    fields_seds_bc = {'SED/lir_dust_contribution_bc': ('disk','bulge_t','total'),}
+    fields_seds_bands = {'SED/ab_dust':('disk','bulge_t','total'),}
 
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk', 'sfr_burst')}
 
     #Bands information:
-    #(0): "FUV_GALEX", "NUV_GALEX", "u_SDSS", "g_SDSS", "r_SDSS", "i_SDSS",
-    #(6): "z_SDSS", "Y_VISTA", "J_VISTA", "H_VISTA", "K_VISTA", "W1_WISE",
-    #(12): "I1_Spitzer", "I2_Spitzer", "W2_WISE", "I3_Spitzer", "I4_Spitzer",
-    #(17): "W3_WISE", "W4_WISE", "P70_Herschel", "P100_Herschel",
-    #(21): "P160_Herschel", "S250_Herschel", "S350_Herschel", "S450_JCMT",
-    #(25): "S500_Herschel", "S850_JCMT", "Band9_ALMA", "Band8_ALMA",
-    #(29): "Band7_ALMA", "Band6_ALMA", "Band5_ALMA", "Band4_ALMA"
+    #(0): "hst/ACS_update_sep07/wfc_f775w_t81", "hst/wfc3/IR/f160w",
+    #(2): "F200W_JWST", "FUV_GALEX", "NUV_GALEX", "u_SDSS", "g_SDSS", "r_SDSS",
+    #(8): "i_SDSS", "z_SDSS", "Y_VISTA", "J_VISTA", "H_VISTA", "K_VISTA",
+    #(14): "W1_WISE", "I1_Spitzer", "I2_Spitzer", "W2_WISE", "I3_Spitzer",
+    #(19): "I4_Spitzer", "W3_WISE", "W4_WISE", "P70_Herschel", "P100_Herschel",
+    #(24): "P160_Herschel", "S250_Herschel", "S350_Herschel", "S450_JCMT",
+    #(28): "S500_Herschel", "S850_JCMT", "FUV_Nathan", "Band9_ALMA",
+    #(32): "Band8_ALMA", "Band7_ALMA", "Band6_ALMA", "Band4_ALMA",
+    #(36): "Band3_ALMA", "BandL_VLA", "BandS_VLA"
 
     LFs_dust     = np.zeros(shape = (len(zlist), len(mbins)))
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         print("Will read snapshot %s" % (str(snapshot)))
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
-        seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols, file_hdf5_sed)
-        (volh, h0) = prepare_data(hdf5_data, seds, index, LFs_dust, obsdir)
+        seds_lir = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols, file_hdf5_sed)
+        seds_bands = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_seds_bands, subvols, file_hdf5_sed)
+        seds_lir_bc = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_seds_bc, subvols, file_hdf5_sed)
+
+
+        (volh, h0) = prepare_data(hdf5_data, seds_lir, seds_bands, seds_lir_bc, index, LFs_dust, obsdir)
 
     def take_log(x,v,h):
         x = x / (v / h**3.0)

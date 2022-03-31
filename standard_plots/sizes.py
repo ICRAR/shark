@@ -60,7 +60,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, 
-     mmol_bulge, mbh_acc_hh, mbh_acc_sb, sfr_disk, sfr_burst) = hdf5_data
+     mmol_bulge, mbh_acc_hh, mbh_acc_sb, age, sfr_disk, sfr_burst) = hdf5_data
 
     mstars_tot = (mdisk+mbulge)/h0
     #if index in (2, 3):
@@ -150,11 +150,9 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     BHSM[index,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
 
-    ind = np.where((mBH > 0) & (ssfr > 1e-14))
+    ind = np.where((mBH > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 1e10))
     BHSFR[index,:] = bin_it(x=np.log10(mBH[ind]) - np.log10(float(h0)), 
                             y=np.log10(ssfr[ind]))
-
-    print(BHSFR[index,:])
 
     ind = np.where((mbulge > 0) & (mbulge/mdisk > 0.5))
     bulge_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
@@ -520,7 +518,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR):
 
     #BH-SSFR relation
     ms, sfr, upperlimflag, mbh, mbherr = common.load_observation(obsdir, 'BHs/MBH_host_gals_Terrazas17.dat', [0,1,2,3,4])
-    
+    print("minimum ms Terrazas",min(ms)) 
     ax.errorbar(mbh, sfr-ms, xerr=mbherr, yerr=0.3, ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Terrazas+17")
     ind = np.where(upperlimflag == 1)
     for a,b in zip (mbh[ind], sfr[ind]-ms[ind]):
@@ -631,7 +629,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo', 'mgas_disk', 'mgas_bulge','matom_disk', 'mmol_disk', 
-                           'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst')}
+                           'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mean_stellar_age', 
+                           'sfr_disk', 'sfr_burst')}
 
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -660,7 +659,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         (mdisk, rdisk, age) = prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR])
+                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR)
         if(index == 0):
            mdisk_z0 = mdisk
            rdisk_z0 = rdisk

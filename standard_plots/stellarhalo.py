@@ -50,35 +50,30 @@ def prepare_data(hdf5_data, index, massstellarh, massstellarh_v2, hist_smf, hist
     id_halo, mvir_infall, mvir_subhalo, id_subhalo) = hdf5_data
 
 
-    ind = np.where(ms_tidally_stripped >= 0)
-    print(len(typeg[ind]))
-    ind = np.where((ms_tidally_stripped > 0) & (typeg == 0))
-    print(len(typeg[ind]))
-    ind = np.where((ms_tidally_stripped > 0) & (typeg == 1))
-    print(len(typeg[ind]))
-    ind = np.where((ms_tidally_stripped > 0) & (typeg == 2))
-    print(len(typeg[ind]))
-
-
     vol = volh/pow(h0,3.)  # In Mpc^3
 
     ids_halo = np.unique(id_halo)
 
-    mshalo_gals = np.zeros(shape = (3, len(ids_halo)))
-    for i,g in enumerate(ids_halo): 
-        ind = np.where(id_halo == g)
-        mshalo_gals[0,i] = np.sum(ms_tidally_stripped[ind])
-        mshalo_gals[1,i] = np.sum(mdisk[ind]+mbulge[ind])
-        ind = np.where( (id_halo == g) & (typeg == 0))
-        mshalo_gals[2,i] = mhalo[ind]
+    ms_gals = np.zeros(shape = (3,len(ids_halo)))
+    for i,g in enumerate(ids_halo):
+        ind = np.where((id_halo == g) & (mdisk+mbulge > 0))
+        indcen = np.where((id_halo == g) & (typeg == 0))
+        if((np.count_nonzero(ind) > 0) & (np.count_nonzero(indcen) > 0)):
+           ms_gals[0,i] = np.sum(mdisk[ind]+mbulge[ind])
+           ms_gals[0,i] = ms_gals[0,i] + ms_halo[indcen]
+           ms_gals[1,i] = ms_halo[indcen]
+           ms_gals[2,i] = mhalo[indcen]
 
     ind = np.where((typeg <= 0) & (ms_halo > 0))
     massstellarh[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                    y=np.log10(ms_halo[ind]) - np.log10(mhalo[ind]),
                                    xbins=xmf)
-    ind = np.where(mshalo_gals[0,:] > 0)
-    massstellarh_v2[index,:] = us.wmedians(x=np.log10(mshalo_gals[2,ind]) - np.log10(float(h0)),
-                                   y=np.log10(mshalo_gals[0,ind]) - np.log10(mshalo_gals[1,ind]),
+    ind = np.where(ms_gals[1,:] == 0)
+    ms_gals[1,ind] = 1.0
+
+    ind = np.where(ms_gals[0,:] > 0)
+    massstellarh_v2[index,:] = us.wmedians(x=np.log10(ms_gals[2,ind]) - np.log10(float(h0)),
+                                   y=np.log10(ms_gals[0,ind]) - np.log10(ms_gals[1,ind]),
                                    xbins=xmf)
 
     mass = mdisk + mbulge
@@ -230,15 +225,15 @@ def plot_stellar_halo_z(plt, outdir, massstellarh, massstellarh_v2, zlist):
     cols = ['DarkRed', 'DarkOrange', 'LimeGreen', 'Turquoise', 'SteelBlue', 'Purple']
     #Predicted stellar-halo mass relation
     for i,z in enumerate(zlist):
-        #(xplot, yplot, errdn, errup) = compute_points(massstellarh)
-        #ax.plot(xplot, yplot[0], linestyle = 'solid', color=cols[i], label = 'z=%s' % str(z))
-        #ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
-        #ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
-
-        (xplot, yplot, errdn, errup) = compute_points(massstellarh_v2)
+        (xplot, yplot, errdn, errup) = compute_points(massstellarh)
         ax.plot(xplot, yplot[0], linestyle = 'solid', color=cols[i], label = 'z=%s' % str(z))
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
+
+#        (xplot, yplot, errdn, errup) = compute_points(massstellarh_v2)
+#        ax.plot(xplot, yplot[0], linestyle = 'solid', color=cols[i], label = 'z=%s' % str(z))
+#        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
+#        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
 
     common.prepare_legend(ax, cols, loc=2)
 
