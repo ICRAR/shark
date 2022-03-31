@@ -60,7 +60,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, 
-     mmol_bulge, mbh_acc_hh, mbh_acc_sb) = hdf5_data
+     mmol_bulge, mbh_acc_hh, mbh_acc_sb, age) = hdf5_data
 
     mstars_tot = (mdisk+mbulge)/h0
     #if index in (2, 3):
@@ -144,7 +144,10 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     bulge_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                     y=np.log10(vbulge[ind]))
     
+    ind = np.where(mdisk >= 5e7)
 
+    return(np.log10(mdisk[ind]) - np.log10(float(h0)), np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)), 13.7969 - age[ind])
+ 
 def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins):
 
     fig = plt.figure(figsize=(5,9.5))
@@ -533,6 +536,36 @@ def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins,
     common.prepare_legend(ax, ['k', 'r','Goldenrod', 'Orange','grey'], loc=2)
     common.savefig(outdir, fig, 'BTfractions.pdf')
 
+def plot_age_disk(plt, outdir, obsdir, mdisk_z0, rdisk_z0, age_z0):
+
+
+    fig = plt.figure(figsize=(5,4.5))
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm disk}/M_{\odot})$"
+    ytit = "$\\rm log_{10} (\\rm r_{\\star,disk}/kpc)$"
+    xmin, xmax, ymin, ymax = 8, 12, -0.5, 2
+
+    # LTG ##################################
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    im = ax.hexbin(mdisk_z0, rdisk_z0, age_z0, xscale='linear', yscale='linear', gridsize=(20,20), cmap='magma', mincnt=30)
+    cbar_ax = fig.add_axes([0.86, 0.15, 0.025, 0.7])
+    cbar = fig.colorbar(im, cax=cbar_ax)
+    cbar.ax.set_ylabel('mean stellar age')
+
+    y1 = 0.35 * (xmf - 10) - 0.06 * (1.0) + 1.01
+    y4 = 0.35 * (xmf - 10) - 0.06 * (4.0) + 1.01
+    y8 = 0.35 * (xmf - 10) - 0.06 * (8.0) + 1.01
+    y12 = 0.35 * (xmf - 10) - 0.06 * (12.0) + 1.01
+
+    ax.plot(xmf, y1, linestyle='dotted', color='k')
+    ax.plot(xmf, y4, linestyle='dotted', color='k')
+    ax.plot(xmf, y8, linestyle='dotted', color='k')
+    ax.plot(xmf, y12, linestyle='dotted', color='k')
+
+    common.savefig(outdir, fig, 'age_disks.pdf')
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
@@ -543,7 +576,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo', 'mgas_disk', 'mgas_bulge','matom_disk', 'mmol_disk', 
-                           'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
+                           'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb',  'mean_stellar_age')}
 
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -568,16 +601,20 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
+        (mdisk, rdisk, age) = prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
                      BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error)
+        if(index == 0):
+           mdisk_z0 = mdisk
+           rdisk_z0 = rdisk
+           age_z0 = age
 
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins)
     plot_velocities(plt, outdir, disk_vel, bulge_vel, baryonic_TF)
     plot_sizes_combined(plt, outdir, obsdir, rcomb)
     plot_bulge_BH(plt, outdir, obsdir, BH, BHSM)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
-
+    plot_age_disk(plt, outdir, obsdir, mdisk_z0, rdisk_z0, age_z0)
 
 if __name__ == '__main__':
     main(*common.parse_args())
