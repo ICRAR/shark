@@ -35,7 +35,7 @@ RExp     = 1.67
 MpcToKpc = 1e3
 G        = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
 
-mlow = 6.5
+mlow = 5
 mupp = 12.5
 dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
@@ -54,13 +54,13 @@ xv    = vbins + dv/2.0
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
-                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error):
+                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, 
-     mmol_bulge, mbh_acc_hh, mbh_acc_sb) = hdf5_data
+     mmol_bulge, mbh_acc_hh, mbh_acc_sb, sfr_disk, sfr_burst) = hdf5_data
 
     mstars_tot = (mdisk+mbulge)/h0
     #if index in (2, 3):
@@ -140,6 +140,22 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     BHSM[index,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
    
+
+    ssfr = (sfr_disk + sfr_burst) / 1e9 / (mbulge + mdisk)
+    #apply lower limit to ssfr
+    ind = np.where(ssfr < 1e-14)
+    ssfr[ind] = 2e-14
+
+    ind = np.where(mBH > 0)
+    BHSM[index,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
+                    y=np.log10(mBH[ind]) - np.log10(float(h0)))
+
+    ind = np.where((mBH > 0) & (ssfr > 1e-14))
+    BHSFR[index,:] = bin_it(x=np.log10(mBH[ind]) - np.log10(float(h0)), 
+                            y=np.log10(ssfr[ind]))
+
+    print(BHSFR[index,:])
+
     ind = np.where((mbulge > 0) & (mbulge/mdisk > 0.5))
     bulge_vel[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                     y=np.log10(vbulge[ind]))
@@ -376,7 +392,7 @@ def plot_sizes_combined(plt, outdir, obsdir, rcomb):
     common.savefig(outdir, fig, 'sizes_combined.pdf')
 
 
-def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM):
+def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR):
 
     fig = plt.figure(figsize=(5,4.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm bulge}/M_{\odot})$"
@@ -471,6 +487,45 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM):
     common.prepare_legend(ax, ['k'], loc=2)
     common.savefig(outdir, fig, 'stellarmass-BH.pdf')
 
+
+    #SSFR vs BH mass
+    fig = plt.figure(figsize=(5,4.5))
+    ytit = "$\\rm log_{10} (\\rm sSFR/M_{\odot} yr^{-1})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
+
+    xmin, xmax, ymin, ymax = 5, 11, -14, -9
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    ax.text(xleg, yleg, 'z=0')
+
+    #Predicted BH-bulge mass relation
+    ind = np.where(BHSFR[0,0,:] != 0)
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = BHSFR[0,0,ind]
+        errdn = BHSFR[0,1,ind]
+        errup = BHSFR[0,2,ind]
+        ax.plot(xplot,yplot[0],color='k',label="Shark")
+        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
+        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
+
+
+    #BH-SSFR relation
+    ms, sfr, upperlimflag, mbh, mbherr = common.load_observation(obsdir, 'BHs/MBH_host_gals_Terrazas17.dat', [0,1,2,3,4])
+    
+    ax.errorbar(mbh, sfr-ms, xerr=mbherr, yerr=0.3, ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Terrazas+17")
+    ind = np.where(upperlimflag == 1)
+    for a,b in zip (mbh[ind], sfr[ind]-ms[ind]):
+        ax.arrow(a, b, 0, -0.3, head_width=0.05, head_length=0.1, fc='r', ec='r')
+
+    common.prepare_legend(ax, ['k','r'], loc=3)
+    common.savefig(outdir, fig, 'BH-SSFR.pdf')
+
 def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites):
 
     fig = plt.figure(figsize=(5,4.5))
@@ -543,7 +598,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo', 'mgas_disk', 'mgas_bulge','matom_disk', 'mmol_disk', 
-                           'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
+                           'matom_bulge', 'mmol_bulge', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst')}
 
     # Loop over redshift and subvolumes
     rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -554,6 +609,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     BH = np.zeros(shape = (len(zlist), 3, len(xmf)))
     BHSM = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    BHSFR = np.zeros(shape = (len(zlist), 3, len(xmf)))
+
     disk_size_sat = np.zeros(shape = (len(zlist), 3, len(xmf)))
     disk_size_cen = np.zeros(shape = (len(zlist), 3, len(xmf)))
     BT_fractions = np.zeros(shape = (len(zlist), len(xmf)))
@@ -570,14 +627,13 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error)
+                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR)
 
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins)
     plot_velocities(plt, outdir, disk_vel, bulge_vel, baryonic_TF)
     plot_sizes_combined(plt, outdir, obsdir, rcomb)
-    plot_bulge_BH(plt, outdir, obsdir, BH, BHSM)
+    plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
-
 
 if __name__ == '__main__':
     main(*common.parse_args())
