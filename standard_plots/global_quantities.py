@@ -41,7 +41,7 @@ XH = 0.72
 
 def prepare_data(hdf5_data, redshifts):
 
-    (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mstar,
+    (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mlost, mcreated, mstar,
      mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst, 
      mDM, mcold_halo, number_major_mergers, number_minor_mergers, 
      number_disk_instabil, max_smbh) = hdf5_data
@@ -65,7 +65,9 @@ def prepare_data(hdf5_data, redshifts):
     #Add up cold halo component to hot gas.
     mhot = mhot + mcold_halo
 
-    massbar = mcold+mhot+meje+mstar+mBH
+    print(mlost)
+    massbar = mcold+mhot+meje+mstar+mBH+mlost
+    
     sfr  = sfrall / volh / GyrToYr
     sfrd = sfrdisk  / volh / GyrToYr
     sfrb = sfrburst / volh / GyrToYr
@@ -130,6 +132,8 @@ def prepare_data(hdf5_data, redshifts):
     mbar_dm_plot = np.zeros(shape = len(mcold))
     mHI_dm_plot = np.zeros(shape = len(mcold))
     mH2_dm_plot = np.zeros(shape = len(mcold))
+    mlost_dm_plot = np.zeros(shape = len(mcold))
+    mcreated_dm_plot = np.zeros(shape = len(mcold))
 
     ind = np.where(mDM > 0.0)
     mcold_dm_plot[ind] = np.log10(mcold[ind]/(mDM[ind]+massbar[ind]))
@@ -139,12 +143,14 @@ def prepare_data(hdf5_data, redshifts):
     mbar_dm_plot[ind] = np.log10(massbar[ind]/(mDM[ind]+massbar[ind]))
     mHI_dm_plot[ind] = np.log10(mHI[ind]/(mDM[ind]+massbar[ind]))
     mH2_dm_plot[ind] = np.log10(mH2[ind]/(mDM[ind]+massbar[ind]))
-
+    mlost_dm_plot[ind] = np.log10(mlost[ind]/(mDM[ind]+massbar[ind]))
+    mcreated_dm_plot[ind] = np.log10(mcreated[ind]/(mDM[ind]+massbar[ind]))
+  
     return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
      sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
      mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden,
-     history_interactions, mDMden)
+     history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot)
 
 def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, meje, mstarden, mcoldden, mhotden, mejeden):
 
@@ -334,7 +340,7 @@ def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, 
     common.savefig(outdir, fig, "global_hotgas.pdf")
 
 
-def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, meje_dm, mbar_dm):
+def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, meje_dm, mbar_dm, mlost_dm, mcreated_dm):
 
     fig = plt.figure(figsize=(9.5,9.5))
 
@@ -348,6 +354,9 @@ def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, m
     ax.plot(redshifts, mcold_dm, 'b', label='ISM gas')
     ax.plot(redshifts, mhot_dm, 'r', label='halo gas')
     ax.plot(redshifts, meje_dm, 'g', label='ejected gas')
+    ax.plot(redshifts, mlost_dm, 'orange', label='lost')
+    ax.plot(redshifts, mcreated_dm, 'orange', linestyle='dashed', label='created')
+
     ax.plot(redshifts, mbar_dm, 'm', label='total baryons')
 
     yplot = [0.1866920152, 0.1866920152]
@@ -355,7 +364,7 @@ def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, m
 
     ax.plot(xplot, np.log10(yplot), 'k', linestyle='dashed', label ='Universal $f_{\\rm baryon}$')
 
-    common.prepare_legend(ax, ['k','b','r','g','m','k'])
+    common.prepare_legend(ax, ['k','b','r','g','orange','orange','m','k'])
     common.savefig(outdir, fig, "baryon_frac.pdf")
 
 
@@ -406,9 +415,9 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfr > 0)
     ax.plot(redshifts[ind], np.log10(sfr[ind]*pow(h0,2.0)), 'k', linewidth=1, label ='total')
-    print("SFR density of the Universe")
-    for a,b in zip(redshifts[ind],  np.log10(sfr[ind]*pow(h0,2.0))):
-        print(a,b)
+    #print("SFR density of the Universe")
+    #for a,b in zip(redshifts[ind],  np.log10(sfr[ind]*pow(h0,2.0))):
+    #    print(a,b)
 
     ind = np.where(sfrd > 0)
     ax.plot(redshifts[ind], np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='dashed', linewidth=1, label ='quiescent')
@@ -666,9 +675,9 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ind = np.where(mH2den > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r')
 
-    print("H2 density of the Universe")
-    for a,b in zip(redshifts[ind],  np.log10(mH2den[ind]*pow(h0,2.0))):
-        print(a,b)
+    #print("H2 density of the Universe")
+    #for a,b in zip(redshifts[ind],  np.log10(mH2den[ind]*pow(h0,2.0))):
+    #    print(a,b)
 
     z, h2_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 2])
     h2_modelvar_burst3 = h2_modelvar[0:179]
@@ -832,7 +841,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
     fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
-                         'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
+                         'mhot_halo', 'mejected_halo', 'mbar_lost', 'mbar_created', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
                          'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo', 'number_major_mergers', 
                          'number_minor_mergers', 'number_disk_instabilities', 'smbh_maximum')}
 
@@ -859,10 +868,10 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
      mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
      sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
      mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, 
-     mejeden, history_interactions, mDMden) = prepare_data(hdf5_data, redshifts)
+     mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot) = prepare_data(hdf5_data, redshifts)
 
     plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar_plot, mcold_plot, mhot_plot, meje_plot, mstarden, mcoldden, mhotden, mejeden)
-    plot_baryon_fractions(plt, outdir, redshifts, mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot)
+    plot_baryon_fractions(plt, outdir, redshifts, mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot, mlost_dm_plot, mcreated_dm_plot)
     plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history_interactions, mDMden)
     plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarden, mstarbden_mergers, mstarbden_diskins)
     plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat)

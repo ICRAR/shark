@@ -120,7 +120,7 @@ def prepare_data(hdf5_data, seds, seds_nod, seds_ap, index, sfr_z, mmol_z, mdust
      sfr_disk, sfr_bulge, typeg,  mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, mmol_bulge, mvir_hosthalo, 
      idtree, mzd, mzb) = hdf5_data
 
-    sim_size = volh * h0**3.0 
+    sim_size = volh / h0**3.0 
     #compute dust masses
     (mdustd, DToM_MW) = dust_mass(mzd, mgas_disk, h0)
     (mdustb, DToM_MW) = dust_mass(mzb, mgas_bulge, h0)

@@ -56,7 +56,7 @@ def prepare_data(hdf5_data, index, hist_ssfr, mbins, dm):
         H, _ = np.histogram(ssfr_in,bins=np.append(sbins,supp))
         hist_ssfr[index,i,:] = hist_ssfr[index,i,:] + H
 
-    vol = volh * h0**3
+    vol = volh / h0**3
     return(vol)
 
 def plot_ssfr(plt, outdir, obsdir, hist_ssfr):
@@ -109,6 +109,8 @@ def plot_ssfr(plt, outdir, obsdir, hist_ssfr):
         xplot = xsf[ind]
         yplot = hist_ssfr[z,i,ind]
         ax.plot(xplot,yplot[0],'k', linestyle='solid', label="$\\rm log_{10}(M_{\\star}/M_{\\odot})=$" + labels[i])
+        ax.plot(xplot-0.3,yplot[0],'k', linestyle='dashed', label="-0.3dex")
+
         plot_observations(ax,i)
         common.prepare_legend(ax, ['k','k'], loc=2)
 
