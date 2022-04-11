@@ -66,6 +66,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.delta_adaf", delta_adaf);
 	options.load("agn_feedback.mdotcrit_adaf", mdotcrit_adaf);
 	options.load("agn_feedback.accretion_disk_model", accretion_disk_model);
+	options.load("agn_feedback.loop_limit_accretion", loop_limit_accretion);
 
 	auto beta = 1 - alpha_adaf / 0.55;
 	low_accretion_adaf = 0.001 * (delta_adaf / 0.0005) * (1 - beta) / beta * std::pow(alpha_adaf, 2.0);
@@ -455,6 +456,8 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 
 	double M_inner_disk = 0;
 	int n_accretion_chunks = 10;
+	int loop_inner = 0;
+	int loop_outer = 0;
 	double eff = 0;
 	double mdot_norm = 0;
 	double mfin = 0;
@@ -471,6 +474,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 	auto mbh = cosmology->comoving_to_physical_mass(smbh.mass);
 	auto mdot = cosmology->comoving_to_physical_mass(delta_mbh/tau_acc);
 	auto spin = smbh.spin;
+	auto mbh_init = mbh;
 
 	if(parameters.accretion_disk_model == AGNFeedbackParameters::PROLONGED){
 		auto efficiency = efficiency_luminosity_agn(spin);
@@ -553,11 +557,11 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 							Delta_M = m_warp;
 
 							// check if mass is too small and apply a lower limit to both mass and radius.
-							if(Delta_M < M_inner_disk/n_accretion_chunks){
+							/*if(Delta_M < M_inner_disk/n_accretion_chunks){
 								auto frac = Delta_M/(M_inner_disk/n_accretion_chunks);
 								Delta_M = M_inner_disk/n_accretion_chunks;
 								R_warp = R_warp * std::pow((1/frac), 0.71);
-							}
+							}*/
 
 							// check that warped mass isn't larger than the available accreting mass.
 							if(Delta_M > M_inner_disk){
@@ -615,11 +619,12 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 
 						mbh = mbh + (1 - eff) * Delta_M; // Not all mass accreted on, some lost as radiation.
 						M_inner_disk = M_inner_disk - Delta_M;
+						loop_inner += 1;
 					}
 				}
-				while(M_inner_disk > 0);
+				while(M_inner_disk > 0 && loop_inner < parameters.loop_limit_accretion);
 
-				//M_outer_disk -= mass_accreted;
+				// M_outer_disk -= mass_accreted;
 				// End of spin-evolution calculation
 				if(parameters.accretion_disk_model == AGNFeedbackParameters::WARPEDDISK){
 					M_outer_disk = -1;
@@ -632,9 +637,10 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 						M_outer_disk = -1;
 					}
 				}
+				loop_outer += 1;
 			}
 		}
-		while(M_outer_disk > 0);
+		while(M_outer_disk > 0  && loop_outer < parameters.loop_limit_accretion);
 	}
 
 	smbh.spin = spin;
