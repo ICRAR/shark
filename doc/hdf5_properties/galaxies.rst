@@ -20,6 +20,7 @@
 ^^^^^^^^^^^^
 * ``bh_accretion_rate_hh``: accretion rate onto the black hole during the hot halo mode [Msun/Gyr/h]
 * ``bh_accretion_rate_sb``: accretion rate onto the black hole during the starburst mode [Msun/Gyr/h]
+* ``bh_spin``: black hole spin [dimensionless]
 * ``cnfw_subhalo``: NFW concentration parameter of the dark matter subhalo in which this galaxy resides [dimensionless]. In the case of type 2 satellites, this corresponds to the concentration its subhalo had before disappearing from the subhalo catalogs.
 * ``cooling_rate``: cooling rate of the hot halo component [Msun/Gyr/h].
 * ``descendant_id_galaxy``: descendant galaxy ID. Different to galaxy id only if galaxy is type 2 and merges on the next snapshot.
@@ -43,6 +44,10 @@
 * ``mgas_metals_disk``: mass of metals locked in the gas of the disk [Msun/h]
 * ``mhot``: hot gas mass in the halo [Msun/h]
 * ``mhot_metals``: mass of metals locked in the hot halo gas [Msun/h]
+* ``mhot_metals_stripped``: mass of metals that has been stripped out of this subhalo due to ram pressure stripping [Msun/h].
+* ``mhot_stripped``: gas mass that has been stripped out of this subhalo due to ram pressure stripping [Msun/h].
+* ``mism_metals_stripped``: mass of metals that has been stripped out of the ISM due to ram pressure stripping [Msun/h]
+* ``mism_stripped``: gas mass that has been stripped out of the ISM due to ram pressure stripping [Msun/h]
 * ``mlost``: gas mass in the lost gas component - due to QSO feedback [Msun/h]
 * ``mlost_metals``: mass of metals locked in the lost gas component - due to QSO feedback [Msun/h]
 * ``mmol_bulge``: molecular gas mass (helium plus hydrogen) in the bulge [Msun/h]
@@ -71,6 +76,8 @@
 * ``position_x``: position component x of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
 * ``position_y``: position component y of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
 * ``position_z``: position component z of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
+* ``r_halo_stripped``: ram pressure stripping radius of the halo gas [cMpc/h]
+* ``r_ism_stripped``: ram pressure stripping radius of the ISM [cMpc/h]
 * ``redshift_merger``: redshift at which this galaxy will merge onto a central galaxy (only relevant for type 2 galaxies)
 * ``rgas_bulge``: half-mass radius of the gas bulge [cMpc/h]
 * ``rgas_disk``: half-mass radius of the gas disk [cMpc/h]

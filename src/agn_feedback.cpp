@@ -474,7 +474,6 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 	auto mbh = cosmology->comoving_to_physical_mass(smbh.mass);
 	auto mdot = cosmology->comoving_to_physical_mass(delta_mbh/tau_acc);
 	auto spin = smbh.spin;
-	auto mbh_init = mbh;
 
 	if(parameters.accretion_disk_model == AGNFeedbackParameters::PROLONGED){
 		auto efficiency = efficiency_luminosity_agn(spin);
@@ -815,10 +814,10 @@ double AGNFeedback::final_spin(const double mbh, const double mfin, const double
 		spin = 0.998;
 	}
 
-	if(spin < 0 & spin > -0.01){
+	if (spin < 0 && spin > -0.01) {
 		spin = -0.01;
 	}
-	else if(spin > 0 & spin < 0.01){
+	else if (spin > 0 && spin < 0.01) {
 		spin = 0.01;
 	}
 
