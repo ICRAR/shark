@@ -67,7 +67,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.mdotcrit_adaf", mdotcrit_adaf);
 	options.load("agn_feedback.accretion_disk_model", accretion_disk_model);
 	options.load("agn_feedback.loop_limit_accretion", loop_limit_accretion);
-	options.load("agn_feedback.A_ADAF", A_ADAF);
+	options.load("agn_feedback.a_adaf", A_ADAF);
 
 	A_TD = A_ADAF/100;
 
