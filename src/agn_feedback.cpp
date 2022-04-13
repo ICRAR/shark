@@ -624,6 +624,12 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 				}
 				while(M_inner_disk > 0 && loop_inner < parameters.loop_limit_accretion);
 
+				//check is there is accretion disk mass left (which can happen if
+				//we stopped the loop due to the number of iterations hiting the limit. In that case, modify the BH mass accordingly.
+				if(M_inner_disk > 0){
+					mbh = mbh + (1 - eff) * M_inner_disk; // Not all mass accreted on, some lost as radiation.
+				}
+
 				// M_outer_disk -= mass_accreted;
 				// End of spin-evolution calculation
 				if(parameters.accretion_disk_model == AGNFeedbackParameters::WARPEDDISK){
