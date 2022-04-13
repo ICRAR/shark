@@ -458,6 +458,11 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 	/*Function computes the black hole spin resulting from the black hole accretion during starbursts.
 	Model follows that published by Griffin et al. (2020).*/
 
+	//if no accretion takes place then return.
+	if(delta_mbh <= 0 || galaxy.smbh.mass == 0){
+		return;
+	}
+
 	double M_inner_disk = 0;
 	int n_accretion_chunks = 10;
 	int loop_inner = 0;
@@ -655,7 +660,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 	smbh.spin = spin;
 
 	// Check for undefined cases.
-	if(spin < -1 || spin > 1 || std::isnan(spin)){
+	if(spin < -1 || spin > 1 || std::isnan(spin) || std::isinf(spin)){
 		std::ostringstream os;
 		os << "SMBH in accretion routine has spin not well defined";
 		throw invalid_data(os.str());
