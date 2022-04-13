@@ -67,6 +67,9 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.mdotcrit_adaf", mdotcrit_adaf);
 	options.load("agn_feedback.accretion_disk_model", accretion_disk_model);
 	options.load("agn_feedback.loop_limit_accretion", loop_limit_accretion);
+	options.load("agn_feedback.A_ADAF", A_ADAF);
+
+	A_TD = A_ADAF/100;
 
 	auto beta = 1 - alpha_adaf / 0.55;
 	low_accretion_adaf = 0.001 * (delta_adaf / 0.0005) * (1 - beta) / beta * std::pow(alpha_adaf, 2.0);
@@ -286,6 +289,7 @@ double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh, bool starbu
 double AGNFeedback::agn_mechanical_luminosity(const BlackHole &smbh){
 	
 	//return mechanical luminosity in units of 10^40 erg/s.
+	//Note that here we use the radio luminosities as described in Griffin et al. (2019; arxiv: 1912.09490) Eqs. 11 and 12.
 	using namespace constants;
 	
 	auto macc = cosmology->comoving_to_physical_mass(smbh.macc_hh + smbh.macc_sb);
@@ -295,10 +299,10 @@ double AGNFeedback::agn_mechanical_luminosity(const BlackHole &smbh){
 	double Lmech = 0;
 
 	if(m_dotdiv0p01 >= 1.0){
-		Lmech = 2.5e3 * std::pow(mBH/1e9,1.1) * std::pow(m_dotdiv0p01,1.2) * std::pow(smbh.spin, 2);
+		Lmech = parameters.A_TD * 2.5e3 * std::pow(mBH/1e9, 1.42) * std::pow(smbh.spin, 2);
 	}
 	else{
-		Lmech = 2e5 * (mBH/1e9) * m_dotdiv0p01  * std::pow(smbh.spin, 2);
+		Lmech = parameters.A_ADAF * 2e5 * std::pow(mBH/1e9, 1.42) * std::pow(m_dotdiv0p01, 1.42)  * std::pow(smbh.spin, 2);
 	}
 
 	return Lmech;

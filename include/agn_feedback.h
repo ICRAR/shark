@@ -71,6 +71,8 @@ public:
 	float constant_lowlum_adaf = 0;
 	float constant_highlum_adaf = 0;
 	float nu2_nu1 = 0;
+	float A_ADAF = 1;
+	float A_TD = A_ADAF / 100;
 	int loop_limit_accretion = 10;
 
 	enum AGNFeedbackModel {
