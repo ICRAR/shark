@@ -61,13 +61,13 @@ matrix:
       packages: [g++-7, libhdf5-dev, hdf5-tools, libboost-filesystem-dev, libboost-program-options-dev, libboost-log-dev, cxxtest, libgsl-dev]
     env: COMPILER=clang++ LD_LIBRARY_PATH=/usr/local/clang-7.0.0/lib
   - os: osx
-    osx_image: xcode9.4 # OSX 10.13
+    osx_image: xcode12.2 # OSX 10.15.7
     env: COMPILER=clang++ PYTHON=venv
   - os: osx
-    osx_image: xcode10  # OSX 10.13
+    osx_image: xcode13.1  # OSX 11.6
     env: COMPILER=clang++
   - os: osx
-    osx_image: xcode11  # OSX 10.14
+    osx_image: xcode13.3  # OSX 12.3
     env: COMPILER=clang++
 
 # We "source" it because it exports variables
