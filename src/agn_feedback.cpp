@@ -108,14 +108,14 @@ Options::get<AGNFeedbackParameters::SpinModel>(const std::string &name, const st
 	if (lvalue == "volonteri07") {
 		return AGNFeedbackParameters::VOLONTERI07;
 	}
-	else if (lvalue == "griffin20") {
-		return AGNFeedbackParameters::GRIFFIN20;
+	else if (lvalue == "griffin19") {
+		return AGNFeedbackParameters::GRIFFIN19;
 	}
 	else if (lvalue == "constant") {
 		return AGNFeedbackParameters::CONSTANTSPIN;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are constant, volonteri07, and griffin20";
+	os << name << " option value invalid: " << value << ". Supported values are constant, volonteri07, and griffin19";
 	throw invalid_option(os.str());
 }
 
@@ -210,9 +210,9 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, Galax
 			if(parameters.spin_model == AGNFeedbackParameters::VOLONTERI07){
 				volonteri07_spin(smbh);
 			}
-			else if (parameters.spin_model == AGNFeedbackParameters::GRIFFIN20){
+			else if (parameters.spin_model == AGNFeedbackParameters::GRIFFIN19){
 				auto deltam = macc * MACCRETION_cgs_simu * tacc;
-				griffin20_spinup_accretion(deltam, tacc, galaxy);
+				griffin19_spinup_accretion(deltam, tacc, galaxy);
 			}
 		}
 
@@ -337,8 +337,8 @@ double AGNFeedback::smbh_growth_starburst(double mgas, double vvir, double tacc,
 		if(parameters.spin_model == AGNFeedbackParameters::VOLONTERI07){
 			volonteri07_spin(smbh);
 		}
-		else if (parameters.spin_model == AGNFeedbackParameters::GRIFFIN20){
-			griffin20_spinup_accretion(m, tacc, galaxy);
+		else if (parameters.spin_model == AGNFeedbackParameters::GRIFFIN19){
+			griffin19_spinup_accretion(m, tacc, galaxy);
 		}
 	}
 
@@ -453,7 +453,7 @@ void AGNFeedback::volonteri07_spin(BlackHole &smbh){
 
 }
 
-void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, Galaxy &galaxy){
+void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, Galaxy &galaxy){
 
 	/*Function computes the black hole spin resulting from the black hole accretion during starbursts.
 	Model follows that published by Griffin et al. (2020).*/
@@ -668,7 +668,7 @@ void AGNFeedback::griffin20_spinup_accretion(double delta_mbh, double tau_acc, G
 
 }
 
-void AGNFeedback::griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary, const Galaxy &galaxy){
+void AGNFeedback::griffin19_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary, const Galaxy &galaxy){
 
 	double t0 = -2.686,
 			t2 = -3.454,

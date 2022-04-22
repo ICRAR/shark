@@ -83,7 +83,7 @@ public:
 
 	enum SpinModel{
 		VOLONTERI07 = 0,
-		GRIFFIN20,
+		GRIFFIN19,
 		CONSTANTSPIN
 	};
 
@@ -122,8 +122,8 @@ public:
 	double qso_outflow_velocity(double Lbol, double mbh, double zgas, double mgas, double mbulge, double rbulge);
 	void qso_outflow_rate(double mgas, const BlackHole &smbh, double zgas, double vcirc,
 			double sfr, double mbulge, double rbulge, double &beta_halo, double &beta_ejec);
-	void griffin20_spinup_accretion(double delta_mbh, double tau_acc, Galaxy &galaxy);
-	void griffin20_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary, const Galaxy &galaxy);
+	void griffin19_spinup_accretion(double delta_mbh, double tau_acc, Galaxy &galaxy);
+	void griffin19_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary, const Galaxy &galaxy);
 	void volonteri07_spin(BlackHole &smbh);
 	std::vector<float> efficiency_luminosity_agn(float spin);
 
