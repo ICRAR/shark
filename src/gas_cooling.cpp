@@ -729,21 +729,30 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 
 bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_density, double mass, double Tvir, double rvir, double redshift){
 		/**
-		 *  This function uses the model of Correa et al. (2018) to determine if a hot halo has formed or not.
+		 *  This function uses the model of Correa et al. (2018) to determine if a hot halo has formed or not. Relevant equations from that paper are Eq. 16 and 17.
 		 **/
 
 		using namespace constants;
+
+		auto m200 = cosmology->comoving_to_physical_mass(mass);
+		auto m200norm = m200 / 1e12;
+		auto log10m200norm = std::log10(m200norm);
 
 		// cooling rate in cgs.
 		double gamma_cool = mhot * MSOLAR_g * lambda * nh_density / (M_Atomic_g * mu_Primordial * 0.1);
 
 		double omega_term = std::sqrt(cosmology->parameters.OmegaM * std::pow(redshift + 1.0, 3.0) + cosmology->parameters.OmegaL);
 
-		// growth rate of halo in Msun/Gyr.
-		double mdot = 71.6 * GIGA * (cosmology->comoving_to_physical_mass(mass) / 1e12) * (cosmology->parameters.Hubble_h/0.7)  * (-0.24 + 0.75 * (redshift + 1.0)) * omega_term;
+		// growth rate of halo in Msun/Gyr from Dekel et al. (2009).
+		double mdot = 0.47 * std::pow(m200norm, 0.15) * std::pow(0.333 * (redshift + 1.0), 2.25) * m200;
+		// 71.6 * GIGA * m200norm * (cosmology->parameters.Hubble_h/0.7)  * (-0.24 + 0.75 * (redshift + 1.0)) * omega_term; //Correa et al. (2015)
+
+		// define fractions of hot gas (Equations 10 and 18 in Correa et al. 2018).
+		double f_hot = std::pow(10.0, -0.8 + 0.5 * log10m200norm - 0.05 * std::pow(log10m200norm, 2.0)); 
+		double f_acchot = 1 / std::exp(-4.3 * (log10m200norm + 0.15));
 
 		// heating rate in cgs.
-		double gamma_heat = 1.5 * k_Boltzmann_erg * Tvir / (M_Atomic_g * mu_Primordial) * cosmology->universal_baryon_fraction() * mdot / MACCRETION_cgs_simu * 0.8333;
+		double gamma_heat = 1.5 * k_Boltzmann_erg * Tvir / (M_Atomic_g * mu_Primordial) * cosmology->universal_baryon_fraction() * mdot / MACCRETION_cgs_simu * (0.666 * f_hot + f_acchot);
 
 		double ratio = gamma_cool/gamma_heat;
 		if(ratio <  agnfeedback->parameters.hot_halo_threshold){

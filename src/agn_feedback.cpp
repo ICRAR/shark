@@ -299,10 +299,10 @@ double AGNFeedback::agn_mechanical_luminosity(const BlackHole &smbh){
 	double Lmech = 0;
 
 	if(m_dotdiv0p01 >= 1.0){
-		Lmech = parameters.A_TD * 2.5e3 * std::pow(mBH/1e9, 1.42) * std::pow(smbh.spin, 2);
+		Lmech = 2.5e3 * std::pow(mBH/1e9, 1.1) * std::pow(m_dotdiv0p01, 1.2) * std::pow(smbh.spin, 2);
 	}
 	else{
-		Lmech = parameters.A_ADAF * 2e5 * std::pow(mBH/1e9, 1.42) * std::pow(m_dotdiv0p01, 1.42)  * std::pow(smbh.spin, 2);
+		Lmech = 2e5 * (mBH/1e9) * (m_dotdiv0p01)  * std::pow(smbh.spin, 2);
 	}
 
 	return Lmech;
