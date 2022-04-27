@@ -745,7 +745,7 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 
 		// growth rate of halo in Msun/Gyr from Dekel et al. (2009).
 		double mdot = 0.47 * std::pow(m200norm, 0.15) * std::pow(0.333 * (redshift + 1.0), 2.25) * m200;
-		// 71.6 * GIGA * m200norm * (cosmology->parameters.Hubble_h/0.7)  * (-0.24 + 0.75 * (redshift + 1.0)) * omega_term; //Correa et al. (2015)
+		// 71.6 * GIGA * m200norm * (cosmology->parameters.Hubble_h/0.7)  * (1 + redshift) * omega_term; //Correa et al. (2015)
 
 		// define fractions of hot gas (Equations 10 and 18 in Correa et al. 2018).
 		double f_hot = std::pow(10.0, -0.8 + 0.5 * log10m200norm - 0.05 * std::pow(log10m200norm, 2.0)); 
