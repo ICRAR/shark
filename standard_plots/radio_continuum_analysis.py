@@ -41,14 +41,10 @@ h        = 6.6261e-27 #cm2 g s-1
 d10pc = 3.086e+19 #10 parsecs in cm
 dfac = 4 * PI * d10pc**2
 
-#model of Mattson et al. (2014) for the dependence of the dust-to-metal mass ratio and metallicity X/H.
-corrfactor_dm = 2.0
-polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238] 
-
 #choose radio continuum model
 radio_model = "Bressan02"
 c_speed = 299792458.0 #in m/s
-c_speed_cm = 299792458.0 * 1e2 #in cm/s
+c_speed_cm = c_speed * 1e2 #in cm/s
 Lsunwatts = 3.846e26
 
 #define parameters associated to AGN luminosity
@@ -191,8 +187,9 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     qIR_bressan = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(lum_radio[3,:]/1e7)
 
     ind = np.where(lir_total[0,:] > 1e9)
-    print(np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind]))
+    print("Median qIR for Dale14 and Bressan", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind]))
 
+    #dividing by 1e7 the luminosities to output them in W/Hz 
     return (lum_radio/1e7, Lum_radio_Viperfish/1e7, lum_ratio, lum_radio_agn/1e7, ms, sfr, vol, h0)
 
 def plot_comparison_radio_lums(plt, outdir, obsdir, LBressan, LViperfish, Lratio, ms, sfr, filters, redshift):
@@ -255,7 +252,6 @@ def plot_comparison_radio_lums(plt, outdir, obsdir, LBressan, LViperfish, Lratio
            Lr = LViperfish[3,:]
         else:
            Lr = LBressan[3,:]
-        print(Lr.shape)
         ax = fig.add_subplot(subp)
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
         ax.text(xleg, yleg, labels[i])
@@ -293,9 +289,7 @@ def plot_radio_lf_z0(plt, output_dir, obs_dir, LBressan, LViperfish, LAGN, redsh
     ind = np.where(LBressan[3,:] > 1e15)
     lum = np.log10(LBressan[3,ind])
     lum = lum[0]
-    print(lum) 
     HBress, _ = np.histogram(lum,bins=np.append(mbins,mupp))
-    print(HBress, vol)
     lum = np.log10(LViperfish[3,ind])
     lum = lum[0] 
     HDale, _ = np.histogram(lum,bins=np.append(mbins,mupp))
@@ -303,7 +297,6 @@ def plot_radio_lf_z0(plt, output_dir, obs_dir, LBressan, LViperfish, LAGN, redsh
     HDale = HDale/vol/dm
   
     ind = np.where(HBress[:] != 0)
-    print(np.log10(HBress[ind]))
     ax.plot(xmf[ind], np.log10(HBress[ind]), linestyle='solid', color='red', label='Obi+17')
     ind = np.where(HDale[:] != 0)
     ax.plot(xmf[ind], np.log10(HDale[ind]), linestyle='dashed', color='blue', label='Dale+14')
