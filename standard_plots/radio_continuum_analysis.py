@@ -239,6 +239,46 @@ def plot_comparison_radio_lums(plt, outdir, obsdir, LBressan, LViperfish, Lratio
 
     common.savefig(outdir, fig, 'radio_lum_comparison_models_z'+redshift+'.pdf')
 
+
+    subplots = (211, 212)
+    labels = ['Dale14','Bressan02']
+
+    fig = plt.figure(figsize=(4.5,8))
+    ytit = "$\\rm log_{10} (SFR/M_{\\odot}\\, yr^{-1})$"
+    xtit = "$\\rm log_{10} (L_{\\rm 1.4GHz}/W Hz^{-1})$"
+    xmin, xmax, ymin, ymax = 19, 25, -3, 3
+    xleg = xmin + 0.15 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    for i, subp in enumerate(subplots):
+        if i == 0:
+           Lr = LViperfish[3,:]
+        else:
+           Lr = LBressan[3,:]
+        print(Lr.shape)
+        ax = fig.add_subplot(subp)
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+        ax.text(xleg, yleg, labels[i])
+ 
+        ind = np.where((ms > 1e8) & (sfr > 0) & (Lr[:] > 1e19))
+        x = np.log10(Lr[ind])
+        y = np.log10(sfr[ind])
+        meds =  bin_it(x=x, y=y)
+        im = ax.hexbin(x, y, xscale='linear', yscale='linear', gridsize=(20,20), cmap='magma', mincnt=4)
+
+        ind = np.where(meds[0,:] != 0)
+        x = xmf[ind]
+        y = meds[0,ind] 
+        yerrdn = meds[1,ind]
+        yerrup = meds[2,ind]
+        ax.errorbar(x, y[0], yerr=[yerrdn[0], yerrup[0]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+    #common.prepare_legend(ax, cols, loc=3)
+
+    plt.tight_layout()
+
+    common.savefig(outdir, fig, 'radio_lum_sfr_models_z'+redshift+'.pdf')
+
+
 def plot_radio_lf_z0(plt, output_dir, obs_dir, LBressan, LViperfish, LAGN, redshift, vol, h0):
 
     fig = plt.figure(figsize=(5,5))
