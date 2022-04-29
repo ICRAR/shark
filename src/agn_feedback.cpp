@@ -67,9 +67,6 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.mdotcrit_adaf", mdotcrit_adaf);
 	options.load("agn_feedback.accretion_disk_model", accretion_disk_model);
 	options.load("agn_feedback.loop_limit_accretion", loop_limit_accretion);
-	options.load("agn_feedback.a_adaf", A_ADAF);
-
-	A_TD = A_ADAF/100;
 
 	auto beta = 1 - alpha_adaf / 0.55;
 	low_accretion_adaf = 0.001 * (delta_adaf / 0.0005) * (1 - beta) / beta * std::pow(alpha_adaf, 2.0);
