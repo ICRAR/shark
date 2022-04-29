@@ -32,6 +32,12 @@ dm = 0.2
 mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
+slow = -1.5
+supp = 2.5
+ds = 0.2
+sbins = np.arange(slow, supp, ds)
+xsf = sbins + ds/2.0
+
 
 def add_observations_to_plot(obsdir, fname, ax, marker, label, color='k', err_absolute=False):
     fname = '%s/Gas/%s' % (obsdir, fname)
@@ -44,14 +50,19 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
     yleg = ymax - 0.1 * (ymax-ymin)
     #ax.text(xleg, yleg, 'z=0')
 
-def prepare_data(hdf5_data):
+def prepare_data(index, redshift, hdf5_data):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
     stack  = functools.partial(us.stacking, xbins=xmf)
+    stack_sfr = functools.partial(us.stacking, xbins=xsf)
 
     # Unpack data
-    (h0, _, typeg, mdisk, mbulge, _, _, mHI, mH2, mgas,
-     mHI_bulge, mH2_bulge, mgas_bulge, mvir) = hdf5_data
+    (h0, _, typeg, mdisk, mbulge, _, mbh, mHI, mH2, mgas,
+     mHI_bulge, mH2_bulge, mgas_bulge, mvir, sfrd, 
+     sfrb) = hdf5_data
+
+    sfr = (sfrd + sfrb)/h0/1e9
+
 
     XH = 0.72
     h0log = np.log10(float(h0))
@@ -59,6 +70,21 @@ def prepare_data(hdf5_data):
     n_typeg = len(typeg)
     morpho_type = np.zeros(shape = (n_typeg))
     morpho_type_stellar = np.zeros(shape = (n_typeg))
+    ssfr = np.zeros(shape = (n_typeg))
+    main_seq = np.zeros(shape = (n_typeg))
+
+    ssfr[:] = -15
+    ind = np.where((mdisk + mbulge > 0) & (sfr > 0))
+    ssfr[ind] = np.log10(sfr[ind]) - np.log10((mdisk[ind] + mbulge[ind])/h0)
+    ind = np.where(ssfr + 9 > -1 + 0.5 * redshift)
+    main_seq[ind] = 1
+           
+    ind = np.where((mbulge + mgas_bulge)/h0 > 1e12)
+    print("median B/T massive gals", np.median(mbulge[ind]/(mbulge[ind] + mdisk[ind])))
+    print("median SSFR massive gals", np.median(ssfr[ind]))
+    print("median mBH massive gals", np.median(mbh[ind]))
+
+
 
     # Early-type galaxies criterion of Khochfar et al. (2011).
     ind = np.where((mbulge + mgas_bulge)/(mdisk + mbulge + mgas + mgas_bulge) > 0.5)
@@ -82,6 +108,24 @@ def prepare_data(hdf5_data):
     mgas_gals_etg = np.zeros(shape = (2, n_typeg))
 
     mh1_relation_satellites_halos = np.zeros(shape = (5,len(mbins))) 
+
+    #Gas scaling relation from stacking
+    ind = np.where((mdisk + mbulge > 0) & (mHI_bulge + mHI > 0) & (main_seq == 1) & (sfr > 0))
+    #print(mHI_bulge[ind] + mHI[ind])
+
+    mh1_mstar_stack = stack(x=np.log10((mdisk[ind] + mbulge[ind])/h0), y=(mHI_bulge[ind] + mHI[ind])/h0)
+    mh1_sfr_stack = stack_sfr(x=np.log10(sfr[ind]), y=(mHI_bulge[ind] + mHI[ind])/h0)
+    fh1_mstar_stack = stack(x=np.log10((mdisk[ind] + mbulge[ind])/h0), y=(mHI_bulge[ind] + mHI[ind])/(mdisk[ind] + mbulge[ind]))
+    fh1_sfr_stack = stack_sfr(x=np.log10(sfr[ind]), y=(mHI_bulge[ind] + mHI[ind])/(mdisk[ind] + mbulge[ind]))
+
+    print("HI stacking stellar mass at z=", redshift)    
+    for a,b,c in zip(xmf, mh1_mstar_stack, fh1_mstar_stack):
+        print(a,b,c)
+
+    print("HI stacking SFR at z=", redshift)  
+    for a,b,c in zip(xsf, mh1_sfr_stack, fh1_sfr_stack):
+        print(a,b,c)
+
 
 
     #Gas scaling relations based on morphological criterion calculated using total baryon mass of disk and bulge
@@ -455,29 +499,36 @@ def plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
 
+    zlist = [0, 0.381963715160695]
+
     plt = common.load_matplotlib()
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge',
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
-                           'matom_bulge', 'mmol_bulge', 'mgas_bulge', 'mvir_hosthalo')}
-    hdf5_data = common.read_data(model_dir, redshift_table[0], fields, subvols)
+                           'matom_bulge', 'mmol_bulge', 'mgas_bulge', 'mvir_hosthalo', 
+                           'sfr_disk', 'sfr_burst')}
 
-    (mgas_relation, mgas_relation_cen, mgas_relation_sat,
-     mh2_gals, mh1_gals, mgas_gals,
-     mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat,
-     mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg,
-     mgas_relation_etg, mh2_relation_etg, mh1_relation_etg,
-     mgas_ms_relation_ltg, mh2_ms_relation_ltg, mh1_ms_relation_ltg,
-     mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg, 
-     mh1_relation_satellites_halos) = prepare_data(hdf5_data)
+    for index, snapshot in enumerate(redshift_table[zlist]):
 
-    plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relation_cen, mgas_relation_sat)
-    plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos)
+         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
 
-    plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, mgas_relation_ltg, 
-	mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg, mgas_ms_relation_ltg, mh2_ms_relation_ltg, 
-	mh1_ms_relation_ltg, mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg)
+         (mgas_relation, mgas_relation_cen, mgas_relation_sat,
+         mh2_gals, mh1_gals, mgas_gals,
+         mh2_relation, mh1_relation, mhr_relation, mhr_relation_cen, mhr_relation_sat,
+         mgas_relation_ltg, mh2_relation_ltg, mh1_relation_ltg,
+         mgas_relation_etg, mh2_relation_etg, mh1_relation_etg,
+         mgas_ms_relation_ltg, mh2_ms_relation_ltg, mh1_ms_relation_ltg,
+         mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg, 
+         mh1_relation_satellites_halos) = prepare_data(index, zlist[index], hdf5_data)
 
-    plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_relation_sat)
+         if(index == 3):
+            plot_cold_gas_fraction(plt, output_dir, obs_dir, mgas_relation, mgas_relation_cen, mgas_relation_sat)
+            plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos)
+            
+            plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, mgas_relation_ltg, 
+                mh2_relation_ltg, mh1_relation_ltg, mgas_relation_etg, mh2_relation_etg, mh1_relation_etg, mgas_ms_relation_ltg, mh2_ms_relation_ltg, 
+                mh1_ms_relation_ltg, mgas_ms_relation_etg, mh2_ms_relation_etg, mh1_ms_relation_etg)
+            
+            plot_h1h2_gas_fraction(plt, output_dir, mhr_relation, mhr_relation_cen, mhr_relation_sat)
 
 if __name__ == '__main__':
     main(*common.parse_args())

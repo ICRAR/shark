@@ -27,7 +27,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0, 0.5, 1, 2)
+zlist = (0, 0.5, 1, 2, 5, 7, 10)
 
 ##################################
 #Constants
@@ -48,24 +48,43 @@ mdotbins = np.arange(mdotlow,mdotupp,dmdot)
 xmdotf = mdotbins + dmdot/2.0
 
 
-def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh):
+def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR, read_spin):
 
-    (h0, _, spin, mbh, mdot_hh, mdot_sb) = hdf5_data
+    if(read_spin == True):
+       (h0, _, spin, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge) = hdf5_data
+    else:
+       (h0, _, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge) = hdf5_data
 
+    print(np.log10(max(mbh)/h0))
     bin_it   = functools.partial(us.wmedians, xbins=xmf)
     bin_it_mdot = functools.partial(us.wmedians, xbins=xmdotf)
 
-    print(max(spin), min(spin))
-    spin = np.abs(spin)
-    ind = np.where(mbh > 0)
-    spinbh[index,:] = bin_it(x=np.log10(mbh[ind]) - np.log10(float(h0)),
-                            y=spin[ind])
-    print(spinbh[index,:])
+    if(read_spin == True):
+       print(max(spin), min(spin))
+       spin = np.abs(spin)
+       ind = np.where(mbh > 0)
+       spinbh[index,:] = bin_it(x=np.log10(mbh[ind]) - np.log10(float(h0)),
+                               y=spin[ind])
+       print(spinbh[index,:])
+       ind = np.where((mbh > 0) & ((mdot_hh + mdot_sb) > 0 ))
+       spinmdot[index,:] = bin_it_mdot(x=np.log10(mdot_hh[ind] + mdot_sb[ind]) - np.log10(float(h0) * 1e9),
+                               y=spin[ind])
     ind = np.where((mbh > 0) & ((mdot_hh + mdot_sb) > 0 ))
-    spinmdot[index,:] = bin_it_mdot(x=np.log10(mdot_hh[ind] + mdot_sb[ind]) - np.log10(float(h0) * 1e9),
-                            y=spin[ind])
     mdotmbh[index,:] = bin_it(x=np.log10(mbh[ind]) - np.log10(float(h0)),
-                            y=np.log10(mdot_hh[ind] + mdot_sb[ind]) - np.log10(float(h0) * 1e9))
+                         y=np.log10(mdot_hh[ind] + mdot_sb[ind]) - np.log10(float(h0) * 1e9))
+
+    mdotmbh_hh[index,:] = bin_it(x=np.log10(mbh[ind]) - np.log10(float(h0)),
+                         y=np.log10(mdot_hh[ind]) - np.log10(float(h0) * 1e9))
+
+
+    ssfr = (sfr_disk + sfr_burst) / 1e9 / (mbulge + mdisk)
+    #apply lower limit to ssfr
+    ind = np.where(ssfr < 1e-14)
+    ssfr[ind] = 2e-14
+
+    ind = np.where((mbh > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 3e8))
+    BHSFR[index,:] = bin_it(x=np.log10(mbh[ind]) - np.log10(float(h0)),
+                            y=np.log10(ssfr[ind]))
 
 
 def plot_spine_BH(plt, outdir, obsdir, spinbh, spinmdot, mdotmbh):
@@ -147,22 +166,119 @@ def plot_spine_BH(plt, outdir, obsdir, spinbh, spinmdot, mdotmbh):
     plt.tight_layout()
     common.savefig(outdir, fig, 'spin-BH.pdf')
 
+def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
+
+    cols=('red','LightSalmon','LimeGreen','DarkGreen','DarkTurquoise','blue')
+
+    fig = plt.figure(figsize=(5,7))
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
+    #mdot bh mass relation
+    ytit = "$\\rm log_{10} (\\rm \\dot{M}_{\\rm BH,all}/M_{\\odot}\\, yr^{-1})$"
+
+    ax = fig.add_subplot(211)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+    xmin, xmax, ymin, ymax = 4, 11, -5, 1
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    for i,c in enumerate(cols):
+        ind = np.where(mdotmbh[i,0,:] != 0)
+        if(len(xmf[ind]) > 0):
+            xplot = xmf[ind]
+            yplot = mdotmbh[i,0,ind]
+            errdn = mdotmbh[i,1,ind]
+            errup = mdotmbh[i,2,ind]
+            ax.plot(xplot,yplot[0],color=c,label="z=%s" % str(zlist[i]))
+            if(i == 0 or i == 5):
+               ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=c, alpha=0.5, interpolate=True)
+               ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=c, alpha=0.5, interpolate=True)
+    
+    common.prepare_legend(ax, cols, loc=2)
+
+
+    #spin mdot relation
+    ytit = "$\\rm log_{10} (\\rm \\dot{M}_{\\rm BH,hh}/M_{\\odot}\\, yr^{-1})$"
+
+    ax = fig.add_subplot(212)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    for i,c in enumerate(cols):
+        ind = np.where(mdotmbh_hh[i,0,:] != 0)
+        if(len(xmf[ind]) > 0):
+            xplot = xmf[ind]
+            yplot = mdotmbh_hh[i,0,ind]
+            errdn = mdotmbh_hh[i,1,ind]
+            errup = mdotmbh_hh[i,2,ind]
+            ax.plot(xplot,yplot[0],color=c,label="z=%s" % str(zlist[i]))
+            if(i == 0 or i == 5):
+               ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=c, alpha=0.5, interpolate=True)
+               ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=c, alpha=0.5, interpolate=True)
+    
+    common.prepare_legend(ax, cols, loc=2)
+
+    plt.tight_layout()
+    common.savefig(outdir, fig, 'macc-BH.pdf')
+
+
+
+    #SSFR vs BH mass
+    fig = plt.figure(figsize=(5,4.5))
+    ytit = "$\\rm log_{10} (\\rm sSFR/M_{\odot} yr^{-1})$"
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
+
+    xmin, xmax, ymin, ymax = 5, 10, -14, -7
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    #Predicted BH-bulge mass relation
+    for i,c in enumerate(cols):
+       ind = np.where(BHSFR[i,0,:] != 0)
+       if(len(xmf[ind]) > 0):
+           xplot = xmf[ind]
+           yplot = BHSFR[i,0,ind]
+           errdn = BHSFR[i,1,ind]
+           errup = BHSFR[i,2,ind]
+           ax.plot(xplot,yplot[0],color=c,label="z=%s" % str(zlist[i]))
+           if(i == 0 or i == 5):
+              ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=c, alpha=0.5, interpolate=True)
+              ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=c, alpha=0.5, interpolate=True)
+
+    common.prepare_legend(ax, cols, loc=1)
+    plt.tight_layout()
+    common.savefig(outdir, fig, 'BH-SSFR_evolution.pdf')
+
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
-    fields = {'galaxies': ('bh_spin', 'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
+
+    read_spin = False
+
+    if(read_spin == True):
+       fields = {'galaxies': ('bh_spin', 'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge')}
+    else:
+       fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge')}
+
 
     # Loop over redshift and subvolumes
     spinbh = np.zeros(shape = (len(zlist), 3, len(xmf)))
     spinmdot = np.zeros(shape = (len(zlist), 3, len(xmdotf))) 
     mdotmbh = np.zeros(shape = (len(zlist), 3, len(xmf)))
-    
+    mdotmbh_hh = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    BHSFR = np.zeros(shape = (len(zlist), 3, len(xmf)))
+ 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh)
+        prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR, read_spin)
 
-    plot_spine_BH(plt, outdir, obsdir, spinbh, spinmdot, mdotmbh)
+    if(read_spin == True):
+       plot_spine_BH(plt, outdir, obsdir, spinbh, spinmdot, mdotmbh)
+    
+    plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR)
 
 
 if __name__ == '__main__':

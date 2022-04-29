@@ -450,8 +450,8 @@ void GalaxyMergers::create_merger(Galaxy &central, const Galaxy &satellite, Halo
 
 
 	// Black holes merge regardless of the merger type.
-	if(agn_params.model == AGNFeedbackParameters::BRAVO22 && agn_params.spin_model == AGNFeedbackParameters::GRIFFIN20){
-		agnfeedback->griffin20_spinup_mergers(central.smbh, satellite.smbh, central);
+	if(agn_params.model == AGNFeedbackParameters::BRAVO22 && agn_params.spin_model == AGNFeedbackParameters::GRIFFIN19){
+		agnfeedback->griffin19_spinup_mergers(central.smbh, satellite.smbh, central);
 	}
 	central.smbh += satellite.smbh;
 

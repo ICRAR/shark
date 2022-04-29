@@ -517,13 +517,14 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     s = 0 
     #plot stars
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm j_{\\star}/kpc\\, km s^{-1})$"
+    ytit = "$\\rm log_{10} (\\rm j/kpc\\, km s^{-1})$"
     xmin, xmax, ymin, ymax = 8, 11.5, 1.5, 4
     xleg = xmax - 0.2 * (xmax - xmin)
-    yleg = ymax - 0.1 * (ymax - ymin)
+    yleg = ymin + 0.1 * (ymax - ymin)
 
     ax = fig.add_subplot(141)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax.text(xleg, yleg, "Stars")
 
     jst, jmole, jatomic, jbar = common.load_observation(obsdir, 'Models/SharkVariations/AngularMomentum.dat', [0,1,2,3])
     jsL18    = np.zeros(shape = (3, len(xmf)))
@@ -582,6 +583,9 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     mgB17, msB17, errmsB17, mbB17, errmbB17, jgB17, errjgB17, jsB17, errjsB17, jbB17, errjbB17 = common.load_observation(obsdir, 'SizesAndAM/LITTLETHINGS_Butler16.dat', [1,3,4,5,6,7,8,9,10,11,12])
     ax.errorbar(msB17, jsB17, yerr=[errjsB17,errjsB17], xerr=[errmsB17,errmsB17], ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Butler+16")
 
+    msD21, jsD21, errjsD21 = common.load_observation(obsdir, 'SizesAndAM/DiTeodoro21.dat', [0,3,4])
+    ax.errorbar(msD21, jsD21, yerr=errjsD21, ls='None', mfc='None', ecolor = 'r', mec='r',marker='D',label="Di Teodoro+21")
+
     msC17, mgC17, mbC17, errupmbC17, errdnmbC17, JstarC17, JgasC17, errupJgasC17, errdnJgasC17, jbarC17, errupjbarC17, errdnjbarC17 = common.load_observation(obsdir, 'SizesAndAM/Chowdhury17.dat', [1,2,5,6,7,8,8,10,11,15,16,17])
     ax.plot(msC17, JstarC17-msC17, 'rp', fillstyle='none',label="Chowdhury+17")
 
@@ -599,9 +603,10 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
 
     #plot molecular gas
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm j_{\\rm H_2}/kpc\\, km s^{-1})$"
+    ytit = "" #$\\rm log_{10} (\\rm j_{\\rm H_2}/kpc\\, km s^{-1})$"
     ax = fig.add_subplot(142)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax.text(xleg, yleg, "$\\rm H_{2}$")
 
     #Predicted size-mass for disks in disk=dominated galaxies
     ind = np.where(sam_gas_disk_mol[s,0,:,selec] != 0)
@@ -627,9 +632,10 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
 
     #plot atomic gas
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm j_{\\rm HI}/kpc\\, km s^{-1})$"
+    ytit = "" #$\\rm log_{10} (\\rm j_{\\rm HI}/kpc\\, km s^{-1})$"
     ax = fig.add_subplot(143)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax.text(xleg, yleg, "HI")
 
     #Predicted size-mass for disks in disk=dominated galaxies
     ind = np.where(sam_gas_disk_atom[s,0,:,selec] != 0)
@@ -657,9 +663,10 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
 
     #plot total baryon
     xtit = "$\\rm log_{10} (\\rm M_{\\rm bar}/M_{\odot})$"
-    ytit = "$\\rm log_{10} (\\rm j_{\\rm bar}/kpc\\, km s^{-1})$"
+    ytit = "" #$\\rm log_{10} (\\rm j_{\\rm bar}/kpc\\, km s^{-1})$"
     ax = fig.add_subplot(144)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax.text(xleg, yleg, "All Baryons")
 
     #Predicted size-mass for disks in disk=dominated galaxies
     ind = np.where(sam_bar[s,0,:,selec] != 0)
@@ -687,14 +694,16 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     ax.plot(mbE17, jbE17, 'k^', fillstyle='none', label='Elson17')
 
     common.prepare_legend(ax, ['k'], loc=2)
+    plt.tight_layout()
     common.savefig(outdir, fig, 'specific_am_z0_components.pdf')
 
-    for c in range (0,2):
-       print 'will change selection'
-       for i in range (0,3):
-            print 'will change within the same sample'
-            for x,y,z,a in zip(sam_stars_disk[s,i,:,c],sam_gas_disk_mol[s,i,:,c],sam_gas_disk_atom[s,i,:,c],sam_bar[s,i,:,c]):
-                 print x,y,z,a
+    #for c in range (0,2):
+    #   print 'will change selection'
+    #   for i in range (0,3):
+    #        print 'will change within the same sample'
+    #        for x,y,z,a in zip(sam_stars_disk[s,i,:,c],sam_gas_disk_mol[s,i,:,c],sam_gas_disk_atom[s,i,:,c],sam_bar[s,i,:,c]):
+    #             print x,y,z,a
+
 
 def plot_specific_am_ratio(plt, outdir, obsdir, sam_ratio_halo_disk, sam_ratio_halo_gal, sam_ratio_halo_disk_gas, 
                            sam_vs_sam_halo_disk, sam_vs_sam_halo_gal, sam_vs_sam_halo_disk_gas):

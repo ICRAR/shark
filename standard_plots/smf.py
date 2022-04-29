@@ -62,17 +62,26 @@ ssfrbins = np.arange(ssfrlow,ssfrupp,dssfr)
 xssfr    = ssfrbins + dssfr/2.0
 
 def load_smf_observations(obsdir, h0):
+    # Thorne et al. (2021)
+    def add_thorne21_data(zappend, file_read='z0.4'):
+        lm, pD, dn, du = np.loadtxt(obsdir+'/mf/SMF/Thorne21/SMFvals_'+file_read+'.csv', delimiter=',', skiprows=1, usecols = [0,1,2,3], unpack = True)
+        hobd = 0.7
+        pDlog = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        dnlog = pDlog - np.log10(dn)
+        dulog = np.log10(du) - pDlog
+        lm = lm -  2.0 * np.log10(hobs/h0)
+        zappend.append((observation("Thorne+2021", lm, pDlog, dnlog, dulog, err_absolute=False), 'D'))
 
-    # Wright et al. (2017, z=0). Chabrier IMF
+    # Driver al. (2022, z=0). Chabrier IMF
     z0obs = []
-    lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/GAMAII_BBD_GSMFs.dat', [0,1,2,3])
+    lm, p, dp = common.load_observation(obsdir, 'mf/SMF/GAMAIV_Driver22.dat', [0,1,2])
     hobs = 0.7
     xobs = lm + 2.0 * np.log10(hobs/h0)
     indx = np.where(p > 0)
     yobs = np.log10(p[indx]) - 3.0 * np.log10(hobs/h0)
-    ydn = yobs - np.log10(p[indx]-dpdn[indx])
-    yup = np.log10(p[indx]+dpup[indx]) - yobs
-    z0obs.append((observation("Wright+2017", xobs[indx], yobs, ydn, yup, err_absolute=False), 'o'))
+    ydn = yobs - np.log10(p[indx]-dp[indx])
+    yup = np.log10(p[indx]+dp[indx]) - yobs
+    z0obs.append((observation("GAMA IV", xobs[indx], yobs, ydn, yup, err_absolute=False), 'o'))
 
     lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/SMF_Bernardi2013_SerExp.data', [0,1,2,3])
     xobs = lm + 2.0 * np.log10(hobs/h0)
@@ -124,11 +133,6 @@ def load_smf_observations(obsdir, h0):
     indx = np.where( dp_up_S12 > 0)
     herrS12[indx]  = dp_up_S12[indx]
 
-    # Wright et al. (2018, several reshifts). Assumes Chabrier IMF.
-    zD17, lmD17, pD17, dp_dn_D17, dp_up_D17 = common.load_observation(obsdir, 'mf/SMF/Wright18_CombinedSMF.dat', [0,1,2,3,4])
-    binobs = 0.25
-    pD17 = pD17 +  2.0 * np.log10(hobs/h0) - np.log10(binobs)
-    lmD17= lmD17 - 3.0 * np.log10(hobs/h0) - np.log10(binobs)
 
     # z0.5 obs
     z05obs = []
@@ -136,8 +140,7 @@ def load_smf_observations(obsdir, h0):
     z05obs.append((observation("Moustakas+2013", xobsM13[in_redshift], yobsM13[in_redshift], lerrM13[in_redshift], herrM13[in_redshift], err_absolute=False), 'o'))
     in_redshift = np.where(zdnMu13 == 0.5)
     z05obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
-    #in_redshift = np.where(zD17 == 0.5)
-    #z05obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    add_thorne21_data(z05obs, file_read='z0.51')
 
     # z1 obs
     z1obs = []
@@ -145,8 +148,7 @@ def load_smf_observations(obsdir, h0):
     z1obs.append((observation("Moustakas+2013", xobsM13[in_redshift], yobsM13[in_redshift], lerrM13[in_redshift], herrM13[in_redshift], err_absolute=False), 'o'))
     in_redshift = np.where(zdnMu13 == 1)
     z1obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
-    #in_redshift = np.where(zD17 == 1)
-    #z1obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    add_thorne21_data(z1obs, file_read='z1.1')
 
     #z2 obs
     z2obs = []
@@ -154,8 +156,7 @@ def load_smf_observations(obsdir, h0):
     z2obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
     in_redshift = np.where(zdnS12 == 1.8)
     z2obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
-    #in_redshift = np.where(zD17 == 2)
-    #z2obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    add_thorne21_data(z2obs, file_read='z2')
 
     # z3 obs
     z3obs = []
@@ -163,8 +164,7 @@ def load_smf_observations(obsdir, h0):
     z3obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
     in_redshift = np.where(zdnS12 == 2.5)
     z3obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
-    #in_redshift = np.where(zD17 == 3)
-    #z3obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
+    add_thorne21_data(z3obs, file_read='z3')
 
     # z4 obs
     z4obs = []
@@ -172,9 +172,8 @@ def load_smf_observations(obsdir, h0):
     z4obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
     in_redshift = np.where(zdnS12 == 3.5)
     z4obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
-    #in_redshift = np.where(zD17 == 4)
-    #z4obs.append((observation("Wright+2018", lmD17[in_redshift], pD17[in_redshift], dp_dn_D17[in_redshift], dp_up_D17[in_redshift], err_absolute=False), 'D'))
-    
+    add_thorne21_data(z4obs, file_read='z4')
+
     return (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs)
 
 def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_offset, hist_smf_30kpc):
@@ -1209,6 +1208,46 @@ def plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr):
     common.prepare_legend(ax, ['k','b','r', 'k', 'b', 'r'], loc=2)
     common.savefig(outdir, fig, 'passive_fraction_z0.pdf')
 
+    #plot SSFR functions
+    fig = plt.figure(figsize=(10,9))
+    xtit="$\\rm log_{10} (\\rm SSFR/yr^{-1})$"
+    ytit="$\\rm log_{10} (\\rm \\phi/Mpc^{-3}\\, dex^{-1})$"
+
+    bins = ['$\\rm log_{10} (\\rm M_{\\rm star}/M_{\\odot})=[9.5,10]$', '$\\rm log_{10} (\\rm M_{\\rm star}/M_{\\odot})=[10,10.5]$','$\\rm log_{10} (\\rm M_{\\rm star}/M_{\\odot})=[10.5,11]$','$\\rm log_{10} (\\rm M_{\\rm star}/M_{\\odot})=[11,11.5]$']
+    xmin, xmax, ymin, ymax = -12.9, -8, -6, -1
+
+    xleg = xmin + 0.1 * (xmax - xmin)
+    yleg = ymax - 0.2 * (ymax - ymin)
+
+    def plot_katsianis_data(ax, i):
+        ppos = (i + 1) * 2 - 1         
+        perrpos = (i + 1) * 2
+        lm, p, dp = common.load_observation(obsdir, 'SFR/Katsianis21_SSFR_functions.dat', [0,ppos,perrpos]) 
+        ind = np.where(p > 0)
+        xplot = lm[ind]
+        yplot = np.log10(p[ind])
+        yerrdn = yplot - np.log10(p[ind] - dp[ind])
+        yerrup = np.log10(p[ind] + dp[ind]) - yplot
+        ax.errorbar(xplot, yplot, yerr=[yerrdn, yerrup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Katsianis+21")
+
+
+    subplots = (221, 222, 223, 224)
+    for i,s in enumerate(subplots):
+
+        ax = fig.add_subplot(s)
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 0.5, 0.5))
+        ax.text(xleg, yleg, bins[i])
+
+        ind = np.where(hist_ssfr[0,i,:] != 0)
+        xplot = xssfr[ind]-9
+        yplot = hist_ssfr[0,i,ind]
+        ax.plot(xplot,yplot[0],color='k',linestyle='solid', linewidth = 1, label="Shark")
+        plot_katsianis_data(ax, i)
+        # Legend
+        common.prepare_legend(ax, ['k','grey'], loc=2)
+    plt.tight_layout()
+    common.savefig(outdir, fig, 'SSFR_functions_z0.pdf')
+
 
 def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist_smf_sat, 
                  hist_smf_30kpc, hist_HImf, hist_HImf_cen, hist_HImf_sat, hist_H2mf, 
@@ -1239,17 +1278,6 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     mass_mol = np.zeros(shape = len(mdisk))
     mass_mol_cen = np.zeros(shape = len(mdisk))
     mass_mol_sat = np.zeros(shape = len(mdisk))
-
-    if (index == 0):
-        #ind = np.where((mdisk+mbulge)/h0 > 1e8)
-        #print('#sfr_disk sfr_bulge mdisk mbulge mHI_disk mH2_disk mHI_bulge mH2_bulge mburst_mergers mburst_diskins mbulge_mergers_assembly mbulge_diskins_assembly')
-        #for a,b,c,d,e,f,g,h,i,j,q,l in zip(sfr_disk[ind]/h0/1e9, sfr_burst[ind]/h0/1e9, mdisk[ind]/h0, mbulge[ind]/h0, mHI[ind]/h0*XH, mH2[ind]/h0*XH, mHI_bulge[ind]/h0*XH, mH2_bulge[ind]/h0*XH, mbulge_mergers[ind]/h0, mbulge_diskins[ind]/h0, mbulge_mergers_assembly[ind]/h0, mbulge_diskins_assembly[ind]/h0):
-        #    print (a,b,c,d,e,f,g,h,i,j,q,l)
-        ind = np.where((mdisk+mbulge)/h0 > 1e8)
-        #print('#sfr mstellar zstar r50 type_galaxy')
-        #for a,b,c,d,e in zip((sfr_disk[ind]+sfr_burst[ind])/h0/1e9, (mdisk[ind]+mbulge[ind])/h0, zstar[ind], rcomb[ind], typeg[ind]):
-        #    print (a,b,c,d,e)
-
 
     ind = np.where((mdisk+mbulge) > 0.0)
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
@@ -1335,8 +1363,13 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     mainseq[index,:] = bin_it(x=mass[ind], y=np.log10((sfr_disk[ind]+sfr_burst[ind])/(mdisk[ind]+mbulge[ind])))
     passive_fractions[index,0,:] = us.fractions(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)), y = np.log10((sfr_disk[ind]+sfr_burst[ind])/(mdisk[ind]+mbulge[ind])), xbins=xmf2, ythresh=-2.2)
     passive_fractions[index,0,:] = 1.0 - passive_fractions[index,0,:] 
-    H, _ = np.histogram(np.log10((sfr_disk[ind]+sfr_burst[ind])/(mdisk[ind]+mbulge[ind])),bins=np.append(ssfrbins,ssfrupp))
-    hist_ssfr[index,:] = hist_ssfr[index,:] + H
+
+    smbins = (9.75, 10.25, 10.75, 11.25)
+    dsm = 0.25
+    for i,sm in enumerate(smbins):
+        ind = np.where((sfr_disk+sfr_burst > 0.03162277660168379) & (mass >= sm - dsm) & (mass < sm + dsm))
+        H, _ = np.histogram(np.log10((sfr_disk[ind]+sfr_burst[ind])/(mdisk[ind]+mbulge[ind])),bins=np.append(ssfrbins,ssfrupp))
+        hist_ssfr[index,i,:] = hist_ssfr[index,i,:] + H
 
     ind = np.where((sfr_disk+sfr_burst > 0) & (mdisk+mbulge > 0) & (mvir_hosthalo < 1e11))
     passive_fractions[index,1,:] = us.fractions(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)), y = np.log10((sfr_disk[ind]+sfr_burst[ind])/(mdisk[ind]+mbulge[ind])), xbins=xmf2, ythresh=-2.2)
@@ -1404,6 +1437,8 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
         hist_H2mf[index,:] = hist_H2mf[index,:]/vol/dm
         hist_H2mf_cen[index,:] = hist_H2mf_cen[index,:]/vol/dm
         hist_H2mf_sat[index,:] = hist_H2mf_sat[index,:]/vol/dm
+    
+        hist_ssfr[index,:] = hist_ssfr[index,:]/vol/dssfr
 
         plotz[index]     = True
         plotz_HImf[index]= True
@@ -1466,7 +1501,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     hist_H2mf_sat = np.zeros(shape = (len(zlist), len(mbins)))
     hist_HImf_err = np.zeros(shape = (len(zlist), len(mbins)))
 
-    hist_ssfr = np.zeros(shape = (len(zlist), len(ssfrbins)))
+    hist_ssfr = np.zeros(shape = (len(zlist), 4, len(ssfrbins)))
 
     fields = {'galaxies': ('sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge',
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
@@ -1515,6 +1550,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     take_log(hist_H2mf_cen)
     take_log(hist_HImf_sat)
     take_log(hist_H2mf_sat)
+    take_log(hist_ssfr)
 
     plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_offset, hist_smf_30kpc)
     plot_stellarmf_galcomponents(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_comp)

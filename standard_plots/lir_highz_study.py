@@ -59,8 +59,8 @@ def prepare_data(hdf5_data, seds, seds_bands, fields_sed_bc, index, LFs_dust, ob
     lir_total = seds[2] #total absolute magnitudes with dust
     lir_bc_cont = fields_sed_bc[2]
     d2 = 4.0 * PI * (10 * 3.086e18)**2.0 #cm^2
-    lir_1p4GHz = 10**((seds_total[37,:] + 48.6) / (-2.5)) / 1e7 * d2 #in W/Hz
-    lir_3GHz = 10**((seds_total[38,:] + 48.6) / (-2.5)) / 1e7 * d2 #in W/Hz
+    lir_1p4GHz = 10**((seds_total[12,:] + 48.6) / (-2.5)) / 1e7 * d2 #in W/Hz
+    lir_3GHz = 10**((seds_total[11,:] + 48.6) / (-2.5)) / 1e7 * d2 #in W/Hz
 
 
     qIR = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(lir_1p4GHz)
@@ -105,7 +105,7 @@ def prepare_data(hdf5_data, seds, seds_bands, fields_sed_bc, index, LFs_dust, ob
     seds_bulge = seds_bands[1]
     seds_total = seds_bands[2]
 
-    L1p4radio = seds_total[37,:]
+    L1p4radio = seds_total[12,:]
 
     #compute luminosity function
     ind = np.where((lir_total > 0) & (lir_total < 1e20))
@@ -149,7 +149,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
 
-    file_name = "eagle-rr14-radio"
+    file_name = "eagle-rr14-radio-only"
     file_hdf5_sed = "Shark-SED-" + file_name + ".hdf5"
 
     fields_sed = {'SED/lir_dust': ('disk','bulge_t','total'),}
@@ -159,16 +159,11 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk', 'sfr_burst')}
 
     #Bands information:
-    #(0): "hst/ACS_update_sep07/wfc_f775w_t81", "hst/wfc3/IR/f160w",
-    #(2): "F200W_JWST", "FUV_GALEX", "NUV_GALEX", "u_SDSS", "g_SDSS", "r_SDSS",
-    #(8): "i_SDSS", "z_SDSS", "Y_VISTA", "J_VISTA", "H_VISTA", "K_VISTA",
-    #(14): "W1_WISE", "I1_Spitzer", "I2_Spitzer", "W2_WISE", "I3_Spitzer",
-    #(19): "I4_Spitzer", "W3_WISE", "W4_WISE", "P70_Herschel", "P100_Herschel",
-    #(24): "P160_Herschel", "S250_Herschel", "S350_Herschel", "S450_JCMT",
-    #(28): "S500_Herschel", "S850_JCMT", "FUV_Nathan", "Band9_ALMA",
-    #(32): "Band8_ALMA", "Band7_ALMA", "Band6_ALMA", "Band4_ALMA",
-    #(36): "Band3_ALMA", "BandL_VLA", "BandS_VLA"
-
+    #(0): "z_SDSS", "Band_ionising_photons", "FUV_Nathan", "Band9_ALMA",
+    #(4): "Band8_ALMA", "Band7_ALMA", "Band6_ALMA", "Band4_ALMA", "Band3_ALMA",
+    #(9): "BandX_VLA", "BandC_VLA", "BandS_VLA", "BandL_VLA", "Band_610MHz",
+    #(14): "Band_325MHz", "Band_150MHz"
+ 
     LFs_dust     = np.zeros(shape = (len(zlist), len(mbins)))
 
     for index, snapshot in enumerate(redshift_table[zlist]):
