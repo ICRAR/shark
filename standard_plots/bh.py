@@ -27,7 +27,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0, 0.5, 1, 2, 5, 7, 10)
+zlist = (0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10)
 
 ##################################
 #Constants
@@ -51,9 +51,9 @@ xmdotf = mdotbins + dmdot/2.0
 def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR, read_spin):
 
     if(read_spin == True):
-       (h0, _, spin, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge) = hdf5_data
+       (h0, _, spin, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge, typeg) = hdf5_data
     else:
-       (h0, _, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge) = hdf5_data
+       (h0, _, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge, typeg) = hdf5_data
 
     print(np.log10(max(mbh)/h0))
     bin_it   = functools.partial(us.wmedians, xbins=xmf)
@@ -82,7 +82,7 @@ def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR,
     ind = np.where(ssfr < 1e-14)
     ssfr[ind] = 2e-14
 
-    ind = np.where((mbh > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 3e8))
+    ind = np.where((mbh > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 3e8) & (typeg <= 0))
     BHSFR[index,:] = bin_it(x=np.log10(mbh[ind]) - np.log10(float(h0)),
                             y=np.log10(ssfr[ind]))
 
@@ -168,7 +168,10 @@ def plot_spine_BH(plt, outdir, obsdir, spinbh, spinmdot, mdotmbh):
 
 def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
 
-    cols=('red','LightSalmon','LimeGreen','DarkGreen','DarkTurquoise','blue')
+    #cols=('red','LightSalmon','LimeGreen','DarkGreen','DarkTurquoise','blue')
+    cols= ('Indigo','purple','Navy','DarkTurquoise', 'Aquamarine', 'Green','PaleGreen','GreenYellow','Gold','Yellow','Orange','OrangeRed','red') 
+#,'DarkRed','FireBrick','Crimson','IndianRed','LightCoral','Maroon','brown','Sienna','SaddleBrown','Chocolate','Peru','DarkGoldenrod','Goldenrod','SandyBrown')
+
 
     fig = plt.figure(figsize=(5,7))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
@@ -226,7 +229,7 @@ def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
     ytit = "$\\rm log_{10} (\\rm sSFR/M_{\odot} yr^{-1})$"
     xtit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
 
-    xmin, xmax, ymin, ymax = 5, 10, -14, -7
+    xmin, xmax, ymin, ymax = 5, 12, -14, -7
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -259,9 +262,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     read_spin = False
 
     if(read_spin == True):
-       fields = {'galaxies': ('bh_spin', 'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge')}
+       fields = {'galaxies': ('bh_spin', 'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge', 'type')}
     else:
-       fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge')}
+       fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge', 'type')}
 
 
     # Loop over redshift and subvolumes

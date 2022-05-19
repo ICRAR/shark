@@ -34,6 +34,13 @@ dm = 0.25
 mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
+mbhlow = 6.0
+mbhupp = 10.0
+dmbh = 1
+mbhbins = np.arange(mbhlow, mbhupp, dmbh)
+xmbhf = mbhbins + dmbh/2.0
+
+
 zsun = 0.0189
 MpctoKpc = 1e3
 PI       = 3.141592654
@@ -54,7 +61,7 @@ beta = 1 - alpha_adaf / 0.55
 eta_edd = 4
 mcrit_nu = 0.001 * (delta / 0.0005) * (1 - beta) / beta * alpha_adaf**2
 spin = 0.1
-A_adaf = 5e-4
+A_adaf = 4e-4
 A_td = A_adaf/100
 
 
@@ -137,7 +144,7 @@ def radio_luminosity_per_freq(Ljet_ADAF, Ljet_td, mdot_norm, mbh, nu):
 
     return lum_nu
 
-def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, filters):
+def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, filters, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, redshift):
 
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
@@ -186,8 +193,37 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     qIR_dale14 = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(Lum_radio_Viperfish[3,:]/1e7)
     qIR_bressan = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(lum_radio[3,:]/1e7)
 
-    ind = np.where(lir_total[0,:] > 1e9)
-    print("Median qIR for Dale14 and Bressan", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind]))
+    ind = np.where(lir_total[0,:] > 1e7)
+    print("Median qIR for Dale14 and Bressan", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind])," at redshift", redshift)
+
+    ran_err = np.random.normal(0.0, 0.3, len(sfr))
+
+    ind = np.where(Lum_radio_Viperfish[3,:]/1e7 > 1e17)
+    H, _ = np.histogram(np.log10(Lum_radio_Viperfish[3,ind]/1e7),bins=np.append(mbins,mupp))
+    hist_sf_dale14[index,0,:] = hist_sf_dale14[index,0,:] + H
+    H, _ = np.histogram(np.log10(Lum_radio_Viperfish[3,ind]/1e7) + ran_err[ind],bins=np.append(mbins,mupp))
+    hist_sf_dale14[index,1,:] = hist_sf_dale14[index,1,:] + H
+
+    ind = np.where(lum_radio[3,:]/1e7 > 1e17)
+    H, _ = np.histogram(np.log10(lum_radio[3,ind]/1e7),bins=np.append(mbins,mupp))
+    hist_sf_obi17[index,0,:] = hist_sf_obi17[index,0,:] + H
+    H, _ = np.histogram(np.log10(lum_radio[3,ind]/1e7) + ran_err[ind],bins=np.append(mbins,mupp))
+    hist_sf_obi17[index,1,:] = hist_sf_obi17[index,1,:] + H
+
+    ind = np.where(lum_radio_agn[3,:]/1e7 > 1e17)
+    H, _ = np.histogram(np.log10(lum_radio_agn[3,ind]/1e7),bins=np.append(mbins,mupp))
+    hist_agn[index,:] = hist_agn[index,:] + H
+
+    for j,m in enumerate(xmbhf):
+            ind = np.where((lum_radio_agn[3,:]/1e7 > 1e17) & (np.log10(mbh) >= m - dmbh/2.0) & (np.log10(mbh) < m + dmbh/2.0))
+            H, _ = np.histogram(np.log10(lum_radio_agn[3,ind]/1e7),bins=np.append(mbins,mupp))
+            hist_agn_bh[index,j,:] = hist_agn_bh[index,j,:] + H
+
+
+    hist_sf_dale14[index,:] = hist_sf_dale14[index,:]/vol/dm
+    hist_sf_obi17[index,:] = hist_sf_obi17[index,:]/vol/dm
+    hist_agn[index,:] = hist_agn[index,:]/vol/dm
+    hist_agn_bh[index,:] = hist_agn_bh[index,:]/vol/dm
 
     #dividing by 1e7 the luminosities to output them in W/Hz 
     return (lum_radio/1e7, Lum_radio_Viperfish/1e7, lum_ratio, lum_radio_agn/1e7, ms, sfr, vol, h0)
@@ -275,72 +311,147 @@ def plot_comparison_radio_lums(plt, outdir, obsdir, LBressan, LViperfish, Lratio
     common.savefig(outdir, fig, 'radio_lum_sfr_models_z'+redshift+'.pdf')
 
 
-def plot_radio_lf_z0(plt, output_dir, obs_dir, LBressan, LViperfish, LAGN, redshift, vol, h0):
+def plot_radio_lf(plt, output_dir, obs_dir, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, h0):
 
-    fig = plt.figure(figsize=(5,5))
+    def rad_obs(ax, z, Galaxies):
+        lm, p, dpdn, dpup = common.load_observation(obs_dir, 'lf/lf1p4GHz_' + Galaxies+'_' + z +'_Bonato21.dat', [0,1,2,3])
+        hobs = 0.7
+        xobs = lm + 2.0 * np.log10(hobs/h0)
+        yobs = p - 3.0 * np.log10(hobs/h0) 
+        ax.errorbar(xobs, yobs, yerr=[dpdn, dpup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Bonato et al. (2020)")
+
+    zfiles = ['z0', 'z1', 'z2', 'z3', 'z4', 'z5']
+    zlabel = ['z=0', 'z=1', 'z=2', 'z=3', 'z=4', 'z=5']
+    colbh = ['DarkBlue','DarkCyan','Gold','OrangeRed','DarkRed']
+    labelbh = ['[6-7]','[7,8]','[8-9]','[9-10]', '>10']
+
+    for i, zf in enumerate(zfiles):
+        fig = plt.figure(figsize=(5,5))
+        ytit = "$\\rm log_{10} (\\phi/Mpc^{-3} dex^{-1})$"
+        xtit = "$\\rm log_{10} (L_{\\rm 1.4GHz}/W Hz^{-1})$"
+        xmin, xmax, ymin, ymax = 19, 26, -7, -1
+        xleg = xmax - 0.15 * (xmax - xmin)
+        yleg = ymax - 0.1 * (ymax - ymin)
+        ax = fig.add_subplot(111)
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+        ax.text(xleg, yleg, zlabel[i]) 
+        ind = np.where(hist_sf_obi17[i,0,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_sf_obi17[i,0,ind])
+        ax.plot(xp, yp[0], linestyle='solid', color='red', label='Shark + Obi17')
+        ind = np.where(hist_sf_obi17[i,1,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_sf_obi17[i,1,ind])
+        ax.plot(xp, yp[0], linestyle='dotted', color='red', label='+0.3dex err')
+
+        ind = np.where(hist_sf_dale14[i,0,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_sf_dale14[i,0,ind])
+        ax.plot(xp, yp[0], linestyle='solid', color='blue', label='Shark + Dale14')
+        ind = np.where(hist_sf_dale14[i,1,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_sf_dale14[i,1,ind])
+        ax.plot(xp, yp[0], linestyle='dotted', color='blue', label='+0.3dex err')
+
+   
+        rad_obs(ax, zf, 'SF') 
+     
+        common.prepare_legend(ax, ['red', 'red','blue', 'blue','grey'], loc=3)
+        plt.tight_layout()
+        common.savefig(output_dir, fig, 'radio_lum_function_' + zf + '.pdf')
+    
+    
+        fig = plt.figure(figsize=(5,5))
+        ytit = "$\\rm log_{10} (\\phi/Mpc^{-3} dex^{-1})$"
+        xtit = "$\\rm log_{10} (L_{\\rm 1.4GHz}/W Hz^{-1})$"
+        xmin, xmax, ymin, ymax = 19, 28.5, -7, -1
+        xleg = xmax - 0.15 * (xmax - xmin)
+        yleg = ymax - 0.1 * (ymax - ymin)
+        ax = fig.add_subplot(111)
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+        ax.text(xleg, yleg, zlabel[i]) 
+   
+        ind = np.where(hist_agn[i,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_agn[i,ind])
+        ax.plot(xp, yp[0], linestyle='solid', color='black', label='Shark + Griffin19')
+        for j,m  in enumerate(xmbhf):
+            ind = np.where(hist_agn_bh[i,j,:] != 0)
+            xp = xmf[ind]
+            yp = np.log10(hist_agn_bh[i,j,ind])
+            ax.plot(xp, yp[0], linestyle='solid', color=colbh[j], label=labelbh[j])
+
+        rad_obs(ax, zf, 'AGN')    
+
+        common.prepare_legend(ax, ['black'], loc=3)
+        plt.tight_layout()
+        common.savefig(output_dir, fig, 'radio_lum_function_AGN_' + zf + '.pdf')
+
+
+    fig = plt.figure(figsize=(12,8))
     ytit = "$\\rm log_{10} (\\phi/Mpc^{-3} dex^{-1})$"
     xtit = "$\\rm log_{10} (L_{\\rm 1.4GHz}/W Hz^{-1})$"
-    xmin, xmax, ymin, ymax = 19, 25, -7, -1
-    xleg = xmin + 0.15 * (xmax - xmin)
+    xmin, xmax, ymin, ymax = 19, 26, -7, -1
+    xleg = xmax - 0.15 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
-    ax = fig.add_subplot(111)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+    subp = (231, 232, 233, 234, 235, 236)
 
-    ind = np.where(LBressan[3,:] > 1e15)
-    lum = np.log10(LBressan[3,ind])
-    lum = lum[0]
-    HBress, _ = np.histogram(lum,bins=np.append(mbins,mupp))
-    lum = np.log10(LViperfish[3,ind])
-    lum = lum[0] 
-    HDale, _ = np.histogram(lum,bins=np.append(mbins,mupp))
-    HBress = HBress/vol/dm
-    HDale = HDale/vol/dm
+    for i, zf in enumerate(zfiles):
+        ax = fig.add_subplot(subp[i])
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+        ax.text(xleg, yleg, zlabel[i]) 
+        ind = np.where(hist_sf_obi17[i,0,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_sf_obi17[i,0,ind])
+        ax.plot(xp, yp[0], linestyle='solid', color='red', label='Shark + Obi17')
+        ind = np.where(hist_sf_obi17[i,1,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_sf_obi17[i,1,ind])
+        ax.plot(xp, yp[0], linestyle='dotted', color='red', label='+0.3dex err')
+
+        ind = np.where(hist_sf_dale14[i,0,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_sf_dale14[i,0,ind])
+        ax.plot(xp, yp[0], linestyle='solid', color='blue', label='Shark + Dale14')
+        ind = np.where(hist_sf_dale14[i,1,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_sf_dale14[i,1,ind])
+        ax.plot(xp, yp[0], linestyle='dotted', color='blue', label='+0.3 dex')
   
-    ind = np.where(HBress[:] != 0)
-    ax.plot(xmf[ind], np.log10(HBress[ind]), linestyle='solid', color='red', label='Obi+17')
-    ind = np.where(HDale[:] != 0)
-    ax.plot(xmf[ind], np.log10(HDale[ind]), linestyle='dashed', color='blue', label='Dale+14')
-
-    lm, p, dpup, dpdn = common.load_observation(obs_dir, 'lf/lf1p4GHz_z0_mauch07.data', [0,1,2,3])
-    hobs = 0.7
-    xobs = lm + 2.0 * np.log10(hobs/h0)
-    yobs = p - 3.0 * np.log10(hobs/h0) + 0.4 #the 0.4 comes from the normalisation required to go from mag^-1 to dex^-1 (from Bonato et al. 2017)
-    ax.errorbar(xobs, yobs, yerr=[dpdn, dpup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Mauch & Sadler (2007)")
- 
-    common.prepare_legend(ax, ['red', 'blue', 'grey'], loc=3)
+        rad_obs(ax, zf, 'SF') 
+     
+        common.prepare_legend(ax, ['red', 'red', 'blue', 'blue', 'grey'], loc=3)
     plt.tight_layout()
-    common.savefig(output_dir, fig, 'radio_lum_function_z'+redshift+'.pdf')
-
-
-    fig = plt.figure(figsize=(5,5))
+    common.savefig(output_dir, fig, 'radio_lum_function_allz.pdf')
+    
+    fig = plt.figure(figsize=(12,8))
     ytit = "$\\rm log_{10} (\\phi/Mpc^{-3} dex^{-1})$"
     xtit = "$\\rm log_{10} (L_{\\rm 1.4GHz}/W Hz^{-1})$"
-    xmin, xmax, ymin, ymax = 19, 27, -7, -1
-    xleg = xmin + 0.15 * (xmax - xmin)
+    xmin, xmax, ymin, ymax = 19, 28.5, -8, -2
+    xleg = xmax - 0.15 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
-    ax = fig.add_subplot(111)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+    subp = (231, 232, 233, 234, 235, 236)
 
-    ind = np.where(LAGN[3,:] > 1e15)
-    lum = np.log10(LAGN[3,ind])
-    lum = lum[0]
-    HAGN, _ = np.histogram(lum,bins=np.append(mbins,mupp))
-    HAGN = HAGN/vol/dm
-  
-    ind = np.where(HAGN[:] != 0)
-    ax.plot(xmf[ind], np.log10(HAGN[ind]), linestyle='solid', color='red', label='Griffin+19')
+    for i, zf in enumerate(zfiles):
+        ax = fig.add_subplot(subp[i])
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+        ax.text(xleg, yleg, zlabel[i]) 
+        ind = np.where(hist_agn[i,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_agn[i,ind])
+        ax.plot(xp, yp[0], linestyle='solid', color='black', label='Shark')
+        for j,m  in enumerate(xmbhf):
+            ind = np.where(hist_agn_bh[i,j,:] != 0)
+            xp = xmf[ind]
+            yp = np.log10(hist_agn_bh[i,j,ind])
+            ax.plot(xp, yp[0], linestyle='solid', color=colbh[j], label=labelbh[j])
 
-    lm, p, dpup, dpdn = common.load_observation(obs_dir, 'lf/lf1p4GHz_agn_z0_mauch07.data', [0,1,2,3])
-    hobs = 0.7
-    xobs = lm + 2.0 * np.log10(hobs/h0)
-    yobs = p - 3.0 * np.log10(hobs/h0) + 0.4 #the 0.4 comes from the normalisation required to go from mag^-1 to dex^-1 (from Bonato et al. 2017)
-    ax.errorbar(xobs, yobs, yerr=[dpdn, dpup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Mauch & Sadler (2007)")
- 
-    common.prepare_legend(ax, ['red', 'grey'], loc=3)
+        rad_obs(ax, zf, 'AGN') 
+     
+        common.prepare_legend(ax, ['black', 'grey'], loc=3)
     plt.tight_layout()
-    common.savefig(output_dir, fig, 'radio_lum_function_AGN_z'+redshift+'.pdf')
-
-
+    common.savefig(output_dir, fig, 'radio_lum_function_AGN_allz.pdf')
+ 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     #zlist = np.arange(2,10,0.25)
@@ -354,7 +465,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     #(14): "Band_325MHz", "Band_150MHz"
 
     #199 188 159 131 113 100 88 79 70 63 57 51
-    zlist = [0, 0.194738848008908, 0.909822023685613, 2.00391410007239, 3.0191633709527, 3.95972701662501, 5.02220991014863, 5.96592270612165, 7.05756323172746, 8.0235605165086, 8.94312532315157, 9.95650268434316] #9.95655] #0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988] #[5.02220991014863, 5.52950356184419, 5.96593, 6.55269895697227, 7.05756323172746, 7.45816170313544, 8.02352, 8.94312532315157, 9.95655]
+    zlist = [0, 1.0, 2.00391410007239, 3.0191633709527, 3.95972701662501, 5.02220991014863, 5.96592270612165, 7.05756323172746, 8.0235605165086, 8.94312532315157, 9.95650268434316] #9.95655] #0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988] #[5.02220991014863, 5.52950356184419, 5.96593, 6.55269895697227, 7.05756323172746, 7.45816170313544, 8.02352, 8.94312532315157, 9.95655]
     #[0.016306640039433, 0.066839636933135, 0.084236502339783, 0.119886040396529, 0.138147164704691, 0.175568857770275, 0.214221447279112, 0.23402097095238, 0.274594901875312, 0.316503156974571]
 
     znames = ['0', '0p2', '0p9', '2', '3', '4', '5', '6', '7', '8', '9', '10']
@@ -366,15 +477,22 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total')}
     fields_lir = {'SED/lir_dust': ('disk','total'),}
 
+    hist_sf_dale14  = np.zeros(shape = (len(zlist), 2, len(mbins)))
+    hist_sf_obi17  = np.zeros(shape = (len(zlist), 2, len(mbins)))
+    hist_agn  = np.zeros(shape = (len(zlist), len(mbins)))
+
+    hist_agn_bh  = np.zeros(shape = (len(zlist), len(mbhbins),len(mbins)))
+
+
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
         seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
         seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols, file_hdf5_sed)
         lir = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_lir, subvols, file_hdf5_sed)
-        (LBressan, LViperfish, Lratio, LAGN, ms, sfr, vol, h0) = prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, filters)
-        plot_comparison_radio_lums(plt, output_dir, obs_dir, LBressan, LViperfish, Lratio, ms, sfr, filters, znames[index])
-        if(snapshot == 199):
-           plot_radio_lf_z0(plt, output_dir, obs_dir, LBressan, LViperfish, LAGN, znames[index], vol, h0)
+        (LBressan, LViperfish, Lratio, LAGN, ms, sfr, vol, h0) = prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, filters, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, zlist[index])
+        #plot_comparison_radio_lums(plt, output_dir, obs_dir, LBressan, LViperfish, Lratio, ms, sfr, filters, znames[index])
+
+    plot_radio_lf(plt, output_dir, obs_dir, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, h0)
 
 if __name__ == '__main__':
     main(*common.parse_args())

@@ -70,18 +70,15 @@ def load_smf_observations(obsdir, h0):
         dnlog = pDlog - np.log10(dn)
         dulog = np.log10(du) - pDlog
         lm = lm -  2.0 * np.log10(hobs/h0)
-        zappend.append((observation("Thorne+2021", lm, pDlog, dnlog, dulog, err_absolute=False), 'D'))
+        zappend.append((observation("Thorne+2021", lm, pDlog, dnlog, dulog, err_absolute=False), 's'))
 
     # Driver al. (2022, z=0). Chabrier IMF
     z0obs = []
     lm, p, dp = common.load_observation(obsdir, 'mf/SMF/GAMAIV_Driver22.dat', [0,1,2])
     hobs = 0.7
     xobs = lm + 2.0 * np.log10(hobs/h0)
-    indx = np.where(p > 0)
-    yobs = np.log10(p[indx]) - 3.0 * np.log10(hobs/h0)
-    ydn = yobs - np.log10(p[indx]-dp[indx])
-    yup = np.log10(p[indx]+dp[indx]) - yobs
-    z0obs.append((observation("GAMA IV", xobs[indx], yobs, ydn, yup, err_absolute=False), 'o'))
+    yobs = p - 3.0 * np.log10(hobs/h0)
+    z0obs.append((observation("Driver+2022", xobs, yobs, dp, dp, err_absolute=False), 'o'))
 
     lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/SMF_Bernardi2013_SerExp.data', [0,1,2,3])
     xobs = lm + 2.0 * np.log10(hobs/h0)
@@ -119,59 +116,44 @@ def load_smf_observations(obsdir, h0):
     indx = np.where( dp_up_Mu13 > 0)
     herrMu13[indx]  = dp_up_Mu13[indx]
 
-    # Santini 2012 (Salpeter IMF)
-    zdnS12, lmS12, pS12, dp_dn_S12, dp_up_S12 = common.load_observation(obsdir, 'mf/SMF/SMF_Santini2012.dat', [0,2,3,4,5])
-    # factor 0.24 corresponds to the IMF correction.
-    xobsS12 = lmS12 - 0.24 +  2.0 * np.log10(hobs/h0)
-    yobsS12 = np.full(xobsS12.shape, -999.)
-    lerrS12 = np.full(xobsS12.shape, -999.)
-    herrS12 = np.full(xobsS12.shape, 999.)
-    indx = np.where( pS12 < 1)
-    yobsS12[indx] = (pS12[indx]) - 3.0 * np.log10(hobs/h0)
-    indx = np.where( dp_dn_S12 > 0)
-    lerrS12[indx]  = dp_dn_S12[indx]
-    indx = np.where( dp_up_S12 > 0)
-    herrS12[indx]  = dp_up_S12[indx]
-
-
     # z0.5 obs
     z05obs = []
-    in_redshift = np.where(zdnM13 == 0.4)
-    z05obs.append((observation("Moustakas+2013", xobsM13[in_redshift], yobsM13[in_redshift], lerrM13[in_redshift], herrM13[in_redshift], err_absolute=False), 'o'))
+    #in_redshift = np.where(zdnM13 == 0.4)
+    #z05obs.append((observation("Moustakas+2013", xobsM13[in_redshift], yobsM13[in_redshift], lerrM13[in_redshift], herrM13[in_redshift], err_absolute=False), 'o'))
     in_redshift = np.where(zdnMu13 == 0.5)
-    z05obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
+    z05obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z05obs, file_read='z0.51')
 
     # z1 obs
     z1obs = []
-    in_redshift = np.where(zdnM13 == 0.8)
-    z1obs.append((observation("Moustakas+2013", xobsM13[in_redshift], yobsM13[in_redshift], lerrM13[in_redshift], herrM13[in_redshift], err_absolute=False), 'o'))
+    #in_redshift = np.where(zdnM13 == 0.8)
+    #z1obs.append((observation("Moustakas+2013", xobsM13[in_redshift], yobsM13[in_redshift], lerrM13[in_redshift], herrM13[in_redshift], err_absolute=False), 'o'))
     in_redshift = np.where(zdnMu13 == 1)
-    z1obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
+    z1obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z1obs, file_read='z1.1')
 
     #z2 obs
     z2obs = []
     in_redshift = np.where(zupMu13 == 2.5)
-    z2obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
-    in_redshift = np.where(zdnS12 == 1.8)
-    z2obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
+    z2obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
+    #in_redshift = np.where(zdnS12 == 1.8)
+    #z2obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z2obs, file_read='z2')
 
     # z3 obs
     z3obs = []
     in_redshift = np.where(zupMu13 == 3.0)
-    z3obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
-    in_redshift = np.where(zdnS12 == 2.5)
-    z3obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
+    z3obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
+    #in_redshift = np.where(zdnS12 == 2.5)
+    #z3obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z3obs, file_read='z3')
 
     # z4 obs
     z4obs = []
     in_redshift = np.where(zupMu13 == 4.0)
-    z4obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), '+'))
-    in_redshift = np.where(zdnS12 == 3.5)
-    z4obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
+    z4obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
+    #in_redshift = np.where(zdnS12 == 3.5)
+    #z4obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z4obs, file_read='z4')
 
     return (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs)
@@ -225,7 +207,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
             if z >= 1:
                 y = hist_smf_offset[idx,:]
                 ind = np.where(y < 0.)
-                ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.25 dex error')
+                ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.3 dex error')
 
         colors = []
         if idx == 0:
@@ -1134,7 +1116,7 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
 
-    xmin, xmax, ymin, ymax = 8, 12, -5, 3
+    xmin, xmax, ymin, ymax = 8, 12.5, -5, 3
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
@@ -1285,7 +1267,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     
     H, _ = np.histogram(mass,bins=np.append(mbins,mupp))
     hist_smf[index,:] = hist_smf[index,:] + H
-    ran_err = np.random.normal(0.0, 0.25, len(mass))
+    ran_err = np.random.normal(0.0, 0.3, len(mass))
     mass_err = mass + ran_err
     H, _ = np.histogram(mass_err,bins=np.append(mbins,mupp))
     hist_smf_offset[index,:] = hist_smf_offset[index,:] + H
@@ -1356,7 +1338,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     H_H2, _ = np.histogram(mass_mol_sat,bins=np.append(mbins,mupp))
     hist_H2mf_sat[index,:] = hist_H2mf_sat[index,:] + H_H2
 
-    bin_it = functools.partial(us.wmedians, xbins=xmf)
+    bin_it = functools.partial(us.wmedians, xbins=xmf, low_numbers=False, nmin=20)
     bin_it_2sigma = functools.partial(us.wmedians_2sigma, xbins=xmf)
 
     ind = np.where((sfr_disk+sfr_burst > 0) & (mdisk+mbulge > 0))

@@ -150,7 +150,7 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     BHSM[index,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
 
-    ind = np.where((mBH > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 1e10))
+    ind = np.where((mBH > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 1e10) & (typeg <= 0))
     BHSFR[index,:] = bin_it(x=np.log10(mBH[ind]) - np.log10(float(h0)), 
                             y=np.log10(ssfr[ind]))
 

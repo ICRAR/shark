@@ -66,7 +66,7 @@ def gpercentiles(x=None):
 
     return result
 
-def wmedians(x=None, y=None, xbins=None, low_numbers=False):
+def wmedians(x=None, y=None, xbins=None, low_numbers=False, nmin=10):
 
     nbins = len(xbins)
     #define size of bins, assuming bins are all equally spaced.
@@ -77,7 +77,7 @@ def wmedians(x=None, y=None, xbins=None, low_numbers=False):
         xlow = xbins[i]-dx/2.0
         xup  = xbins[i]+dx/2.0
         ind  = np.where((x > xlow) & (x< xup))
-        if(len(x[ind]) > 9):
+        if(len(x[ind]) >= nmin):
 
             obj_bin = len(x[ind])
             ybin    = y[ind]
