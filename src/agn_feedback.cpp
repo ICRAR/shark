@@ -70,7 +70,7 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 
 	auto beta = 1 - alpha_adaf / 0.55;
 	low_accretion_adaf = 0.001 * (delta_adaf / 0.0005) * (1 - beta) / beta * std::pow(alpha_adaf, 2.0);
-	constant_lowlum_adaf = (delta_adaf / 0.0005) * (1 - beta) * 6;
+	constant_lowlum_adaf = (delta_adaf / 0.0005) * (1 - beta) / 0.5 * 6;
 	constant_highlum_adaf = beta / 0.5 / std::pow(alpha_adaf, 2) * 6;
 	nu2_nu1 = std::pow(alpha_td, 2.0);
 
@@ -272,7 +272,7 @@ double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh, bool starbu
 				Lbol = 0.2 * eff[0] * (macc / MACCRETION_cgs_simu)  * std::pow(c_light_cm, 2.0) * parameters.constant_highlum_adaf / eff[1] / 1e40;
 			}
 			else{
-				Lbol = 0.0002 * eff[0] * (macc / MACCRETION_cgs_simu) * std::pow(c_light_cm, 2.0) / eff[1] / 1e40;
+				Lbol = 0.0002 * eff[0] * (macc / MACCRETION_cgs_simu) * std::pow(c_light_cm, 2.0) * parameters.constant_lowlum_adaf / eff[1] / 1e40;
 			}
 		}
 	}
