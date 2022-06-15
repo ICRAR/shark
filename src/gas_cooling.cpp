@@ -94,6 +94,7 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 	options.load("gas_cooling.pre_enrich_z", pre_enrich_z);
 	options.load("gas_cooling.tau_cooling", tau_cooling);
 	options.load("gas_cooling.limit_fbar", limit_fbar);
+	options.load("gas_cooling.rcore", rcore);
 
 	auto cooling_tables_dir = get_static_data_filepath("cooling");
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
@@ -503,7 +504,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of BOWER06 AGN feedback model.
 
-	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO22){
+	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
 		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
 		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, deltat, *central_galaxy);
@@ -513,7 +514,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 		//Mass heating rate from AGN in units of Msun/Gyr.
 		double mheatrate = 0;
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::BRAVO22){
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
 			// decide whether this halo is in a quasi-hydrostatic regime or not.
 			bool hothalo = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density, Mvir, Tvir, Rvir, z);
 
@@ -533,7 +534,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 		double r_ratio = rheat/r_cool;
 
-		// Track heating radius. Croton16 and Bravo22 assume that the heating radius only increases.
+		// Track heating radius. Croton16 and Lagos22 assume that the heating radius only increases.
 		if(subhalo.cooling_subhalo_tracking.rheat < rheat){
 			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
@@ -706,16 +707,16 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 		/**
 		* For an isothermal profile, we define a small core radius.
 		*/
-		double rcore = 0.01 * rvir;
+		double rc = parameters.rcore * rvir;
 
-		double r1 = rvir/rcore;
-		double r2 = rcool/rcore;
+		double r1 = rvir/rc;
+		double r2 = rcool/rc;
 
 		//Define cooling luminosity in $10^{40} erg/s$.
 		double func1 = std::atan(r1) - r1/(std::pow(r1,2.0) + 1);
 		double func2 = std::atan(r2) - r2/(std::pow(r2,2.0) + 1);
 
-		double ave_pseudo_density = std::pow(mhot, 2.0) / std::pow(rcore,3.0); //in Msun^2/Mpc^3.
+		double ave_pseudo_density = std::pow(mhot, 2.0) / std::pow(rc,3.0); //in Msun^2/Mpc^3.
 		double factor_geometry = (func1 - func2)/ std::pow(r1 - std::atan(r1), 2.0);
 
 		double Lcool = lcool_conversion_factor / (8.0*PI) * std::pow(10.0,logl) * ave_pseudo_density  * factor_geometry;

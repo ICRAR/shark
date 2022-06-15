@@ -79,6 +79,7 @@ public:
 	double pre_enrich_z = 1e-7;
 	double tau_cooling = 1;
 	bool limit_fbar = false;
+        double rcore = 0.01;
 
 	LambdaCoolingModel lambdamodel = CLOUDY;
 	CoolingModel model = CROTON06;

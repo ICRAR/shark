@@ -50,11 +50,11 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.v_smbh", v_smbh);
 	options.load("agn_feedback.tau_fold", tau_fold);
 
-	// relevant for Croton16 and Bravo 22 models.
+	// relevant for Croton16 and Lagos 22 models.
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
-	// relevant for Bravo 22 model.
+	// relevant for Lagos 22 model.
 	options.load("agn_feedback.kappa_radio", kappa_radio);
 	options.load("agn_feedback.hot_halo_threshold", hot_halo_threshold);
 	options.load("agn_feedback.spin_model", spin_model);
@@ -90,11 +90,11 @@ Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, c
 	else if (lvalue == "croton16") {
 		return AGNFeedbackParameters::CROTON16;
 	}
-	else if (lvalue == "bravo22") {
-		return AGNFeedbackParameters::BRAVO22;
+	else if (lvalue == "lagos22") {
+		return AGNFeedbackParameters::LAGOS22;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are bower06, croton16 and bravo22";
+	os << name << " option value invalid: " << value << ". Supported values are bower06, croton16 and lagos22";
 	throw invalid_option(os.str());
 }
 
@@ -197,12 +197,12 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, Galax
 		if (parameters.model == AGNFeedbackParameters::BOWER06) {
 			macc = Lcool * 1e40 / std::pow(c_light_cm , 2.0) / parameters.accretion_eff_cooling;
 		}
-		else if (parameters.model == AGNFeedbackParameters::BRAVO22 || parameters.model == AGNFeedbackParameters::CROTON16) {
+		else if (parameters.model == AGNFeedbackParameters::LAGOS22 || parameters.model == AGNFeedbackParameters::CROTON16) {
 			macc = parameters.kappa_agn * 0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * 1e40 * (smbh.mass * MSOLAR_g);
 		}
 
 		// calculate new spin if necessary
-		if(parameters.model == AGNFeedbackParameters::BRAVO22){
+		if(parameters.model == AGNFeedbackParameters::LAGOS22){
 			// in this case compute spin
 			if(parameters.spin_model == AGNFeedbackParameters::VOLONTERI07){
 				volonteri07_spin(smbh);
@@ -248,14 +248,14 @@ double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh, bool starbu
 
 	auto macc = cosmology->comoving_to_physical_mass(smbh.macc_hh);
 
-	if(parameters.model == AGNFeedbackParameters::BRAVO22 || starburst){
+	if(parameters.model == AGNFeedbackParameters::LAGOS22 || starburst){
 		//In this case also sum the starburst accretion rate
 		macc += cosmology->comoving_to_physical_mass(smbh.macc_sb);
 	}
 
-	// assume constant radiation efficiency unless this model is Bravo22
+	// assume constant radiation efficiency unless this model is Lagos22
 	double Lbol = 0;
-	if (parameters.model == AGNFeedbackParameters::BRAVO22) {
+	if (parameters.model == AGNFeedbackParameters::LAGOS22) {
 		double LEdd = eddington_luminosity(mBH);
 		double m_dot_norm = accretion_rate_ratio(macc,mBH);
 		
@@ -329,7 +329,7 @@ double AGNFeedback::smbh_growth_starburst(double mgas, double vvir, double tacc,
 	}
 
 	// calculate new spin if necessary
-	if(parameters.model == AGNFeedbackParameters::BRAVO22){
+	if(parameters.model == AGNFeedbackParameters::LAGOS22){
 		// in this case compute spin
 		if(parameters.spin_model == AGNFeedbackParameters::VOLONTERI07){
 			volonteri07_spin(smbh);
