@@ -59,13 +59,21 @@ dssfr = 0.2
 ssfrbins = np.arange(ssfrlow,ssfrupp,dssfr)
 
 
+sfrlow = -3
+sfrupp = 1.5
+dsfr = 0.2
+sfrbins = np.arange(sfrlow,sfrupp,dsfr)
+xsfr    = sfrbins + dsfr/2.0
+
+
 # These are two easily create variables of these different shapes without
 # actually storing a reference ourselves; we don't need it
 zeros1 = lambda: np.zeros(shape=(1, 3, len(xmf)))
 zeros2 = lambda: np.zeros(shape=(1, 3, len(xmf2)))
 zeros3 = lambda: np.zeros(shape=(1, len(mbins)))
 zeros4 = lambda: np.empty(shape=(1), dtype=np.bool_)
-zeros5 = lambda: np.zeros(shape=(1, len(ssfrbins)))
+zeros5 = lambda: np.zeros(shape=(1, 4, len(ssfrbins)))
+zeros6 = lambda: np.zeros(shape = (1, 3, len(xsfr)))
 
 
 class Constraint(object):
@@ -98,7 +106,8 @@ class Constraint(object):
                 'mgas_metals_disk', 'mgas_metals_bulge',
                 'mstars_metals_disk', 'mstars_metals_bulge', 'type',
                 'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers', 
-                'mstars_burst_diskinstabilities')
+                'mstars_burst_diskinstabilities', 'mstars_bulge_mergers_assembly', 
+                'mstars_bulge_diskins_assembly')
         }
 
         for index, z in enumerate(self.z):
@@ -110,8 +119,9 @@ class Constraint(object):
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
                              zeros1(), zeros4(), zeros4(), zeros2(), zeros5(),
-                             zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
-                             zeros1(), hist_smf_err, hist_HImf_err, hist_smf_comp)
+                             zeros1(), zeros1(), zeros1(), zeros1(), zeros1(), 
+                             zeros1(), hist_smf_err, hist_HImf_err, hist_smf_comp, 
+                             zeros6())
 
         #########################
         # take logs
@@ -125,7 +135,8 @@ class Constraint(object):
 
 	#### Read CSFR model data ####
         fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
-                         'mhot_halo', 'mejected_halo', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
+                         'mhot_halo', 'mejected_halo', 'mbar_lost', 'mbar_created', 'mstars', 
+                         'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
                          'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo', 'number_major_mergers', 
                          'number_minor_mergers', 'number_disk_instabilities', 'smbh_maximum')}
 
@@ -152,7 +163,7 @@ class Constraint(object):
         mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
         sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
         mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden,
-        mejeden, history_interactions, mDMden) = global_quantities.prepare_data(hdf5_data_sfr, redshifts)
+        mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot) = global_quantities.prepare_data(hdf5_data_sfr, redshifts)
 
 	#### Size-mass relation ####
         mlow3 = 6.5
@@ -320,17 +331,19 @@ class SMF_z0(SMF):
 
     def get_obs_x_y_err(self, h0):
 
-        lm, p, dpdn, dpup = self.load_observation('mf/SMF/SMF_Bernardi2013_SerExp.data', cols=[0,1,2,3])
+        lm, p, dp = self.load_observation('mf/SMF/GAMAIV_Driver22.dat', cols=[0,1,2])
         hobs = 0.7
-
         x_obs = lm + 2.0 * np.log10(hobs/h0)
-        indx = np.where(p > 0)
-
-        x_obs = x_obs[indx]
-        y_obs = np.log10(p[indx]) - 3.0 * np.log10(hobs/h0)
-        y_dn = y_obs - np.log10(p[indx] - dpdn[indx])
-        y_up = np.log10(p[indx]+dpup[indx]) - y_obs
+        y_obs = p - 3.0 * np.log10(hobs/h0)
+        y_dn = dp
+        y_up = dp
 	
+        #lm, p, dpdn, dpup = self.load_observation('mf/SMF/SMF_Li2009.dat', cols=[0,1,2,3])
+        #x_obs = lm - 2.0 * np.log10(h0)
+        #y_obs = p + 3.0 * np.log10(h0)
+        #y_dn = dpdn
+        #y_up = dpup
+
         return x_obs, y_obs, y_dn, y_up
 
 class SMF_z0p5(SMF):
