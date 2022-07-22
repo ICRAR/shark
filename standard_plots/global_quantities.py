@@ -381,36 +381,23 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     common.prepare_ax(ax, 0, 10, -3, -0.5, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
-    redK11, SFRK11, err_upK11, err_dnK11 = common.load_observation(obsdir, 'Global/SFRD_Karim11.dat', [0,1,2,3])
-
+    reddnM14, redupM14, sfrM14, sfrM14errup, sfrM14errdn = common.load_observation(obsdir, 'Global/SFRD_Madau14.dat', [0,1,2,3,4])
+    #authors assume a Salpeter IMF, so a correction of np.log10(0.63) is necessary.
+    sfrM14errdn = abs(sfrM14errdn)
     hobs = 0.7
-    xobs = redK11
-
-    yobs = xobs*0. - 999.
-    indx = np.where( SFRK11 > 0)
-    yobs[indx] = np.log10(SFRK11[indx] * pow(hobs/h0, 2.0))
-
-    lerr = yobs*0. - 999.
-    indx = np.where( (SFRK11-err_dnK11) > 0)
-    lerr[indx]  = np.log10(SFRK11[indx] - err_dnK11[indx])
-
-    herr = yobs*0. + 999.
-    indx = np.where( (SFRK11+err_upK11) > 0)
-    herr[indx]  = np.log10(SFRK11[indx] + err_upK11[indx])
-
-    ax.errorbar(xobs[0:8], yobs[0:8], yerr=[yobs[0:8]-lerr[0:8],herr[0:8]-yobs[0:8]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D')
-    ax.errorbar(xobs[9:17], yobs[9:17], yerr=[yobs[9:17]-lerr[9:17],herr[9:17]-yobs[9:17]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='x')
+    sfrM14 = sfrM14 + np.log10(pow(hobs/h0, 2.0)) + np.log10(0.63)
+    ax.errorbar((reddnM14 + redupM14) / 2.0, sfrM14, xerr=abs(redupM14-reddnM14)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5)
 
     #Driver (Chabrier IMF), ['Baldry+2012, z<0.06']
     redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_sfr.dat', [0,1,2,3,4,5,6])
+
 
     hobs = 0.7
     xobsD17 = (redD17d+redD17u)/2.0
     yobsD17 = sfrD17 + np.log10(hobs/h0)
 
-    errD17 = yobs*0. - 999.
     errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
-    ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+    ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o')
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfr > 0)
@@ -443,9 +430,10 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     plt.subplots_adjust(left=0.15)
 
     common.prepare_ax(ax, 0, 13.5, -3, -0.5, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.errorbar(us.look_back_time(xobs[0:8]), yobs[0:8], yerr=[yobs[0:8]-lerr[0:8],herr[0:8]-yobs[0:8]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Karim+11 obs")
-    ax.errorbar(us.look_back_time(xobs[9:17]), yobs[9:17], yerr=[yobs[9:17]-lerr[9:17],herr[9:17]-yobs[9:17]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='x', label="Karim+11 extr")
-    ax.errorbar(us.look_back_time(xobsD17), yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o', label="Driver+18")
+    lbtdown = us.look_back_time(reddnM14)
+    lbtup = us.look_back_time(redupM14)
+    ax.errorbar(us.look_back_time((reddnM14 + redupM14) / 2.0), sfrM14, xerr=abs(lbtdown-lbtup)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5, label='Madau+14')
+    ax.errorbar(us.look_back_time(xobsD17), yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label="Driver+18")
 
     ind = np.where(sfr > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), 'k',  linewidth=1)
@@ -462,7 +450,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     ind = np.where(sfr_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(z[ind]), sfr_modelvar_nu0p5[ind], 'SlateGray', linestyle='dotted')
 
-    common.prepare_legend(ax, ['grey','grey','grey'], loc=2)
+    common.prepare_legend(ax, ['grey','navy','grey'], loc=2)
     common.savefig(outdir, fig, "cosmic_sfr.pdf")
 
 

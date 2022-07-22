@@ -417,7 +417,9 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     xplot = xmf[ind]
     yplot = hist_bmf[1,ind]
     ax.errorbar(xplot,yplot[0],color='b')
-
+    print("Baryon MF mass bin 1")
+    for a,b,c in zip(xmf, hist_bmf[1,:], hist_bmf_sat[1,:]):
+        print(a,b,c)
     ind = np.where(hist_bmf_sat[1,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf_sat[1,ind]
@@ -449,6 +451,10 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     yplot = hist_bmf_sat[2,ind]
     ax.errorbar(xplot,yplot[0],color='g', linestyle="dashed")
 
+    print("Baryon MF mass bin 2")
+    for a,b,c in zip(xmf, hist_bmf[2,:], hist_bmf_sat[2,:]):
+        print(a,b,c)
+
     #RESOLVE observations
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionmedmasshalos_resolve.txt', [0,1,2,3,7,8,9])
     resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'g', 'o', yerrdn_val=0.1)
@@ -474,6 +480,9 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     xplot = xmf[ind]
     yplot = hist_bmf_sat[3,ind]
     ax.errorbar(xplot,yplot[0],color='r', linestyle="dashed",label="satellites")
+    print("Baryon MF mass bin 3")
+    for a,b,c in zip(xmf, hist_bmf[3,:], hist_bmf_sat[3,:]):
+        print(a,b,c)
 
     #RESOLVE observations
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionhighmasshalos_resolve.txt', [0,1,2,3,7,8,9])
@@ -502,11 +511,157 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     yplot = hist_bmf_sat[4,ind]
     ax.errorbar(xplot,yplot[0],color='orange', linestyle="dashed")
 
+    print("Baryon MF mass bin 4")
+    for a,b,c in zip(xmf, hist_bmf[4,:], hist_bmf_sat[4,:]):
+        print(a,b,c)
+
+
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionclusterhalos_eco.txt', [0,1,2,3,7,8,9])
     eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'orange', 's', yerrdn_val=No)
     eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'orange', 's', fillstyle='full', markersize=3, label="ECO satellites")
 
     common.savefig(outdir, fig, 'bmf_resolve.pdf')
+
+
+    #plot only bins in halo mass
+    fig = plt.figure(figsize=(8.3,7.5))
+
+    xtit="$\\rm log_{10}(\\rm M^{\\prime}_{\\rm bar}/M_{\odot})$"
+    ytit="$\\rm log_{10}(\\phi/{\\rm dlog_{10}M^{\\prime}_{\\rm bar}}/Mpc^{-3})$"
+
+    xmin, xmax, ymin, ymax = 9, 12.3, -6, -1
+    xleg= xmax - 0.3 * (xmax - xmin)
+    yleg= ymax - 0.1 * (ymax - ymin)
+
+
+    def plot_lagos18(ax, bin_halo=1, col='k', inc_label=True):
+        p_pos = bin_halo * 2 - 1
+        p_pos_sat = bin_halo * 2
+        x,p,ps = common.load_observation(obsdir, 'Models/SharkVariations/BMF_Lagos18.dat', [0, p_pos, p_pos_sat])
+
+
+        ind = np.where(p != 0)
+        xplot = x[ind]
+        yplot = p[ind]
+        ax.errorbar(xplot,yplot,color=col, linewidth=3, linestyle='solid', label = 'Shark v1.1 (L18) all' if inc_label else None)
+    
+        ind = np.where(ps != 0)
+        xplot = x[ind]
+        yplot = ps[ind]
+        ax.errorbar(xplot,yplot,color=col, linewidth=3, linestyle="dashed", label = 'Shark v1.1 (L18) sats' if inc_label else None)
+
+    # low mass halos ##################################
+    ax = fig.add_subplot(221)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit=None, ytit=ytit)
+    xleg= xmax - 0.7 * (xmax - xmin)
+    yleg= ymax - 0.1 * (ymax - ymin)
+    ax.text(xleg,yleg, '$11<\\rm log_{10}(M_{\\rm halo}/M_{\odot})<11.4$', fontsize=12)
+
+    #Predicted SMHM
+    ind = np.where(hist_bmf[1,:] != 0)
+    xplot = xmf[ind]
+    yplot = hist_bmf[1,ind]
+    ax.errorbar(xplot,yplot[0],color='b', linewidth=6)
+
+    ind = np.where(hist_bmf_sat[1,:] != 0)
+    xplot = xmf[ind]
+    yplot = hist_bmf_sat[1,ind]
+    ax.errorbar(xplot,yplot[0],color='b', linewidth=6,  linestyle="dashed")
+
+    plot_lagos18(ax, bin_halo=1, col='b', inc_label=False)
+    #RESOLVE observations
+    M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionlowmasshalos_resolve.txt', [0,1,2,3,7,8,9])
+    resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'b', 'o', yerrdn_val=0.1)
+    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'b', 'o', yerrdn_val=0.1, fillstyle='full', markersize=3)
+
+    M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionlowmasshalos_eco.txt', [0,1,2,3,7,8,9])
+    eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'b', 's', yerrdn_val=0.1)
+    eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'b', 's', fillstyle='full', markersize=3)
+
+
+    # medium mass halos ##################################
+    ax = fig.add_subplot(222)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit=None, ytit=None)
+    ax.text(xleg, yleg, '$11.4<\\rm log_{10}(M_{\\rm halo}/M_{\odot})<12$', fontsize=12)
+
+    #Predicted SMHM
+    ind = np.where(hist_bmf[2,:] != 0)
+    xplot = xmf[ind]
+    yplot = hist_bmf[2,ind]
+    ax.errorbar(xplot,yplot[0],color='g', linewidth=6)
+
+    ind = np.where(hist_bmf_sat[2,:] != 0)
+    xplot = xmf[ind]
+    yplot = hist_bmf_sat[2,ind]
+    ax.errorbar(xplot,yplot[0],color='g', linestyle="dashed", linewidth=6)
+
+    plot_lagos18(ax, bin_halo=2, col = 'g', inc_label=False)
+    #RESOLVE observations
+    M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionmedmasshalos_resolve.txt', [0,1,2,3,7,8,9])
+    resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'g', 'o', yerrdn_val=0.1)
+    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'g', 'o', fillstyle='full', markersize=3)
+
+    M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionmedmasshalos_eco.txt', [0,1,2,3,7,8,9])
+    eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'g', 's', yerrdn_val=0.1)
+    eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'g', 's', fillstyle='full', markersize=3)
+
+
+    # medium high mass halos ##################################
+    ax = fig.add_subplot(223)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit=xtit, ytit=ytit)
+    ax.text(xleg, yleg, '$12<\\rm log_{10}(M_{\\rm halo}/M_{\odot})<13.5$', fontsize=12)
+
+    #Predicted SMHM
+    ind = np.where(hist_bmf[3,:] != 0)
+    xplot = xmf[ind]
+    yplot = hist_bmf[3,ind]
+    ax.errorbar(xplot,yplot[0],color='r',linewidth=6)
+
+    ind = np.where(hist_bmf_sat[3,:] != 0)
+    xplot = xmf[ind]
+    yplot = hist_bmf_sat[3,ind]
+    ax.errorbar(xplot,yplot[0],color='r', linestyle="dashed", linewidth=6)
+
+    plot_lagos18(ax, bin_halo=3, col='r', inc_label=False)
+    #RESOLVE observations
+    M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionhighmasshalos_eco.txt', [0,1,2,3,7,8,9])
+    eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'r', 's', yerrdn_val=No, label="ECO all")
+    eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'r', 's', fillstyle='full', markersize=3, label="ECO satellites")
+
+    M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionhighmasshalos_resolve.txt', [0,1,2,3,7,8,9])
+    resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'r', 'o', yerrdn_val=0.1, label="RESOLVE all")
+    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'r', 'o', fillstyle='full', markersize=3, label="RESOLVE satellites")
+
+    common.prepare_legend(ax, ['k','k','k','k','k','k'], loc=3) #, bbox_to_anchor=(0.1, -0.4))
+
+    # high mass halos ##################################
+    ax = fig.add_subplot(224)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit=xtit, ytit=None)
+    ax.text(xleg, yleg, '$\\rm log_{10}(M_{\\rm halo}/M_{\odot})>13.5$', fontsize=12)
+
+    #Predicted SMHM
+    ind = np.where(hist_bmf[4,:] != 0)
+    xplot = xmf[ind]
+    yplot = hist_bmf[4,ind]
+    ax.errorbar(xplot,yplot[0],color='orange', label="Shark v2.0 all", linewidth=6)
+
+    ind = np.where(hist_bmf_sat[4,:] != 0)
+    xplot = xmf[ind]
+    yplot = hist_bmf_sat[4,ind]
+    ax.errorbar(xplot,yplot[0],color='orange', linestyle="dashed", label="Shark v2.0 sats", linewidth=6)
+
+    plot_lagos18(ax, bin_halo=4, col='orange', inc_label=True)
+
+    M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionclusterhalos_eco.txt', [0,1,2,3,7,8,9])
+    eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'orange', 's', yerrdn_val=No)
+    eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'orange', 's', fillstyle='full', markersize=3)
+
+
+    common.prepare_legend(ax, ['orange','orange','k','k','orange','orange','orange','orange'], loc=3) #, bbox_to_anchor=(0.1, -0.4))
+
+    plt.tight_layout()
+    common.savefig(outdir, fig, 'bmf_resolve_massbins.pdf')
+
 
 
 def plot_mHI_mstar_resolve(plt, outdir, obsdir, mHIms, mHIms_true):

@@ -251,11 +251,10 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
 
     Write_Tables = False 
+    for a,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19 in zip(xmf, LFs_dust[0,:], LFs_dust[1,:], LFs_dust[2,:], LFs_dust[3,:], LFs_dust[4,:], LFs_dust[5,:], LFs_dust[6,:], LFs_dust[7,:], LFs_dust[8,:], LFs_dust[9,:], LFs_dust[10,:], LFs_dust[11,:], LFs_dust[12,:], LFs_dust[13,:], LFs_dust[14,:], LFs_dust[15,:], LFs_dust[16,:], LFs_dust[17,:], LFs_dust[18,:]):
+            print(a,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19)
+
     if(Write_Tables == True): 
-       for i,zin in enumerate(zlist):
-           print('#IR LF at z=', zin)
-           for a,b in zip(xmf, LFs_dust[i,:]):
-               print(a,b)
 
        print('#Computed using the Shark model (Lagos et al. 2018; MNRAS.481.3573) using the SED modelling introduced in Lagos et al. (2019; MNRAS.489.4196). Also refer to Lagos et al. (2020; MNRAS.499.1948) for a detailed analysis of dusty galaxies in Shark.')
        print('#Table details:')

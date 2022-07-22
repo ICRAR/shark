@@ -61,15 +61,22 @@ dssfr = 0.2
 ssfrbins = np.arange(ssfrlow,ssfrupp,dssfr)
 xssfr    = ssfrbins + dssfr/2.0
 
+sfrlow = -3
+sfrupp = 1.5
+dsfr = 0.2
+sfrbins = np.arange(sfrlow,sfrupp,dsfr)
+xsfr    = sfrbins + dsfr/2.0
+
+
 def load_smf_observations(obsdir, h0):
     # Thorne et al. (2021)
     def add_thorne21_data(zappend, file_read='z0.4'):
         lm, pD, dn, du = np.loadtxt(obsdir+'/mf/SMF/Thorne21/SMFvals_'+file_read+'.csv', delimiter=',', skiprows=1, usecols = [0,1,2,3], unpack = True)
         hobd = 0.7
-        pDlog = np.log10(pD) +  3.0 * np.log10(hobs/h0)
-        dnlog = pDlog - np.log10(dn)
-        dulog = np.log10(du) - pDlog
-        lm = lm -  2.0 * np.log10(hobs/h0)
+        pDlog = np.log10(pD[::3]) +  3.0 * np.log10(hobs/h0)
+        dnlog = pDlog - np.log10(dn[::3])
+        dulog = np.log10(du[::3]) - pDlog
+        lm = lm[::3] -  2.0 * np.log10(hobs/h0)
         zappend.append((observation("Thorne+2021", lm, pDlog, dnlog, dulog, err_absolute=False), 's'))
 
     # Driver al. (2022, z=0). Chabrier IMF
@@ -82,11 +89,17 @@ def load_smf_observations(obsdir, h0):
 
     lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/SMF_Bernardi2013_SerExp.data', [0,1,2,3])
     xobs = lm + 2.0 * np.log10(hobs/h0)
-    indx = np.where(p > 0)
-    yobs = np.log10(p[indx]) - 3.0 * np.log10(hobs/h0)
-    ydn = yobs - np.log10(p[indx]-dpdn[indx])
-    yup = np.log10(p[indx]+dpup[indx]) - yobs
-    z0obs.append((observation("Bernardi+2013", xobs[indx], yobs, ydn, yup, err_absolute=False), 's'))
+    yobs = np.log10(p) - 3.0 * np.log10(hobs/h0)
+    ydn = np.log10(p) - np.log10(p-dpdn)
+    yup = np.log10(p+dpup) - np.log10(p) 
+    z0obs.append((observation("Bernardi+2013", xobs, yobs, ydn, yup, err_absolute=False), 's'))
+
+
+    lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/SMF_Li2009.dat', [0,1,2,3])
+    xobs = lm - 2.0 * np.log10(hobs) + 2.0 * np.log10(hobs/h0)
+    yobs = p + 3.0 * np.log10(hobs) - 3.0 * np.log10(hobs/h0)
+    z0obs.append((observation("Li&White+2009", xobs, yobs, abs(dpdn), dpup, err_absolute=False), 'd'))
+
 
     # Moustakas (Chabrier IMF), ['Moustakas+2013, several redshifts']
     zdnM13, lmM13, pM13, dp_dn_M13, dp_up_M13 = common.load_observation(obsdir, 'mf/SMF/SMF_Moustakas2013.dat', [0,3,5,6,7])
@@ -161,7 +174,25 @@ def load_smf_observations(obsdir, h0):
 def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_offset, hist_smf_30kpc):
 
     (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs) = load_smf_observations(obsdir, h0)
+    
+    PlotLagos18 = True
+    def plot_lagos18_smf(ax, z):
+        sm, z0, z0p5, z1, z2, z3, z4 = common.load_observation(obsdir, 'Models/SharkVariations/SMF_Lagos18.dat', [0,1,2,3,4,5,6])
+        if z == 0:
+           y = z0
+        elif z == 1:
+           y = z0p5
+        elif z == 2:
+           y = z1
+        elif z == 3:
+           y = z2
+        elif z == 4:
+           y = z3
+        elif z == 5:
+           y = z4
+        ax.plot(sm, y, linestyle='dashed', color='black',label='Shark v1.1 (L18)' if z == 0 else None)
 
+    
     fig = plt.figure(figsize=(9.7,11.7))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\star}}/{\\rm Mpc}^{-3} )$"
@@ -183,38 +214,40 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
         # Observations
         for obs, marker in obs_and_markers:
             common.errorbars(ax, obs.x, obs.y, obs.yerrdn, obs.yerrup, 'grey',
-                             marker, err_absolute=obs.err_absolute, label=obs.label)
+                             marker, err_absolute=obs.err_absolute, label=obs.label, markersize=3)
 
         # Predicted SMF
         if plotz[idx]:
             y = hist_smf[idx,:]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'r', label='all galaxies' if idx == 0 else None)
-            #print('#redshift', z)
+            ax.plot(xmf[ind],y[ind],'r', label='Shark v2.0' if idx == 0 else None)
+            #print('#stellar mass function redshift', z)
             #for a,b in zip(xmf[ind],y[ind]):
             #    print(a,b)
-            y = hist_smf_cen[idx,:]
-            ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'b', linestyle='dotted', label ='centrals' if idx == 0 else None)
-            y = hist_smf_sat[idx,:]
-            ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'g', linestyle='dashed', label ='satellites' if idx == 0 else None)
-
+            #y = hist_smf_cen[idx,:]
+            #ind = np.where(y < 0.)
+            #ax.plot(xmf[ind],y[ind],'b', linestyle='dotted', label ='centrals' if idx == 0 else None)
+            #y = hist_smf_sat[idx,:]
+            #ind = np.where(y < 0.)
+            #ax.plot(xmf[ind],y[ind],'g', linestyle='dotted', label ='Shark v2.0 (sats)' if idx == 0 else None)
             if z < 1:
                 y = hist_smf_30kpc[idx,:]
                 ind = np.where(y < 0.)
-                ax.plot(xmf[ind],y[ind],'k', linestyle='dotted', linewidth=1, label ='30kpc')
+                ax.plot(xmf[ind],y[ind],'r', linestyle='dotted', linewidth=1, label ='Shark v2.0 (30kpc)'  if idx == 0 else None)
             if z >= 1:
                 y = hist_smf_offset[idx,:]
                 ind = np.where(y < 0.)
-                ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.3 dex error')
+                ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.3dex error')
+            if PlotLagos18 == True:
+               plot_lagos18_smf(ax, idx)
+       
 
         colors = []
         if idx == 0:
-            colors = ['r','b','g']
-        if z < 1:
-            colors += ['k']
-        if z >= 1:
+            colors = ['r','r','k']
+        #elif idx == 1:
+        #    colors += ['r']
+        elif idx > 1:
             colors = ['r']
         colors += ['grey', 'grey','grey']
 
@@ -416,24 +449,12 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
     if plotz_HImf[0]:
         y = hist_HImf[0,:]
         ind = np.where(y < 0.)
-        ax.plot(xmf[ind],y[ind],'k',  label ='all galaxies')
-        #print("Will print the HI MF")
-        #for a,b in zip(xmf[ind],y[ind]):
-        #    print(a,b)
-        y = hist_HImf_cen[0,:]
-        ind = np.where(y < 0.)
-        ax.plot(xmf[ind],y[ind],'b', linestyle='dotted', label ='centrals')
-        y = hist_HImf_sat[0,:]
-        ind = np.where(y < 0.)
-        ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='satellites')
+        ax.plot(xmf[ind],y[ind],'r', linestyle='solid',  label ='Shark v2.0')
 
+    xm, ym = common.load_observation(obsdir, 'Models/SharkVariations/HIMF_Lagos18.dat', [0,1])
+    ax.plot(xm,ym,'k', linestyle='dashed', label = 'Shark v1.1 (L18)')
 
-    pHI_GD14 = common.load_observation(obsdir, 'Models/SharkVariations/HIH2MassFunctions_OtherModels.dat', [0])
-
-    ind = np.where(pHI_GD14 < 0)
-    ax.plot(xmf[ind],pHI_GD14[ind],'BurlyWood', linestyle='dashdot', label = 'GD14')
-
-    common.prepare_legend(ax, ['k','b','r','BurlyWood','grey','grey'])
+    common.prepare_legend(ax, ['r','k','grey','grey'])
     common.savefig(outdir, fig, 'HImf_z0.pdf')
 
     # Plot different resolutions
@@ -546,39 +567,40 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
     ax.errorbar(xobs+corr_fac_H2, yobs, yerr=[dpCOdn,dpCOup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Keres+03")
 
     #H2 mass function
-    lm,p,dpdn,dpup = common.load_observation(obsdir, 'mf/GasMF/B14_MH2MF.dat', [0,1,2,3])
+    lm,p,dpdn,dpup = common.load_observation(obsdir, 'mf/GasMF/H2MF_Fletcher21_Estimated.dat', [0,1,2,3])
     #correct data for their choice of cosmology
     #add bin to the data.
     hobs = 0.7
-    logbin = np.log10(0.4)
-    xobs = lm[2:8] + np.log10(pow(hobs,2)/pow(h0,2))
-    yobs = p[2:8] - logbin + np.log10(pow(h0,3)/pow(hobs,3))
-    ax.errorbar(xobs, yobs, yerr=[p[2:8]-dpdn[2:8],dpup[2:8]-p[2:8]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Boselli+14")
+    lm = lm + np.log10(pow(hobs,2)/pow(h0,2))
+    yobs = p + np.log10(pow(h0,3)/pow(hobs,3))
+    ax.errorbar(lm, yobs, yerr=[p-dpdn,dpup-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Fletcher+21")
 
     #Predicted H2MF
     if plotz_HImf[0]:
         y = hist_H2mf[0,:]
         ind = np.where(y < 0.)
-        ax.plot(xmf[ind],y[ind],'k')
-        #print("Will print the H2 MF")
-        #for a,b in zip(xmf[ind],y[ind]):
-        #    print(a,b)
+        ax.plot(xmf[ind],y[ind],'r', linestyle='solid', label='Shark v2.0')
+        print("Will print the H2 MF")
+        for a,b in zip(xmf[ind],y[ind]):
+            print(a,b)
 
-        y = hist_H2mf_cen[0,:]
-        ind = np.where(y < 0.)
-        ax.plot(xmf[ind],y[ind],'b', linestyle='dotted')
-        y = hist_H2mf_sat[0,:]
-        ind = np.where(y < 0.)
-        ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
+        #y = hist_H2mf_cen[0,:]
+        #ind = np.where(y < 0.)
+        #ax.plot(xmf[ind],y[ind],'b', linestyle='dotted')
+        #y = hist_H2mf_sat[0,:]
+        #ind = np.where(y < 0.)
+        #ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
 
-    pH2_GD14 = common.load_observation(obsdir, 'Models/SharkVariations/HIH2MassFunctions_OtherModels.dat', [1])
+    #pH2_GD14 = common.load_observation(obsdir, 'Models/SharkVariations/HIH2MassFunctions_OtherModels.dat', [1])
 
-    ind = np.where(pH2_GD14 < 0)
-    ax.plot(xmf[ind],pH2_GD14[ind],'BurlyWood', linestyle='dashdot') 
+    #ind = np.where(pH2_GD14 < 0)
+    #ax.plot(xmf[ind],pH2_GD14[ind],'BurlyWood', linestyle='dashdot') 
+
+    xm, ym = common.load_observation(obsdir, 'Models/SharkVariations/HIMF_Lagos18.dat', [0,2])
+    ax.plot(xm,ym,'k', linestyle='dashed')
 
     common.prepare_legend(ax, ['grey','grey'])
     common.savefig(outdir, fig, 'H2mf_z0.pdf')
-
 
 def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):
 
@@ -1108,7 +1130,7 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
     common.savefig(outdir, fig, 'mzr_z0.pdf')
 
 
-def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
+def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
 
@@ -1123,19 +1145,23 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #predicted relation
-    ind = np.where((sfr_seq[0,:] > 0) & (sfr_seq[1,:] != 0) )
+    ind = np.where((sfr_seq[0,:] > 7) & (sfr_seq[0,:] < 13) & (sfr_seq[1,:] >-10) & (sfr_seq[1,:] < 10))
     xdata = sfr_seq[0,ind]
     ydata = sfr_seq[1,ind]
     us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
 
     ind = np.where(sfr_seq[0,:] > 0)
     toplot = bin_it(x=sfr_seq[0,ind], y=sfr_seq[1,ind])
-    ax.plot(xmf, toplot[0],color='k',linestyle='dotted', linewidth = 3) #, **contour_kwargs)
+    ind = np.where(toplot[0,:] != 0)
+    yp = toplot[0,ind] 
+    ax.plot(xmf[ind], yp[0],color='k',linestyle='solid', linewidth = 2, label="Shark v2.0")
 
-    ind = np.where(mainseqsf[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = mainseqsf[0,0,ind]
-    ax.plot(xplot,yplot[0],color='k',linestyle='solid', linewidth = 1, label="Shark all galaxies")
+    xm, ym = common.load_observation(obsdir, 'Models/SharkVariations/SFRMstars_Lagos18.dat', [0,1])
+    ax.plot(xm, ym, linestyle='dashed', linewidth = 2, color='black',label='Shark v1.1 (L18)')
+
+    #print("will print median MS")
+    #for a,b in zip(xmf, toplot[0]):
+    #    print(a,b)
 
     #SFR relation z=0
     lm, SFR = common.load_observation(obsdir, 'SFR/Brinchmann04.dat', (0, 1))
@@ -1151,9 +1177,54 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf):
     ydataD16 = [-0.39, 0.477]
     ax.plot(xdataD16,ydataD16, color='b',linestyle='dashdot',linewidth = 4, label='Davies+16')
 
+
+    # individual massive galaxies from Terrazas+17
+    ms, sfr, upperlimflag = common.load_observation(obsdir, 'BHs/MBH_host_gals_Terrazas17.dat', [0,1,2])
+    #BH-SSFR relation
+    ind = np.where(ms > 11.3)
+    ax.errorbar(ms[ind], sfr[ind], xerr=0.2, yerr=0.3, ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Terrazas+17")
+    ind = np.where((upperlimflag == 1) & (ms > 11.3))
+    for a,b in zip (ms[ind], sfr[ind]):
+        ax.arrow(a, b, 0, -0.3, head_width=0.05, head_length=0.1, fc='r', ec='r')
+
     # Legend
-    common.prepare_legend(ax, ['k','PaleVioletRed', 'b'], loc=2)
+    common.prepare_legend(ax, ['k','PaleVioletRed', 'b','r'], loc=2)
     common.savefig(outdir, fig, 'SFR_Mstars_z0.pdf')
+
+
+    #plot SFR vs Hneutral for central, massive galaxies
+    fig = plt.figure(figsize=(5,5))
+    ytit="$\\rm log_{10} (\\rm M_{\\rm neutral}/M_{\odot})$"
+    xtit="$\\rm log_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
+
+    xmin, xmax, ymin, ymax = -3, 1.5, 8, 12.5
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    #predicted relation
+    ind = np.where(sfr_hi[0,0,:] != 0)
+    xplot = xsfr[ind]
+    yplot = sfr_hi[0,0,ind]
+    ydn = sfr_hi[0,1,ind]
+    yup = sfr_hi[0,2,ind]
+
+    ax.fill_between(xplot,yplot[0]+yup[0],yplot[0]-ydn[0], facecolor='grey', alpha=1,interpolate=True)
+    ax.plot(xplot,yplot[0],color='k',linestyle='solid', linewidth = 1, label="Shark cens")
+
+
+    # load observations
+    SFR, Mneutral, Mneutralerr = common.load_observation(obsdir, 'SFR/UVIR_SFR_HI_Shi22.dat', (0, 5, 6))
+    ax.errorbar(SFR, Mneutral, yerr=Mneutralerr, ls='None', mfc='None', ecolor = 'OrangeRed', mec='OrangeRed',marker='+',label="Shi+22 (UVIR)")
+    SFR, Mneutral, Mneutralerr = common.load_observation(obsdir, 'SFR/Halpha_D400_SFR_HI_Shi22.dat', (0, 5, 6))
+    ax.errorbar(SFR, Mneutral, yerr=Mneutralerr, ls='None', mfc='None', ecolor = 'gold', mec='gold',marker='+',label="Shi+22 (H$\\alpha$)")
+
+ 
+    # Legend
+    common.prepare_legend(ax, ['k', 'OrangeRed', 'gold'], loc=2)
+    common.savefig(outdir, fig, 'SFR_HI_Centrals_z0.pdf')
+
 
 def plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr):
 
@@ -1237,7 +1308,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
                  mainseqsf_cen, sfe_cen, mainseq_sat, mainseqsf_sat, sfe_sat, mzr, 
                  fmzr, mzr_cen, mzr_sat, plotz, plotz_HImf, passive_fractions, hist_ssfr, 
                  mszr, mszr_cen, mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2, hist_smf_err, 
-                 hist_HImf_err, hist_smf_comp):
+                 hist_HImf_err, hist_smf_comp, sfr_hi):
 
     (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rstar_disk, mBH, mHI, mH2, 
      mgas_disk, mHI_bulge, mH2_bulge, mgas_bulge, mgas_metals_disk, mgas_metals_bulge, 
@@ -1260,6 +1331,27 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     mass_mol = np.zeros(shape = len(mdisk))
     mass_mol_cen = np.zeros(shape = len(mdisk))
     mass_mol_sat = np.zeros(shape = len(mdisk))
+
+
+    ind = np.where((np.isnan(mdisk+mbulge) == True) | (np.isinf(mdisk+mbulge) == True))
+    if (len(mdisk[ind]) > 0):
+         print("Number of galaxies with a stellar mass of NaN:", len(mdisk[ind]))
+    else:
+         print("All galaxies have well defined stellar mass")
+
+    ind = np.where((np.isnan(mBH) == True) | (np.isinf(mBH) == True))
+    if (len(mdisk[ind]) > 0):
+         print("Number of galaxies with a BH mass of NaN:", len(mdisk[ind]))
+    else:
+         print("All galaxies have well defined BH mass")
+
+
+    #select massive centrals
+    bin_it_sfr = functools.partial(us.wmedians, xbins=xsfr, low_numbers=False, nmin=10)
+    ind = np.where(((mdisk+mbulge)/h0 > 10**10.6) & ((mdisk+mbulge)/h0 > 1e11) & (typeg == 0) & (sfr_disk + sfr_burst > 0))
+    sfr_cens = np.log10((sfr_disk[ind] + sfr_burst[ind])/h0) - 9  
+    mneutral_cens = np.log10((mgas_disk[ind] + mgas_bulge[ind])/h0)
+    sfr_hi[index,:] = bin_it_sfr(x=sfr_cens, y=mneutral_cens)
 
     ind = np.where((mdisk+mbulge) > 0.0)
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
@@ -1462,6 +1554,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     sfe_cen     = np.zeros(shape = (len(zlist), 3, len(xmf)))
     sfe_sat     = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
+    sfr_hi      = np.zeros(shape = (len(zlist), 3, len(xsfr))) 
     passive_fractions = np.zeros(shape = (len(zlist), 3, len(xmf2)))
 
     # Histograms
@@ -1502,16 +1595,26 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                              mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen, mzr_sat, plotz,
                              plotz_HImf, passive_fractions, hist_ssfr, mszr, mszr_cen, 
 			     mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2, hist_smf_err, hist_HImf_err, 
-                             hist_smf_comp)
+                             hist_smf_comp, sfr_hi)
 
         h0 = hdf5_data[0]
+        volh = hdf5_data[1]
         if index == 0:
             (sfr_disk, sfr_burst, mdisk, mbulge) = hdf5_data[2:6]
             sfr_seq = np.zeros(shape = (2, len(mdisk)))
+            ind = np.where(sfr_disk + sfr_burst <= 0)
+            sfr_disk[ind] = 1e-10 #assume a minimum
+
             ind  = np.where((sfr_disk + sfr_burst > 0) & (mdisk + mbulge > 0))
             sfr_seq[0,ind] = mass[ind]
             sfr_seq[1,ind] = np.log10((sfr_disk[ind] + sfr_burst[ind]) / h0 / GyrToYr)
 
+            ind = np.where(mass < 10.7)
+            sfr_den = np.log10(sum(sfr_disk[ind] + sfr_burst[ind]) /  h0 / GyrToYr) + np.log10(h0**3.0 / volh)
+            print("cosmic SFR density at z=0", sfr_den, volh)
+            ind = np.where(mass < 12)
+            sfr_den = np.log10(sum(sfr_disk[ind] + sfr_burst[ind]) /  h0 / GyrToYr) + np.log10(h0**3.0 / volh)
+            print("cosmic SFR density at z=0", sfr_den, volh)
 
     # This should be the same in all HDF5 files
 
@@ -1545,7 +1648,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_SFE_Mstars(plt, outdir, sfe, sfe_cen, sfe_sat)
     plot_fmzr(plt, outdir, fmzr)
     plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_sat, mzr)
-    plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf)
+    plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi)
     plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr) 
 
 

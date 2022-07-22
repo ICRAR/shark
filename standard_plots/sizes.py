@@ -54,7 +54,8 @@ xv    = vbins + dv/2.0
 
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
-                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR):
+                 disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, 
+                 bs_error, BHSFR, BH_morpho, BHSM_morpho):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
@@ -132,23 +133,31 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
     bulge_size_diskins[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where(mbulge > 0)
+    ind = np.where(mBH > 0)
     BH[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
- 
+    ind = np.where((mBH > 0) & (mbulge/(mdisk+mbulge) > 0.5))
+    BH_morpho[index,0,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
+                    y=np.log10(mBH[ind]) - np.log10(float(h0)))
+    ind = np.where((mBH > 0) & (mbulge/(mdisk+mbulge) <= 0.5))
+    BH_morpho[index,1,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
+                    y=np.log10(mBH[ind]) - np.log10(float(h0)))
+
     ind = np.where(mBH > 0)
     BHSM[index,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
                     y=np.log10(mBH[ind]) - np.log10(float(h0)))
    
+    ind = np.where((mBH > 0) & (mbulge/(mdisk+mbulge) > 0.5))
+    BHSM_morpho[index,0,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
+                    y=np.log10(mBH[ind]) - np.log10(float(h0)))
+    ind = np.where((mBH > 0) & (mbulge/(mdisk+mbulge) <= 0.5))
+    BHSM_morpho[index,1,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
+                    y=np.log10(mBH[ind]) - np.log10(float(h0)))
 
     ssfr = (sfr_disk + sfr_burst) / 1e9 / (mbulge + mdisk)
     #apply lower limit to ssfr
     ind = np.where(ssfr < 1e-14)
     ssfr[ind] = 2e-14
-
-    ind = np.where(mBH > 0)
-    BHSM[index,:] = bin_it(x=np.log10(mbulge[ind] + mdisk[ind]) - np.log10(float(h0)),
-                    y=np.log10(mBH[ind]) - np.log10(float(h0)))
 
     ind = np.where((mBH > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 1e10) & (typeg <= 0))
     BHSFR[index,:] = bin_it(x=np.log10(mBH[ind]) - np.log10(float(h0)), 
@@ -393,45 +402,58 @@ def plot_sizes_combined(plt, outdir, obsdir, rcomb):
     common.savefig(outdir, fig, 'sizes_combined.pdf')
 
 
-def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR):
+def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR, BH_morpho, BHSM_morpho):
 
-    fig = plt.figure(figsize=(5,4.5))
+    fig = plt.figure(figsize=(6,5.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm bulge}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
 
     xmin, xmax, ymin, ymax = 8, 13, 5, 11
     xleg = xmax - 0.2 * (xmax - xmin)
-    yleg = ymax - 0.1 * (ymax - ymin)
+    yleg = ymin + 0.1 * (ymax - ymin)
 
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-    ax.text(xleg, yleg, 'z=0')
+    ax.text(xleg, yleg, 'z=0', fontsize=12)
 
     #Predicted BH-bulge mass relation
     ind = np.where(BH[0,0,:] != 0)
-    if(len(xmf[ind]) > 0):
-        xplot = xmf[ind]
-        yplot = BH[0,0,ind]
-        errdn = BH[0,1,ind]
-        errup = BH[0,2,ind]
-        ax.plot(xplot,yplot[0],color='k',label="Shark")
-        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
-        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
-
-
-    MBH_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BHBulgeRelation_OtherModels.dat', [0])
-    MBH_f_smbh0p008   = MBH_othermodels[0:29]
-    MBH_f_smbh0p00008 = MBH_othermodels[30:60]
-    ind = np.where(MBH_f_smbh0p008 != 0)
     xplot = xmf[ind]
-    yplot = MBH_f_smbh0p008[ind]
-    ax.plot(xplot,yplot,color='Goldenrod',linestyle='dashed',label='$f_{\\rm smbh}=8 \\times 10^{-3}$')
-    ind = np.where(MBH_f_smbh0p00008 != 0)
+    yplot = BH[0,0,ind]
+    errdn = BH[0,1,ind]
+    errup = BH[0,2,ind]
+    ax.plot(xplot,yplot[0],color='k',label="Shark (All)")
+    ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
+
+    ind = np.where(BH_morpho[0,0,0,:] != 0)
     xplot = xmf[ind]
-    yplot = MBH_f_smbh0p00008[ind]
-    ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$f_{\\rm smbh}=8 \\times 10^{-5}$')
+    yplot = BH_morpho[0,0,0,ind]
+    errdn = BH_morpho[0,0,1,ind]
+    errup = BH_morpho[0,0,2,ind]
+    ax.plot(xplot,yplot[0],color='Crimson',label="Shark (ETGs)")
+    ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='Crimson', alpha=0.25, interpolate=True)
+
+    ind = np.where(BH_morpho[0,1,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = BH_morpho[0,1,0,ind]
+    errdn = BH_morpho[0,1,1,ind]
+    errup = BH_morpho[0,1,2,ind]
+    ax.plot(xplot,yplot[0],color='Navy',label="Shark (LTGs)")
+    ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='Navy', alpha=0.25, interpolate=True)
+
+    #MBH_othermodels = common.load_observation(obsdir, 'Models/SharkVariations/BHBulgeRelation_OtherModels.dat', [0])
+    #MBH_f_smbh0p008   = MBH_othermodels[0:29]
+    #MBH_f_smbh0p00008 = MBH_othermodels[30:60]
+    #ind = np.where(MBH_f_smbh0p008 != 0)
+    #xplot = xmf[ind]
+    #yplot = MBH_f_smbh0p008[ind]
+    #ax.plot(xplot,yplot,color='Goldenrod',linestyle='dashed',label='$f_{\\rm smbh}=8 \\times 10^{-3}$')
+    #ind = np.where(MBH_f_smbh0p00008 != 0)
+    #xplot = xmf[ind]
+    #yplot = MBH_f_smbh0p00008[ind]
+    #ax.plot(xplot,yplot,color='Orange',linestyle='dotted',label='$f_{\\rm smbh}=8 \\times 10^{-5}$')
 
     #BH-bulge relation
     mBH_M13, errup_M13, errdn_M13, mBH_power, mbulge_M13 = common.load_observation(obsdir, 'BHs/MBH_sigma_Mbulge_McConnelMa2013.dat', [0,1,2,3,7])
@@ -441,56 +463,87 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR):
     yobs = np.log10(mBH_M13[ind] * pow(10.0,mBH_power[ind]))
     lerr = np.log10((mBH_M13[ind] - errdn_M13[ind]) * pow(10.0,mBH_power[ind]))
     herr = np.log10((mBH_M13[ind] + errup_M13[ind]) * pow(10.0,mBH_power[ind]))
-    ax.errorbar(xobs, yobs, yerr=[yobs-lerr,herr-yobs], ls='None', mfc='None', ecolor = 'r', mec='r',marker='^',label="McConnell & Ma 2013")
+    ax.errorbar(xobs, yobs, yerr=[yobs-lerr,herr-yobs], ls='None', mfc='None', ecolor = 'r', mec='r',marker='^',label="M13")
 
     #BH-bulge relation
-    mBH_H04, errup_H04, errdn_H04, mbulge_H04 = common.load_observation(obsdir, 'BHs/MBH_sigma_Mbulge_HaeringRix2004.dat', [0,1,2,4])
+    #mBH_H04, errup_H04, errdn_H04, mbulge_H04 = common.load_observation(obsdir, 'BHs/MBH_sigma_Mbulge_HaeringRix2004.dat', [0,1,2,4])
+    #xobs = np.log10(mbulge_H04)
+    #yobs = xobs*0. - 999.
+    #indx = np.where( mBH_H04 > 0)
+    #yobs[indx] = np.log10(mBH_H04[indx])
+    #lerr = yobs*0. - 999.
+    #indx = np.where( (mBH_H04-errdn_H04) > 0)
+    #lerr[indx]  = np.log10(mBH_H04[indx] - errdn_H04[indx])
+    #herr = yobs*0. + 999.
+    #indx = np.where( (mBH_H04+errup_H04) > 0)
+    #herr[indx]  = np.log10(mBH_H04[indx] + errup_H04[indx])
+    #ax.errorbar(xobs, yobs, yerr=[yobs-lerr,herr-yobs], ls='None', mfc='None', ecolor = 'maroon', mec='maroon',marker='s',label="Haering+2004")
 
-    xobs = np.log10(mbulge_H04)
 
-    yobs = xobs*0. - 999.
-    indx = np.where( mBH_H04 > 0)
-    yobs[indx] = np.log10(mBH_H04[indx])
+    mBH_D19, errup_D19, errdn_D19, mbulge_D19, errbul_D19, mgal_D19, errgal_D19 = common.load_observation(obsdir, 'BHs/MBH_Mstar_Davis2019.dat', [0,1,2,3,4,5,6])
+    ind = np.where((mBH_D19 != 0) & (mbulge_D19 != 0))
+    ax.errorbar(mbulge_D19[ind], mBH_D19[ind], xerr=errbul_D19[ind], yerr=[errdn_D19[ind], errup_D19[ind]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='o',label="D19 (LTGs)")
+    mBH_S19, errbh_S19, mbulge_S19, errbul_S19, mgal_S19, errgal_S19 = common.load_observation(obsdir, 'BHs/MBH_Mstar_Sahu2019.dat', [0,1,2,3,4, 5])
+    ind = np.where((mBH_S19 != 0) & (mbulge_S19 != 0))
+    ax.errorbar(mbulge_S19[ind], mBH_S19[ind], xerr=errbul_S19[ind], yerr=errbh_S19[ind], ls='None', mfc='None', ecolor = 'Orange', mec='Orange',marker='d',label="S19 (ETGs)")
 
-    lerr = yobs*0. - 999.
-    indx = np.where( (mBH_H04-errdn_H04) > 0)
-    lerr[indx]  = np.log10(mBH_H04[indx] - errdn_H04[indx])
 
-    herr = yobs*0. + 999.
-    indx = np.where( (mBH_H04+errup_H04) > 0)
-    herr[indx]  = np.log10(mBH_H04[indx] + errup_H04[indx])
-    ax.errorbar(xobs, yobs, yerr=[yobs-lerr,herr-yobs], ls='None', mfc='None', ecolor = 'maroon', mec='maroon',marker='s',label="Haering+04")
-
-    common.prepare_legend(ax, ['k','Goldenrod','Orange','r','maroon'], loc=2)
+    common.prepare_legend(ax, ['k','crimson','navy','r','b', 'Orange'], loc=2)
     common.savefig(outdir, fig, 'bulge-BH.pdf')
 
     #stellar mass-black hole mass relation
-    fig = plt.figure(figsize=(5,4.5))
+    fig = plt.figure(figsize=(6,5.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    xmin, xmax, ymin, ymax = 9, 12.5, 5.5, 11
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymin + 0.1 * (ymax - ymin)
 
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-    ax.text(xleg, yleg, 'z=0')
+    ax.text(xleg, yleg, 'z=0', fontsize=12)
 
     #Predicted BH-stellar mass relation
     ind = np.where(BHSM[0,0,:] != 0)
-    if(len(xmf[ind]) > 0):
-        xplot = xmf[ind]
-        yplot = BH[0,0,ind]
-        errdn = BH[0,1,ind]
-        errup = BH[0,2,ind]
-        ax.plot(xplot,yplot[0],color='k',label="Shark")
-        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
-        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
+    xplot = xmf[ind]
+    yplot = BHSM[0,0,ind]
+    errdn = BHSM[0,1,ind]
+    errup = BHSM[0,2,ind]
+    ax.plot(xplot,yplot[0],color='k',label="Shark (All)")
+    ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
+    ind = np.where(BHSM_morpho[0,0,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = BHSM_morpho[0,0,0,ind]
+    errdn = BHSM_morpho[0,0,1,ind]
+    errup = BHSM_morpho[0,0,2,ind]
+    ax.plot(xplot,yplot[0],color='Crimson',label="Shark (ETGs)")
+    ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='Crimson', alpha=0.25, interpolate=True)
 
-    common.prepare_legend(ax, ['k'], loc=2)
+    ind = np.where(BHSM_morpho[0,1,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = BHSM_morpho[0,1,0,ind]
+    errdn = BHSM_morpho[0,1,1,ind]
+    errup = BHSM_morpho[0,1,2,ind]
+    ax.plot(xplot,yplot[0],color='Navy',label="Shark (LTGs)")
+    ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='Navy', alpha=0.25, interpolate=True)
+
+    ind = np.where((mBH_S19 != 0) & (mgal_S19 != 0))
+    ax.errorbar(mgal_S19[ind], mBH_S19[ind], xerr=errgal_S19[ind], yerr=errbh_S19[ind], ls='None', mfc='None', ecolor = 'Orange', mec='Orange',marker='d',label="S19 (ETGs)")
+    ind = np.where((mBH_D19 != 0) & (mgal_D19 != 0))
+    ax.errorbar(mgal_D19[ind], mBH_D19[ind], xerr=errgal_D19[ind], yerr=[errdn_D19[ind],errup_D19[ind]], ls='None', mfc='None', ecolor = 'b', mec='b',marker='d',label="D19 (LTGs)")
+
+    ms, sfr, upperlimflag, mbh, mbherr = common.load_observation(obsdir, 'BHs/MBH_host_gals_Terrazas17.dat', [0,1,2,3,4])
+    ind=np.where(sfr-ms > -11.5)
+    ax.errorbar(ms[ind], mbh[ind], yerr=mbherr[ind], xerr=0.2, ls='None', mfc='None', ecolor = 'PowderBlue', mec='PowderBlue',marker='s', label="T17 (SF)")
+    ind=np.where(sfr-ms <= -11.5)
+    ax.errorbar(ms[ind], mbh[ind], yerr=mbherr[ind], xerr=0.2, ls='None', mfc='None', ecolor = 'LightSalmon', mec='LightSalmon',marker='s',label="T17 (P)")
+
+    common.prepare_legend(ax, ['k','crimson','navy', 'Orange', 'b', 'PowderBlue','LightSalmon'], loc=2)
     common.savefig(outdir, fig, 'stellarmass-BH.pdf')
 
-
     #SSFR vs BH mass
-    fig = plt.figure(figsize=(5,4.5))
+    fig = plt.figure(figsize=(6,5.5))
     ytit = "$\\rm log_{10} (\\rm sSFR/M_{\odot} yr^{-1})$"
     xtit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
 
@@ -502,7 +555,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR):
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-    ax.text(xleg, yleg, 'z=0')
+    ax.text(xleg, yleg, 'z=0', fontsize=12)
 
     #Predicted BH-bulge mass relation
     ind = np.where(BHSFR[0,0,:] != 0)
@@ -517,8 +570,6 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR):
 
 
     #BH-SSFR relation
-    ms, sfr, upperlimflag, mbh, mbherr = common.load_observation(obsdir, 'BHs/MBH_host_gals_Terrazas17.dat', [0,1,2,3,4])
-    print("minimum ms Terrazas",min(ms)) 
     ax.errorbar(mbh, sfr-ms, xerr=mbherr, yerr=0.3, ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Terrazas+17")
     ind = np.where(upperlimflag == 1)
     for a,b in zip (mbh[ind], sfr[ind]-ms[ind]):
@@ -641,6 +692,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     BH = np.zeros(shape = (len(zlist), 3, len(xmf)))
     BHSM = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    BH_morpho = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
+    BHSM_morpho = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
+
     BHSFR = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
     disk_size_sat = np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -659,7 +713,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         (mdisk, rdisk, age) = prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR)
+                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR, BH_morpho, BHSM_morpho)
         if(index == 0):
            mdisk_z0 = mdisk
            rdisk_z0 = rdisk
@@ -668,7 +722,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bulge_size_mergers, bulge_size_diskins)
     plot_velocities(plt, outdir, disk_vel, bulge_vel, baryonic_TF)
     plot_sizes_combined(plt, outdir, obsdir, rcomb)
-    plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR)
+    plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR, BH_morpho, BHSM_morpho)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
     plot_age_disk(plt, outdir, obsdir, mdisk_z0, rdisk_z0, age_z0)
 

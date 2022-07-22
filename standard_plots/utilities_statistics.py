@@ -101,15 +101,17 @@ def stacking(x=None, y=None, xbins=None, low_numbers=False):
     nbins = len(xbins)
     #define size of bins, assuming bins are all equally spaced.
     dx = xbins[1] - xbins[0]
-    result = np.zeros(shape = (nbins))
+    result = np.zeros(shape = (2,nbins))
 
     for i in range (0,nbins):
         xlow = xbins[i]-dx/2.0
         xup  = xbins[i]+dx/2.0
-        ind  = np.where((x > xlow) & (x< xup))
+        ind  = np.where((x > xlow) & (x<= xup))
         if(len(x[ind]) > 0):
             ybin    = y[ind]
-            result[i] = np.log10(np.mean(ybin))
+            xbin    = x[ind]
+            result[0,i] = np.log10(np.mean(xbin))
+            result[1,i] = np.log10(np.mean(ybin))
 
     return result
 

@@ -43,9 +43,9 @@ polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238]
 
 #choose dust model between mm14, rr14 and constdust
 m14 = False
-rr14 = False
+rr14 = True
 constdust = False
-rr14xcoc = True
+rr14xcoc = False
 
 #read EAGLE tables
 sdust_eaglet, taumed_eagle, taulow_eagle, tauhigh_eagle = common.load_observation('../data', 'Models/EAGLE/Tau5500-Trayford-EAGLE.dat', [0,1,2,3])
@@ -235,7 +235,7 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
     # will write the hdf5 files with the CO SLEDs and relevant quantities
     # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
     ind = np.where( (mdisk +  mbulge) > 0)
-    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14-steep.hdf5')
+    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14.hdf5')
     print ('Will write extinction to %s' % file_to_write)
     hf = h5py.File(file_to_write, 'w')
     
@@ -254,7 +254,8 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     #zlist = np.arange(2,10,0.25)
     #zlist = (0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 0, 0.25, 0.5, 1, 2, 3, 4, 6, 8, 9, 10)
 
-    zlist = [9.95655] #0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988] #[5.02220991014863, 5.52950356184419, 5.96593, 6.55269895697227, 7.05756323172746, 7.45816170313544, 8.02352, 8.94312532315157, 9.95655]
+    zlist = [0, 0.25, 0.38, 0.49, 0.76, 1.00, 1.245, 1.51, 1.77, 2.00, 3.01, 3.95, 5.0, 6.0, 7.0, 8.0, 9.0, 10]
+    #[0,0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988, 5.02220991014863, 5.52950356184419, 5.96593, 6.55269895697227, 7.05756323172746, 7.45816170313544, 8.02352, 8.94312532315157, 9.95655]
     #[0.016306640039433, 0.066839636933135, 0.084236502339783, 0.119886040396529, 0.138147164704691, 0.175568857770275, 0.214221447279112, 0.23402097095238, 0.274594901875312, 0.316503156974571]
 
     plt = common.load_matplotlib()

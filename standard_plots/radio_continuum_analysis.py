@@ -196,6 +196,10 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     ind = np.where(lir_total[0,:] > 1e7)
     print("Median qIR for Dale14 and Bressan", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind])," at redshift", redshift)
 
+
+    ind = np.where(sfr > 300)
+    print(lir_total[0,ind])
+
     ran_err = np.random.normal(0.0, 0.3, len(sfr))
 
     ind = np.where(Lum_radio_Viperfish[3,:]/1e7 > 1e17)
