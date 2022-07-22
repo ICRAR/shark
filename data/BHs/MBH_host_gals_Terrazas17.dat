@@ -1,5 +1,5 @@
 #From Terrazas et al. (2017; ApJ...844..170)
-#log10(Mstar/Msun) lof10(SFR/Msun yr^-1) sfr_upper_limit_Flag log10(MBH/Msun) err_BH
+#log10(Mstar/Msun) log10(SFR/Msun yr^-1) sfr_upper_limit_Flag log10(MBH/Msun) err_BH
       10.904           0.213    0        7.755         0.084
       10.200           -0.010   0        6.057         0.105
       11.381           -0.611   0        9.394         0.079
