@@ -540,8 +540,11 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				physicalmodel->evolve_galaxy_starburst(*subhalo, *galaxy, z, delta_t, true);
 
 				// Grow SMBH after starbursts, as during it we need a realistical measurement of Ledd the BH had before the starburst.
-				galaxy->smbh.mass += delta_mbh;
-				galaxy->smbh.mass_metals += delta_mzbh;
+				// Check if SMBH exists in this galaxy, then grow it.
+				if(galaxy->smbh.mass != 0){
+					galaxy->smbh.mass += delta_mbh;
+					galaxy->smbh.mass_metals += delta_mzbh;
+				}
 
 				// Check for small gas reservoirs left in the bulge, in case mass is small, transfer to disk.
 				if(galaxy->bulge_gas.mass > 0 && galaxy->bulge_gas.mass < parameters.mass_min){
