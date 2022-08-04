@@ -188,9 +188,11 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, d
 		// Define accretion rate.
 		galaxy->smbh.macc_sb = delta_mbh/tdyn;
 
-		// Grow SMBH.
-		galaxy->smbh.mass += delta_mbh;
-		galaxy->smbh.mass_metals += delta_mzbh;
+		// Check if SMBH exists in this galaxy, then grow it.
+		if(galaxy->smbh.mass != 0){
+			galaxy->smbh.mass += delta_mbh;
+			galaxy->smbh.mass_metals += delta_mzbh;
+		}
 
 		// Reduce gas available for star formation due to black hole growth.
 		galaxy->bulge_gas.mass -= delta_mbh;
