@@ -324,18 +324,21 @@ double AGNFeedback::smbh_growth_starburst(double mgas, double vvir, double tacc,
 
 	auto &smbh = galaxy.smbh;
 
-	if(mgas > 0){
-		m =  parameters.f_smbh * mgas / (1 + std::pow(parameters.v_smbh/vvir, 2.0));
-	}
-
-	// calculate new spin if necessary
-	if(parameters.model == AGNFeedbackParameters::LAGOS22){
-		// in this case compute spin
-		if(parameters.spin_model == AGNFeedbackParameters::VOLONTERI07){
-			volonteri07_spin(smbh);
+	// Grow supermassive BH only if above the black hole seed (avoid formation of low BH masses without seeds).
+        if(smbh.mass > parameters.mseed){
+		if(mgas > 0){
+			m =  parameters.f_smbh * mgas / (1 + std::pow(parameters.v_smbh/vvir, 2.0));
 		}
-		else if (parameters.spin_model == AGNFeedbackParameters::GRIFFIN19){
-			griffin19_spinup_accretion(m, tacc, galaxy);
+        
+		// calculate new spin if necessary
+		if(parameters.model == AGNFeedbackParameters::LAGOS22){
+			// in this case compute spin
+			if(parameters.spin_model == AGNFeedbackParameters::VOLONTERI07){
+				volonteri07_spin(smbh);
+			}
+			else if (parameters.spin_model == AGNFeedbackParameters::GRIFFIN19){
+				griffin19_spinup_accretion(m, tacc, galaxy);
+			}
 		}
 	}
 

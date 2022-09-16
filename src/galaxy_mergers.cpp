@@ -592,7 +592,6 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 					delta_mzbh = delta_mbh/galaxy.bulge_gas.mass * galaxy.bulge_gas.mass_metals;
 				}
 
-
 				// Define accretion rate.
 				galaxy.smbh.macc_sb = delta_mbh/tdyn;
 
