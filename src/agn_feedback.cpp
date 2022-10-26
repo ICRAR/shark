@@ -263,13 +263,13 @@ double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh, bool starbu
 
 		if(m_dot_norm >= parameters.mdotcrit_adaf){
 			Lbol = eff[0] * (macc / MACCRETION_cgs_simu) * std::pow(c_light_cm,2.0) / 1e40;
-			if(Lbol > parameters.eta_superedd * LEdd){
-				Lbol = parameters.eta_superedd * (1.0 + std::log(m_dot_norm / parameters.eta_superedd)) * LEdd;
+			if(m_dot_norm > parameters.eta_superedd * (0.1 / eff[0])){
+				Lbol = parameters.eta_superedd * (1.0 + std::log(m_dot_norm / parameters.eta_superedd * eff[0] / 0.1)) * LEdd;
 			}
 		}
 		else{
 			if(m_dot_norm > parameters.low_accretion_adaf){
-				Lbol = 0.2 * eff[0] * (macc / MACCRETION_cgs_simu)  * std::pow(c_light_cm, 2.0) * parameters.constant_highlum_adaf / eff[1] / 1e40;
+				Lbol = 0.2 * eff[0] * (macc / MACCRETION_cgs_simu)  * std::pow(c_light_cm, 2.0) * m_dot_norm * parameters.constant_highlum_adaf / eff[1] / 1e40;
 			}
 			else{
 				Lbol = 0.0002 * eff[0] * (macc / MACCRETION_cgs_simu) * std::pow(c_light_cm, 2.0) * parameters.constant_lowlum_adaf / eff[1] / 1e40;
