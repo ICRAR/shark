@@ -670,6 +670,8 @@ void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, G
 
 void AGNFeedback::griffin19_spinup_mergers(BlackHole &smbh_primary, const BlackHole &smbh_secondary, const Galaxy &galaxy){
 
+        using namespace constants;
+
 	double t0 = -2.686,
 			t2 = -3.454,
 			t3 = 2.353,
@@ -681,7 +683,8 @@ void AGNFeedback::griffin19_spinup_mergers(BlackHole &smbh_primary, const BlackH
 	auto s1 = smbh_primary.spin;
 	auto s2 = smbh_secondary.spin;
 
-	if ( m1 > 0 && m2 > 0){
+        // Apply Rezzolla et al. (2008) if at least one of the BHs has a non-zero spin.
+	if ( m1 > 0 && m2 > 0 && (s1 !=0 || s2 != 0)){
 
 		// The subscript 1 refers to the spin of black hole 1
 		// We are using spherical polar coordinates
@@ -743,6 +746,19 @@ void AGNFeedback::griffin19_spinup_mergers(BlackHole &smbh_primary, const BlackH
 			os << " SMBH in merging black holes has spin not well defined";
 			throw invalid_data(os.str());
 		}
+	}
+	else if (m1 > 0 && m2 > 0 && s1 ==0 && s2 == 0){
+	// when both BHs are spinless, then apply Berti & Volonteri (2008)
+		double q = m2 / m1;
+		if ( q > 1) q = 1.0 / q;
+		
+		auto new_spin = 2 * SQRT3 * q / std::pow( 1 + q, 2.0) - 2.029 * std::pow(q, 2.0) / std::pow( 1 + q, 4.0);
+
+		// make sure it doesn't go negative or above 1.
+		if ( new_spin < 0) new_spin = 0;
+		if ( new_spin > 1) new_spin = 1;
+
+		smbh_primary.spin = new_spin;
 	}
 	else{
 		if(m1 == 0){
