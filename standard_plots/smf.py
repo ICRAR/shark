@@ -74,10 +74,21 @@ def load_smf_observations(obsdir, h0):
         lm, pD, dn, du = np.loadtxt(obsdir+'/mf/SMF/Thorne21/SMFvals_'+file_read+'.csv', delimiter=',', skiprows=1, usecols = [0,1,2,3], unpack = True)
         hobd = 0.7
         pDlog = np.log10(pD[::3]) +  3.0 * np.log10(hobs/h0)
-        dnlog = pDlog - np.log10(dn[::3])
-        dulog = np.log10(du[::3]) - pDlog
+        dnlog = np.log10(pD[::3]) - np.log10(dn[::3])
+        dulog = np.log10(du[::3]) - np.log10(pD[::3])
         lm = lm[::3] -  2.0 * np.log10(hobs/h0)
         zappend.append((observation("Thorne+2021", lm, pDlog, dnlog, dulog, err_absolute=False), 's'))
+
+    # Weaver et al. (2022; COSMOS2020)
+    def add_weaver22_data(zappend, file_read='0.2z0.5'):
+        lm, pD, dn, du = np.loadtxt(obsdir+'/mf/SMF/COSMOS2020/SMF_Farmer_v2.1_' + file_read + '_total.txt', delimiter=' ', skiprows=0, usecols = [0,2,3,4], unpack = True)
+        hobd = 0.7
+        pDlog = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        dnlog = np.log10(pD) - np.log10(dn)
+        dulog = np.log10(du) - np.log10(pD)
+        lm = lm -  2.0 * np.log10(hobs/h0)
+        zappend.append((observation("Weaver+2023", lm, pDlog, dnlog, dulog, err_absolute=False), '*'))
+
 
     # Driver al. (2022, z=0). Chabrier IMF
     z0obs = []
@@ -136,6 +147,8 @@ def load_smf_observations(obsdir, h0):
     in_redshift = np.where(zdnMu13 == 0.5)
     z05obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z05obs, file_read='z0.51')
+    add_weaver22_data(z05obs, file_read='0.2z0.5')
+
 
     # z1 obs
     z1obs = []
@@ -144,6 +157,7 @@ def load_smf_observations(obsdir, h0):
     in_redshift = np.where(zdnMu13 == 1)
     z1obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z1obs, file_read='z1.1')
+    add_weaver22_data(z1obs, file_read='0.8z1.1')
 
     #z2 obs
     z2obs = []
@@ -152,6 +166,7 @@ def load_smf_observations(obsdir, h0):
     #in_redshift = np.where(zdnS12 == 1.8)
     #z2obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z2obs, file_read='z2')
+    add_weaver22_data(z2obs, file_read='2.0z2.5')
 
     # z3 obs
     z3obs = []
@@ -160,6 +175,7 @@ def load_smf_observations(obsdir, h0):
     #in_redshift = np.where(zdnS12 == 2.5)
     #z3obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z3obs, file_read='z3')
+    add_weaver22_data(z3obs, file_read='3.0z3.5')
 
     # z4 obs
     z4obs = []
@@ -168,6 +184,7 @@ def load_smf_observations(obsdir, h0):
     #in_redshift = np.where(zdnS12 == 3.5)
     #z4obs.append((observation("Santini+2012", xobsS12[in_redshift], yobsS12[in_redshift], lerrS12[in_redshift], herrS12[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z4obs, file_read='z4')
+    add_weaver22_data(z4obs, file_read='3.5z4.5')
 
     return (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs)
 
@@ -214,7 +231,7 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, his
         # Observations
         for obs, marker in obs_and_markers:
             common.errorbars(ax, obs.x, obs.y, obs.yerrdn, obs.yerrup, 'grey',
-                             marker, err_absolute=obs.err_absolute, label=obs.label, markersize=3)
+                             marker, err_absolute=obs.err_absolute, label=obs.label, markersize=4)
 
         # Predicted SMF
         if plotz[idx]:
@@ -1188,7 +1205,7 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
         ax.arrow(a, b, 0, -0.3, head_width=0.05, head_length=0.1, fc='r', ec='r')
 
     # Legend
-    common.prepare_legend(ax, ['k','PaleVioletRed', 'b','r'], loc=2)
+    common.prepare_legend(ax, ['k','k','PaleVioletRed', 'b','r'], loc=2)
     common.savefig(outdir, fig, 'SFR_Mstars_z0.pdf')
 
 

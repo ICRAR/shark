@@ -35,7 +35,7 @@ mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
 mbhlow = 6.0
-mbhupp = 10.0
+mbhupp = 10.
 dmbh = 1
 mbhbins = np.arange(mbhlow, mbhupp, dmbh)
 xmbhf = mbhbins + dmbh/2.0
@@ -157,7 +157,7 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     q_ionis = ionising_photons(ion_mag, 912.0) #in s^-1
 
     # Unpack data
-    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb) = hdf5_data
+    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb) = hdf5_data
 
     mbh = mbh/h0
     macc_bh = (macc_hh + macc_sb)/h0/1e9 #in Msun/yr
@@ -170,7 +170,7 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     sfr = sfrd + sfrb
 
     #select galaxies with Mstar > 0
-    ind = np.where(mdisk + mbulge > 0)
+    ind = np.where((mdisk + mbulge  > 0) | (sfr > 0))
     ms = (mdisk[ind] + mbulge[ind])/h0 #in Msun
     sfr = sfr[ind]/h0/1e9 #in Msun/yr
     
@@ -200,7 +200,7 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     ind = np.where(sfr > 300)
     print(lir_total[0,ind])
 
-    ran_err = np.random.normal(0.0, 0.3, len(sfr))
+    ran_err = np.random.normal(0.0, 0.4, len(sfr))
 
     ind = np.where(Lum_radio_Viperfish[3,:]/1e7 > 1e17)
     H, _ = np.histogram(np.log10(Lum_radio_Viperfish[3,ind]/1e7),bins=np.append(mbins,mupp))
@@ -456,6 +456,29 @@ def plot_radio_lf(plt, output_dir, obs_dir, hist_sf_dale14, hist_sf_obi17, hist_
     plt.tight_layout()
     common.savefig(output_dir, fig, 'radio_lum_function_AGN_allz.pdf')
  
+    fig = plt.figure(figsize=(12,8))
+    ytit = "$\\rm log_{10} (\\phi/Mpc^{-3} dex^{-1})$"
+    xtit = "$\\rm log_{10} (L_{\\rm 1.4GHz}/W Hz^{-1})$"
+    xmin, xmax, ymin, ymax = 19, 28.5, -8, -2
+    xleg = xmax - 0.15 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+    subp = (231, 232, 233, 234, 235, 236)
+
+    for i, zf in enumerate(zfiles):
+        ax = fig.add_subplot(subp[i])
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+        ax.text(xleg, yleg, zlabel[i]) 
+        ind = np.where(hist_agn[i,:] != 0)
+        xp = xmf[ind]
+        yp = np.log10(hist_agn[i,ind])
+        ax.plot(xp, yp[0], linestyle='solid', color='black', label='Shark (all AGN)')
+
+        rad_obs(ax, zf, 'AGN') 
+     
+        common.prepare_legend(ax, ['black', 'grey'], loc=3)
+    plt.tight_layout()
+    common.savefig(output_dir, fig, 'radio_lum_function_AGN_allz_v2.pdf')
+ 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     #zlist = np.arange(2,10,0.25)
@@ -475,11 +498,11 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     znames = ['0', '0p2', '0p9', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy',
-                           'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
+                           'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mgas_disk', 'mgas_bulge')}
    
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total')}
-    fields_lir = {'SED/lir_dust': ('disk','total'),}
+    fields_lir = {'SED/lir_dust': ('disk','total')}
 
     hist_sf_dale14  = np.zeros(shape = (len(zlist), 2, len(mbins)))
     hist_sf_obi17  = np.zeros(shape = (len(zlist), 2, len(mbins)))

@@ -39,7 +39,7 @@ c_light  = 299792458.0 #m/s
 PI       = 3.141592654
 
 mlow = 6.5
-mupp = 12.5
+mupp = 14.0
 dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
@@ -186,8 +186,8 @@ def plot_lir_lf(plt, outdir, obsdir, LFs_dust, file_name, csfr):
     ax.plot(zlist, csfr[:,0], color='red', linestyle='solid', label='Shark LIR-SFR')
     ax.plot(zlist, csfr[:,0]-0.3, color='red', linestyle='dotted', label='Shark LIR-SFR -0.4dex')
     ax.plot(zlist, csfr[:,1], color='k', linestyle='solid', label='Shark total SFR')
-    for a,b,c in zip(zlist, csfr[:,0],csfr[:,1]):
-        print(a,b,c)
+    #for a,b,c in zip(zlist, csfr[:,0],csfr[:,1]):
+    #    print(a,b,c)
     common.prepare_legend(ax, ['red','red','k'], loc='lower left')
     common.savefig(outdir, fig, "CSFR_"+file_name+".pdf")
 
@@ -242,7 +242,6 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
         seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols, file_hdf5_sed)
         (volh, h0) = prepare_data(hdf5_data, seds, index, LFs_dust, obsdir, nbrightgals, nbrightgals_err, csfr)
 
-    print(csfr)
     nbrightgals = nbrightgals/(volh/h0**3.0)
     nbrightgals_err = nbrightgals_err/(volh/h0**3.0)
 
@@ -251,8 +250,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
 
     Write_Tables = False 
-    for a,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19 in zip(xmf, LFs_dust[0,:], LFs_dust[1,:], LFs_dust[2,:], LFs_dust[3,:], LFs_dust[4,:], LFs_dust[5,:], LFs_dust[6,:], LFs_dust[7,:], LFs_dust[8,:], LFs_dust[9,:], LFs_dust[10,:], LFs_dust[11,:], LFs_dust[12,:], LFs_dust[13,:], LFs_dust[14,:], LFs_dust[15,:], LFs_dust[16,:], LFs_dust[17,:], LFs_dust[18,:]):
-            print(a,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19)
+    #for a,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19 in zip(xmf, LFs_dust[0,:], LFs_dust[1,:], LFs_dust[2,:], LFs_dust[3,:], LFs_dust[4,:], LFs_dust[5,:], LFs_dust[6,:], LFs_dust[7,:], LFs_dust[8,:], LFs_dust[9,:], LFs_dust[10,:], LFs_dust[11,:], LFs_dust[12,:], LFs_dust[13,:], LFs_dust[14,:], LFs_dust[15,:], LFs_dust[16,:], LFs_dust[17,:], LFs_dust[18,:]):
+    #        print(a,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19)
 
     if(Write_Tables == True): 
 

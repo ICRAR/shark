@@ -543,12 +543,12 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
         ind = np.where(p != 0)
         xplot = x[ind]
         yplot = p[ind]
-        ax.errorbar(xplot,yplot,color=col, linewidth=3, linestyle='solid', label = 'Shark v1.1 (L18) all' if inc_label else None)
+        ax.errorbar(xplot,yplot,color=col, linewidth=2, linestyle='solid', alpha=0.8, label = 'Shark v1.1 (L18) all' if inc_label else None)
     
         ind = np.where(ps != 0)
         xplot = x[ind]
         yplot = ps[ind]
-        ax.errorbar(xplot,yplot,color=col, linewidth=3, linestyle="dashed", label = 'Shark v1.1 (L18) sats' if inc_label else None)
+        ax.errorbar(xplot,yplot,color=col, linewidth=2, linestyle="dashed", alpha=0.8, label = 'Shark v1.1 (L18) sats' if inc_label else None)
 
     # low mass halos ##################################
     ax = fig.add_subplot(221)
@@ -561,12 +561,12 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     ind = np.where(hist_bmf[1,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf[1,ind]
-    ax.errorbar(xplot,yplot[0],color='b', linewidth=6)
+    ax.errorbar(xplot,yplot[0],color='b', linewidth=6, alpha=0.5)
 
     ind = np.where(hist_bmf_sat[1,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf_sat[1,ind]
-    ax.errorbar(xplot,yplot[0],color='b', linewidth=6,  linestyle="dashed")
+    ax.errorbar(xplot,yplot[0],color='b', linewidth=6,  linestyle="dashed", alpha=0.5)
 
     plot_lagos18(ax, bin_halo=1, col='b', inc_label=False)
     #RESOLVE observations
@@ -588,12 +588,12 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     ind = np.where(hist_bmf[2,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf[2,ind]
-    ax.errorbar(xplot,yplot[0],color='g', linewidth=6)
+    ax.errorbar(xplot,yplot[0],color='g', linewidth=6, alpha=0.5)
 
     ind = np.where(hist_bmf_sat[2,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf_sat[2,ind]
-    ax.errorbar(xplot,yplot[0],color='g', linestyle="dashed", linewidth=6)
+    ax.errorbar(xplot,yplot[0],color='g', linestyle="dashed", linewidth=6, alpha=0.5)
 
     plot_lagos18(ax, bin_halo=2, col = 'g', inc_label=False)
     #RESOLVE observations
@@ -615,12 +615,12 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     ind = np.where(hist_bmf[3,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf[3,ind]
-    ax.errorbar(xplot,yplot[0],color='r',linewidth=6)
+    ax.errorbar(xplot,yplot[0],color='r',linewidth=6, alpha=0.5)
 
     ind = np.where(hist_bmf_sat[3,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf_sat[3,ind]
-    ax.errorbar(xplot,yplot[0],color='r', linestyle="dashed", linewidth=6)
+    ax.errorbar(xplot,yplot[0],color='r', linestyle="dashed", linewidth=6, alpha=0.5)
 
     plot_lagos18(ax, bin_halo=3, col='r', inc_label=False)
     #RESOLVE observations
@@ -643,12 +643,12 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     ind = np.where(hist_bmf[4,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf[4,ind]
-    ax.errorbar(xplot,yplot[0],color='orange', label="Shark v2.0 all", linewidth=6)
+    ax.errorbar(xplot,yplot[0],color='orange', label="Shark v2.0 all", linewidth=6, alpha=0.5)
 
     ind = np.where(hist_bmf_sat[4,:] != 0)
     xplot = xmf[ind]
     yplot = hist_bmf_sat[4,ind]
-    ax.errorbar(xplot,yplot[0],color='orange', linestyle="dashed", label="Shark v2.0 sats", linewidth=6)
+    ax.errorbar(xplot,yplot[0],color='orange', linestyle="dashed", label="Shark v2.0 sats", linewidth=6, alpha=0.5)
 
     plot_lagos18(ax, bin_halo=4, col='orange', inc_label=True)
 
@@ -657,7 +657,7 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'orange', 's', fillstyle='full', markersize=3)
 
 
-    common.prepare_legend(ax, ['orange','orange','k','k','orange','orange','orange','orange'], loc=3) #, bbox_to_anchor=(0.1, -0.4))
+    common.prepare_legend(ax, ['orange','orange','orange','orange','orange','orange'], loc=3) #, bbox_to_anchor=(0.1, -0.4))
 
     plt.tight_layout()
     common.savefig(outdir, fig, 'bmf_resolve_massbins.pdf')

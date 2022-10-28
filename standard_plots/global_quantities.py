@@ -438,6 +438,11 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     ind = np.where(sfr > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), 'k',  linewidth=1)
 
+    
+#print("cosmic SFR")
+#    for a,b,c,d,e in zip(redshifts[ind], us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), np.log10(sfrd[ind]*pow(h0,2.0)), np.log10(sfrb[ind]*pow(h0,2.0))):
+#        print(a,b,c,d,e)
+
     ind = np.where(sfrd > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='dashed', linewidth=1)
     ind = np.where(sfrb > 0)
@@ -503,6 +508,57 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
 
     common.savefig(outdir, fig, "delta_time_history.pdf")
 
+    fig = plt.figure(figsize=(6,5.5))
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm log_{10}(CSFRD/ M_{\odot}\,yr^{-1}\,cMpc^{-3})$"
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 10, -3, -0.3, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
+    reddnM14, redupM14, sfrM14, sfrM14errup, sfrM14errdn = common.load_observation(obsdir, 'Global/SFRD_Madau14.dat', [0,1,2,3,4])
+    #authors assume a Salpeter IMF, so a correction of np.log10(0.63) is necessary.
+    sfrM14errdn = abs(sfrM14errdn)
+    hobs = 0.7
+    sfrM14 = sfrM14 + np.log10(pow(hobs/h0, 2.0)) + np.log10(0.63)
+    ax.errorbar((reddnM14 + redupM14) / 2.0, sfrM14, xerr=abs(redupM14-reddnM14)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5, label='Madau+14')
+
+    #Driver (Chabrier IMF), ['Baldry+2012, z<0.06']
+    redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_sfr.dat', [0,1,2,3,4,5,6])
+
+
+    hobs = 0.7
+    xobsD17 = (redD17d+redD17u)/2.0
+    yobsD17 = sfrD17 + np.log10(hobs/h0)
+
+    errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
+    ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label='Driver+18')
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ind = np.where(sfr > 0)
+    ax.plot(redshifts[ind], np.log10(sfr[ind]*pow(h0,2.0)), 'k', linewidth=1, label ='total (v2.0)')
+    #print("SFR density of the Universe")
+    #for a,b in zip(redshifts[ind],  np.log10(sfr[ind]*pow(h0,2.0))):
+    #    print(a,b)
+
+    ind = np.where(sfrd > 0)
+    ax.plot(redshifts[ind], np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='solid', linewidth=1, label ='disks (v2.0)')
+    ind = np.where(sfrb > 0)
+    ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='solid',  linewidth=1, label ='bursts (v2.0)')
+
+    zin, sfr_l18, sfr_l18d, sfr_l18b = common.load_observation(obsdir, 'Models/SharkVariations/Global_Lagos18.dat', [0, 2, 3, 4])
+
+    ax.plot(zin, sfr_l18, 'k', linewidth=1, linestyle='dashed', label ='v1.1 (L18)')
+    ax.plot(zin, sfr_l18d, 'b', linewidth=1,linestyle='dashed') #,  label ='disks (L18)')
+    ax.plot(zin, sfr_l18b, 'r', linewidth=1,linestyle='dashed') #,  label ='bursts (L18)')
+
+    common.prepare_legend(ax, ['k','b','r','k','grey','navy'], loc=1) #bbox_to_anchor=(0.52, 0.47))
+
+    common.savefig(outdir, fig, "cosmic_sfr_compL18.pdf")
+
 
 def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarden, mstarbden_mergers, mstarbden_diskins):
 
@@ -520,12 +576,16 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ind = np.where(mstarden > 0)
     ax.plot(redshifts[ind],np.log10(mstarden[ind]*pow(h0,2.0)), 'k')
 
-    ind = np.where(mstarbden_mergers > 0)
-    ax.plot(redshifts[ind],np.log10(mstarbden_mergers[ind]*pow(h0,2.0)), 'r', linestyle='dashed')
-    ind = np.where(mstarbden_diskins > 0)
-    ax.plot(redshifts[ind],np.log10(mstarbden_diskins[ind]*pow(h0,2.0)), 'b', linestyle='dotted')
-
     mstardisk = mstarden - (mstarbden_mergers+mstarbden_diskins)
+
+    ind = np.where(mstarbden_mergers + mstarbden_diskins > 0)
+    ax.plot(redshifts[ind],np.log10((mstarbden_mergers[ind]+mstarbden_diskins[ind])*pow(h0,2.0)), 'r', linestyle='dashed')
+    ind = np.where(mstardisk > 0)
+    ax.plot(redshifts[ind],np.log10(mstardisk[ind]*pow(h0,2.0)), 'b', linestyle='dotted')
+
+    print("will print stelar density")
+    for a,b,c,d,e in zip(redshifts, us.look_back_time(redshifts), np.log10(mstarden[ind]*pow(h0,2.0)), np.log10(mstardisk*pow(h0,2.0)), np.log10((mstarbden_mergers+mstarbden_diskins)*pow(h0,2.0))):
+        print(a,b,c,d,e)
 
     z, sm_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 4])
     sm_modelvar_burst3  = sm_modelvar[0:179]
@@ -561,11 +621,12 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mstarden > 0)
     ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarden[ind]*pow(h0,2.0)), 'k', label='Shark all galaxies')
+    mstardisk = mstarden - (mstarbden_mergers+mstarbden_diskins)
 
-    ind = np.where(mstarbden_mergers > 0)
-    ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarbden_mergers[ind]*pow(h0,2.0)), 'r', linestyle='dashed', label='formed in galaxy mergers')
-    ind = np.where(mstarbden_diskins > 0)
-    ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstarbden_diskins[ind]*pow(h0,2.0)), 'b', linestyle='dotted', label='formed in disk instabilities')
+    ind = np.where(mstarbden_mergers + mstarbden_diskins> 0)
+    ax.plot(us.look_back_time(redshifts[ind]),np.log10((mstarbden_mergers[ind] + mstarbden_diskins[ind])*pow(h0,2.0)), 'r', linestyle='dashed', label='formed in bursts')
+    ind = np.where(mstardisk > 0)
+    ax.plot(us.look_back_time(redshifts[ind]),np.log10(mstardisk[ind]*pow(h0,2.0)), 'b', linestyle='dotted', label='formed in disks')
 
     ind = np.where(sm_modelvar_burst20 > -10)
     ax.plot(us.look_back_time(z[ind]), sm_modelvar_burst20[ind], 'Sienna', linestyle='dotted',  label ='$\\eta_{\\rm burst}=20$')
@@ -579,6 +640,56 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     common.prepare_legend(ax, ['k','r','b', 'Sienna','DarkSlateGray','SlateGray'], loc=3)
 
     common.savefig(outdir, fig, "cosmic_smd.pdf")
+
+    # Plots stellar mass cosmic density
+    xtit="$\\rm redshift$"
+    ytit="$\\rm log_{10}(\\rho_{\\rm star}/ M_{\odot}\,cMpc^{-3})$"
+
+    fig = plt.figure(figsize=(6,5.5))
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 10, 5, 8.7, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ind = np.where(mstarden > 0)
+    ax.plot(redshifts[ind],np.log10(mstarden[ind]*pow(h0,2.0)), 'k', label='total (v2.0)')
+    mstardisk = mstarden - (mstarbden_mergers+mstarbden_diskins)
+
+    ind = np.where(mstardisk > 0)
+    ax.plot(redshifts[ind],np.log10(mstardisk[ind]*pow(h0,2.0)), 'b', linestyle='solid', label='disks (v2.0)')
+
+    ind = np.where(mstarbden_mergers + mstarbden_diskins > 0)
+    ax.plot(redshifts[ind],np.log10((mstarbden_mergers[ind]+mstarbden_diskins[ind])*pow(h0,2.0)), 'r', linestyle='solid', label='bursts (v2.0)')
+
+
+    zin, sd_l18, sd_l18d, sd_l18b = common.load_observation(obsdir, 'Models/SharkVariations/Global_SMD_Lagos18.dat', [0, 2, 3, 4])
+    ax.plot(zin, sd_l18, 'k', linewidth=1, linestyle='dashed', label ='v1.1 (L18)')
+    ax.plot(zin, sd_l18d, 'b', linewidth=1,linestyle='dashed') #,  label ='disks (L18)')
+    ax.plot(zin, sd_l18b, 'r', linewidth=1,linestyle='dashed') #,  label ='bursts (L18)')
+
+
+    reddnM14, redupM14, sfrM14, sfrM14errup, sfrM14errdn = common.load_observation(obsdir, 'Global/SMD_Madau14.dat', [0,1,2,3,4])
+    #authors assume a Salpeter IMF, so a correction of np.log10(0.63) is necessary.
+    sfrM14errdn = abs(sfrM14errdn)
+    hobs = 0.7
+    sfrM14 = sfrM14 + np.log10(pow(hobs/h0, 2.0)) + np.log10(0.63)
+    ax.errorbar((reddnM14 + redupM14) / 2.0, sfrM14, xerr=abs(redupM14-reddnM14)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5, label='Madau+14')
+
+    #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
+    redD17d, redD17u, smdD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_smd.dat', [1,2,3,4,5,6,7])
+
+    hobs = 0.7
+    xobs = (redD17d+redD17u)/2.0
+    yobs = smdD17 + np.log10(hobs/h0)
+
+    err = yobs*0. - 999.
+    err = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
+    ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label="Driver+18")
+
+    common.prepare_legend(ax, ['k','b','r','k','grey', 'navy'], loc=1)
+
+    common.savefig(outdir, fig, "cosmic_smd_compL18.pdf")
 
 
 def plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat):
@@ -641,6 +752,57 @@ def plot_sft_efficiency(plt, outdir, redshifts, sfre, sfreH2, mhrat):
 
 def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
 
+
+    def load_observations_h2(ax, obsdir, h0, caption=False):
+        #Walter ASPECS ALMA program
+        zloD16, zupD16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Decarli19_H2.dat', [0,1,2,3])
+        zD16 =(zupD16 + zloD16)/2.0
+        rhoH2D16 = (rhoH2loD16 + rhoH2upD16)/2.0
+        hobs = 0.7
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = rhoH2D16 + np.log10(pow(hobs/h0,3.0))
+        errylow = rhoH2D16 - rhoH2loD16
+        erryup  = rhoH2upD16 - rhoH2D16
+        ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='d',label="Decarli+19" if caption == True else None)
+
+        #COLDz
+        zloD16, zupD16, rhoH2loD16, rhoH2D16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Riechers19_H2.dat', [0,1,2,3,4])
+        zD16 =(zupD16 + zloD16)/2.0
+        hobs = 0.7
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = np.log10(rhoH2D16) + np.log10(pow(hobs/h0,3.0))
+        errylow = np.log10(rhoH2D16) - np.log10(rhoH2loD16)
+        erryup  = np.log10(rhoH2upD16) - np.log10(rhoH2D16)
+        ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s',label="Riechers+19" if caption == True else None)
+
+        #ALMACAL-CO
+        zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/ASPECTS_Cont_H2.dat', [0,1,2,3,4,5])
+        hobs = 0.7
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = rhoH2D16 + np.log10(pow(hobs/h0,3.0))
+        errylow = rhoH2D16 - rhoH2loD16
+        erryup  = rhoH2upD16 - rhoH2D16
+        ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Decarli+20" if caption == True else None)
+
+
+        #z0 data
+        zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/H2_z0.dat', [0,1,2,3,4,5])
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = np.log10(rhoH2D16) + np.log10(pow(hobs/h0,3.0))
+        errylow = np.log10(rhoH2D16) - np.log10(rhoH2loD16)
+        erryup  = np.log10(rhoH2upD16) - np.log10(rhoH2D16)
+        ax.errorbar(xobs[0:1], yobs[0:1], xerr=[errxlow[0:1],errxup[0:1]], yerr=[errylow[0:1],erryup[0:1]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Boselli+14" if caption == True else None)
+        ax.errorbar(xobs[1:2], yobs[1:2], xerr=[errxlow[1:2],errxup[1:2]], yerr=[errylow[1:2],erryup[1:2]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*',label="Fletcher+20" if caption == True else None)
+
+
     fig = plt.figure(figsize=(5,4.5))
 
     ax = fig.add_subplot(111)
@@ -662,6 +824,9 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mH2den > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'r')
+    print("will print Omega H2")
+    for a,b,c in zip(redshifts, us.look_back_time(redshifts), np.log10(mH2den*pow(h0,2.0)) + np.log10(XH)):
+        print(a,b,c)
 
     #print("H2 density of the Universe")
     #for a,b in zip(redshifts[ind],  np.log10(mH2den[ind]*pow(h0,2.0))):
@@ -679,25 +844,62 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     ind = np.where(h2_modelvar_nu0p5 > -10)
     ax.plot(us.look_back_time(z[ind]), h2_modelvar_nu0p5[ind], 'Salmon', linestyle='dotted')
 
-    #Walter ASPECS ALMA program
-    zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Walter17_H2.dat', [0,1,2,3,4,5])
-
-    hobs = 0.7
-
-    xobs    = zD16
-    errxlow = zD16-zloD16
-    errxup  = zupD16-zD16
-    yobs = np.log10(rhoH2D16) + np.log10(pow(hobs/h0,3.0))
-    errylow = np.log10(rhoH2D16) - np.log10(rhoH2loD16)
-    erryup  = np.log10(rhoH2upD16) - np.log10(rhoH2D16)
-
-    ax.errorbar(us.look_back_time(xobs), yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='+',label="Decarli+16")
-    ax.errorbar(us.look_back_time(xobs[0:1]), yobs[0:1], xerr=[errxlow[0:1],errxup[0:1]], yerr=[errylow[0:1],erryup[0:1]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Boselli+14")
+    load_observations_h2(ax, obsdir, h0, caption=True)
 
     # Legend
     common.prepare_legend(ax, ['grey','grey','grey'], loc=0)
 
     common.savefig(outdir, fig, "omega_H2.pdf")
+
+
+    fig = plt.figure(figsize=(6,5.5))
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm log_{10}(\\rho_{\\rm H_2}/ M_{\odot}\,cMpc^{-3})$"
+    common.prepare_ax(ax, 0, 6, 5.2, 8.4, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ind = np.where(mH2den > 0)
+    ax.plot(redshifts[ind], np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'k', label='total in gals (v2.0)')
+
+    zin, omegaH2l18  = common.load_observation(obsdir, 'Models/SharkVariations/Global_OmegaGas_Lagos18.dat', [0,2])
+    ax.plot(zin, omegaH2l18, 'k', linestyle='dashed', label = 'total in gals (L18)')
+
+    load_observations_h2(ax, obsdir, h0, caption=True)
+
+    # Legend
+    common.prepare_legend(ax, ['k','k','grey','grey','grey','grey','grey'], loc=0)
+    common.savefig(outdir, fig, "omega_H2_compL18.pdf")
+
+
+def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
+
+    fig = plt.figure(figsize=(5,4.5))
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm Lookback\,time/Gyr$"
+    ytit="$\\rm log_{10}(\\Omega_{\\rm gas})$"
+    common.prepare_ax(ax, 0, 13.5, -4, -2.7, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    new_tick_locations = np.array([0., 2., 4., 6., 8., 10., 12.])
+
+    ax2.set_xticks(new_tick_locations)
+    ax2.set_xticklabels(us.redshift(new_tick_locations), fontsize=12)
+
+    ax2.set_xlabel("redshift",fontsize=13)
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ax.plot(us.look_back_time(redshifts), mcold + np.log10(Omegab) - np.log10(XH), 'k', label='total neutral ISM')
+    ax.plot(us.look_back_time(redshifts), mHI + np.log10(Omegab) - np.log10(XH), 'b', linestyle = 'dotted', label='atomic')
+    ax.plot(us.look_back_time(redshifts), mH2 + np.log10(Omegab) - np.log10(XH), 'r', linestyle = 'dashed',label='molecular')
+
+    common.prepare_legend(ax, ['k','b','r'], loc=1)
+    common.savefig(outdir, fig, "omega_neutral.pdf")
 
 
 def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
@@ -793,6 +995,9 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     # note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(omegaHI > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(omegaHI[ind]*pow(h0,2.0)) + np.log10(XH), 'r', label='Shark')
+    print("will print Omega HI")
+    for a,b,c in zip(redshifts, us.look_back_time(redshifts), np.log10(omegaHI*pow(h0,2.0)) + np.log10(XH)):
+        print(a,b,c)
 
     z, hi_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 1])
     hi_modelvar_burst3 = hi_modelvar[0:179]
@@ -824,6 +1029,43 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
 
     common.prepare_legend(ax, ['r','Sienna','Crimson','Salmon','grey'])
     common.savefig(outdir, fig, "omega_HI.pdf")
+
+
+
+
+
+    fig = plt.figure(figsize=(6,5.5))
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm log_{10}(\\Omega_{\\rm H_I})$"
+    common.prepare_ax(ax, 0, 6, -5, -2, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    # note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ind = np.where(omegaHI > 0)
+    ax.plot(redshifts[ind], np.log10(omegaHI[ind]*pow(h0,2.0)) + np.log10(XH), 'k', label='total in gals (v2.0)')
+
+    zin, omegaHIl18  = common.load_observation(obsdir, 'Models/SharkVariations/Global_OmegaGas_Lagos18.dat', [0,3])
+    ax.plot(zin, omegaHIl18, 'k', linestyle='dashed', label = 'total in gals (L18)')
+
+    xcgm = np.zeros(shape = 2)
+    ycgm = np.zeros(shape = 2)
+    xcgm[:] = 2.0
+    ycgm[0] = -5.0
+    ycgm[1] = -2.0
+    ax.plot(xcgm,ycgm, 'k', linestyle='dotted', linewidth=0.85)
+    ax.arrow(2.0, -2.5, 0.75, 0, head_width=0.05, head_length=0.1, fc='k', ec='k')
+    ax.text(2.1, -2.4, 'CGM?', fontsize=12)
+
+
+    # Rhee+18 compilation
+    redR18,reddR18,reduR18,omegaR18,errdnR18,errupR18 = common.load_observation(obsdir, 'Global/HI_density_Rhee18.dat', [1,2,3,7,8,9])
+    ax.errorbar(redR18,np.log10(omegaR18*1e-3), xerr=[reddR18,reduR18],yerr=[errdnR18,errupR18], ls='None', mfc='None', ecolor = 'grey', mec='grey', marker='o', label="Rhee+18 (comp)")
+
+    common.prepare_legend(ax, ['k','k','grey'])
+    common.savefig(outdir, fig, "omega_HI_compL18.pdf")
+
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 

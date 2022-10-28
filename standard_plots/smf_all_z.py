@@ -48,9 +48,16 @@ dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
 
-def prepare_data(hdf5_data, index, hist_smf):
+mlow2 = 8
+mupp2 = 12
+dm2 = 0.15
+mbins2 = np.arange(mlow2,mupp2,dm2)
+xmf2 = mbins2 + dm2/2.0
 
-    (h0, volh, mdisk, mbulge) = hdf5_data
+
+def prepare_data(hdf5_data, index, hist_smf, sigma_ms, zlist):
+
+    (h0, volh, mdisk, mbulge, sfrd, sfrb, typeg) = hdf5_data
 
     mass          = np.zeros(shape = len(mdisk))
     ind = np.where((mdisk+mbulge) > 0.0)
@@ -62,22 +69,54 @@ def prepare_data(hdf5_data, index, hist_smf):
         vol = volh/pow(h0,3.)  # In Mpc^3
         hist_smf[index,:]  = hist_smf[index,:]/vol/dm
 
+    sfrt = (sfrd+ sfrb)/1e9/h0
+    mt = (mdisk + mbulge)/h0
+
+
+    bin_it = functools.partial(us.wmedians, xbins=xmf)
+    bin_it_2 = functools.partial(us.wmedians, xbins=xmf2)
+
+    #select main sequence galaxies
+    ind = np.where((sfrt > 0) & (mt >= 7e8) & (mt <= 1e10) & (typeg == 0))
+    sfrin = np.log10(sfrt[ind])
+    mtin = np.log10(mt[ind])
+
+    ms_med = bin_it(x=mtin, y=sfrin)
+    pos = np.where(ms_med[0,:] != 0)
+    yin = ms_med[0,pos]
+    ms_fit = np.polyfit(xmf[pos], yin[0], 2)
+   
+    dist_ms = np.log10(sfrt) - (ms_fit[0] * np.log10(mt)**2 + ms_fit[1] * np.log10(mt) + ms_fit[2])
+
+    for i,m in enumerate(xmf2):
+        ind = np.where((sfrt > 0) & (mt >= 10**(m-dm2/2.0)) & (mt < 10**(m+dm2/2.0))  & (dist_ms > -0.75) & (dist_ms < 0.75))
+        sigma_ms[index,i] = np.std(np.log10(sfrt[ind]))
+   
+
+    print("#Main sequence scatter at z:", zlist[index])
+    print("#log10(Mstar/Msun) std(log10(SFR))")
+
+    for a,b in zip(xmf2, sigma_ms[index,:]):
+        print(a,b)
+    
+
     return mass
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
-    zlist = (0.15, 0.25, 0.4, 0.625, 0.875, 1.125, 1.375, 1.625, 1.875)
+    zlist = (0.5, 1.0, 2.0, 3.0) #(0.15, 0.25, 0.4, 0.625, 0.875, 1.125, 1.375, 1.625, 1.875)
 
     plt = common.load_matplotlib()
 
     # Histograms
     hist_smf       = np.zeros(shape = (len(zlist), len(mbins)))
+    sigma_ms       = np.zeros(shape = (len(zlist), len(xmf2)))
 
-    fields = {'galaxies': ('mstars_disk', 'mstars_bulge')}
+    fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'sfr_disk', 'sfr_burst', 'type')}
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        mass = prepare_data(hdf5_data, index, hist_smf)
+        mass = prepare_data(hdf5_data, index, hist_smf, sigma_ms, zlist)
         h0 = hdf5_data[0]
 
     # Take logs

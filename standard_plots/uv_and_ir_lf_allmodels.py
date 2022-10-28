@@ -661,7 +661,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_dust4[ind] = np.log10(LFs_dust4[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14-steep')
+       outdir = os.path.join(outdir, 'eagle-rr14')
 
     plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, LFs_dust2, LFs_dust3, LFs_dust4, nbands)
     plot_uv_lf_z0(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, LFs_dust2, LFs_dust3, LFs_dust4)

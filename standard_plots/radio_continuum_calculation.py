@@ -99,7 +99,10 @@ def synchrotron_lum(SFR, nu):
     ESNR = 0.06 * ENT
     alpha = -0.8
 
-    comp1 = ESNR * (nu / 1.49)**(-0.5) + ENT * (nu / 1.49)**(alpha)
+    T = 1e4
+    EM = 6e6 #pc * cm**-6
+    tau = (T/1e4)**(-1.35) * (nu / 1.4)**(-2.1) * EM / 6e6
+    comp1 = ESNR * (nu / 1.49)**(-0.5) + ENT * (nu / 1.49)**(alpha) * exp(-tau)
     nuSNCC = SFR * 0.0095
     lum = comp1 * 1e30 * nuSNCC
 
@@ -149,10 +152,13 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
     q_ionis = ionising_photons(ion_mag, 912.0) #in s^-1
     print(max(q_ionis))
     # Unpack data
-    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal) = hdf5_data
+    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb) = hdf5_data
     h0log = np.log10(float(h0))
-
     vol = volh/h0**3
+
+    mbh = mbh/h0
+    macc_bh = (macc_hh + macc_sb)/h0/1e9 #in Msun/yr
+    (Ljet_ADAF, Ljet_td, mdot_norm) = radio_luminosity_agn(mbh, macc_bh)
 
     sfr = sfrd + sfrb
 
@@ -160,16 +166,23 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
     ind = np.where(mdisk + mbulge > 0)
     ms = (mdisk[ind] + mbulge[ind])/h0 #in Msun
     sfr = sfr[ind]/h0/1e9 #in Msun/yr
+    Ljet_ADAF = Ljet_ADAF[ind]
+    Ljet_td = Ljet_td[ind]
+    mdot_norm = mdot_norm[ind]
+    mbh = mbh[ind]
 
     lum1p4 = freefree_lum(q_ionis, 1.4) + synchrotron_lum(sfr, 1.4)
-    selection_freq = (8.4, 5.0, 3.0, 1.4, 0.61, 0.325, 0.15) #GHz
+    selection_freq = (8.4, 5.0, 3.0, 1.4, 0.61, 0.5, 0.325, 0.15) #GHz
 
     lum_radio = np.zeros(shape = (len(selection_freq), len(q_ionis)))
     lum_ratio = np.zeros(shape = (len(selection_freq), len(q_ionis)))
+    lum_radio_agn = np.zeros(shape = (len(selection_freq), len(q_ionis)))
 
     for i, nu in enumerate(selection_freq):
         lum_radio[i,:] = freefree_lum(q_ionis[:], nu) + synchrotron_lum(sfr[:], nu)
         lum_ratio[i,:] = freefree_lum(q_ionis[:], nu) / lum_radio[i,:]
+        lum_radio_agn[i,:] = radio_luminosity_per_freq(Ljet_ADAF[:], Ljet_td[:], mdot_norm[:], mbh[:], nu)
+
 
     max_ff = max(lum_ratio[3,:] * lum_radio[3,:])
     sfr_derived = lum_ratio[3,:] * lum_radio[3,:] / (2.17e27) * (1.4)**0.1
@@ -190,15 +203,20 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
     writeon = True
     if(writeon == True):
        # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
-       file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'Shark-SED-eagle-rr14-radio-only-bressan-model.hdf5')
-       print ('Will write extinction to %s' % file_to_write)
+       file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'Shark-SED-eagle-rr14-radio-only-hansen23.hdf5')
+       print ('Will write radio emission from SF and AGN to %s' % file_to_write)
        hf = h5py.File(file_to_write, 'w')
        
-       hf.create_dataset('SED/luminosity_radio', data=lum_radio)
-       hf.create_dataset('SED/free_free_ratio', data=lum_ratio)
+       hf.create_dataset('SED/luminosity_radio_sf', data=lum_radio)
+       hf.create_dataset('SED/luminosity_radio_agn', data=lum_radio_agn)
+
+       hf.create_dataset('SED/free_free_ratio_sf', data=lum_ratio)
+       hf.create_dataset('SED/mdot_norm_agn', data=mdot_norm)
+
        hf.create_dataset('galaxies/id_galaxy', data=idgal[ind])
        hf.create_dataset('frequencies', data=selection_freq)
        hf.close()
+
 
     return (lum_radio/1e7, Lum_radio_Viperfish/1e7, lum_ratio, ms, sfr, vol, h0)
 
@@ -304,7 +322,9 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     znames = ['0', '0p2', '0p9', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     plt = common.load_matplotlib()
-    fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy')}
+    fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy',
+                           'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mgas_disk', 
+                           'mgas_bulge')}
    
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total')}
