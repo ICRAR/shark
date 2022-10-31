@@ -103,7 +103,7 @@ StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParame
 }
 
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
-								          bool burst, double vgal, double &jrate, double jgas) {
+					  bool burst, double vgal, double &jrate, double jgas) {
 
 	if (std::isnan(rgas)) {
 		throw invalid_argument("rgas is NaN, cannot calculate star formation rate");

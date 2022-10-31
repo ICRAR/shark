@@ -455,15 +455,15 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	galaxy.bulge_stars.mass 		= y[0];
 	galaxy.bulge_gas.mass   		= y[1];
 	subhalo.hot_halo_gas.mass               = y[3];
-	subhalo.ejected_galaxy_gas.mass 		= y[4];
-	subhalo.lost_galaxy_gas.mass 			= y[5];
+	subhalo.ejected_galaxy_gas.mass 	= y[4];
+	subhalo.lost_galaxy_gas.mass 		= y[5];
 
 	// Assign new mass in metals.
-	galaxy.bulge_stars.mass_metals 			= y[6];
-	galaxy.bulge_gas.mass_metals 			= y[7];
+	galaxy.bulge_stars.mass_metals 		= y[6];
+	galaxy.bulge_gas.mass_metals 		= y[7];
 	subhalo.hot_halo_gas.mass_metals        = y[9];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[10];
-	subhalo.lost_galaxy_gas.mass_metals		= y[11];
+	subhalo.lost_galaxy_gas.mass_metals	= y[11];
 
 	// Equations of angular momentum exchange are ignored in the case of starbursts.
 
