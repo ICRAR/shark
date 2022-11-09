@@ -29,6 +29,7 @@ import hothalo
 import sizes
 import smf
 import smhm
+import qso_lf
 
 def main():
 
