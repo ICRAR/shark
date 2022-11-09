@@ -1600,7 +1600,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge',
                            'mgas_metals_disk', 'mgas_metals_bulge',
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type', 
-			   'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers', 
+                           'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers', 
                            'mstars_burst_diskinstabilities', 'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly')}
 
     for index, snapshot in enumerate(redshift_table[zlist]):
@@ -1611,7 +1611,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                              sfe, mainseq_cen, mainseqsf_cen, sfe_cen, mainseq_sat,
                              mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen, mzr_sat, plotz,
                              plotz_HImf, passive_fractions, hist_ssfr, mszr, mszr_cen, 
-			     mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2, hist_smf_err, hist_HImf_err, 
+                             mszr_sat, mainseqsf_1s, mainseqHI, mainseqH2, hist_smf_err, hist_HImf_err, 
                              hist_smf_comp, sfr_hi)
 
         h0 = hdf5_data[0]
