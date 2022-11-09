@@ -101,62 +101,6 @@ def load_lf_obs(obsdir):
     
     return(H07_LF,S09_LF,T22_LF)
 
-def plot_lf_qso_z(plt, outdir, obsdir, LF_data):
-    fig=plt.figure(figsize=(7.2*2,3.5*4))
-    spec=gs.GridSpec(nrows=4,ncols=3,figure=fig,wspace=0,hspace=0,left=0.08,right=0.99,bottom=0.13,top=0.99)
-    fax=[fig.add_subplot(spec[i,j]) for i in range(4) for j in range(3)]
-    xlab='$\Phi(L^{}_\mathrm{QSO})$ [dex$^{-1}$Mpc$^{-3}$]'
-    ylab='$L^{}_\mathrm{QSO}$ [erg s$^{-1}$]'
-    LFlow,LFupp=np.array([np.log10(3)-7,np.log10(5)-3])
-    
-    H07_LF,S09_LF,T22_LF=load_lf_obs(obsdir)
-    
-    for i,z in enumerate(zlist):
-        xdata=LF_data[2*i,:]
-        ydata=LF_data[2*i+1,:]
-        zcol=cm.summer(np.log10(1+z)/max_logz)
-        
-        if np.sum(H07_LF[0,:]==z)>0:
-            zsel=H07_LF[0,:]==z
-            fax[i].errorbar(H07_LF[1,zsel],H07_LF[2,zsel],yerr=[H07_LF[2,zsel]*(H07_LF[3,zsel]-1),
-                                                                H07_LF[2,zsel]*(1/H07_LF[3,zsel]-1)],
-                            marker='d',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
-        if np.sum(S09_LF[0,:]==z)>0:
-            zsel=S09_LF[0,:]==z
-            fax[i].errorbar(S09_LF[1,zsel],S09_LF[2,zsel],yerr=[S09_LF[3,zsel],S09_LF[4,zsel]],
-                            marker='s',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
-        if np.sum(T22_LF[0,:]==z)>0:
-            zsel=T22_LF[0,:]==z
-            fax[i].errorbar(T22_LF[1,zsel],T22_LF[2,zsel],yerr=[T22_LF[2,zsel]*(T22_LF[3,zsel]-1),
-                                                                T22_LF[2,zsel]*(1/T22_LF[3,zsel]-1)],
-                            marker='o',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
-        
-        fax[i].step(10**xdata,10**ydata,color='k')
-        fax[i].plot(0.85,0.9,zlab_list[-i-1],bbox={'fc':zcol,'boxstyle':'Round','ec':'k'},
-                    transform=fax[i].transAxes,ha='center',va='center')
-    
-    for i in range(12):
-        fax[i].set_xscale('log')
-        fax[i].set_yscale('log')
-        fax[i].set_xlim(Llow,Lupp)
-        fax[i].set_ylim(LFlow,LFupp)
-        if i<9:
-            fax[i].get_xaxis().set_ticklabels([])
-        else:
-            fax[i].set_xlabel(xlab)
-        if i%3>0:
-            fax[i].get_yaxis().set_ticklabels([])
-        else:
-            fax[i].set_ylabel(ylab)
-    
-    fig.legend([Line2D([0,1],[0,1],color='k'),Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='d'),
-                Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='s'),
-                Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='o')],
-              ['SHARK','Hopkins+2007','Shankar+2009','Thorne+2022'],
-              loc=8,bbox_to_anchor=(0.5,0.0),ncols=4)
-    
-    common.savefig(outdir, fig, 'L_QSO_z.pdf')
-
 def prepare_data(hdf5_data, snapshot):
     (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb, BH_spin) = hdf5_data
     MBH = MBH.astype('float64') / h0
@@ -191,7 +135,7 @@ def prepare_data(hdf5_data, snapshot):
     #Eddington MBH accretion rate and ratio
     M_dot_Edd=1e40*L_Edd/(0.1*(c_light*m2cm)**2)
     M_dot=MBH_acc*M_sun*kg2g/yr2s
-    m_dot=np.where(M_dot_Edd>0,M_dot/M_dot_Edd,np.nan)
+    m_dot=np.where((M_dot_Edd>0)&(m_dot>0),M_dot/M_dot_Edd,np.nan)
     
     #Bolometric luminosity
     L_bol=np.zeros(len(m_dot))
@@ -221,6 +165,62 @@ def prepare_data(hdf5_data, snapshot):
     LF_bol = np.array([LF_bol[0]]+[l for l in LF_bol])
     
     return(LF_bol)
+
+def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
+    fig=plt.figure(figsize=(7.2*2,3.5*4))
+    spec=gs.GridSpec(nrows=4,ncols=3,figure=fig,wspace=0,hspace=0,left=0.08,right=0.99,bottom=0.13,top=0.99)
+    fax=[fig.add_subplot(spec[i,j]) for i in range(4) for j in range(3)]
+    xlab='$\Phi(L^{}_\mathrm{QSO})$ [dex$^{-1}$Mpc$^{-3}$]'
+    ylab='$L^{}_\mathrm{QSO}$ [erg s$^{-1}$]'
+    LFlow,LFupp=np.array([np.log10(3)-7,np.log10(5)-3])
+    
+    H07_LF,S09_LF,T22_LF=load_lf_obs(obsdir)
+    
+    for i,z in enumerate(zlist):
+        xdata=10**Lbins
+        ydata=10**LF_qso[i,:]
+        zcol=cm.summer(np.log10(1+z)/max_logz)
+        
+        if np.sum(H07_LF[0,:]==z)>0:
+            zsel=H07_LF[0,:]==z
+            fax[i].errorbar(H07_LF[1,zsel],H07_LF[2,zsel],yerr=[H07_LF[2,zsel]*(H07_LF[3,zsel]-1),
+                                                                H07_LF[2,zsel]*(1-1/H07_LF[3,zsel])],
+                            marker='d',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+        if np.sum(S09_LF[0,:]==z)>0:
+            zsel=S09_LF[0,:]==z
+            fax[i].errorbar(S09_LF[1,zsel],S09_LF[2,zsel],yerr=[S09_LF[3,zsel],S09_LF[4,zsel]],
+                            marker='s',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+        if np.sum(T22_LF[0,:]==z)>0:
+            zsel=T22_LF[0,:]==z
+            fax[i].errorbar(T22_LF[1,zsel],T22_LF[2,zsel],yerr=[T22_LF[2,zsel]*(T22_LF[3,zsel]-1),
+                                                                T22_LF[2,zsel]*(1-1/T22_LF[3,zsel])],
+                            marker='o',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+        
+        fax[i].step(xdata,ydata,color='k')
+        fax[i].text(0.85,0.9,f'$z={z:.2f}$',bbox={'fc':zcol,'boxstyle':'Round','ec':'k'},
+                    transform=fax[i].transAxes,ha='center',va='center')
+    
+    for i in range(12):
+        fax[i].set_xscale('log')
+        fax[i].set_yscale('log')
+        fax[i].set_xlim(Llow,Lupp)
+        fax[i].set_ylim(LFlow,LFupp)
+        if i<9:
+            fax[i].get_xaxis().set_ticklabels([])
+        else:
+            fax[i].set_xlabel(xlab)
+        if i%3>0:
+            fax[i].get_yaxis().set_ticklabels([])
+        else:
+            fax[i].set_ylabel(ylab)
+    
+    fig.legend([Line2D([0,1],[0,1],color='k'),Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='d'),
+                Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='s'),
+                Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='o')],
+              ['SHARK','Hopkins+2007','Shankar+2009','Thorne+2022'],
+              loc=8,bbox_to_anchor=(0.5,0.0),ncols=4)
+    
+    common.savefig(outdir, fig, 'L_QSO_z.pdf')
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plt = common.load_matplotlib()
