@@ -40,8 +40,7 @@ def main():
     # Modules and which arguments they take
     args_and_mods = {
         args_minimal: [hothalo],
-        #args_with_obsdir: (coldgas, global_quantities, hmf, sizes, smf, smhm),
-        args_with_obsdir: (qso_lf),
+        args_with_obsdir: (coldgas, global_quantities, hmf, sizes, smf, smhm, qso_lf),
     }
 
     n_mods = functools.reduce(lambda x, y: x + y, [len(l) for l in args_and_mods.values()])

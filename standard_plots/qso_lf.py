@@ -118,17 +118,17 @@ def plot_lf_qso_z(plt, outdir, obsdir, LF_data):
         
         if np.sum(H07_LF[0,:]==z)>0:
             zsel=H07_LF[0,:]==z
-            fax[i].errorbar(H07_LF[1,zsel],H07_LF[2,zsel],yerr=[H07_LF[2,:]*(H07_LF[3,:]-1),
-                                                                H07_LF[2,:]*(1/H07_LF[3,:]-1)],
+            fax[i].errorbar(H07_LF[1,zsel],H07_LF[2,zsel],yerr=[H07_LF[2,zsel]*(H07_LF[3,zsel]-1),
+                                                                H07_LF[2,zsel]*(1/H07_LF[3,zsel]-1)],
                             marker='d',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
         if np.sum(S09_LF[0,:]==z)>0:
             zsel=S09_LF[0,:]==z
-            fax[i].errorbar(S09_LF[1,zsel],S09_LF[2,zsel],yerr=[S09_LF[3,:],S09_LF[4,:]-],
+            fax[i].errorbar(S09_LF[1,zsel],S09_LF[2,zsel],yerr=[S09_LF[3,zsel],S09_LF[4,zsel]],
                             marker='s',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
         if np.sum(T22_LF[0,:]==z)>0:
             zsel=T22_LF[0,:]==z
-            fax[i].errorbar(T22_LF[1,zsel],T22_LF[2,zsel],yerr=[T22_LF[2,:]*(T22_LF[3,:]-1),
-                                                                T22_LF[2,:]*(1/T22_LF[3,:]-1)],
+            fax[i].errorbar(T22_LF[1,zsel],T22_LF[2,zsel],yerr=[T22_LF[2,zsel]*(T22_LF[3,zsel]-1),
+                                                                T22_LF[2,zsel]*(1/T22_LF[3,zsel]-1)],
                             marker='o',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
         
         fax[i].step(10**xdata,10**ydata,color='k')
@@ -157,11 +157,12 @@ def plot_lf_qso_z(plt, outdir, obsdir, LF_data):
     
     common.savefig(outdir, fig, 'L_QSO_z.pdf')
 
-def prepare_data(hdf5_data):
+def prepare_data(hdf5_data, snapshot):
     (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb, BH_spin) = hdf5_data
-    MBH_acc = bh_accretion_rate_hh + bh_accretion_rate_sb
-    MBH /= h0
-    MBH_acc /= MBH_acc * 1e9
+    MBH = MBH.astype('float64') / h0
+    MBH_acc = (bh_accretion_rate_hh + bh_accretion_rate_sb).astype('float64')
+    MBH_acc /= h0 * 1e9
+    BH_spin = BH_spin.astype('float64')
     
     def acc_eff_calc(a):
         a1=np.abs(a)
@@ -190,11 +191,11 @@ def prepare_data(hdf5_data):
     #Eddington MBH accretion rate and ratio
     M_dot_Edd=1e40*L_Edd/(0.1*(c_light*m2cm)**2)
     M_dot=MBH_acc*M_sun*kg2g/yr2s
-    m_dot=M_dot/M_dot_Edd
+    m_dot=np.where(M_dot_Edd>0,M_dot/M_dot_Edd,np.nan)
     
     #Bolometric luminosity
     L_bol=np.zeros(len(m_dot))
-    ADAF_low=0<m_dot<=ADAF_trans
+    ADAF_low=(0<m_dot)&(m_dot<=ADAF_trans)
     ADAF_high=(m_dot>ADAF_trans)&(m_dot<1e-2)
     TD=m_dot>=1e-2
     
@@ -212,8 +213,7 @@ def prepare_data(hdf5_data):
     
     L_bol=np.where(L_bol>0,np.log10(L_bol),np.nan)
     
-    print(f'Fraction of galaxies with an AGN = {1.0*np.sum(~np.isnan(L_bol))/len(L_bol):.3f}')
-    print(f'Fraction of galaxies with L_QSO > 1e42 erg/s = {1.0*np.sum(L_bol>42)/len(L_bol):.3f}')
+    print(f'Fraction of galaxies in snapshot {snapshot} with an AGN = {1.0*np.sum(~np.isnan(L_bol))/len(L_bol):.3f}')
     
     LF_bol = np.histogram(L_bol,bins=Lbins)[0]
     LF_bol = np.where(LF_bol>0, np.log10(LF_bol), np.nan)
@@ -225,15 +225,15 @@ def prepare_data(hdf5_data):
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plt = common.load_matplotlib()
     
-    LF_qso = np.zeros(shape = (len(zlist), len(mbins)))
+    LF_qso = np.zeros(shape = (len(zlist), len(Lbins)))
     
     fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'bh_spin')}
     
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        LF_data[index,:] = prepare_data(hdf5_data)
+        LF_qso[index,:] = prepare_data(hdf5_data, snapshot)
     
-    plot_lf_qso_z(plt, outdir, obsdir, LF_data) 
+    plot_lf_qso_z(plt, outdir, obsdir, LF_qso) 
     
     #something
 
