@@ -162,7 +162,7 @@ def prepare_data(hdf5_data, snapshot):
     
     LF_bol = np.histogram(L_bol,bins=Lbins)[0]
     LF_bol = np.where(LF_bol>0, np.log10(LF_bol), np.nan)
-    LF_bol -= 3 * np.log10(volh/h0) + dL
+    LF_bol -= np.log10(volh/h0) + dL
     LF_bol = np.array([LF_bol[0]]+[l for l in LF_bol])
     
     return(LF_bol)
