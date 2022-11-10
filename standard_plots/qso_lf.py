@@ -25,6 +25,7 @@ import logging
 import numpy as np
 import matplotlib.cm as cm
 import matplotlib.gridspec as gs
+from matplotlib.lines import Line2D
 
 import os
 import common
@@ -135,7 +136,7 @@ def prepare_data(hdf5_data, snapshot):
     #Eddington MBH accretion rate and ratio
     M_dot_Edd=1e40*L_Edd/(0.1*(c_light*m2cm)**2)
     M_dot=MBH_acc*M_sun*kg2g/yr2s
-    m_dot=np.where((M_dot_Edd>0)&(m_dot>0),M_dot/M_dot_Edd,np.nan)
+    m_dot=np.where((M_dot_Edd>0)&(M_dot>0),M_dot/M_dot_Edd,np.nan)
     
     #Bolometric luminosity
     L_bol=np.zeros(len(m_dot))
@@ -155,7 +156,7 @@ def prepare_data(hdf5_data, snapshot):
     SE=TD&(m_dot>eta_superEdd*(0.1/acc_eff))
     L_bol[SE]=eta_superEdd*(1+np.log((m_dot[SE]/eta_superEdd)*(acc_eff[SE]/0.1)))*L_Edd[SE]
     
-    L_bol=np.where(L_bol>0,np.log10(L_bol),np.nan)
+    L_bol=np.where(L_bol>0,np.log10(L_bol)+40,np.nan)
     
     print(f'Fraction of galaxies in snapshot {snapshot} with an AGN = {1.0*np.sum(~np.isnan(L_bol))/len(L_bol):.3f}')
     
@@ -172,7 +173,7 @@ def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
     fax=[fig.add_subplot(spec[i,j]) for i in range(4) for j in range(3)]
     xlab='$\Phi(L^{}_\mathrm{QSO})$ [dex$^{-1}$Mpc$^{-3}$]'
     ylab='$L^{}_\mathrm{QSO}$ [erg s$^{-1}$]'
-    LFlow,LFupp=np.array([np.log10(3)-7,np.log10(5)-3])
+    LFlow,LFupp=[3e-7,5e-3]
     
     H07_LF,S09_LF,T22_LF=load_lf_obs(obsdir)
     
@@ -185,16 +186,16 @@ def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
             zsel=H07_LF[0,:]==z
             fax[i].errorbar(H07_LF[1,zsel],H07_LF[2,zsel],yerr=[H07_LF[2,zsel]*(H07_LF[3,zsel]-1),
                                                                 H07_LF[2,zsel]*(1-1/H07_LF[3,zsel])],
-                            marker='d',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+                            marker='d',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
         if np.sum(S09_LF[0,:]==z)>0:
             zsel=S09_LF[0,:]==z
             fax[i].errorbar(S09_LF[1,zsel],S09_LF[2,zsel],yerr=[S09_LF[3,zsel],S09_LF[4,zsel]],
-                            marker='s',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+                            marker='s',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
         if np.sum(T22_LF[0,:]==z)>0:
             zsel=T22_LF[0,:]==z
             fax[i].errorbar(T22_LF[1,zsel],T22_LF[2,zsel],yerr=[T22_LF[2,zsel]*(T22_LF[3,zsel]-1),
                                                                 T22_LF[2,zsel]*(1-1/T22_LF[3,zsel])],
-                            marker='o',lw=0,mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+                            marker='o',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
         
         fax[i].step(xdata,ydata,color='k')
         fax[i].text(0.85,0.9,f'$z={z:.2f}$',bbox={'fc':zcol,'boxstyle':'Round','ec':'k'},
@@ -203,7 +204,7 @@ def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
     for i in range(12):
         fax[i].set_xscale('log')
         fax[i].set_yscale('log')
-        fax[i].set_xlim(Llow,Lupp)
+        fax[i].set_xlim(10**Llow,10**Lupp)
         fax[i].set_ylim(LFlow,LFupp)
         if i<9:
             fax[i].get_xaxis().set_ticklabels([])
@@ -220,7 +221,7 @@ def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
               ['SHARK','Hopkins+2007','Shankar+2009','Thorne+2022'],
               loc=8,bbox_to_anchor=(0.5,0.0),ncols=4)
     
-    common.savefig(outdir, fig, 'L_QSO_z.pdf')
+    common.savefig(outdir, fig, 'LF_QSO_z.pdf')
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plt = common.load_matplotlib()
