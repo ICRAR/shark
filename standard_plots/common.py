@@ -246,7 +246,7 @@ def savefig(output_dir, fig, plotname):
         plotname += '.pdf'
     plotfile = os.path.join(output_dir, plotname)
     logger.info('Saving plot to %s', plotfile)
-    fig.savefig(plotfile, dvi=300, pad_inches=0)
+    fig.savefig(plotfile, dpi=300, pad_inches=0)
 
 def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
