@@ -1197,7 +1197,6 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
 
     # individual massive galaxies from Terrazas+17
     ms, sfr, upperlimflag = common.load_observation(obsdir, 'BHs/MBH_host_gals_Terrazas17.dat', [0,1,2])
-    #BH-SSFR relation
     ind = np.where(ms > 11.3)
     ax.errorbar(ms[ind], sfr[ind], xerr=0.2, yerr=0.3, ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Terrazas+17")
     ind = np.where((upperlimflag == 1) & (ms > 11.3))

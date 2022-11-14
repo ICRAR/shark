@@ -225,13 +225,20 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
     yleg = ymax - 0.1 * (ymax - ymin)
 
     subplots = (321, 322, 323, 324, 325, 326)
-    all_labels = (('Shark v2.0', 'v1.1 (L18)', 'Moster+13', 'Behroozi+13'), )
+    all_labels = (('Shark v2.0', 'v1.1 (L18)', 'Moster+13', 'Behroozi+13', 'EAGLE'), )
 
 
     def plot_l18(i, ax, label):
         mh, sm = common.load_observation(obsdir, 'Models/SharkVariations/SMHM_Lagos18.dat', [0,i+1]) 
         ind = np.where(sm != 0)
         ax.plot(mh[ind], sm[ind], 'k', linestyle='dashed', label=label)
+
+    def plot_eagle(z, ax, label):
+        mh, sm, red = common.load_observation(obsdir, 'Models/EAGLE/SMHM.dat', [0,1,4]) 
+        ind = np.where(red == z)
+        ax.plot(mh[ind], sm[ind], 'k', linestyle='dotted', label=label)
+
+    z_eagle = [0, 0.5, 1.0, 2.0, 3.0, 4.0]
 
     for i, (z, subplot) in enumerate(zip(zlist, subplots)):
         labels = all_labels[0]
@@ -258,6 +265,7 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
             ax.plot(xplot, yplot[0], color='k', linestyle='solid', label=labels[0])
 
         plot_l18(i, ax, labels[1])
+        plot_eagle(z_eagle[i], ax, labels[4])
         plot_moster13(ax, z, labels, labels[2])
         plot_berhoozi13(ax, z, labels, labels[3])
 

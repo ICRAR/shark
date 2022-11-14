@@ -34,6 +34,13 @@ dm = 0.25
 mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
+mslow = 7.0
+msupp = 12.5
+dms = 0.25
+msbins = np.arange(mslow, msupp, dms)
+xmfs = msbins + dms/2.0
+
+
 mbhlow = 6.0
 mbhupp = 10.
 dmbh = 1
@@ -144,20 +151,26 @@ def radio_luminosity_per_freq(Ljet_ADAF, Ljet_td, mdot_norm, mbh, nu):
 
     return lum_nu
 
-def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, filters, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, redshift):
+def prepare_data(hdf5_data, seds_nod, seds, lir, seds_lir_bc, index, model_dir, snapshot, filters, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, redshift):
 
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
     total_mags_nod = seds_nod[4]
     total_mags = seds[4]
 
+    lir_bc_cont = seds_lir_bc[2]
     Lum_radio_Viperfish = 10**((total_mags[9:16,:] + 48.6)/(-2.5)) * dfac #erg/s/Hz
 
     ion_mag = total_mags_nod[1,:]
     q_ionis = ionising_photons(ion_mag, 912.0) #in s^-1
 
     # Unpack data
-    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb) = hdf5_data
+    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb, typeg) = hdf5_data
+
+    temp_bc = 57.0
+    temp_diff = 22.0
+    temp_eff =  temp_bc * lir_bc_cont + temp_diff * (1.0 - lir_bc_cont)
+
 
     mbh = mbh/h0
     macc_bh = (macc_hh + macc_sb)/h0/1e9 #in Msun/yr
@@ -173,7 +186,15 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     ind = np.where((mdisk + mbulge  > 0) | (sfr > 0))
     ms = (mdisk[ind] + mbulge[ind])/h0 #in Msun
     sfr = sfr[ind]/h0/1e9 #in Msun/yr
-    
+    typeg = typeg[ind]
+
+    #calculate main sequence
+    ind = np.where((ms > 3e8) & (ms <1e10) & (typeg ==0) & (sfr > 0))
+    ms_fit = np.polyfit(np.log10(ms[ind]), np.log10(sfr[ind]), 1)
+    delta_ms = np.log10(sfr) - (ms_fit[0] * np.log10(ms) + ms_fit[1])
+    print("Delta main seq", delta_ms, np.median(delta_ms))
+
+ 
     selection_freq = (8.4, 5.0, 3.0, 1.4, 0.61, 0.325, 0.15) #GHz
 
     lum_radio = np.zeros(shape = (len(selection_freq), len(q_ionis)))
@@ -196,6 +217,11 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     ind = np.where(lir_total[0,:] > 1e7)
     print("Median qIR for Dale14 and Bressan", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind])," at redshift", redshift)
 
+    ind= np.where((ms > 1e8) & (ms < 1e9) & (temp_eff > 50) & (typeg ==0))
+    print("Median sfr, ms, qIR", np.median(sfr[ind]), np.median(ms[ind]), np.median(qIR_bressan[ind]))
+
+    ind= np.where((ms > 1e8) & (ms < 1e9) & (qIR_bressan  > 2.5 ) & (typeg == 0))
+    print("Median sfr, ms, qIR", np.median(sfr[ind]), np.median(ms[ind]), np.median(qIR_bressan[ind]))
 
     ind = np.where(sfr > 300)
     print(lir_total[0,ind])
@@ -230,11 +256,14 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, fil
     hist_agn_bh[index,:] = hist_agn_bh[index,:]/vol/dm
 
     #dividing by 1e7 the luminosities to output them in W/Hz 
-    return (lum_radio/1e7, Lum_radio_Viperfish/1e7, lum_ratio, lum_radio_agn/1e7, ms, sfr, vol, h0)
+    return (lum_radio/1e7, Lum_radio_Viperfish/1e7, lum_ratio, lum_radio_agn/1e7, ms, sfr, vol, h0, qIR_bressan, temp_eff, typeg, delta_ms)
 
-def plot_comparison_radio_lums(plt, outdir, obsdir, LBressan, LViperfish, Lratio, ms, sfr, filters, redshift):
+def plot_comparison_radio_lums(plt, outdir, obsdir, LBressan, LViperfish, Lratio, ms, sfr, qIR_bressan, Tdust, typeg, delta_ms, filters, redshift):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
+    bin_it_sm = functools.partial(us.wmedians, xbins=xmfs)
+
+    Tdust = Tdust[0]
 
     subplots = (331, 332, 333, 334, 335, 336, 337)
     labels = filters
@@ -314,6 +343,47 @@ def plot_comparison_radio_lums(plt, outdir, obsdir, LBressan, LViperfish, Lratio
 
     common.savefig(outdir, fig, 'radio_lum_sfr_models_z'+redshift+'.pdf')
 
+
+    fig = plt.figure(figsize=(4.5,8))
+    xtit = "$\\rm log_{10} (M_{\\star}/M_{\\odot})$"
+    ytit = "$\\rm q_{\\rm IR}$"
+    xmin, xmax, ymin, ymax = 8, 12, 0, 3
+    xleg = xmin + 0.15 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ax = fig.add_subplot(211)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+    ax.text(xleg, yleg, 'Bressan model')
+
+    ind = np.where((qIR_bressan > -1) & (ms > 1e8) & (qIR_bressan < 5) & (abs(delta_ms) < 0.3))
+    x = np.log10(ms[ind])
+    y = qIR_bressan[ind]
+    z = Tdust[ind]
+    meds =  bin_it_sm(x=x, y=y)
+    im = ax.hexbin(x, y, xscale='linear', yscale='linear', gridsize=(20,20), cmap='magma', mincnt=4)
+
+    ind = np.where(meds[0,:] != 0)
+    xm = xmfs[ind]
+    ym = meds[0,ind]
+    yerrdn = meds[1,ind]
+    yerrup = meds[2,ind]
+    ax.errorbar(xm, ym[0], yerr=[yerrdn[0], yerrup[0]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+    #common.prepare_legend(ax, cols, loc=3)
+
+    ax = fig.add_subplot(212)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+
+    im = ax.hexbin(x, y, z, xscale='linear', yscale='linear', gridsize=(20,20), cmap='magma', mincnt=4)
+    cbar = fig.colorbar(im)#, cax=cbar_ax)
+    cbar.ax.set_ylabel('$\\rm T_{\\rm dust}/K$')
+
+    ax.errorbar(xm, ym[0], yerr=[yerrdn[0], yerrup[0]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+    #common.prepare_legend(ax, cols, loc=3)
+
+
+    plt.tight_layout()
+
+    common.savefig(outdir, fig, 'qIR_sfr_z'+redshift+'.pdf')
 
 def plot_radio_lf(plt, output_dir, obs_dir, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, h0):
 
@@ -498,11 +568,12 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     znames = ['0', '0p2', '0p9', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy',
-                           'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mgas_disk', 'mgas_bulge')}
+                           'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mgas_disk', 'mgas_bulge', 'type')}
    
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total')}
     fields_lir = {'SED/lir_dust': ('disk','total')}
+    fields_seds_bc = {'SED/lir_dust_contribution_bc': ('disk','bulge_t','total'),}
 
     hist_sf_dale14  = np.zeros(shape = (len(zlist), 2, len(mbins)))
     hist_sf_obi17  = np.zeros(shape = (len(zlist), 2, len(mbins)))
@@ -516,8 +587,10 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
         seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
         seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, subvols, file_hdf5_sed)
         lir = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_lir, subvols, file_hdf5_sed)
-        (LBressan, LViperfish, Lratio, LAGN, ms, sfr, vol, h0) = prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, filters, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, zlist[index])
-        #plot_comparison_radio_lums(plt, output_dir, obs_dir, LBressan, LViperfish, Lratio, ms, sfr, filters, znames[index])
+        seds_lir_bc = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_seds_bc, subvols, file_hdf5_sed)
+
+        (LBressan, LViperfish, Lratio, LAGN, ms, sfr, vol, h0, qIR_bressan, tdust, typeg, delta_ms) = prepare_data(hdf5_data, seds_nod, seds, lir, seds_lir_bc, index, model_dir, snapshot, filters, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, zlist[index])
+        plot_comparison_radio_lums(plt, output_dir, obs_dir, LBressan, LViperfish, Lratio, ms, sfr, qIR_bressan, tdust, typeg, delta_ms, filters, znames[index])
 
     plot_radio_lf(plt, output_dir, obs_dir, hist_sf_dale14, hist_sf_obi17, hist_agn, hist_agn_bh, h0)
 

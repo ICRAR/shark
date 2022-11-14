@@ -110,7 +110,7 @@ def stacking(x=None, y=None, xbins=None, low_numbers=False):
         if(len(x[ind]) > 0):
             ybin    = y[ind]
             xbin    = x[ind]
-            result[0,i] = np.log10(np.mean(xbin))
+            result[0,i] = np.log10(np.mean(10**xbin))
             result[1,i] = np.log10(np.mean(ybin))
 
     return result

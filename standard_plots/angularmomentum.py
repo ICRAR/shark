@@ -59,7 +59,7 @@ lbins = np.arange(llow,lupp,dl)
 xlf   = lbins + dl/2.0
 
 
-def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, sam_ratio_halo_disk, sam_ratio_halo_gal, 
+def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_ratio_halo_disk, sam_ratio_halo_gal, 
                  sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
                  sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal, sam_barv2, disk_size): #, phot_data, phot_data_nod, nbands):
 
@@ -75,6 +75,14 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
      matom_bulge, mmol_bulge, mgas_bulge, sfr_disk, sfr_bulge, vmax, lx, ly, lz) = hdf5_data
 
 
+    specific_angular_momentum_disk_gas_2 = (specific_angular_momentum_disk_gas_mol * mmol_disk + specific_angular_momentum_disk_gas_atom * matom_disk ) / (matom_disk + mmol_disk)
+
+    ind = np.where((mgas_bulge) > 0)
+    print(specific_angular_momentum_bulge_gas[ind])
+
+    ind = np.where((mmol_disk == 0) & (matom_disk > 0))
+    specific_angular_momentum_disk_gas_atom[ind] = specific_angular_momentum_disk_gas[ind]
+    specific_angular_momentum_disk_gas_mol[ind] = 0
 
     sam_subhalo_fromL = np.sqrt(lx**2.0 + ly**2.0 + lz**2.0) * 1e3 / mvir_s #in km/s * kpc
     lambda_fromL = np.sqrt(lx**2.0 + ly**2.0 + lz**2.0) / mvir_s * 1.5234153 / (4.3e-9 * mvir_s)**0.666 * 67.77**0.33;
@@ -140,8 +148,8 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
 
     #calculate effective specific angular momentum by mass-weighting the contributions from the disk and bulge
     jstars      = (specific_angular_momentum_disk_star * mdisk + specific_angular_momentum_bulge_star * mbulge) / (mdisk+mbulge)
-    jbar        = (specific_angular_momentum_disk_star * mdisk + specific_angular_momentum_disk_gas * mgas_disk + 
-                   specific_angular_momentum_bulge_star * mbulge + specific_angular_momentum_bulge_gas * mgas_bulge) / (mdisk + mbulge + mgas_disk + mgas_bulge)
+    jbar        = (specific_angular_momentum_disk_star * mdisk + specific_angular_momentum_disk_gas * mgas_disk ) / (mdisk + mbulge + mgas_disk + mgas_bulge)  
+                   #specific_angular_momentum_bulge_star * mbulge + specific_angular_momentum_bulge_gas * mgas_bulge) / (mdisk + mbulge + mgas_disk + mgas_bulge)
     mbar        = (mdisk + mbulge + mgas_disk + mgas_bulge)
     jbarv2      = (specific_angular_momentum_disk_gas_atom * matom_disk + specific_angular_momentum_disk_star * mdisk + specific_angular_momentum_bulge_star * mbulge + matom_bulge * specific_angular_momentum_bulge_gas) / (mdisk + mbulge + matom_disk + matom_bulge)
     mbarv2      = (mdisk + mbulge + matom_disk + matom_bulge)
@@ -180,23 +188,23 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     thresh = [0, 0.25, 0.5, 0.75]
     mass_cut = 8.25
     for c in range(0,len(thresh)):
-        ind = np.where((jstars > 0) & (ms > mass_cut) & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
+        ind = np.where((jstars > 0) & (ms > mass_cut) & (mdisk+mbulge > 0) & (typeg >= 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_stars[index,:,:,c]                = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                                   y=np.log10(jstars[ind]) - np.log10(float(h0))) #specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
 
-        ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
+        ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (typeg >= 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_stars_disk[index,:,:,c]           = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                                   y=np.log10(specific_angular_momentum_disk_star[ind]) - np.log10(float(h0))) #specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
 
-        ind = np.where((jbar > 0) & (ms > mass_cut) & (mbar > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
+        ind = np.where((jbar > 0) & (ms > mass_cut) & (mbar > 0) & (typeg >= 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_bar[index,:,:,c]                  = bin_it(x=np.log10(mbar[ind]) - np.log10(float(h0)),
                                                   y=np.log10(jbar[ind]) - np.log10(float(h0))) #specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
 
-        ind = np.where((jbarv2 > 0) & (ms > mass_cut) & (mbarv2 > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c])) 
+        ind = np.where((jbarv2 > 0) & (ms > mass_cut) & (mbarv2 > 0) & (typeg >= 0) & (mdisk/(mdisk+mbulge) >= thresh[c])) 
         sam_barv2[index,:,:,c]                = bin_it(x=np.log10(mbarv2[ind]) - np.log10(float(h0)),
                                                   y=np.log10(jbarv2[ind]) - np.log10(float(h0))) #specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
 
-        ind = np.where((jstars > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
+        ind = np.where((jstars > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg >= 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_ratio_halo_gal[index,:,:,c]       = bin_it_halo(x=np.log10(mvir_s[ind]) - np.log10(float(h0)),
                                                   y=np.log10(jstars[ind]/sam_subhalo[ind]))
         sam_vs_sam_halo_gal[index,:,:,c]      = bin_it_j(x=np.log10(sam_subhalo[ind]),
@@ -217,14 +225,16 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
         sam_vs_sam_halo_disk_gas[index,:,:,c] = bin_it_j(x=np.log10(sam_subhalo[ind]),
                                                   y=np.log10(specific_angular_momentum_disk_gas[ind])  - np.log10(float(h0)))
      
-        ind = np.where((jatom > 0) & (ms > mass_cut) & (matom_disk+matom_bulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]) & (ms < 12))
+        ind = np.where((jatom > 0) & (ms > mass_cut) & (matom_disk+matom_bulge > 0) & (typeg >= 0) & (mdisk/(mdisk+mbulge) >= thresh[c]) & (ms < 12))
         sam_gas_disk_atom[index,:,:,c]        = bin_it(x=np.log10(matom_disk[ind] + matom_bulge[ind]) - np.log10(float(h0)),
                                                   y=np.log10(jatom[ind]) - np.log10(float(h0)))
-        
-        ind = np.where((specific_angular_momentum_disk_gas_mol > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
+       
+        ind = np.where((specific_angular_momentum_disk_gas_mol > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg >= 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_gas_disk_mol[index,:,:,c]         = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                                   y=np.log10(jmol[ind]) - np.log10(float(h0)))
-        
+        sam_gas_disk_atom_ms[index,:,:,c]     = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                                                  y=np.log10(jatom[ind]) - np.log10(float(h0)))
+       
         ind = np.where((sam_subhalo > 0) & (mdisk+mbulge > 0) & (ms > mass_cut)  & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_halo[index,:,:,c]                 = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)), 
             		                          y=np.log10(sam_subhalo[ind]))
@@ -503,7 +513,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     common.savefig(outdir, fig, 'vmax_vs_subhalo.pdf')
 
 
-def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, sam_bar, sam_stars, sam_barv2, mass_cut):
+def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_bar, sam_stars, sam_barv2, mass_cut):
 
     fig = plt.figure(figsize=(4.5,4.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -875,11 +885,11 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     plot_observations_AM(ax, bar_type=3, color='grey', mass_cut=mass_cut)
 
     #Predicted size-mass for disks in disk=dominated galaxies
-    ind = np.where(sam_barv2[s,0,:,selec] != 0)
+    ind = np.where(sam_bar[s,0,:,selec] != 0)
     xplot = xmf[ind]
-    yplot = sam_barv2[s,0,ind,selec] + 3.0
-    errdn = sam_barv2[s,1,ind,selec]
-    errup = sam_barv2[s,2,ind,selec]
+    yplot = sam_bar[s,0,ind,selec] + 3.0
+    errdn = sam_bar[s,1,ind,selec]
+    errup = sam_bar[s,2,ind,selec]
     ax.plot(xplot,yplot[0],color='k')
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='k', alpha=0.25,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='k', alpha=0.25,interpolate=True)
@@ -935,7 +945,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     ytit = "" #$\\rm log_{10} (\\rm j_{\\rm H_2}/kpc\\, km s^{-1})$"
     ax = fig.add_subplot(142)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.text(xleg, yleg, "$\\rm H_{2}$")
+    ax.text(xleg, yleg, "$\\rm HI$ and $\\rm H_2$")
 
     #Predicted size-mass for disks in disk=dominated galaxies
     for c in range(0,4):
@@ -947,6 +957,15 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
         ax.plot(xplot,yplot[0],color='g', linestyle=linestyles[c])
         if(c == 1):
            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='g', alpha=0.35,interpolate=True)
+
+        ind = np.where(sam_gas_disk_atom_ms[s,0,:,c] != 0)
+        xplot = xmf[ind]
+        yplot = sam_gas_disk_atom_ms[s,0,ind,c] + 3.0
+        errdn = sam_gas_disk_atom_ms[s,1,ind,c]
+        errup = sam_gas_disk_atom_ms[s,2,ind,c]
+        ax.plot(xplot,yplot[0],color='b', linestyle=linestyles[c])
+        if(c == 1):
+           ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='b', alpha=0.35,interpolate=True)
 
     #ax.plot(msO14, jmolO14, 'go',fillstyle='none')
     #common.prepare_legend(ax, ['k'], loc=2)
@@ -961,11 +980,12 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     plot_observations_AM(ax, bar_type=2, color='grey', mass_cut=mass_cut)
     #Predicted size-mass for disks in disk=dominated galaxies
     for c in range(0,4):
-        ind = np.where(sam_gas_disk_atom[s,0,:,c] != 0)
+        ind = np.where((sam_gas_disk_atom[s,0,:,c] != 0) & (xmf > 8))
         xplot = xmf[ind]
         yplot = sam_gas_disk_atom[s,0,ind,c] + 3.0
         errdn = sam_gas_disk_atom[s,1,ind,c]
         errup = sam_gas_disk_atom[s,2,ind,c]
+        print(np.polyfit(xplot, yplot[0], 1))
         ax.plot(xplot,yplot[0],color='b', linestyle=linestyles[c])
         if(c == 1):
            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='b', alpha=0.35,interpolate=True)
@@ -1298,6 +1318,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     sam_stars_disk    = np.zeros(shape = (len(zlist), 3, len(xmf), 4))
     sam_gas_disk_atom = np.zeros(shape = (len(zlist), 3, len(xmf), 4))
     sam_gas_disk_mol  = np.zeros(shape = (len(zlist), 3, len(xmf), 4))
+    sam_gas_disk_atom_ms = np.zeros(shape = (len(zlist), 3, len(xmf), 4))
     sam_bar           = np.zeros(shape = (len(zlist), 3, len(xmf), 4))
     sam_barv2         = np.zeros(shape = (len(zlist), 3, len(xmf), 4))
     sam_halo          = np.zeros(shape = (len(zlist), 3, len(xmf), 4))
@@ -1323,7 +1344,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         #seds_nod = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed_nod, subvols, file_hdf5_sed)
         #nbands = len(seds[0])
 
-        (lh, lj, lm, bt, ms, ssfr, mass_cut)  = prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, sam_ratio_halo_disk, 
+        (lh, lj, lm, bt, ms, ssfr, mass_cut)  = prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_ratio_halo_disk, 
                      sam_ratio_halo_gal, sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
                      sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal, sam_barv2, disk_size) #, seds, seds_nod, nbands)
 
@@ -1335,7 +1356,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                 stellar_mass = ms
                 ssfr_z0 = ssfr
 
-    plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_halo, sam_bar, sam_stars, sam_barv2, mass_cut)
+    plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_bar, sam_stars, sam_barv2, mass_cut)
     plot_specific_am_ratio(plt, outdir, obsdir, sam_ratio_halo_disk, sam_ratio_halo_gal, sam_ratio_halo_disk_gas, 
                            sam_vs_sam_halo_disk, sam_vs_sam_halo_gal, sam_vs_sam_halo_disk_gas)
     plot_lambda(plt, outdir, obsdir, lambdaH, lambda_jiang, lambda_mass, BT_ratio, stellar_mass, ssfr_z0)
