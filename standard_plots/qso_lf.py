@@ -32,7 +32,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0.00, 0.25, 0.50, 1.00, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00, 8.00, 10)
+zlist = (0.00, 0.25, 0.50, 1.00, 2.00, 3.00, 4.00, 5.00, 6.00) #, 8.00, 10)
 M_sun=1.9891e30
 c_light=2.99792458e8
 G=6.67259e-11
@@ -104,11 +104,13 @@ def load_lf_obs(obsdir):
 
 def prepare_data(hdf5_data, snapshot):
     (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb, BH_spin) = hdf5_data
+    vol = volh/pow(h0,3.)
+
     MBH = MBH.astype('float64') / h0
-    MBH_acc = (bh_accretion_rate_hh + bh_accretion_rate_sb).astype('float64')
-    MBH_acc /= h0 * 1e9
+    MBH_acc = (bh_accretion_rate_hh + bh_accretion_rate_sb) #.astype('float64')
+    MBH_acc /= (h0 * 1e9)
     BH_spin = BH_spin.astype('float64')
-    
+
     def acc_eff_calc(a):
         a1=np.abs(a)
         a2=a**2
@@ -132,12 +134,12 @@ def prepare_data(hdf5_data, snapshot):
     #Eddington luminosity
     L_Edd=4*np.pi*c_light*G*M_sun*M_atom*H_atom_mass/(sigma_Thomson*1e40)
     L_Edd*=MBH*J2erg
-    
+   
     #Eddington MBH accretion rate and ratio
     M_dot_Edd=1e40*L_Edd/(0.1*(c_light*m2cm)**2)
     M_dot=MBH_acc*M_sun*kg2g/yr2s
+
     m_dot=np.where((M_dot_Edd>0)&(M_dot>0),M_dot/M_dot_Edd,np.nan)
-    
     #Bolometric luminosity
     L_bol=np.zeros(len(m_dot))
     ADAF_low=(0<m_dot)&(m_dot<=ADAF_trans)
@@ -157,20 +159,25 @@ def prepare_data(hdf5_data, snapshot):
     L_bol[SE]=eta_superEdd*(1+np.log((m_dot[SE]/eta_superEdd)*(acc_eff[SE]/0.1)))*L_Edd[SE]
     
     L_bol=np.where(L_bol>0,np.log10(L_bol)+40,np.nan)
-    
+    ind=np.where(L_bol > 0)
+ 
     print(f'Fraction of galaxies in snapshot {snapshot} with an AGN = {1.0*np.sum(~np.isnan(L_bol))/len(L_bol):.3f}')
-    
-    LF_bol = np.histogram(L_bol,bins=Lbins)[0]
+    LF_bol = np.histogram(L_bol[ind],bins=Lbins)[0]
     LF_bol = np.where(LF_bol>0, np.log10(LF_bol), np.nan)
-    LF_bol -= np.log10(volh/h0) + dL
+    LF_bol -= (np.log10(volh) + dL)
     LF_bol = np.array([LF_bol[0]]+[l for l in LF_bol])
     
     return(LF_bol)
 
 def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
+
+
+
     fig=plt.figure(figsize=(7.2*2,3.5*4))
-    spec=gs.GridSpec(nrows=4,ncols=3,figure=fig,wspace=0,hspace=0,left=0.08,right=0.99,bottom=0.13,top=0.99)
-    fax=[fig.add_subplot(spec[i,j]) for i in range(4) for j in range(3)]
+    subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+
+    #spec=gs.GridSpec(nrows=4,ncols=3,figure=fig,wspace=0,hspace=0,left=0.08,right=0.99,bottom=0.13,top=0.99)
+    #fax=[fig.add_subplot(spec[i,j]) for i in range(4) for j in range(3)]
     xlab='$\Phi(L^{}_\mathrm{QSO})$ [dex$^{-1}$Mpc$^{-3}$]'
     ylab='$L^{}_\mathrm{QSO}$ [erg s$^{-1}$]'
     LFlow,LFupp=[3e-7,5e-3]
@@ -178,49 +185,37 @@ def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
     H07_LF,S09_LF,T22_LF=load_lf_obs(obsdir)
     
     for i,z in enumerate(zlist):
+        ax = fig.add_subplot(subplots[i])
+        common.prepare_ax(ax, 10**Llow,10**Lupp, LFlow, LFupp, xlab, ylab, locators=(0.1, 1, 0.1))
+        ax.set_xscale('log')
+        ax.set_yscale('log')
         xdata=10**Lbins
         ydata=10**LF_qso[i,:]
         zcol=cm.summer(np.log10(1+z)/max_logz)
         
         if np.sum(H07_LF[0,:]==z)>0:
             zsel=H07_LF[0,:]==z
-            fax[i].errorbar(H07_LF[1,zsel],H07_LF[2,zsel],yerr=[H07_LF[2,zsel]*(H07_LF[3,zsel]-1),
+            ax.errorbar(H07_LF[1,zsel],H07_LF[2,zsel],yerr=[H07_LF[2,zsel]*(H07_LF[3,zsel]-1),
                                                                 H07_LF[2,zsel]*(1-1/H07_LF[3,zsel])],
-                            marker='d',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+                            marker='d',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey', label = 'Hopkins+2007')
         if np.sum(S09_LF[0,:]==z)>0:
             zsel=S09_LF[0,:]==z
-            fax[i].errorbar(S09_LF[1,zsel],S09_LF[2,zsel],yerr=[S09_LF[3,zsel],S09_LF[4,zsel]],
-                            marker='s',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+            ax.errorbar(S09_LF[1,zsel],S09_LF[2,zsel],yerr=[S09_LF[3,zsel],S09_LF[4,zsel]],
+                            marker='s',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey', label = 'Shankar+2009')
         if np.sum(T22_LF[0,:]==z)>0:
             zsel=T22_LF[0,:]==z
-            fax[i].errorbar(T22_LF[1,zsel],T22_LF[2,zsel],yerr=[T22_LF[2,zsel]*(T22_LF[3,zsel]-1),
+            ax.errorbar(T22_LF[1,zsel],T22_LF[2,zsel],yerr=[T22_LF[2,zsel]*(T22_LF[3,zsel]-1),
                                                                 T22_LF[2,zsel]*(1-1/T22_LF[3,zsel])],
-                            marker='o',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey')
+                            marker='o',lw=0,mec='none',mfc='xkcd:grey',elinewidth=1.5,ecolor='xkcd:grey', label = 'Thorne+2022')
         
-        fax[i].step(xdata,ydata,color='k')
-        fax[i].text(0.85,0.9,f'$z={z:.2f}$',bbox={'fc':zcol,'boxstyle':'Round','ec':'k'},
-                    transform=fax[i].transAxes,ha='center',va='center')
-    
-    for i in range(12):
-        fax[i].set_xscale('log')
-        fax[i].set_yscale('log')
-        fax[i].set_xlim(10**Llow,10**Lupp)
-        fax[i].set_ylim(LFlow,LFupp)
-        if i<9:
-            fax[i].get_xaxis().set_ticklabels([])
-        else:
-            fax[i].set_xlabel(xlab)
-        if i%3>0:
-            fax[i].get_yaxis().set_ticklabels([])
-        else:
-            fax[i].set_ylabel(ylab)
-    
-    fig.legend([Line2D([0,1],[0,1],color='k'),Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='d'),
-                Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='s'),
-                Line2D([0,1],[0,1],color='xkcd:grey',lw=0,marker='o')],
-              ['SHARK','Hopkins+2007','Shankar+2009','Thorne+2022'],
-              loc=8,bbox_to_anchor=(0.5,0.0),ncols=4)
-    
+        ax.plot(xdata,ydata,color='k', label ='SHARK')
+        ax.text(1e42, 1e-6, f'$z={z:.2f}$')
+
+        if (i == 2):
+           common.prepare_legend(ax, ['k', 'grey', 'grey', 'grey'], loc=1)
+ 
+   
+    plt.tight_layout()
     common.savefig(outdir, fig, 'LF_QSO_z.pdf')
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
