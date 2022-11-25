@@ -117,6 +117,7 @@ def pso_run_main(parser, args):
     parser.add_argument('-o', '--outdir', help='Auxiliary output directory, defaults to .', default=_abspath('.'),
                         type=_abspath)
     parser.add_argument('-k', '--keep', help='Keep temporary output files', action='store_true')
+    parser.add_argument('-y', '--force-yes', help='Keep temporary output files', action='store_true')
 
     pso_opts = parser.add_argument_group('PSO options')
     pso_opts.add_argument('-s', '--swarm-size', help='Size of the particle swarm. Defaults to 10 + sqrt(D) * 2 (D=number of dimensions)',
@@ -213,7 +214,7 @@ def pso_run_main(parser, args):
         logger.info('    Memory per instance: %s', opts.memory)
         logger.info('    Nodes to use: %s', opts.nodes)
 
-    while True:
+    while True and not opts.force_yes:
         answer = common.raw_input('\nAre these parameters correct? (Yes/no): ')
         if answer:
             answer = answer.lower()
