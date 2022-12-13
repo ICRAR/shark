@@ -27,7 +27,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10)
+zlist = (0,  0.5,  1, 1.5,  3, 4, 6)
 
 ##################################
 #Constants
@@ -66,6 +66,12 @@ def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR,
     bin_it_mdot = functools.partial(us.wmedians, xbins=xmdotf)
 
     if(read_spin == True):
+       ind = np.where((np.isnan(spin) == True) | (np.isinf(spin) == True))
+       if (len(spin[ind]) > 0):
+            print("Number of galaxies with a BH spin of NaN:", len(spin[ind]))
+       else:
+            print("All galaxies have well defined BH spin")
+   
        print(max(spin), min(spin))
        spin = np.abs(spin)
        ind = np.where(mbh > 0)
@@ -189,17 +195,17 @@ def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
     xmin, xmax, ymin, ymax = 4, 11, -5, 1
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-    for i,c in enumerate(cols):
+    for i,c in enumerate(zlist):
         ind = np.where(mdotmbh[i,0,:] != 0)
         if(len(xmf[ind]) > 0):
             xplot = xmf[ind]
             yplot = mdotmbh[i,0,ind]
             errdn = mdotmbh[i,1,ind]
             errup = mdotmbh[i,2,ind]
-            ax.plot(xplot,yplot[0],color=c,label="z=%s" % str(zlist[i]))
+            ax.plot(xplot,yplot[0],color=cols[i],label="z=%s" % str(c))
             if(i == 0 or i == 5):
-               ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=c, alpha=0.5, interpolate=True)
-               ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=c, alpha=0.5, interpolate=True)
+               ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
+               ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
     
     common.prepare_legend(ax, cols, loc=2)
 
@@ -211,17 +217,17 @@ def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-    for i,c in enumerate(cols):
+    for i,c in enumerate(zlist):
         ind = np.where(mdotmbh_hh[i,0,:] != 0)
         if(len(xmf[ind]) > 0):
             xplot = xmf[ind]
             yplot = mdotmbh_hh[i,0,ind]
             errdn = mdotmbh_hh[i,1,ind]
             errup = mdotmbh_hh[i,2,ind]
-            ax.plot(xplot,yplot[0],color=c,label="z=%s" % str(zlist[i]))
+            ax.plot(xplot,yplot[0],color=cols[i],label="z=%s" % str(c))
             if(i == 0 or i == 5):
-               ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=c, alpha=0.5, interpolate=True)
-               ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=c, alpha=0.5, interpolate=True)
+               ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
+               ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
     
     common.prepare_legend(ax, cols, loc=2)
 
@@ -244,17 +250,17 @@ def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     #Predicted BH-bulge mass relation
-    for i,c in enumerate(cols):
+    for i,c in enumerate(zlist):
        ind = np.where(BHSFR[i,0,:] != 0)
        if(len(xmf[ind]) > 0):
            xplot = xmf[ind]
            yplot = BHSFR[i,0,ind]
            errdn = BHSFR[i,1,ind]
            errup = BHSFR[i,2,ind]
-           ax.plot(xplot,yplot[0],color=c,label="z=%s" % str(zlist[i]))
+           ax.plot(xplot,yplot[0],color=cols[i],label="z=%s" % str(c))
            if(i == 0 or i == 5):
-              ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=c, alpha=0.5, interpolate=True)
-              ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=c, alpha=0.5, interpolate=True)
+              ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
+              ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
 
     common.prepare_legend(ax, cols, loc=1)
     plt.tight_layout()
@@ -281,6 +287,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     BHSFR = np.zeros(shape = (len(zlist), 3, len(xmf)))
  
     for index, snapshot in enumerate(redshift_table[zlist]):
+        print("Will read redshift", zlist[index])
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR, read_spin)
 

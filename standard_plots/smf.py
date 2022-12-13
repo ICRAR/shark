@@ -1619,7 +1619,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
             (sfr_disk, sfr_burst, mdisk, mbulge) = hdf5_data[2:6]
             sfr_seq = np.zeros(shape = (2, len(mdisk)))
             ind = np.where(sfr_disk + sfr_burst <= 0)
-            sfr_disk[ind] = 1e-10 #assume a minimum
+            sfr_disk[ind] = 2e-10 * GyrToYr * h0 #assume a minimum
 
             ind  = np.where((sfr_disk + sfr_burst > 0) & (mdisk + mbulge > 0))
             sfr_seq[0,ind] = mass[ind]

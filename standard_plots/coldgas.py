@@ -353,7 +353,7 @@ def plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos, mh
 
     ###################################
     #   Plots global mass densities
-    fig = plt.figure(figsize=(12,4.5))
+    fig = plt.figure(figsize=(16,4.5))
 
     subp = [151, 152, 153, 154, 155]
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -404,7 +404,7 @@ def plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos, mh
     common.savefig(output_dir, fig, "HI_stacking_satellites.pdf")
 
 
-    fig = plt.figure(figsize=(12,4.5))
+    fig = plt.figure(figsize=(16,4.5))
     xtit="$\\rm log_{10} (\\rm sSFR/yr^{-1})$"
 
     for i, sp in enumerate(subp):

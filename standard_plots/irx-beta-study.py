@@ -26,7 +26,7 @@ import common
 import utilities_statistics as us
 
 
-zlist=np.array([0.19, 0.9, 2.0, 3.0, 3.95, 5, 5.96, 7, 8]) #, 8.94]) #, 9.95])
+zlist=np.array([0.194739]) #, 0.9, 2.0, 3.0, 3.95, 5, 5.96, 7, 8, 8.94]) #, 8.94]) #, 9.95])
 
 #0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988, 5.02220991014863, 5.2202206934302, 5.52950356184419, 5.74417977285603, 5.96593, 6.19496927748119, 6.55269895697227, 7.05756323172746, 7.45816170313544, 7.73629493731708, 8.02352,8.32018565809831, 8.47220854014322, 8.78358705435761, 8.94312532315157, 9.27010372804765, 9.437541750167, 9.78074128377067, 9.95655])
 
@@ -182,6 +182,7 @@ def prepare_data(hdf5_data, ext_data, seds, seds_lir, index, zsnap, obsdir, sm_i
     mstar_in = np.log10(mstars[pos])
     zgas_in = np.log10(zgas[pos])
     ssfr_in = np.log10(sfr[pos] / mstars[pos]) - (fit_ms[0] * np.log10(mstars[pos]) + fit_ms[1])
+    sfr_in = np.log10(sfr[pos]/1e9/h0)
     mdust_in = np.log10(mdust[pos])
     eta_comp = (eta_bulge[pos] * (lir_total[pos] - lir_disk[pos]) +  eta_disk[pos] * lir_disk[pos]) / lir_total[pos] #luminosity weighted eta
     tau_birth_comp = (tau_birth_bulge[pos] * (lir_total[pos] - lir_disk[pos]) + tau_birth_disk[pos] * lir_disk[pos]) / lir_total[pos] #luminosity weighted tau_birth
@@ -195,6 +196,7 @@ def prepare_data(hdf5_data, ext_data, seds, seds_lir, index, zsnap, obsdir, sm_i
     mstar_in = mstar_in[pos]
     zgas_in = zgas_in[pos]
     ssfr_in = ssfr_in[pos]
+    sfr_in = sfr_in[pos]
     mdust_in = mdust_in[pos]
     eta_comp = eta_comp[pos]
     tau_birth_comp = tau_birth_comp[pos]
@@ -202,9 +204,15 @@ def prepare_data(hdf5_data, ext_data, seds, seds_lir, index, zsnap, obsdir, sm_i
 
     sm_irx[index,:] = us.wmedians(x=mstar_in, y=irx, xbins=xmf)
 
-    return(volh, h0, irx, beta, mstar_in, zgas_in, ssfr_in, mdust_in, eta_comp, tau_birth_comp, tau_screen_comp)
+    return(volh, h0, irx, beta, mstar_in, zgas_in, ssfr_in, mdust_in, eta_comp, tau_birth_comp, tau_screen_comp, sfr)
     
-def plot_irx_beta(plt, outdir, obsdir, irx, beta, mstar, zgas_in, ssfr, mdust, eta, tau_birth, tau_screen, z, dust_model):
+def plot_irx_beta(plt, outdir, obsdir, irx, beta, mstar, zgas_in, ssfr, mdust, eta, tau_birth, sfr, tau_screen, z, dust_model):
+
+    ind = np.where((mstar >= 7.5) & (mstar <= 8.5))
+    print("#Data for galaxies with Mstar/Msun in [7.5,8.5] for redshift:", z)
+    print("#IRX beta log(Mstar/Msun) log(SFR/Msun yr^-1) Delta_MainSeq")
+    for (a,b,c,d,e) in zip (irx[ind], beta[ind], mstar[ind], sfr[ind], ssfr[ind]):
+        print(a,b,c,d,e)
 
     fig = plt.figure(figsize=(5,5))
     xtit = "$\\beta$"
@@ -241,7 +249,7 @@ def plot_irx_beta(plt, outdir, obsdir, irx, beta, mstar, zgas_in, ssfr, mdust, e
 
 
     #plot IRX-beta for different stellar mass bins
-    mstar_bins = [8,9,10,11,12.5]
+    mstar_bins = [8,9,10,11,12]
     subplots = [141, 142, 143, 144]
 
     def plot_properties_in_irx_beta(prop, name, label, binsx=30, binsy=30, vmin=-1.5, vmax=0.5):
@@ -272,7 +280,12 @@ def plot_irx_beta(plt, outdir, obsdir, irx, beta, mstar, zgas_in, ssfr, mdust, e
            y = meds[0,pos]
            yerrdn = meds[1,pos]
            yerrup = meds[2,pos]
-           ax.errorbar(xv2[pos],y[0], yerr=[yerrdn[0],yerrup[0]], ls='None', mfc='None', ecolor = 'DarkGray', mec='DarkGray', color='DarkGray', marker='o',linestyle='solid')
+           ax.errorbar(xv2[pos],y[0], yerr=[yerrdn[0],yerrup[0]], mfc='None', ecolor = 'DarkGray', mec='DarkGray', color='DarkGray', marker='o',linestyle='solid')
+           #if(i == 0):
+           #   print("#median IRX-beta relation for bin", mstar_bins[i], mstar_bins[i+1], " at redshift", z)
+           #   for a, b, c, d in zip(xv2[pos],y[0], yerrdn[0],yerrup[0]):
+           #       print(a,b,c,d)
+
            plot_obs(ax)
            if i == 0:
                common.prepare_legend(ax, 'k', loc=2)
@@ -398,9 +411,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         ext_data = common.read_data_ext(modeldir, snapshot, fields_ext, subvols, dust_model)
 
         (volh, h0, irx, beta, mstar_in, zgas_in, ssfr, mdust, 
-         eta, tau_birth, tau_screen) = prepare_data(hdf5_data, ext_data, seds, seds_lir, index, zlist[index], obsdir, sm_irx)
+         eta, tau_birth, tau_screen, sfr) = prepare_data(hdf5_data, ext_data, seds, seds_lir, index, zlist[index], obsdir, sm_irx)
         plot_irx_beta(plt, outdir, obsdir, irx, beta, mstar_in, zgas_in, ssfr, mdust, eta, tau_birth, 
-                      tau_screen, zlist[index], dust_model)
+                      tau_screen, sfr, zlist[index], dust_model)
 
     def take_log(x,v,h):
         x = x / (v / h**3.0)

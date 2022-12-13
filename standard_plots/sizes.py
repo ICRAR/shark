@@ -556,6 +556,11 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR, BH_morpho, BHSM_morpho):
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     ax.text(xleg, yleg, 'z=0', fontsize=12)
+    ax.text(xleg-0.25, yleg-0.3, '$M_{\\star}> 10^{10}\\, M_{\\odot}$', fontsize=12)
+
+    xL18, yL18, yl_L18, yu_L18 = common.load_observation(obsdir, 'Models/SharkVariations/BHSSFR_Lagos18.dat', [0,1,2,3])
+    ax.plot(xL18, yL18,color='k',label="Shark v1.1 (L18)")
+    ax.fill_between(xL18,yl_L18,yu_L18, facecolor='k', alpha=0.25, interpolate=True)
 
     #Predicted BH-bulge mass relation
     ind = np.where(BHSFR[0,0,:] != 0)
@@ -564,18 +569,19 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR, BH_morpho, BHSM_morpho):
         yplot = BHSFR[0,0,ind]
         errdn = BHSFR[0,1,ind]
         errup = BHSFR[0,2,ind]
-        ax.plot(xplot,yplot[0],color='k',label="Shark")
-        ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
-        ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='grey', interpolate=True)
-
+        #print("Will print the BH-SSFR correlation")
+        #for a,b,c,d in zip(xplot, yplot[0], yplot[0]-errdn[0], yplot[0]+errup[0]):
+        #    print(a,b,c,d)
+        ax.plot(xplot,yplot[0],color='red',lw=3.5,label="Shark v2.0")
+        ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5, interpolate=True)
 
     #BH-SSFR relation
-    ax.errorbar(mbh, sfr-ms, xerr=mbherr, yerr=0.3, ls='None', mfc='None', ecolor = 'r', mec='r',marker='s',label="Terrazas+17")
+    ax.errorbar(mbh, sfr-ms, xerr=mbherr, yerr=0.3, ls='None', mfc='None', ecolor = 'b', mec='b',marker='s',label="Terrazas+17")
     ind = np.where(upperlimflag == 1)
     for a,b in zip (mbh[ind], sfr[ind]-ms[ind]):
-        ax.arrow(a, b, 0, -0.3, head_width=0.05, head_length=0.1, fc='r', ec='r')
+        ax.arrow(a, b, 0, -0.3, head_width=0.05, head_length=0.1, fc='b', ec='b')
 
-    common.prepare_legend(ax, ['k','r'], loc=3)
+    common.prepare_legend(ax, ['k','r','b'], loc=3)
     common.savefig(outdir, fig, 'BH-SSFR.pdf')
 
 def plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites):

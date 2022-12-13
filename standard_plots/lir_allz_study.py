@@ -49,6 +49,9 @@ def prepare_data(hdf5_data, seds, index, LFs_dust, obsdir, nbrightgals, nbrightg
 
     (h0, volh, mdisk, mbulge, sfr_disk, sfr_burst) = hdf5_data
 
+    sm_thresh = 3.98e10
+    ssfr_thresh = 1e-10
+    ssfr_thresh2 = 1e-11
 
     lir_total = seds[1] #total absolute magnitudes with dust
     mstar_tot = (mdisk + mbulge)/h0
@@ -84,30 +87,41 @@ def prepare_data(hdf5_data, seds, index, LFs_dust, obsdir, nbrightgals, nbrightg
     nbrightgals[3,0,index] = brightgals.size
     nbrightgals[3,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where((lir_total >= 1e11) & (lir_total < 1e20) & (mstar_tot >= 3e10))
+    ind = np.where((lir_total >= 1e11) & (lir_total < 1e20) & (mstar_tot >= sm_thresh))
     brightgals = lir_total[ind]
     nbrightgals[4,0,index] = brightgals.size
     nbrightgals[4,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where((lir_total >= 1e12) & (lir_total < 1e20) & (mstar_tot >= 3e10))
+    ind = np.where((lir_total >= 1e12) & (lir_total < 1e20) & (mstar_tot >= sm_thresh))
     brightgals = lir_total[ind]
     nbrightgals[8,0,index] = brightgals.size
     nbrightgals[8,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where(mstar_tot >= 3e10)
+    ind = np.where(mstar_tot >= sm_thresh)
     brightgals = mstar_tot[ind]
     nbrightgals[5,0,index] = brightgals.size
     nbrightgals[5,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where((mstar_tot >= 3e10) & (sfr_tot/mstar_tot < 1e-10)) 
+    ind = np.where((mstar_tot >= sm_thresh) & (sfr_tot/mstar_tot < ssfr_thresh)) 
     brightgals = mstar_tot[ind]
     nbrightgals[6,0,index] = brightgals.size
     nbrightgals[6,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where((mstar_tot >= 1e11) & (sfr_tot/mstar_tot < 1e-10)) 
+    ind = np.where((mstar_tot >= 1e11) & (sfr_tot/mstar_tot < ssfr_thresh)) 
     brightgals = mstar_tot[ind]
     nbrightgals[7,0,index] = brightgals.size
     nbrightgals[7,1,index] = sum(mstar_tot[ind])
+
+    ind = np.where((mstar_tot >= sm_thresh) & (sfr_tot/mstar_tot < ssfr_thresh2)) 
+    brightgals = mstar_tot[ind]
+    nbrightgals[9,0,index] = brightgals.size
+    nbrightgals[9,1,index] = sum(mstar_tot[ind])
+
+    ind = np.where((mstar_tot >= 1e11) & (sfr_tot/mstar_tot < ssfr_thresh2)) 
+    brightgals = mstar_tot[ind]
+    nbrightgals[10,0,index] = brightgals.size
+    nbrightgals[10,1,index] = sum(mstar_tot[ind])
+
 
     mstar_tot = 10.0**(np.log10(mstar_tot) + np.random.normal(0,0.2,mstar_tot.size))
 
@@ -136,30 +150,41 @@ def prepare_data(hdf5_data, seds, index, LFs_dust, obsdir, nbrightgals, nbrightg
     nbrightgals_err[3,0,index] = brightgals.size
     nbrightgals_err[3,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where((lir_total >= 1e11) & (lir_total < 1e20) & (mstar_tot >= 3e10))
+    ind = np.where((lir_total >= 1e11) & (lir_total < 1e20) & (mstar_tot >= sm_thresh))
     brightgals = lir_total[ind]
     nbrightgals_err[4,0,index] = brightgals.size
     nbrightgals_err[4,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where((lir_total >= 1e12) & (lir_total < 1e20) & (mstar_tot >= 3e10))
+    ind = np.where((lir_total >= 1e12) & (lir_total < 1e20) & (mstar_tot >= sm_thresh))
     brightgals = lir_total[ind]
     nbrightgals_err[8,0,index] = brightgals.size
     nbrightgals_err[8,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where(mstar_tot >= 3e10)
+    ind = np.where(mstar_tot >= sm_thresh)
     brightgals = mstar_tot[ind]
     nbrightgals_err[5,0,index] = brightgals.size
     nbrightgals_err[5,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where((mstar_tot >= 3e10) & (sfr_tot/mstar_tot < 1e-10)) 
+    ind = np.where((mstar_tot >= sm_thresh) & (sfr_tot/mstar_tot < ssfr_thresh)) 
     brightgals = mstar_tot[ind]
     nbrightgals_err[6,0,index] = brightgals.size
     nbrightgals_err[6,1,index] = sum(mstar_tot[ind])
 
-    ind = np.where((mstar_tot >= 1e11) & (sfr_tot/mstar_tot < 1e-10)) 
+    ind = np.where((mstar_tot >= 1e11) & (sfr_tot/mstar_tot < ssfr_thresh)) 
     brightgals = mstar_tot[ind]
     nbrightgals_err[7,0,index] = brightgals.size
     nbrightgals_err[7,1,index] = sum(mstar_tot[ind])
+
+    ind = np.where((mstar_tot >= sm_thresh) & (sfr_tot/mstar_tot < ssfr_thresh2)) 
+    brightgals = mstar_tot[ind]
+    nbrightgals_err[9,0,index] = brightgals.size
+    nbrightgals_err[9,1,index] = sum(mstar_tot[ind])
+
+    ind = np.where((mstar_tot >= 1e11) & (sfr_tot/mstar_tot < ssfr_thresh2)) 
+    brightgals = mstar_tot[ind]
+    nbrightgals_err[10,0,index] = brightgals.size
+    nbrightgals_err[10,1,index] = sum(mstar_tot[ind])
+
 
 
     #compute luminosity function
@@ -233,8 +258,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     csfr = np.zeros(shape = (len(zlist), 2))
     LFs_dust     = np.zeros(shape = (len(zlist), len(mbins)))
-    nbrightgals = np.zeros(shape = (9,2,len(zlist)))
-    nbrightgals_err = np.zeros(shape = (9,2,len(zlist)))
+    nbrightgals = np.zeros(shape = (11,2,len(zlist)))
+    nbrightgals_err = np.zeros(shape = (11,2,len(zlist)))
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         #print("Will read snapshot %s" % (str(snapshot)))
@@ -249,7 +274,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     j = 0
 
 
-    Write_Tables = False 
+    Write_Tables = True 
     #for a,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19 in zip(xmf, LFs_dust[0,:], LFs_dust[1,:], LFs_dust[2,:], LFs_dust[3,:], LFs_dust[4,:], LFs_dust[5,:], LFs_dust[6,:], LFs_dust[7,:], LFs_dust[8,:], LFs_dust[9,:], LFs_dust[10,:], LFs_dust[11,:], LFs_dust[12,:], LFs_dust[13,:], LFs_dust[14,:], LFs_dust[15,:], LFs_dust[16,:], LFs_dust[17,:], LFs_dust[18,:]):
     #        print(a,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19)
 
@@ -262,23 +287,25 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
        print('#N2: number density of galaxies with LIR>1e12Lsun')
        print('#N3: number density of galaxies with LIR>1e11Lsun and Mstar>1e11Msun')
        print('#N4: number density of galaxies with Mstar>1e11Msun:')
-       print('#N5: number density of galaxies with LIR>1e11Lsun and Mstar>3e10Msun')
-       print('#N6: number density of galaxies with Mstar>3e10Msun')
-       print('#N7: number density of galaxies with Mstar>3e10Msun & SSFR<1e-10yr^-1')
+       print('#N5: number density of galaxies with LIR>1e11Lsun and Mstar>3.9e10Msun')
+       print('#N6: number density of galaxies with Mstar>3.9e10Msun')
+       print('#N7: number density of galaxies with Mstar>3.9e10Msun & SSFR<1e-10yr^-1')
        print('#N8: number density of galaxies with Mstar>1e11Msun & SSFR<1e-10yr^-1')
-       print('#N9: number density of galaxies with LIR>1e12Lsun and Mstar>3e10Msun')
+       print('#N9: number density of galaxies with LIR>1e12Lsun and Mstar>3.9e10Msun')
+       print('#N10: number density of galaxies with Mstar>3.9e10Msun & SSFR<1e-11yr^-1')
+       print('#N11: number density of galaxies with Mstar>1e11Msun & SSFR<1e-11yr^-1')
        print('#(WE): refers to the cuts above applied after convolving IR luminosities and stellar masses with a gaussian of width 0.2dex')
        print('#SMD: refers to stellar mass density in units of Msun/Mpc^-3 and the sample numbers are as for the number densities.')
        print('# ')
        print('#columns:')
-       print('#redshift N1 N2 N3 N4 N5 N6 N7 N8 N9')
-       for a,b,c,d,e,f,g,h,i,k in zip(zlist,ngals[0,j,:],ngals[1,j,:],ngals[2,j,:],ngals[3,j,:],ngals[4,j,:],ngals[5,j,:],ngals[6,j,:],ngals[7,j,:],ngals[8,j,:]):
-           print(a,b,c,d,e,f,g,h,i,k)
+       print('#redshift N1 N2 N3 N4 N5 N6 N7 N8 N9 N10 N11')
+       for a,b,c,d,e,f,g,h,i,k,l,m in zip(zlist,ngals[0,j,:],ngals[1,j,:],ngals[2,j,:],ngals[3,j,:],ngals[4,j,:],ngals[5,j,:],ngals[6,j,:],ngals[7,j,:],ngals[8,j,:],ngals[9,j,:],ngals[10,j,:]):
+           print(a,b,c,d,e,f,g,h,i,k,l,m)
        print('# ')
        print('#redshift N1(WE) N2(WE) N3(WE) N4(WE) N5(WE) N6(WE) N7(WE) N8(WE) N9(WE)')
        ngals = nbrightgals_err
-       for a,b,c,d,e,f,g,h,i,k in zip(zlist,ngals[0,j,:],ngals[1,j,:],ngals[2,j,:],ngals[3,j,:],ngals[4,j,:],ngals[5,j,:],ngals[6,j,:],ngals[7,j,:],ngals[8,j,:]):
-           print(a,b,c,d,e,f,g,h,i,k)
+       for a,b,c,d,e,f,g,h,i,k,l,m in zip(zlist,ngals[0,j,:],ngals[1,j,:],ngals[2,j,:],ngals[3,j,:],ngals[4,j,:],ngals[5,j,:],ngals[6,j,:],ngals[7,j,:],ngals[8,j,:],ngals[9,j,:],ngals[10,j,:]):
+           print(a,b,c,d,e,f,g,h,i,k,l,m)
        ngals = nbrightgals
        j = 1
        print('# ')
