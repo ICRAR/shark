@@ -272,7 +272,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	vector<float> cooling_rate;
 	vector<int> on_hydrostatic_eq;
-	vector<float> mheat_ratio;
 
 	vector<float> mvir_hosthalo;
 	vector<float> mvir_subhalo;
@@ -311,6 +310,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> L_z_subhalo;
 
 	vector<int> type;
+
 	vector<Halo::id_t> id_halo;
 	vector<Halo::id_t> id_halo_tree;
 	vector<Subhalo::id_t> id_subhalo;
@@ -375,15 +375,13 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				//ignore this galaxy if it will appear for the first time in the coming snapshot.
 				if(galaxy.birth_snapshot == snapshot) continue;
 
-
-				if(halo->hydrostatic_eq){
+				if(halo->on_hydrostatic_eq){
 					on_hydrostatic_eq.push_back(1);
 				}
 				else{
 					on_hydrostatic_eq.push_back(0);
 				}
 
-				mheat_ratio.push_back(galaxy.mheat_ratio);
 
 				id_halo_tree.push_back(halo->id);
 				id_subhalo_tree.push_back(subhalo->id);
@@ -681,7 +679,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(mean_stellar_mass_galaxies_ihsc);
 	REPORT(cooling_rate);
 	REPORT(on_hydrostatic_eq);
-	REPORT(mheat_ratio);
 	REPORT(mhot_stripped);
 	REPORT(mhot_stripped_metals);
 	REPORT(mvir_hosthalo);
@@ -769,6 +766,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("subhalo/l_z", L_z_subhalo, comment);
 
 	//Write galaxy properties.
+
 	comment = "stellar mass in the disk [Msun/h]";
 	file.write_dataset("galaxies/mstars_disk", mstars_disk, comment);
 
@@ -939,9 +937,6 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "is halo on quasi hydrostatic equilibrium (=1 for true, =0 for false).";
 	file.write_dataset("galaxies/on_hydrostatic_eq", on_hydrostatic_eq, comment);
-
-	comment = "ratio between the heating rate by AGN and cooling rate.";
-	file.write_dataset("galaxies/mheat_ratio", mheat_ratio, comment);
 
 	comment = "gas mass that has been stripped out of this subhalo due to ram pressure stripping [Msun/h].";
 	file.write_dataset("galaxies/mhot_stripped", mhot_stripped, comment);

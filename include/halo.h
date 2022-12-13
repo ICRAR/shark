@@ -156,7 +156,7 @@ public:
 	 */
 	bool ignore_gal_formation = false;
 
-       /**
+        /**
          * Boolean parameter tracking whether this halo is in quasi hydrostatic equilibrium
          */
 

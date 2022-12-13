@@ -679,6 +679,7 @@ double GasCooling::mean_density(double mhot, double rvir){
 	return mhot*MSOLAR_g/(SPI * std::pow(rvir * MPC2CM,3.0)) / (M_Atomic_g * mu_Primordial); //in units of cm^-3.
 }
 
+
 double GasCooling::cooling_radius(double mhot, double rvir, double tcharac, double logl, double Tvir){
 
 	using namespace constants;
@@ -748,13 +749,12 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 		auto m200norm = m200 / 1e12;
 		auto log10m200norm = std::log10(m200norm);
 
-		// cooling rate in cgs.
 
 		double omega_term = std::sqrt(cosmology->parameters.OmegaM * std::pow(redshift + 1.0, 3.0) + cosmology->parameters.OmegaL);
 
 		// growth rate of halo in Msun/Gyr from Dekel et al. (2009).
 		double mdot = 0.47 * std::pow(m200norm, 0.15) * std::pow(0.333 * (redshift + 1.0), 2.25) * m200;
-		// 71.6 * GIGA * m200norm * (cosmology->parameters.Hubble_h/0.7)  * (1 + redshift) * omega_term; //Correa et al. (2015)
+		//double mdot = 71.6 * GIGA * m200norm * (cosmology->parameters.Hubble_h/0.7)  * (1 + redshift) * omega_term; //Correa et al. (2015)
 
 		// define fractions of hot gas (Equations 10 and 18 in Correa et al. 2018).
                 double f_hot = std::pow(10.0, -0.8 + 0.5 * log10m200norm - 0.05 * std::pow(log10m200norm, 2.0));
@@ -763,23 +763,20 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 		// heating rate in cgs.
 		double gamma_heat = 1.5 * k_Boltzmann_erg * Tvir / (M_Atomic_g * mu_Primordial) * cosmology->universal_baryon_fraction() * mdot / MACCRETION_cgs_simu * (0.666 * f_hot + f_acchot);
 
+		// cooling rate in cgs.
 		double gamma_cool = f_hot * m200 * MSOLAR_g * cosmology->universal_baryon_fraction() * lambda * nh_density / (M_Atomic_g * mu_Primordial); 
 		//mhot * MSOLAR_g * lambda * nh_density / (M_Atomic_g * mu_Primordial);
 
 
 		double ratio = gamma_cool/gamma_heat;
+
 		if(ratio <  agnfeedback->parameters.hot_halo_threshold || m200 > 3e12){
 			return true;
 		}
 		else{
 			return false;
 		}
-		/*if(m200norm > agnfeedback->parameters.hot_halo_threshold){
-			return true;
-		}
-		else{
-			return false;
-		}*/
+
 
 }
 
