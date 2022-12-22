@@ -108,7 +108,7 @@ public:
 
 	void plant_seed_smbh(Subhalo &subhalo);
 	double eddington_luminosity(double mbh);
-	double accretion_rate_hothalo_smbh(double Lcool, double tacc, Galaxy &galaxy);
+	double accretion_rate_hothalo_smbh(double Lcool, double tacc, double fhot, double vvir, Galaxy &galaxy);
 	double accretion_rate_hothalo_smbh_limit(double mheatrate, double vvir, const BlackHole &smbh);
 	double accretion_rate_ratio(double macc, double mBH);
 	double agn_bolometric_luminosity(const BlackHole &smbh,  bool starburst);

@@ -178,7 +178,7 @@ double AGNFeedback::eddington_luminosity(double mbh){
 	}
 }
 
-double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, Galaxy &galaxy) {
+double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, double fhot, double vvir, Galaxy &galaxy) {
 
 	/**
 	 * Function calculates the accretion rate onto the central black hole based on a cooling luminosity.
@@ -197,8 +197,13 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, Galax
 		if (parameters.model == AGNFeedbackParameters::BOWER06) {
 			macc = Lcool * 1e40 / std::pow(c_light_cm , 2.0) / parameters.accretion_eff_cooling;
 		}
-		else if (parameters.model == AGNFeedbackParameters::LAGOS22 || parameters.model == AGNFeedbackParameters::CROTON16) {
+		else if (parameters.model == AGNFeedbackParameters::CROTON16) {
 			macc = parameters.kappa_agn * 0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * 1e40 * (smbh.mass * MSOLAR_g);
+		}
+		else if (parameters.model == AGNFeedbackParameters::LAGOS22) {
+			// here we adopt Croton et al. (2006)
+			macc = parameters.kappa_agn * (smbh.mass / 1e8) * (fhot / 0.1) * std::pow( vvir / 200.0, 3.0);
+			//0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * 1e40 * (smbh.mass * MSOLAR_g);
 		}
 
 		// calculate new spin if necessary

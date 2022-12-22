@@ -371,6 +371,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	}
 
 	double vvir = subhalo.Vvir;
+	double fhot = mhot / subhalo.Mvir;
 
 	// If subhalo is a satellite, then use the virial velocity the subhalo had at infall.
 	if(subhalo.subhalo_type != Subhalo::CENTRAL){
@@ -394,7 +395,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		galaxy.vmax  = subhalo.Vcirc;
 	}
 
-	double Tvir   = 97.48*std::pow(vvir,2.0); //in K.
+	double Tvir   = 35.9 * std::pow(vvir,2.0); //in K.
 	double lgTvir = log10(Tvir); //in K.
 	double Rvir = 0;
 	double Mvir = 0;
@@ -491,7 +492,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 				double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot + mhot_ejec);
 	
 				if(Lcool < agnfeedback->parameters.f_edd * Ledd && Lcool > 0){
-					central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lcool, deltat, *central_galaxy);
+					central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lcool, deltat, fhot, vvir, *central_galaxy);
 					//now convert mass accretion rate to comoving units.
 					central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
 					// set cooling rate to 0.
@@ -507,7 +508,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
 		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40;
-		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, deltat, *central_galaxy);
+		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, deltat, fhot, vvir, *central_galaxy);
 
 		//now convert mass accretion rate to comoving units.
 		central_galaxy->smbh.macc_hh = cosmology->physical_to_comoving_mass(central_galaxy->smbh.macc_hh);
@@ -749,11 +750,12 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 		// 71.6 * GIGA * m200norm * (cosmology->parameters.Hubble_h/0.7)  * (1 + redshift) * omega_term; //Correa et al. (2015)
 
 		// define fractions of hot gas (Equations 10 and 18 in Correa et al. 2018).
-		double f_hot = std::pow(10.0, -0.8 + 0.5 * log10m200norm - 0.05 * std::pow(log10m200norm, 2.0)); 
-		double f_acchot = 1 / std::exp(-4.3 * (log10m200norm + 0.15));
+                double f_hot = std::pow(10.0, -0.8 + 0.5 * log10m200norm - 0.05 * std::pow(log10m200norm, 2.0));
+                double f_acchot = 1 / (std::exp(-4.3 * (log10m200norm + 0.15)) + 1);
 
 		// heating rate in cgs.
 		double gamma_heat = 1.5 * k_Boltzmann_erg * Tvir / (M_Atomic_g * mu_Primordial) * cosmology->universal_baryon_fraction() * mdot / MACCRETION_cgs_simu * (0.666 * f_hot + f_acchot);
+
 
 		double ratio = gamma_cool/gamma_heat;
 		if(ratio <  agnfeedback->parameters.hot_halo_threshold){
