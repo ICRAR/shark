@@ -777,6 +777,7 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 			return false;
 		}
 
+		return;
 
 }
 
