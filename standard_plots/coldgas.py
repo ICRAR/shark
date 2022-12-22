@@ -40,7 +40,7 @@ xsf = sbins + ds/2.0
 
 sflow = -13.0
 sfupp = -8.0
-dsf = 0.25
+dsf = 0.2
 sfbins = np.arange(sflow, sfupp, dsf)
 xssfr = sfbins + dsf/2.0
 
@@ -86,61 +86,65 @@ def prepare_data(index, redshift, hdf5_data):
 
     #we follow Campbell et al. (2015) who shows that the purity of satellites is constant with halo mass at a level of ~65%
     #while for centrals it goes from 90% at 1e12, 85% at 1e13, 80% at 1e14
-
     mhalo_bins=[0,1e12,1e13,1e14,1e16]
-    sat_pur = 0.65
-    cen_put = [0.875, 0.875, 0.825, 0.7, 0.7]
-    for j in range(0,len(mhalo_bins)-1):
-        #select central galaxies 
-        ind = np.where((typeg == 0)  & (mvir/h0 >= mhalo_bins[j]) & (mvir/h0 < mhalo_bins[j+1]))
-        n_cen = len(typeg[ind])
-        typein = np.zeros(shape = n_cen)
-        #we now need to randomly select a fraction of centrals and reassigned them as satellites
-        typein[:] = 0
-        IDS = range(0,n_cen)
-        selected = np.random.choice(IDS, size=int(np.floor((1 - cen_put[j+1])*n_cen)))
-        typein[selected] = 1
-        type_g_conf[ind] = typein
+  
+    CalculateHaloConfusion = False
+    if(CalculateHaloConfusion == True):
 
-        #select satellites galaxies 
-        ind = np.where((typeg > 0) & (mvir/h0 >= mhalo_bins[j]) & (mvir/h0 < mhalo_bins[j+1]))
-        n_sat = len(typeg[ind])
-        typein = np.zeros(shape = n_sat)
-        #we now need to randomly select a fraction of satellites and reassigned them as centrals
-        typein[:] = 1
-        IDS = range(0,n_sat)
-        selected = np.random.choice(IDS, size=int(np.floor((1-sat_pur)*n_sat)))
-        typein[selected] = 0
-        type_g_conf[ind] = typein
+       sat_pur = 0.65
+       cen_put = [0.875, 0.875, 0.825, 0.7, 0.7]
+       for j in range(0,len(mhalo_bins)-1):
+           #select central galaxies 
+           ind = np.where((typeg == 0)  & (mvir/h0 >= mhalo_bins[j]) & (mvir/h0 < mhalo_bins[j+1]))
+           n_cen = len(typeg[ind])
+           typein = np.zeros(shape = n_cen)
+           #we now need to randomly select a fraction of centrals and reassigned them as satellites
+           typein[:] = 0
+           IDS = range(0,n_cen)
+           selected = np.random.choice(IDS, size=int(np.floor((1 - cen_put[j+1])*n_cen)))
+           typein[selected] = 1
+           type_g_conf[ind] = typein
+   
+           #select satellites galaxies 
+           ind = np.where((typeg > 0) & (mvir/h0 >= mhalo_bins[j]) & (mvir/h0 < mhalo_bins[j+1]))
+           n_sat = len(typeg[ind])
+           typein = np.zeros(shape = n_sat)
+           #we now need to randomly select a fraction of satellites and reassigned them as centrals
+           typein[:] = 1
+           IDS = range(0,n_sat)
+           selected = np.random.choice(IDS, size=int(np.floor((1-sat_pur)*n_sat)))
+           typein[selected] = 0
+           type_g_conf[ind] = typein
+   
+       #now we rank order the masses of halos and assign them to the new "centrals"
+       #first take all central galaxies with a stellar mass >1e9Msun:
+       ind = np.where((type_g_conf == 0) & ((mdisk + mbulge)/h0 > 1e9))
+       n_most_mass_cens = len(type_g_conf[ind])
+       ids_cen = id_halo_tree[ind]
+       mstar_tot_group = np.zeros(shape = n_most_mass_cens)
+       for i,g in enumerate(ids_cen):
+           ind = np.where(id_halo_tree == g)
+           mstar_tot_group[i] = sum(mdisk[ind] + mbulge[ind])
+   
+       #now select the n_most_mass_cens most massive halos
+       ind = np.where(typeg == 0) 
+       mvirin = mvir[ind]
+       id_halo_tree_in = id_halo_tree[ind]
+       mass_sorted_ids = np.argsort(1.0/mvirin)
+       
+       mhalo_most_massive = mvirin[mass_sorted_ids[0:n_most_mass_cens]]/h0
+       ids_most_massive = id_halo_tree_in[mass_sorted_ids[0:n_most_mass_cens]]
+   
+       print(mhalo_most_massive, min(mhalo_most_massive), max(mhalo_most_massive))
+   
+       #sort total stellar mass of groups
+       smass_sorted_ids = np.argsort(1.0/mstar_tot_group)
+       ids_sm_sorted = ids_cen[smass_sorted_ids]
+       for i,g in enumerate(ids_sm_sorted):
+           ind = np.where(id_halo_tree == g)
+           mhalo_conf[ind] = mhalo_most_massive[i]
 
-    #now we rank order the masses of halos and assign them to the new "centrals"
-    #first take all central galaxies with a stellar mass >1e9Msun:
-    ind = np.where((type_g_conf == 0) & ((mdisk + mbulge)/h0 > 1e9))
-    n_most_mass_cens = len(type_g_conf[ind])
-    ids_cen = id_halo_tree[ind]
-    mstar_tot_group = np.zeros(shape = n_most_mass_cens)
-    for i,g in enumerate(ids_cen):
-        ind = np.where(id_halo_tree == g)
-        mstar_tot_group[i] = sum(mdisk[ind] + mbulge[ind])
-
-    #now select the n_most_mass_cens most massive halos
-    ind = np.where(typeg == 0) 
-    mvirin = mvir[ind]
-    id_halo_tree_in = id_halo_tree[ind]
-    mass_sorted_ids = np.argsort(1.0/mvirin)
-    
-    mhalo_most_massive = mvirin[mass_sorted_ids[0:n_most_mass_cens]]/h0
-    ids_most_massive = id_halo_tree_in[mass_sorted_ids[0:n_most_mass_cens]]
-
-    print(mhalo_most_massive, min(mhalo_most_massive), max(mhalo_most_massive))
-
-    #sort total stellar mass of groups
-    smass_sorted_ids = np.argsort(1.0/mstar_tot_group)
-    ids_sm_sorted = ids_cen[smass_sorted_ids]
-    for i,g in enumerate(ids_sm_sorted):
-        ind = np.where(id_halo_tree == g)
-        mhalo_conf[ind] = mhalo_most_massive[i]
-    print(max(mhalo_conf))
+    mhalo_conf = mvir/h0
 
     ssfr[:] = -15
     ind = np.where((mdisk + mbulge > 0) & (sfr > 0))
@@ -362,17 +366,32 @@ def plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos, mh
 
     labels = ['all satellites', '$M_{\\rm halo}<10^{12}\\rm M_{\\odot}$', '$10^{12}\\rm M_{\\odot}<M_{\\rm halo}<10^{13}\\rm M_{\\odot}$', '$10^{13}\\rm M_{\\odot}<M_{\\rm halo}<10^{14}\\rm M_{\\odot}$', '$M_{\\rm halo}>10^{14}\\rm M_{\\odot}$']
 
-    def plot_obs_brown17(ax, bin_mass=0, mass = True, lab=True):
+    def plot_obs_brown17(ax, bin_mass=0, mass = True, lab=True, delta=False, color='Salmon'):
         if(mass == True):
            x, y, ydown, yup, binm = common.load_observation(obs_dir, 'Gas/HIMstar_Brown17.dat', (0, 1, 2, 3, 4))
         else:
            x, y, ydown, yup, binm = common.load_observation(obs_dir, 'Gas/HISSFR_Brown17.dat', (0, 1, 2, 3, 4))
+
+        #define the relation for the whole sample
+        ind = np.where(binm == 0)
+        xin_all = x[ind]
+        yin_all = y[ind]
+        yerr_dn_all = abs(y[ind] - ydown[ind])
+        yerr_up_all = abs(y[ind] - yup[ind])
+
         ind = np.where(binm == bin_mass)
         xin = x[ind]
-        yin = y[ind]
-        yerr_dn = abs(yin - ydown[ind])
-        yerr_up = abs(yin - yup[ind])
-        ax.errorbar(xin, yin, yerr=[yerr_dn, yerr_up], ls='None', mfc='Salmon', fillstyle='full', ecolor = 'Salmon', mec='Salmon',marker='o',markersize=7, label="Brown+17" if lab else None)
+        if(delta == False):
+           yin = y[ind]
+           yerr_dn = abs(yin - ydown[ind])
+           yerr_up = abs(yin - yup[ind])
+        else:
+           nbins = len(binm[ind])
+           yin = y[ind] - yin_all[0:nbins]
+           yerr_dn = np.sqrt((y[ind] - ydown[ind])**2 + yerr_dn_all[0:nbins]**2)
+           yerr_up = np.sqrt((y[ind] - yup[ind])**2 + yerr_up_all[0:nbins]**2)
+
+        ax.errorbar(xin, yin, yerr=[yerr_dn, yerr_up], ls='None', mfc=color, fillstyle='full', ecolor = color, mec=color,marker='o',markersize=7, label="Brown+17" if lab else None)
 
 
     for i, sp in enumerate(subp):
@@ -435,6 +454,64 @@ def plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos, mh
 
     plt.tight_layout()
     common.savefig(output_dir, fig, "HI_stacking_satellites_ssfr.pdf")
+
+    ###################################
+    #   Plots global mass densities
+    fig = plt.figure(figsize=(5,4.5))
+
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit="$\\rm \\Delta\\,log_{10}\\langle M_{\\rm HI}/M_{\\star}\\rangle$"
+
+
+    colors = ['k','blue', 'darkgreen', 'orange', 'red']
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+    common.prepare_ax(ax, 9, 12, -1, 1, xtit, ytit, locators=(0.5, 0.5, 0.2, 0.2))
+
+    for i, lab in enumerate(labels):
+        if(i >= 1):
+           plot_obs_brown17(ax, bin_mass= i, mass=True, lab = False, delta=True, color=colors[i])
+           ind = np.where((mh1_relation_satellites_halos[0,i,1,:] != 0) & (np.isinf(mh1_relation_satellites_halos[0,i,1,:]) == False))
+           xplot = mh1_relation_satellites_halos[0,i,0,ind] 
+           yplot = mh1_relation_satellites_halos[0,i,1,ind] - mh1_relation_satellites_halos[0,0,1,ind]
+           ax.plot(xplot[0],yplot[0],color=colors[i], linestyle='solid', label=labels[i])
+           #ind = np.where((mh1_relation_satellites_halos[1,i,1,:] != 0) & (np.isinf(mh1_relation_satellites_halos[1,i,1,:]) == False))
+           #xplot = mh1_relation_satellites_halos[1,i,0,ind]
+           #yplot = mh1_relation_satellites_halos[1,i,1,ind] - mh1_relation_satellites_halos[1,0,1,ind]
+           #ax.plot(xplot[0],yplot[0],color=colors[i], linestyle='dashed', label='with sat/cen confusion')
+    common.prepare_legend(ax, ['blue', 'darkgreen', 'orange', 'red'], loc='best')
+
+    plt.tight_layout()
+    common.savefig(output_dir, fig, "HI_stacking_satellites_RelativeDiff.pdf")
+
+    ###################################
+    #   Plots global mass densities
+    fig = plt.figure(figsize=(5,4.5))
+
+    ytit="$\\rm \\Delta\\,log_{10}\\langle M_{\\rm HI}/M_{\\star}\\rangle$"
+    xtit="$\\rm log_{10} (\\rm sSFR/yr^{-1})$"
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+    common.prepare_ax(ax, -12, -9, -1, 1, xtit, ytit, locators=(0.5, 0.5, 0.2, 0.2))
+
+    for i, lab in enumerate(labels):
+        if(i >= 1):
+           plot_obs_brown17(ax, bin_mass= i, mass=False, lab = False, delta=True, color=colors[i])
+           ind = np.where((mh1_relation_ssfr_satellites_halos[0,i,1,:] != 0) & (np.isinf(mh1_relation_ssfr_satellites_halos[0,i,1,:]) == False))
+           xplot = mh1_relation_ssfr_satellites_halos[0,i,0,ind] 
+           yplot = mh1_relation_ssfr_satellites_halos[0,i,1,ind] - mh1_relation_ssfr_satellites_halos[0,0,1,ind]
+           ax.plot(xplot[0],yplot[0],color=colors[i], linestyle='solid')
+           #ind = np.where((mh1_relation_satellites_halos[1,i,1,:] != 0) & (np.isinf(mh1_relation_satellites_halos[1,i,1,:]) == False))
+           #xplot = mh1_relation_satellites_halos[1,i,0,ind]
+           #yplot = mh1_relation_satellites_halos[1,i,1,ind] - mh1_relation_satellites_halos[1,0,1,ind]
+           #ax.plot(xplot[0],yplot[0],color=colors[i], linestyle='dashed', label='with sat/cen confusion')
+    #common.prepare_legend(ax, ['blue', 'darkgreen', 'orange', 'red'], loc='best')
+
+    plt.tight_layout()
+    common.savefig(output_dir, fig, "HI_stacking_satellites_ssfr_RelativeDiff.pdf")
+
 
 
 def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relation, mh1_gals, mh1_relation, mh2_gals, mh2_relation, 

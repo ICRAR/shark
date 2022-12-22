@@ -85,7 +85,7 @@ def freefree_lum(Q, nu):
     #output in erg/s/Hz
 
     T = 1e4 #temperature in K
-    lum = Q/6.3e25 * (T/1e4)**0.45 * (nu)**(-0.1)
+    lum = Q/6.3e32 * (T/1e4)**0.45 * (nu)**(-0.1)
 
     return lum
 
@@ -95,15 +95,15 @@ def synchrotron_lum(SFR, nu):
     #nu is the frequency in GHz
     #output in erg/s/Hz
 
-    ENT = 1.944
+    ENT = 1.44
     ESNR = 0.06 * ENT
     alpha = -0.8
 
     T = 1e4
     EM = 6e6 #pc * cm**-6
     tau = (T/1e4)**(-1.35) * (nu / 1.4)**(-2.1) * EM / 6e6
-    comp1 = ESNR * (nu / 1.49)**(-0.5) + ENT * (nu / 1.49)**(alpha) * exp(-tau)
-    nuSNCC = SFR * 0.0095
+    comp1 = ESNR * (nu / 1.49)**(-0.5) + ENT * (nu / 1.49)**(alpha) * np.exp(-tau)
+    nuSNCC = SFR * 0.011148
     lum = comp1 * 1e30 * nuSNCC
 
     return lum

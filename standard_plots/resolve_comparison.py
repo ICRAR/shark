@@ -536,7 +536,7 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     xtit="$\\rm log_{10}(\\rm M^{\\prime}_{\\rm bar}/M_{\odot})$"
     ytit="$\\rm log_{10}(\\phi/{\\rm dlog_{10}M^{\\prime}_{\\rm bar}}/Mpc^{-3})$"
 
-    xmin, xmax, ymin, ymax = 9, 12.3, -6, -1
+    xmin, xmax, ymin, ymax = 9, 12.3, -6, -0.5
     xleg= xmax - 0.3 * (xmax - xmin)
     yleg= ymax - 0.1 * (ymax - ymin)
 
@@ -550,7 +550,8 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
         ps[ind]  = -10
 
         pc = np.log10(10**p - 10**ps)
-
+        ind = np.where(p == 0)
+        pc[ind] == 0
         if(plot_central == False):
            ind = np.where(p != 0)
            xplot = x[ind]
@@ -595,6 +596,7 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 's', yerrdn_val=0.1)
     eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 's', fillstyle='full', markersize=5)
 
+    #common.prepare_legend(ax, ['k','k','k','k','k','k'], fancybox=True, framealpha=0.5, bbox_to_anchor=(0.4, 0.5))
 
     # medium mass halos ##################################
     ax = fig.add_subplot(222)
@@ -647,9 +649,9 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
 
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionhighmasshalos_resolve.txt', [0,4,5,6,7,8,9])
     resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 'o', yerrdn_val=0.1, label="RESOLVE cens")
-    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 'o', fillstyle='full', markersize=5, label="RESOLVE satellites")
 
-    common.prepare_legend(ax, ['k','k','k','k','k','k'], loc=3) #, bbox_to_anchor=(0.1, -0.4))
+    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 'o', fillstyle='full', markersize=5, label="RESOLVE satellites")
+    common.prepare_legend(ax, ['k','k','k','k','k','k'], loc='best', fancybox=True, framealpha=0.5) #, bbox_to_anchor=(0.1, -0.4))
 
     # high mass halos ##################################
     ax = fig.add_subplot(224)
@@ -674,7 +676,7 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 's', fillstyle='full', markersize=5)
 
 
-    common.prepare_legend(ax, ['red','red','k','k'], loc=3) #, bbox_to_anchor=(0.1, -0.4))
+    common.prepare_legend(ax, ['red','red','k','k'], fancybox=True, framealpha=0.5,  bbox_to_anchor=(0.22, 0.55))
 
     plt.tight_layout()
     common.savefig(outdir, fig, 'bmf_resolve_massbins.pdf')

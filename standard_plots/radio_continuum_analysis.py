@@ -93,7 +93,8 @@ def freefree_lum(Q, nu):
     #output in erg/s/Hz
 
     T = 1e4 #temperature in K
-    lum = Q/6.3e25 * (T/1e4)**0.45 * (nu)**(-0.1)
+    lum = Q/6.3e32 * (T/1e4)**0.45 * (nu)**(-0.1)
+
 
     return lum
 
@@ -103,12 +104,15 @@ def synchrotron_lum(SFR, nu):
     #nu is the frequency in GHz
     #output in erg/s/Hz
 
-    ENT = 1.944
+    ENT = 1.44 
     ESNR = 0.06 * ENT
     alpha = -0.8
 
-    comp1 = ESNR * (nu / 1.49)**(-0.5) + ENT * (nu / 1.49)**(alpha)
-    nuSNCC = SFR * 0.0095
+    T = 1e4
+    EM = 6.5 #pc * cm**-6; this comes from the observations of H. V. Cane (1979-11) Spectra of the non-thermal radio radiation from the galactic polar regions. MNRAS 189, pp. 465–478. Cited by: §4.3.2, who found that τ≈1 at ν≈2 MHz.
+    tau = (T/1e4)**(-1.35) * (nu / 1.4)**(-2.1) * EM / 6e6
+    comp1 = ESNR * (nu / 1.49)**(-0.5) + ENT * (nu / 1.49)**(alpha) * np.exp(-tau)
+    nuSNCC = SFR * 0.011148
     lum = comp1 * 1e30 * nuSNCC
 
     return lum
@@ -213,11 +217,11 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, seds_lir_bc, index, model_dir, 
     lir_total = lir[1] #total dust luminosity
     qIR_dale14 = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(Lum_radio_Viperfish[3,:]/1e7)
     qIR_bressan = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(lum_radio[3,:]/1e7)
-
+ 
     ind = np.where(lir_total[0,:] > 1e7)
     print("Median qIR for Dale14 and Bressan", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind])," at redshift", redshift)
 
-    ind= np.where((ms > 1e8) & (ms < 1e9) & (temp_eff > 50) & (typeg ==0))
+    ind= np.where((ms > 1e8) & (ms < 1e9) & (temp_eff[0,:] > 50) & (typeg ==0))
     print("Median sfr, ms, qIR", np.median(sfr[ind]), np.median(ms[ind]), np.median(qIR_bressan[ind]))
 
     ind= np.where((ms > 1e8) & (ms < 1e9) & (qIR_bressan  > 2.5 ) & (typeg == 0))
