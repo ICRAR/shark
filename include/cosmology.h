@@ -97,6 +97,7 @@ public:
 	};
 
 	double hubble_parameter (double z) const;
+	double critical_density (double z) const;
 
 	CosmologicalParameters parameters;
 

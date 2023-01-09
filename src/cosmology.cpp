@@ -241,4 +241,13 @@ double Cosmology::hubble_parameter (double z) const {
 	return parameters.Hubble_h * 100.0 * std::sqrt(H2);
 }
 
+double Cosmology::critical_density (double z) const {
+
+	// Function returns the critical density in units of Msun/cMpc^3
+	
+	auto h = hubble_parameter(z) / 100.0; // we want h not H.
+
+	return 2.7754e11 * std::pow(h, 2);
+}
+
 } // namespace shark

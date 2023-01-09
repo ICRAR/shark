@@ -267,6 +267,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> mlost_metals;
 
 	vector<float> cooling_rate;
+	vector<int> on_hydrostatic_eq;
 
 	vector<float> mvir_hosthalo;
 	vector<float> mvir_subhalo;
@@ -369,6 +370,13 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				//ignore this galaxy if it will appear for the first time in the coming snapshot.
 				if(galaxy.birth_snapshot == snapshot) continue;
 
+
+				if(halo->hydrostatic_eq){
+					on_hydrostatic_eq.push_back(1);
+				}
+				else{
+					on_hydrostatic_eq.push_back(0);
+				}
 
 				id_halo_tree.push_back(halo->id);
 				id_subhalo_tree.push_back(subhalo->id);
@@ -664,6 +672,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	REPORT(stellar_halo_metals);
 	REPORT(mean_stellar_mass_galaxies_ihsc);
 	REPORT(cooling_rate);
+	REPORT(on_hydrostatic_eq);
 	REPORT(mhot_stripped);
 	REPORT(mhot_stripped_metals);
 	REPORT(mvir_hosthalo);
@@ -915,6 +924,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "cooling rate of the hot halo component [Msun/Gyr/h].";
 	file.write_dataset("galaxies/cooling_rate", cooling_rate, comment);
+
+	comment = "is halo on quasi hydrostatic equilibrium (=1 for true, =0 for false).";
+	file.write_dataset("galaxies/on_hydrostatic_eq", on_hydrostatic_eq, comment);
 
 	comment = "gas mass that has been stripped out of this subhalo due to ram pressure stripping [Msun/h].";
 	file.write_dataset("galaxies/mhot_stripped", mhot_stripped, comment);

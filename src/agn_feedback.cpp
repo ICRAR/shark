@@ -297,7 +297,7 @@ double AGNFeedback::agn_mechanical_luminosity(const BlackHole &smbh){
 	auto macc = cosmology->comoving_to_physical_mass(smbh.macc_hh + smbh.macc_sb);
 	auto mBH = cosmology->comoving_to_physical_mass(smbh.mass);
 
-	double m_dotdiv0p01 = accretion_rate_ratio(macc,mBH) / 0.01;
+	double m_dotdiv0p01 = accretion_rate_ratio(macc, mBH) / 0.01;
 	double Lmech = 0;
 
 	if(m_dotdiv0p01 >= 1.0){

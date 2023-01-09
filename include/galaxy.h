@@ -157,6 +157,8 @@ public:
 	/// The type of this galaxy
 	galaxy_type_t galaxy_type = CENTRAL;
 
+
+
 	/**
 	 * Define functions to calculate total mass and metals of various components.
 	 */

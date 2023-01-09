@@ -419,7 +419,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	 * Calculate mean density for notional cooling profile.
 	 */
 	double nh_density  = mean_density(mhot_density, Rvir); //in units of cm^-3.
-
+	double nh_density_200crit = cosmology->critical_density(z) * MSOLAR_g / MPC2CM_cube / (M_Atomic_g * mu_Primordial); //in units of cm^-3.
 	double tcool = 0;
 	double tcharac = 0;
 
@@ -516,11 +516,21 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		//Mass heating rate from AGN in units of Msun/Gyr.
 		double mheatrate = 0;
 		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
-			// decide whether this halo is in a quasi-hydrostatic regime or not.
-			bool hothalo = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density, Mvir, Tvir, Rvir, z);
+			// decide whether this halo is in a quasi-hydrostatic regime or not in the case of central subhalos, otherwise just take the status from the central subhalo.
+			bool hothalo;
+
+			if(subhalo.subhalo_type == Subhalo::CENTRAL) {
+				hothalo = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density_200crit, halo->Mvir, Tvir, z);
+				halo->hydrostatic_eq = hothalo;
+			} 
+
+			// if host halo is very massive, then adopt true anyway
+			if(halo->Mvir > 3e12){
+				halo->hydrostatic_eq = true;
+			}
 
 			// radio mode feedback only applies in situations where there is a hot halo
-			if(hothalo){
+			if(halo->hydrostatic_eq){
 				mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh) * agnfeedback->parameters.kappa_radio
 						* 1e40 / (0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
 			}
@@ -729,7 +739,7 @@ double GasCooling::cooling_luminosity(double logl, double rcool, double rvir, do
 	}
 }
 
-bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_density, double mass, double Tvir, double rvir, double redshift){
+bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_density, double mass, double Tvir, double redshift){
 		/**
 		 *  This function uses the model of Correa et al. (2018) to determine if a hot halo has formed or not. Relevant equations from that paper are Eq. 16 and 17.
 		 **/
@@ -741,7 +751,6 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 		auto log10m200norm = std::log10(m200norm);
 
 		// cooling rate in cgs.
-		double gamma_cool = mhot * MSOLAR_g * lambda * nh_density / (M_Atomic_g * mu_Primordial * 0.1);
 
 		double omega_term = std::sqrt(cosmology->parameters.OmegaM * std::pow(redshift + 1.0, 3.0) + cosmology->parameters.OmegaL);
 
@@ -756,6 +765,9 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 		// heating rate in cgs.
 		double gamma_heat = 1.5 * k_Boltzmann_erg * Tvir / (M_Atomic_g * mu_Primordial) * cosmology->universal_baryon_fraction() * mdot / MACCRETION_cgs_simu * (0.666 * f_hot + f_acchot);
 
+		double gamma_cool = f_hot * m200 * MSOLAR_g * cosmology->universal_baryon_fraction() * lambda * nh_density / (M_Atomic_g * mu_Primordial); 
+		//mhot * MSOLAR_g * lambda * nh_density / (M_Atomic_g * mu_Primordial);
+
 
 		double ratio = gamma_cool/gamma_heat;
 		if(ratio <  agnfeedback->parameters.hot_halo_threshold){
@@ -764,6 +776,12 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 		else{
 			return false;
 		}
+		/*if(m200norm > agnfeedback->parameters.hot_halo_threshold){
+			return true;
+		}
+		else{
+			return false;
+		}*/
 
 }
 
