@@ -414,6 +414,11 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	* Calculates the cooling Lambda function for the metallicity and temperature of this halo.
 	*/
 	double logl = cooling_lambda_interpolator.get(lgTvir, zhot); //in cgs
+								     
+	// Avoid values that are too large for hot halo cooling
+	if (logl > -23){
+		logl = -23.0;
+	}
 
 	/**
 	 * Calculate mean density for notional cooling profile.
@@ -469,7 +474,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	else {
 		//cooling radius larger than virial radius, and set cooling radius to virial radius.
 		coolingrate = mhot/tcool;
-				r_cool = Rvir;
+		r_cool = Rvir;
 	}
 
 	if(agnfeedback->parameters.model == AGNFeedbackParameters::BOWER06){
@@ -517,22 +522,15 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		double mheatrate = 0;
 		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
 			// decide whether this halo is in a quasi-hydrostatic regime or not in the case of central subhalos, otherwise just take the status from the central subhalo.
-			bool hothalo;
-
 			if(subhalo.subhalo_type == Subhalo::CENTRAL) {
-				hothalo = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density_200crit, halo->Mvir, Tvir, z);
-				halo->hydrostatic_eq = hothalo;
+				halo->hydrostatic_eq = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density_200crit, halo->Mvir, Tvir, z);
 			} 
-
-			// if host halo is very massive, then adopt true anyway
-			if(halo->Mvir > 3e12){
-				halo->hydrostatic_eq = true;
-			}
 
 			// radio mode feedback only applies in situations where there is a hot halo
 			if(halo->hydrostatic_eq){
-				mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh) * agnfeedback->parameters.kappa_radio
-						* 1e40 / (0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
+				mheatrate = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh) * agnfeedback->parameters.kappa_radio * 1e40 /
+						(0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
+				central_galaxy->mheat_ratio = mheatrate / coolingrate; 
 			}
 		}
 		else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
@@ -770,7 +768,7 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 
 
 		double ratio = gamma_cool/gamma_heat;
-		if(ratio <  agnfeedback->parameters.hot_halo_threshold){
+		if(ratio <  agnfeedback->parameters.hot_halo_threshold || m200 > 3e12){
 			return true;
 		}
 		else{

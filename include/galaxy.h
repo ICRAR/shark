@@ -158,6 +158,7 @@ public:
 	galaxy_type_t galaxy_type = CENTRAL;
 
 
+        float mheat_ratio = 0;
 
 	/**
 	 * Define functions to calculate total mass and metals of various components.
