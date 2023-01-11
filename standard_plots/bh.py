@@ -52,6 +52,12 @@ def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR,
 
     if(read_spin == True):
        (h0, _, spin, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge, typeg) = hdf5_data
+       ind = np.where((np.isnan(spin) == True) | (np.isinf(spin) == True))
+       if (len(spin[ind]) > 0):
+         print("Number of galaxies with a spin of NaN:", len(spin[ind]))
+       else:
+         print("All galaxies have well defined BH spins")
+
     else:
        (h0, _, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge, typeg) = hdf5_data
 
@@ -259,7 +265,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
 
-    read_spin = False
+    read_spin = True
 
     if(read_spin == True):
        fields = {'galaxies': ('bh_spin', 'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge', 'type')}
