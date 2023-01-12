@@ -73,6 +73,15 @@ public:
 	bool output_sf_histories = false;
 	std::vector<int> snapshots_sf_histories;
 
+	/**
+	 * Parameters of BH histories:
+	 * output_bh_histories: boolean parameter set to true if the user wants the black hole formation histories to be output.
+	 * snapshots_bh_histories: vector of int with the snapshots the user wants the black hole formation histories output at.
+	 */
+
+	bool output_bh_histories = false;
+	std::vector<int> snapshots_bh_histories;
+
 	float ode_solver_precision = 0;
 	int ignore_npart_threshold = 1000;
 	float ignore_below_z = 1.0;
