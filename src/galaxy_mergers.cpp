@@ -453,8 +453,12 @@ void GalaxyMergers::create_merger(Galaxy &central, const Galaxy &satellite, Halo
 	if(agn_params.model == AGNFeedbackParameters::LAGOS22 && agn_params.spin_model == AGNFeedbackParameters::GRIFFIN19){
 		agnfeedback->griffin19_spinup_mergers(central.smbh, satellite.smbh, central);
 	}
-	central.smbh += satellite.smbh;
 
+	// change properties of central BH
+	central.smbh.mass += satellite.smbh.mass;
+	central.smbh.massembly += satellite.smbh.mass;
+	central.smbh.macc_hh += satellite.smbh.macc_hh;
+	central.smbh.macc_sb += satellite.smbh.macc_sb;
 
 	//satellite stellar mass is always transferred to the bulge.
 	transfer_history_satellite_to_bulge(central, satellite, snapshot);
@@ -593,7 +597,7 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 				}
 
 				// Define accretion rate.
-				galaxy.smbh.macc_sb = delta_mbh/tdyn;
+				galaxy.smbh.macc_sb += delta_mbh/tdyn;
 
 				// Reduce gas available for star formation due to black hole growth.
 				galaxy.bulge_gas.mass -= delta_mbh;
@@ -781,18 +785,28 @@ void GalaxyMergers::transfer_bulge_gas(Galaxy &galaxy)
 void GalaxyMergers::transfer_history_satellite_to_bulge(Galaxy &central, const Galaxy &satellite, int snapshot) const
 {
 	/**
-	 * Function transfers the satellite stellar mass history to the bulge of the central galaxy.
+	 * Function transfers the satellite stellar mass history to the bulge of the central galaxy. And transfer BH history of satellite to central.
 	 */
 
 	//Transfer history of stellar mass growth until the previous snapshot.
 	for(int s=simparams.min_snapshot; s <= snapshot-1; s++) {
 
+		// Find correct history item for satellite and central given the snapshot
 		auto it_sat = std::find_if(satellite.history.begin(), satellite.history.end(), [s](const HistoryItem &hitem) {
 			return hitem.snapshot == s;
 		});
 
 		auto it_cen = std::find_if(central.history.begin(), central.history.end(), [s](const HistoryItem &hitem) {
 			return hitem.snapshot == s;
+		});
+
+		// Find correct black hole history item for satellite and central given the snapshot
+		auto it_bh_sat = std::find_if(satellite.bh_history.begin(), satellite.bh_history.end(), [s](const BHHistoryItem &bhhitem) {
+			return bhhitem.snapshot == s;
+		});
+
+		auto it_bh_cen = std::find_if(central.bh_history.begin(), central.bh_history.end(), [s](const BHHistoryItem &bhhitem) {
+			return bhhitem.snapshot == s;
 		});
 
 		/**There will be four cases:
@@ -823,6 +837,11 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(Galaxy &central, const G
 			hist_item.sfr_z_bulge_diskins = 0;
 
 			central.history.push_back(hist_item);
+
+			// transfer BH history of satellite to central.
+			auto bh_hist_item = *it_bh_sat;
+			central.bh_history.push_back(bh_hist_item);
+
 		}
 		else { // both galaxies exist at this snapshot
 			auto hist_sat = *it_sat;
@@ -830,6 +849,24 @@ void GalaxyMergers::transfer_history_satellite_to_bulge(Galaxy &central, const G
 
 			hist_cen.sfr_bulge_mergers   += hist_sat.sfr_bulge_mergers + hist_sat.sfr_bulge_diskins + hist_sat.sfr_disk;
 			hist_cen.sfr_z_bulge_mergers += hist_sat.sfr_z_bulge_mergers + hist_sat.sfr_z_bulge_diskins + hist_sat.sfr_z_disk;
+
+			// transfer BH history of satellite to central.
+			auto bh_hist_sat = *it_bh_sat;
+			auto &bh_hist_cen = *it_bh_cen;
+
+			bh_hist_cen.macc_hh += bh_hist_sat.macc_hh;
+			bh_hist_cen.macc_sb += bh_hist_sat.macc_sb;
+			bh_hist_cen.massembly += bh_hist_sat.massembly;
+
+			// adopt a mass weighted spin and do this before changing the BH mass of the central
+			auto mbh_tot = bh_hist_cen.mbh + bh_hist_sat.mbh;
+
+			//redefine spin only if BH mass is >0
+			if(mbh_tot > 0){
+				bh_hist_cen.spin = (bh_hist_cen.mbh * bh_hist_cen.spin + bh_hist_sat.mbh * bh_hist_sat.spin) / (mbh_tot);
+			}
+
+			bh_hist_cen.mbh = mbh_tot;
 
 		}
 	}

@@ -158,8 +158,11 @@ public:
 	/** accretion rate onto the black hole during hot halo mode. */
 	float macc_hh = 0;
 
-	/** macc_sb: accretion rate onto the black hole during starbursts. */
+	/** macc_sb: accretion rate onto the black hole during galaxy starbursts. */
 	float macc_sb = 0;
+
+	/** massembly: mass that has been brought from BH-BH mergers. */
+	float massembly = 0;
 
 	/** spin: black hole spin. */
 	float spin = 0;

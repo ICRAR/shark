@@ -57,7 +57,7 @@ public:
 
 	void evaluate_disk_instability (HaloPtr &halo, int snapshot, double delta_t);
 
-	void create_starburst(SubhaloPtr &subhalo, Galaxy &galaxy, double z, double delta_t);
+	void create_starburst(SubhaloPtr &subhalo, Galaxy &galaxy, double z, int snapshot, double delta_t);
 
 	void transfer_history_disk_to_bulge(Galaxy &galaxy, int snapshot);
 

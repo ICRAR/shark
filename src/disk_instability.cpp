@@ -106,7 +106,7 @@ void DiskInstability::evaluate_disk_instability (HaloPtr &halo, int snapshot, do
 
 				transfer_history_disk_to_bulge(galaxy, snapshot);
 
-				create_starburst(subhalo, galaxy, z, delta_t);
+				create_starburst(subhalo, galaxy, z, snapshot, delta_t);
 			}
 		}
 	}
@@ -173,7 +173,7 @@ double DiskInstability::bulge_size(const Galaxy &galaxy) const
 
 }
 
-void DiskInstability::create_starburst(SubhaloPtr &subhalo, Galaxy &galaxy, double z, double delta_t){
+void DiskInstability::create_starburst(SubhaloPtr &subhalo, Galaxy &galaxy, double z, int snapshot, double delta_t){
 
 	// Trigger starburst only in case there is gas in the bulge.
 	if(galaxy.bulge_gas.mass > merger_params.mass_min){
@@ -187,9 +187,8 @@ void DiskInstability::create_starburst(SubhaloPtr &subhalo, Galaxy &galaxy, doub
 		}
 
 
-
 		// Define accretion rate.
-		galaxy.smbh.macc_sb = delta_mbh/tdyn;
+		galaxy.smbh.macc_sb += delta_mbh/tdyn;
 
 		// Grow SMBH.
 		galaxy.smbh.mass += delta_mbh;

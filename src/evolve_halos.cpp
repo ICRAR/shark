@@ -182,14 +182,14 @@ void reset_instantaneous_galaxy_properties(const std::vector<HaloPtr> &halos, in
 
 			// Make sure all SFRs and BH accretion rates (in mass and metals) are set to 0 for the next snapshot
 			for (auto &galaxy: subhalo->galaxies) {
-				galaxy.sfr_bulge_mergers  = 0;
-				galaxy.sfr_z_bulge_mergers= 0;
-				galaxy.sfr_bulge_diskins  = 0;
-				galaxy.sfr_z_bulge_diskins= 0;
-				galaxy.sfr_z_disk         = 0;
-				galaxy.sfr_disk           = 0;
-				galaxy.smbh.macc_sb       = 0;
-				galaxy.smbh.macc_hh       = 0;
+				galaxy.sfr_bulge_mergers	= 0;
+				galaxy.sfr_z_bulge_mergers	= 0;
+				galaxy.sfr_bulge_diskins	= 0;
+				galaxy.sfr_z_bulge_diskins	= 0;
+				galaxy.sfr_z_disk		= 0;
+				galaxy.sfr_disk			= 0;
+				galaxy.smbh.macc_sb		= 0;
+				galaxy.smbh.macc_hh		= 0;
 
 				//restart counter of mergers and disk instabilities.
 				galaxy.interaction.restore_interaction_item();
@@ -262,6 +262,7 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
 
 				if(execparams.output_sf_histories){
 
+					//define and save SF history item
 					HistoryItem hist_galaxy;
 					hist_galaxy.sfr_disk            = galaxy.sfr_disk;
 					hist_galaxy.sfr_bulge_mergers   = galaxy.sfr_bulge_mergers;
@@ -271,6 +272,16 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
 					hist_galaxy.sfr_z_bulge_diskins = galaxy.sfr_z_bulge_diskins;
 					hist_galaxy.snapshot            = snapshot;
 					galaxy.history.emplace_back(hist_galaxy);
+
+					//define and save BH history item
+					BHHistoryItem bh_hist_galaxy;
+					bh_hist_galaxy.macc_hh 		= galaxy.smbh.macc_hh;
+					bh_hist_galaxy.macc_sb	 	= galaxy.smbh.macc_sb;
+					bh_hist_galaxy.massembly 	= galaxy.smbh.massembly;
+					bh_hist_galaxy.mbh 		= galaxy.smbh.mass; 
+					bh_hist_galaxy.spin 		= galaxy.smbh.spin;
+				        bh_hist_galaxy.snapshot 	= snapshot;	
+					galaxy.bh_history.emplace_back(bh_hist_galaxy);
 				}
         
 				//Accumulate galaxy baryons

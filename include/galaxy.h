@@ -50,6 +50,15 @@ struct HistoryItem {
 	int snapshot;
 };
 
+struct BHHistoryItem {
+	float macc_hh;
+	float macc_sb;
+	float massembly;
+	float mbh;
+	float spin;
+	int snapshot;
+};
+
 // TODO: add documentation
 struct InteractionItem {
 	int major_mergers = 0;
@@ -136,6 +145,9 @@ public:
 
 	/// star formation and gas history of this galaxy across snapshots
 	std::vector<HistoryItem> history;
+
+	/// black hole history of this galaxy across snapshots
+	std::vector<BHHistoryItem> bh_history;
 
 	/// interactions of this galaxy during this snapshot
 	InteractionItem interaction;
