@@ -468,14 +468,14 @@ void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, G
 		return;
 	}
 
-	double M_inner_disk = 0;
+	double m_in = 0;
 	int n_accretion_chunks = 10;
 	int loop_inner = 0;
 	int loop_outer = 0;
 	double eff = 0;
 	double mdot_norm = 0;
 	double mfin = 0;
-	double Delta_M = 0;
+	double delta_m = 0;
 	double angular_momentum_ratio = 0;
 	double R_angm = 0;
 	bool retrograde_accretion;
@@ -484,7 +484,7 @@ void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, G
 	auto &smbh = galaxy.smbh;
 
 	// Compute quantities in physical units before proceeding.
-	auto M_outer_disk = cosmology->comoving_to_physical_mass(delta_mbh);
+	auto m_out = cosmology->comoving_to_physical_mass(delta_mbh);
 	auto mbh = cosmology->comoving_to_physical_mass(smbh.mass);
 	auto mdot = cosmology->comoving_to_physical_mass(delta_mbh/tau_acc);
 	auto spin = smbh.spin;
@@ -493,7 +493,7 @@ void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, G
 		auto efficiency = efficiency_luminosity_agn(spin);
 		eff = efficiency[0];
 		auto r_lso = efficiency[1];
-		spin = final_spin(mbh, mbh + M_outer_disk, r_lso);
+		spin = final_spin(mbh, mbh + m_out, r_lso);
 	}
 	else{
 		do {
@@ -510,21 +510,26 @@ void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, G
 				mdot_norm = accretion_rate_ratio(mdot, mbh);
 
 				// Self-gravity radius based on King, Pringle, Hofmann 2008 equation 10 but with different constant at the front.
-				auto R_sg = 4790.0 * std::pow(parameters.alpha_td, 0.5185) * std::pow(mdot_norm, -0.2962) * std::pow(mbh/1e8, -0.9629); //This is in units of R_Schw
-				double M_sg = 0;
+				auto r_sg = 4790.0 * std::pow(parameters.alpha_td, 0.5185) * 
+						std::pow(mdot_norm, -0.2962) * 
+						std::pow(mbh/1e8, -0.9629); //This is in units of 2r_G
+				double m_sg = 0;
 
 				if(mdot_norm < parameters.mdotcrit_adaf){
-					// ADAF system.
-					M_sg = mbh;
+					// ADAF disk.
+					m_sg = mbh;
 				}
 				else{
 					/* Self-gravity mass based on King, Pringle, Hofmann 2008 equation 7
 					but with different constant at the front.
-					M_sg = M_BH * (H/R) is the expression used.*/
-					M_sg = 1.35 * std::pow(parameters.alpha_td, -0.8) * std::pow(mdot_norm, 0.6) * std::pow(mbh / 1e8, 2.2) * std::pow(R_sg, 1.4); // In Msun
+					m_sg = M_BH * (H/R) is the expression used.*/
+					m_sg = 1.35 * std::pow(parameters.alpha_td, -0.8) * 
+						std::pow(mdot_norm, 0.6) * 
+						std::pow(mbh / 1e8, 2.2) * 
+						std::pow(r_sg, 1.4); // In Msun
 				}
 
-				M_inner_disk = std::min(M_sg , delta_mbh);
+				m_in = std::min(m_sg , delta_mbh);
 
 				// Compute new spin based on accretion onto the black hole.
 				do{
@@ -536,13 +541,13 @@ void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, G
 							efficiency = efficiency_luminosity_agn(spin);
 							eff = efficiency[0];
 							r_lso = efficiency[1];
-							mfin = mbh + (1 - eff) * (M_inner_disk / n_accretion_chunks);
+							mfin = mbh + (1 - eff) * (m_in / n_accretion_chunks);
 							spin = final_spin(mbh, mfin, r_lso);
-							mbh = mbh + (1- eff) * (M_inner_disk / n_accretion_chunks);
+							mbh = mbh + (1- eff) * (m_in / n_accretion_chunks);
 							ichunk --;
 						}
 						while (ichunk > 0);
-						M_inner_disk = -1; //To stop the loop
+						m_in = -1; //To stop the loop
 					}
 					else{
 						/* The disk will be inclined with respect to the BH equatorial plane, thus, the BH
@@ -554,45 +559,38 @@ void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, G
 						r_lso = efficiency[1];
 
 						// Warp radius based on Volonteri 2007 equation 2, with a slightly different constant at the front.
-						auto R_warp = 3410 * std::pow( std::abs(spin), 0.625) *
+						auto r_warp = 3410 * std::pow( std::abs(spin), 0.625) *
 								std::pow(mbh/1e8, 0.125) *
 								std::pow(mdot_norm, -0.25) *
 								std::pow(parameters.nu2_nu1, -0.625) *
-								std::pow(parameters.alpha_td, -0.5); // Units of R_Schw
+								std::pow(parameters.alpha_td, -0.5); // Units of 2r_G
 
-						// M_warp equal to Sigma R**2, as based on King, Pringle, Hofmann 2008 equation 7, but with a different constant at the front.
+						// m_warp equal to Sigma R**2, as based on King, Pringle, Hofmann 2008 equation 7, but with a different constant at the front.
 						auto m_warp = 1.35 * std::pow(parameters.alpha_td, -0.8) *
 								std::pow(mdot_norm, 0.6) *
 								std::pow(mbh/1e8, 2.2) *
-								std::pow(R_warp, 1.4); //Msun
+								std::pow(r_warp, 1.4); //Msun
 
 						if(parameters.accretion_disk_model == AGNFeedbackParameters::WARPEDDISK){
-							Delta_M = m_warp;
-
-							// check if mass is too small and apply a lower limit to both mass and radius.
-							/*if(Delta_M < M_inner_disk/n_accretion_chunks){
-								auto frac = Delta_M/(M_inner_disk/n_accretion_chunks);
-								Delta_M = M_inner_disk/n_accretion_chunks;
-								R_warp = R_warp * std::pow((1/frac), 0.71);
-							}*/
+							delta_m = m_warp;
 
 							// check that warped mass isn't larger than the available accreting mass.
-							if(Delta_M > M_inner_disk){
-								Delta_M = M_inner_disk;
-								R_warp = R_sg;
+							if(delta_m > m_in){
+								delta_m = m_in;
+								r_warp = r_sg;
 							}
-							R_angm = R_warp;
+							R_angm = r_warp;
 
 						}
 						else if(parameters.accretion_disk_model == AGNFeedbackParameters::SELFGRAVITYDISK){
-							Delta_M = M_inner_disk;
-							R_angm = R_sg;
+							delta_m = m_in;
+							R_angm = r_sg;
 						}
 
-						mfin = mbh + (1 - eff) * Delta_M;
+						mfin = mbh + (1 - eff) * delta_m;
 
 						//compute angular momentum ratio
-						angular_momentum_ratio = (Delta_M / (constants::SQRT2 * mbh * std::abs(spin))) * std::sqrt(R_angm);
+						angular_momentum_ratio = (delta_m / (constants::SQRT2 * mbh * std::abs(spin))) * std::sqrt(R_angm);
 
 						auto J_SMBH = std::abs(spin) * std::pow(mbh, 2) * constants::G / constants::c_light_km;
 						auto J_disk = 2 * angular_momentum_ratio * J_SMBH;
@@ -630,36 +628,35 @@ void AGNFeedback::griffin19_spinup_accretion(double delta_mbh, double tau_acc, G
 							spin = -1 * spin;
 						}
 
-						mbh = mbh + (1 - eff) * Delta_M; // Not all mass accreted on, some lost as radiation.
-						M_inner_disk = M_inner_disk - Delta_M;
+						mbh = mbh + (1 - eff) * delta_m; // Not all mass accreted on, some lost as radiation.
+						m_in = m_in - delta_m;
 						loop_inner += 1;
 					}
 				}
-				while(M_inner_disk > 0 && loop_inner < parameters.loop_limit_accretion);
+				while(m_in > 0 && loop_inner < parameters.loop_limit_accretion);
 
 				//check is there is accretion disk mass left (which can happen if
 				//we stopped the loop due to the number of iterations hiting the limit. In that case, modify the BH mass accordingly.
-				if(M_inner_disk > 0){
-					mbh = mbh + (1 - eff) * M_inner_disk; // Not all mass accreted on, some lost as radiation.
+				if(m_in > 0){
+					mbh = mbh + (1 - eff) * m_in; // Not all mass accreted on, some lost as radiation.
 				}
 
-				// M_outer_disk -= mass_accreted;
 				// End of spin-evolution calculation
 				if(parameters.accretion_disk_model == AGNFeedbackParameters::WARPEDDISK){
-					M_outer_disk = -1;
+					m_out = -1;
 				}
 				else if (parameters.accretion_disk_model == AGNFeedbackParameters::SELFGRAVITYDISK){
-					if (M_outer_disk > M_sg){
-						M_outer_disk -= M_sg;
+					if (m_out > m_sg){
+						m_out -= m_sg;
 					}
 					else{
-						M_outer_disk = -1;
+						m_out = -1;
 					}
 				}
 				loop_outer += 1;
 			}
 		}
-		while(M_outer_disk > 0  && loop_outer < parameters.loop_limit_accretion);
+		while(m_out > 0  && loop_outer < parameters.loop_limit_accretion);
 	}
 
 	smbh.spin = spin;
