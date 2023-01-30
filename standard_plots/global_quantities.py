@@ -537,12 +537,25 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
     ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label='Driver+18')
 
+    zdnW22, zupW22, rhoW22, errrhoW22u, errrhoW22dn = common.load_observation(obsdir, 'Global/Weaver22_SMD.dat', [0,1,2,3,4])
+    rhoW22_cosmocorr = rhoW22 * hobs/h0 * 1e7
+    zW22 = (zupW22 + zdnW22)/2.0
+    errrhoW22u = np.log10(rhoW22 + errrhoW22u) - np.log10(rhoW22)
+    errrhoW22dn = np.log10(rhoW22) - np.log10(rhoW22 - errrhoW22dn)
+    ax.errorbar(zW22, np.log10(rhoW22_cosmocorr), xerr=[zW22 - zdnW22, zupW22 - zW22], yerr=[errrhoW22dn, errrhoW22u], ecolor = 'grey',  mec='grey', marker='*', label='Weaver+22')
+
+    zdnS23, zmidS23, zupS23, rhoS23, rhoS23_dn_s, rho23_up_s, rhoS23_dn_l, rho23_up_l = common.load_observation(obsdir, 'Global/Santini23_JWST_SMD.dat', [0, 1, 2, 3, 4, 5, 6, 7])
+    rhoS23_cosmocorr = rhoS23 * hobs/h0
+    rhoS23_errdn = np.log10(rhoS23) - np.log10(rhoS23_dn_s)
+    rhoS23_errup = np.log10(rhoS23_up_s) - np.log10(rhoS23)
+    rhoS23_errdn2 = np.log10(rhoS23) - np.log10(rhoS23_dn_l)
+    rhoS23_errup2 = np.log10(rhoS23_up_l) - np.log10(rhoS23)
+
+    ax.errorbar(zmidS23, np.log10(rhoS23_cosmocorr), xerr=[zmidS23 - zdnS23, zupS23 - zmidS23], yerr=[rhoS23_errdn2, rhoS23_errup2],  ecolor = 'grey',  mec='grey', marker='s', label='Santini+23')
+
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfr > 0)
     ax.plot(redshifts[ind], np.log10(sfr[ind]*pow(h0,2.0)), 'k', linewidth=1, label ='total (v2.0)')
-    #print("SFR density of the Universe")
-    #for a,b in zip(redshifts[ind],  np.log10(sfr[ind]*pow(h0,2.0))):
-    #    print(a,b)
 
     ind = np.where(sfrd > 0)
     ax.plot(redshifts[ind], np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='solid', linewidth=1, label ='disks (v2.0)')

@@ -534,17 +534,27 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     yleg= ymax - 0.1 * (ymax - ymin)
 
 
-    def plot_lagos18(ax, bin_halo=1, col='k', inc_label=True):
+    def plot_lagos18(ax, bin_halo=1, col='k', inc_label=True, plot_central=False):
         p_pos = bin_halo * 2 - 1
         p_pos_sat = bin_halo * 2
         x,p,ps = common.load_observation(obsdir, 'Models/SharkVariations/BMF_Lagos18.dat', [0, p_pos, p_pos_sat])
 
+        ind = np.where(ps == 0)
+        ps[ind]  = -10
 
-        ind = np.where(p != 0)
-        xplot = x[ind]
-        yplot = p[ind]
-        ax.errorbar(xplot,yplot,color=col, linewidth=2, linestyle='solid', alpha=0.8, label = 'Shark v1.1 (L18) all' if inc_label else None)
-    
+        pc = np.log10(10**p - 10**ps)
+
+        if(plot_central == False):
+           ind = np.where(p != 0)
+           xplot = x[ind]
+           yplot = p[ind]
+           ax.errorbar(xplot,yplot,color=col, linewidth=2, linestyle='solid', alpha=0.8, label = 'Shark v1.1 (L18) all' if inc_label else None)
+        else:
+            ind = np.where(pc != 0)
+            xplot = x[ind]
+            yplot = pc[ind]
+            ax.errorbar(xplot,yplot,color=col, linewidth=2, linestyle='solid', alpha=0.8, label = 'Shark v1.1 (L18) cens' if inc_label else None)
+   
         ind = np.where(ps != 0)
         xplot = x[ind]
         yplot = ps[ind]
@@ -650,7 +660,7 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     yplot = hist_bmf_sat[4,ind]
     ax.errorbar(xplot,yplot[0],color='orange', linestyle="dashed", label="Shark v2.0 sats", linewidth=6, alpha=0.5)
 
-    plot_lagos18(ax, bin_halo=4, col='orange', inc_label=True)
+    plot_lagos18(ax, bin_halo=4, col='orange', inc_label=True, plot_central=True)
 
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionclusterhalos_eco.txt', [0,1,2,3,7,8,9])
     eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'orange', 's', yerrdn_val=No)
