@@ -375,7 +375,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				//ignore this galaxy if it will appear for the first time in the coming snapshot.
 				if(galaxy.birth_snapshot == snapshot) continue;
 
-				if(halo->on_hydrostatic_eq){
+				if(halo->hydrostatic_eq){
 					on_hydrostatic_eq.push_back(1);
 				}
 				else{
