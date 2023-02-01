@@ -199,7 +199,7 @@ def _mf_obs_as_errorbar(ax, scale_factor, x, y, yerrdn, yerrup, color, marker,
     if yerrdn_val is not None:
         ind = np.where((y > 0) & (yerrdn == 0))
         if yerrdn_val is y:
-            yerrdn_val = y[ind]
+            yerrdn_val = 0.01 #y[ind]
         yerrdn[ind] =  yerrdn_val
 
     # log and scale the rest of the values
@@ -546,12 +546,10 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
         p_pos_sat = bin_halo * 2
         x,p,ps = common.load_observation(obsdir, 'Models/SharkVariations/BMF_Lagos18.dat', [0, p_pos, p_pos_sat])
 
-        ind = np.where(ps == 0)
-        ps[ind]  = -10
-
-        pc = np.log10(10**p - 10**ps)
-        ind = np.where(p == 0)
-        pc[ind] == 0
+        pc = p
+        ind = np.where(ps != 0)
+        pc[ind]  =  np.log10(10**pc[ind] - 10**ps[ind])
+       
         if(plot_central == False):
            ind = np.where(p != 0)
            xplot = x[ind]
@@ -589,14 +587,14 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     plot_lagos18(ax, bin_halo=1, col='k', inc_label=False, plot_central=True)
     #RESOLVE observations
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionlowmasshalos_resolve.txt', [0,4,5,6,7,8,9])
-    resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 'o', yerrdn_val=0.1)
-    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 'o', yerrdn_val=0.1, fillstyle='full', markersize=5)
+    resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 'o', yerrdn_val=0.1, label="ECO cens")
+    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 'o', yerrdn_val=0.1, fillstyle='full', markersize=5, label="ECO sats")
 
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionlowmasshalos_eco.txt', [0,4,5,6,7,8,9])
-    eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 's', yerrdn_val=0.1)
-    eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 's', fillstyle='full', markersize=5)
+    eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 's', yerrdn_val=0.1, label="RESOLVE cens")
+    eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 's', fillstyle='full', markersize=5, label="RESOLVE sats")
 
-    #common.prepare_legend(ax, ['k','k','k','k','k','k'], fancybox=True, framealpha=0.5, bbox_to_anchor=(0.4, 0.5))
+    common.prepare_legend(ax, ['k','k','k','k','k','k'], fancybox=True, framealpha=0.5, bbox_to_anchor=(0.4, 0.5))
 
     # medium mass halos ##################################
     ax = fig.add_subplot(222)
@@ -644,14 +642,13 @@ def plot_bmf_resolve(plt, outdir, obsdir, hist_bmf, hist_bmf_sat):
     plot_lagos18(ax, bin_halo=3, col='k', inc_label=False, plot_central=True)
     #RESOLVE observations
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionhighmasshalos_eco.txt', [0,4,5,6,7,8,9])
-    eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 's', yerrdn_val=No, label="ECO cens")
-    eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 's', fillstyle='full', markersize=5, label="ECO satellites")
+    eco_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 's', yerrdn_val=No)
+    eco_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 's', fillstyle='full', markersize=5)
 
     M, No, Nodn, Noup, Ns, Nsdn, Nsup = load_resolve_mf_obs('bmassfunctionhighmasshalos_resolve.txt', [0,4,5,6,7,8,9])
-    resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 'o', yerrdn_val=0.1, label="RESOLVE cens")
+    resolve_mf_obs_as_errorbar(ax, M, No, Nodn, Noup, 'MediumBlue', 'o', yerrdn_val=0.1)
 
-    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 'o', fillstyle='full', markersize=5, label="RESOLVE satellites")
-    common.prepare_legend(ax, ['k','k','k','k','k','k'], loc='best', fancybox=True, framealpha=0.5) #, bbox_to_anchor=(0.1, -0.4))
+    resolve_mf_obs_as_errorbar(ax, M, Ns, Nsdn, Nsup, 'Gold', 'o', fillstyle='full', markersize=5)
 
     # high mass halos ##################################
     ax = fig.add_subplot(224)

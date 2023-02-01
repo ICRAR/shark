@@ -49,7 +49,7 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside, massgal_mor
     print("number of halos with types==0", len(mhalo[centrals]))
 
 
-    thresh = [0.25, 0.5, 0.75]
+    thresh = [0.5, 0.75]
 
     ind = np.where((typeg <= 0) & (mdisk+mbulge > 0))
     massgal[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
@@ -69,12 +69,12 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside, massgal_mor
         ind = np.where((typeg <= 0) & (mdisk/(mdisk+mbulge) >= thresh[i]) & (mdisk+mbulge > 0))
         massgal_morph[i,0,index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                        y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
-                                       xbins=xmf2, nmin=10)
+                                       xbins=xmf2, nmin=50)
     
         ind = np.where((typeg <= 0) & (mdisk/(mdisk+mbulge) < thresh[i]) & (mdisk+mbulge > 0))
         massgal_morph[i,1,index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                        y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
-                                       xbins=xmf2,  nmin=10)
+                                       xbins=xmf2,  nmin=50)
  
     ssfr_thresh = -1 + 0.5* redshift
     if (ssfr_thresh > 0): 
