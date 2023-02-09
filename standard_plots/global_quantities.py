@@ -65,7 +65,6 @@ def prepare_data(hdf5_data, redshifts):
     #Add up cold halo component to hot gas.
     mhot = mhot + mcold_halo
 
-    print(mlost)
     massbar = mcold+mhot+meje+mstar+mBH+mlost
     
     sfr  = sfrall / volh / GyrToYr

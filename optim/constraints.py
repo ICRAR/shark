@@ -461,49 +461,22 @@ class RM(Constraint):
 
         return x_mod, y_mod, y_err
 
+
 def _evaluate(constraint, stat_test, modeldir, subvols, plot_outputdir):
     try:
         y_obs, y_mod, err = constraint.get_data(modeldir, subvols,
                                                 plot_outputdir=plot_outputdir)
-        return stat_test(y_obs, y_mod, err) * constraint.weight
+        evaluation = stat_test(y_obs, y_mod, err) * constraint.weight
+        return y_obs, y_mod, err, evaluation
     except:
         logger.exception('Error while evaluating constraint, returning 1e20')
         return 1e20
 
-
 def evaluate(constraints, stat_test, modeldir, subvols, plot_outputdir=None):
     """Returns the evaluation of all constraints, as a total number (default)
     or as individual numbers for each constraint"""
-    return [_evaluate(c, stat_test, modeldir, subvols, plot_outputdir)
-            for c in constraints]
-
-def _get_y_mod(constraint, modeldir, subvols, plot_outputdir):
-    try:
-        y_obs, y_mod, err = constraint.get_data(modeldir, subvols,
-						plot_outputdir=plot_outputdir)
-        return y_mod
-    except:
-        logger.exception('Error')
-        return [1e20]
-
-def get_y_mod(constraints, modeldir, subvols, plot_outputdir=None):
-    return[_get_y_mod(c, modeldir, subvols, plot_outputdir)
-            for c in constraints]
-
-
-def _get_y_err(constraint, modeldir, subvols, plot_outputdir):
-    try:
-        y_obs, y_mod, err = constraint.get_data(modeldir, subvols,
-                                                plot_outputdir=plot_outputdir)
-        return err
-    except:
-        logger.exception('Error')
-        return [1e20]
-
-def get_y_err(constraints, modeldir, subvols, plot_outputdir=None):
-    return[_get_y_err(c, modeldir, subvols, plot_outputdir)
-                for c in constraints]
-
+    return zip(*[_evaluate(c, stat_test, modeldir, subvols, plot_outputdir)
+            for c in constraints])
 
 def log_results(constraints, results):
     """Emits a log message showing the function evaluation for `constraints`"""

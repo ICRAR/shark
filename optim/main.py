@@ -45,7 +45,7 @@ import pso
 logger = logging.getLogger('main')
 
 def setup_logging(outdir=None):
-    fmt = '%(asctime)-15s %(name)s#%(funcName)s:%(lineno)s %(message)s'
+    fmt = '%(asctime)-15s [%(levelname)5s] %(name)s#%(funcName)s:%(lineno)s %(message)s'
     fmt = logging.Formatter(fmt)
     fmt.converter = time.gmtime
     logging.root.setLevel(logging.INFO)
@@ -102,7 +102,7 @@ def evaluation_main(parser, args):
         modeldir = common.get_shark_output_dir(output_dir, simu, model)
         logger.info('Getting for model %s with subvolumes %r and test function %s',
                     modeldir, subvols, opts.stat_test)
-        result = constraints.evaluate(opts.constraints, stat_test, modeldir,
+        _y_obs, _y_mod, _y_err, result = constraints.evaluate(opts.constraints, stat_test, modeldir,
                                       subvols, plot_outputdir=opts.plot_output_dir)
         results.append(result)
     constraints.log_results(opts.constraints, results)
@@ -173,20 +173,12 @@ def pso_run_main(parser, args):
     ss = opts.swarm_size
     if ss is None:
         ss = 10 + int(2 * math.sqrt(len(space)))
+        opts.swarm_size = ss
 
-    args = (opts, space, subvols, analysis.stat_tests[opts.stat_test])
-
-    if opts.hpc_mode:
-        if opts.nodes is not None and opts.nodes > ss:
-            logger.warning('Requested %d nodes, but swarm size is %d. '
-                           'Reducing number of nodes to %d', opts.nodes, ss, ss)
-            opts.nodes = ss
-        procs = 0
-        f = execution.run_shark_hpc
-    else:
-        n_cpus = multiprocessing.cpu_count()
-        procs = min(n_cpus, ss)
-        f = execution.run_shark
+    if opts.hpc_mode and opts.nodes is not None and opts.nodes > ss:
+        logger.warning('Requested %d nodes, but swarm size is %d. '
+                       'Reducing number of nodes to %d', opts.nodes, ss, ss)
+        opts.nodes = ss
 
     logger.info('-----------------------------------------------------')
     logger.info('Runtime information')
@@ -195,6 +187,7 @@ def pso_run_main(parser, args):
     logger.info('    Subvolumes to use: %r', subvols)
     logger.info('    Output directory: %s', opts.outdir)
     logger.info('    Keep temporary output files: %d', opts.keep)
+    logger.info('')
     logger.info("PSO information:")
     logger.info('    Search space parameters: %s', ' '.join(space['name']))
     logger.info('    Swarm size: %d', ss)
@@ -202,9 +195,11 @@ def pso_run_main(parser, args):
     logger.info('    Lower bounds: %r', space['lb'])
     logger.info('    Upper bounds: %r', space['ub'])
     logger.info('    Test function: %s', opts.stat_test)
+    logger.info('')
     logger.info('Constraints:')
     for c in opts.constraints:
         logger.info('    %s', c)
+    logger.info('')
     logger.info('HPC mode: %d', opts.hpc_mode)
     if opts.hpc_mode:
         logger.info('    Account used to submit: %s', opts.account if opts.account else '')
@@ -238,16 +233,20 @@ def pso_run_main(parser, args):
     tStart = time.time()
     if opts.hpc_mode:
         os.chdir('../hpc')
-    try:
-        xopt, fopt = pso.pso(f, space['lb'], space['ub'], args=args, swarmsize=ss,
-                             maxiter=opts.max_iterations, processes=procs,
-                             dumpfile_prefix=os.path.join(tracksdir, 'track_%03d'))
-    except (KeyboardInterrupt, execution.AbortedByUser):
-        logger.info('Execution aborted by user, finishing PSO')
-        return
 
-    global count
-    logger.info('Number of iterations = %d', count)
+    n_cpus = multiprocessing.cpu_count()
+    n_procs = min(n_cpus, ss)
+    with multiprocessing.Pool(processes=n_procs) as mp_pool:
+        args = (mp_pool, opts, space, subvols, analysis.stat_tests[opts.stat_test])
+        try:
+            xopt, fopt = pso.pso(execution.run_shark, space['lb'], space['ub'], args=args, swarmsize=ss,
+                                 maxiter=opts.max_iterations, processes=0,
+                                 dumpfile_prefix=os.path.join(tracksdir, 'track_%03d'))
+        except (KeyboardInterrupt, execution.AbortedByUser):
+            logger.info('Execution aborted by user, finishing PSO')
+            return
+    mp_pool.join()
+
     logger.info('xopt = %r', xopt)
     logger.info('fopt = %r', fopt)
     logger.info('PSO finished in %.3f [s]', time.time() - tStart)

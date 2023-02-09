@@ -1351,15 +1351,15 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
 
     ind = np.where((np.isnan(mdisk+mbulge) == True) | (np.isinf(mdisk+mbulge) == True))
     if (len(mdisk[ind]) > 0):
-         print("Number of galaxies with a stellar mass of NaN:", len(mdisk[ind]))
+         logger.info("Number of galaxies with a stellar mass of NaN:", len(mdisk[ind]))
     else:
-         print("All galaxies have well defined stellar mass")
+         logger.info("All galaxies have well defined stellar mass")
 
     ind = np.where((np.isnan(mBH) == True) | (np.isinf(mBH) == True))
     if (len(mdisk[ind]) > 0):
-         print("Number of galaxies with a BH mass of NaN:", len(mdisk[ind]))
+         logger.info("Number of galaxies with a BH mass of NaN:", len(mdisk[ind]))
     else:
-         print("All galaxies have well defined BH mass")
+         logger.info("All galaxies have well defined BH mass")
 
 
     #select massive centrals

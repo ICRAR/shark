@@ -21,7 +21,6 @@
 #
 
 import logging
-import multiprocessing
 import os
 import shutil
 import subprocess
@@ -32,6 +31,7 @@ import numpy as np
 
 import common
 import constraints
+import functools
 
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,57 @@ def _to_shark_options(particle, space):
 
 
 count = 0
-def run_shark_hpc(particles, *args):
+
+
+def _prepare_run(opts, particles):
+    iteration_name = 'PSO_%d' % count
+    shark_output_base = os.path.join(opts.outdir, iteration_name)
+    os.makedirs(shark_output_base)
+    np.save(os.path.join(shark_output_base, 'particles.npy'), particles)
+    return iteration_name, shark_output_base
+
+
+def _read_particle_results(particle_index, shark_output_base, opts, subvols, statTest):
+    _, simu, model, _ = common.read_configuration(opts.config)
+    particle_outdir = os.path.join(shark_output_base, str(particle_index))
+    modeldir = common.get_shark_output_dir(particle_outdir, simu, model)
+    _y_obs, y_mod, y_err, result = constraints.evaluate(opts.constraints, statTest, modeldir, subvols)
+    if not opts.keep:
+        shutil.rmtree(particle_outdir, ignore_errors=True)
+    return _y_obs, y_mod, y_err, result
+
+def _read_results(particles, mp_pool, shark_output_base, opts, subvols, statTest):
+
+    logger.info("=================== Evaluating constraints")
+    y_obs, y_mod, y_err, results = zip(*mp_pool.map(
+        functools.partial(
+            _read_particle_results,
+            shark_output_base=shark_output_base,
+            opts=opts,
+            subvols=subvols,
+            statTest=statTest
+        ),
+        range(len(particles))
+    ))
+
+    constraints.log_results(opts.constraints, results)
+    try:
+        np.save(os.path.join(shark_output_base, 'modelvals.npy'), y_mod)
+        np.save(os.path.join(shark_output_base, 'modelerrorvals.npy'), y_err)
+    except ValueError:
+        logger.error("Couldn't save model values/errors because they don't all have the same shape. TO BE IMPLEMENTED IN THE FUTURE.")
+
+    results = np.sum(results, axis=1)
+
+    # this global count just tracks the number of iterations so they can be
+    # saved to different files
+    global count
+    count += 1
+
+    return results
+
+
+def _run_shark_hpc(particles, shark_output_base, job_name, opts, space, subvols):
     """
     - Handler function for running PSO on Shark on a SLURM based cluster.
     - Swarm size and number of iterations need to be set within the script for now
@@ -105,10 +155,6 @@ def run_shark_hpc(particles, *args):
     - For now the subprocess call within must be altered if you are changing shark submit options
     - To find appropriate memory allocations peruse the initial output lines of each particle
     """
-
-    global count
-
-    opts, space, subvols, statTest = args
 
     # Prepare the file that will be used by the shark submission scripts
     # to determine which values shark will be run for. We put a final \n so the
@@ -123,10 +169,7 @@ def run_shark_hpc(particles, *args):
         f.write('\n'.join(shark_options) + '\n')
 
     # Submit the execution of multiple shark instances, one for each particle
-    job_name = 'PSOSMF_%d' % count
-    shark_output_base = os.path.join(opts.outdir, job_name)
-    os.makedirs(shark_output_base)
-    np.save(os.path.join(shark_output_base, 'particles.npy'), particles)
+
     cmdline = ['./shark-submit', '-S', opts.shark_binary, '-w', opts.walltime,
                '-n', job_name, '-O', shark_output_base, '-E', positions_fname,
                '-V', ' '.join(map(str, subvols))]
@@ -159,48 +202,12 @@ def run_shark_hpc(particles, *args):
         cancel_job(job_id)
         raise AbortedByUser
 
-    ss = len(particles)
-    results = np.zeros([ss, len(opts.constraints)])
 
-    # create arrays to save each constraint evaluation   
-    ymodarr = []
-    yerrarr = []
-    for i in range(ss):
-        _, simu, model, _ = common.read_configuration(opts.config)
-        particle_outdir = os.path.join(shark_output_base, str(i))
-        modeldir = common.get_shark_output_dir(particle_outdir, simu, model)
-        results[i] = constraints.evaluate(opts.constraints, statTest, modeldir, subvols)
-	
-        ymodarr.append(constraints.get_y_mod(opts.constraints, modeldir, subvols))
-        yerrarr.append(constraints.get_y_err(opts.constraints, modeldir, subvols)) 
-
-        if not opts.keep:
-            shutil.rmtree(particle_outdir, ignore_errors=True)
-	
-    constraints.log_results(opts.constraints, results)
-    np.save(os.path.join(shark_output_base, 'modelvals.npy'), ymodarr)
-    np.save(os.path.join(shark_output_base, 'modelerrorvals.npy'), yerrarr)
-    
-    results = np.sum(results, axis=1)
-    logger.info('Particles %r evaluated to %r', particles, results)
-
-    # this global count just tracks the number of iterations so they can be saved to different files
-    count += 1
-
-    return results
-
-
-def run_shark(particle, *args):
-
-    opts, space, subvols, statTest = args
-
-    pid = multiprocessing.current_process().pid
-    shark_output_base = os.path.join(opts.outdir, 'output_%d' % pid)
-    _, simu, model, _ = common.read_configuration(opts.config)
-    modeldir = common.get_shark_output_dir(shark_output_base, simu, model)
-
+def _run_single_local_shark(indexed_particle, shark_output_base, opts, space, subvols):
+    index, particle = indexed_particle
+    shark_output_dir = os.path.join(shark_output_base, str(index))
     cmdline = [opts.shark_binary, opts.config,
-               '-o', 'execution.output_directory=%s' % shark_output_base,
+               '-o', 'execution.output_directory=%s' % shark_output_dir,
                '-o', 'execution.simulation_batches=%s' % ' '.join(map(str, subvols))]
     for option in _to_shark_options(particle, space):
         cmdline += ['-o', option]
@@ -209,13 +216,31 @@ def run_shark(particle, *args):
     except KeyboardInterrupt:
         raise AbortedByUser
 
-    results = constraints.evaluate(opts.constraints, statTest, modeldir, subvols)
-    constraints.log_results(constraints, [results])
-    total = sum(results)
-    logger.info('Particle %r evaluated to %f', particle, total)
-    logger.info('test statement')
 
-    if not opts.keep:
-        shutil.rmtree(shark_output_base, ignore_errors=True)
+def _run_shark_local(particles, mp_pool, shark_output_base, opts, space, subvols):
+    mp_pool.map(
+        functools.partial(
+            _run_single_local_shark,
+            shark_output_base=shark_output_base,
+            opts=opts,
+            space=space,
+            subvols=subvols
+        ),
+        enumerate(particles)
+    )
 
-    return total
+
+def run_shark(particles, mp_pool, opts, space, subvols, statTest):
+    """
+    - Handler function for running PSO on Shark on a SLURM based cluster.
+    - Swarm size and number of iterations need to be set within the script for now
+    - Function needs the relative path to a Shark config file under the -c option
+    - For now the subprocess call within must be altered if you are changing shark submit options
+    - To find appropriate memory allocations peruse the initial output lines of each particle
+    """
+    shark_output_base, instance_name = _prepare_run(opts, particles)
+    if opts.hpc_mode:
+        _run_shark_hpc(particles, shark_output_base, instance_name, opts, space, subvols)
+    else:
+        _run_shark_local(particles, mp_pool, shark_output_base, opts, space, subvols)
+    return _read_results(particles, mp_pool, shark_output_base, opts, subvols, statTest)
