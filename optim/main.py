@@ -24,7 +24,10 @@ import math
 import multiprocessing
 import os
 import sys
+import struct
 import time
+
+import numpy as np
 
 def _abspath(p):
     return os.path.normpath(os.path.abspath(p))
@@ -128,6 +131,8 @@ def pso_run_main(parser, args):
                           default='space.txt', type=_abspath)
     pso_opts.add_argument('-t', '--stat-test', help='Stat function used to calculate the value of a particle, defaults to student-t',
                           default='student-t', choices=list(analysis.stat_tests.keys()))
+    pso_opts.add_argument("--pso-seed", type=int, help="Seed to use for PSO random functions, allows reproducibility of PSO runs", default=None)
+    pso_opts.add_argument("--shark-seed", type=int, help="Seed to use for shark random functions, allows reproducibility of shark runs", default=None)
     add_constraint_argument(pso_opts)
 
     hpc_opts = parser.add_argument_group('HPC options')
@@ -155,6 +160,13 @@ def pso_run_main(parser, args):
         if not opts.shark_binary:
             parser.error("No shark binary found, specify one via -b")
 
+    # Manage RNG seed
+    if opts.pso_seed is None:
+        opts.pso_seed = struct.unpack("I", os.urandom(4))[0]
+    np.random.seed(opts.pso_seed)
+    if opts.shark_seed is None:
+        opts.shark_seed = struct.unpack("I", os.urandom(4))[0]
+
     _, _, _, redshift_file = common.read_configuration(opts.config)
     redshift_table = common._redshift_table(redshift_file)
     subvols = common.parse_subvolumes(opts.subvolumes)
@@ -181,6 +193,10 @@ def pso_run_main(parser, args):
         opts.nodes = ss
 
     logger.info('-----------------------------------------------------')
+    logger.info("Random seed information")
+    logger.info("    PSO seed: %d", opts.pso_seed)
+    logger.info("    shark seed: %d", opts.shark_seed)
+    logger.info('')
     logger.info('Runtime information')
     logger.info('    shark binary: %s', opts.shark_binary)
     logger.info('    Base configuration file: %s', opts.config)

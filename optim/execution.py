@@ -172,6 +172,7 @@ def _run_shark_hpc(particles, shark_output_base, job_name, opts, space, subvols)
 
     cmdline = ['./shark-submit', '-S', opts.shark_binary, '-w', opts.walltime,
                '-n', job_name, '-O', shark_output_base, '-E', positions_fname,
+               '-o', 'execution.seed=%d' % opts.shark_seed,
                '-V', ' '.join(map(str, subvols))]
     if opts.account:
         cmdline += ['-a', opts.account]
@@ -208,7 +209,8 @@ def _run_single_local_shark(indexed_particle, shark_output_base, opts, space, su
     shark_output_dir = os.path.join(shark_output_base, str(index))
     cmdline = [opts.shark_binary, opts.config,
                '-o', 'execution.output_directory=%s' % shark_output_dir,
-               '-o', 'execution.simulation_batches=%s' % ' '.join(map(str, subvols))]
+               '-o', 'execution.simulation_batches=%s' % ' '.join(map(str, subvols)),
+               '-o', 'execution.seed=%d' % opts.shark_seed]
     for option in _to_shark_options(particle, space):
         cmdline += ['-o', option]
     try:
