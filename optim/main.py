@@ -253,16 +253,20 @@ def pso_run_main(parser, args):
     with multiprocessing.Pool(processes=n_procs) as mp_pool:
         args = (mp_pool, opts, space, subvols, analysis.stat_tests[opts.stat_test])
         try:
-            xopt, fopt = pso.pso(execution.run_shark, space['lb'], space['ub'], args=args, swarmsize=ss,
-                                 maxiter=opts.max_iterations, processes=0,
-                                 dumpfile_prefix=os.path.join(tracksdir, 'track_%03d'))
+            x_opt, f_opt, x_best, f_best = pso.pso(
+                execution.run_shark, space['lb'], space['ub'], args=args,
+                swarmsize=ss, maxiter=opts.max_iterations, processes=0,
+                dumpfile_prefix=os.path.join(tracksdir, 'track_%03d')
+            )
         except (KeyboardInterrupt, execution.AbortedByUser):
             logger.info('Execution aborted by user, finishing PSO')
             return
     mp_pool.join()
 
-    logger.info('xopt = %r', xopt)
-    logger.info('fopt = %r', fopt)
+    logger.info('Best particle = %r', x_opt)
+    logger.info('Best objective function = %r', f_opt)
+    logger.info('Best position per particle = %r', x_best)
+    logger.info('Best objective function per particle = %r', f_best)
     logger.info('PSO finished in %.3f [s]', time.time() - tStart)
 
 

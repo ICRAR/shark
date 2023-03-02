@@ -42,7 +42,7 @@ def _update_particle_pos_and_vel(pos_lb, pos_ub, omega, phip, phig, pos, vel, be
 def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={}, 
         swarmsize=100, omega=0.5, phip=0.5, phig=0.5, maxiter=100, 
         minstep=1e-8, minfunc=1e-8, processes=1,
-        particle_output=False, dumpfile_prefix=None):
+        dumpfile_prefix=None):
     """
     Perform a particle swarm optimization (PSO)
    
@@ -92,9 +92,6 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
         The number of processes to use to evaluate objective function and 
         constraints. If processes = 0 then all particles are given to a single
         handling function to deal with them all at once (default: 1)
-    particle_output : boolean
-        Whether to include the best per-particle position and the objective
-        values at those.
    
     Returns
     =======
@@ -192,35 +189,28 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
             logger.info('New best for swarm at iteration %d: %r %.3f', iteration, p[i_min, :], fp[i_min])
 
             p_min = p[i_min, :].copy()
-
+            stop = False
             if iteration != 0:
                 if np.abs(fg - fp[i_min]) <= minfunc:
                     logger.info('Stopping search: Swarm best objective change less than %.3f', minfunc)
-                    if particle_output:
-                        return p_min, fp[i_min], p, fp
-                    else:
-                        return p_min, fp[i_min]
-                stepsize = np.sqrt(np.sum((g - p_min)**2))
-                if stepsize <= minstep:
+                    stop = True
+                elif np.sqrt(np.sum((g - p_min)**2)) <= minstep:
                     logger.info('Stopping search: Swarm best position change less than %.3f', minstep)
-                    if particle_output:
-                        return p_min, fp[i_min], p, fp
-                    else:
-                        return p_min, fp[i_min]
-            else:
-                g = p_min
-                fg = fp[i_min]
+                    stop = True
+            g = p_min
+            fg = fp[i_min]
+            if stop:
+                break
         elif iteration == 0:
             # At the start, there may not be any feasible starting point, so just
             # give iteration a temporary "best" point since iteration's likely to change
             g = x[0, :].copy()
 
         logger.info('Best after iteration %d: %r %.3f', iteration, g, fg)
+    else:
+        logger.info('Stopping search: maximum iterations reached --> %d', maxiter)
 
-    logger.info('Stopping search: maximum iterations reached --> %d', maxiter)
     if not is_feasible(g):
         logger.warning("However, the optimization couldn't find a feasible design. sorry n.n")
-    if particle_output:
-        return g, fg, p, fp
-    else:
-        return g, fg
+
+    return g, fg, p, fp
