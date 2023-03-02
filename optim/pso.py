@@ -2,8 +2,12 @@
 #
 # https://github.com/tisimst/pyswarm/tree/master/pyswarm   (original pyswarms code)
 
+import logging
 from functools import partial
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 def _obj_wrapper(func, args, kwargs, x):
     return func(x, *args, **kwargs)
@@ -37,7 +41,7 @@ def _update_particle_pos_and_vel(pos_lb, pos_ub, omega, phip, phig, pos, vel, be
 
 def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={}, 
         swarmsize=100, omega=0.5, phip=0.5, phig=0.5, maxiter=100, 
-        minstep=1e-8, minfunc=1e-8, debug=False, processes=1,
+        minstep=1e-8, minfunc=1e-8, processes=1,
         particle_output=False, dumpfile_prefix=None):
     """
     Perform a particle swarm optimization (PSO)
@@ -84,9 +88,6 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
     minfunc : scalar
         The minimum change of swarm's best objective value before the search
         terminates (Default: 1e-8)
-    debug : boolean
-        If True, progress statements will be displayed every iteration
-        (Default: False)
     processes : int
         The number of processes to use to evaluate objective function and 
         constraints. If processes = 0 then all particles are given to a single
@@ -132,16 +133,13 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
     # Check for constraint function(s) #########################################
     if f_ieqcons is None:
         if not len(ieqcons):
-            if debug:
-                print('No constraints given.')
+            logger.debug('No constraints given')
             cons = _cons_none_wrapper
         else:
-            if debug:
-                print('Converting ieqcons to a single constraint function')
+            logger.debug('Converting ieqcons to a single constraint function')
             cons = partial(_cons_ieqcons_wrapper, ieqcons, args, kwargs)
     else:
-        if debug:
-            print('Single constraint function given in f_ieqcons')
+        logger.debug('Single constraint function given in f_ieqcons')
         cons = partial(_cons_f_ieqcons_wrapper, f_ieqcons, args, kwargs)
     is_feasible = partial(_is_feasible_wrapper, cons)
 
@@ -191,24 +189,20 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
         # Update swarm's best position
         i_min = np.argmin(fp)
         if fp[i_min] < fg:
-            if debug:
-                print('New best for swarm at iteration {:}: {:} {:}'\
-                    .format(it, p[i_min, :], fp[i_min]))
+            logger.info('New best for swarm at iteration %d: %r %.3f', it, p[i_min, :], fp[i_min])
 
             p_min = p[i_min, :].copy()
 
             if it != 0:
                 if np.abs(fg - fp[i_min]) <= minfunc:
-                    print('Stopping search: Swarm best objective change less than {:}'\
-                        .format(minfunc))
+                    logger.info('Stopping search: Swarm best objective change less than %.3f', minfunc)
                     if particle_output:
                         return p_min, fp[i_min], p, fp
                     else:
                         return p_min, fp[i_min]
                 stepsize = np.sqrt(np.sum((g - p_min)**2))
                 if stepsize <= minstep:
-                    print('Stopping search: Swarm best position change less than {:}'\
-                        .format(minstep))
+                    logger.info('Stopping search: Swarm best position change less than %.3f', minstep)
                     if particle_output:
                         return p_min, fp[i_min], p, fp
                     else:
@@ -221,13 +215,11 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
             # give it a temporary "best" point since it's likely to change
             g = x[0, :].copy()
 
-        if debug:
-            print('Best after iteration {:}: {:} {:}'.format(it, g, fg))
+        logger.info('Best after iteration %d: %r %.3f', it, g, fg)
 
-    print('Stopping search: maximum iterations reached --> {:}'.format(maxiter))
-    
+    logger.info('Stopping search: maximum iterations reached --> %d', maxiter)
     if not is_feasible(g):
-        print("However, the optimization couldn't find a feasible design. Sorry")
+        logger.warning("However, the optimization couldn't find a feasible design. sorry n.n")
     if particle_output:
         return g, fg, p, fp
     else:
