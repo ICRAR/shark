@@ -56,6 +56,7 @@ def setup_logging(outdir=None):
     h.setFormatter(fmt)
     logging.root.addHandler(h)
     if outdir:
+        os.makedirs(outdir, exist_ok=True)
         log_fname = os.path.join(outdir, 'shark_pso.log')
         h = logging.FileHandler(log_fname)
         h.setFormatter(fmt)
@@ -239,10 +240,7 @@ def pso_run_main(parser, args):
 
     # Directory where we store the intermediate results
     tracksdir = os.path.join(opts.outdir, 'tracks')
-    try:
-        os.makedirs(tracksdir)
-    except OSError:
-        pass
+    os.makedirs(tracksdir, exist_ok=True)
 
     # Go, go, go!
     logger.info('Starting PSO now')
