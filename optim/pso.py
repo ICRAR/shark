@@ -9,8 +9,8 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-def _obj_wrapper(func, args, kwargs, x):
-    return func(x, *args, **kwargs)
+def _obj_wrapper(func, args, kwargs, x, iteration):
+    return func(x, iteration, *args, **kwargs)
 
 def _is_feasible_wrapper(func, x):
     return np.all(func(x)>=0)
@@ -159,10 +159,10 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
     fg = np.inf  # best swarm position starting value
 
     # Iterate until termination criterion met ##################################
-    for it in range(maxiter):
+    for iteration in range(maxiter):
 
         # Get particle positions and velocities
-        if it == 0:
+        if iteration == 0:
             x = lb + np.random.rand(S, D) * (ub - lb)
             v = vlow + np.random.rand(S, D) * (vhigh - vlow)
         else:
@@ -170,16 +170,16 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
 
         # Update objectives and constraints
         if processes > 1:
-            fx = np.array(mp_pool.map(obj, x))
+            fx = np.array(mp_pool.map(obj, x, iteration))
             fs = np.array(mp_pool.map(is_feasible, x))
         elif processes != 0:
             for i in range(S):
-                fx[i] = obj(x[i, :])
+                fx[i] = obj(x[i, :], iteration)
                 fs[i] = is_feasible(x[i, :])
         else:
-            fx = obj(x)
+            fx = obj(x, iteration)
             fs = is_feasible(x)
-        dump(it, x, fx)
+        dump(iteration, x, fx)
 
         # Store particle's best position (if constraints are satisfied)
         i_update = np.logical_and((fx < fp), fs)
@@ -189,11 +189,11 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
         # Update swarm's best position
         i_min = np.argmin(fp)
         if fp[i_min] < fg:
-            logger.info('New best for swarm at iteration %d: %r %.3f', it, p[i_min, :], fp[i_min])
+            logger.info('New best for swarm at iteration %d: %r %.3f', iteration, p[i_min, :], fp[i_min])
 
             p_min = p[i_min, :].copy()
 
-            if it != 0:
+            if iteration != 0:
                 if np.abs(fg - fp[i_min]) <= minfunc:
                     logger.info('Stopping search: Swarm best objective change less than %.3f', minfunc)
                     if particle_output:
@@ -210,12 +210,12 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
             else:
                 g = p_min
                 fg = fp[i_min]
-        elif it == 0:
+        elif iteration == 0:
             # At the start, there may not be any feasible starting point, so just
-            # give it a temporary "best" point since it's likely to change
+            # give iteration a temporary "best" point since iteration's likely to change
             g = x[0, :].copy()
 
-        logger.info('Best after iteration %d: %r %.3f', it, g, fg)
+        logger.info('Best after iteration %d: %r %.3f', iteration, g, fg)
 
     logger.info('Stopping search: maximum iterations reached --> %d', maxiter)
     if not is_feasible(g):

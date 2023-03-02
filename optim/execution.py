@@ -96,11 +96,8 @@ def _to_shark_options(particle, space):
         yield '%s=%s' % (name, value)
 
 
-count = 0
-
-
-def _prepare_run(opts, particles):
-    iteration_name = 'PSO_%d' % count
+def _prepare_run(opts, particles, iteration):
+    iteration_name = 'PSO_%d' % iteration
     shark_output_base = os.path.join(opts.outdir, iteration_name)
     os.makedirs(shark_output_base)
     np.save(os.path.join(shark_output_base, 'particles.npy'), particles)
@@ -138,11 +135,6 @@ def _read_results(particles, mp_pool, shark_output_base, opts, subvols, statTest
         logger.error("Couldn't save model values/errors because they don't all have the same shape. TO BE IMPLEMENTED IN THE FUTURE.")
 
     results = np.sum(results, axis=1)
-
-    # this global count just tracks the number of iterations so they can be
-    # saved to different files
-    global count
-    count += 1
 
     return results
 
@@ -232,7 +224,7 @@ def _run_shark_local(particles, mp_pool, shark_output_base, opts, space, subvols
     )
 
 
-def run_shark(particles, mp_pool, opts, space, subvols, statTest):
+def run_shark(particles, iteration, mp_pool, opts, space, subvols, statTest):
     """
     - Handler function for running PSO on Shark on a SLURM based cluster.
     - Swarm size and number of iterations need to be set within the script for now
@@ -240,7 +232,7 @@ def run_shark(particles, mp_pool, opts, space, subvols, statTest):
     - For now the subprocess call within must be altered if you are changing shark submit options
     - To find appropriate memory allocations peruse the initial output lines of each particle
     """
-    shark_output_base, instance_name = _prepare_run(opts, particles)
+    shark_output_base, instance_name = _prepare_run(opts, particles, iteration)
     if opts.hpc_mode:
         _run_shark_hpc(particles, shark_output_base, instance_name, opts, space, subvols)
     else:
