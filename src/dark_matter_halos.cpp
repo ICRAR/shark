@@ -176,8 +176,10 @@ float DarkMatterHalos::halo_lambda (const Subhalo &subhalo, float m, double z, d
 	}
 
 	// Prime the generator with a known seed to allow for reproducible runs
+	// using a very weak dependence on Mhalo for the spin distribution, following Kim et al. (2015): arxiv:1508.06037
+	double lambda_cen_mhalo = 0.00895651600584195 * std::log10(m)  - 0.07580254755439589;
 	std::default_random_engine generator(exec_params.get_seed(subhalo));
-	std::lognormal_distribution<double> distribution(std::log(0.03), std::abs(std::log(0.5)));
+	std::lognormal_distribution<double> distribution(std::log(lambda_cen_mhalo), std::abs(std::log(0.5)));
 	auto lambda_random = distribution(generator);
 
 	// Avoid zero values. In that case assume small lambda value.

@@ -149,7 +149,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 				descendant_subhalo->host_halo->hydrostatic_eq = subhalo->host_halo->hydrostatic_eq;
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
 				//check mass of host halo in the next snapshot and set hydrostatic floor for the most massive ones
-				if (descendant_subhalo->host_halo->Mvir > 3e12){
+				if (descendant_subhalo->host_halo->Mvir > 5e12){
 					descendant_subhalo->host_halo->hydrostatic_eq = true;
 				}
 			}
