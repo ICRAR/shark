@@ -48,6 +48,7 @@ polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238]
 #choose radio continuum model
 radio_model = "Bressan02"
 c_speed = 299792458.0 #in m/s
+c_speed_cm = c_speed * 1e2
 Lsunwatts = 3.846e26
 
 #define parameters associated to AGN luminosity
@@ -152,7 +153,7 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
     q_ionis = ionising_photons(ion_mag, 912.0) #in s^-1
     print(max(q_ionis))
     # Unpack data
-    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb) = hdf5_data
+    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb, typeg) = hdf5_data
     h0log = np.log10(float(h0))
     vol = volh/h0**3
 
@@ -164,8 +165,10 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
 
     #select galaxies with Mstar > 0
     ind = np.where(mdisk + mbulge > 0)
+    typein = typeg[ind]
     ms = (mdisk[ind] + mbulge[ind])/h0 #in Msun
     sfr = sfr[ind]/h0/1e9 #in Msun/yr
+    sfrb = sfrb[ind] / (sfrd[ind] + sfrb[ind])
     Ljet_ADAF = Ljet_ADAF[ind]
     Ljet_td = Ljet_td[ind]
     mdot_norm = mdot_norm[ind]
@@ -197,10 +200,10 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
     qIR_dale14 = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(Lum_radio_Viperfish[3,:]/1e7)
     qIR_bressan = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(lum_radio[3,:]/1e7)
 
-    ind = np.where(lir_total[0,:] > 1e9)
-    print(np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind]))
+    ind = np.where((ms > 1e8) & (ms < 1e9) & (qIR_bressan >  -10) & (qIR_bressan < 10) & (sfr > 1e-3) & (typein == 0))
+    print("Median qIR:", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind]), np.median(sfrb[ind]))
 
-    writeon = True
+    writeon = False
     if(writeon == True):
        # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
        file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'Shark-SED-eagle-rr14-radio-only-hansen23.hdf5')
@@ -324,7 +327,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy',
                            'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mgas_disk', 
-                           'mgas_bulge')}
+                           'mgas_bulge', 'type')}
    
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total')}

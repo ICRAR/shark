@@ -41,7 +41,7 @@ dmr = 0.2
 mrbins = np.arange(mrlow,mrupp,dmr)
 xmrf = mrbins + dmr/2.0
 
-def prepare_data(hdf5_data, index, massstellarh, massstellarh_v2, hist_smf, hist_minfall):
+def prepare_data(hdf5_data, index, massstellarh, massstellarh_v2, hist_smf, hist_minfall, frac_sat):
 
     Omegab = 0.0491
     OmegaM = 0.3121
@@ -49,20 +49,46 @@ def prepare_data(hdf5_data, index, massstellarh, massstellarh_v2, hist_smf, hist
     (h0, volh, mdisk, mbulge, ms_halo, mhalo, typeg, ms_tidally_stripped, 
     id_halo, mvir_infall, mvir_subhalo, id_subhalo) = hdf5_data
 
-
     vol = volh/pow(h0,3.)  # In Mpc^3
 
     ids_halo = np.unique(id_halo)
 
     ms_gals = np.zeros(shape = (3,len(ids_halo)))
-    for i,g in enumerate(ids_halo):
-        ind = np.where((id_halo == g) & (mdisk+mbulge > 0))
-        indcen = np.where((id_halo == g) & (typeg == 0))
-        if((np.count_nonzero(ind) > 0) & (np.count_nonzero(indcen) > 0)):
-           ms_gals[0,i] = np.sum(mdisk[ind]+mbulge[ind])
-           ms_gals[0,i] = ms_gals[0,i] + ms_halo[indcen]
-           ms_gals[1,i] = ms_halo[indcen]
-           ms_gals[2,i] = mhalo[indcen]
+    n_gals = np.zeros(shape = (len(ids_halo)))
+    #for i,g in enumerate(ids_halo):
+    #    ind = np.where((id_halo == g) & (mdisk+mbulge > 0))
+    #    indcen = np.where((id_halo == g) & (typeg == 0))
+    #    if((np.count_nonzero(ind) > 0) & (np.count_nonzero(indcen) > 0)):
+    #       ms_gals[0,i] = np.sum(mdisk[ind]+mbulge[ind])
+    #       ms_gals[0,i] = ms_gals[0,i] + ms_halo[indcen]
+    #       ms_gals[1,i] = ms_halo[indcen]
+    #       ms_gals[2,i] = mhalo[indcen]
+
+    i = 0
+    j = 0
+    for i in range(0,len(ids_halo)):
+        ids = id_halo[j]
+        while (id_halo[j] == ids):
+            ms_gals[0,i] = ms_gals[0,i] + mdisk[j] + mbulge[j]
+            n_gals[i] = n_gals[i] + 1
+            if(typeg[j] == 0):
+                ms_gals[1,i] = ms_halo[j]
+                ms_gals[2,i] = mhalo[j]
+                n_gals[i] = n_gals[i] - 1
+            j = j + 1
+            if(j == len(id_halo)):
+               break
+        i = i + 1
+
+    for i, m in enumerate(xmf):
+        ind = np.where((ms_gals[2,:] >= 10**(m - dm/2.0)) & (ms_gals[2,:] < 10**(m + dm/2.0)))
+        if(len(n_gals[ind]) == 0):
+            frac_sat[index,i] = -10 
+        else:
+            frac_sat[index,i] = np.median(n_gals[ind])
+    ind = np.where(frac_sat[index,:] == 0)
+    frac_sat[index,ind] = 0.01
+
 
     ind = np.where((typeg <= 0) & (ms_halo > 0))
     massstellarh[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
@@ -73,7 +99,7 @@ def prepare_data(hdf5_data, index, massstellarh, massstellarh_v2, hist_smf, hist
 
     ind = np.where(ms_gals[0,:] > 0)
     massstellarh_v2[index,:] = us.wmedians(x=np.log10(ms_gals[2,ind]) - np.log10(float(h0)),
-                                   y=np.log10(ms_gals[0,ind]) - np.log10(ms_gals[1,ind]),
+                                   y=np.log10(ms_gals[1,ind]) - np.log10(ms_gals[0,ind]),
                                    xbins=xmf)
 
     mass = mdisk + mbulge
@@ -98,7 +124,7 @@ def prepare_data(hdf5_data, index, massstellarh, massstellarh_v2, hist_smf, hist
     hist_minfall[index,:] = hist_minfall[index,:] + H
     hist_minfall[index,:] = hist_minfall[index,:] / np.sum(hist_minfall[index,:] * dm)
 
-    return h0
+    return (h0)
 
 def load_smf_observations(obsdir, h0):
 
@@ -202,15 +228,15 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_minfall, zlist):
 
     common.savefig(outdir, fig, 'infall_masses_distribution.pdf')
 
-def plot_stellar_halo_z(plt, outdir, massstellarh, massstellarh_v2, zlist):
+def plot_stellar_halo_z(plt, outdir, massstellarh, massstellarh_v2, zlist, frac_sat):
 
-    fig = plt.figure(figsize=(7, 5))
+    fig = plt.figure(figsize=(7, 9))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm halo, DM}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm M_{\\star,halo}/M_{\\star,total})$"
     xmin, xmax, ymin, ymax = 10.5, 15, -4, 0
 
     # z=0 ##################################
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(211)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
     plt.subplots_adjust(left=0.2)
 
@@ -225,7 +251,7 @@ def plot_stellar_halo_z(plt, outdir, massstellarh, massstellarh_v2, zlist):
     cols = ['DarkRed', 'DarkOrange', 'LimeGreen', 'Turquoise', 'SteelBlue', 'Purple']
     #Predicted stellar-halo mass relation
     for i,z in enumerate(zlist):
-        (xplot, yplot, errdn, errup) = compute_points(massstellarh)
+        (xplot, yplot, errdn, errup) = compute_points(massstellarh_v2)
         ax.plot(xplot, yplot[0], linestyle = 'solid', color=cols[i], label = 'z=%s' % str(z))
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
@@ -238,6 +264,19 @@ def plot_stellar_halo_z(plt, outdir, massstellarh, massstellarh_v2, zlist):
     common.prepare_legend(ax, cols, loc=2)
 
 
+    ax = fig.add_subplot(212)
+    ytit = "$\\rm log_{10}(\\langle N_{sat}\\rangle)$"
+    xmin, xmax, ymin, ymax = 10.5, 15, -0.2, 5
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    plt.subplots_adjust(left=0.2)
+
+    for i,z in enumerate(zlist):
+        print(frac_sat[i,:])
+        ind = np.where(frac_sat[i,:] > -10)
+        xplot = xmf[ind]
+        yplot = np.log10(frac_sat[i,ind])
+        ax.plot(xplot, yplot[0], linestyle = 'solid', color=cols[i], label = 'z=%s' % str(z))
+
     common.savefig(outdir, fig, 'stellar_halo_mass_z.pdf')
 
 
@@ -248,19 +287,21 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'type','mstars_tidally_stripped','id_halo_tree', 'mvir_infall_subhalo',
                            'mvir_subhalo', 'id_subhalo_tree')}
 
-    zlist = [0, 0.5, 1, 2, 3, 4]
+    zlist = [0, 0.5, 1] #, 2, 3, 4]
     snapshots = redshift_table[zlist]
     massstellarh    = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massstellarh_v2 = np.zeros(shape = (len(zlist), 3, len(xmf)))
     hist_smf        = np.zeros(shape = (len(zlist), 4, len(mbins)))
     hist_minfall    = np.zeros(shape = (len(zlist), len(mrbins)))
+    frac_sat        =  np.zeros(shape = (len(zlist), len(xmf)))
 
     for idx, snapshot in enumerate(snapshots):
+        print("Will read and process redshift", zlist[idx])
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        h0 = prepare_data(hdf5_data, idx, massstellarh, massstellarh_v2, hist_smf, hist_minfall)
+        (h0) = prepare_data(hdf5_data, idx, massstellarh, massstellarh_v2, hist_smf, hist_minfall, frac_sat)
 
 
-    plot_stellar_halo_z(plt, outdir, massstellarh, massstellarh_v2, zlist)
+    plot_stellar_halo_z(plt, outdir, massstellarh, massstellarh_v2, zlist, frac_sat)
     plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_minfall, zlist)
 
 

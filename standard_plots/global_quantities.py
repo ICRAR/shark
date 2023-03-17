@@ -544,7 +544,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     errrhoW22dn = np.log10(rhoW22) - np.log10(rhoW22 - errrhoW22dn)
     ax.errorbar(zW22, np.log10(rhoW22_cosmocorr), xerr=[zW22 - zdnW22, zupW22 - zW22], yerr=[errrhoW22dn, errrhoW22u], ecolor = 'grey',  mec='grey', marker='*', label='Weaver+22')
 
-    zdnS23, zmidS23, zupS23, rhoS23, rhoS23_dn_s, rho23_up_s, rhoS23_dn_l, rho23_up_l = common.load_observation(obsdir, 'Global/Santini23_JWST_SMD.dat', [0, 1, 2, 3, 4, 5, 6, 7])
+    zdnS23, zmidS23, zupS23, rhoS23, rhoS23_dn_s, rhoS23_up_s, rhoS23_dn_l, rhoS23_up_l = common.load_observation(obsdir, 'Global/Santini23_JWST_SMD.dat', [0, 1, 2, 3, 4, 5, 6, 7])
     rhoS23_cosmocorr = rhoS23 * hobs/h0
     rhoS23_errdn = np.log10(rhoS23) - np.log10(rhoS23_dn_s)
     rhoS23_errup = np.log10(rhoS23_up_s) - np.log10(rhoS23)
