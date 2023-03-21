@@ -3,6 +3,8 @@
 # https://github.com/tisimst/pyswarm/tree/master/pyswarm   (original pyswarms code)
 
 import logging
+import os
+import pickle
 from functools import partial
 import numpy as np
 
@@ -39,10 +41,21 @@ def _update_particle_pos_and_vel(pos_lb, pos_ub, omega, phip, phig, pos, vel, be
     pos = pos * (~np.logical_or(maskl, masku)) + pos_lb * maskl + pos_ub * masku
     return pos, vel
 
+
+def _dump_pso_state(state_filename, *pso_state):
+    logger.info("Storing PSO state into %s", state_filename)
+    with open(state_filename, 'wb') as f:
+        pickle.dump(pso_state, f)
+
+def _load_pso_state(state_filename):
+    logger.info("Loading PSO state from %s", state_filename)
+    with open(state_filename, 'rb') as f:
+        return pickle.load(f)
+
 def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={}, 
         swarmsize=100, omega=0.5, phip=0.5, phig=0.5, maxiter=100, 
         minstep=1e-8, minfunc=1e-8, processes=1,
-        dumpfile_prefix=None):
+        dumpfile_prefix=None, state_filename=None):
     """
     Perform a particle swarm optimization (PSO)
    
@@ -146,18 +159,25 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
         mp_pool = multiprocessing.Pool(processes)
 
     # Initialize the particle swarm ############################################
-    S = swarmsize
-    D = len(lb)  # the number of dimensions each particle has
-    p = np.zeros((S, D))  # best particle positions
-    fp = np.ones(S)*np.inf  # best particle function values
-    g = []  # best swarm position
-    fg = np.inf  # best swarm position starting value
+    if os.path.isfile(state_filename):
+        first_iteration, x, v, p, fp, g, fg = _load_pso_state(state_filename)
+    else:
+        S = swarmsize
+        D = len(lb)  # the number of dimensions each particle has
+        p = np.zeros((S, D))  # best particle positions
+        fp = np.ones(S) * np.inf  # best particle function values
+        g = []  # best swarm position
+        fg = np.inf  # best swarm position starting value
+        first_iteration = 0
+        x = None
+        v = None
 
     # Iterate until termination criterion met ##################################
-    for iteration in range(maxiter):
+    for iteration in range(first_iteration, maxiter):
 
         # Get particle positions and velocities
-        if iteration == 0:
+        if x is None:
+            assert v is None
             x = lb + np.random.rand(S, D) * (ub - lb)
             v = vlow + np.random.rand(S, D) * (vhigh - vlow)
         else:
@@ -205,6 +225,7 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
             g = x[0, :].copy()
 
         logger.info('Best after iteration %d: %r %.3f', iteration, g, fg)
+        _dump_pso_state(state_filename, iteration + 1, x, v, p, fp, g, fg)
     else:
         logger.info('Stopping search: maximum iterations reached --> %d', maxiter)
 

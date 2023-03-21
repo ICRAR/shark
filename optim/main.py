@@ -194,6 +194,8 @@ def pso_run_main(parser, args):
         opts.nodes = ss
 
     logger.info('-----------------------------------------------------')
+    logger.info("Running PSO with command line: %r", ' '.join(sys.argv))
+    logger.info("")
     logger.info("Random seed information")
     logger.info("    PSO seed: %d", opts.pso_seed)
     logger.info("    shark seed: %d", opts.shark_seed)
@@ -256,7 +258,8 @@ def pso_run_main(parser, args):
             x_opt, f_opt, x_best, f_best = pso.pso(
                 execution.run_shark, space['lb'], space['ub'], args=args,
                 swarmsize=ss, maxiter=opts.max_iterations, processes=0,
-                dumpfile_prefix=os.path.join(tracksdir, 'track_%03d')
+                dumpfile_prefix=os.path.join(tracksdir, 'track_%03d'),
+                state_filename=os.path.join(opts.outdir, "pso_state.data")
             )
         except (KeyboardInterrupt, execution.AbortedByUser):
             logger.info('Execution aborted by user, finishing PSO')
