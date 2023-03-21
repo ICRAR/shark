@@ -149,8 +149,6 @@ def pso(func, lb, ub, ieqcons=[], f_ieqcons=None, args=(), kwargs={},
     S = swarmsize
     D = len(lb)  # the number of dimensions each particle has
     p = np.zeros((S, D))  # best particle positions
-    fx = np.zeros(S)  # current particle function values
-    fs = np.zeros(S, dtype=bool)  # feasibility of each particle
     fp = np.ones(S)*np.inf  # best particle function values
     g = []  # best swarm position
     fg = np.inf  # best swarm position starting value
