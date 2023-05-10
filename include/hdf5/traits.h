@@ -27,7 +27,7 @@
 #define SHARK_HDF5_TRAITS
 
 #include <hdf5.h>
-#include <H5Cpp.h>
+#include "api.h"
 
 namespace shark {
 
@@ -45,44 +45,44 @@ struct datatype_traits {
 // datawriting separately
 template<>
 struct datatype_traits<std::string> {
-	static const H5::PredType &write_type;
+	static const PredefinedDataType write_type;
 };
 
 // bool doesn't need a native type because it's actually not natively supported
 // by HDF5. We instead manually convert them to int later.
 template<>
 struct datatype_traits<bool> {
-	static const H5::PredType &write_type;
+	static const PredefinedDataType write_type;
 };
 
 template<>
 struct datatype_traits<float> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType native_type;
+	static const PredefinedDataType write_type;
 };
 
 template<>
 struct datatype_traits<double> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType native_type;
+	static const PredefinedDataType write_type;
 };
 
 template<>
 struct datatype_traits<int> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType native_type;
+	static const PredefinedDataType write_type;
 };
 
 template<>
 struct datatype_traits<unsigned int> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType native_type;
+	static const PredefinedDataType write_type;
 };
 
 template<>
 struct datatype_traits<std::int64_t> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType native_type;
+	static const PredefinedDataType write_type;
 };
 
 //
@@ -95,12 +95,12 @@ struct entity_traits {
 
 template<>
 struct entity_traits<H5G_GROUP> {
-	using rettype = H5::Group;
+	using rettype = Group;
 };
 
 template<>
 struct entity_traits<H5G_DATASET> {
-	using rettype = H5::DataSet;
+	using rettype = DataSet;
 };
 
 }  // namespace hdf5

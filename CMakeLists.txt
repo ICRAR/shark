@@ -351,6 +351,7 @@ set(SHARKLIB_SRCS
    include/hdf5/reader.h
    include/hdf5/traits.h
    include/hdf5/writer.h
+   include/hdf5/api.h
    src/agn_feedback.cpp
    src/cosmology.cpp
    src/execution.cpp
@@ -387,6 +388,7 @@ set(SHARKLIB_SRCS
    src/hdf5/reader.cpp
    src/hdf5/traits.cpp
    src/hdf5/writer.cpp
+   src/hdf5/api.cpp
 )
 
 if (WIN32)

@@ -35,10 +35,8 @@ namespace shark {
 
 namespace hdf5 {
 
-IOBase::IOBase(const std::string &filename, unsigned int flags) :
-	hdf5_file(filename, flags)
+IOBase::IOBase(const std::string &filename, const FileOpenMethod& openMethod) : hdf5_file(filename, openMethod)
 {
-	// no-op
 }
 
 IOBase::~IOBase()
@@ -52,23 +50,24 @@ void IOBase::close()
 		return;
 	}
 
-	hdf5_file.close();
+    // TODO
+//	hdf5_file.close();
 	opened = false;
 }
 
-void IOBase::open_file(const std::string &filename, unsigned int flags)
+void IOBase::open_file(const std::string &filename, const FileOpenMethod& openMethod)
 {
-	hdf5_file = H5::H5File(filename, flags);
+	hdf5_file = File(filename, openMethod);
 }
 
-const std::string IOBase::get_filename() const
+const std::string& IOBase::get_filename() const
 {
 	return hdf5_file.getFileName();
 }
 
-H5::DataSpace IOBase::get_nd_dataspace(const H5::DataSet &dataset, unsigned int expected_ndims) const
+DataSpace IOBase::get_nd_dataspace(const DataSet &dataset, unsigned int expected_ndims) const
 {
-	H5::DataSpace space = dataset.getSpace();
+	DataSpace space = dataset.getSpace();
 	int ndims = space.getSimpleExtentNdims();
 	if (ndims != int(expected_ndims)) {
 		std::ostringstream os;
@@ -82,25 +81,25 @@ H5::DataSpace IOBase::get_nd_dataspace(const H5::DataSet &dataset, unsigned int 
 	return space;
 }
 
-H5::DataSpace IOBase::get_scalar_dataspace(const H5::DataSet &dataset) const {
+DataSpace IOBase::get_scalar_dataspace(const DataSet &dataset) const {
 	return get_nd_dataspace(dataset, 0);
 }
 
-H5::DataSpace IOBase::get_1d_dataspace(const H5::DataSet &dataset) const {
+DataSpace IOBase::get_1d_dataspace(const DataSet &dataset) const {
 	return get_nd_dataspace(dataset, 1);
 }
 
-H5::DataSpace IOBase::get_2d_dataspace(const H5::DataSet &dataset) const {
+DataSpace IOBase::get_2d_dataspace(const DataSet &dataset) const {
 	return get_nd_dataspace(dataset, 2);
 }
 
-hsize_t IOBase::get_1d_dimsize(const H5::DataSpace &space) const {
-	hsize_t dim_size;
-	space.getSimpleExtentDims(&dim_size, nullptr);
-	return dim_size;
+hsize_t IOBase::get_1d_dimsize(const DataSpace &space) const {
+    auto dimensions = space.getSimpleExtentDims();
+    assert(dimensions.size() == 1);
+    return dimensions[0];
 }
 
-H5::DataSet IOBase::get_dataset(const std::string &name) const {
+DataSet IOBase::get_dataset(const std::string &name) const {
 
 	LOG(debug) << "Getting dataset " << name << " on file " << get_filename();
 
@@ -111,7 +110,7 @@ H5::DataSet IOBase::get_dataset(const std::string &name) const {
 	return get_dataset(parts);
 }
 
-H5::DataSet IOBase::get_dataset(const std::vector<std::string> &path) const {
+DataSet IOBase::get_dataset(const std::vector<std::string> &path) const {
 
 	// only the attribute name, read directly and come back
 	if( path.size() == 1 ) {
@@ -119,7 +118,7 @@ H5::DataSet IOBase::get_dataset(const std::vector<std::string> &path) const {
 	}
 
 	// else there's a path to follow, go for it!
-	H5::Group group = hdf5_file.openGroup(path.front());
+	Group group = hdf5_file.openGroup(path.front());
 	std::vector<std::string> group_paths(path.begin() + 1, path.end() - 1);
 	for(auto const &path: group_paths) {
 		LOG(debug) << "Getting dataset " << path << " on file " << get_filename();

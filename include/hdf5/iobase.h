@@ -29,7 +29,8 @@
 #include <string>
 #include <vector>
 
-#include <H5Cpp.h>
+//#include <H5Cpp.h>
+#include "hdf5/api.h"
 
 // Define handy macros to detect whether we are above 1.8.11 and/or 1.10.0
 // These versions introduce some important backward-incompatible changes in the
@@ -69,7 +70,7 @@ public:
 	 * @param filename The HDF5 filename
 	 * @param flags The mode in which the file will be opened
 	 */
-	IOBase(const std::string &filename, unsigned int flags);
+	IOBase(const std::string &filename, const FileOpenMethod& openMethod);
 
 	/**
 	 * Closes the file and destroys this class
@@ -85,7 +86,7 @@ public:
 	 * Returns the filename being handled by this class
 	 * @return The filename being handled by this class
 	 */
-	const std::string get_filename() const;
+	const std::string& get_filename() const;
 
 	/**
 	 * Opens the given file in the given mode
@@ -93,23 +94,24 @@ public:
 	 * @param filename the HDF5 filename
 	 * @param flags The mode in which the file will be opened
 	 */
-	void open_file(const std::string &filename, unsigned int flags);
+	void open_file(const std::string &filename, const FileOpenMethod& openMethod);
 
 protected:
 
-	H5::DataSet get_dataset(const std::string &name) const;
-	H5::DataSet get_dataset(const std::vector<std::string> &path) const;
-	H5::DataSpace get_scalar_dataspace(const H5::DataSet &dataset) const;
-	H5::DataSpace get_1d_dataspace(const H5::DataSet &dataset) const;
-	H5::DataSpace get_2d_dataspace(const H5::DataSet &dataset) const;
-	hsize_t get_1d_dimsize(const H5::DataSpace &space) const;
+	DataSet get_dataset(const std::string &name) const;
+	DataSet get_dataset(const std::vector<std::string> &path) const;
+	DataSpace get_scalar_dataspace(const DataSet &dataset) const;
+	DataSpace get_1d_dataspace(const DataSet &dataset) const;
+	DataSpace get_2d_dataspace(const DataSet &dataset) const;
+	hsize_t get_1d_dimsize(const DataSpace &space) const;
 
-	H5::H5File hdf5_file;
+//	H5::H5File hdf5_file;
+    File hdf5_file;
 
 private:
 
 	bool opened {true};
-	H5::DataSpace get_nd_dataspace(const H5::DataSet &dataset, unsigned int expected_ndims) const;
+	DataSpace get_nd_dataspace(const DataSet &dataset, unsigned int expected_ndims) const;
 };
 
 }  // namespace hdf5

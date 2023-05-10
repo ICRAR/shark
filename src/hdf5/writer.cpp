@@ -28,7 +28,6 @@
 
 #include "hdf5/writer.h"
 #include "exceptions.h"
-#include "logging.h"
 
 
 namespace shark {
@@ -40,7 +39,7 @@ const std::string Writer::NO_COMMENT;
 Writer::Writer(const std::string &filename, bool overwrite,
 	naming_convention group_naming_convention, naming_convention dataset_naming_convention,
 	naming_convention attr_naming_convention) :
-	IOBase(filename, overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL),
+	IOBase(filename, overwrite ? FileOpenMethod::Truncate : FileOpenMethod::ExclusiveWrite),
 	group_naming_convention(group_naming_convention),
 	dataset_naming_convention(dataset_naming_convention),
 	attr_naming_convention(attr_naming_convention)
@@ -82,16 +81,16 @@ void Writer::check_attr_name(const std::string &attr_name) const
 template <H5G_obj_t E>
 inline static
 typename entity_traits<E>::rettype
-get_entity(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name);
+get_entity(const AbstractGroup &file_or_group, const std::string &name);
 
 template <> inline
-H5::Group get_entity<H5G_GROUP>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name)
+Group get_entity<H5G_GROUP>(const AbstractGroup &file_or_group, const std::string &name)
 {
 	return file_or_group.openGroup(name);
 }
 
 template <> inline
-H5::DataSet get_entity<H5G_DATASET>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name)
+DataSet get_entity<H5G_DATASET>(const AbstractGroup &file_or_group, const std::string &name)
 {
 	return file_or_group.openDataSet(name);
 }
@@ -99,23 +98,23 @@ H5::DataSet get_entity<H5G_DATASET>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_g
 template <H5G_obj_t E, typename ... Ts>
 inline static
 typename entity_traits<E>::rettype
-create_entity(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name, Ts&&...create_args);
+create_entity(AbstractGroup &file_or_group, const std::string &name, Ts&&...create_args);
 
 template <> inline
-H5::Group create_entity<H5G_GROUP>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name)
+Group create_entity<H5G_GROUP>(AbstractGroup &file_or_group, const std::string &name)
 {
 	return file_or_group.createGroup(name);
 }
 
 template <> inline
-H5::DataSet create_entity<H5G_DATASET>(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name, const H5::DataType &dataType, const H5::DataSpace &dataSpace)
+DataSet create_entity<H5G_DATASET>(AbstractGroup &file_or_group, const std::string &name, const DataType &dataType, const DataSpace &dataSpace)
 {
 	return file_or_group.createDataSet(name, dataType, dataSpace);
 }
 
 template <H5G_obj_t E, typename ... Ts>
 typename entity_traits<E>::rettype
-ensure_entity(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::string &name, Ts&&...create_args)
+get_or_create_entity(AbstractGroup &file_or_group, const std::string &name, Ts&&...create_args)
 {
 	// Loop through subobjects and find entity
 	for(hsize_t i = 0; i < file_or_group.getNumObjs(); i++) {
@@ -140,34 +139,34 @@ ensure_entity(const HDF5_FILE_GROUP_COMMON_BASE &file_or_group, const std::strin
 	return create_entity<E>(file_or_group, name, std::forward<Ts>(create_args)...);
 }
 
-H5::Group Writer::ensure_group(const std::vector<std::string> &path) const
+Group Writer::get_or_create_group(const std::vector<std::string> &path)
 {
 	if (path.size() == 1) {
 		check_group_name(path[0]);
-		return ensure_entity<H5G_GROUP>(hdf5_file, path[0]);
+		return get_or_create_entity<H5G_GROUP>(hdf5_file, path[0]);
 	}
 
-	H5::Group group =  ensure_entity<H5G_GROUP>(hdf5_file, path.front());
+	Group group = get_or_create_entity<H5G_GROUP>(hdf5_file, path.front());
 	std::vector<std::string> group_paths(path.begin() + 1, path.end());
 	for(auto &part: group_paths) {
-		group = ensure_entity<H5G_GROUP>(group, part);
+		group = get_or_create_entity<H5G_GROUP>(group, part);
 		check_group_name(part);
 	}
 	return group;
 }
 
-H5::DataSet Writer::ensure_dataset(const std::vector<std::string> &path, const H5::DataType &dataType, const H5::DataSpace &dataSpace) const
+DataSet Writer::get_or_create_dataset(const std::vector<std::string> &path, const DataType &dataType, const DataSpace &dataSpace)
 {
 	if (path.size() == 1) {
 		check_dataset_name(path[0]);
-		return ensure_entity<H5G_DATASET>(hdf5_file, path[0], dataType, dataSpace);
+		return get_or_create_entity<H5G_DATASET>(hdf5_file, path[0], dataType, dataSpace);
 	}
 
 	std::vector<std::string> group_paths(path.begin(), path.end() - 1);
 	auto &dataset_name = path.back();
 	check_dataset_name(dataset_name);
-	H5::Group group = ensure_group(group_paths);
-	return ensure_entity<H5G_DATASET>(group, dataset_name, dataType, dataSpace);
+	Group group = get_or_create_group(group_paths);
+	return get_or_create_entity<H5G_DATASET>(group, dataset_name, dataType, dataSpace);
 }
 
 }  // namespace hdf5

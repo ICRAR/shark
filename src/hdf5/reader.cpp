@@ -41,35 +41,22 @@ namespace hdf5 {
 class attribute_not_found : public std::exception {};
 class name_not_found : public std::exception {};
 
-# ifdef HDF5_NEWER_THAN_1_10_0
-using CommonFG = H5::Group;
-# else
-using CommonFG = H5::CommonFG;
-# endif
-
-template <typename AttributeHolder>
-static H5::Attribute _get_attribute(const AttributeHolder &l, const std::string attr_name)
+static Attribute _get_attribute(const Location& l, const std::string &attr_name)
 {
-	auto exists = H5Aexists(l.getId(), attr_name.c_str());
-	if (exists == 0) {
+	if (!l.attributeExists(attr_name)) {
 		throw attribute_not_found();
 	}
-	else if (exists < 0) {
-		throw std::runtime_error("Error on H5Aexists");
-	}
-	return l.openAttribute(attr_name);
+	return l.openAttribute(attr_name); // l.openAttribute(attr_name);
 }
 
-static H5::Attribute _get_attribute(const CommonFG &file_or_group, const std::vector<std::string> &parts)
+static Attribute _get_attribute(const AbstractGroup& file_or_group, const std::vector<std::string> &parts)
 {
 	// This is the attribute name
 	if (parts.size() == 1) {
-		// This is a group (we don't support attributes in files)
-#ifdef HDF5_NEWER_THAN_1_10_0
-		return _get_attribute(file_or_group, parts[0]);
-#else
-		return _get_attribute(static_cast<const H5::Group &>(file_or_group), parts[0]);
-#endif
+        // This is a group (we don't support attributes in files)
+        // This throws cast exception, do we want a custom error for this?
+        const auto& attribute_holder = dynamic_cast<const Location&>(file_or_group);
+        return _get_attribute(attribute_holder, parts[0]);
 	}
 
 	auto n_groups = file_or_group.getNumObjs();
@@ -96,7 +83,7 @@ static H5::Attribute _get_attribute(const CommonFG &file_or_group, const std::ve
 	throw name_not_found();
 }
 
-H5::Attribute Reader::get_attribute(const std::string &name) const
+Attribute Reader::get_attribute(const std::string &name) const
 {
 	LOG(debug) << "Getting attribute " << name << " from file " << get_filename();
 	std::vector<std::string> parts = tokenize(name, "/");

@@ -32,8 +32,9 @@
 #include <string>
 #include <vector>
 
-#include <H5Cpp.h>
+//#include <H5Cpp.h>
 
+#include "hdf5/api.h"
 #include "hdf5/iobase.h"
 #include "hdf5/traits.h"
 #include "exceptions.h"
@@ -55,100 +56,91 @@ public:
 };
 
 // How we construct data types depends on the type
-template <typename T>
+template<typename T>
 static inline
-H5::DataType _datatype(const T &val)
-{
-	return H5::DataType(datatype_traits<T>::write_type);
+DataType _datatype(const T &val) {
+	return DataType(datatype_traits<T>::write_type);
 }
 
-template <>
+template<>
 inline
-H5::DataType _datatype<std::string>(const std::string &val)
-{
-	return H5::StrType(H5::PredType::C_S1, val.size());
+DataType _datatype<std::string>(const std::string &val) {
+	return StringDataType(val.size());
 }
 
 // Overwriting for vectors of values
-template <typename T>
+template<typename T>
 static inline
-H5::DataType _datatype(const std::vector<T> &val)
-{
-	return H5::DataType(datatype_traits<T>::write_type);
+DataType _datatype(const std::vector<T> &val) {
+	return DataType(datatype_traits<T>::write_type);
 }
 
 // Overwriting for vectors of values
-template <typename T>
+template<typename T>
 static inline
-H5::DataType _datatype(const std::vector<std::vector<T>> &val)
-{
-	return H5::DataType(datatype_traits<T>::write_type);
+DataType _datatype(const std::vector<std::vector<T>> &val) {
+	return DataType(datatype_traits<T>::write_type);
 }
 
-template <>
+template<>
 inline
-H5::DataType _datatype<std::string>(const std::vector<std::string> &val)
-{
-	return H5::StrType(H5::PredType::C_S1, H5T_VARIABLE);
+DataType _datatype<std::string>(const std::vector<std::string> &val) {
+	return StringDataType();
 }
 
 // How we write attributes, depending on the data type
 // Strings need some special treatment, so we specialise for them
-template <typename T>
+template<typename T>
 static inline
-void _write_attribute(const H5::Attribute &attr, const H5::DataType &dataType, const T &val)
-{
-	attr.write(dataType, &val);
+void _write_attribute(Attribute &attr, const DataType &dataType, const T &val) {
+	attr.write(dataType, val);
 }
 
-template <>
+template<>
 inline
-void _write_attribute<std::string>(const H5::Attribute &attr, const H5::DataType &dataType, const std::string &val)
-{
+void _write_attribute<std::string>(Attribute &attr, const DataType &dataType, const std::string &val) {
 	attr.write(dataType, val);
 }
 
 // How we write datasets, depending on the data type
-template <typename T>
+template<typename T>
 static inline
-void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const T &val)
-{
-	H5::DataType mem_dataType(datatype_traits<T>::native_type);
+void _write_dataset(DataSet &dataset, const DataType &dataType, const DataSpace &dataSpace, const T &val) {
+	DataType mem_dataType(datatype_traits<T>::native_type);
 	dataset.write(&val, mem_dataType, dataSpace, dataSpace);
 }
 
 // Specialization for bools, which we need to convert into int first
-template <>
+template<>
 inline
-void _write_dataset<bool>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const bool &val)
-{
+void _write_dataset<bool>(DataSet &dataset, const DataType &dataType, const DataSpace &dataSpace, const bool &val) {
 	int int_val = static_cast<int>(val);
-	H5::DataType mem_dataType(H5::PredType::NATIVE_INT);
+	DataType mem_dataType(PredefinedDataType::NATIVE_INT());
 	dataset.write(&int_val, mem_dataType, dataSpace, dataSpace);
 }
 
 // Specialization for strings, for which there is a specific .write method
-template <>
+template<>
 inline
-void _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::string &val)
-{
-	dataset.write(val, dataType, dataSpace, dataSpace);
+void _write_dataset<std::string>(DataSet &dataset, const DataType &dataType, const DataSpace &dataSpace,
+								 const std::string &val) {
+	dataset.write(val.data(), dataType, dataSpace, dataSpace);
 }
 
 // Overwriting of _write_datasets for vectors
-template <typename T>
+template<typename T>
 static inline
-void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<T> &vals)
-{
-	H5::DataType mem_dataType(datatype_traits<T>::native_type);
+void
+_write_dataset(DataSet &dataset, const DataType &dataType, const DataSpace &dataSpace, const std::vector<T> &vals) {
+	DataType mem_dataType(datatype_traits<T>::native_type);
 	dataset.write(vals.data(), mem_dataType, dataSpace, dataSpace);
 }
 
 // and specializing for vectors of strings
-template <>
+template<>
 inline
-void _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &dataSpace, const std::vector<std::string> &vals)
-{
+void _write_dataset<std::string>(DataSet &dataset, const DataType &dataType, const DataSpace &dataSpace,
+								 const std::vector<std::string> &vals) {
 	std::vector<const char *> c_strings;
 	std::transform(vals.begin(), vals.end(), std::back_inserter(c_strings), [](const std::string &s) {
 		return s.c_str();
@@ -157,30 +149,28 @@ void _write_dataset<std::string>(const H5::DataSet &dataset, const H5::DataType 
 }
 
 // Overwriting of _write_datasets for vectors of vectors
-template <typename T>
+template<typename T>
 static inline
-void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, const H5::DataSpace &fDataSpace, const std::vector<std::vector<T>> &vals)
-{
-
-	H5::DataType mem_dataType(datatype_traits<T>::native_type);
+void _write_dataset(DataSet &dataset, const DataType &dataType, DataSpace &fDataSpace,
+					const std::vector<std::vector<T>> &vals) {
+	DataType mem_dataType(datatype_traits<T>::native_type);
 
 	// Find out maximum dimensions of the dataset
-	hsize_t dataset_max_dims[2], dataset_dims[2];
-	fDataSpace.getSimpleExtentDims(dataset_dims, dataset_max_dims);
+	auto dataset_max_dims = fDataSpace.getSimpleExtentMaxDims();
 
 	// We iterate over each inner vector and write it as a new row
 	// in the dataset. For this, we set the parameters for selecting where the
 	// data will be written into the file. The fstart will thus keep changing
 	// to write each row vector consecutively
-	hsize_t fcount[2] = {1, dataset_max_dims[1]};
-	hsize_t fstart[2] = {0, 0};
-	hsize_t fstride[2] = {1, 1};
-	hsize_t fblock[2] = {1, 1};
+	std::vector<hsize_t> fcount = {1, dataset_max_dims[1]};
+	std::vector<hsize_t> fstart = {0, 0};
+	std::vector<hsize_t> fstride = {1, 1};
+	std::vector<hsize_t> fblock = {1, 1};
 
 	// The data from the vector should only be of length dataset_max_dims[1]
-	H5::DataSpace mDataSpace(1, dataset_max_dims + 1);
-	for(auto &row: vals) {
-		fDataSpace.selectHyperslab(H5S_SELECT_SET, fcount, fstart, fstride, fblock);
+	auto mDataSpace = DataSpace::create({dataset_max_dims[1]});
+	for (auto &row: vals) {
+		fDataSpace.selectHyperslab(HyperslabSelection::Set, fstart, fstride, fcount, fblock);
 		dataset.write(row.data(), mem_dataType, mDataSpace, fDataSpace);
 		fstart[0]++;
 	}
@@ -189,8 +179,8 @@ void _write_dataset(const H5::DataSet &dataset, const H5::DataType &dataType, co
 template<typename AttributeHolder, typename T>
 static inline
 void _create_and_write_attribute(AttributeHolder &dataset, const std::string &name, const T &value) {
-	H5::DataType dataType = _datatype<T>(value);
-	auto attr = dataset.createAttribute(name, dataType, H5::DataSpace(H5S_SCALAR));
+	DataType dataType = _datatype<T>(value);
+	auto attr = dataset.createAttribute(name, dataType, DataSpace::create(DataSpaceType::Scalar));
 	_write_attribute<T>(attr, dataType, value);
 }
 
@@ -209,18 +199,16 @@ public:
 	 * @param overwrite Whether existing files should be overwritten or not
 	 */
 	explicit Writer(const std::string &filename, bool overwrite = true,
-		naming_convention group_naming_convention = naming_convention::SNAKE_CASE,
-		naming_convention dataset_naming_convention = naming_convention::SNAKE_CASE,
-		naming_convention attr_naming_convention = naming_convention::SNAKE_CASE);
+					naming_convention group_naming_convention = naming_convention::SNAKE_CASE,
+					naming_convention dataset_naming_convention = naming_convention::SNAKE_CASE,
+					naming_convention attr_naming_convention = naming_convention::SNAKE_CASE);
 
-	void set_comment(H5::DataSet &dataset, const std::string &comment)
-	{
+	void set_comment(DataSet &dataset, const std::string &comment) {
 		if (comment.empty()) {
 			return;
 		}
 
-		// C-style function call; DataSet.setComment works only in hdf5>=1.8.11
-		H5Oset_comment(dataset.getId(), comment.c_str());
+		dataset.setComment(comment);
 
 		// Follow naming convention, "comment" works with snake_case and lowerCamelCase
 		auto comment_attr_name = "comment";
@@ -242,13 +230,13 @@ public:
 			throw invalid_argument(os.str());
 		}
 
-		std::vector<std::string> path(parts.begin(), parts.end()-1);
+		std::vector<std::string> path(parts.begin(), parts.end() - 1);
 		auto &attr_name = parts.back();
 		check_attr_name(attr_name);
 
 		// Get the corresponding group/dataset and write the attribute there
 		try {
-			auto group = ensure_group(path);
+			auto group = get_or_create_group(path);
 			_create_and_write_attribute(group, attr_name, value);
 		} catch (const object_exists &) {
 			// name doesn't point to a group but to an existing dataset
@@ -261,47 +249,50 @@ public:
 
 	template<typename T>
 	void write_dataset(const std::string &name, const T &value, const std::string &comment = NO_COMMENT) {
-		H5::DataSpace dataSpace(H5S_SCALAR);
-		H5::DataType dataType = _datatype<T>(value);
-		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
+		auto dataSpace = DataSpace::create(DataSpaceType::Scalar);
+		DataType dataType = _datatype<T>(value);
+		auto dataset = get_or_create_dataset(tokenize(name, "/"), dataType, dataSpace);
 		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, value);
 	}
 
 	template<typename T>
 	void write_dataset(const std::string &name, const std::vector<T> &values, const std::string &comment = NO_COMMENT) {
-		const hsize_t size = values.size();
-		H5::DataSpace dataSpace(1, &size);
-		H5::DataType dataType = _datatype<T>(values);
-		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
+		auto dataSpace = DataSpace::create({values.size()});
+		DataType dataType = _datatype<T>(values);
+		auto dataset = get_or_create_dataset(tokenize(name, "/"), dataType, dataSpace);
 		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, values);
 	}
 
 	template<typename T>
-	void write_dataset(const std::string &name, const std::vector<std::vector<T>> &values, const std::string &comment = NO_COMMENT) {
+	void write_dataset(const std::string &name, const std::vector<std::vector<T>> &values,
+					   const std::string &comment = NO_COMMENT) {
 		if (values.empty()) {
 			return;
 		}
-		const hsize_t sizes[] = {values.size(), values[0].size()};
-		H5::DataSpace dataSpace(2, sizes);
-		H5::DataType dataType = _datatype<T>(values);
-		auto dataset = ensure_dataset(tokenize(name, "/"), dataType, dataSpace);
+		auto dataSpace = DataSpace::create({values.size(), values[0].size()});
+		DataType dataType = _datatype<T>(values);
+		auto dataset = get_or_create_dataset(tokenize(name, "/"), dataType, dataSpace);
 		set_comment(dataset, comment);
 		_write_dataset(dataset, dataType, dataSpace, values);
 	}
 
 private:
 
-	H5::Group ensure_group(const std::vector<std::string> &path) const;
-	H5::DataSet ensure_dataset(const std::vector<std::string> &path, const H5::DataType &dataType, const H5::DataSpace &dataSpace) const;
+	Group get_or_create_group(const std::vector<std::string> &path);
+
+	DataSet
+	get_or_create_dataset(const std::vector<std::string> &path, const DataType &dataType, const DataSpace &dataSpace);
 
 	naming_convention group_naming_convention;
 	naming_convention dataset_naming_convention;
 	naming_convention attr_naming_convention;
 
 	void check_group_name(const std::string &group_name) const;
+
 	void check_dataset_name(const std::string &dataset_name) const;
+
 	void check_attr_name(const std::string &attr_name) const;
 
 	static const std::string NO_COMMENT;
