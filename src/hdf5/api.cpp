@@ -88,7 +88,8 @@ DataType::~DataType() {
 	H5Tclose(getHandle());
 }
 
-// Always copy the predefined type so that our deconstructor will succeed!
+// Always copy the predefined type so that the deconstructor will succeed!
+// (H5Tclose() will fail for the predefined types as they are considered immutable)
 PredefinedDataType::PredefinedDataType(hid_t handle) : DataType(H5Tcopy(handle)) {}
 
 const PredefinedDataType& PredefinedDataType::C_S1() {

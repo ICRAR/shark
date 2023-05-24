@@ -31,19 +31,19 @@ namespace shark {
 
 namespace hdf5 {
 
-const PredefinedDataType datatype_traits<std::string>::write_type = PredefinedDataType::C_S1();
-const PredefinedDataType datatype_traits<bool>::write_type = PredefinedDataType::NATIVE_INT8();
+const PredefinedDataType& datatype_traits<std::string>::write_type = PredefinedDataType::C_S1();
+const PredefinedDataType& datatype_traits<bool>::write_type = PredefinedDataType::NATIVE_INT8();
 
-const PredefinedDataType datatype_traits<float>::native_type = PredefinedDataType::NATIVE_FLOAT();
-const PredefinedDataType datatype_traits<float>::write_type = PredefinedDataType::NATIVE_FLOAT();
-const PredefinedDataType datatype_traits<double>::native_type = PredefinedDataType::NATIVE_DOUBLE();
-const PredefinedDataType datatype_traits<double>::write_type = PredefinedDataType::NATIVE_DOUBLE();
-const PredefinedDataType datatype_traits<int>::native_type = PredefinedDataType::NATIVE_INT();
-const PredefinedDataType datatype_traits<int>::write_type = PredefinedDataType::NATIVE_INT32();
-const PredefinedDataType datatype_traits<unsigned int>::native_type = PredefinedDataType::NATIVE_UINT();
-const PredefinedDataType datatype_traits<unsigned int>::write_type = PredefinedDataType::NATIVE_UINT32();
-const PredefinedDataType datatype_traits<std::int64_t>::native_type = PredefinedDataType::NATIVE_INT64();
-const PredefinedDataType datatype_traits<std::int64_t>::write_type = PredefinedDataType::NATIVE_INT64();
+const PredefinedDataType& datatype_traits<float>::native_type = PredefinedDataType::NATIVE_FLOAT();
+const PredefinedDataType& datatype_traits<float>::write_type = PredefinedDataType::NATIVE_FLOAT();
+const PredefinedDataType& datatype_traits<double>::native_type = PredefinedDataType::NATIVE_DOUBLE();
+const PredefinedDataType& datatype_traits<double>::write_type = PredefinedDataType::NATIVE_DOUBLE();
+const PredefinedDataType& datatype_traits<int>::native_type = PredefinedDataType::NATIVE_INT();
+const PredefinedDataType& datatype_traits<int>::write_type = PredefinedDataType::NATIVE_INT32();
+const PredefinedDataType& datatype_traits<unsigned int>::native_type = PredefinedDataType::NATIVE_UINT();
+const PredefinedDataType& datatype_traits<unsigned int>::write_type = PredefinedDataType::NATIVE_UINT32();
+const PredefinedDataType& datatype_traits<std::int64_t>::native_type = PredefinedDataType::NATIVE_INT64();
+const PredefinedDataType& datatype_traits<std::int64_t>::write_type = PredefinedDataType::NATIVE_INT64();
 
 }  // namespace hdf5
 

@@ -45,44 +45,44 @@ struct datatype_traits {
 // datawriting separately
 template<>
 struct datatype_traits<std::string> {
-	static const PredefinedDataType write_type;
+	static const PredefinedDataType& write_type;
 };
 
 // bool doesn't need a native type because it's actually not natively supported
 // by HDF5. We instead manually convert them to int later.
 template<>
 struct datatype_traits<bool> {
-	static const PredefinedDataType write_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<float> {
-	static const PredefinedDataType native_type;
-	static const PredefinedDataType write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<double> {
-	static const PredefinedDataType native_type;
-	static const PredefinedDataType write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<int> {
-	static const PredefinedDataType native_type;
-	static const PredefinedDataType write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<unsigned int> {
-	static const PredefinedDataType native_type;
-	static const PredefinedDataType write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<std::int64_t> {
-	static const PredefinedDataType native_type;
-	static const PredefinedDataType write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 //
