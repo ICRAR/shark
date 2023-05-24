@@ -35,7 +35,7 @@
 namespace shark {
 namespace hdf5 {
 
-class Attribute : public Resource {
+class Attribute : public Entity {
 public:
 	Attribute(const Location& location, const std::string& name);
 	~Attribute() override;
@@ -46,15 +46,15 @@ public:
 	template<typename T>
 	T read() const {
 		// Need to close or leak
-		hid_t type = H5Aget_type(getHandle());
+		hid_t type = H5Aget_type(getId());
 		T val;
-		H5Aread(getHandle(), type, &val);
+		H5Aread(getId(), type, &val);
 		return val;
 	}
 
 	template<typename T>
 	void write(const DataType& dataType, const T& val) {
-		H5Awrite(getHandle(), dataType.getHandle(), &val);
+		H5Awrite(getId(), dataType.getId(), &val);
 	}
 
 private:

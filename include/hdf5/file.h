@@ -43,6 +43,9 @@ enum class FileOpenMethod {
 };
 
 class File : public AbstractGroup {
+private:
+	std::string filename;
+
 public:
 	File(const std::string& filename, const FileOpenMethod& openMethod);
 	~File() override;
@@ -50,8 +53,6 @@ public:
 	const std::string& getFileName() const;
 
 private:
-	std::string filename;
-
 	static hid_t openOrCreate(const std::string& filename, const FileOpenMethod& openMethod);
 };
 

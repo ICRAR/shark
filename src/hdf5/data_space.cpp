@@ -29,13 +29,13 @@
 namespace shark {
 namespace hdf5 {
 
-DataSpace::DataSpace(hid_t handle) : Resource(H5I_DATASPACE, handle) {}
+DataSpace::DataSpace(hid_t handle) : Entity(H5I_DATASPACE, handle) {}
 
-DataSpace::DataSpace(const DataSet& dataSet) : Resource(H5I_DATASPACE, H5Dget_space(dataSet.getHandle())) {
+DataSpace::DataSpace(const DataSet& dataSet) : Entity(H5I_DATASPACE, H5Dget_space(dataSet.getId())) {
 }
 
 DataSpace::~DataSpace() {
-	H5Sclose(getHandle());
+	H5Sclose(getId());
 }
 
 DataSpace DataSpace::create(const DataSpaceType& type) {
@@ -48,13 +48,13 @@ DataSpace DataSpace::create(std::vector<hsize_t> dimensions) {
 }
 
 int DataSpace::getSimpleExtentNdims() const {
-	return H5Sget_simple_extent_ndims(getHandle());
+	return H5Sget_simple_extent_ndims(getId());
 }
 
 std::vector<hsize_t> DataSpace::getSimpleExtentDims() const {
 	auto ndims = getSimpleExtentNdims();
 	std::vector<hsize_t> dim_sizes(ndims);
-	H5Sget_simple_extent_dims(getHandle(), dim_sizes.data(), nullptr);
+	H5Sget_simple_extent_dims(getId(), dim_sizes.data(), nullptr);
 	return dim_sizes;
 }
 
@@ -62,7 +62,7 @@ std::vector<hsize_t> DataSpace::getSimpleExtentMaxDims() const {
 	auto ndims = getSimpleExtentNdims();
 	std::vector<hsize_t> dim_sizes(ndims);
 	std::vector<hsize_t> max_dim_sizes(ndims);
-	H5Sget_simple_extent_dims(getHandle(), dim_sizes.data(), max_dim_sizes.data());
+	H5Sget_simple_extent_dims(getId(), dim_sizes.data(), max_dim_sizes.data());
 	return max_dim_sizes;
 }
 
@@ -70,7 +70,7 @@ void DataSpace::selectHyperslab(const HyperslabSelection& op, const std::vector<
                                 const std::vector<hsize_t>& stride, const std::vector<hsize_t>& count,
                                 const std::vector<hsize_t>& block) {
 	// Assert all same length & same as rank
-	H5Sselect_hyperslab(getHandle(), static_cast<H5S_seloper_t>(op), start.data(), stride.data(), count.data(),
+	H5Sselect_hyperslab(getId(), static_cast<H5S_seloper_t>(op), start.data(), stride.data(), count.data(),
 	                    block.data());
 }
 

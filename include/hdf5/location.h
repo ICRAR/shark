@@ -28,20 +28,17 @@
 
 #include <hdf5.h>
 #include "hdf5/entity.h"
+#include "hdf5/data_type.h"
+#include "hdf5/data_space.h"
 
 namespace shark {
 namespace hdf5 {
 
-// TODO can add include?
+// Break circular reference
 class Attribute;
 
-class DataType;
-
-class DataSpace;
-
-class Location : public Resource {
+class Location : public Entity {
 public:
-	// A file, group, dataset
 	Location(H5I_type_t expectedType, hid_t handle);
 
 	bool attributeExists(const std::string& name) const;

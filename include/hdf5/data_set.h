@@ -35,6 +35,9 @@ namespace hdf5 {
 class AbstractGroup;
 
 class DataSet : public Location {
+private:
+	std::string objName;
+
 public:
 	DataSet(const AbstractGroup& file, const std::string& name);
 	~DataSet() override;
@@ -51,7 +54,6 @@ public:
 
 private:
 	explicit DataSet(std::string name, hid_t handle);
-	std::string objName;
 };
 
 } // namespace hdf5

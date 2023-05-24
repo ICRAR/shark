@@ -35,18 +35,18 @@ AbstractGroup::AbstractGroup(H5I_type_t expectedType, hid_t handle) : Location(e
 
 hsize_t AbstractGroup::getNumObjs() const {
 	hsize_t num;
-	H5Gget_num_objs(getHandle(), &num);
+	H5Gget_num_objs(getId(), &num);
 	return num;
 }
 
 std::string AbstractGroup::getObjnameByIdx(hsize_t idx) const {
-	auto size = H5Gget_objname_by_idx(getHandle(), idx, nullptr, 0);
+	auto size = H5Gget_objname_by_idx(getId(), idx, nullptr, 0);
 
 	// Ensure there's enough space for the null terminator that the C API will write
 	std::string name;
 	name.resize(size + 1);
 
-	H5Gget_objname_by_idx(getHandle(), idx, &name[0], name.size());
+	H5Gget_objname_by_idx(getId(), idx, &name[0], name.size());
 
 	// Now resize back down to the actual size
 	name.resize(size);
@@ -55,7 +55,7 @@ std::string AbstractGroup::getObjnameByIdx(hsize_t idx) const {
 }
 
 H5G_obj_t AbstractGroup::getObjTypeByIdx(hsize_t idx) const {
-	return H5Gget_objtype_by_idx(getHandle(), idx);
+	return H5Gget_objtype_by_idx(getId(), idx);
 }
 
 Group AbstractGroup::openGroup(const std::string& name) const {
@@ -79,15 +79,15 @@ DataSet AbstractGroup::createDataSet(const std::string& name, const DataType& da
 Group::Group(hid_t handle) : AbstractGroup(H5I_GROUP, handle) {}
 
 Group::Group(const AbstractGroup& parent, const std::string& name) :
-		Group(H5Gopen(parent.getHandle(), name.c_str(), H5P_DEFAULT)) {
+		Group(H5Gopen(parent.getId(), name.c_str(), H5P_DEFAULT)) {
 }
 
 Group::~Group() {
-	H5Gclose(getHandle());
+	H5Gclose(getId());
 }
 
 Group Group::create(AbstractGroup& parent, const std::string& name) {
-	return Group(H5Gcreate(parent.getHandle(), name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
+	return Group(H5Gcreate(parent.getId(), name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 }
 
 } // namespace hdf5

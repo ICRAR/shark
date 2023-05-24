@@ -33,7 +33,7 @@ namespace shark {
 namespace hdf5 {
 
 
-class DataType : public Resource {
+class DataType : public Entity {
 public:
 	explicit DataType(hid_t handle);
 	~DataType() override;

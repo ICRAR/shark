@@ -32,23 +32,24 @@
 namespace shark {
 namespace hdf5 {
 
-class Resource {
+class Entity {
+private:
+	hid_t id;
+
 public:
-	Resource(H5I_type_t expectedType, hid_t handle);
-	Resource(const Resource& other);
-	Resource& operator=(const Resource& rhs);
-	Resource(Resource&&) = default;
-	Resource& operator=(Resource&&) = default;
-	virtual ~Resource();
+	Entity(H5I_type_t expectedType, hid_t handle);
+	Entity(const Entity& other);
+	Entity& operator=(const Entity& rhs);
+	Entity(Entity&&) = default;
+	Entity& operator=(Entity&&) = default;
+	virtual ~Entity();
 
 	void setComment(const std::string& comment);
 
-	hid_t getHandle() const;
+	hid_t getId() const;
 	// TODO getName using H5Iget_name()
 
 private:
-	hid_t handle;
-
 	bool isValid() const;
 };
 

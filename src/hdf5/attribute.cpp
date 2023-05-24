@@ -28,38 +28,38 @@
 namespace shark {
 namespace hdf5 {
 
-Attribute::Attribute(hid_t handle) : Resource(H5I_ATTR, handle) {}
+Attribute::Attribute(hid_t handle) : Entity(H5I_ATTR, handle) {}
 
 Attribute::Attribute(const Location& group, const std::string& name) :
-		Attribute(H5Aopen(group.getHandle(), name.c_str(), H5P_DEFAULT)) {
+		Attribute(H5Aopen(group.getId(), name.c_str(), H5P_DEFAULT)) {
 }
 
 Attribute::~Attribute() {
-	H5Aclose(getHandle());
+	H5Aclose(getId());
 }
 
 Attribute Attribute::create(Location& location, const std::string& name, const DataType& dataType,
                             const DataSpace& dataSpace) {
 	return Attribute(
-			H5Acreate(location.getHandle(), name.c_str(), dataType.getHandle(), dataSpace.getHandle(), H5P_DEFAULT,
+			H5Acreate(location.getId(), name.c_str(), dataType.getId(), dataSpace.getId(), H5P_DEFAULT,
 			          H5P_DEFAULT));
 }
 
 template<>
 std::string Attribute::read<std::string>() const {
 	H5A_info_t info;
-	H5Aget_info(getHandle(), &info);
+	H5Aget_info(getId(), &info);
 	std::string val;
 	val.resize(info.data_size); // Size includes null-terminator
-	auto type = H5Aget_type(getHandle());
-	H5Aread(getHandle(), type, &val[0]);
+	auto type = H5Aget_type(getId());
+	H5Aread(getId(), type, &val[0]);
 	val.resize(info.data_size - 1); // Trim included null-terminator
 	return val;
 }
 
 template<>
 void Attribute::write<std::string>(const DataType& dataType, const std::string& val) {
-	H5Awrite(getHandle(), dataType.getHandle(), val.data());
+	H5Awrite(getId(), dataType.getId(), val.data());
 }
 
 } // namespace hdf5

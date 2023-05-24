@@ -30,9 +30,9 @@
 namespace shark {
 namespace hdf5 {
 
-Resource::Resource(H5I_type_t expectedType, hid_t handle) : handle(handle) {
+Entity::Entity(H5I_type_t expectedType, hid_t handle) : id(handle) {
 	if (!isValid()) {
-		throw std::runtime_error("Invalid handle");
+		throw std::runtime_error("Invalid id");
 	}
 
 	auto type = H5Iget_type(handle);
@@ -45,24 +45,24 @@ Resource::Resource(H5I_type_t expectedType, hid_t handle) : handle(handle) {
 	}
 }
 
-Resource::Resource(const Resource& other) : handle(other.handle) {
-	H5Iinc_ref(handle);
+Entity::Entity(const Entity& other) : id(other.id) {
+	H5Iinc_ref(id);
 }
 
-Resource& Resource::operator=(const Resource& rhs) {
-	H5Idec_ref(handle);
-	handle = rhs.handle;
-	H5Iinc_ref(handle);
+Entity& Entity::operator=(const Entity& rhs) {
+	H5Idec_ref(id);
+	id = rhs.id;
+	H5Iinc_ref(id);
 	return *this;
 }
 
 // Needed to satisfy the linker, but we want to make overriding required for subclasses
 // As a result we don't put this in the class definition
 // See here for more details: https://stackoverflow.com/a/11437551
-Resource::~Resource() = default;
+Entity::~Entity() = default;
 
-bool Resource::isValid() const {
-	auto isValid = H5Iis_valid(handle);
+bool Entity::isValid() const {
+	auto isValid = H5Iis_valid(id);
 	if (isValid < 0) {
 		throw std::runtime_error("Error in H5Iis_valid");
 	}
@@ -70,12 +70,12 @@ bool Resource::isValid() const {
 	return isValid > 0;
 }
 
-void Resource::setComment(const std::string& comment) {
-	H5Oset_comment(getHandle(), comment.c_str());
+void Entity::setComment(const std::string& comment) {
+	H5Oset_comment(getId(), comment.c_str());
 }
 
-hid_t Resource::getHandle() const {
-	return handle;
+hid_t Entity::getId() const {
+	return id;
 }
 
 } // shark

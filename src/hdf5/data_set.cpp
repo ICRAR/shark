@@ -34,18 +34,18 @@ namespace hdf5 {
 DataSet::DataSet(std::string name, hid_t handle) : Location(H5I_DATASET, handle), objName(std::move(name)) {}
 
 DataSet::DataSet(const AbstractGroup& file, const std::string& name) :
-		Location(H5I_DATASET, H5Dopen(file.getHandle(), name.c_str(), H5P_DEFAULT)),
+		Location(H5I_DATASET, H5Dopen(file.getId(), name.c_str(), H5P_DEFAULT)),
 		objName(name) {
 }
 
 DataSet::~DataSet() {
-	H5Dclose(getHandle());
+	H5Dclose(getId());
 }
 
 DataSet DataSet::create(shark::hdf5::AbstractGroup& parent, const std::string& name, const DataType& dataType,
                         const shark::hdf5::DataSpace& dataSpace) {
 	return DataSet(name,
-	               H5Dcreate(parent.getHandle(), name.c_str(), dataType.getHandle(), dataSpace.getHandle(), H5P_DEFAULT,
+	               H5Dcreate(parent.getId(), name.c_str(), dataType.getId(), dataSpace.getId(), H5P_DEFAULT,
 	                         H5P_DEFAULT, H5P_DEFAULT));
 }
 
@@ -58,16 +58,16 @@ const std::string& DataSet::getObjName() const {
 }
 
 hid_t DataSet::getDataType() const {
-	return H5Dget_type(getHandle());
+	return H5Dget_type(getId());
 }
 
 herr_t DataSet::read(void *buf, hid_t dataType, const DataSpace& memSpace, const DataSpace& fileSpace) const {
-	return H5Dread(getHandle(), dataType, memSpace.getHandle(), fileSpace.getHandle(), H5P_DEFAULT, buf);
+	return H5Dread(getId(), dataType, memSpace.getId(), fileSpace.getId(), H5P_DEFAULT, buf);
 }
 
 herr_t
 DataSet::write(const void *buf, const DataType& memDataType, const DataSpace& memSpace, const DataSpace& fileSpace) {
-	return H5Dwrite(getHandle(), memDataType.getHandle(), memSpace.getHandle(), fileSpace.getHandle(), H5P_DEFAULT,
+	return H5Dwrite(getId(), memDataType.getId(), memSpace.getId(), fileSpace.getId(), H5P_DEFAULT,
 	                buf);
 }
 

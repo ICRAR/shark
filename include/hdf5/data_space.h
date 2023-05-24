@@ -47,7 +47,7 @@ enum class HyperslabSelection {
 	Set = H5S_SELECT_SET,
 };
 
-class DataSpace : public Resource {
+class DataSpace : public Entity {
 public:
 	explicit DataSpace(const DataSet& dataSet);
 	~DataSpace() override;

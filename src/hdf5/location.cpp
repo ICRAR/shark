@@ -30,10 +30,10 @@
 namespace shark {
 namespace hdf5 {
 
-Location::Location(H5I_type_t expectedType, hid_t handle) : Resource(expectedType, handle) {}
+Location::Location(H5I_type_t expectedType, hid_t handle) : Entity(expectedType, handle) {}
 
 bool Location::attributeExists(const std::string& name) const {
-	auto exists = H5Aexists(getHandle(), name.c_str());
+	auto exists = H5Aexists(getId(), name.c_str());
 	if (exists < 0) {
 		throw std::runtime_error("Error on H5Aexists");
 	}

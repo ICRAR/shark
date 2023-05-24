@@ -35,7 +35,7 @@ File::File(const std::string& filename, const FileOpenMethod& openMethod) :
 }
 
 File::~File() {
-	H5Fclose(getHandle());
+	H5Fclose(getId());
 }
 
 hid_t File::openOrCreate(const std::string& filename, const FileOpenMethod& openMethod) {
