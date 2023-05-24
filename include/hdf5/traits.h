@@ -37,7 +37,7 @@ namespace hdf5 {
 // Traits for data type conversion
 // The references are set in traits.cpp
 //
-template <typename T>
+template<typename T>
 struct datatype_traits {
 };
 
@@ -88,9 +88,9 @@ struct datatype_traits<std::int64_t> {
 //
 // Traits for HDF5 entities
 //
-template <H5G_obj_t E>
+template<H5G_obj_t E>
 struct entity_traits {
-	using rettype = void ;
+	using rettype = void;
 };
 
 template<>

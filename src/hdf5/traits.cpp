@@ -41,7 +41,7 @@ const PredefinedDataType datatype_traits<double>::write_type = PredefinedDataTyp
 const PredefinedDataType datatype_traits<int>::native_type = PredefinedDataType::NATIVE_INT();
 const PredefinedDataType datatype_traits<int>::write_type = PredefinedDataType::NATIVE_INT32();
 const PredefinedDataType datatype_traits<unsigned int>::native_type = PredefinedDataType::NATIVE_UINT();
-const PredefinedDataType datatype_traits<unsigned int>::write_type =  PredefinedDataType::NATIVE_UINT32();
+const PredefinedDataType datatype_traits<unsigned int>::write_type = PredefinedDataType::NATIVE_UINT32();
 const PredefinedDataType datatype_traits<std::int64_t>::native_type = PredefinedDataType::NATIVE_INT64();
 const PredefinedDataType datatype_traits<std::int64_t>::write_type = PredefinedDataType::NATIVE_INT64();
 

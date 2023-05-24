@@ -58,7 +58,6 @@ namespace hdf5 {
 class IOBase {
 
 public:
-
 	/**
 	 * Creates a new IOBase instance without opening a file
 	 */
@@ -70,7 +69,7 @@ public:
 	 * @param filename The HDF5 filename
 	 * @param flags The mode in which the file will be opened
 	 */
-	IOBase(const std::string &filename, const FileOpenMethod& openMethod);
+	IOBase(const std::string& filename, const FileOpenMethod& openMethod);
 
 	/**
 	 * Closes the file and destroys this class
@@ -94,24 +93,22 @@ public:
 	 * @param filename the HDF5 filename
 	 * @param flags The mode in which the file will be opened
 	 */
-	void open_file(const std::string &filename, const FileOpenMethod& openMethod);
+	void open_file(const std::string& filename, const FileOpenMethod& openMethod);
 
 protected:
-
-	DataSet get_dataset(const std::string &name) const;
-	DataSet get_dataset(const std::vector<std::string> &path) const;
-	DataSpace get_scalar_dataspace(const DataSet &dataset) const;
-	DataSpace get_1d_dataspace(const DataSet &dataset) const;
-	DataSpace get_2d_dataspace(const DataSet &dataset) const;
-	hsize_t get_1d_dimsize(const DataSpace &space) const;
+	DataSet get_dataset(const std::string& name) const;
+	DataSet get_dataset(const std::vector<std::string>& path) const;
+	DataSpace get_scalar_dataspace(const DataSet& dataset) const;
+	DataSpace get_1d_dataspace(const DataSet& dataset) const;
+	DataSpace get_2d_dataspace(const DataSet& dataset) const;
+	hsize_t get_1d_dimsize(const DataSpace& space) const;
 
 //	H5::H5File hdf5_file;
-    File hdf5_file;
+	File hdf5_file;
 
 private:
-
-	bool opened {true};
-	DataSpace get_nd_dataspace(const DataSet &dataset, unsigned int expected_ndims) const;
+	bool opened{true};
+	DataSpace get_nd_dataspace(const DataSet& dataset, unsigned int expected_ndims) const;
 };
 
 }  // namespace hdf5

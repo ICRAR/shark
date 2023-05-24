@@ -51,36 +51,36 @@ public:
 	 *
 	 * @param filename The name of the HDF5 file to read
 	 */
-	explicit Reader(const std::string &filename) :
-		IOBase(filename, FileOpenMethod::Read) {}
+	explicit Reader(const std::string& filename) :
+			IOBase(filename, FileOpenMethod::Read) {}
 
 	template<typename T>
-	T read_attribute(const std::string &name) const {
+	T read_attribute(const std::string& name) const {
 		Attribute attr = get_attribute(name);
 		return attr.read<T>();
 	}
 
 	template<typename T>
-	T read_dataset(const std::string &name) const {
+	T read_dataset(const std::string& name) const {
 		return _read_dataset<T>(get_dataset(name));
 	}
 
 	template<typename T>
-	std::vector<T> read_dataset_v(const std::string &name) const {
+	std::vector<T> read_dataset_v(const std::string& name) const {
 		return _read_dataset_v<T>(get_dataset(name));
 	}
 
 	template<typename T>
-	std::vector<T> read_dataset_v_2(const std::string &name) const {
+	std::vector<T> read_dataset_v_2(const std::string& name) const {
 		return _read_dataset_v_2<T>(get_dataset(name));
 	}
 
 private:
-	Attribute get_attribute(const std::string &name) const;
+	Attribute get_attribute(const std::string& name) const;
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, T>::type
-	_read_dataset(const DataSet &dataset) const {
+	_read_dataset(const DataSet& dataset) const {
 		DataSpace space = get_scalar_dataspace(dataset);
 		T data_out;
 		dataset.read(&data_out, dataset.getDataType(), space, space);
@@ -89,7 +89,7 @@ private:
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, std::vector<T>>::type
-	_read_dataset_v(const DataSet &dataset) const {
+	_read_dataset_v(const DataSet& dataset) const {
 
 		DataSpace space = get_1d_dataspace(dataset);
 		hsize_t dim_size = get_1d_dimsize(space);
@@ -101,11 +101,11 @@ private:
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, std::vector<T>>::type
-	_read_dataset_v_2(const DataSet &dataset) const {
+	_read_dataset_v_2(const DataSet& dataset) const {
 
 		DataSpace space = get_2d_dataspace(dataset);
 		auto dim_sizes = space.getSimpleExtentDims();
-        assert(dim_sizes.size() == 2);
+		assert(dim_sizes.size() == 2);
 
 		std::vector<T> data(dim_sizes[0] * dim_sizes[1]);
 		dataset.read(data.data(), dataset.getDataType(), space, space);

@@ -34,77 +34,81 @@ namespace shark {
 namespace hdf5 {
 
 class Group;
+
 class DataSet;
+
 class DataSpace;
+
 class Attribute;
 
 class Resource {
 public:
-    Resource(H5I_type_t expectedType, hid_t handle);
-    Resource (const Resource& other);
-    Resource& operator= (const Resource& rhs);
-    Resource(Resource&&) = default;
-    Resource& operator=(Resource&&) = default;
-    virtual ~Resource();
+	Resource(H5I_type_t expectedType, hid_t handle);
+	Resource(const Resource& other);
+	Resource& operator=(const Resource& rhs);
+	Resource(Resource&&) = default;
+	Resource& operator=(Resource&&) = default;
+	virtual ~Resource();
 
-    void setComment(const std::string& comment);
+	void setComment(const std::string& comment);
 
-    hid_t getHandle() const;
+	hid_t getHandle() const;
+	// TODO getName using H5Iget_name()
 
 private:
-    hid_t handle;
+	hid_t handle;
 
 	bool isValid() const;
 };
 
 class DataType : public Resource {
 public:
-    explicit DataType(hid_t handle);
-    ~DataType() override;
+	explicit DataType(hid_t handle);
+	~DataType() override;
 };
 
 class PredefinedDataType : public DataType {
 public:
-    static const PredefinedDataType& C_S1();
-    static const PredefinedDataType& NATIVE_INT8();
-    static const PredefinedDataType& NATIVE_FLOAT();
-    static const PredefinedDataType& NATIVE_DOUBLE();
-    static const PredefinedDataType& NATIVE_INT();
-    static const PredefinedDataType& NATIVE_INT32();
-    static const PredefinedDataType& NATIVE_UINT();
-    static const PredefinedDataType& NATIVE_UINT32();
-    static const PredefinedDataType& NATIVE_INT64();
+	static const PredefinedDataType& C_S1();
+	static const PredefinedDataType& NATIVE_INT8();
+	static const PredefinedDataType& NATIVE_FLOAT();
+	static const PredefinedDataType& NATIVE_DOUBLE();
+	static const PredefinedDataType& NATIVE_INT();
+	static const PredefinedDataType& NATIVE_INT32();
+	static const PredefinedDataType& NATIVE_UINT();
+	static const PredefinedDataType& NATIVE_UINT32();
+	static const PredefinedDataType& NATIVE_INT64();
 
 private:
-    explicit PredefinedDataType(hid_t handle);
+	explicit PredefinedDataType(hid_t handle);
 };
 
 class StringDataType : public DataType {
 public:
-    explicit StringDataType(size_t size = H5T_VARIABLE);
+	explicit StringDataType(size_t size = H5T_VARIABLE);
 };
 
 class Location : public Resource {
 public:
-    // A file, group, dataset
-    Location(H5I_type_t expectedType, hid_t handle);
+	// A file, group, dataset
+	Location(H5I_type_t expectedType, hid_t handle);
 
-    bool attributeExists(const std::string& name) const;
-    Attribute openAttribute(const std::string& name) const;
-    Attribute createAttribute(const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
+	bool attributeExists(const std::string& name) const;
+	Attribute openAttribute(const std::string& name) const;
+	Attribute createAttribute(const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
 };
 
 class AbstractGroup : public Location {
 public:
-    AbstractGroup(H5I_type_t expectedType, hid_t handle);
+	AbstractGroup(H5I_type_t expectedType, hid_t handle);
 
-    hsize_t getNumObjs() const;
-    std::string getObjnameByIdx(hsize_t idx) const;
-    H5G_obj_t getObjTypeByIdx(hsize_t idx) const;
-    Group openGroup(const std::string& name) const;
-    DataSet openDataSet(const std::string& name) const;
-    Group createGroup(const std::string& name) ;
-    DataSet createDataSet(const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
+	hsize_t getNumObjs() const;
+	std::string getObjnameByIdx(hsize_t idx) const;
+	H5G_obj_t getObjTypeByIdx(hsize_t idx) const;
+	Group openGroup(const std::string& name) const;
+	DataSet openDataSet(const std::string& name) const;
+	Group createGroup(const std::string& name);
+	DataSet createDataSet(const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
 };
 
 enum class FileOpenMethod {
@@ -120,98 +124,103 @@ enum class FileOpenMethod {
 
 class File : public AbstractGroup {
 public:
-    File(const std::string& filename, const FileOpenMethod& openMethod);
-    ~File() override;
+	File(const std::string& filename, const FileOpenMethod& openMethod);
+	~File() override;
 
-    const std::string& getFileName() const;
+	const std::string& getFileName() const;
 
 private:
-    std::string filename;
+	std::string filename;
 
 	static hid_t openOrCreate(const std::string& filename, const FileOpenMethod& openMethod);
 };
 
 class Group : public AbstractGroup {
 public:
-    Group(const AbstractGroup& parent, const std::string& name);
-    ~Group() override;
+	Group(const AbstractGroup& parent, const std::string& name);
+	~Group() override;
 
-    static Group create(AbstractGroup& parent, const std::string& name);
+	static Group create(AbstractGroup& parent, const std::string& name);
 
 private:
-    explicit Group(hid_t handle);
+	explicit Group(hid_t handle);
 };
 
 class DataSet : public Location {
 public:
-    DataSet(const AbstractGroup& file, const std::string& name);
-    ~DataSet() override;
+	DataSet(const AbstractGroup& file, const std::string& name);
+	~DataSet() override;
 
-    static DataSet create(AbstractGroup& parent, const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
+	static DataSet
+	create(AbstractGroup& parent, const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
 
-    const std::string& getObjName() const;
-    hid_t getDataType() const;
-    DataSpace getSpace() const;
+	const std::string& getObjName() const;
+	hid_t getDataType() const;
+	DataSpace getSpace() const;
 
-    herr_t read(void* buf, hid_t dataType, const DataSpace& memSpace, const DataSpace& fileSpace) const;
-    herr_t write(const void* buf, const DataType& memDataType, const DataSpace& memSpace, const DataSpace& fileSpace);
+	herr_t read(void *buf, hid_t dataType, const DataSpace& memSpace, const DataSpace& fileSpace) const;
+	herr_t write(const void *buf, const DataType& memDataType, const DataSpace& memSpace, const DataSpace& fileSpace);
 
 private:
-    explicit DataSet(std::string name, hid_t handle);
-    std::string objName;
+	explicit DataSet(std::string name, hid_t handle);
+	std::string objName;
 };
 
 enum class DataSpaceType {
-    Null = H5S_NULL,
-    Scalar = H5S_SCALAR,
-    Simple = H5S_SIMPLE,
+	Null = H5S_NULL,
+	Scalar = H5S_SCALAR,
+	Simple = H5S_SIMPLE,
 };
 
 enum class HyperslabSelection {
-    // More available
-    // See https://docs.hdfgroup.org/hdf5/v1_14/group___h5_s.html#ga6adfdf1b95dc108a65bf66e97d38536d
-    Set = H5S_SELECT_SET,
+	// More available
+	// See https://docs.hdfgroup.org/hdf5/v1_14/group___h5_s.html#ga6adfdf1b95dc108a65bf66e97d38536d
+	Set = H5S_SELECT_SET,
 };
 
 class DataSpace : public Resource {
 public:
-    explicit DataSpace(const DataSet& dataSet);
-    ~DataSpace() override;
+	explicit DataSpace(const DataSet& dataSet);
+	~DataSpace() override;
 
-    static DataSpace create(const DataSpaceType& type);
-    static DataSpace create(std::vector<hsize_t> dimensions);
+	static DataSpace create(const DataSpaceType& type);
+	static DataSpace create(std::vector<hsize_t> dimensions);
 
-    int getSimpleExtentNdims() const;
-    std::vector<hsize_t> getSimpleExtentDims() const;
-    std::vector<hsize_t> getSimpleExtentMaxDims() const;
-    void selectHyperslab(const HyperslabSelection& op, const std::vector<hsize_t>& start, const std::vector<hsize_t>& stride, const std::vector<hsize_t>& count, const std::vector<hsize_t>& block);
+	int getSimpleExtentNdims() const;
+	std::vector<hsize_t> getSimpleExtentDims() const;
+	std::vector<hsize_t> getSimpleExtentMaxDims() const;
+	void
+	selectHyperslab(const HyperslabSelection& op, const std::vector<hsize_t>& start, const std::vector<hsize_t>& stride,
+	                const std::vector<hsize_t>& count, const std::vector<hsize_t>& block);
 
 private:
-    explicit DataSpace(hid_t handle);
+	explicit DataSpace(hid_t handle);
 };
 
 class Attribute : public Resource {
 public:
-    Attribute(const Location& location, const std::string& name);
-    ~Attribute() override;
+	Attribute(const Location& location, const std::string& name);
+	~Attribute() override;
 
-    static Attribute create(Location& location, const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
+	static Attribute
+	create(Location& location, const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
 
-    template<typename T>
-    T read() const {
-        hid_t type = H5Aget_type(getHandle());
-        T val;
-        H5Aread(getHandle(), type, &val);
-        return val;
-    }
+	template<typename T>
+	T read() const {
+		// Need to close or leak
+		hid_t type = H5Aget_type(getHandle());
+		T val;
+		H5Aread(getHandle(), type, &val);
+		return val;
+	}
 
-    template<typename T>
-    void write(const DataType& dataType, const T& val) {
-        H5Awrite(getHandle(), dataType.getHandle(), &val);
-    }
+	template<typename T>
+	void write(const DataType& dataType, const T& val) {
+		H5Awrite(getHandle(), dataType.getHandle(), &val);
+	}
 
 private:
-    explicit Attribute(hid_t handle);
+	explicit Attribute(hid_t handle);
 };
 
 template<>
