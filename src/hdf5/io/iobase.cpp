@@ -27,6 +27,7 @@
 #include <string>
 #include <stdexcept>
 
+#include "hdf5/utils.h"
 #include "hdf5/io/iobase.h"
 #include "logging.h"
 #include "utils.h"
@@ -55,7 +56,7 @@ void IOBase::open_file(const std::string& filename, const FileOpenMethod& openMe
 	hdf5_file = File(filename, openMethod);
 }
 
-const std::string& IOBase::get_filename() const {
+std::string IOBase::get_filename() const {
 	return hdf5_file.getFileName();
 }
 

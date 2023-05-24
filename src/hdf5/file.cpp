@@ -30,8 +30,7 @@ namespace shark {
 namespace hdf5 {
 
 File::File(const std::string& filename, const FileOpenMethod& openMethod) :
-		AbstractGroup(H5I_FILE, openOrCreate(filename, openMethod)),
-		filename(filename) {
+		AbstractGroup(H5I_FILE, openOrCreate(filename, openMethod)) {
 }
 
 File::~File() {
@@ -51,10 +50,6 @@ hid_t File::openOrCreate(const std::string& filename, const FileOpenMethod& open
 		default:
 			throw std::runtime_error("Unknown open type");
 	}
-}
-
-const std::string& File::getFileName() const {
-	return filename;
 }
 
 } // namespace hdf5

@@ -25,6 +25,7 @@
 
 #include "hdf5/group.h"
 #include "hdf5/data_set.h"
+#include "hdf5/utils.h"
 
 namespace shark {
 namespace hdf5 {
@@ -40,18 +41,10 @@ hsize_t AbstractGroup::getNumObjs() const {
 }
 
 std::string AbstractGroup::getObjnameByIdx(hsize_t idx) const {
-	auto size = H5Gget_objname_by_idx(getId(), idx, nullptr, 0);
-
-	// Ensure there's enough space for the null terminator that the C API will write
-	std::string name;
-	name.resize(size + 1);
-
-	H5Gget_objname_by_idx(getId(), idx, &name[0], name.size());
-
-	// Now resize back down to the actual size
-	name.resize(size);
-
-	return name;
+	auto id = getId();
+	return stringFromHdf5Api([id, idx](char* buf, size_t size) {
+		return H5Gget_objname_by_idx(id, idx, buf, size);
+	});
 }
 
 H5G_obj_t AbstractGroup::getObjTypeByIdx(hsize_t idx) const {

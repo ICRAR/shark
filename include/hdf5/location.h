@@ -41,6 +41,8 @@ class Location : public Entity {
 public:
 	Location(H5I_type_t expectedType, hid_t handle);
 
+	std::string getFileName() const;
+
 	bool attributeExists(const std::string& name) const;
 	Attribute openAttribute(const std::string& name) const;
 	Attribute createAttribute(const std::string& name, const DataType& dataType, const DataSpace& dataSpace);

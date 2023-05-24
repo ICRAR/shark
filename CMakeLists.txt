@@ -355,6 +355,7 @@ set(SHARKLIB_SRCS
    include/hdf5/file.h
    include/hdf5/group.h
    include/hdf5/location.h
+   include/hdf5/utils.h
    include/hdf5/io/iobase.h
    include/hdf5/io/reader.h
    include/hdf5/io/traits.h

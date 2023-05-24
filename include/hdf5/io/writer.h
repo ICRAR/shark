@@ -34,6 +34,7 @@
 
 #include "hdf5/data_type.h"
 #include "hdf5/data_set.h"
+#include "hdf5/attribute.h"
 #include "iobase.h"
 #include "traits.h"
 #include "exceptions.h"
@@ -127,7 +128,7 @@ template<>
 inline
 void _write_dataset<std::string>(DataSet& dataset, const DataType& dataType, const DataSpace& dataSpace,
                                  const std::vector<std::string>& vals) {
-	std::vector<const char *> c_strings;
+	std::vector<const char*> c_strings;
 	std::transform(vals.begin(), vals.end(), std::back_inserter(c_strings), [](const std::string& s) {
 		return s.c_str();
 	});

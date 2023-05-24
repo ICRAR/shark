@@ -65,13 +65,6 @@ void Writer::check_attr_name(const std::string& attr_name) const {
 	_check_entity_name(attr_name, "Attribute", attr_naming_convention);
 }
 
-
-#ifdef HDF5_NEWER_THAN_1_10_0
-#define HDF5_FILE_GROUP_COMMON_BASE H5::Group
-#else
-#define HDF5_FILE_GROUP_COMMON_BASE H5::CommonFG
-#endif
-
 template<H5G_obj_t E>
 inline static
 typename entity_traits<E>::rettype

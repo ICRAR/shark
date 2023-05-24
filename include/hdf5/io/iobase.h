@@ -33,24 +33,7 @@
 #include "hdf5/data_space.h"
 #include "hdf5/file.h"
 
-// Define handy macros to detect whether we are above 1.8.11 and/or 1.10.0
-// These versions introduce some important backward-incompatible changes in the
-// C++ API that we need to be aware of if we want to support these versions
-#undef HDF5_NEWER_THAN_1_8_11
-#undef HDF5_NEWER_THAN_1_10_0
-#if HDF5_VERSION_MAJOR == 1 && \
-     (HDF5_VERSION_MINOR > 10 || \
-      (HDF5_VERSION_MINOR == 10 && HDF5_VERSION_PATCH >= 1))
-#define HDF5_NEWER_THAN_1_10_0
-#endif
-#if HDF5_VERSION_MAJOR == 1 && \
-     (HDF5_VERSION_MINOR > 8 || \
-      (HDF5_VERSION_MINOR == 8 && HDF5_VERSION_PATCH >= 12))
-#define HDF5_NEWER_THAN_1_8_11
-#endif
-
 namespace shark {
-
 namespace hdf5 {
 
 /**
@@ -86,7 +69,7 @@ public:
 	 * Returns the filename being handled by this class
 	 * @return The filename being handled by this class
 	 */
-	const std::string& get_filename() const;
+	std::string get_filename() const;
 
 	/**
 	 * Opens the given file in the given mode
@@ -104,7 +87,6 @@ protected:
 	DataSpace get_2d_dataspace(const DataSet& dataset) const;
 	hsize_t get_1d_dimsize(const DataSpace& space) const;
 
-//	H5::H5File hdf5_file;
 	File hdf5_file;
 
 private:

@@ -26,11 +26,19 @@
 #include <stdexcept>
 #include "hdf5/attribute.h"
 #include "hdf5/location.h"
+#include "hdf5/utils.h"
 
 namespace shark {
 namespace hdf5 {
 
 Location::Location(H5I_type_t expectedType, hid_t handle) : Entity(expectedType, handle) {}
+
+std::string Location::getFileName() const {
+	auto id = getId();
+	return stringFromHdf5Api([id](char* buf, ssize_t size) {
+		return H5Fget_name(id, buf, size);
+	});
+}
 
 bool Location::attributeExists(const std::string& name) const {
 	auto exists = H5Aexists(getId(), name.c_str());
