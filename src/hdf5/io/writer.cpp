@@ -45,7 +45,7 @@ Writer::Writer(const std::string& filename, bool overwrite,
 }
 
 static
-void _check_entity_name(const std::string& name, const char *entity_type, naming_convention convention) {
+void _check_entity_name(const std::string& name, const char* entity_type, naming_convention convention) {
 	if (!follows_convention(name, convention)) {
 		std::ostringstream os;
 		os << entity_type << " name " << name << " does not follow the " << convention << " naming convention";
@@ -129,10 +129,10 @@ get_or_create_entity(AbstractGroup& file_or_group, const std::string& name, Ts&&
 Group Writer::get_or_create_group(const std::vector<std::string>& path) {
 	if (path.size() == 1) {
 		check_group_name(path[0]);
-		return get_or_create_entity<H5G_GROUP>(hdf5_file, path[0]);
+		return get_or_create_entity<H5G_GROUP>(hdf5_file.value(), path[0]);
 	}
 
-	Group group = get_or_create_entity<H5G_GROUP>(hdf5_file, path.front());
+	Group group = get_or_create_entity<H5G_GROUP>(hdf5_file.value(), path.front());
 	std::vector<std::string> group_paths(path.begin() + 1, path.end());
 	for (auto& part: group_paths) {
 		group = get_or_create_entity<H5G_GROUP>(group, part);
@@ -145,7 +145,7 @@ DataSet Writer::get_or_create_dataset(const std::vector<std::string>& path, cons
                                       const DataSpace& dataSpace) {
 	if (path.size() == 1) {
 		check_dataset_name(path[0]);
-		return get_or_create_entity<H5G_DATASET>(hdf5_file, path[0], dataType, dataSpace);
+		return get_or_create_entity<H5G_DATASET>(hdf5_file.value(), path[0], dataType, dataSpace);
 	}
 
 	std::vector<std::string> group_paths(path.begin(), path.end() - 1);

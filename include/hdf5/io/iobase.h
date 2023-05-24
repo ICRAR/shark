@@ -28,6 +28,7 @@
 
 #include <string>
 #include <vector>
+#include<boost/optional.hpp>
 
 #include "hdf5/data_set.h"
 #include "hdf5/data_space.h"
@@ -87,10 +88,9 @@ protected:
 	DataSpace get_2d_dataspace(const DataSet& dataset) const;
 	hsize_t get_1d_dimsize(const DataSpace& space) const;
 
-	File hdf5_file;
+	boost::optional<File> hdf5_file;
 
 private:
-	bool opened{true};
 	DataSpace get_nd_dataspace(const DataSet& dataset, unsigned int expected_ndims) const;
 };
 

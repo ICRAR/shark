@@ -90,7 +90,7 @@ Attribute Reader::get_attribute(const std::string& name) const {
 	}
 
 	try {
-		return _get_attribute(hdf5_file, parts);
+		return _get_attribute(hdf5_file.value(), parts);
 	} catch (const attribute_not_found&) {
 		std::ostringstream os;
 		os << "Attribute " << name << " doesn't exist in " << get_filename();

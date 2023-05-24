@@ -35,7 +35,7 @@
 namespace shark {
 namespace hdf5 {
 
-IOBase::IOBase(const std::string& filename, const FileOpenMethod& openMethod) : hdf5_file(filename, openMethod) {
+IOBase::IOBase(const std::string& filename, const FileOpenMethod& openMethod) : hdf5_file(File(filename, openMethod)) {
 }
 
 IOBase::~IOBase() {
@@ -43,13 +43,12 @@ IOBase::~IOBase() {
 }
 
 void IOBase::close() {
-	if (!opened) {
+	if (!hdf5_file.has_value()) {
 		return;
 	}
 
-	// TODO
-//	hdf5_file.close();
-	opened = false;
+	// RAII will close the file for us!
+	hdf5_file = boost::none;
 }
 
 void IOBase::open_file(const std::string& filename, const FileOpenMethod& openMethod) {
@@ -57,7 +56,7 @@ void IOBase::open_file(const std::string& filename, const FileOpenMethod& openMe
 }
 
 std::string IOBase::get_filename() const {
-	return hdf5_file.getFileName();
+	return hdf5_file->getFileName();
 }
 
 DataSpace IOBase::get_nd_dataspace(const DataSet& dataset, unsigned int expected_ndims) const {
@@ -95,7 +94,7 @@ DataSet IOBase::get_dataset(const std::string& name) const {
 
 	LOG(debug) << "Getting dataset " << name << " on file " << get_filename();
 
-	// The name might contains slashes, so we can navigate through
+	// The name might contain slashes, so we can navigate through
 	// a hierarchy of groups/datasets
 	auto parts = tokenize(name, "/");
 
@@ -106,11 +105,11 @@ DataSet IOBase::get_dataset(const std::vector<std::string>& path) const {
 
 	// only the attribute name, read directly and come back
 	if (path.size() == 1) {
-		return hdf5_file.openDataSet(path[0]);
+		return hdf5_file->openDataSet(path[0]);
 	}
 
 	// else there's a path to follow, go for it!
-	Group group = hdf5_file.openGroup(path.front());
+	Group group = hdf5_file->openGroup(path.front());
 	std::vector<std::string> group_paths(path.begin() + 1, path.end() - 1);
 	for (auto const& path: group_paths) {
 		LOG(debug) << "Getting dataset " << path << " on file " << get_filename();
