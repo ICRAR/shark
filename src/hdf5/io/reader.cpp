@@ -32,7 +32,7 @@
 
 #include "exceptions.h"
 #include "logging.h"
-#include "hdf5/reader.h"
+#include "hdf5/io/reader.h"
 
 namespace shark {
 namespace hdf5 {

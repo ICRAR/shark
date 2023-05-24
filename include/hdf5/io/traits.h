@@ -27,7 +27,9 @@
 #define SHARK_HDF5_TRAITS
 
 #include <hdf5.h>
-#include "api.h"
+#include "hdf5/data_type.h"
+#include "hdf5/group.h"
+#include "hdf5/data_set.h"
 
 namespace shark {
 

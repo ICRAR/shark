@@ -24,8 +24,8 @@
 #include <cxxtest/TestSuite.h>
 
 #include <boost/filesystem.hpp>
-#include "hdf5/reader.h"
-#include "hdf5/writer.h"
+#include "hdf5/io/reader.h"
+#include "hdf5/io/writer.h"
 
 using namespace shark;
 namespace fs = boost::filesystem;

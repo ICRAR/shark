@@ -32,11 +32,9 @@
 #include <string>
 #include <type_traits>
 
-//#include <H5Cpp.h>
-#include <hdf5.h>
-
 #include "utils.h"
-#include "hdf5/iobase.h"
+#include "iobase.h"
+#include "hdf5/attribute.h"
 
 namespace shark {
 

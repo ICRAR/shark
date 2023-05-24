@@ -94,8 +94,8 @@ endmacro()
 
 #
 # This is how we look for HDF5
-# We are currently interested in the CXX library,
-# which is a hard requirement -- if it's not there we fail misserably
+# We are currently interested in the C library,
+# which is a hard requirement -- if it's not there we fail miserably
 #
 macro(find_hdf5)
 
@@ -110,7 +110,7 @@ macro(find_hdf5)
 	# HDF5_VERSION is defined only in cmake 3.3+
 	# Even in these newer cmakes, there are cases in which the version is still
 	# not properly calculated though, so let us check simply for an empty string
-	# and compile a small problem that prints the version of the HDF5 found
+	# and compile a small program that prints the version of the HDF5 found
 	# by cmake.
 	#
 	if (NOT HDF5_VERSION)
@@ -119,7 +119,7 @@ macro(find_hdf5)
 		set(test_file ${scratch_directory}/cmake_version.cxx)
 		file(WRITE ${test_file}
 		     "#include <stdio.h>\n"
-		     "#include <H5Cpp.h>\n"
+		     "#include <hdf5.h>\n"
 		     "int main(int argc, char **argv) {\n"
 		     "  printf(\"INFO:\" H5_VERSION);\n"
 		     "  return 0;\n"
@@ -347,11 +347,18 @@ set(SHARKLIB_SRCS
    include/total_baryon.h
    include/tree_builder.h
    include/utils.h
-   include/hdf5/iobase.h
-   include/hdf5/reader.h
-   include/hdf5/traits.h
-   include/hdf5/writer.h
-   include/hdf5/api.h
+   include/hdf5/attribute.h
+   include/hdf5/data_set.h
+   include/hdf5/data_space.h
+   include/hdf5/data_type.h
+   include/hdf5/entity.h
+   include/hdf5/file.h
+   include/hdf5/group.h
+   include/hdf5/location.h
+   include/hdf5/io/iobase.h
+   include/hdf5/io/reader.h
+   include/hdf5/io/traits.h
+   include/hdf5/io/writer.h
    src/agn_feedback.cpp
    src/cosmology.cpp
    src/execution.cpp
@@ -384,11 +391,18 @@ set(SHARKLIB_SRCS
    src/total_baryon.cpp
    src/tree_builder.cpp
    src/utils.cpp
-   src/hdf5/iobase.cpp
-   src/hdf5/reader.cpp
-   src/hdf5/traits.cpp
-   src/hdf5/writer.cpp
-   src/hdf5/api.cpp
+   src/hdf5/attribute.cpp
+   src/hdf5/data_set.cpp
+   src/hdf5/data_space.cpp
+   src/hdf5/data_type.cpp
+   src/hdf5/entity.cpp
+   src/hdf5/file.cpp
+   src/hdf5/group.cpp
+   src/hdf5/location.cpp
+   src/hdf5/io/iobase.cpp
+   src/hdf5/io/reader.cpp
+   src/hdf5/io/traits.cpp
+   src/hdf5/io/writer.cpp
 )
 
 if (WIN32)

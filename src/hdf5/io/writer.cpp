@@ -26,7 +26,7 @@
 #include <sstream>
 #include <utility>
 
-#include "hdf5/writer.h"
+#include "hdf5/io/writer.h"
 #include "exceptions.h"
 
 

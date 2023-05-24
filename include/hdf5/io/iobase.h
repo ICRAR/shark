@@ -29,8 +29,9 @@
 #include <string>
 #include <vector>
 
-//#include <H5Cpp.h>
-#include "hdf5/api.h"
+#include "hdf5/data_set.h"
+#include "hdf5/data_space.h"
+#include "hdf5/file.h"
 
 // Define handy macros to detect whether we are above 1.8.11 and/or 1.10.0
 // These versions introduce some important backward-incompatible changes in the

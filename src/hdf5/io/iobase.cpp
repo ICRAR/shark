@@ -27,7 +27,7 @@
 #include <string>
 #include <stdexcept>
 
-#include "hdf5/iobase.h"
+#include "hdf5/io/iobase.h"
 #include "logging.h"
 #include "utils.h"
 

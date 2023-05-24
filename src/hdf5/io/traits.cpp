@@ -25,7 +25,7 @@
 
 #include <string>
 
-#include "hdf5/traits.h"
+#include "hdf5/io/traits.h"
 
 namespace shark {
 

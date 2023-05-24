@@ -32,11 +32,10 @@
 #include <string>
 #include <vector>
 
-//#include <H5Cpp.h>
-
-#include "hdf5/api.h"
-#include "hdf5/iobase.h"
-#include "hdf5/traits.h"
+#include "hdf5/data_type.h"
+#include "hdf5/data_set.h"
+#include "iobase.h"
+#include "traits.h"
 #include "exceptions.h"
 #include "naming_convention.h"
 #include "utils.h"
