@@ -24,6 +24,7 @@
  */
 
 #include <stdexcept>
+#include "logging.h"
 #include "hdf5/file.h"
 
 namespace shark {
@@ -34,7 +35,9 @@ File::File(const std::string& filename, const FileOpenMethod& openMethod) :
 }
 
 File::~File() {
-	H5Fclose(getId());
+	if (H5Fclose(getId()) < 0) {
+		LOG(error) << "H5Fclose() failed";
+	}
 }
 
 hid_t File::openOrCreate(const std::string& filename, const FileOpenMethod& openMethod) {

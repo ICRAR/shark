@@ -23,6 +23,7 @@
  * C++ wrappers for dealing with HDF5 groups (abstract or concrete)
  */
 
+#include "logging.h"
 #include "hdf5/group.h"
 #include "hdf5/data_set.h"
 #include "hdf5/utils.h"
@@ -36,13 +37,16 @@ AbstractGroup::AbstractGroup(H5I_type_t expectedType, hid_t handle) : Location(e
 
 hsize_t AbstractGroup::getNumObjs() const {
 	hsize_t num;
-	assertHdf5Return(H5Gget_num_objs(getId(), &num));
+	// TODO Deprecated in 1.8.0, replacement is H5Gget_info()
+	if (H5Gget_num_objs(getId(), &num) < 0) {
+		throw hdf5_api_error("H5Gget_num_objs");
+	}
 	return num;
 }
 
 std::string AbstractGroup::getObjnameByIdx(hsize_t idx) const {
 	auto id = getId();
-	return stringFromHdf5Api([id, idx](char* buf, size_t size) {
+	return stringFromHdf5Api("H5Gget_objname_by_idx", [id, idx](char* buf, size_t size) {
 		// TODO Deprecated in 1.8.0, replacement is H5Lget_name_by_idx()
 		return H5Gget_objname_by_idx(id, idx, buf, size);
 	});
@@ -50,7 +54,11 @@ std::string AbstractGroup::getObjnameByIdx(hsize_t idx) const {
 
 H5G_obj_t AbstractGroup::getObjTypeByIdx(hsize_t idx) const {
 	// TODO Deprecated in 1.8.0, replacement is H5Oget_info()
-	return assertNonNegative(H5Gget_objtype_by_idx(getId(), idx));
+	auto type = H5Gget_objtype_by_idx(getId(), idx);
+	if (type < 0) {
+		throw hdf5_api_error("H5Gget_objtype_by_idx");
+	}
+	return type;
 }
 
 Group AbstractGroup::openGroup(const std::string& name) const {
@@ -78,7 +86,9 @@ Group::Group(const AbstractGroup& parent, const std::string& name) :
 }
 
 Group::~Group() {
-	H5Gclose(getId());
+	if (H5Gclose(getId()) < 0) {
+		LOG(error) << "H5Gclose() failed";
+	}
 }
 
 Group Group::create(AbstractGroup& parent, const std::string& name) {

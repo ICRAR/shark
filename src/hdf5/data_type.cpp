@@ -23,6 +23,7 @@
  * C++ Wrappers for HDF5 data types
  */
 
+#include "logging.h"
 #include "hdf5/data_type.h"
 #include "hdf5/utils.h"
 
@@ -33,7 +34,9 @@ DataType::DataType(hid_t handle) : Entity(H5I_DATATYPE, handle) {
 }
 
 DataType::~DataType() {
-	H5Tclose(getId());
+	if (H5Tclose(getId()) < 0) {
+		LOG(error) << "H5Tclose() failed";
+	}
 }
 
 // Always copy the predefined type so that the deconstructor will succeed!
@@ -86,7 +89,9 @@ const PredefinedDataType& PredefinedDataType::NATIVE_INT64() {
 }
 
 StringDataType::StringDataType(size_t size) : DataType(H5Tcopy(PredefinedDataType::C_S1().getId())) {
-	assertHdf5Return(H5Tset_size(getId(), size));
+	if (H5Tset_size(getId(), size) < 0) {
+		throw hdf5_api_error("H5Tset_size");
+	}
 }
 
 } // namespace hdf5

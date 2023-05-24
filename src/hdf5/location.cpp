@@ -35,14 +35,16 @@ Location::Location(H5I_type_t expectedType, hid_t handle) : Entity(expectedType,
 
 std::string Location::getFileName() const {
 	auto id = getId();
-	return stringFromHdf5Api([id](char* buf, ssize_t size) {
+	return stringFromHdf5Api("H5Fget_name", [id](char* buf, ssize_t size) {
 		return H5Fget_name(id, buf, size);
 	});
 }
 
 bool Location::attributeExists(const std::string& name) const {
 	auto exists = H5Aexists(getId(), name.c_str());
-	assertNonNegative(exists);
+	if (exists < 0) {
+		throw hdf5_api_error("H5Aexists");
+	}
 	return exists > 0;
 }
 

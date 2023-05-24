@@ -29,19 +29,19 @@
 #include <string>
 #include <stdexcept>
 #include <hdf5.h>
+#include "exceptions.h"
 
 namespace shark {
 namespace hdf5 {
 
-void assertHdf5Return(herr_t ret);
+class hdf5_api_error : public exception {
+public:
+	explicit hdf5_api_error(const std::string& function_name) : exception(
+			function_name + "() failure") {};
 
-template<typename T>
-T assertNonNegative(T val) {
-	if (val < 0) {
-		throw std::runtime_error("Hdf5 API call error");
-	}
-	return val;
-}
+	hdf5_api_error(const std::string& function_name, const std::string& message) : exception(
+			function_name + "() failure: " + message) {};
+};
 
 /**
  * Retrieve a string from a HDF5 api call that adheres to the
@@ -58,9 +58,11 @@ T assertNonNegative(T val) {
  * @return The correctly allocated string holding the entire value from the HDF5 api
  */
 template<typename F>
-std::string stringFromHdf5Api(F&& f) {
+std::string stringFromHdf5Api(const std::string& hdf5_fn_name, F&& f) {
 	ssize_t size = f(nullptr, 0);
-	assertNonNegative(size);
+	if (size < 0) {
+		throw hdf5_api_error(hdf5_fn_name, "Unable to determine size of string");
+	}
 
 	// Ensure there's enough space for the null-terminator that the C API will write
 	// (even though C++11 will allocate enough for a null-terminator, it's UB to
@@ -69,7 +71,9 @@ std::string stringFromHdf5Api(F&& f) {
 	s.resize(size + 1);
 
 	size = f(&s[0], s.size());
-	assertNonNegative(size);
+	if (size < 0) {
+		throw hdf5_api_error(hdf5_fn_name, "Failed to write string to buffer");
+	}
 
 	// Now resize back down to the actual size
 	s.resize(size);

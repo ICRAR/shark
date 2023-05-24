@@ -23,6 +23,7 @@
  * C++ wrapper for HDF5 attributes
  */
 
+#include "logging.h"
 #include "hdf5/attribute.h"
 
 namespace shark {
@@ -35,7 +36,9 @@ Attribute::Attribute(const Location& group, const std::string& name) :
 }
 
 Attribute::~Attribute() {
-	H5Aclose(getId());
+	if (H5Aclose(getId()) < 0) {
+		LOG(error) << "H5Aclose() failed";
+	}
 }
 
 Attribute Attribute::create(Location& location, const std::string& name, const DataType& dataType,
@@ -55,12 +58,16 @@ template<>
 std::string Attribute::read<std::string>() const {
 	// Unfortunately different enough that we can't use stringFromHdf5Api
 	H5A_info_t info;
-	assertHdf5Return(H5Aget_info(getId(), &info));
+	if (H5Aget_info(getId(), &info) < 0) {
+		throw hdf5_api_error("H5Aget_info", "Unable to get attribute " + getName() + "info");
+	}
 
 	std::string val;
 	val.resize(info.data_size); // Size includes null-terminator
 
-	assertHdf5Return(H5Aread(getId(), getType().getId(), &val[0]));
+	if (H5Aread(getId(), getType().getId(), &val[0]) < 0) {
+		throw hdf5_api_error("H5Aread", "Unable to read attribute " + getName());
+	}
 
 	val.resize(info.data_size - 1); // Trim included null-terminator
 	return val;
@@ -68,7 +75,9 @@ std::string Attribute::read<std::string>() const {
 
 template<>
 void Attribute::write<std::string>(const DataType& dataType, const std::string& val) {
-	assertHdf5Return(H5Awrite(getId(), dataType.getId(), val.data()));
+	if (H5Awrite(getId(), dataType.getId(), val.data()) < 0) {
+		throw hdf5_api_error("H5Awrite", "Unable to write to attribute " + getName());
+	}
 }
 
 } // namespace hdf5

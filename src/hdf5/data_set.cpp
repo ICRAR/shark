@@ -23,6 +23,7 @@
  * C++ wrappers for dealing with HDF5 datasets
  */
 
+#include "logging.h"
 #include "hdf5/data_set.h"
 #include "hdf5/data_space.h"
 #include "hdf5/group.h"
@@ -39,7 +40,9 @@ DataSet::DataSet(const AbstractGroup& file, const std::string& name) :
 }
 
 DataSet::~DataSet() {
-	H5Dclose(getId());
+	if (H5Dclose(getId()) < 0) {
+		LOG(error) << "H5Dclose() failed";
+	}
 }
 
 DataSet DataSet::create(shark::hdf5::AbstractGroup& parent, const std::string& name, const DataType& dataType,
@@ -57,15 +60,17 @@ DataType DataSet::getDataType() const {
 }
 
 void DataSet::read(void* buf, const DataType& dataType, const DataSpace& memSpace, const DataSpace& fileSpace) const {
-	auto ret = H5Dread(getId(), dataType.getId(), memSpace.getId(), fileSpace.getId(), H5P_DEFAULT, buf);
-	assertHdf5Return(ret);
+	if (H5Dread(getId(), dataType.getId(), memSpace.getId(), fileSpace.getId(), H5P_DEFAULT, buf) < 0) {
+		throw hdf5_api_error("H5Dread", "Unable to read from dataset " + getName());
+	}
 }
 
 void
 DataSet::write(const void* buf, const DataType& memDataType, const DataSpace& memSpace, const DataSpace& fileSpace) {
-	auto ret = H5Dwrite(getId(), memDataType.getId(), memSpace.getId(), fileSpace.getId(), H5P_DEFAULT,
-	                    buf);
-	assertHdf5Return(ret);
+	if (H5Dwrite(getId(), memDataType.getId(), memSpace.getId(), fileSpace.getId(), H5P_DEFAULT,
+	             buf) < 0) {
+		throw hdf5_api_error("H5Dwrite", "Unable to write to dataset " + getName());
+	}
 }
 
 } // namespace hdf5

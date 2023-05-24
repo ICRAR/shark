@@ -78,7 +78,9 @@ bool Entity::isValid() const {
 }
 
 void Entity::setComment(const std::string& comment) {
-	assertHdf5Return(H5Oset_comment(getId(), comment.c_str()));
+	if (H5Oset_comment(getId(), comment.c_str()) < 0) {
+		throw hdf5_api_error("H5Oset_comment");
+	}
 }
 
 hid_t Entity::getId() const {
@@ -87,7 +89,7 @@ hid_t Entity::getId() const {
 
 std::string Entity::getName() const {
 	auto _id = getId();
-	return stringFromHdf5Api([_id](char* buf, size_t size) {
+	return stringFromHdf5Api("H5Iget_name", [_id](char* buf, size_t size) {
 		return H5Iget_name(_id, buf, size);
 	});
 }

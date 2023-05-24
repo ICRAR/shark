@@ -23,15 +23,10 @@
  * Various utilities for interacting with the HDF5 API
  */
 
-#include <stdexcept>
-#include "hdf5/utils.h"
-
 namespace shark {
 namespace hdf5 {
 
-void assertHdf5Return(herr_t ret) {
-	assertNonNegative(ret);
-}
+// Nothing... yet
 
 } // namespace hdf5
 } // namespace shark

@@ -47,13 +47,17 @@ public:
 	template<typename T>
 	T read() const {
 		T val;
-		assertHdf5Return(H5Aread(getId(), getType().getId(), &val));
+		if (H5Aread(getId(), getType().getId(), &val) < 0) {
+			throw hdf5_api_error("H5Aread", "Unable to read from attribute " + getName());
+		}
 		return val;
 	}
 
 	template<typename T>
 	void write(const DataType& dataType, const T& val) {
-		assertHdf5Return(H5Awrite(getId(), dataType.getId(), &val));
+		if (H5Awrite(getId(), dataType.getId(), &val) < 0) {
+			throw hdf5_api_error("H5Awrite", "Unable to write to attribute " + getName());
+		};
 	}
 
 private:
