@@ -214,6 +214,12 @@ private:
     explicit Attribute(hid_t handle);
 };
 
+template<>
+std::string Attribute::read<std::string>() const;
+
+template<>
+void Attribute::write<std::string>(const DataType& dataType, const std::string& val);
+
 } // namespace hdf5
 } // namespace shark
 

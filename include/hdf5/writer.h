@@ -65,7 +65,8 @@ DataType _datatype(const T &val) {
 template<>
 inline
 DataType _datatype<std::string>(const std::string &val) {
-	return StringDataType(val.size());
+	// Allow space for null terminator
+	return StringDataType(val.size() + 1);
 }
 
 // Overwriting for vectors of values
@@ -86,20 +87,6 @@ template<>
 inline
 DataType _datatype<std::string>(const std::vector<std::string> &val) {
 	return StringDataType();
-}
-
-// How we write attributes, depending on the data type
-// Strings need some special treatment, so we specialise for them
-template<typename T>
-static inline
-void _write_attribute(Attribute &attr, const DataType &dataType, const T &val) {
-	attr.write(dataType, val);
-}
-
-template<>
-inline
-void _write_attribute<std::string>(Attribute &attr, const DataType &dataType, const std::string &val) {
-	attr.write(dataType, val);
 }
 
 // How we write datasets, depending on the data type
@@ -181,7 +168,7 @@ static inline
 void _create_and_write_attribute(AttributeHolder &dataset, const std::string &name, const T &value) {
 	DataType dataType = _datatype<T>(value);
 	auto attr = dataset.createAttribute(name, dataType, DataSpace::create(DataSpaceType::Scalar));
-	_write_attribute<T>(attr, dataType, value);
+	attr.write(dataType, value);
 }
 
 /**
