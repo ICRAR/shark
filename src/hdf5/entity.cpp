@@ -25,17 +25,19 @@
 
 #include <stdexcept>
 #include <sstream>
+#include <cassert>
 #include "hdf5/entity.h"
+#include "hdf5/utils.h"
 
 namespace shark {
 namespace hdf5 {
 
-Entity::Entity(H5I_type_t expectedType, hid_t handle) : id(handle) {
+Entity::Entity(H5I_type_t expectedType, hid_t id) : id(id) {
 	if (!isValid()) {
 		throw std::runtime_error("Invalid id");
 	}
 
-	auto type = H5Iget_type(handle);
+	auto type = H5Iget_type(id);
 	if (type == H5I_BADID) {
 		throw std::runtime_error("Unable to determine resource type");
 	} else if (type != expectedType) {
@@ -46,13 +48,18 @@ Entity::Entity(H5I_type_t expectedType, hid_t handle) : id(handle) {
 }
 
 Entity::Entity(const Entity& other) : id(other.id) {
-	H5Iinc_ref(id);
+	auto ref = H5Iinc_ref(id);
+	assert(ref >= 0);
 }
 
 Entity& Entity::operator=(const Entity& rhs) {
-	H5Idec_ref(id);
+	auto ref = H5Idec_ref(id);
+	assert(ref >= 0);
+
 	id = rhs.id;
-	H5Iinc_ref(id);
+	ref = H5Iinc_ref(id);
+	assert(ref >= 0);
+
 	return *this;
 }
 
@@ -71,11 +78,18 @@ bool Entity::isValid() const {
 }
 
 void Entity::setComment(const std::string& comment) {
-	H5Oset_comment(getId(), comment.c_str());
+	assertHdf5Return(H5Oset_comment(getId(), comment.c_str()));
 }
 
 hid_t Entity::getId() const {
 	return id;
+}
+
+std::string Entity::getName() const {
+	auto _id = getId();
+	return stringFromHdf5Api([_id](char* buf, size_t size) {
+		return H5Iget_name(_id, buf, size);
+	});
 }
 
 } // shark

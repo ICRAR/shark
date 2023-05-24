@@ -25,6 +25,7 @@
 
 #include "hdf5/data_space.h"
 #include "hdf5/data_set.h"
+#include "hdf5/utils.h"
 
 namespace shark {
 namespace hdf5 {
@@ -70,8 +71,9 @@ void DataSpace::selectHyperslab(const HyperslabSelection& op, const std::vector<
                                 const std::vector<hsize_t>& stride, const std::vector<hsize_t>& count,
                                 const std::vector<hsize_t>& block) {
 	// Assert all same length & same as rank
-	H5Sselect_hyperslab(getId(), static_cast<H5S_seloper_t>(op), start.data(), stride.data(), count.data(),
-	                    block.data());
+	auto ret = H5Sselect_hyperslab(getId(), static_cast<H5S_seloper_t>(op), start.data(), stride.data(), count.data(),
+	                               block.data());
+	assertHdf5Return(ret);
 }
 
 } // namespace hdf5

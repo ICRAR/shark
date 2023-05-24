@@ -37,7 +37,7 @@ private:
 	hid_t id;
 
 public:
-	Entity(H5I_type_t expectedType, hid_t handle);
+	Entity(H5I_type_t expectedType, hid_t id);
 	Entity(const Entity& other);
 	Entity& operator=(const Entity& rhs);
 	Entity(Entity&&) = default;
@@ -47,7 +47,7 @@ public:
 	void setComment(const std::string& comment);
 
 	hid_t getId() const;
-	// TODO getName using H5Iget_name()
+	std::string getName() const;
 
 private:
 	bool isValid() const;

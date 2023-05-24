@@ -20,7 +20,7 @@
 /**
  * @file
  *
- * C++ wrappers for dealing HDF5 groups (abstract or concrete)
+ * C++ wrappers for dealing with HDF5 groups (abstract or concrete)
  */
 
 #include "hdf5/group.h"
@@ -36,19 +36,21 @@ AbstractGroup::AbstractGroup(H5I_type_t expectedType, hid_t handle) : Location(e
 
 hsize_t AbstractGroup::getNumObjs() const {
 	hsize_t num;
-	H5Gget_num_objs(getId(), &num);
+	assertHdf5Return(H5Gget_num_objs(getId(), &num));
 	return num;
 }
 
 std::string AbstractGroup::getObjnameByIdx(hsize_t idx) const {
 	auto id = getId();
 	return stringFromHdf5Api([id, idx](char* buf, size_t size) {
+		// TODO Deprecated in 1.8.0, replacement is H5Lget_name_by_idx()
 		return H5Gget_objname_by_idx(id, idx, buf, size);
 	});
 }
 
 H5G_obj_t AbstractGroup::getObjTypeByIdx(hsize_t idx) const {
-	return H5Gget_objtype_by_idx(getId(), idx);
+	// TODO Deprecated in 1.8.0, replacement is H5Oget_info()
+	return assertNonNegative(H5Gget_objtype_by_idx(getId(), idx));
 }
 
 Group AbstractGroup::openGroup(const std::string& name) const {

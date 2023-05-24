@@ -42,9 +42,7 @@ std::string Location::getFileName() const {
 
 bool Location::attributeExists(const std::string& name) const {
 	auto exists = H5Aexists(getId(), name.c_str());
-	if (exists < 0) {
-		throw std::runtime_error("Error on H5Aexists");
-	}
+	assertNonNegative(exists);
 	return exists > 0;
 }
 

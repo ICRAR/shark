@@ -26,27 +26,22 @@
 #ifndef SHARK_HDF5_UTILS_H
 #define SHARK_HDF5_UTILS_H
 
-// Define handy macros to detect whether we are above 1.8.11 and/or 1.10.0
-// These versions introduce some important backward-incompatible changes in the
-// C++ API that we need to be aware of if we want to support these versions
-#undef HDF5_NEWER_THAN_1_8_11
-#undef HDF5_NEWER_THAN_1_10_0
-#if HDF5_VERSION_MAJOR == 1 && \
-     (HDF5_VERSION_MINOR > 10 || \
-      (HDF5_VERSION_MINOR == 10 && HDF5_VERSION_PATCH >= 1))
-#define HDF5_NEWER_THAN_1_10_0
-#endif
-#if HDF5_VERSION_MAJOR == 1 && \
-     (HDF5_VERSION_MINOR > 8 || \
-      (HDF5_VERSION_MINOR == 8 && HDF5_VERSION_PATCH >= 12))
-#define HDF5_NEWER_THAN_1_8_11
-#endif
-
 #include <string>
 #include <stdexcept>
+#include <hdf5.h>
 
 namespace shark {
 namespace hdf5 {
+
+void assertHdf5Return(herr_t ret);
+
+template<typename T>
+T assertNonNegative(T val) {
+	if (val < 0) {
+		throw std::runtime_error("Hdf5 API call error");
+	}
+	return val;
+}
 
 /**
  * Retrieve a string from a HDF5 api call that adheres to the
@@ -65,9 +60,7 @@ namespace hdf5 {
 template<typename F>
 std::string stringFromHdf5Api(F&& f) {
 	ssize_t size = f(nullptr, 0);
-	if (size < 0) {
-		throw std::runtime_error("Failed to retrieve string size");
-	}
+	assertNonNegative(size);
 
 	// Ensure there's enough space for the null-terminator that the C API will write
 	// (even though C++11 will allocate enough for a null-terminator, it's UB to
@@ -76,9 +69,7 @@ std::string stringFromHdf5Api(F&& f) {
 	s.resize(size + 1);
 
 	size = f(&s[0], s.size());
-	if (size < 0) {
-		throw std::runtime_error("Failed to write string to buffer");
-	}
+	assertNonNegative(size);
 
 	// Now resize back down to the actual size
 	s.resize(size);

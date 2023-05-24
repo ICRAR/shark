@@ -24,12 +24,12 @@
  */
 
 #include "hdf5/data_type.h"
+#include "hdf5/utils.h"
 
 namespace shark {
 namespace hdf5 {
 
 DataType::DataType(hid_t handle) : Entity(H5I_DATATYPE, handle) {
-	// TODO check actually is datatype
 }
 
 DataType::~DataType() {
@@ -86,7 +86,7 @@ const PredefinedDataType& PredefinedDataType::NATIVE_INT64() {
 }
 
 StringDataType::StringDataType(size_t size) : DataType(H5Tcopy(PredefinedDataType::C_S1().getId())) {
-	H5Tset_size(getId(), size);
+	assertHdf5Return(H5Tset_size(getId(), size));
 }
 
 } // namespace hdf5

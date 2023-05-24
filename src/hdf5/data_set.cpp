@@ -27,15 +27,15 @@
 #include "hdf5/data_space.h"
 #include "hdf5/group.h"
 #include "hdf5/data_type.h"
+#include "hdf5/utils.h"
 
 namespace shark {
 namespace hdf5 {
 
-DataSet::DataSet(std::string name, hid_t handle) : Location(H5I_DATASET, handle), objName(std::move(name)) {}
+DataSet::DataSet(hid_t handle) : Location(H5I_DATASET, handle) {}
 
 DataSet::DataSet(const AbstractGroup& file, const std::string& name) :
-		Location(H5I_DATASET, H5Dopen(file.getId(), name.c_str(), H5P_DEFAULT)),
-		objName(name) {
+		Location(H5I_DATASET, H5Dopen2(file.getId(), name.c_str(), H5P_DEFAULT)) {
 }
 
 DataSet::~DataSet() {
@@ -44,31 +44,28 @@ DataSet::~DataSet() {
 
 DataSet DataSet::create(shark::hdf5::AbstractGroup& parent, const std::string& name, const DataType& dataType,
                         const shark::hdf5::DataSpace& dataSpace) {
-	return DataSet(name,
-	               H5Dcreate(parent.getId(), name.c_str(), dataType.getId(), dataSpace.getId(), H5P_DEFAULT,
-	                         H5P_DEFAULT, H5P_DEFAULT));
+	return DataSet(H5Dcreate2(parent.getId(), name.c_str(), dataType.getId(), dataSpace.getId(), H5P_DEFAULT,
+	                          H5P_DEFAULT, H5P_DEFAULT));
 }
 
 DataSpace DataSet::getSpace() const {
 	return DataSpace(*this);
 }
 
-const std::string& DataSet::getObjName() const {
-	return objName;
+DataType DataSet::getDataType() const {
+	return DataType(H5Dget_type(getId()));
 }
 
-hid_t DataSet::getDataType() const {
-	return H5Dget_type(getId());
+void DataSet::read(void* buf, const DataType& dataType, const DataSpace& memSpace, const DataSpace& fileSpace) const {
+	auto ret = H5Dread(getId(), dataType.getId(), memSpace.getId(), fileSpace.getId(), H5P_DEFAULT, buf);
+	assertHdf5Return(ret);
 }
 
-herr_t DataSet::read(void *buf, hid_t dataType, const DataSpace& memSpace, const DataSpace& fileSpace) const {
-	return H5Dread(getId(), dataType, memSpace.getId(), fileSpace.getId(), H5P_DEFAULT, buf);
-}
-
-herr_t
-DataSet::write(const void *buf, const DataType& memDataType, const DataSpace& memSpace, const DataSpace& fileSpace) {
-	return H5Dwrite(getId(), memDataType.getId(), memSpace.getId(), fileSpace.getId(), H5P_DEFAULT,
-	                buf);
+void
+DataSet::write(const void* buf, const DataType& memDataType, const DataSpace& memSpace, const DataSpace& fileSpace) {
+	auto ret = H5Dwrite(getId(), memDataType.getId(), memSpace.getId(), fileSpace.getId(), H5P_DEFAULT,
+	                    buf);
+	assertHdf5Return(ret);
 }
 
 } // namespace hdf5

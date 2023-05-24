@@ -31,6 +31,7 @@
 #include "hdf5/location.h"
 #include "hdf5/data_space.h"
 #include "hdf5/data_type.h"
+#include "hdf5/utils.h"
 
 namespace shark {
 namespace hdf5 {
@@ -45,20 +46,19 @@ public:
 
 	template<typename T>
 	T read() const {
-		// Need to close or leak
-		hid_t type = H5Aget_type(getId());
 		T val;
-		H5Aread(getId(), type, &val);
+		assertHdf5Return(H5Aread(getId(), getType().getId(), &val));
 		return val;
 	}
 
 	template<typename T>
 	void write(const DataType& dataType, const T& val) {
-		H5Awrite(getId(), dataType.getId(), &val);
+		assertHdf5Return(H5Awrite(getId(), dataType.getId(), &val));
 	}
 
 private:
 	explicit Attribute(hid_t handle);
+	DataType getType() const;
 };
 
 template<>

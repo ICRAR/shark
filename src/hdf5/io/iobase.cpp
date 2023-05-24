@@ -66,9 +66,7 @@ DataSpace IOBase::get_nd_dataspace(const DataSet& dataset, unsigned int expected
 	if (ndims != int(expected_ndims)) {
 		std::ostringstream os;
 		os << ndims << " dimensions found in dataset";
-#ifdef HDF5_NEWER_THAN_1_8_11
-		os << " " << dataset.getObjName();
-#endif // HDF5_NEWER_THAN_1_8_11
+		os << " " << dataset.getName();
 		os << ", " << expected_ndims << " expected";
 		throw std::runtime_error(os.str());
 	}

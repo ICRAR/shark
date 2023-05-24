@@ -20,39 +20,18 @@
 /**
  * @file
  *
- * C++ wrappers for dealing with HDF5 datasets
+ * Various utilities for interacting with the HDF5 API
  */
 
-#ifndef SHARK_HDF5_DATA_SET_H
-#define SHARK_HDF5_DATA_SET_H
-
-#include <hdf5.h>
-#include "hdf5/location.h"
+#include <stdexcept>
+#include "hdf5/utils.h"
 
 namespace shark {
 namespace hdf5 {
 
-class AbstractGroup;
-
-class DataSet : public Location {
-public:
-	DataSet(const AbstractGroup& file, const std::string& name);
-	~DataSet() override;
-
-	static DataSet
-	create(AbstractGroup& parent, const std::string& name, const DataType& dataType, const DataSpace& dataSpace);
-
-	DataType getDataType() const;
-	DataSpace getSpace() const;
-
-	void read(void* buf, const DataType& dataType, const DataSpace& memSpace, const DataSpace& fileSpace) const;
-	void write(const void* buf, const DataType& memDataType, const DataSpace& memSpace, const DataSpace& fileSpace);
-
-private:
-	explicit DataSet(hid_t handle);
-};
+void assertHdf5Return(herr_t ret) {
+	assertNonNegative(ret);
+}
 
 } // namespace hdf5
 } // namespace shark
-
-#endif //SHARK_HDF5_DATA_SET_H
