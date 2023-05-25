@@ -203,7 +203,6 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, doubl
 		else if (parameters.model == AGNFeedbackParameters::LAGOS22) {
 			// here we adopt Croton et al. (2006)
 			macc = parameters.kappa_agn * (smbh.mass / 1e8) * (fhot / 0.1) * std::pow( vvir / 200.0, 3.0);
-			//0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * 1e40 * (smbh.mass * MSOLAR_g);
 		}
 
 		// calculate new spin if necessary

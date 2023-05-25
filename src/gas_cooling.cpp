@@ -417,7 +417,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 								     
 	// Avoid values that are too large for hot halo cooling
 	if (logl > -23){
-		logl = -23.0;
+		logl = -23;
 	}
 
 	/**
@@ -513,8 +513,10 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
 
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
-		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40; //in units of 1e40erg/s.
-		double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot + mhot_ejec);
+		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40; //in units of 1e40 s/cm^3*gr^2.
+		double Lcool = constants::k_Boltzmann_erg * Tvir * 2.5  / (constants::M_Atomic_g * constants::mu_Primordial) * (coolingrate / MACCRETION_cgs_simu) / 1e40; //in units of 1e40erg/s.
+			//cooling_luminosity(logl, r_cool, Rvir, mhot);
+  	        //	constants::k_Boltzmann_erg * Tvir * 2.5  / (constants::M_Atomic_g * constants::mu_Primordial) * (coolingrate / MACCRETION_cgs_simu) / 1e40; //in units of 1e40erg/s.
 
 		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, deltat, fhot, vvir, *central_galaxy);
 
@@ -524,6 +526,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		//Mass heating rate from AGN in units of Msun/Gyr.
 		double mheatrate = 0;
 		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
+
 			// decide whether this halo is in a quasi-hydrostatic regime or not in the case of central subhalos, otherwise just take the status from the central subhalo.
 			if(subhalo.subhalo_type == Subhalo::CENTRAL) {
 				halo->hydrostatic_eq = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density_200crit, halo->Mvir, Tvir, z);
@@ -531,16 +534,13 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 			// radio mode feedback only applies in situations where there is a hot halo
 			if(halo->hydrostatic_eq){
-				double Qnet = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh) * agnfeedback->parameters.kappa_radio; //in units of 1e40erg/s.
-			       //	/
-				//		(0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
+				double Qnet = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh); //in units of 1e40erg/s.
+													    //
 				// Compare the amount of power injected by AGN with the cooling luminosity
-				central_galaxy->mheat_ratio = Qnet / Lcool;
-				// heating rate will be determined by the offset in luminosity that the AGN provides
-				mheatrate = central_galaxy->mheat_ratio * coolingrate;
+				central_galaxy->mheat_ratio = Qnet * agnfeedback->parameters.kappa_radio / Lcool;
 
-				//mheatrate = Qnet * 1e40 /
-                                //       (0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
+ 				//heating rate will be determined by the offset in luminosity that the AGN provides
+				mheatrate = central_galaxy->mheat_ratio * coolingrate;
 			}
 		}
 		else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
@@ -552,11 +552,11 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		double rheat = mheatrate/coolingrate * r_cool;
 		double r_ratio = rheat/r_cool;
 
-		// Track heating radius. Croton16 and Lagos22 assume that the heating radius only increases.
-		if(subhalo.cooling_subhalo_tracking.rheat < rheat && agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
+		// Track heating radius. Croton16 assume that the heating radius only increases, so it is saved only if it's larger than the previously recorded one.
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
 			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
-		else if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
+		else if(subhalo.cooling_subhalo_tracking.rheat < rheat && agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
 			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
 
