@@ -24,13 +24,9 @@ cmake_minimum_required(VERSION 3.2)
 # We have the version here
 file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
 
-# We have only C++ sources, but until cmake 3.4 the check_symbol_exists
-# macro didn't work properly if only defining C++ as the project language
-if (${CMAKE_VERSION} VERSION_LESS 3.4)
-	set(SHARK_LANGS C CXX)
-else()
-	set(SHARK_LANGS CXX)
-endif()
+# We have only C++ sources, but we need to allow compilation of C sources
+# so that finding the HDF5 API works correctly
+set(SHARK_LANGS C CXX)
 
 # Our project...
 project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
@@ -101,9 +97,9 @@ macro(find_hdf5)
 
 	# The CONFIG mode is needed at least when using vcpkg's hdf5
 	if (SHARK_HDF5_USE_CONFIG)
-		find_package(HDF5 REQUIRED COMPONENTS CXX CONFIG)
+		find_package(HDF5 REQUIRED COMPONENTS C CONFIG)
 	else()
-		find_package(HDF5 REQUIRED COMPONENTS CXX)
+		find_package(HDF5 REQUIRED COMPONENTS C)
 	endif()
 
 	#
@@ -161,9 +157,9 @@ macro(find_hdf5)
 	                "-DHDF5_VERSION_PATCH=${HDF5_VERSION_PATCH}")
 
 	if (SHARK_HDF5_USE_CONFIG)
-		set(SHARK_LIBS ${SHARK_LIBS} hdf5::hdf5_cpp-shared)
+		set(SHARK_LIBS ${SHARK_LIBS} hdf5::hdf5-shared)
 	else()
-		set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
+		set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_C_LIBRARIES})
 	endif()
 endmacro()
 
