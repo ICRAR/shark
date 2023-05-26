@@ -1,0 +1,40 @@
+name: Build and test
+
+# Build on every branch push, tag push, and pull request change:
+on: [push]
+
+jobs:
+  build_wheels:
+    name: Build and test shark on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install dependencies
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt install libhdf5-dev hdf5-tools libboost-filesystem-dev libboost-program-options-dev libboost-log-dev cxxtest libgsl-dev
+
+      - name: Install dependencies
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew install hdf5 boost cxxtest gsl
+
+      - name: Configure
+        # Leaving Werror out for now because there *are* errors
+        # and I don't know what the proper fix is.
+        run: cmake -B build/ -DSHARK_TEST=ON -DCMAKE_CXX_FLAGS="-Wall" #-Werror
+
+      - name: Build
+        run: cmake --build build/
+
+      - name: Run unit tests
+        run: |
+          cd build
+          ctest --output-on-failure
