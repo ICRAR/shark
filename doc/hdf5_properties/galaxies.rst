@@ -34,6 +34,7 @@
 * ``l_z``: total angular momentum component z of galaxy [Msun pMpc km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.
 * ``lambda_subhalo``: Spin parameter of the dark matter subhalo in which this galaxy resides [dimensionless].  In the case of type 2 satellites, this corresponds to the lambda its subhalo had before disappearing from the subhalo catalogs.
 * ``m_bh``: black hole mass [Msun/h]
+* ``m_bh_assembly``: black hole mass that comes from assembly (BH-BH mergers) [Msun/h]
 * ``matom_bulge``: atomic gas mass (helium plus hydrogen) in the bulge [Msun/h]
 * ``matom_disk``: atomic gas mass (helium plus hydrogen) in the disk [Msun/h]
 * ``mean_mstellar_galaxies_stellarhalo``: mass weighted stellar mass of the galaxies that contributed to building the stellar halo [Msun/h]
@@ -73,6 +74,7 @@
 * ``mvir_hosthalo``: Dark matter mass of the host halo in which this galaxy resides [Msun/h]
 * ``mvir_infall_subhalo``: Dark matter mass at infall of the host halo in which this galaxy reside when it was last central [Msun/h]
 * ``mvir_subhalo``: Dark matter mass of the subhalo in which this galaxy resides [Msun/h]. In the case of type 2 satellites, this corresponds to the mass its subhalo had before disappearing from the subhalo catalogs.
+* ``on_hydrostatic_eq``: is halo on quasi hydrostatic equilibrium (=1 for true, =0 for false).
 * ``position_x``: position component x of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
 * ``position_y``: position component y of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
 * ``position_z``: position component z of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
