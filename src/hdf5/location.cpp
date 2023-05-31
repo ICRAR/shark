@@ -40,6 +40,12 @@ std::string Location::getFileName() const {
 	});
 }
 
+void Location::setComment(const std::string& comment) {
+	if (H5Oset_comment(getId(), comment.c_str()) < 0) {
+		throw hdf5_api_error("H5Oset_comment");
+	}
+}
+
 bool Location::attributeExists(const std::string& name) const {
 	auto exists = H5Aexists(getId(), name.c_str());
 	if (exists < 0) {

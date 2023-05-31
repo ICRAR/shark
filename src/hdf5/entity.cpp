@@ -48,18 +48,13 @@ Entity::Entity(H5I_type_t expectedType, hid_t id) : id(id) {
 }
 
 Entity::Entity(const Entity& other) : id(other.id) {
-	auto ref = H5Iinc_ref(id);
-	assert(ref >= 0);
+	incrementReference();
 }
 
 Entity& Entity::operator=(const Entity& rhs) {
-	auto ref = H5Idec_ref(id);
-	assert(ref >= 0);
-
+	decrementReference();
 	id = rhs.id;
-	ref = H5Iinc_ref(id);
-	assert(ref >= 0);
-
+	incrementReference();
 	return *this;
 }
 
@@ -77,9 +72,15 @@ bool Entity::isValid() const {
 	return isValid > 0;
 }
 
-void Entity::setComment(const std::string& comment) {
-	if (H5Oset_comment(getId(), comment.c_str()) < 0) {
-		throw hdf5_api_error("H5Oset_comment");
+void Entity::incrementReference() {
+	if (H5Iinc_ref(id) < 0) {
+		throw hdf5_api_error("H5Iinc_ref");
+	}
+}
+
+void Entity::decrementReference() {
+	if (H5Idec_ref(id) < 0) {
+		throw hdf5_api_error("H5Idec_ref");
 	}
 }
 

@@ -42,15 +42,15 @@ public:
 	Entity& operator=(const Entity& rhs);
 	Entity(Entity&&) = default;
 	Entity& operator=(Entity&&) = default;
-	virtual ~Entity();
-
-	void setComment(const std::string& comment);
+	virtual ~Entity() = 0;
 
 	hid_t getId() const;
 	std::string getName() const;
 
 private:
 	bool isValid() const;
+	void incrementReference();
+	void decrementReference();
 };
 
 } // namespace hdf5

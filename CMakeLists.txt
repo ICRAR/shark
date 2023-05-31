@@ -396,7 +396,6 @@ set(SHARKLIB_SRCS
    src/hdf5/file.cpp
    src/hdf5/group.cpp
    src/hdf5/location.cpp
-   src/hdf5/utils.cpp
    src/hdf5/io/iobase.cpp
    src/hdf5/io/reader.cpp
    src/hdf5/io/traits.cpp

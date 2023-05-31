@@ -42,6 +42,7 @@ public:
 	Location(H5I_type_t expectedType, hid_t handle);
 
 	std::string getFileName() const;
+	void setComment(const std::string& comment);
 
 	bool attributeExists(const std::string& name) const;
 	Attribute openAttribute(const std::string& name) const;
