@@ -32,10 +32,9 @@
 #include <string>
 #include <type_traits>
 
-#include <H5Cpp.h>
-
 #include "utils.h"
-#include "hdf5/iobase.h"
+#include "iobase.h"
+#include "hdf5/attribute.h"
 
 namespace shark {
 
@@ -50,43 +49,37 @@ public:
 	 *
 	 * @param filename The name of the HDF5 file to read
 	 */
-	explicit Reader(const std::string &filename) :
-		IOBase(filename, H5F_ACC_RDONLY) {}
+	explicit Reader(const std::string& filename) :
+			IOBase(filename, FileOpenMethod::Read) {}
 
 	template<typename T>
-	const T read_attribute(const std::string &name) const {
-		std::string attr_name;
-		H5::Attribute attr = get_attribute(name);
-		H5::DataType type = attr.getDataType();
-		T val;
-		attr.read(type, &val);
-		attr.close();
-		return val;
+	T read_attribute(const std::string& name) const {
+		Attribute attr = get_attribute(name);
+		return attr.read<T>();
 	}
 
 	template<typename T>
-	T read_dataset(const std::string &name) const {
+	T read_dataset(const std::string& name) const {
 		return _read_dataset<T>(get_dataset(name));
 	}
 
 	template<typename T>
-	std::vector<T> read_dataset_v(const std::string &name) const {
+	std::vector<T> read_dataset_v(const std::string& name) const {
 		return _read_dataset_v<T>(get_dataset(name));
 	}
 
 	template<typename T>
-	std::vector<T> read_dataset_v_2(const std::string &name) const {
+	std::vector<T> read_dataset_v_2(const std::string& name) const {
 		return _read_dataset_v_2<T>(get_dataset(name));
 	}
 
 private:
-
-	H5::Attribute get_attribute(const std::string &name) const;
+	Attribute get_attribute(const std::string& name) const;
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, T>::type
-	_read_dataset(const H5::DataSet &dataset) const {
-		H5::DataSpace space = get_scalar_dataspace(dataset);
+	_read_dataset(const DataSet& dataset) const {
+		DataSpace space = get_scalar_dataspace(dataset);
 		T data_out;
 		dataset.read(&data_out, dataset.getDataType(), space, space);
 		return data_out;
@@ -94,9 +87,9 @@ private:
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, std::vector<T>>::type
-	_read_dataset_v(const H5::DataSet &dataset) const {
+	_read_dataset_v(const DataSet& dataset) const {
 
-		H5::DataSpace space = get_1d_dataspace(dataset);
+		DataSpace space = get_1d_dataspace(dataset);
 		hsize_t dim_size = get_1d_dimsize(space);
 
 		std::vector<T> data(dim_size);
@@ -106,11 +99,11 @@ private:
 
 	template<typename T>
 	typename std::enable_if<std::is_arithmetic<T>::value, std::vector<T>>::type
-	_read_dataset_v_2(const H5::DataSet &dataset) const {
+	_read_dataset_v_2(const DataSet& dataset) const {
 
-		H5::DataSpace space = get_2d_dataspace(dataset);
-		hsize_t dim_sizes[2];
-		space.getSimpleExtentDims(dim_sizes, nullptr);
+		DataSpace space = get_2d_dataspace(dataset);
+		auto dim_sizes = space.getSimpleExtentDims();
+		assert(dim_sizes.size() == 2);
 
 		std::vector<T> data(dim_sizes[0] * dim_sizes[1]);
 		dataset.read(data.data(), dataset.getDataType(), space, space);

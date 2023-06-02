@@ -27,101 +27,91 @@
 #include <string>
 #include <stdexcept>
 
-#include "hdf5/iobase.h"
+#include "hdf5/utils.h"
+#include "hdf5/io/iobase.h"
 #include "logging.h"
 #include "utils.h"
 
 namespace shark {
-
 namespace hdf5 {
 
-IOBase::IOBase(const std::string &filename, unsigned int flags) :
-	hdf5_file(filename, flags)
-{
-	// no-op
+IOBase::IOBase(const std::string& filename, const FileOpenMethod& openMethod) : hdf5_file(File(filename, openMethod)) {
 }
 
-IOBase::~IOBase()
-{
+IOBase::~IOBase() {
 	close();
 }
 
-void IOBase::close()
-{
-	if (!opened) {
+void IOBase::close() {
+	if (!hdf5_file.has_value()) {
 		return;
 	}
 
-	hdf5_file.close();
-	opened = false;
+	// RAII will close the file for us!
+	hdf5_file = boost::none;
 }
 
-void IOBase::open_file(const std::string &filename, unsigned int flags)
-{
-	hdf5_file = H5::H5File(filename, flags);
+void IOBase::open_file(const std::string& filename, const FileOpenMethod& openMethod) {
+	hdf5_file = File(filename, openMethod);
 }
 
-const std::string IOBase::get_filename() const
-{
-	return hdf5_file.getFileName();
+std::string IOBase::get_filename() const {
+	return hdf5_file->getFileName();
 }
 
-H5::DataSpace IOBase::get_nd_dataspace(const H5::DataSet &dataset, unsigned int expected_ndims) const
-{
-	H5::DataSpace space = dataset.getSpace();
+DataSpace IOBase::get_nd_dataspace(const DataSet& dataset, unsigned int expected_ndims) const {
+	DataSpace space = dataset.getSpace();
 	int ndims = space.getSimpleExtentNdims();
 	if (ndims != int(expected_ndims)) {
 		std::ostringstream os;
 		os << ndims << " dimensions found in dataset";
-#ifdef HDF5_NEWER_THAN_1_8_11
-		os << " " << dataset.getObjName();
-#endif // HDF5_NEWER_THAN_1_8_11
+		os << " " << dataset.getName();
 		os << ", " << expected_ndims << " expected";
 		throw std::runtime_error(os.str());
 	}
 	return space;
 }
 
-H5::DataSpace IOBase::get_scalar_dataspace(const H5::DataSet &dataset) const {
+DataSpace IOBase::get_scalar_dataspace(const DataSet& dataset) const {
 	return get_nd_dataspace(dataset, 0);
 }
 
-H5::DataSpace IOBase::get_1d_dataspace(const H5::DataSet &dataset) const {
+DataSpace IOBase::get_1d_dataspace(const DataSet& dataset) const {
 	return get_nd_dataspace(dataset, 1);
 }
 
-H5::DataSpace IOBase::get_2d_dataspace(const H5::DataSet &dataset) const {
+DataSpace IOBase::get_2d_dataspace(const DataSet& dataset) const {
 	return get_nd_dataspace(dataset, 2);
 }
 
-hsize_t IOBase::get_1d_dimsize(const H5::DataSpace &space) const {
-	hsize_t dim_size;
-	space.getSimpleExtentDims(&dim_size, nullptr);
-	return dim_size;
+hsize_t IOBase::get_1d_dimsize(const DataSpace& space) const {
+	auto dimensions = space.getSimpleExtentDims();
+	assert(dimensions.size() == 1);
+	return dimensions[0];
 }
 
-H5::DataSet IOBase::get_dataset(const std::string &name) const {
+DataSet IOBase::get_dataset(const std::string& name) const {
 
 	LOG(debug) << "Getting dataset " << name << " on file " << get_filename();
 
-	// The name might contains slashes, so we can navigate through
+	// The name might contain slashes, so we can navigate through
 	// a hierarchy of groups/datasets
 	auto parts = tokenize(name, "/");
 
 	return get_dataset(parts);
 }
 
-H5::DataSet IOBase::get_dataset(const std::vector<std::string> &path) const {
+DataSet IOBase::get_dataset(const std::vector<std::string>& path) const {
 
 	// only the attribute name, read directly and come back
-	if( path.size() == 1 ) {
-		return hdf5_file.openDataSet(path[0]);
+	if (path.size() == 1) {
+		return hdf5_file->openDataSet(path[0]);
 	}
 
 	// else there's a path to follow, go for it!
-	H5::Group group = hdf5_file.openGroup(path.front());
+	Group group = hdf5_file->openGroup(path.front());
 	std::vector<std::string> group_paths(path.begin() + 1, path.end() - 1);
-	for(auto const &path: group_paths) {
+	for (auto const& path: group_paths) {
 		LOG(debug) << "Getting dataset " << path << " on file " << get_filename();
 		group = group.openGroup(path);
 	}
@@ -130,5 +120,4 @@ H5::DataSet IOBase::get_dataset(const std::vector<std::string> &path) const {
 }
 
 }  // namespace hdf5
-
 }  // namespace shark

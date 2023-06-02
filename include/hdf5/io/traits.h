@@ -27,7 +27,9 @@
 #define SHARK_HDF5_TRAITS
 
 #include <hdf5.h>
-#include <H5Cpp.h>
+#include "hdf5/data_type.h"
+#include "hdf5/group.h"
+#include "hdf5/data_set.h"
 
 namespace shark {
 
@@ -37,7 +39,7 @@ namespace hdf5 {
 // Traits for data type conversion
 // The references are set in traits.cpp
 //
-template <typename T>
+template<typename T>
 struct datatype_traits {
 };
 
@@ -45,62 +47,62 @@ struct datatype_traits {
 // datawriting separately
 template<>
 struct datatype_traits<std::string> {
-	static const H5::PredType &write_type;
+	static const PredefinedDataType& write_type;
 };
 
 // bool doesn't need a native type because it's actually not natively supported
 // by HDF5. We instead manually convert them to int later.
 template<>
 struct datatype_traits<bool> {
-	static const H5::PredType &write_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<float> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<double> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<int> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<unsigned int> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 template<>
 struct datatype_traits<std::int64_t> {
-	static const H5::PredType &native_type;
-	static const H5::PredType &write_type;
+	static const PredefinedDataType& native_type;
+	static const PredefinedDataType& write_type;
 };
 
 //
 // Traits for HDF5 entities
 //
-template <H5G_obj_t E>
+template<H5G_obj_t E>
 struct entity_traits {
-	using rettype = void ;
+	using rettype = void;
 };
 
 template<>
 struct entity_traits<H5G_GROUP> {
-	using rettype = H5::Group;
+	using rettype = Group;
 };
 
 template<>
 struct entity_traits<H5G_DATASET> {
-	using rettype = H5::DataSet;
+	using rettype = DataSet;
 };
 
 }  // namespace hdf5

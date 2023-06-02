@@ -32,7 +32,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "hdf5/writer.h"
+#include "hdf5/io/writer.h"
 #include "config.h"
 #include "cosmology.h"
 #include "exceptions.h"

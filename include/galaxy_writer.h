@@ -39,7 +39,7 @@
 #include "cosmology.h"
 #include "dark_matter_halos.h"
 #include "execution.h"
-#include "hdf5/writer.h"
+#include "hdf5/io/writer.h"
 #include "simulation.h"
 #include "star_formation.h"
 

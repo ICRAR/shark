@@ -25,7 +25,7 @@
 
 #include "exceptions.h"
 #include "utils.h"
-#include "hdf5/reader.h"
+#include "hdf5/io/reader.h"
 #include "importer/descendants.h"
 
 namespace shark {
