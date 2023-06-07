@@ -331,19 +331,19 @@ class SMF_z0(SMF):
 
     def get_obs_x_y_err(self, h0):
 
-        lm, p, dp = self.load_observation('mf/SMF/GAMAIV_Driver22.dat', cols=[0,1,2])
-        hobs = 0.7
-        x_obs = lm + 2.0 * np.log10(hobs/h0)
-        y_obs = p - 3.0 * np.log10(hobs/h0)
-        y_dn = dp
-        y_up = dp
-
-        #lm, p, dpdn, dpup = self.load_observation('mf/SMF/SMF_Li2009.dat', cols=[0,1,2,3])
+        #lm, p, dp = self.load_observation('mf/SMF/GAMAIV_Driver22.dat', cols=[0,1,2])
         #hobs = 0.7
-        #x_obs = lm - 2.0 * np.log10(hobs) + 2.0 * np.log10(hobs/h0)
-        #y_obs = p + 3.0 * np.log10(hobs) - 3.0 * np.log10(hobs/h0)
-        #y_dn = dpdn
-        #y_up = dpup
+        #x_obs = lm + 2.0 * np.log10(hobs/h0)
+        #y_obs = p - 3.0 * np.log10(hobs/h0)
+        #y_dn = dp
+        #y_up = dp
+
+        lm, p, dpdn, dpup = self.load_observation('mf/SMF/SMF_Li2009.dat', cols=[0,1,2,3])
+        hobs = 0.7
+        x_obs = lm - 2.0 * np.log10(hobs) + 2.0 * np.log10(hobs/h0)
+        y_obs = p + 3.0 * np.log10(hobs) - 3.0 * np.log10(hobs/h0)
+        y_dn = dpdn
+        y_up = dpup
 
         return x_obs, y_obs, y_dn, y_up
 
