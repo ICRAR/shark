@@ -28,27 +28,13 @@
 
 #include <string>
 #include <vector>
+#include<boost/optional.hpp>
 
-#include <H5Cpp.h>
-
-// Define handy macros to detect whether we are above 1.8.11 and/or 1.10.0
-// These versions introduce some important backward-incompatible changes in the
-// C++ API that we need to be aware of if we want to support these versions
-#undef HDF5_NEWER_THAN_1_8_11
-#undef HDF5_NEWER_THAN_1_10_0
-#if HDF5_VERSION_MAJOR == 1 && \
-     (HDF5_VERSION_MINOR > 10 || \
-      (HDF5_VERSION_MINOR == 10 && HDF5_VERSION_PATCH >= 1))
-#define HDF5_NEWER_THAN_1_10_0
-#endif
-#if HDF5_VERSION_MAJOR == 1 && \
-     (HDF5_VERSION_MINOR > 8 || \
-      (HDF5_VERSION_MINOR == 8 && HDF5_VERSION_PATCH >= 12))
-#define HDF5_NEWER_THAN_1_8_11
-#endif
+#include "hdf5/data_set.h"
+#include "hdf5/data_space.h"
+#include "hdf5/file.h"
 
 namespace shark {
-
 namespace hdf5 {
 
 /**
@@ -57,7 +43,6 @@ namespace hdf5 {
 class IOBase {
 
 public:
-
 	/**
 	 * Creates a new IOBase instance without opening a file
 	 */
@@ -69,7 +54,7 @@ public:
 	 * @param filename The HDF5 filename
 	 * @param flags The mode in which the file will be opened
 	 */
-	IOBase(const std::string &filename, unsigned int flags);
+	IOBase(const std::string& filename, const FileOpenMethod& openMethod);
 
 	/**
 	 * Closes the file and destroys this class
@@ -85,7 +70,7 @@ public:
 	 * Returns the filename being handled by this class
 	 * @return The filename being handled by this class
 	 */
-	const std::string get_filename() const;
+	std::string get_filename() const;
 
 	/**
 	 * Opens the given file in the given mode
@@ -93,23 +78,20 @@ public:
 	 * @param filename the HDF5 filename
 	 * @param flags The mode in which the file will be opened
 	 */
-	void open_file(const std::string &filename, unsigned int flags);
+	void open_file(const std::string& filename, const FileOpenMethod& openMethod);
 
 protected:
+	DataSet get_dataset(const std::string& name) const;
+	DataSet get_dataset(const std::vector<std::string>& path) const;
+	DataSpace get_scalar_dataspace(const DataSet& dataset) const;
+	DataSpace get_1d_dataspace(const DataSet& dataset) const;
+	DataSpace get_2d_dataspace(const DataSet& dataset) const;
+	hsize_t get_1d_dimsize(const DataSpace& space) const;
 
-	H5::DataSet get_dataset(const std::string &name) const;
-	H5::DataSet get_dataset(const std::vector<std::string> &path) const;
-	H5::DataSpace get_scalar_dataspace(const H5::DataSet &dataset) const;
-	H5::DataSpace get_1d_dataspace(const H5::DataSet &dataset) const;
-	H5::DataSpace get_2d_dataspace(const H5::DataSet &dataset) const;
-	hsize_t get_1d_dimsize(const H5::DataSpace &space) const;
-
-	H5::H5File hdf5_file;
+	boost::optional<File> hdf5_file;
 
 private:
-
-	bool opened {true};
-	H5::DataSpace get_nd_dataspace(const H5::DataSet &dataset, unsigned int expected_ndims) const;
+	DataSpace get_nd_dataspace(const DataSet& dataset, unsigned int expected_ndims) const;
 };
 
 }  // namespace hdf5

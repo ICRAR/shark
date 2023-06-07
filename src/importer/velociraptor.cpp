@@ -36,7 +36,7 @@
 #include "exceptions.h"
 #include "subhalo.h"
 #include "utils.h"
-#include "hdf5/reader.h"
+#include "hdf5/io/reader.h"
 
 namespace shark {
 
