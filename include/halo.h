@@ -146,6 +146,8 @@ public:
 	float age_80 = 0;
 	/// redshift at which the halo had 50% of its mass in place
 	float age_50 = 0;
+	/// cumulative excess jet power from satellite subhalos (this is >0 only if satellite completely shut off their own cooling and have some left over jet power)
+	float excess_jetfeedback = 0;
 	/// The snapshot at which this halo is found
 	int snapshot;
 	/**

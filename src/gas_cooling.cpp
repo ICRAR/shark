@@ -365,7 +365,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	// we will compute the density of the hot gas with mhot_density, which for centrals is = mhot, but for satellites type1 is not.
 	auto mhot_density = mhot;
-	// if subhalo is a satellite, we include the gas mass that has been stripped as the assumption is that the RPS does not affected the gas density.
+	// if subhalo is a satellite, we include the gas mass that has been stripped as the assumption is that the RPS does not affected the gas density profile.
 	if(subhalo.subhalo_type == Subhalo::SATELLITE){
 		mhot_density += subhalo.hot_halo_gas_stripped.mass;
 	}
@@ -514,9 +514,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
 		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40; //in units of 1e40 s/cm^3*gr^2.
-		double Lcool = constants::k_Boltzmann_erg * Tvir * 2.5  / (constants::M_Atomic_g * constants::mu_Primordial) * (coolingrate / MACCRETION_cgs_simu) / 1e40; //in units of 1e40erg/s.
-			//cooling_luminosity(logl, r_cool, Rvir, mhot);
-  	        //	constants::k_Boltzmann_erg * Tvir * 2.5  / (constants::M_Atomic_g * constants::mu_Primordial) * (coolingrate / MACCRETION_cgs_simu) / 1e40; //in units of 1e40erg/s.
+		double Lcool = cooling_luminosity(logl, r_cool, Rvir, mhot);
 
 		central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh(Lpseudo_cool, deltat, fhot, vvir, *central_galaxy);
 
@@ -530,14 +528,25 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 			// decide whether this halo is in a quasi-hydrostatic regime or not in the case of central subhalos, otherwise just take the status from the central subhalo.
 			if(subhalo.subhalo_type == Subhalo::CENTRAL) {
 				halo->hydrostatic_eq = quasi_hydrostatic_halo(mhot_density, std::pow(10.0,logl), nh_density_200crit, halo->Mvir, Tvir, z);
-			} 
+			}
+			else{
+				//In the case of the subhalo being a satellite subhalo, check if the host halo is already in hydrostatic equilibrium or if it's massive (in which case it should be in hydrostatic eq).
+				if(halo->hydrostatic_eq || halo->Mvir > 3e12){
+					halo->hydrostatic_eq = true;
+				}
+			}	
 
 			// radio mode feedback only applies in situations where there is a hot halo
 			if(halo->hydrostatic_eq){
-				double Qnet = agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh); //in units of 1e40erg/s.
-													    //
+				double Qnet = agnfeedback->parameters.kappa_radio * agnfeedback->agn_mechanical_luminosity(central_galaxy->smbh); //in units of 1e40erg/s.
+													   
+				// If this is a central subhalo, then add up any excess jet feedback from satellite galaxies and then make excess equal 0.
+				if(subhalo.subhalo_type == Subhalo::CENTRAL) {
+					Qnet += halo->excess_jetfeedback;
+					halo->excess_jetfeedback = 0;
+				}
 				// Compare the amount of power injected by AGN with the cooling luminosity
-				central_galaxy->mheat_ratio = Qnet * agnfeedback->parameters.kappa_radio / Lcool;
+				central_galaxy->mheat_ratio = Qnet / Lcool;
 
  				//heating rate will be determined by the offset in luminosity that the AGN provides
 				mheatrate = central_galaxy->mheat_ratio * coolingrate;
@@ -563,10 +572,17 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
 		if(r_ratio > agnfeedback->parameters.alpha_cool){
+			//if the subhalo is a satellite and the AGN feedback experienced is enough to completely switch off cooling in that satellite, save the excess jet power in the halo to be used 
+			//by the central galaxy to make work.
+			if (subhalo.subhalo_type == Subhalo::SATELLITE){
+				halo->excess_jetfeedback += (central_galaxy->mheat_ratio - 1) * Lcool; //saved in 1e40erg/s
+			}
+
 			r_ratio = 1;
 			//Redefine mheatrate and macc_h accordingly.
 			mheatrate = r_ratio * coolingrate;
 			central_galaxy->smbh.macc_hh = agnfeedback->accretion_rate_hothalo_smbh_limit(mheatrate, vvir, central_galaxy->smbh);
+
 		}
 
 		//modify cooling rate according to heating rate.

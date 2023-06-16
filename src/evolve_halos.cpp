@@ -51,8 +51,11 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 		descendant->star_central_infall.mass_metals = main_galaxy->stellar_mass_metals();
 		//if subhalo will become a satellite subhalo then transfer the stellar_halo.
 		descendant->host_halo->central_subhalo->stellar_halo += parent->stellar_halo;
+		//if subhalo will become a satellite subhalo then transfer excess jet power.
+		descendant->host_halo->excess_jetfeedback += parent->host_halo->excess_jetfeedback;
 		descendant->host_halo->central_subhalo->mean_galaxy_making_stellar_halo += parent->mean_galaxy_making_stellar_halo;
 		parent->stellar_halo.restore_baryon();
+		parent->host_halo->excess_jetfeedback = 0;
 		parent->mean_galaxy_making_stellar_halo = 0;
 	}
 
@@ -148,10 +151,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			if (subhalo->main_progenitor) {
 				descendant_subhalo->host_halo->hydrostatic_eq = subhalo->host_halo->hydrostatic_eq;
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
-				//check mass of host halo in the next snapshot and set hydrostatic floor for the most massive ones
-				if (descendant_subhalo->host_halo->Mvir > 5e12){
-					descendant_subhalo->host_halo->hydrostatic_eq = true;
-				}
 			}
 		}
 	}

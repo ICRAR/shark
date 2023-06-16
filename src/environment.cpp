@@ -70,9 +70,8 @@ Environment::Environment(const EnvironmentParameters &parameters,
 
 void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subhalo, SubhaloPtr &central_subhalo, double z){
 
-	// Ejected gas is moved to the budget of ejected gas of the central, as this gas escaped
-	// the subhalo of the satellite. This is always the case.
-	//central_subhalo.ejected_galaxy_gas += satellite_subhalo.ejected_galaxy_gas;
+	// Ejected gas of the satellite subhalo is moved to the lost galaxy gas of the central. This is because Wright et al. (2020) found that 
+	// the ejected gas of halos that become satellites make a negligible contribution to the gas accretion of halos.
 	central_subhalo->lost_galaxy_gas += satellite_subhalo.lost_galaxy_gas + satellite_subhalo.ejected_galaxy_gas;
 	central_subhalo->stellar_halo += satellite_subhalo.stellar_halo;
 	central_subhalo->mean_galaxy_making_stellar_halo += satellite_subhalo.mean_galaxy_making_stellar_halo;
