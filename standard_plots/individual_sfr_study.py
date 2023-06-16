@@ -68,8 +68,11 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
     xtit="$\\rm LBT/Gyr$"
     ytit="$\\rm log_{10}(SFR/M_{\odot} yr^{-1})$"
 
-    xmin, xmax, ymin, ymax = 0, 13.6, -3.2, 3.5
-    xleg = xmin + 0.1 * (xmax-xmin)
+    xmin = 0
+    if(redshift == '2'):
+        xmin=10.35
+    xmax, ymin, ymax = 13.6, -3.2, 3.5
+    xleg = xmax + 0.025 * (xmax-xmin)
     yleg = ymax - 0.07 * (ymax-ymin)
 
     fig = plt.figure(figsize=(6.5,5))
@@ -78,10 +81,12 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
     colors = ('Navy','Blue','RoyalBlue','SkyBlue','Teal','DarkTurquoise','Aquamarine','Yellow', 'Gold',  'Orange','OrangeRed', 'LightSalmon', 'Crimson', 'Red', 'DarkRed')
 
     ax = fig.add_subplot(111)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(2, 2, 1, 1))
-    ax.text(13.9,2.5,'$\\rm log_{10}(M_{\\star}/M_{\\odot})$', fontsize=12)
+    if(redshift == '0'):
+       common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(2, 2, 1, 1))
+    if(redshift == '2'):
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.5, 0.5, 1, 1))
+    ax.text(xleg,yleg,'$\\rm log_{10}(M_{\\star}/M_{\\odot})$', fontsize=12)
 
-    print(np.log10(max(gal_props_z0[:,1])))
     N_max = 25
     for j in range(0,len(mbins)-1):
         ind = np.where((gal_props_z0[:,1] > 10**mbins[j]) & (gal_props_z0[:,1] < 10**mbins[j+1]) & (gal_props_z0[:,4] == 0))
@@ -92,20 +97,22 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
            age_selec     = gal_props_z0[ind,0]
            typesg        = gal_props_z0[ind,4]
            numgals = len(age_selec[0])
-           if(numgals >= 10):
+           if(numgals >= 30):
+              print("Stellar mass bin", mbins[j], " has ", numgals, " galaxies") 
               SFH_med = np.zeros(shape = (3,len(LBT)))
               for snap in range(0,len(LBT)):
                   SFH_med[0,snap] = np.median(tot_sfh_selec[:,snap])
                   SFH_med[1,snap] = np.percentile(tot_sfh_selec[:,snap],16)
                   SFH_med[2,snap] = np.percentile(tot_sfh_selec[:,snap],84)
-                  print(SFH_med[:,snap])
                   if(SFH_med[0,snap] < 0.001):
                      SFH_med[0,snap] = 0.001
                      SFH_med[1,snap] = 0.001 - 0.001*0.2
                      SFH_med[2,snap] = 0.001 + 0.001*0.2
-              print(SFH_med[:,snap])
               ax.fill_between(LBT,np.log10(SFH_med[1,:]),np.log10(SFH_med[2,:]), facecolor=colors[j], alpha=0.5, interpolate=True)
               ax.plot(LBT,np.log10(SFH_med[0,:]), color=colors[j], linewidth=3, label='%s' % str(mbins[j]+0.125))
+              #if(j == len(mbins)-4):
+              #     for g in range(0,numgals):
+              #         ax.plot(LBT, np.log10(tot_sfh_selec[g,:]), linewidth=1, color=colors[j])
 
            #nloop = numgals
            #if(numgals > N_max):
@@ -145,11 +152,11 @@ def prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq):
               ind = np.where((typeg == 0) & (on_hydrostatic_eq == 1) & (mhalo/h0 > 10**(m-dm/2.0)) & (mhalo/h0 < 10**(m+dm/2.0)))
               n_hydro = len(typeg[ind])
               f_q[index,i] = (n_hydro + 0.0) / (n_all + 0.0)
-           print(m, n_hydro, n_all)
+           #print(m, n_hydro, n_all)
    
    
        ind =np.where((typeg == 0) & (mhalo > 1e14))
-       print("massive halos", (on_hydrostatic_eq[ind]))
+       #print("massive halos", (on_hydrostatic_eq[ind]))
 
     (bulge_diskins_hist, bulge_mergers_hist, disk_hist) = sfh
 
@@ -162,15 +169,15 @@ def prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq):
   
     if(read_hydroeq):
        ind = np.where((mdisk + mbulge > 10**11.0) & (sfr_tot < 10) & (typeg == 0))
-       print(np.median(np.log10(mbh[ind])), np.median((mhot[ind]+mreheated[ind])/mhalo[ind]), np.median(mbulge[ind]/(mdisk[ind]+mbulge[ind])), np.median(np.log10(mbh[ind]/mbulge[ind])), np.median(np.log10(mhalo[ind])), np.median(on_hydrostatic_eq[ind]))
+       #print(np.median(np.log10(mbh[ind])), np.median((mhot[ind]+mreheated[ind])/mhalo[ind]), np.median(mbulge[ind]/(mdisk[ind]+mbulge[ind])), np.median(np.log10(mbh[ind]/mbulge[ind])), np.median(np.log10(mhalo[ind])), np.median(on_hydrostatic_eq[ind]))
        Nlow = len(sfr_tot[ind])
    
        ind = np.where((mdisk + mbulge > 10**11.0) & (sfr_tot > 10) & (typeg == 0))
-       print(np.median(np.log10(mbh[ind])), np.median((mhot[ind]+mreheated[ind])/mhalo[ind]), np.median(mbulge[ind]/(mdisk[ind]+mbulge[ind])), np.median(np.log10(mbh[ind]/mbulge[ind])), np.median(np.log10(mhalo[ind])), np.median(on_hydrostatic_eq[ind]))
+       #print(np.median(np.log10(mbh[ind])), np.median((mhot[ind]+mreheated[ind])/mhalo[ind]), np.median(mbulge[ind]/(mdisk[ind]+mbulge[ind])), np.median(np.log10(mbh[ind]/mbulge[ind])), np.median(np.log10(mhalo[ind])), np.median(on_hydrostatic_eq[ind]))
    
        Nhigh = len(sfr_tot[ind])
    
-       print("Fraction low over total", (Nlow+0.0)/(Nlow+Nhigh))
+       #print("Fraction low over total", (Nlow+0.0)/(Nlow+Nhigh))
     #components:
     #(len(my_data), 2, 2, 5, nbands)
     #0: disk instability bulge
@@ -204,7 +211,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     Variable_Ext = True
     file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
-    read_hydroeq = True
+    read_hydroeq = False
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
@@ -224,7 +231,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
                   'bulges_mergers': ('star_formation_rate_histories'),
                   'disks': ('star_formation_rate_histories')}
 
-    z = (0, 0) #0.5, 1, 1.5, 2, 3)
+    z = (0, 2) #0.5, 1, 1.5, 2, 3)
     snapshots = redshift_table[z]
 
     f_q = np.zeros(shape = (len(z), len(xmf)))

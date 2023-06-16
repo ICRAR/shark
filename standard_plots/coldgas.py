@@ -28,7 +28,7 @@ import utilities_statistics as us
 # Constants
 mlow = 6.0
 mupp = 12.0
-dm = 0.2
+dm = 0.5
 mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
@@ -40,7 +40,7 @@ xsf = sbins + ds/2.0
 
 sflow = -13.0
 sfupp = -8.0
-dsf = 0.2
+dsf = 0.5
 sfbins = np.arange(sflow, sfupp, dsf)
 xssfr = sfbins + dsf/2.0
 
@@ -455,6 +455,39 @@ def plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos, mh
     plt.tight_layout()
     common.savefig(output_dir, fig, "HI_stacking_satellites_ssfr.pdf")
 
+
+    def plot_lagos18_HIstacking_relativediff(ax, mass_bin=1, mass=True, color='k'):
+        if(mass == False):
+            m, reldiff = common.load_observation(obs_dir, 'Models/SharkVariations/HIStackingSatellite_SSFR_RelativeDiff.dat', (0, 1))
+            if(mass_bin == 1):
+                i_i = 0
+                i_f = 9 
+            elif(mass_bin == 2):
+                i_i = 9
+                i_f = 19
+            elif(mass_bin == 3):
+                i_i = 19
+                i_f = 29
+            elif(mass_bin == 4):
+                i_i=29
+                i_f=39
+        else:
+            m, reldiff = common.load_observation(obs_dir, 'Models/SharkVariations/HIStackingSatellite_Mstar_RelativeDiff.dat', (0, 1))
+            if(mass_bin == 1):
+                i_i = 0
+                i_f = 4 
+            elif(mass_bin == 2):
+                i_i = 4
+                i_f = 9
+            elif(mass_bin == 3):
+                i_i = 9
+                i_f = 15
+            elif(mass_bin == 4):
+                i_i=15
+                i_f=21
+        ax.plot(m[i_i:i_f], reldiff[i_i:i_f], linestyle='dashed', color=color)
+
+
     ###################################
     #   Plots global mass densities
     fig = plt.figure(figsize=(5,4.5))
@@ -467,15 +500,17 @@ def plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos, mh
 
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
-    common.prepare_ax(ax, 9, 12, -1, 1, xtit, ytit, locators=(0.5, 0.5, 0.2, 0.2))
+    common.prepare_ax(ax, 9, 12, -1, 0.7, xtit, ytit, locators=(0.5, 0.5, 0.2, 0.2))
 
     for i, lab in enumerate(labels):
         if(i >= 1):
            plot_obs_brown17(ax, bin_mass= i, mass=True, lab = False, delta=True, color=colors[i])
+           plot_lagos18_HIstacking_relativediff(ax, mass_bin=i, mass=True, color=colors[i])
            ind = np.where((mh1_relation_satellites_halos[0,i,1,:] != 0) & (np.isinf(mh1_relation_satellites_halos[0,i,1,:]) == False))
            xplot = mh1_relation_satellites_halos[0,i,0,ind] 
            yplot = mh1_relation_satellites_halos[0,i,1,ind] - mh1_relation_satellites_halos[0,0,1,ind]
            ax.plot(xplot[0],yplot[0],color=colors[i], linestyle='solid', label=labels[i])
+
            #ind = np.where((mh1_relation_satellites_halos[1,i,1,:] != 0) & (np.isinf(mh1_relation_satellites_halos[1,i,1,:]) == False))
            #xplot = mh1_relation_satellites_halos[1,i,0,ind]
            #yplot = mh1_relation_satellites_halos[1,i,1,ind] - mh1_relation_satellites_halos[1,0,1,ind]
@@ -499,6 +534,7 @@ def plot_HI_stacking(plt, output_dir, obs_dir, mh1_relation_satellites_halos, mh
     for i, lab in enumerate(labels):
         if(i >= 1):
            plot_obs_brown17(ax, bin_mass= i, mass=False, lab = False, delta=True, color=colors[i])
+           plot_lagos18_HIstacking_relativediff(ax, mass_bin=i, mass=False, color=colors[i])
            ind = np.where((mh1_relation_ssfr_satellites_halos[0,i,1,:] != 0) & (np.isinf(mh1_relation_ssfr_satellites_halos[0,i,1,:]) == False))
            xplot = mh1_relation_ssfr_satellites_halos[0,i,0,ind] 
            yplot = mh1_relation_ssfr_satellites_halos[0,i,1,ind] - mh1_relation_ssfr_satellites_halos[0,0,1,ind]

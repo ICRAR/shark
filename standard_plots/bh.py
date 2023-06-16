@@ -27,7 +27,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0,  0.5,  1, 1.5,  3, 4, 6)
+zlist = (0,  0.5,  1, 1.5,  2, 3, 4, 6)
 
 ##################################
 #Constants
@@ -37,7 +37,7 @@ G        = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
 
 mlow = 4.5
 mupp = 12.5
-dm = 0.2
+dm = 0.25
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
 
@@ -62,7 +62,10 @@ def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR,
        (h0, _, mbh, mdot_hh, mdot_sb, sfr_disk, sfr_burst, mdisk, mbulge, typeg) = hdf5_data
 
     print(np.log10(max(mbh)/h0))
-    bin_it   = functools.partial(us.wmedians, xbins=xmf)
+    ind = np.where(mbh/h0 > 1e8)
+    print("Number of galaxies with BH mass > 1e8Msun:", len(mbh[ind]), " at redshift", zlist[index])
+
+    bin_it   = functools.partial(us.wmedians, xbins=xmf, nmin=5)
     bin_it_mdot = functools.partial(us.wmedians, xbins=xmdotf)
 
     if(read_spin == True):
@@ -94,7 +97,7 @@ def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR,
     ind = np.where(ssfr < 1e-14)
     ssfr[ind] = 2e-14
 
-    ind = np.where((mbh > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 3e8) & (typeg <= 0))
+    ind = np.where((mbh > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 1e9) & (typeg <= 0))
     BHSFR[index,:] = bin_it(x=np.log10(mbh[ind]) - np.log10(float(h0)),
                             y=np.log10(ssfr[ind]))
 
@@ -235,6 +238,7 @@ def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
     common.savefig(outdir, fig, 'macc-BH.pdf')
 
 
+    cols= ('Indigo','Navy','DarkTurquoise', 'Aquamarine', 'PaleGreen', 'Gold','Orange','red') 
 
     #SSFR vs BH mass
     fig = plt.figure(figsize=(5,4.5))
