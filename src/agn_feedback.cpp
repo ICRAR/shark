@@ -328,8 +328,10 @@ double AGNFeedback::smbh_growth_starburst(double mgas, double vvir, double tacc,
 
 	auto &smbh = galaxy.smbh;
 
+	float TOL = 0.99;
+
 	// Grow supermassive BH only if above the black hole seed (avoid formation of low BH masses without seeds).
-        if(smbh.mass > parameters.mseed){
+        if(smbh.mass >= TOL * parameters.mseed){
 		if(mgas > 0){
 			m =  parameters.f_smbh * mgas / (1 + std::pow(parameters.v_smbh/vvir, 2.0));
 		}
