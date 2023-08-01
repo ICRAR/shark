@@ -1142,6 +1142,8 @@ void HDF5GalaxyWriter::write_sf_histories (int snapshot, const std::vector<HaloP
 
 	if(exec_params.output_sf_histories){
 		if(std::find(exec_params.snapshots_sf_histories.begin(), exec_params.snapshots_sf_histories.end(), snapshot) != exec_params.snapshots_sf_histories.end()){
+
+			Timer sfh_writer_timer;
 			hdf5::Writer file_sfh(get_output_directory(snapshot) + "/star_formation_histories.hdf5");
 
 			//Create the vectors that will save the information of the galaxies
@@ -1307,6 +1309,7 @@ void HDF5GalaxyWriter::write_sf_histories (int snapshot, const std::vector<HaloP
 			comment = "Time interval covered between snapshots [Gyr]";
 			file_sfh.write_dataset("delta_t", delta_t, comment);
 
+			LOG(info) << "Galaxies SFH data written in " << sfh_writer_timer;
 		}
 
 	}
