@@ -55,7 +55,7 @@ xv    = vbins + dv/2.0
 def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                  disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, 
                  disk_vel, BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, 
-                 bs_error, BHSFR, BH_morpho, BHSM_morpho):
+                 bs_error, BHSFR, BH_morpho, BHSM_morpho, age_stellar_mass):
 
     (h0, _, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
@@ -77,12 +77,16 @@ def prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_merg
             specific_angular_momentum_bulge_star[zero_bulge] = 1.0
             mbulge[zero_bulge] = 10.0
 
-    bin_it   = functools.partial(us.wmedians, xbins=xmf)
+    bin_it   = functools.partial(us.wmedians, xbins=xmf, nmin=8)
     bin_it_v = functools.partial(us.wmedians, xbins=xv)
 
     vdisk = specific_angular_momentum_disk_star / rdisk / 2.0  #in km/s
     vbulge = specific_angular_momentum_bulge_star / rbulge / 2.0 #in km/s
-   
+ 
+    ind = np.where(mdisk+mbulge > 0)
+    age_stellar_mass[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+            y=age[ind])
+
     ind = np.where(mdisk+mbulge > 0)
     rcomb[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                             y=np.log10((mdisk[ind]*rdisk[ind]  + mbulge[ind]*rbulge[ind])*MpcToKpc / (mdisk[ind]+mbulge[ind]))- np.log10(float(h0)))
@@ -510,14 +514,14 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR, BH_morpho, BHSM_morpho):
     yplot = BHSM[0,0,ind]
     errdn = BHSM[0,1,ind]
     errup = BHSM[0,2,ind]
-    ax.plot(xplot,yplot[0],color='k',label="Shark (All)")
+    ax.plot(xplot,yplot[0],color='k',label="Shark v2.0 (All)")
     ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
     ind = np.where(BHSM_morpho[0,0,0,:] != 0)
     xplot = xmf[ind]
     yplot = BHSM_morpho[0,0,0,ind]
     errdn = BHSM_morpho[0,0,1,ind]
     errup = BHSM_morpho[0,0,2,ind]
-    ax.plot(xplot,yplot[0],color='Crimson',label="Shark (ETGs)")
+    ax.plot(xplot,yplot[0],color='Crimson',label="Shark v2.0 (ETGs)")
     ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='Crimson', alpha=0.25, interpolate=True)
 
     ind = np.where(BHSM_morpho[0,1,0,:] != 0)
@@ -525,8 +529,15 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR, BH_morpho, BHSM_morpho):
     yplot = BHSM_morpho[0,1,0,ind]
     errdn = BHSM_morpho[0,1,1,ind]
     errup = BHSM_morpho[0,1,2,ind]
-    ax.plot(xplot,yplot[0],color='Navy',label="Shark (LTGs)")
+    ax.plot(xplot,yplot[0],color='Navy',label="Shark v2.0 (LTGs)")
     ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='Navy', alpha=0.25, interpolate=True)
+
+    msL18, bhL18_ETGs, bhL18_LTGs = common.load_observation(obsdir, 'Models/SharkVariations/StellarMassBHMass_L18.dat', [0,1,2])
+    ind = np.where(bhL18_ETGs > 0)
+    ax.plot(msL18[ind], bhL18_ETGs[ind], color='Crimson', linestyle='dashed', label="Shark v1.1 (ETGs)")
+    ind = np.where(bhL18_LTGs > 0)
+    ax.plot(msL18[ind], bhL18_LTGs[ind], color='Navy', linestyle='dashed', label="Shark v1.1 (LTGs)")
+
 
     ind = np.where((mBH_S19 != 0) & (mgal_S19 != 0))
     ax.errorbar(mgal_S19[ind], mBH_S19[ind], xerr=errgal_S19[ind], yerr=errbh_S19[ind], ls='None', mfc='None', ecolor = 'Orange', mec='Orange',marker='d',label="S19 (ETGs)")
@@ -539,7 +550,7 @@ def plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR, BH_morpho, BHSM_morpho):
     ind=np.where(sfr-ms <= -11.5)
     ax.errorbar(ms[ind], mbh[ind], yerr=mbherr[ind], xerr=0.2, ls='None', mfc='None', ecolor = 'LightSalmon', mec='LightSalmon',marker='s',label="T17 (P)")
 
-    common.prepare_legend(ax, ['k','crimson','navy', 'Orange', 'b', 'PowderBlue','LightSalmon'], loc=2)
+    common.prepare_legend(ax, ['k','crimson','navy', 'crimson','navy', 'Orange', 'b', 'PowderBlue','LightSalmon'], loc=2)
     common.savefig(outdir, fig, 'stellarmass-BH.pdf')
 
     #SSFR vs BH mass
@@ -677,6 +688,32 @@ def plot_age_disk(plt, outdir, obsdir, mdisk_z0, rdisk_z0, age_z0):
 
     common.savefig(outdir, fig, 'age_disks.pdf')
 
+def plot_age_stellar_mass(plt, outdir, obsdir, age_stellar_mass):
+
+
+    fig = plt.figure(figsize=(5,4.5))
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit = "$\\rm t_{\\star}/Gyr$"
+    xmin, xmax, ymin, ymax = 8, 12, 0, 14
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    ind = np.where(age_stellar_mass[0,0,:] != 0)
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = age_stellar_mass[0,0,ind]
+        errdn = age_stellar_mass[0,1,ind]
+        errup = age_stellar_mass[0,2,ind]
+        ax.plot(xplot,yplot[0],color='red',lw=3.5,label="Shark v2.0")
+        ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5, interpolate=True)
+   
+
+    common.savefig(outdir, fig, 'age_stellar_mass_z0.pdf')
+
+
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
@@ -712,14 +749,16 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     disk_vel =  np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_vel =  np.zeros(shape = (len(zlist), 3, len(xmf)))
     baryonic_TF =  np.zeros(shape = (len(zlist), 3, len(xv))) 
-  
+    age_stellar_mass = np.zeros(shape = (len(zlist), 3, len(xmf)))
+
     bs_error = np.zeros(shape = (len(zlist), len(xmf))) 
     
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         (mdisk, rdisk, age) = prepare_data(hdf5_data, index, rcomb, disk_size, bulge_size, bulge_size_mergers, bulge_size_diskins, BH,
                      disk_size_sat, disk_size_cen, BT_fractions, BT_fractions_nodiskins, bulge_vel, disk_vel, 
-                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR, BH_morpho, BHSM_morpho)
+                     BT_fractions_centrals, BT_fractions_satellites, baryonic_TF, BHSM, xmf, xv, bs_error, BHSFR, BH_morpho, BHSM_morpho, 
+                     age_stellar_mass)
         if(index == 0):
            mdisk_z0 = mdisk
            rdisk_z0 = rdisk
@@ -731,6 +770,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_bulge_BH(plt, outdir, obsdir, BH, BHSM, BHSFR, BH_morpho, BHSM_morpho)
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_nodiskins, BT_fractions_centrals, BT_fractions_satellites)
     plot_age_disk(plt, outdir, obsdir, mdisk_z0, rdisk_z0, age_z0)
+    plot_age_stellar_mass(plt, outdir, obsdir, age_stellar_mass)
 
 if __name__ == '__main__':
     main(*common.parse_args())

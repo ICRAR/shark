@@ -102,8 +102,15 @@ def load_lf_obs(obsdir):
     
     return(H07_LF,S09_LF,T22_LF)
 
-def prepare_data(hdf5_data, snapshot):
-    (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb, BH_spin) = hdf5_data
+def prepare_data(hdf5_data, snapshot, read_spin):
+
+    if(read_spin):
+       (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb, BH_spin) = hdf5_data
+    else:
+        (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb) = hdf5_data
+        BH_spin = np.zeros(shape = len(MBH))
+        BH_spin[:] = 0.68
+
     vol = volh/pow(h0,3.)
 
     MBH = MBH.astype('float64') / h0
@@ -130,7 +137,7 @@ def prepare_data(hdf5_data, snapshot):
     
     #Efficiency
     r_lso,acc_eff=acc_eff_calc(BH_spin)
-    
+
     #Eddington luminosity
     L_Edd=4*np.pi*c_light*G*M_sun*M_atom*H_atom_mass/(sigma_Thomson*1e40)
     L_Edd*=MBH*J2erg
@@ -157,7 +164,7 @@ def prepare_data(hdf5_data, snapshot):
     #Correcting for super Eddington
     SE=TD&(m_dot>eta_superEdd*(0.1/acc_eff))
     L_bol[SE]=eta_superEdd*(1+np.log((m_dot[SE]/eta_superEdd)*(acc_eff[SE]/0.1)))*L_Edd[SE]
-    
+ 
     L_bol=np.where(L_bol>0,np.log10(L_bol)+40,np.nan)
     ind=np.where(L_bol > 0)
  
@@ -178,8 +185,8 @@ def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
 
     #spec=gs.GridSpec(nrows=4,ncols=3,figure=fig,wspace=0,hspace=0,left=0.08,right=0.99,bottom=0.13,top=0.99)
     #fax=[fig.add_subplot(spec[i,j]) for i in range(4) for j in range(3)]
-    xlab='$\Phi(L^{}_\mathrm{QSO})$ [dex$^{-1}$Mpc$^{-3}$]'
-    ylab='$L^{}_\mathrm{QSO}$ [erg s$^{-1}$]'
+    ylab='$\Phi(L^{}_\mathrm{QSO})$ [dex$^{-1}$Mpc$^{-3}$]'
+    xlab='$L^{}_\mathrm{QSO}$ [erg s$^{-1}$]'
     LFlow,LFupp=[3e-7,5e-3]
     
     H07_LF,S09_LF,T22_LF=load_lf_obs(obsdir)
@@ -222,12 +229,17 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plt = common.load_matplotlib()
     
     LF_qso = np.zeros(shape = (len(zlist), len(Lbins)))
-    
-    fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'bh_spin')}
+   
+    read_spin = False
+
+    if(read_spin):
+        fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'bh_spin')}
+    else:
+        fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
     
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        LF_qso[index,:] = prepare_data(hdf5_data, snapshot)
+        LF_qso[index,:] = prepare_data(hdf5_data, snapshot, read_spin)
     
     plot_lf_qso_z(plt, outdir, obsdir, LF_qso) 
     

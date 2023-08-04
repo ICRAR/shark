@@ -380,7 +380,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
 
     common.prepare_ax(ax, 0, 10, -3, -0.5, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
-    #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
+    #Madau & Dickinson 2014
     reddnM14, redupM14, sfrM14, sfrM14errup, sfrM14errdn = common.load_observation(obsdir, 'Global/SFRD_Madau14.dat', [0,1,2,3,4])
     #authors assume a Salpeter IMF, so a correction of np.log10(0.63) is necessary.
     sfrM14errdn = abs(sfrM14errdn)
@@ -388,16 +388,22 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     sfrM14 = sfrM14 + np.log10(pow(hobs/h0, 2.0)) + np.log10(0.63)
     ax.errorbar((reddnM14 + redupM14) / 2.0, sfrM14, xerr=abs(redupM14-reddnM14)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5)
 
-    #Driver (Chabrier IMF), ['Baldry+2012, z<0.06']
-    redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_sfr.dat', [0,1,2,3,4,5,6])
+    #D'Silva+23 (Chabrier IMF)
+    sfrD23, sfrD23errup, sfrD23errdn, zD23, zD23errup, zD23errdn = common.load_observation(obsdir, 'Global/DSilva23_sfr.dat', [0,1,2,3,4,5])
+
+    #Adams23 (Chabrier IMF)
+    zA23, sfrA23, sfrA23errdn, sfrA23errup = common.load_observation(obsdir, 'Global/Adams23_CSFRDCompilation.dat', [0,1,2,3])
+    sfrA23errdn = sfrA23 - sfrA23errdn #make them relative errors
+    sfrA23errup = sfrA23errup - sfrA23
+    hobs = 0.7
+    yobsA23 = sfrA23 + np.log10(hobs/h0)
+    ax.errorbar(zA23, yobsA23, yerr=[sfrA23errdn, sfrA23errup], ls='None', mfc='None', ecolor = 'darkgreen', mec='darkgreen',marker='s')
+
 
 
     hobs = 0.7
-    xobsD17 = (redD17d+redD17u)/2.0
-    yobsD17 = sfrD17 + np.log10(hobs/h0)
-
-    errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
-    ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o')
+    yobsD23 = sfrD23 + np.log10(hobs/h0)
+    ax.errorbar(zD23, yobsD23, xerr=[zD23errdn, zD23errup], yerr=[sfrD23errdn, sfrD23errup], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o')
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfr > 0)
@@ -433,7 +439,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     lbtdown = us.look_back_time(reddnM14)
     lbtup = us.look_back_time(redupM14)
     ax.errorbar(us.look_back_time((reddnM14 + redupM14) / 2.0), sfrM14, xerr=abs(lbtdown-lbtup)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5, label='Madau+14')
-    ax.errorbar(us.look_back_time(xobsD17), yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label="Driver+18")
+    ax.errorbar(us.look_back_time(zD23), yobsD23, yerr=[sfrD23errdn, sfrD23errup], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label="D'Silva+23")
 
     ind = np.where(sfr > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), 'k',  linewidth=1)
@@ -516,7 +522,8 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     ax = fig.add_subplot(111)
     plt.subplots_adjust(left=0.15)
 
-    common.prepare_ax(ax, 0, 10, -3, -0.3, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 15, -6, -0.3, xtit, ytit, locators=(1, 1, 1, 1))
+    #plt.xscale('log')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     reddnM14, redupM14, sfrM14, sfrM14errup, sfrM14errdn = common.load_observation(obsdir, 'Global/SFRD_Madau14.dat', [0,1,2,3,4])
@@ -526,32 +533,9 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     sfrM14 = sfrM14 + np.log10(pow(hobs/h0, 2.0)) + np.log10(0.63)
     ax.errorbar((reddnM14 + redupM14) / 2.0, sfrM14, xerr=abs(redupM14-reddnM14)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5, label='Madau+14')
 
-    #Driver (Chabrier IMF), ['Baldry+2012, z<0.06']
-    redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_sfr.dat', [0,1,2,3,4,5,6])
+    ax.errorbar(zD23, yobsD23, xerr=[zD23errdn, zD23errup], yerr=[sfrD23errdn, sfrD23errup], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label ='D\'Silva+23')
+    ax.errorbar(zA23, yobsA23, yerr=[sfrA23errdn, sfrA23errup], ls='None', mfc='None', ecolor = 'darkgreen', mec='darkgreen',marker='s', label = 'Adams+23')
 
-
-    hobs = 0.7
-    xobsD17 = (redD17d+redD17u)/2.0
-    yobsD17 = sfrD17 + np.log10(hobs/h0)
-
-    errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
-    ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label='Driver+18')
-
-    zdnW22, zupW22, rhoW22, errrhoW22u, errrhoW22dn = common.load_observation(obsdir, 'Global/Weaver22_SMD.dat', [0,1,2,3,4])
-    rhoW22_cosmocorr = rhoW22 * hobs/h0 * 1e7
-    zW22 = (zupW22 + zdnW22)/2.0
-    errrhoW22u = np.log10(rhoW22 + errrhoW22u) - np.log10(rhoW22)
-    errrhoW22dn = np.log10(rhoW22) - np.log10(rhoW22 - errrhoW22dn)
-    ax.errorbar(zW22, np.log10(rhoW22_cosmocorr), xerr=[zW22 - zdnW22, zupW22 - zW22], yerr=[errrhoW22dn, errrhoW22u], ecolor = 'grey',  mec='grey', marker='*', label='Weaver+22')
-
-    zdnS23, zmidS23, zupS23, rhoS23, rhoS23_dn_s, rhoS23_up_s, rhoS23_dn_l, rhoS23_up_l = common.load_observation(obsdir, 'Global/Santini23_JWST_SMD.dat', [0, 1, 2, 3, 4, 5, 6, 7])
-    rhoS23_cosmocorr = rhoS23 * hobs/h0
-    rhoS23_errdn = np.log10(rhoS23) - np.log10(rhoS23_dn_s)
-    rhoS23_errup = np.log10(rhoS23_up_s) - np.log10(rhoS23)
-    rhoS23_errdn2 = np.log10(rhoS23) - np.log10(rhoS23_dn_l)
-    rhoS23_errup2 = np.log10(rhoS23_up_l) - np.log10(rhoS23)
-
-    ax.errorbar(zmidS23, np.log10(rhoS23_cosmocorr), xerr=[zmidS23 - zdnS23, zupS23 - zmidS23], yerr=[rhoS23_errdn2, rhoS23_errup2],  ecolor = 'grey',  mec='grey', marker='s', label='Santini+23')
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(sfr > 0)
@@ -561,6 +545,11 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     ax.plot(redshifts[ind], np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='solid', linewidth=1, label ='disks (v2.0)')
     ind = np.where(sfrb > 0)
     ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='solid',  linewidth=1, label ='bursts (v2.0)')
+    #print("#will print SFR density")
+    #print("#redshift LBG/Gyr SFRD_tot[Msun/yr/Mpc^3] SFRD_disk[Msun/yr/Mpc^3] SFRD_bulges[Msun/yr/Mpc^3]")
+    #for a,b,c,d,e in zip(redshifts, us.look_back_time(redshifts), np.log10(sfr*pow(h0,2.0)), np.log10(sfrd*pow(h0,2.0)), np.log10(sfrb*pow(h0,2.0))):
+    #    print(a,b,c,d,e)
+
 
     zin, sfr_l18, sfr_l18d, sfr_l18b = common.load_observation(obsdir, 'Models/SharkVariations/Global_Lagos18.dat', [0, 2, 3, 4])
 
@@ -568,7 +557,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     ax.plot(zin, sfr_l18d, 'b', linewidth=1,linestyle='dashed') #,  label ='disks (L18)')
     ax.plot(zin, sfr_l18b, 'r', linewidth=1,linestyle='dashed') #,  label ='bursts (L18)')
 
-    common.prepare_legend(ax, ['k','b','r','k','grey','navy'], loc=1) #bbox_to_anchor=(0.52, 0.47))
+    common.prepare_legend(ax, ['k','b','r','k','grey','navy', 'darkgreen'], loc=3) #bbox_to_anchor=(0.52, 0.47))
 
     common.savefig(outdir, fig, "cosmic_sfr_compL18.pdf")
 
@@ -596,9 +585,10 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ind = np.where(mstardisk > 0)
     ax.plot(redshifts[ind],np.log10(mstardisk[ind]*pow(h0,2.0)), 'b', linestyle='dotted')
 
-    print("will print stelar density")
-    for a,b,c,d,e in zip(redshifts, us.look_back_time(redshifts), np.log10(mstarden[ind]*pow(h0,2.0)), np.log10(mstardisk*pow(h0,2.0)), np.log10((mstarbden_mergers+mstarbden_diskins)*pow(h0,2.0))):
-        print(a,b,c,d,e)
+    print("#will print stellar density")
+    print("#redshift LBG/Gyr SMD_tot[Msun/Mpc^3] SMD_disk[Msun/Mpc^3] SMD_bulge_mergers[Msun/Mpc^3] SMD_bulge_diskins[Msun/Mpc^3]")
+    for a,b,c,d,e,f in zip(redshifts, us.look_back_time(redshifts), np.log10(mstarden*pow(h0,2.0)), np.log10(mstardisk*pow(h0,2.0)), np.log10(mstarbden_mergers*pow(h0,2.0)), np.log10(mstarbden_diskins*pow(h0,2.0))):
+        print(a,b,c,d,e,f)
 
     z, sm_modelvar = common.load_observation(obsdir, 'Models/SharkVariations/Global_OtherModels.dat', [0, 4])
     sm_modelvar_burst3  = sm_modelvar[0:179]
@@ -662,12 +652,16 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     ax = fig.add_subplot(111)
     plt.subplots_adjust(left=0.15)
 
-    common.prepare_ax(ax, 0, 10, 5, 8.7, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+    common.prepare_ax(ax, 0, 15, 1, 9, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mstarden > 0)
     ax.plot(redshifts[ind],np.log10(mstarden[ind]*pow(h0,2.0)), 'k', label='total (v2.0)')
     mstardisk = mstarden - (mstarbden_mergers+mstarbden_diskins)
+
+    #for a,b,c,d in zip(us.look_back_time(redshifts), mstardisk/mstarden, mstarbden_mergers/mstarden, mstarbden_diskins/mstarden):
+    #    print(a,b,c,d)
+
 
     ind = np.where(mstardisk > 0)
     ax.plot(redshifts[ind],np.log10(mstardisk[ind]*pow(h0,2.0)), 'b', linestyle='solid', label='disks (v2.0)')
@@ -700,7 +694,23 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     err = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
     ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label="Driver+18")
 
-    common.prepare_legend(ax, ['k','b','r','k','grey', 'navy'], loc=1)
+    zdnW22, zupW22, rhoW22, errrhoW22u, errrhoW22dn = common.load_observation(obsdir, 'Global/Weaver22_SMD.dat', [0,1,2,3,4])
+    rhoW22_cosmocorr = rhoW22 * hobs/h0 * 1e7
+    zW22 = (zupW22 + zdnW22)/2.0
+    errrhoW22u = np.log10(rhoW22 + errrhoW22u) - np.log10(rhoW22)
+    errrhoW22dn = np.log10(rhoW22) - np.log10(rhoW22 - errrhoW22dn)
+    ax.errorbar(zW22, np.log10(rhoW22_cosmocorr), xerr=[zW22 - zdnW22, zupW22 - zW22], yerr=[errrhoW22dn, errrhoW22u], ls='None', ecolor = 'grey',  mec='grey', marker='*', label='Weaver+22')
+
+    zdnS23, zmidS23, zupS23, rhoS23, rhoS23_dn_s, rhoS23_up_s, rhoS23_dn_l, rhoS23_up_l = common.load_observation(obsdir, 'Global/Santini23_JWST_SMD.dat', [0, 1, 2, 3, 4, 5, 6, 7])
+    rhoS23_cosmocorr = rhoS23 * hobs/h0
+    rhoS23_errdn = np.log10(rhoS23) - np.log10(rhoS23_dn_s)
+    rhoS23_errup = np.log10(rhoS23_up_s) - np.log10(rhoS23)
+    rhoS23_errdn2 = np.log10(rhoS23) - np.log10(rhoS23_dn_l)
+    rhoS23_errup2 = np.log10(rhoS23_up_l) - np.log10(rhoS23)
+
+    ax.errorbar(zmidS23, np.log10(rhoS23_cosmocorr), xerr=[zmidS23 - zdnS23, zupS23 - zmidS23], yerr=[rhoS23_errdn2, rhoS23_errup2],  ls='None', ecolor = 'grey',  mec='grey', marker='s', label='Santini+23')
+
+    common.prepare_legend(ax, ['k','b','r','k','grey', 'navy', 'grey', 'grey'], loc=3)
 
     common.savefig(outdir, fig, "cosmic_smd_compL18.pdf")
 
@@ -804,6 +814,20 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
         ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Decarli+20" if caption == True else None)
 
 
+        #ALMACAL-CO
+        zloD16, zupD16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/Hamanowicz22_H2.dat', [0,1,2,3])
+        zD16 =(zupD16 + zloD16)/2.0
+        medrhoH2 = (rhoH2loD16 + rhoH2upD16)/2.0
+        rhoH2D16 = np.log10(medrhoH2)
+        hobs = 0.7
+        xobs    = zD16
+        errxlow = zD16-zloD16
+        errxup  = zupD16-zD16
+        yobs = rhoH2D16 + np.log10(pow(hobs/h0,3.0))
+        errylow = np.log10(medrhoH2) - np.log10(rhoH2loD16)
+        erryup  = np.log10(rhoH2upD16) - np.log10(medrhoH2)
+        ax.errorbar(xobs, yobs, xerr=[errxlow,errxup], yerr=[errylow,erryup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^',label="Hamanowicz+23" if caption == True else None)
+
         #z0 data
         zD16, zloD16, zupD16, rhoH2D16, rhoH2loD16, rhoH2upD16  = common.load_observation(obsdir, 'Global/H2_z0.dat', [0,1,2,3,4,5])
         xobs    = zD16
@@ -813,7 +837,7 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
         errylow = np.log10(rhoH2D16) - np.log10(rhoH2loD16)
         erryup  = np.log10(rhoH2upD16) - np.log10(rhoH2D16)
         ax.errorbar(xobs[0:1], yobs[0:1], xerr=[errxlow[0:1],errxup[0:1]], yerr=[errylow[0:1],erryup[0:1]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o',label="Boselli+14" if caption == True else None)
-        ax.errorbar(xobs[1:2], yobs[1:2], xerr=[errxlow[1:2],errxup[1:2]], yerr=[errylow[1:2],erryup[1:2]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*',label="Fletcher+20" if caption == True else None)
+        ax.errorbar(xobs[1:2], yobs[1:2], xerr=[errxlow[1:2],errxup[1:2]], yerr=[errylow[1:2],erryup[1:2]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*',label="Fletcher+21" if caption == True else None)
 
 
     fig = plt.figure(figsize=(5,4.5))
@@ -875,15 +899,15 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(mH2den > 0)
-    ax.plot(redshifts[ind], np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'k', label='total in gals (v2.0)')
+    ax.plot(redshifts[ind], np.log10(mH2den[ind]*pow(h0,2.0)) + np.log10(XH), 'red', label='H$_2$ in gals (v2.0)')
 
     zin, omegaH2l18  = common.load_observation(obsdir, 'Models/SharkVariations/Global_OmegaGas_Lagos18.dat', [0,2])
-    ax.plot(zin, omegaH2l18, 'k', linestyle='dashed', label = 'total in gals (L18)')
+    ax.plot(zin, omegaH2l18, 'k', linestyle='dashed', label = 'H$_2$ in gals (L18)')
 
     load_observations_h2(ax, obsdir, h0, caption=True)
 
     # Legend
-    common.prepare_legend(ax, ['k','k','grey','grey','grey','grey','grey'], loc=0)
+    common.prepare_legend(ax, ['red','k','grey','grey','grey','grey','grey','grey'], loc=0)
     common.savefig(outdir, fig, "omega_H2_compL18.pdf")
 
 
@@ -985,7 +1009,7 @@ def plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol)
     common.savefig(outdir, fig, "cosmic_dust.pdf")
 
 
-def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
+def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI, mcold):
 
     fig = plt.figure(figsize=(5,4.5))
 
@@ -1057,10 +1081,11 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
 
     # note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
     ind = np.where(omegaHI > 0)
-    ax.plot(redshifts[ind], np.log10(omegaHI[ind]*pow(h0,2.0)) + np.log10(XH), 'k', label='total in gals (v2.0)')
+    ax.plot(redshifts[ind], np.log10(omegaHI[ind]*pow(h0,2.0)) + np.log10(XH), 'red', label='HI in gals (v2.0)')
+    ax.plot(redshifts[ind], mcold + np.log10(Omegab) - np.log10(XH), 'red', linestyle = 'dotted', label='HI+H$_{2}$ in gals (v2.0)')
 
     zin, omegaHIl18  = common.load_observation(obsdir, 'Models/SharkVariations/Global_OmegaGas_Lagos18.dat', [0,3])
-    ax.plot(zin, omegaHIl18, 'k', linestyle='dashed', label = 'total in gals (L18)')
+    ax.plot(zin, omegaHIl18, 'k', linestyle='dashed', label = 'HI in gals (L18)')
 
     xcgm = np.zeros(shape = 2)
     ycgm = np.zeros(shape = 2)
@@ -1076,7 +1101,12 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI):
     redR18,reddR18,reduR18,omegaR18,errdnR18,errupR18 = common.load_observation(obsdir, 'Global/HI_density_Rhee18.dat', [1,2,3,7,8,9])
     ax.errorbar(redR18,np.log10(omegaR18*1e-3), xerr=[reddR18,reduR18],yerr=[errdnR18,errupR18], ls='None', mfc='None', ecolor = 'grey', mec='grey', marker='o', label="Rhee+18 (comp)")
 
-    common.prepare_legend(ax, ['k','k','grey'])
+    # Heintz+23 
+    redK23, rederrK23, rhoHIK23, rhoHIupK23, rhoHIdnK23 = common.load_observation(obsdir, 'Global/HI_density_Heintz23.dat', [0,1,2,3, 4])
+    hK13 = h0 * np.sqrt(OmegaM*(1.0+redK23)**3.0 + OmegaL)
+    ax.errorbar(redK23,np.log10(rhoHIK23/((rho_crit*pow(h0,2.0)))), xerr=rederrK23, yerr=[np.log10(rhoHIK23)-np.log10(rhoHIdnK23), np.log10(rhoHIupK23)-np.log10(rhoHIK23)], ls='None', mfc='None', ecolor = 'darkgreen', mec='darkgreen', marker='s', label="Heintz+22 (HI in gals)")
+
+    common.prepare_legend(ax, ['red','red', 'k','grey','darkgreen'])
     common.savefig(outdir, fig, "omega_HI_compL18.pdf")
 
 
@@ -1121,7 +1151,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_mass_cosmic_density(plt, outdir, redshifts, mcold_plot, mHI_plot, mH2_plot)
     plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den)
     plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol)
-    plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI)
+    plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI, mcold_plot)
 
 if __name__ == '__main__':
     main(*common.parse_args())

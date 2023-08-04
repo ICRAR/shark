@@ -59,7 +59,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
     subplots = (411, 412, 413, 414)
     idx = (0, 1, 2, 3)
     zs  = (0, 1, 2, 3)
-    band = nbands-1
+    band = 28
     labels= ('z=3', 'z=4', 'z=6', 'z=8')
   
     corrm_obs = -5.0*np.log10(h0/0.7) 
@@ -145,7 +145,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
         ax.plot(xlf_obs[ind],y[0],'k', linewidth=1)
         if(idx == 1):
            for a,b,c in zip(xlf_obs,LFs_dust[z,4,band,:],LFs_nodust[z,4,band,:]):
-               print a, b+volcorr-np.log10(dm),c+volcorr-np.log10(dm)
+               print (a, b+volcorr-np.log10(dm),c+volcorr-np.log10(dm))
 
         ind = np.where(LFs_dust[z,3,band,:] < 0.)
         y = LFs_dust[z,3,band,ind]+volcorr-np.log10(dm)
@@ -219,7 +219,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
-    z = (3.0, 4.0, 6.0, 8.0) #, 1.0, 1.5, 2.0)
+    z = (8.0, 9, 10.5, 12.5) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
     file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5" 
@@ -236,6 +236,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
         nbands = len(seds[0]) 
 
+        print(nbands)
         if(index == 0):
             LFs_dust     = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
             LFs_nodust   = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
@@ -258,7 +259,12 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     if(Variable_Ext):
        outdir = os.path.join(outdir, 'eagle-rr14-steep')
 
-    plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands)
+    volcorr = 3.0*np.log10(h0)
+
+    band = 0
+    for a,b,c,d,e in zip(xlf, LFs_dust[0,4,band,:], LFs_dust[1,4,band,:],LFs_dust[2,4,band,:],LFs_dust[3,4,band,:]):
+        print(a,b+volcorr-np.log10(dm),c+volcorr-np.log10(dm),d+volcorr-np.log10(dm),e+volcorr-np.log10(dm))
+    #plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands)
 
 if __name__ == '__main__':
     main(*common.parse_args())

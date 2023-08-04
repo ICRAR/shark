@@ -31,7 +31,11 @@ zupp = 6
 dz = 0.05
 zbins = np.arange(zlow,zupp,dz)
 xz   = zbins + dz/2.0
-zlist = xz
+zlist_old = xz
+
+zlist= np.zeros(shape = len(zlist_old) + 1)
+zlist[0] = 0
+zlist[1:len(zlist)] = zlist_old[:]
 
 ##################################
 #Constants
@@ -64,7 +68,7 @@ btbins2 = np.arange(btlow,btupp,dbt)
 xbt    = btbins2 + dbt/2.0
 
 
-def prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution):
+def prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution, mass_by_comp):
 
     (h0, volh, mdisk, mbulge, mburst_mergers, mburst_diskins, mstars_bulge_mergers_assembly, mstars_bulge_diskins_assembly, 
      mBH, rdisk, rbulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
@@ -72,10 +76,20 @@ def prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution):
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mgas_disk, mgas_bulge, matom_disk, mmol_disk, matom_bulge, 
      mmol_bulge, mbh_acc_hh, mbh_acc_sb) = hdf5_data
 
+    volume = volh / h0**3
+    print("volume", volume)
     mstars_tot = (mdisk+mbulge)/h0
+    mstars_disk_tot = np.sum(mdisk/h0) / volume
+    mstars_bulge_mergers_tot = np.sum(mburst_mergers + mstars_bulge_mergers_assembly)/h0/volume
+    mstars_bulge_diskins_tot =np.sum(mburst_diskins + mstars_bulge_diskins_assembly)/h0/volume
+
+    mass_by_comp[index,0] = mstars_disk_tot
+    mass_by_comp[index,1] = mstars_bulge_mergers_tot
+    mass_by_comp[index,2] = mstars_bulge_diskins_tot
+
     bt = mbulge / (mdisk+mbulge)
 
-    mall = np.sum(mstars_tot[ind])
+    mall = np.sum(mstars_tot)
     BT_fractions[index, 0] = np.sum(mall)/volh * h0**2.0
     for i in range(0,len(btbins)-1):
         ind = np.where( ( mstars_tot > 0) & (bt >= btbins[i]) & (bt <= btbins[i+1]))
@@ -158,13 +172,16 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     BT_fractions = np.zeros(shape = (len(zlist), len(btbins)))
     BT_fractions_distribution = np.zeros(shape = (2, len(zlist), len(btbins2)))
-  
+    mass_by_comp = np.zeros(shape = (len(zlist), 3))
+
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution)
+        prepare_data(hdf5_data, index, BT_fractions, BT_fractions_distribution, mass_by_comp)
 
     plot_bt_fractions(plt, outdir, obsdir, BT_fractions, BT_fractions_distribution)
 
+    for a,b,c,d,e in zip(zlist, us.look_back_time(zlist), mass_by_comp[:,0], mass_by_comp[:,1],  mass_by_comp[:,2]):
+        print(a,b,c,d, e)
 
 if __name__ == '__main__':
     main(*common.parse_args())

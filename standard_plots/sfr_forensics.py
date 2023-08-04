@@ -65,6 +65,9 @@ def prepare_data(hdf5_data, sfh, hdf5_data_hist, LBT, delta_t):
     (h0, volh, mdisk, mbulge) = hdf5_data
     (bulge_diskins_hist, bulge_mergers_hist, disk_hist) = sfh
 
+    vol_sim = volh / h0**3
+    print(sum(mdisk)/ sum(mdisk + mbulge))
+
     ms_true = mstar / h0 / (volh / h0**3.0)
     sfrall = (sfrdisk + sfrburst)/h0/ 1e9/(volh / h0**3.0)
     mstars_tot = (mdisk+mbulge)/h0
@@ -73,11 +76,15 @@ def prepare_data(hdf5_data, sfh, hdf5_data_hist, LBT, delta_t):
     mstars = np.log10(mstars_tot[ind])
 
     sfhs_masses = np.zeros(shape= (len(LBT), len(mbins)))
+    sfhs_comp = np.zeros(shape= (len(LBT), 3))
     sfr_tot = np.zeros(shape= (len(LBT)))
 
     mshs_masses     = np.zeros(shape= (len(LBT), len(mbins)))
+    mshs_comp = np.zeros(shape= (len(LBT), 3))
     mshs_masses_cum = np.zeros(shape= (len(LBT), len(mbins)))
     ms_tot = np.zeros(shape= (len(LBT)))
+    ms_tot_bycomp = np.zeros(shape= (len(LBT), 3))
+    ms_tot_bycomp_massivegals = np.zeros(shape= (len(LBT), 3))
 
     for i in range(0,len(binsm)):
         if ( i == 0 ):
@@ -92,9 +99,31 @@ def prepare_data(hdf5_data, sfh, hdf5_data_hist, LBT, delta_t):
         sfr_tot[j] = np.sum(disk_hist[:,j] + bulge_mergers_hist[:,j] + bulge_diskins_hist[:,j]) / h0/ (volh / h0**3.0)
         for i in range(0,len(binsm)):
             mshs_masses_cum[j,i] = np.sum(mshs_masses[0:j,i]) / (volh / h0**3.0)
-        ms_tot[j] = np.sum(mshs_masses_cum[j,:])
+        sfhs_comp[j,0] = np.sum(disk_hist[:,j]) / h0/ (volh / h0**3.0)
+        sfhs_comp[j,1] = np.sum(bulge_mergers_hist[:,j]) / h0/ (volh / h0**3.0)
+        sfhs_comp[j,2] = np.sum(bulge_diskins_hist[:,j]) / h0/ (volh / h0**3.0)
+        
+        if j == 0:
+           mshs_comp[j,0] = np.sum(disk_hist[:,j]) / h0/ (volh / h0**3.0) * 1e9 * delta_t[j] * (1.0 - recycle)
+           mshs_comp[j,1] = np.sum(bulge_mergers_hist[:,j]) / h0/ (volh / h0**3.0) * 1e9  * delta_t[j] * (1.0 - recycle)
+           mshs_comp[j,2] = np.sum(bulge_diskins_hist[:,j]) / h0/ (volh / h0**3.0) * 1e9  * delta_t[j] * (1.0 - recycle)
+        else:
+           mshs_comp[j,0] = np.sum(disk_hist[:,j]) / h0/ (volh / h0**3.0) * 1e9  * delta_t[j] * (1.0 - recycle) + mshs_comp[j-1,0]
+           mshs_comp[j,1] = np.sum(bulge_mergers_hist[:,j]) / h0/ (volh / h0**3.0) * 1e9  * delta_t[j] * (1.0 - recycle) + mshs_comp[j-1,1]
+           mshs_comp[j,2] = np.sum(bulge_diskins_hist[:,j]) / h0/ (volh / h0**3.0) * 1e9  * delta_t[j] * (1.0 - recycle) + mshs_comp[j-1,2] 
 
-    return (sfhs_masses, sfr_tot, sfrall, mshs_masses_cum, ms_tot, ms_true)
+        ms_tot[j] = np.sum(mshs_masses_cum[j,:])
+        ms_tot_bycomp[j,0] = np.sum(disk_hist[:,j]) / np.sum(disk_hist[:,j] + bulge_mergers_hist[:,j] + bulge_diskins_hist[:,j])
+        ms_tot_bycomp[j,1] = np.sum(bulge_mergers_hist[:,j]) / np.sum(disk_hist[:,j] + bulge_mergers_hist[:,j] + bulge_diskins_hist[:,j])
+        ms_tot_bycomp[j,2] = np.sum(bulge_diskins_hist[:,j]) / np.sum(disk_hist[:,j] + bulge_mergers_hist[:,j] + bulge_diskins_hist[:,j])
+        ind = np.where(mstars >= 9)
+        ms_tot_bycomp_massivegals[j,0] = np.sum(disk_hist[ind,j]) / np.sum(disk_hist[ind,j] + bulge_mergers_hist[ind,j] + bulge_diskins_hist[ind,j])
+        ms_tot_bycomp_massivegals[j,1] = np.sum(bulge_mergers_hist[ind,j]) / np.sum(disk_hist[ind,j] + bulge_mergers_hist[ind,j] + bulge_diskins_hist[ind,j])
+        ms_tot_bycomp_massivegals[j,2] = np.sum(bulge_diskins_hist[ind,j]) / np.sum(disk_hist[ind,j] + bulge_mergers_hist[ind,j] + bulge_diskins_hist[ind,j])
+
+
+
+    return (sfhs_masses, sfr_tot, sfrall, mshs_masses_cum, ms_tot, ms_tot_bycomp, ms_true, ms_tot_bycomp_massivegals, sfhs_comp, mshs_comp)
 
 def plot_cosmic_sfr(plt, outdir, obsdir, sfhs_masses, sfr_tot, sfr_true, mshs_masses, ms_tot, ms_true, LBT, h0):
     
@@ -218,7 +247,18 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     hdf5_data = common.read_data(modeldir, 199, fields, subvols)
     sfh, delta_t, LBT = common.read_sfh(modeldir, 199, sfh_fields, subvols)
-    (sfhs_masses, sfr_tot, sfr_true, mshs_masses, ms_tot, ms_true) = prepare_data(hdf5_data, sfh, hdf5_data_hist, LBT, delta_t)
+    (sfhs_masses, sfr_tot, sfr_true, mshs_masses, ms_tot, ms_tot_bycomp, ms_true, ms_tot_bycomp_massivegals, sfhs_comp, mshs_comp) = prepare_data(hdf5_data, sfh, hdf5_data_hist, LBT, delta_t)
+
+    print("#SFRD Forensics")
+    print("#LBT/Gyr SFRD_disk[Msun/yr/Mpc^3] SFRD_bulge_mergers[Msun/yr/Mpc^3] SFRD_bulge_diskins[Msun/yr/Mpc^3]")
+    for a,b,c,d in zip(LBT, sfhs_comp[:,0], sfhs_comp[:,1], sfhs_comp[:,2]):
+        print(a,b,c,d)
+
+    print("#SMD Forensics")
+    print("#LBT/Gyr SMD_disk[Msun/Mpc^3] SMD_bulge_mergers[Msun/Mpc^3] SMD_bulge_diskins[Msun/Mpc^3]")
+    for a,b,c,d in zip(LBT, mshs_comp[:,0], mshs_comp[:,1], mshs_comp[:,2]):
+        print(a,b,c,d)
+       
 
     plot_cosmic_sfr(plt, outdir, obsdir, sfhs_masses, sfr_tot, sfr_true, mshs_masses, ms_tot, ms_true, LBT, h0)
 

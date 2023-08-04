@@ -231,6 +231,10 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
         if(index == 0):
             LFs_dust     = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
             LFs_nodust   = np.zeros(shape = (len(z), 5, nbands, len(mbins)))
+            fdisk_emission    = np.zeros(shape = (len(z), nbands, len(mbins)))
+            fbulge_m_emission = np.zeros(shape = (len(z), nbands, len(mbins)))
+            fbulge_d_emission = np.zeros(shape = (len(z), nbands, len(mbins)))
+
 
         prepare_data(hdf5_data, seds, seds_nod, LFs_dust, LFs_nodust, index, nbands, 
                      fdisk_emission, fbulge_m_emission, fbulge_d_emission)

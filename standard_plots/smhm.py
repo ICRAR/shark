@@ -272,7 +272,7 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
         if(i == 0):
            plot_observations_kravtsov18(ax)
         if labels:
-            common.prepare_legend(ax, ['k','k','r','b'], loc=4)
+            common.prepare_legend(ax, ['k','k','k','r','b'], loc=4)
 
 
     common.savefig(outdir, fig, 'SMHM_z_compL18.pdf')

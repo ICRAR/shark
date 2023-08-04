@@ -19,12 +19,13 @@
 """HMF plots"""
 
 import numpy as np
-
+import utilities_statistics as us
 import common
+import functools
 
 
 ##################################
-mlow = 10
+mlow = 8
 mupp = 15
 dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
@@ -77,7 +78,7 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
 
     fig = plt.figure(figsize=(6.5,5))
     #mbins =  (11.0, 11.2, 11.4, 11.6, 11.8, 12.0, 12.2, 12.4, 12.6)
-    mbins = (9,9.25,9.5,9.75,10,10.25,10.5,10.75,11,11.25,11.5, 11.7, 12, 12.25,12.5)
+    mbins = (9,9.25,9.5,9.75,10,10.25,10.5,10.75,11,11.25,11.5, 11.75, 12, 12.25,12.5)
     colors = ('Navy','Blue','RoyalBlue','SkyBlue','Teal','DarkTurquoise','Aquamarine','Yellow', 'Gold',  'Orange','OrangeRed', 'LightSalmon', 'Crimson', 'Red', 'DarkRed')
 
     ax = fig.add_subplot(111)
@@ -86,6 +87,7 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
     if(redshift == '2'):
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.5, 0.5, 1, 1))
     ax.text(xleg,yleg,'$\\rm log_{10}(M_{\\star}/M_{\\odot})$', fontsize=12)
+    ax.text(0.5,2.8,'Shark v2.0 (this work)', fontsize=13)
 
     N_max = 25
     for j in range(0,len(mbins)-1):
@@ -97,7 +99,7 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
            age_selec     = gal_props_z0[ind,0]
            typesg        = gal_props_z0[ind,4]
            numgals = len(age_selec[0])
-           if(numgals >= 30):
+           if(numgals >= 50):
               print("Stellar mass bin", mbins[j], " has ", numgals, " galaxies") 
               SFH_med = np.zeros(shape = (3,len(LBT)))
               for snap in range(0,len(LBT)):
@@ -128,12 +130,77 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
     common.prepare_legend(ax, colors, bbox_to_anchor=(0.98, 0.1))
     plt.tight_layout()
     common.savefig(outdir, fig, "SFHs_massivegalaxies_z"+redshift+".pdf")
-    
 
-def prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq):
+def plot_age_stellar_mass(plt, outdir, obsdir, age_stellar_mass, age90_stellar_mass):
+
+
+    fig = plt.figure(figsize=(5,4.5))
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit = "$\\rm t_{\\star,50}/Gyr$"
+    xmin, xmax, ymin, ymax = 9, 12, 1, 14
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 2))
+    mL18, ageL18, age84L18, age16L18 = np.loadtxt(obsdir + '/Models/SharkVariations/AgeMstar_Lagos18.dat', unpack = True, usecols = [0,1,2,3])
+
+    ax.plot(mL18, ageL18,color='black',lw=2,label="Shark v1.1 (sm-w)")
+    ax.fill_between(mL18, age84L18, age16L18, facecolor='k', alpha=0.5, interpolate=True)
+
+
+    ind = np.where(age_stellar_mass[0,0,:] != 0)
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = age_stellar_mass[0,0,ind]
+        errdn = age_stellar_mass[0,1,ind]
+        errup = age_stellar_mass[0,2,ind]
+        ax.plot(xplot,yplot[0],color='red',lw=3.5,label="Shark v2.0 (sm-w)")
+        ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5, interpolate=True)
+
+    mv19, agev19, agev19dn, agev19up =np.loadtxt(obsdir + '/stellarpop/age_mstar_vandensande19.dat', unpack = True, usecols = [0,1,2,3])
+    ax.errorbar(mv19, 10**agev19, yerr=[10**agev19 - 10**agev19dn, 10**agev19up - 10**agev19], marker = 's', color='teal', label = 'van de Sande+19 (rband-w)')
+    
+    common.prepare_legend(ax, ['k', 'r', 'teal'], loc = 2)
+    plt.tight_layout()
+    common.savefig(outdir, fig, 'age_stellar_mass_z0.pdf')
+
+    fig = plt.figure(figsize=(5,4.5))
+    ytit = "$\\rm t_{\\star,90}/Gyr$"
+    xmin, xmax, ymin, ymax = 9, 12, 0, 14
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 2))
+    mL18, ageL18, age84L18, age16L18 = np.loadtxt(obsdir + '/Models/SharkVariations/AgeMstar_Lagos18.dat', unpack = True, usecols = [0,1,2,3])
+
+    ax.plot(mL18, ageL18,color='black',lw=2,label="Shark v1.1 (sm-w)")
+    ax.fill_between(mL18, age84L18, age16L18, facecolor='k', alpha=0.5, interpolate=True)
+
+
+    ind = np.where(age90_stellar_mass[0,0,:] != 0)
+    if(len(xmf[ind]) > 0):
+        xplot = xmf[ind]
+        yplot = age90_stellar_mass[0,0,ind]
+        errdn = age90_stellar_mass[0,1,ind]
+        errup = age90_stellar_mass[0,2,ind]
+        ax.plot(xplot,yplot[0],color='red',lw=3.5,label="Shark v2.0 (sm-w)")
+        ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5, interpolate=True)
+
+    for a,b,c,d in zip(xplot,yplot[0],yplot[0]+errup[0],yplot[0]-errdn[0]):
+        print(a,b,c,d)
+
+    common.prepare_legend(ax, ['k', 'r'], loc = 2)
+    plt.tight_layout()
+    common.savefig(outdir, fig, 'age90_stellar_mass_z0.pdf')
+
+
+def prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq, LBT, delta_t, age_stellar_mass, age90_stellar_mass):
    
     #star_formation_histories and SharkSED have the same number of galaxies in the same order, and so we can safely assume that to be the case.
     #to select the same galaxies in galaxies.hdf5 we need to ask for all of those that have a stellar mass > 0, and then assume that they are in the same order.
+    bin_it   = functools.partial(us.wmedians, xbins=xmf)
 
     if(read_hydroeq):
        (h0, _, mdisk, mbulge, mhalo, mshalo, typeg, age, 
@@ -192,18 +259,40 @@ def prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq):
     total_sfh = np.zeros(shape = (ngals, nsnap))
     sb_sfh    = np.zeros(shape = (ngals, nsnap))
     disk_sfh  = np.zeros(shape = (ngals, nsnap))
-    gal_props = np.zeros(shape = (ngals, 5))
+    gal_props = np.zeros(shape = (ngals, 6))
 
     gal_props[:,0] = 13.6-age[ind]
     gal_props[:,1] = mdisk[ind] + mbulge[ind]
     gal_props[:,2] = mbulge[ind] / (mdisk[ind] + mbulge[ind])
     gal_props[:,3] = (sfr_burst[ind] + sfr_disk[ind])/1e9/h0
     gal_props[:,4] = typeg[ind]
-
+    
     for s in range(0,nsnap):
         total_sfh[:,s] = bulge_diskins_hist[:,s] + bulge_mergers_hist[:,s] + disk_hist[:,s] #in Msun/yr
         sb_sfh[:,s]    = bulge_diskins_hist[:,s] + bulge_mergers_hist[:,s]
         disk_sfh[:,s]  = disk_hist[:,s]
+
+    tot_mass_formed = np.zeros(shape = (ngals))
+    age_50 = np.zeros(shape = (ngals))
+    age_90 = np.zeros(shape = (ngals))
+
+    for g in range(0,ngals):
+        tot_mass_formed = sum(total_sfh[g,:] * delta_t * 1e9)
+        mass_cum = 0
+        s = 0
+        while mass_cum < 0.9*tot_mass_formed:
+            mass_cum += total_sfh[g,s] * delta_t[s] * 1e9
+            if(mass_cum > 0.5*tot_mass_formed and age_50[g] == 0):
+                age_50[g] = LBT[s]
+            s = s + 1
+        age_90[g] = LBT[s-1]
+
+    gal_props[:,5] = age_50
+
+    age_stellar_mass[index,:] = bin_it(x=np.log10(gal_props[:,1]) - np.log10(float(h0)),
+            y=age_50)
+    age90_stellar_mass[index,:] = bin_it(x=np.log10(gal_props[:,1]) - np.log10(float(h0)),
+            y=age_90)
 
     return (total_sfh, sb_sfh, disk_sfh, gal_props)
 
@@ -235,6 +324,8 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     snapshots = redshift_table[z]
 
     f_q = np.zeros(shape = (len(z), len(xmf)))
+    age_stellar_mass = np.zeros(shape = (len(z), 3, len(xmf)))
+    age90_stellar_mass = np.zeros(shape = (len(z), 3, len(xmf)))
 
     # Create histogram
     for index, snapshot in enumerate(snapshots):
@@ -242,7 +333,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
         sfh, delta_t, LBT = common.read_sfh(model_dir, snapshot, sfh_fields, subvols)
 
-        (total_sfh, sb_sfh, disk_sfh, gal_props) = prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq)
+        (total_sfh, sb_sfh, disk_sfh, gal_props) = prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq, LBT, delta_t, age_stellar_mass, age90_stellar_mass)
 
         h0, volh = hdf5_data[0], hdf5_data[1]
         total_sfh_z0 = total_sfh
@@ -250,6 +341,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
         LBT_z0 = LBT
         plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LBT_z0, str(z[index]))
 
+    plot_age_stellar_mass(plt, outdir, obsdir, age_stellar_mass, age90_stellar_mass)
     if(read_hydroeq):
        plot_fraction_hydro(plt, outdir, obsdir, f_q, z)
   

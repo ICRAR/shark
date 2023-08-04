@@ -228,7 +228,7 @@ def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
             errdn = mdotmbh_hh[i,1,ind]
             errup = mdotmbh_hh[i,2,ind]
             ax.plot(xplot,yplot[0],color=cols[i],label="z=%s" % str(c))
-            if(i == 0 or i == 5):
+            if(i == 0 or i == 5 or i == 7):
                ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
                ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
     
@@ -241,18 +241,20 @@ def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
     cols= ('Indigo','Navy','DarkTurquoise', 'Aquamarine', 'PaleGreen', 'Gold','Orange','red') 
 
     #SSFR vs BH mass
-    fig = plt.figure(figsize=(5,4.5))
+    fig = plt.figure(figsize=(3.5,4.5))
     ytit = "$\\rm log_{10} (\\rm sSFR/M_{\odot} yr^{-1})$"
     xtit = "$\\rm log_{10} (\\rm M_{\\rm BH}/M_{\odot})$"
 
-    xmin, xmax, ymin, ymax = 5, 12, -14, -7
-    xleg = xmax - 0.2 * (xmax - xmin)
-    yleg = ymax - 0.1 * (ymax - ymin)
+    xmin, xmax, ymin, ymax = 5, 11, -14, -7
+    xleg = xmax - 0.4 * (xmax - xmin)
+    yleg = ymax + 0.05 * (ymax - ymin)
 
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    ax.text(7, -6.9, 'Shark v2.0', fontsize=12)
+
     #Predicted BH-bulge mass relation
     for i,c in enumerate(zlist):
        ind = np.where(BHSFR[i,0,:] != 0)
@@ -261,12 +263,16 @@ def plot_macc_BH(plt, outdir, obsdir, mdotmbh, mdotmbh_hh, BHSFR):
            yplot = BHSFR[i,0,ind]
            errdn = BHSFR[i,1,ind]
            errup = BHSFR[i,2,ind]
-           ax.plot(xplot,yplot[0],color=cols[i],label="z=%s" % str(c))
-           if(i == 0 or i == 5):
+           if(i > 3):
+              ax.plot(xplot,yplot[0],color=cols[i],label="z=%s" % str(c))
+           else: 
+               ax.plot(xplot,yplot[0],color=cols[i]) 
+           if(i == 0 or i == 5 or i == 7):
               ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=cols[i], alpha=0.5, interpolate=True)
               ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=cols[i], alpha=0.5, interpolate=True)
 
-    common.prepare_legend(ax, cols, loc=1)
+    ax.plot([7.5,7.5], [-12.3, -7], linestyle='dotted', color='grey')
+    common.prepare_legend(ax, cols[4:len(cols)], loc=3)
     plt.tight_layout()
     common.savefig(outdir, fig, 'BH-SSFR_evolution.pdf')
 
@@ -275,7 +281,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
 
-    read_spin = True
+    read_spin = False
 
     if(read_spin == True):
        fields = {'galaxies': ('bh_spin', 'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge', 'type')}

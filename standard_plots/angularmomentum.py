@@ -61,7 +61,7 @@ xlf   = lbins + dl/2.0
 
 def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_atom2, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_ratio_halo_disk, sam_ratio_halo_gal, 
                  sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
-                 sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal, sam_barv2, disk_size): #, phot_data, phot_data_nod, nbands):
+                 sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal, sam_barv2, disk_size, rcomb): #, phot_data, phot_data_nod, nbands):
 
 
     bin_it = functools.partial(us.wmedians, xbins=xmf, low_numbers=True)
@@ -101,7 +101,12 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     mstartot = mdisk[ind] + mbulge[ind]
     rgal_star = (rdisk * mdisk + rbulge * mbulge ) / ( mdisk + mbulge)
     rgal_gas  = (rg_disk * mgas_disk + rg_bulge * mgas_bulge ) / ( mgas_disk + mgas_bulge)
-    
+   
+    ind = np.where(mdisk+mbulge > 0)
+    rcomb[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                            y=np.log10((mdisk[ind]*rdisk[ind]  + mbulge[ind]*rbulge[ind])*MpcToKpc / (mdisk[ind]+mbulge[ind]))- np.log10(float(h0)))
+
+
     #p = 0
     #for c in range(0,5):
     #    indust = phot_data[p]
@@ -264,7 +269,7 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     return (lh, lj, lm, bt, ms, ssfr, mass_cut)
 
 
-def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vmax_halo_gal, disk_size):
+def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vmax_halo_gal, disk_size, rcomb):
 
     print ('sizes disks')
     for i,j,p in zip(disk_size[0,0,:],disk_size[0,1,:],disk_size[0,2,:]):
@@ -285,15 +290,15 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     # LTG ##################################
     ax = fig.add_subplot(311)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.text(8.1,1.7,'disks of centrals',fontsize=12)
+    ax.text(10.2,0.1,'galaxy disks',fontsize=12)
 
     #Predicted size-mass for disks in disk=dominated galaxies
-    ind = np.where(disk_size_cen[0,0,:] != 0)
+    ind = np.where(disk_size[0,0,:] != 0)
     xplot = xmf[ind]
-    yplot = disk_size_cen[0,0,ind]
-    errdn = disk_size_cen[0,1,ind]
-    errup = disk_size_cen[0,2,ind]
-    ax.plot(xplot,yplot[0],color='b',linestyle='solid',label="ISM/stars AM transfer")
+    yplot = disk_size[0,0,ind]
+    errdn = disk_size[0,1,ind]
+    errup = disk_size[0,2,ind]
+    ax.plot(xplot,yplot[0],color='b',linestyle='solid',label="Shark v2.0")
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.3,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.3,interpolate=True)
 
@@ -305,9 +310,9 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     yplot = rdisk_am[ind]
     errdn = rdisk_am16[ind]
     errup = rdisk_am84[ind]
-    ax.plot(xplot,yplot,color='b',linestyle='dashed', label="Lagos+18")
-    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='b', linestyle='solid', alpha=0.4,interpolate=True)
-    ax.fill_between(xplot,yplot,yplot+errup, facecolor='b', linestyle='solid', alpha=0.4,interpolate=True)
+    ax.plot(xplot,yplot,color='DodgerBlue',linestyle='dashed', label="Shark v1.1 (L18)")
+    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='DeepSkyBlue', linestyle='solid', alpha=0.4,interpolate=True)
+    ax.fill_between(xplot,yplot,yplot+errup, facecolor='DeepSkyBlue', linestyle='solid', alpha=0.4,interpolate=True)
 
     #Lange et al. (2016)
     m,r = common.load_observation(obsdir, 'SizesAndAM/rdisk_L16.dat', [0,1])
@@ -315,42 +320,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     ax.plot(m[38:83], r[38:83], linestyle='dotted',color='k')
     ax.plot(m[85:128], r[85:129], linestyle='dotted',color='k')
 
-    common.prepare_legend(ax, ['b','b'], bbox_to_anchor=(0.005, 0.62))
-
-    ax = fig.add_subplot(312)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.text(8.1,1.7,'disks of satellites',fontsize=12)
-
-    #Predicted size-mass for disks in disk=dominated galaxies satellites
-    ind = np.where(disk_size_sat[0,0,:] != 0)
-    xplot = xmf[ind]
-    yplot = disk_size_sat[0,0,ind]
-    errdn = disk_size_sat[0,1,ind]
-    errup = disk_size_sat[0,2,ind]
-    ax.plot(xplot,yplot[0],color='g',linestyle='solid')
-    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='g', alpha=0.3,interpolate=True)
-    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='g', alpha=0.3,interpolate=True)
-
-    rdisk_am   = rb[0:29]
-    rdisk_am16 = r16[0:29]
-    rdisk_am84 = r84[0:29]
-
-    ind = np.where(rdisk_am != 0)
-    xplot = xmf[ind]
-    yplot = rdisk_am[ind]
-    errdn = rdisk_am16[ind]
-    errup = rdisk_am84[ind]
-    ax.plot(xplot,yplot,color='g',linestyle='dashed')
-    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='g', linestyle='solid', alpha=0.4,interpolate=True)
-    ax.fill_between(xplot,yplot,yplot+errup, facecolor='g', linestyle='solid', alpha=0.4,interpolate=True)
-
-    #Lange et al. (2016)
-    m,r = common.load_observation(obsdir, 'SizesAndAM/rdisk_L16.dat', [0,1])
-    ax.plot(m[0:36], r[0:36], linestyle='dotted',color='k',label="L16 50th, 68th, 90th")
-    ax.plot(m[38:83], r[38:83], linestyle='dotted',color='k')
-    ax.plot(m[85:128], r[85:129], linestyle='dotted',color='k')
-
-    common.prepare_legend(ax, ['k'], bbox_to_anchor=(0.005, 0.67))
+    common.prepare_legend(ax, ['b','DeepSkyBlue'], loc=2)
 
     # ETGs ##################################
     xtit = "$\\rm log_{10} (\\rm M_{\\star,bulge}/M_{\odot})$"
@@ -359,9 +329,9 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
-    ax = fig.add_subplot(313)
+    ax = fig.add_subplot(312)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.text(8.1,1.7,'bulges of all galaxies',fontsize=12)
+    ax.text(10.2,-0.2,'galaxy bulges',fontsize=12)
 
     #Predicted size-mass for bulges in bulge-dominated systems
     ind = np.where(bulge_size[0,0,:] != 0)
@@ -370,7 +340,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
         yplot = bulge_size[0,0,ind]
         errdn = bulge_size[0,1,ind]
         errup = bulge_size[0,2,ind]
-        ax.plot(xplot,yplot[0],color='r',linestyle='solid')
+        ax.plot(xplot,yplot[0],color='r',linestyle='solid', label='Shark v2.0')
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.3,interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.3,interpolate=True)
 
@@ -383,16 +353,58 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     yplot = rdisk_am[ind]
     errdn = rdisk_am16[ind]
     errup = rdisk_am84[ind]
-    ax.plot(xplot,yplot,color='r',linestyle='dashed')
-    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='LightCoral', linestyle='solid', alpha=0.4,interpolate=True)
-    ax.fill_between(xplot,yplot,yplot+errup, facecolor='LightCoral', linestyle='solid', alpha=0.4,interpolate=True)
+    ax.plot(xplot,yplot,color='IndianRed',linestyle='dashed', label='Shark v1.1 (L18)')
+    ax.fill_between(xplot,yplot,yplot-errdn, facecolor='LightSalmon', linestyle='solid', alpha=0.4,interpolate=True)
+    ax.fill_between(xplot,yplot,yplot+errup, facecolor='LightSalmon', linestyle='solid', alpha=0.4,interpolate=True)
 
     #Lange et al. (2016)
     m,r = common.load_observation(obsdir, 'SizesAndAM/rbulge_L16.dat', [0,1])
     ax.plot(m[0:39], r[0:39], linestyle='dotted',color='k')
     ax.plot(m[41:76], r[41:76], linestyle='dotted',color='k')
     ax.plot(m[78:115], r[78:115], linestyle='dotted',color='k')
+    common.prepare_legend(ax, ['r','IndianRed'], loc=2)
 
+
+    lm, lr, count, bs_err = common.load_observation(obsdir, 'SizeMass/GAMA_H-band_dlogM_0.25_reff.txt', [0,1,2,3])
+    # Total ##################################
+    xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit="$\\rm log_{10} (\\rm r_{\\star}/kpc)$"
+    xmin, xmax, ymin, ymax = 8, 11.5, -0.1, 1.5
+
+    ax = fig.add_subplot(313)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+    ax.text(10.2, 0.,'all galaxies',fontsize=12)
+
+    #Predicted size-mass for disks
+    ind = np.where(rcomb[0,0,:] != 0)
+    xplot = xmf[ind]
+    yplot = rcomb[0,0,ind]
+    errdn = rcomb[0,1,ind]
+    errup = rcomb[0,2,ind]
+    #np.save(os.path.join(outdir,'sizemass.npy'), np.array([xplot, yplot[0]]))
+    ax.plot(xplot,yplot[0], color = 'ForestGreen',
+            linewidth=2,label="Shark v2.0")
+    ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='ForestGreen', linestyle='solid', alpha=0.4,interpolate=True)
+    ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='ForestGreen', linestyle='solid', alpha=0.4,interpolate=True)
+    for a,b,c,d in zip(xplot,yplot[0],yplot[0]-errdn[0],yplot[0]+errup[0]):
+        print(a,b,c,d)
+
+    mL18, rL18, err16L18, err84L18 = common.load_observation(obsdir, 'Models/SharkVariations/SizeTotal_Lagos18.dat', [0,1,2,3])
+    ind = np.where(rL18 != 0)
+    xplot = mL18[ind]
+    yplot = rL18[ind]
+    errdn = err16L18[ind]
+    errup = err84L18[ind]
+    ax.plot(xplot,yplot,color='LimeGreen',linestyle='dashed', label='Shark v1.1 (L18)')
+    ax.fill_between(xplot,errdn, errup, facecolor='LightGreen', linestyle='solid', alpha=0.4,interpolate=True)
+
+    # Add GAMA H-band observations with bootstrapped error
+    ax.errorbar(lm, lr,yerr = [bs_err, bs_err], marker ='v',
+             ls = 'none', mfc = 'None', markersize=5,
+             color = 'gray', label = 'Lange+2015')
+
+    common.prepare_legend(ax, ['ForestGreen','LimeGreen','gray'], loc=2)
+    plt.tight_layout()
     common.savefig(outdir, fig, 'sizes_angular_momentum_model.pdf')
 
 
@@ -400,7 +412,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     fig = plt.figure(figsize=(5,8.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\star,disk}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm r_{\\star,disk}/kpc)$"
-    xmin, xmax, ymin, ymax = 8, 12, -0.1, 2
+    xmin, xmax, ymin, ymax = 8, 12, -0.1, 1.5
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -427,7 +439,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     yplot = rdisk_am[ind]
     errdn = rdisk_am16[ind]
     errup = rdisk_am84[ind]
-    ax.plot(xplot,yplot,color='b',linestyle='dashed', label="v1.1 (L18)")
+    ax.plot(xplot,yplot,color='b',linestyle='dashed', label="Shark v1.1 (L18)")
     ax.fill_between(xplot,yplot,yplot-errdn, facecolor='b', linestyle='solid', alpha=0.8,interpolate=True)
     ax.fill_between(xplot,yplot,yplot+errup, facecolor='b', linestyle='solid', alpha=0.8,interpolate=True)
 
@@ -442,7 +454,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     # ETGs ##################################
     xtit = "$\\rm log_{10} (\\rm M_{\\star,bulge}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm r_{\\star,bulge}/kpc)$"
-    xmin, xmax, ymin, ymax = 8, 12, -0.35, 2
+    xmin, xmax, ymin, ymax = 8, 12, -0.35, 1.5
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
@@ -1366,6 +1378,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     disk_size_cen = np.zeros(shape = (len(zlist), 3, len(xmf))) 
     bulge_size    = np.zeros(shape = (len(zlist), 3, len(xmf)))
     disk_size     = np.zeros(shape = (len(zlist), 3, len(xmf))) 
+    rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
@@ -1375,7 +1388,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
         (lh, lj, lm, bt, ms, ssfr, mass_cut)  = prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_atom2, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_ratio_halo_disk, 
                      sam_ratio_halo_gal, sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
-                     sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal, sam_barv2, disk_size) #, seds, seds_nod, nbands)
+                     sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, vmax_halo_gal, sam_barv2, disk_size, rcomb) #, seds, seds_nod, nbands)
 
         if(index  == 0):
                 lambdaH = lh
@@ -1389,7 +1402,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     #plot_specific_am_ratio(plt, outdir, obsdir, sam_ratio_halo_disk, sam_ratio_halo_gal, sam_ratio_halo_disk_gas, 
     #                       sam_vs_sam_halo_disk, sam_vs_sam_halo_gal, sam_vs_sam_halo_disk_gas)
     #plot_lambda(plt, outdir, obsdir, lambdaH, lambda_jiang, lambda_mass, BT_ratio, stellar_mass, ssfr_z0)
-    #plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vmax_halo_gal, disk_size)
+    plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vmax_halo_gal, disk_size, rcomb)
 
 if __name__ == '__main__':
     main(*common.parse_args())

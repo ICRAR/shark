@@ -44,7 +44,7 @@ MpcToKpc = 1e3
 # Mass function initialization
 mlow = 5
 mupp = 14
-dm = 0.2
+dm = 0.125
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
 imf   = 'cha'
@@ -54,6 +54,12 @@ mupp2 = 14
 dm2 = 0.3
 mbins2 = np.arange(mlow2,mupp2,dm2)
 xmf2 = mbins2 + dm2/2.0
+
+mlow3 = 5
+mupp3 = 14
+dm3 = 0.2
+mbins3 = np.arange(mlow3,mupp3,dm3)
+xmf3 = mbins3 + dm3/2.0
 
 ssfrlow = -6
 ssfrupp = 4
@@ -766,26 +772,26 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     mainseqsf_modelvar = np.zeros(shape = (5, 270))
     mainseqsf_modelvar[0,:], mainseqsf_modelvar[1,:], mainseqsf_modelvar[2,:], mainseqsf_modelvar[3,:], mainseqsf_modelvar[4,:] = common.load_observation(obsdir, 'Models/SharkVariations/SFRMstars_OtherModels.dat', [0,1,2,3,4])
 
-    mainseqsf_GD14  = np.zeros(shape = (2, 5, len(xmf)))
-    mainseqsf_KMT09 = np.zeros(shape = (2, 5, len(xmf)))
-    mainseqsf_K13   = np.zeros(shape = (2, 5, len(xmf)))
+    mainseqsf_GD14  = np.zeros(shape = (2, 5, len(xmf3)))
+    mainseqsf_KMT09 = np.zeros(shape = (2, 5, len(xmf3)))
+    mainseqsf_K13   = np.zeros(shape = (2, 5, len(xmf3)))
 
     for z in range(0,2):
-        st = len(xmf) * z
+        st = len(xmf3) * z
         for j in range(0,5):
-            for i in range(0,len(xmf)):
+            for i in range(0,len(xmf3)):
                 mainseqsf_GD14[z,j,i] = mainseqsf_modelvar[j,st+i]
 
     for z in range(0,2):
-        st = len(xmf) * (z+2)
+        st = len(xmf3) * (z+2)
         for j in range(0,5):
-            for i in range(0,len(xmf)):
+            for i in range(0,len(xmf3)):
                 mainseqsf_KMT09[z,j,i] = mainseqsf_modelvar[j,st+i]
 
     for z in range(0,2):
-        st = len(xmf) * (z+4)
+        st = len(xmf3) * (z+4)
         for j in range(0,5):
-            for i in range(0,len(xmf)):
+            for i in range(0,len(xmf3)):
                 mainseqsf_K13[z,j,i] = mainseqsf_modelvar[j,st+i]
 
     idx = 0
@@ -807,7 +813,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ax.plot(xplot,yplot[0],'k', linestyle='solid', label="Shark")
  
     ind = np.where(mainseqsf_GD14[idx_modelvar,0,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf3[ind]
     yplot = mainseqsf_GD14[idx_modelvar,0,ind]
     errdn = mainseqsf_GD14[idx_modelvar,3,ind]
     errup = mainseqsf_GD14[idx_modelvar,4,ind]
@@ -816,7 +822,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ax.plot(xplot,yplot[0],'r', linestyle='dashed', label="GD14")
  
     ind = np.where(mainseqsf_KMT09[idx_modelvar,0,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf3[ind]
     yplot = mainseqsf_KMT09[idx_modelvar,0,ind]
     errdn = mainseqsf_KMT09[idx_modelvar,3,ind]
     errup = mainseqsf_KMT09[idx_modelvar,4,ind]
@@ -825,7 +831,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ax.plot(xplot,yplot[0],'b', linestyle='dotted', label="KMT09")
  
     ind = np.where(mainseqsf_K13[idx_modelvar,0,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf3[ind]
     yplot = mainseqsf_K13[idx_modelvar,0,ind]
     errdn = mainseqsf_K13[idx_modelvar,3,ind]
     errup = mainseqsf_K13[idx_modelvar,4,ind]
@@ -851,23 +857,23 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     mainseqgas_modelvar = np.zeros(shape = (6, 135))
     mainseqgas_modelvar[0,:], mainseqgas_modelvar[1,:], mainseqgas_modelvar[2,:], mainseqgas_modelvar[3,:], mainseqgas_modelvar[4,:], mainseqgas_modelvar[5,:] = common.load_observation(obsdir, 'Models/SharkVariations/GasMstars_OtherModels.dat', [0,1,2,3,4,5])
 
-    mainseqgas_GD14  = np.zeros(shape = (6, len(xmf)))
-    mainseqgas_KMT09 = np.zeros(shape = (6, len(xmf)))
-    mainseqgas_K13   = np.zeros(shape = (6, len(xmf)))
+    mainseqgas_GD14  = np.zeros(shape = (6, len(xmf3)))
+    mainseqgas_KMT09 = np.zeros(shape = (6, len(xmf3)))
+    mainseqgas_K13   = np.zeros(shape = (6, len(xmf3)))
 
     st = 0
     for j in range(0,6):
-        for i in range(0,len(xmf)):
+        for i in range(0,len(xmf3)):
             mainseqgas_GD14[j,i] = mainseqgas_modelvar[j,st+i]
 
-    st = len(xmf) 
+    st = len(xmf3) 
     for j in range(0,6):
-        for i in range(0,len(xmf)):
+        for i in range(0,len(xmf3)):
             mainseqgas_KMT09[j,i] = mainseqgas_modelvar[j,st+i]
 
-    st = len(xmf) * 2
+    st = len(xmf3) * 2
     for j in range(0,6):
-        for i in range(0,len(xmf)):
+        for i in range(0,len(xmf3)):
             mainseqgas_K13[j,i] = mainseqgas_modelvar[j,st+i]
 
     #Predicted relation
@@ -884,7 +890,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
 
     idx_modelvar = 0
     ind = np.where(mainseqgas_GD14[0+idx_modelvar,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf3[ind]
     yplot = mainseqgas_GD14[0+idx_modelvar,ind]
     errdn = mainseqgas_GD14[1+idx_modelvar,ind]
     errup = mainseqgas_GD14[2+idx_modelvar,ind]
@@ -893,7 +899,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ax.plot(xplot,yplot[0],'r', linestyle='dashed')
 
     ind = np.where(mainseqgas_KMT09[0+idx_modelvar,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf3[ind]
     yplot = mainseqgas_KMT09[0+idx_modelvar,ind]
     errdn = mainseqgas_KMT09[1+idx_modelvar,ind]
     errup = mainseqgas_KMT09[2+idx_modelvar,ind]
@@ -901,8 +907,8 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.3,interpolate=True)
     ax.plot(xplot,yplot[0],'b', linestyle='dotted')
 
-    ind = np.where((mainseqgas_K13[0+idx_modelvar,:] != 0) & (xmf < 11))
-    xplot = xmf[ind]
+    ind = np.where((mainseqgas_K13[0+idx_modelvar,:] != 0) & (xmf3 < 11))
+    xplot = xmf3[ind]
     yplot = mainseqgas_K13[0+idx_modelvar,ind]
     errdn = mainseqgas_K13[1+idx_modelvar,ind]
     errup = mainseqgas_K13[2+idx_modelvar,ind]
@@ -935,7 +941,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
 
     idx_modelvar = 3
     ind = np.where(mainseqgas_GD14[0+idx_modelvar,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf3[ind]
     yplot = mainseqgas_GD14[0+idx_modelvar,ind]
     errdn = mainseqgas_GD14[1+idx_modelvar,ind]
     errup = mainseqgas_GD14[2+idx_modelvar,ind]
@@ -944,7 +950,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ax.plot(xplot,yplot[0],'r', linestyle='dashed')
 
     ind = np.where(mainseqgas_KMT09[0+idx_modelvar,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf3[ind]
     yplot = mainseqgas_KMT09[0+idx_modelvar,ind]
     errdn = mainseqgas_KMT09[1+idx_modelvar,ind]
     errup = mainseqgas_KMT09[2+idx_modelvar,ind]
@@ -953,7 +959,7 @@ def plot_SFR_Mstars(plt, outdir, obsdir, mainseqsf, mainseqsf_cen, mainseqsf_sat
     ax.plot(xplot,yplot[0],'b', linestyle='dotted')
 
     ind = np.where((mainseqgas_K13[0+idx_modelvar,:] != 0))
-    xplot = xmf[ind]
+    xplot = xmf3[ind]
     yplot = mainseqgas_K13[0+idx_modelvar,ind]
     errdn = mainseqgas_K13[1+idx_modelvar,ind]
     errup = mainseqgas_K13[2+idx_modelvar,ind]
@@ -1058,27 +1064,6 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
     ax = fig.add_subplot(211)
     plt.subplots_adjust(bottom=0.15, left=0.18)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-
-    #MZR z=0
-    corrzsun = 8.69 #solar oxygen abundance in units of 12 + log(O/H)
-    hobs = 0.72
-    #add cosmology correction plus IMF correction that goes into the stellar mass.
-    corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) - 0.09
-    lm, mz  = common.load_observation(obsdir, 'MZR/MMR-Kewley08.dat', [0,1])
-    ax.plot(lm[0:11] + corr_cos,mz[0:11]- corrzsun,'grey', linestyle='solid', linewidth = 0.8, label='Kewley & Ellison 08')
-    ax.plot(lm[13:27] + corr_cos,mz[13:27]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    ax.plot(lm[119:134] + corr_cos,mz[119:134]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-    ax.plot(lm[136:148] + corr_cos,mz[136:148]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
-
-    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/MMAdrews13.dat', [0,1,2,3])
-    hobs = 0.7
-    #add cosmology correction plus IMF correction that goes into the stellar mass.
-    corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) - 0.09
-    common.errorbars(ax, lm+ corr_cos, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 's', label='Andrews+13')
-    #correction for Tremonti is the same.
-    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/Tremonti04.dat', [0,1,2,3])
-    common.errorbars(ax, lm+ corr_cos, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 'o', label="Tremonti+04")
-
     ind = np.where(mzr[0,0,:] != 0)
     yplot = (mzr[0,0,ind])
     errdn = (mzr[0,1,ind])
@@ -1107,8 +1092,37 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.4,interpolate=True)
     ax.plot(xplot,yplot[0],'r', linestyle='dashed')
 
+    #MZR z=0
+    corrzsun = 8.69 #solar oxygen abundance in units of 12 + log(O/H)
+    hobs = 0.72
+    #add cosmology correction plus IMF correction that goes into the stellar mass.
+    corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) - 0.09
+    lm, mz  = common.load_observation(obsdir, 'MZR/MMR-Kewley08.dat', [0,1])
+    #ax.plot(lm[0:11] + corr_cos,mz[0:11]- corrzsun,'grey', linestyle='solid', linewidth = 0.8, label='Kewley & Ellison 08')
+    #ax.plot(lm[13:27] + corr_cos,mz[13:27]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
+    #ax.plot(lm[119:134] + corr_cos,mz[119:134]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
+    #ax.plot(lm[136:148] + corr_cos,mz[136:148]- corrzsun,'grey', linestyle='solid', linewidth = 0.6)
 
-    common.prepare_legend(ax, ['grey','grey','grey'], loc=4)
+    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/MMAdrews13.dat', [0,1,2,3])
+    hobs = 0.7
+    #add cosmology correction plus IMF correction that goes into the stellar mass.
+    corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) 
+    #common.errorbars(ax, lm+ corr_cos, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 's', label='Andrews+13')
+    #correction for Tremonti is the same.
+    lm, mz, mzdn, mzup = common.load_observation(obsdir, 'MZR/Curti2020.dat', [0,1,2,3])
+    common.errorbars(ax, lm+ corr_cos, mz - corrzsun, mzdn - corrzsun, mzup - corrzsun, 'grey', 'o', label="Curti+20")
+ 
+    lm, mz = common.load_observation(obsdir, 'MZR/Curti2020_Compilation.dat', [0,1])
+    ax.plot(lm+ corr_cos, mz - corrzsun, color='darkgreen', marker='*', ls='None', mfc='None', label="Davies+17")
+   
+    #ZTe = 0.293±0.023 log(M∗) + 5.575±0.192
+    #ZTe = 0.332±0.021 log(M∗) + 5.242±0.171
+    ind = np.where(xmf < 9.87)
+    ax.plot(xmf[ind], 0.332 * xmf[ind] + 5.242 - corrzsun, linestyle = 'solid', color='darkblue', label='Yates+19')
+    ax.plot(xmf[ind], 0.332 * xmf[ind] + 5.242 - corrzsun - 0.171, linestyle = 'solid', color='darkblue')
+    ax.plot(xmf[ind], 0.332 * xmf[ind] + 5.242 - corrzsun + 0.171, linestyle = 'solid', color='darkblue')
+
+    common.prepare_legend(ax, ['darkgreen','darkblue','grey','grey'], loc=4)
 
 
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -1131,7 +1145,7 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
     xplot = xmf[ind]
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='b', alpha=0.4,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='b', alpha=0.4,interpolate=True)
-    ax.plot(xplot,yplot[0],'b', linestyle='solid',label="Shark centrals")
+    ax.plot(xplot,yplot[0],'b', linestyle='solid',label="Shark star-forming")
 
     ind = np.where(mszr_sat[0,0,:] != 0)
     yplot = (mszr_sat[0,0,ind])
@@ -1140,7 +1154,7 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
     xplot = xmf[ind]
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='r', alpha=0.4,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='r', alpha=0.4,interpolate=True)
-    ax.plot(xplot,yplot[0],'r', linestyle='dashed',label="Shark satellites")
+    ax.plot(xplot,yplot[0],'r', linestyle='dashed',label="Shark all")
 
     common.prepare_legend(ax, ['b', 'r', 'grey','grey'], loc=4)
 
@@ -1149,23 +1163,25 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
 
 def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
 
-    bin_it = functools.partial(us.wmedians, xbins=xmf)
+    bin_it = functools.partial(us.wmedians, xbins=xmf, nmin=20)
 
     fig = plt.figure(figsize=(5,5))
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
 
-    xmin, xmax, ymin, ymax = 8, 12.5, -5, 3
+    xmin, xmax, ymin, ymax = 8, 12.5, -3.2, 3.3
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
+    ind = np.where(sfr_seq[1,:] < -3)
+    sfr_seq[1,ind] = -3
     #predicted relation
     ind = np.where((sfr_seq[0,:] > 7) & (sfr_seq[0,:] < 13) & (sfr_seq[1,:] >-10) & (sfr_seq[1,:] < 10))
     xdata = sfr_seq[0,ind]
     ydata = sfr_seq[1,ind]
-    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
+    us.density_contour(ax, xdata[0], ydata[0], 30, 30, cmap = 'cividis') #, **contour_kwargs)
 
     ind = np.where(sfr_seq[0,:] > 0)
     toplot = bin_it(x=sfr_seq[0,ind], y=sfr_seq[1,ind])
@@ -1185,15 +1201,31 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
     hobs = 0.7
     #add cosmology correction plus IMF correction that goes into the stellar mass.
     corr_cos = np.log10(pow(hobs,2)/pow(h0,2)) - 0.09
-    # apply correction to both stellar mass and SFRs.
-    ax.plot(lm[0:35] + corr_cos, SFR[0:35] + corr_cos, color='PaleVioletRed', linewidth = 3, linestyle='dashed', label='Brinchmann+04')
-    ax.plot(lm[36:70] + corr_cos, SFR[36:70] + corr_cos, color='PaleVioletRed',linewidth = 5, linestyle='dotted')
-    ax.plot(lm[71:len(SFR)] + corr_cos, SFR[71:len(SFR)] + corr_cos, color='PaleVioletRed',linewidth = 5, linestyle='dotted')
+    #apply correction to both stellar mass and SFRs.
+    ax.plot(lm[0:35] + corr_cos, SFR[0:35] + corr_cos, color='SandyBrown', linewidth = 4, linestyle='dashed', label='Brinchmann+04')
+    #ax.plot(lm[36:70] + corr_cos, SFR[36:70] + corr_cos, color='PaleVioletRed',linewidth = 5, linestyle='dotted')
+    #ax.plot(lm[71:len(SFR)] + corr_cos, SFR[71:len(SFR)] + corr_cos, color='PaleVioletRed',linewidth = 5, linestyle='dotted')
 
     xdataD16 = [9.3, 10.6]
     ydataD16 = [-0.39, 0.477]
     ax.plot(xdataD16,ydataD16, color='b',linestyle='dashdot',linewidth = 4, label='Davies+16')
 
+    #GAMA data at z<0.06
+    #CATAID StellarMass_bestfit StellarMass_50 StellarMass_16 StellarMass_84 SFR_bestfit SFR_50 SFR_16 SFR_84 Zgas_bestfit Zgas_50 Zgas_16 Zgas_84 DustMass_bestfit DustMass_50 DustMass_16 DustMass_84 DustLum_50 DustLum_16 DustLum_84 uberID redshift
+    ms_gama, sfr_gama = common.load_observation(obsdir, 'GAMA/ProSpect_Claudia.txt', [2,6])
+    ind = np.where(sfr_gama < 1e-3)
+    sfr_gama[ind] = 1e-3
+    #ax.hexbin(np.log10(ms_gama), np.log10(sfr_gama), gridsize=(20,20), mincnt=5) #, cmap = 'plasma') #, **contour_kwargs)
+    us.density_contour_reduced(ax, np.log10(ms_gama), np.log10(sfr_gama), 25, 25) #, **contour_kwargs)
+
+    toplot = bin_it(x=np.log10(ms_gama), y=np.log10(sfr_gama))
+    ind = np.where(toplot[0,:] != 0)
+    yp = toplot[0,ind]
+    yup = toplot[2,ind]
+    ydn = toplot[1,ind]
+    ax.plot(xmf[ind], yp[0],color='PaleVioletRed',linestyle='dashed', linewidth = 5, label="GAMA")
+#ax.plot(xmf[ind], yp[0]+yup[0],color='PaleVioletRed',linestyle='dotted', linewidth = 5)
+    #ax.plot(xmf[ind], yp[0]-ydn[0],color='PaleVioletRed',linestyle='dotted', linewidth = 5)
 
     # individual massive galaxies from Terrazas+17
     ms, sfr, upperlimflag = common.load_observation(obsdir, 'BHs/MBH_host_gals_Terrazas17.dat', [0,1,2])
@@ -1204,7 +1236,8 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
         ax.arrow(a, b, 0, -0.3, head_width=0.05, head_length=0.1, fc='r', ec='r')
 
     # Legend
-    common.prepare_legend(ax, ['k','k','PaleVioletRed', 'b','r'], loc=2)
+    common.prepare_legend(ax, ['k','k','SandyBrown','b','PaleVioletRed','r'], loc=2)
+
     common.savefig(outdir, fig, 'SFR_Mstars_z0.pdf')
 
 
@@ -1492,12 +1525,12 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     fmzr[index,:] = bin_it(x=mass[ind]-0.66*np.log10((sfr_disk[ind]+sfr_burst[ind])/h0/GyrToYr),
                            y=np.log10((mgas_metals[ind]/mgas[ind]/Zsun)))
 
-    ind = np.where((mgas_metals > 0.0) & (typeg == 0) & (mgas > 1e5))
+    ind = np.where((mgas_metals > 0.0)  & (mgas > 1e5) & ((sfr_disk+sfr_burst)/(mdisk+mbulge) >= 1e-2))
     mzr_cen[index,:] = bin_it(x=mass[ind], y=np.log10((mgas_metals[ind]/mgas[ind]/Zsun)))
     ind = np.where((mstars_metals_disk+mstars_metals_bulge > 0.0) & (typeg == 0) )
     mszr_cen[index,:] = bin_it(x=mass[ind], y=np.log10(((mstars_metals_disk[ind]+mstars_metals_bulge[ind])/(mdisk[ind]+mbulge[ind])/Zsun)))
 
-    ind = np.where((mgas_metals > 0.0) & (typeg > 0) & (mgas > 1e5) & (mass > 8))
+    ind = np.where((mgas_metals > 0.0) & (mgas > 1e5) & (mass > 8))
     mzr_sat[index,:] = bin_it(x=mass[ind], y=np.log10((mgas_metals[ind]/mgas[ind]/Zsun)))
     ind = np.where((mstars_metals_disk+mstars_metals_bulge > 0.0) & (typeg > 0) & (mass > 8))
     mszr_sat[index,:] = bin_it(x=mass[ind], y=np.log10(((mstars_metals_disk[ind]+mstars_metals_bulge[ind])/(mdisk[ind]+mbulge[ind])/Zsun)))
@@ -1625,12 +1658,15 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
             sfr_seq[0,ind] = mass[ind]
             sfr_seq[1,ind] = np.log10((sfr_disk[ind] + sfr_burst[ind]) / h0 / GyrToYr)
 
-            ind = np.where(mass < 10.7)
+            ind = np.where(mass < 10.5)
             sfr_den = np.log10(sum(sfr_disk[ind] + sfr_burst[ind]) /  h0 / GyrToYr) + np.log10(h0**3.0 / volh)
-            print("cosmic SFR density at z=0", sfr_den, volh)
+            print("cosmic SFR density at z=0 < 10.5", sfr_den, volh)
+            ind = np.where(mass < 11)
+            sfr_den = np.log10(sum(sfr_disk[ind] + sfr_burst[ind]) /  h0 / GyrToYr) + np.log10(h0**3.0 / volh)
+            print("cosmic SFR density at z=0 < 11", sfr_den, volh)
             ind = np.where(mass < 12)
             sfr_den = np.log10(sum(sfr_disk[ind] + sfr_burst[ind]) /  h0 / GyrToYr) + np.log10(h0**3.0 / volh)
-            print("cosmic SFR density at z=0", sfr_den, volh)
+            print("cosmic SFR density at z=0 < 12", sfr_den, volh)
 
     # This should be the same in all HDF5 files
 

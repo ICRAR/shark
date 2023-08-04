@@ -200,8 +200,11 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
     qIR_dale14 = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(Lum_radio_Viperfish[3,:]/1e7)
     qIR_bressan = np.log10(lir_total[0,:]*Lsunwatts/3.75e12) - np.log10(lum_radio[3,:]/1e7)
 
-    ind = np.where((ms > 1e8) & (ms < 1e9) & (qIR_bressan >  -10) & (qIR_bressan < 10) & (sfr > 1e-3) & (typein == 0))
-    print("Median qIR:", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind]), np.median(sfrb[ind]))
+    ind = np.where((ms > 1e8) & (ms < 1e9) & (qIR_bressan >  0) & (qIR_bressan < 3) & (sfr > 1e-3) & (typein == 0))
+    print("Median qIR dwarf galaxies:", np.median(qIR_dale14[ind]), np.median(qIR_bressan[ind]), np.median(sfrb[ind]), )
+    print("Median qIR dwarf galaxies:", np.percentile(qIR_bressan[ind], [16,84]))
+    qIR_out = qIR_bressan[ind]
+    ms_out = np.log10(ms[ind])
 
     writeon = False
     if(writeon == True):
@@ -221,7 +224,29 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
        hf.close()
 
 
-    return (lum_radio/1e7, Lum_radio_Viperfish/1e7, lum_ratio, ms, sfr, vol, h0)
+    return (lum_radio/1e7, Lum_radio_Viperfish/1e7, lum_ratio, ms, sfr, vol, h0, ms_out, qIR_out)
+
+def plot_qIR_dwarf_galaxies(plt, outdir, obsdir, qIR, ms, redshift):
+
+    bin_it = functools.partial(us.wmedians, xbins=xmf)
+
+    fig = plt.figure(figsize=(4,4))
+    ytit = "$\\rm q_{\\rm IR}$"
+    xtit = "$\\rm log_{10} (M_{\\rm star}/M_{\\odot})$"
+    xmin, xmax, ymin, ymax = 8, 9, 0, 3
+    xleg = xmin + 0.15 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ax = fig.add_subplot(111)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+    im = ax.hexbin(ms, qIR, xscale='linear', yscale='linear', gridsize=(20,20), cmap='magma')
+    cbar = fig.colorbar(im)#, cax=cbar_ax)
+    cbar.ax.set_ylabel('$\\rm Number$)')
+
+    plt.tight_layout()
+
+    common.savefig(outdir, fig, 'qIR_dwarfgals_z'+redshift+'.pdf')
+
 
 def plot_comparison_radio_lums(plt, outdir, obsdir, LBressan, LViperfish, Lratio, ms, sfr, filters, redshift):
 
@@ -314,13 +339,14 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     filters = ('8.4GHz', '5GHz', '3GHz', '1.4GHz', '610MHz', '325MHz', '150MHz') 
 
     file_hdf5_sed = "Shark-SED-eagle-rr14-radio-only.hdf5"
+    #"Shark-SED-eagle-rr14-no-perturbation-radio-only.hdf5" #"Shark-SED-eagle-rr14-radio-only.hdf5"
     #(0): "z_SDSS", "Band_ionising_photons", "FUV_Nathan", "Band9_ALMA",
     #(4): "Band8_ALMA", "Band7_ALMA", "Band6_ALMA", "Band4_ALMA", "Band3_ALMA",
     #(9): "BandX_VLA", "BandC_VLA", "BandS_VLA", "BandL_VLA", "Band_610MHz",
     #(14): "Band_325MHz", "Band_150MHz"
 
     #199 188 159 131 113 100 88 79 70 63 57 51
-    zlist = [0, 0.194738848008908, 0.909822023685613, 2.00391410007239, 3.0191633709527, 3.95972701662501, 5.02220991014863, 5.96592270612165, 7.05756323172746, 8.0235605165086, 8.94312532315157, 9.95650268434316] #9.95655] #0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988] #[5.02220991014863, 5.52950356184419, 5.96593, 6.55269895697227, 7.05756323172746, 7.45816170313544, 8.02352, 8.94312532315157, 9.95655]
+    zlist = [0] #, 0.194738848008908, 0.909822023685613, 2.00391410007239, 3.0191633709527, 3.95972701662501, 5.02220991014863, 5.96592270612165, 7.05756323172746, 8.0235605165086, 8.94312532315157, 9.95650268434316] #9.95655] #0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988] #[5.02220991014863, 5.52950356184419, 5.96593, 6.55269895697227, 7.05756323172746, 7.45816170313544, 8.02352, 8.94312532315157, 9.95655]
     #[0.016306640039433, 0.066839636933135, 0.084236502339783, 0.119886040396529, 0.138147164704691, 0.175568857770275, 0.214221447279112, 0.23402097095238, 0.274594901875312, 0.316503156974571]
 
     znames = ['0', '0p2', '0p9', '2', '3', '4', '5', '6', '7', '8', '9', '10']
@@ -339,7 +365,8 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
             seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, [subv], file_hdf5_sed)
             seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, [subv], file_hdf5_sed)
             lir = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_lir, [subv], file_hdf5_sed)
-            (LBressan, LViperfish, Lratio, ms, sfr, vol, h0) = prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, subv, filters)
+            (LBressan, LViperfish, Lratio, ms, sfr, vol, h0, ms_out, qIR_out) = prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, subv, filters)
+            plot_qIR_dwarf_galaxies(plt, output_dir, obs_dir, qIR_out, ms_out, znames[index])
             #plot_comparison_radio_lums(plt, output_dir, obs_dir, LBressan, LViperfish, Lratio, ms, sfr, filters, znames[index])
             #if(snapshot == 199):
             #   plot_radio_lf_z0(plt, output_dir, obs_dir, LBressan, LViperfish, znames[index], vol, h0)

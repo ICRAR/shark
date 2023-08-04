@@ -559,7 +559,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     #zlist = (0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 0, 0.25, 0.5, 1, 2, 3, 4, 6, 8, 9, 10)
     filters = ('8.4GHz', '5GHz', '3GHz', '1.4GHz', '610MHz', '325MHz', '150MHz') 
 
-    file_hdf5_sed = "Shark-SED-eagle-rr14-radio-only.hdf5"
+    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5" #"Shark-SED-eagle-rr14-radio-only.hdf5"
     #(0): "z_SDSS", "Band_ionising_photons", "FUV_Nathan", "Band9_ALMA",
     #(4): "Band8_ALMA", "Band7_ALMA", "Band6_ALMA", "Band4_ALMA", "Band3_ALMA",
     #(9): "BandX_VLA", "BandC_VLA", "BandS_VLA", "BandL_VLA", "Band_610MHz",

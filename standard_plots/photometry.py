@@ -616,7 +616,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
     idx = (0, 1, 2, 3, 4, 5, 6, 7)
     bands = (14, 17, 20, 21, 22, 23, 25, 26)
     labels= ('WISE 2', 'WISE 3', 'P100', 'P160', 'S250', 'S350', 'S500', 'JCTM850')
-    
+ 
     for subplot, idx, b in zip(subplots, idx, bands):
 
         ax = fig.add_subplot(subplot)
@@ -1245,6 +1245,8 @@ def prepare_data(hdf5_data, phot_data, phot_data_nod, LFs_dust, LFs_nodust, inde
     #4: total
 
     ind = np.where(mdisk + mbulge > 0)
+    #print(len(mdisk[ind]))
+    #print(phot_data)
     SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
     SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
 
@@ -1295,10 +1297,10 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
-    z = (0, 0.25, 0.5,  2.0, 3.0) #, 1.0, 1.5, 2.0)
+    z = (0, 0.25, 0.5) #, 1.0, 1.5, 2.0, 3.0)
     snapshots = redshift_table[z]
 
-    file_hdf5_sed = "Shark-SED-BPASS-eagle-rr14.hdf5" 
+    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5" 
     # Create histogram
     for index, snapshot in enumerate(snapshots):
 
@@ -1335,7 +1337,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'BPASS-eagle-rr14')
+       outdir = os.path.join(outdir, 'eagle-rr14')
        #check if directory exists, otherwise create it
        if not os.path.exists(outdir):
           os.makedirs(outdir)

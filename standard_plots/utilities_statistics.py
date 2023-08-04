@@ -165,7 +165,7 @@ def find_confidence_interval(x, pdf, confidence_level):
 
 
 
-def density_contour(ax, xdata, ydata, nbins_x, nbins_y):
+def density_contour(ax, xdata, ydata, nbins_x, nbins_y, cmap = 'viridis'):
     """ Create a density contour plot.
     Parameters
     ----------
@@ -209,10 +209,94 @@ def density_contour(ax, xdata, ydata, nbins_x, nbins_y):
     # The viridis colormap is only available since mpl 1.5
     extra_args = {}
     if tuple(mpl.__version__.split('.')) >= ('1', '5'):
-        extra_args['cmap'] = plt.get_cmap('viridis')
+        extra_args['cmap'] = plt.get_cmap(cmap)
 
     return ax.contourf(X, Y, Z, levels=levels, origin="lower", alpha=0.75,
                       norm=col.Normalize(vmin=0, vmax=0.01), **extra_args)
+
+def density_contour_reduced_col(ax, xdata, ydata, nbins_x, nbins_y, cmap = 'viridis'):
+    """ Create a density contour plot.
+    Parameters
+    ----------
+    ax : matplotlib.Axes
+        Plot the contour to this axis
+    xdata : numpy.ndarray
+    ydata : numpy.ndarray
+    nbins_x : int
+        Number of bins along x dimension
+    nbins_y : int
+        Number of bins along y dimension
+    contour_kwargs : dict
+        kwargs to be passed to pyplot.contour()
+    """
+
+    H, xedges, yedges = np.histogram2d(xdata, ydata, bins=(nbins_x,nbins_y), normed=True)
+    x_bin_sizes = (xedges[1:] - xedges[:-1]).reshape((1,nbins_x))
+    y_bin_sizes = (yedges[1:] - yedges[:-1]).reshape((nbins_y,1))
+
+    pdf = (H*(x_bin_sizes*y_bin_sizes))
+
+    thirty_sigma = so.brentq(find_confidence_interval, 0., 1., args=(pdf, 0.5))
+    one_sigma = so.brentq(find_confidence_interval, 0., 1., args=(pdf, 0.68))
+    two_sigma = so.brentq(find_confidence_interval, 0., 1., args=(pdf, 0.95))
+    three_sigma = so.brentq(find_confidence_interval, 0., 1., args=(pdf, 0.99))
+    levels = [three_sigma, two_sigma, one_sigma, thirty_sigma]
+
+
+    X, Y = 0.5*(xedges[1:]+xedges[:-1]), 0.5*(yedges[1:]+yedges[:-1])
+    Z = pdf.T
+
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as col
+
+    # The viridis colormap is only available since mpl 1.5
+    extra_args = {}
+    if tuple(mpl.__version__.split('.')) >= ('1', '5'):
+        extra_args['cmap'] = plt.get_cmap(cmap)
+
+    return ax.contourf(X, Y, Z, levels=levels, origin="lower", alpha=0.75,
+                      norm=col.Normalize(vmin=0, vmax=0.01), **extra_args)
+
+
+def density_contour_reduced(ax, xdata, ydata, nbins_x, nbins_y, cmap = 'viridis'):
+    """ Create a density contour plot.
+    Parameters
+    ----------
+    ax : matplotlib.Axes
+        Plot the contour to this axis
+    xdata : numpy.ndarray
+    ydata : numpy.ndarray
+    nbins_x : int
+        Number of bins along x dimension
+    nbins_y : int
+        Number of bins along y dimension
+    contour_kwargs : dict
+        kwargs to be passed to pyplot.contour()
+    """
+
+    H, xedges, yedges = np.histogram2d(xdata, ydata, bins=(nbins_x,nbins_y), normed=True)
+    x_bin_sizes = (xedges[1:] - xedges[:-1]).reshape((1,nbins_x))
+    y_bin_sizes = (yedges[1:] - yedges[:-1]).reshape((nbins_y,1))
+
+    pdf = (H*(x_bin_sizes*y_bin_sizes))
+
+    thirty_sigma = so.brentq(find_confidence_interval, 0., 1., args=(pdf, 0.5))
+    one_sigma = so.brentq(find_confidence_interval, 0., 1., args=(pdf, 0.68))
+    two_sigma = so.brentq(find_confidence_interval, 0., 1., args=(pdf, 0.95))
+    three_sigma = so.brentq(find_confidence_interval, 0., 1., args=(pdf, 0.99))
+    levels = [three_sigma, two_sigma, one_sigma, thirty_sigma]
+
+    X, Y = 0.5*(xedges[1:]+xedges[:-1]), 0.5*(yedges[1:]+yedges[:-1])
+    Z = pdf.T
+
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as col
+
+    return ax.contour(X, Y, Z, levels=levels, origin="lower", 
+                      norm=col.Normalize(vmin=0, vmax=0.01), colors='PaleVioletRed')
+
 
 
 
