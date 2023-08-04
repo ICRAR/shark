@@ -58,6 +58,9 @@ double Reincorporation::reincorporated_mass(Halo &halo, Subhalo &subhalo, double
 	if(treinc == 0){
 		return mgas;
 	}
+	else if (treinc > 100){
+		return 0;
+	}
 
 	return mgas / treinc * delta_t;
 

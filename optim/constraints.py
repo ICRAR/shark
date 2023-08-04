@@ -355,22 +355,30 @@ class SMF_z0p5(SMF):
     def get_obs_x_y_err(self, h0):
 
         # Wright et al. (2018, several reshifts). Assumes Chabrier IMF.
-        zD17, lmD17, pD17, dp_dn_D17, dp_up_D17, dp_cv = self.load_observation('mf/SMF/Wright18_CombinedSMF.dat', cols=[0,1,2,3,4,5])
-        hobs = 0.7
-        binobs = 0.25
-        pD17 = pD17 + 2.0 * np.log10(hobs/h0) - np.log10(binobs)
-        lmD17 = lmD17 - 3.0 * np.log10(hobs/h0) - np.log10(binobs)
-        in_redshift = np.where(zD17 == 0.5)
+        #zD17, lmD17, pD17, dp_dn_D17, dp_up_D17, dp_cv = self.load_observation('mf/SMF/Wright18_CombinedSMF.dat', cols=[0,1,2,3,4,5])
+        #hobs = 0.7
+        #binobs = 0.25
+        #pD17 = pD17 + 2.0 * np.log10(hobs/h0) - np.log10(binobs)
+        #lmD17 = lmD17 - 3.0 * np.log10(hobs/h0) - np.log10(binobs)
+        #in_redshift = np.where(zD17 == 0.5)
 
-        x_obs = lmD17[in_redshift]
-        y_obs = pD17[in_redshift]
-        y_dn = dp_dn_D17[in_redshift]
-        y_up = dp_up_D17[in_redshift]
-        cv = np.log10(1 + dp_cv[in_redshift]) 
+        #x_obs = lmD17[in_redshift]
+        #y_obs = pD17[in_redshift]
+        #y_dn = dp_dn_D17[in_redshift]
+        #y_up = dp_up_D17[in_redshift]
+        #cv = np.log10(1 + dp_cv[in_redshift]) 
 
         # combine cosmic variance and model variance in quadrature
-        y_dn = np.sqrt(y_dn**2 + cv**2)
-        y_up = np.sqrt(y_up**2 + cv**2)
+        #y_dn = np.sqrt(y_dn**2 + cv**2)
+        #y_up = np.sqrt(y_up**2 + cv**2)
+
+        #SMF from Weaver et al. (2022)
+        lm, pD, dn, du = self.load_observation('mf/SMF/COSMOS2020/SMF_Farmer_v2.1_0.5z0.8_total.txt', cols = [0,2,3,4])
+        hobs = 0.7
+        y_obs = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        y_dn = np.log10(pD) - np.log10(dn)
+        y_up = np.log10(du) - np.log10(pD)
+        x_obs = lm -  2.0 * np.log10(hobs/h0)
 
         return x_obs, y_obs, y_dn, y_up
 
@@ -406,7 +414,7 @@ class SMF_z1(SMF):
         #y_dn = y_dn[ind]
         #y_up = y_up[ind]
 
-
+        #SMF from Weaver et al. (2022)
         lm, pD, dn, du = self.load_observation('mf/SMF/COSMOS2020/SMF_Farmer_v2.1_0.8z1.1_total.txt', cols = [0,2,3,4])
         hobs = 0.7
         y_obs = np.log10(pD) +  3.0 * np.log10(hobs/h0)
@@ -416,6 +424,23 @@ class SMF_z1(SMF):
 
         return x_obs, y_obs, y_dn, y_up
  
+class SMF_z2(SMF):
+    """The SMF constraint at z=2"""
+
+    z = [2]
+
+    def get_obs_x_y_err(self, h0):
+
+        #SMF from Weaver et al. (2022)
+        lm, pD, dn, du = self.load_observation('mf/SMF/COSMOS2020/SMF_Farmer_v2.1_2.0z2.5_total.txt', cols = [0,2,3,4])
+        hobs = 0.7
+        y_obs = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        y_dn = np.log10(pD) - np.log10(dn)
+        y_up = np.log10(du) - np.log10(pD)
+        x_obs = lm -  2.0 * np.log10(hobs/h0)
+
+        return x_obs, y_obs, y_dn, y_up
+
 
 class CSFR(Constraint):
     """The Cosmic Star Formation Rate constraint"""

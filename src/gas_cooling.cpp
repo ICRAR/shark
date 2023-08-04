@@ -798,7 +798,7 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 
 		double ratio = gamma_cool/gamma_heat;
 
-		if(ratio <  agnfeedback->parameters.hot_halo_threshold || m200 > 5e12){
+		if(ratio <  agnfeedback->parameters.hot_halo_threshold || m200 > 3e12){
 			return true;
 		}
 		else{
