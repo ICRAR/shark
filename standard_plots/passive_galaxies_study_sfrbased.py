@@ -185,7 +185,7 @@ def plot_num_density_passive(plt, outdir, obs_dir, zlist, num_den_passive, num_d
     common.savefig(outdir, fig, 'num_density_passive_modelvariations.pdf')
 
 
-def prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass, redshift):
+def prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass, redshift, num_dens_halos):
 
 
     # Unpack data
@@ -253,22 +253,12 @@ def prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_
     ind = np.where(num_den_passive_we == 0)
     num_den_passive_we[ind] = 0.5 / (volh / h0**3)
 
-    ind = np.where((mvir > 11.5) & (mvir < 11.7) & (typeg == 0))
-    ngals = len(mvir[ind])
-    num_dens = ngals / (volh / h0**3.0)
-    print("number density of halos with m=11.6 +/- 0.1", num_dens, "at redshift", redshift)
-    ind = np.where((mvir > 11.7) & (mvir < 11.9) & (typeg == 0))
-    ngals = len(mvir[ind])
-    num_dens = ngals / (volh / h0**3.0)
-    print("number density of halos with m=11.8 +/- 0.1", num_dens, "at redshift", redshift)
-    ind = np.where((mvir > 11.9) & (mvir < 12.1) & (typeg == 0))
-    ngals = len(mvir[ind])
-    num_dens = ngals / (volh / h0**3.0)
-    print("number density of halos with m=12.0 +/- 0.1", num_dens, "at redshift", redshift)
-    ind = np.where((mvir > 12.1) & (mvir < 12.3) & (typeg == 0))
-    ngals = len(mvir[ind])
-    num_dens = ngals / (volh / h0**3.0)
-    print("number density of halos with m=12.2 +/- 0.1", num_dens, "at redshift", redshift)
+    mhalo_bins = [11.5, 11.6,11.7,11.8,11.9,12,12.1,12.2]
+    
+    for j, b in enumerate(mhalo_bins):
+        ind = np.where((mvir > b) & (typeg == 0))
+        ngals = len(mvir[ind])
+        num_dens_halos[index, j] = (ngals +0.0) / (volh / h0**3.0)
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
@@ -285,16 +275,19 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     num_den_passive_we = np.zeros(shape = (len(zlist), 2))
     num_den_passive_mass = np.zeros(shape = (len(zlist), 2))
     num_den_passive_we_mass = np.zeros(shape = (len(zlist), 2))
-
+    num_dens_halos = np.zeros(shape = (len(zlist), 8))
     for index, snapshot in enumerate(redshift_table[zlist]):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
 
-        prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass, zlist[index])
+        prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass, zlist[index], num_dens_halos)
 
     #for a,b,c,d,e in zip(zlist, num_den_passive[:,0], num_den_passive[:,1], num_den_passive_mass[:,0], num_den_passive_mass[:,1]):
     #    print(a,b,c,d,e)
     plot_num_density_passive(plt, output_dir, obs_dir, zlist, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass)
+
+    #for i in range(0,len(zlist)):
+    #    print(zlist[i],num_dens_halos[i,0], num_dens_halos[i,1], num_dens_halos[i,2], num_dens_halos[i,3], num_dens_halos[i,4], num_dens_halos[i,5], num_dens_halos[i,6],num_dens_halos[i,7])
 
 if __name__ == '__main__':
     main(*common.parse_args())

@@ -96,6 +96,7 @@ def wmedians(x=None, y=None, xbins=None, low_numbers=False, nmin=10):
 
     return result
 
+
 def stacking(x=None, y=None, xbins=None, low_numbers=False):
 
     nbins = len(xbins)

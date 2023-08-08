@@ -219,10 +219,10 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
-    z = (8.0, 9, 10.5, 12.5) #, 1.0, 1.5, 2.0)
+    z = (3.0, 4.0, 6.0, 8.0, 10.0)  #(8.0, 9, 10.5, 12.5) #, 1.0, 1.5, 2.0)
     snapshots = redshift_table[z]
 
-    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5" 
+    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5" 
     # Create histogram
     for index, snapshot in enumerate(snapshots):
 
@@ -257,14 +257,14 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     LFs_nodust[ind] = np.log10(LFs_nodust[ind])
 
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14-steep')
+       outdir = os.path.join(outdir, 'eagle-rr14')
 
     volcorr = 3.0*np.log10(h0)
 
     band = 0
     for a,b,c,d,e in zip(xlf, LFs_dust[0,4,band,:], LFs_dust[1,4,band,:],LFs_dust[2,4,band,:],LFs_dust[3,4,band,:]):
         print(a,b+volcorr-np.log10(dm),c+volcorr-np.log10(dm),d+volcorr-np.log10(dm),e+volcorr-np.log10(dm))
-    #plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands)
+    plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands)
 
 if __name__ == '__main__':
     main(*common.parse_args())

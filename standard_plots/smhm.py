@@ -35,7 +35,7 @@ xmf2 = mbins2 + dm2/2.0
 
 
 
-def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside, massgal_morph, masshalo_massivegals, redshift):
+def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside, massgal_morph, masshalo_massivegals, redshift, massgal_witherror):
 
     Omegab = 0.0491
     OmegaM = 0.3121
@@ -54,6 +54,11 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside, massgal_mor
     ind = np.where((typeg <= 0) & (mdisk+mbulge > 0))
     massgal[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                    y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                                   xbins=xmf)
+
+    ind = np.where((typeg <= 0) & (mdisk+mbulge > 0))
+    massgal_witherror[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
+                                   y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)) + np.random.normal(0.0, 0.3, len(mdisk[ind])),
                                    xbins=xmf)
 
     massbar[index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
@@ -104,7 +109,7 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside, massgal_mor
 
     return thresh
 
-def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, masshalo_massivegals):
+def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, masshalo_massivegals, massgal_witherror):
 
     def plot_moster13(ax, z, labels, label):
         #Moster et al. (2013) abundance matching SMHM relation
@@ -231,7 +236,7 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
     def plot_l18(i, ax, label):
         mh, sm = common.load_observation(obsdir, 'Models/SharkVariations/SMHM_Lagos18.dat', [0,i+1]) 
         ind = np.where(sm != 0)
-        ax.plot(mh[ind], sm[ind], 'k', linestyle='dashed', label=label)
+        ax.plot(mh[ind], sm[ind], 'k', linestyle='dotted', label=label)
 
     def plot_eagle(z, ax, label):
         mh, sm, red = common.load_observation(obsdir, 'Models/EAGLE/SMHM.dat', [0,1,4]) 
@@ -264,8 +269,16 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
             ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
             ax.plot(xplot, yplot[0], color='k', linestyle='solid', label=labels[0])
 
+        ind = np.where(massgal_witherror[i,0,:] != 0)
+        xplot = xmf[ind]
+        yplot = massgal_witherror[i,0,ind]
+        if not labels:
+            ax.plot(xplot, yplot[0], color='k', linestyle='dashed')
+        else:
+            ax.plot(xplot, yplot[0], color='k', linestyle='dashed', label=labels[0] + '+0.3dex err')
+
         plot_l18(i, ax, labels[1])
-        plot_eagle(z_eagle[i], ax, labels[4])
+        #plot_eagle(z_eagle[i], ax, labels[4])
         plot_moster13(ax, z, labels, labels[2])
         plot_berhoozi13(ax, z, labels, labels[3])
 
@@ -544,6 +557,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     zlist = (0, 0.5, 1, 2, 3, 4)
     snapshots = redshift_table[zlist]
     massgal = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    massgal_witherror = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massgal_morph = np.zeros(shape = (4, 2, len(zlist), 3, len(xmf2)))
     massbar = np.zeros(shape = (len(zlist), 3, len(xmf)))
     massbar_inside =  np.zeros(shape = (len(zlist), 3, len(xmf)))
@@ -551,9 +565,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     for idx, snapshot in enumerate(snapshots):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
-        thresh = prepare_data(hdf5_data, idx, massgal, massbar, massbar_inside, massgal_morph, masshalo_massivegals, zlist[idx])
+        thresh = prepare_data(hdf5_data, idx, massgal, massbar, massbar_inside, massgal_morph, masshalo_massivegals, zlist[idx], massgal_witherror)
 
-    plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, masshalo_massivegals)
+    plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, masshalo_massivegals, massgal_witherror)
     plot_BMHM_z(plt, outdir, massbar, massbar_inside)
 
 if __name__ == '__main__':

@@ -622,7 +622,7 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
     xm, ym = common.load_observation(obsdir, 'Models/SharkVariations/HIMF_Lagos18.dat', [0,2])
     ax.plot(xm,ym,'k', linestyle='dashed')
 
-    common.prepare_legend(ax, ['grey','grey'])
+    common.prepare_legend(ax, ['red','grey','grey'])
     common.savefig(outdir, fig, 'H2mf_z0.pdf')
 
 def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):

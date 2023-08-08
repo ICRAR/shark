@@ -308,6 +308,9 @@ def plot_SMHM_z(plt, outdir, zlist, halo_mass_rel):
    
         ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='red', alpha = 0.5, interpolate=True)
         ax.errorbar(xplot, yplot[0], color='r', label='Passive galaxies (v2.0)')
+        print("#SMHM relation of passive galaxies ")
+        for a,b,c,d in zip(xplot, yplot[0],yplot[0]+errup[0],yplot[0]-errdn[0]):
+            print(a,b,c,d, zlist[idx], 1)
 
         ind = np.where(halo_mass_rel[idx,2,0,:] != 0)
         xplot = xmf[ind]
@@ -317,7 +320,9 @@ def plot_SMHM_z(plt, outdir, zlist, halo_mass_rel):
    
         ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='blue', alpha = 0.5, interpolate=True)
         ax.errorbar(xplot, yplot[0], color='b', label = 'SF galaxies (v2.0)')
- 
+        print("#SMHM relation of SF galaxies ")
+        for a,b,c,d in zip(xplot, yplot[0],yplot[0]+errup[0],yplot[0]-errdn[0]):
+            print(a,b,c,d, zlist[idx], 0)
         ind = np.where(halo_mass_rel[idx,3,0,:] != 0)
         xplot = xmf[ind]
         yplot = halo_mass_rel[idx,3,0,ind]
@@ -474,6 +479,7 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
     indeces = (1, 2, 3, 4, 5, 6)
     zs = (0.5, 1, 2, 3, 4, 5)
     observations = (z05obs, z1obs, z2obs, z3obs, z4obs, z5obs)
+    limits_obs = [7, 8.4, 9.4, 10, 10.1, 10.2, 10.45]
 
     for subplot, idx, z, obs_and_markers in zip(subplots, indeces, zs, observations):
 
@@ -484,6 +490,8 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
             ytitle = ' '
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle, locators=(0.1, 1, 0.1))
         ax.text(xleg, yleg, 'z=%s' % str(z))
+        xlim = limits_obs[idx]
+        ax.plot([xlim, xlim], [-6.5,-1], linestyle='dotted', color='grey')
 
         # Observations
         for obs, marker in obs_and_markers:
@@ -690,7 +698,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat)
     plot_SMHM_z(plt, outdir, zlist, halo_mass_rel)
     print("#SMF passive galaxies")
-    for a,b,c,d,e,f,g,h in zip(xmf, hist_smf_pass_cen[0,:], hist_smf_pass_cen[1,:], hist_smf_pass_cen[2,:], hist_smf_pass_cen[3,:], hist_smf_pass_cen[4,:], hist_smf_pass_cen[5,:], hist_smf_pass_cen[6,:]):
+    for a,b,c,d,e,f,g,h in zip(xmf, hist_smf_pass_sat[0,:], hist_smf_pass_sat[1,:], hist_smf_pass_sat[2,:], hist_smf_pass_sat[3,:], hist_smf_pass_sat[4,:], hist_smf_pass_sat[5,:], hist_smf_pass_sat[6,:]):
         print(a,b,c,d,e,f,g,h)
 
 if __name__ == '__main__':

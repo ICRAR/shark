@@ -78,7 +78,7 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
 
     fig = plt.figure(figsize=(6.5,5))
     #mbins =  (11.0, 11.2, 11.4, 11.6, 11.8, 12.0, 12.2, 12.4, 12.6)
-    mbins = (9,9.25,9.5,9.75,10,10.25,10.5,10.75,11,11.25,11.5, 11.75, 12, 12.25,12.5)
+    mbins = (9,9.25,9.5,9.75,10,10.25,10.5,10.75,11,11.25,11.5, 11.75, 12, 12.25)
     colors = ('Navy','Blue','RoyalBlue','SkyBlue','Teal','DarkTurquoise','Aquamarine','Yellow', 'Gold',  'Orange','OrangeRed', 'LightSalmon', 'Crimson', 'Red', 'DarkRed')
 
     ax = fig.add_subplot(111)
@@ -104,8 +104,8 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
               SFH_med = np.zeros(shape = (3,len(LBT)))
               for snap in range(0,len(LBT)):
                   SFH_med[0,snap] = np.median(tot_sfh_selec[:,snap])
-                  SFH_med[1,snap] = np.percentile(tot_sfh_selec[:,snap],16)
-                  SFH_med[2,snap] = np.percentile(tot_sfh_selec[:,snap],84)
+                  SFH_med[1,snap] = np.percentile(tot_sfh_selec[:,snap],25)
+                  SFH_med[2,snap] = np.percentile(tot_sfh_selec[:,snap],75)
                   if(SFH_med[0,snap] < 0.001):
                      SFH_med[0,snap] = 0.001
                      SFH_med[1,snap] = 0.001 - 0.001*0.2
