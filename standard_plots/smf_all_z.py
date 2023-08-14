@@ -127,6 +127,7 @@ def load_smf_observations(obsdir, h0):
 
     # Driver al. (2022, z=0). Chabrier IMF
     z0obs = []
+    z0obsPSO = []
     lm, p, dp = common.load_observation(obsdir, 'mf/SMF/GAMAIV_Driver22.dat', [0,1,2])
     hobs = 0.7
     xobs = lm + 2.0 * np.log10(hobs/h0)
@@ -144,7 +145,8 @@ def load_smf_observations(obsdir, h0):
     lm, p, dpdn, dpup = common.load_observation(obsdir, 'mf/SMF/SMF_Li2009.dat', [0,1,2,3])
     xobs = lm - 2.0 * np.log10(hobs) + 2.0 * np.log10(hobs/h0)
     yobs = p + 3.0 * np.log10(hobs) - 3.0 * np.log10(hobs/h0)
-    z0obs.append((observation("Li&White+2009", xobs, yobs, abs(dpdn), dpup, err_absolute=False), 'd'))
+    #z0obs.append((observation("Li&White+2009", xobs, yobs, abs(dpdn), dpup, err_absolute=False), 'd'))
+    z0obsPSO.append((observation("Li+2009 (PSO)", xobs, yobs, abs(dpdn), dpup, err_absolute=False), 'd'))
 
 
     # Moustakas (Chabrier IMF), ['Moustakas+2013, several redshifts']
@@ -226,7 +228,7 @@ def load_smf_observations(obsdir, h0):
     z7obs = []
     add_weaver22_data(z7obs,file_read='6.5z7.5')
 
-    return (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs)
+    return (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs, z0obsPSO)
 
 def plot_SMHM_z(plt, outdir, zlist, halo_mass_rel):
 
@@ -343,7 +345,7 @@ def plot_SMHM_z(plt, outdir, zlist, halo_mass_rel):
 
 def plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_30kpc, hist_smf_pass, hist_smf_pass_err):
 
-    (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs) = load_smf_observations(obsdir, h0)
+    (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs, z0obsPSO) = load_smf_observations(obsdir, h0)
     
     PlotLagos18 = True
     def plot_lagos18_smf(ax, z):
@@ -391,6 +393,10 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_3
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle, locators=(0.1, 1, 0.1))
         ax.text(xleg, yleg, 'z=%s' % str(z))
 
+        if( idx == 0):
+            for obs, marker in z0obsPSO:
+                common.errorbars(ax, obs.x, obs.y, obs.yerrdn, obs.yerrup, 'darkgreen',
+                                   marker, err_absolute=obs.err_absolute, label=obs.label, markersize=6) 
         # Observations
         for obs, marker in obs_and_markers:
             common.errorbars(ax, obs.x, obs.y, obs.yerrdn, obs.yerrup, 'grey',
@@ -423,7 +429,10 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_3
         #    colors += ['r']
         elif idx > 1:
             colors = ['r']
-        colors += ['grey', 'grey','grey']
+        if idx == 0:
+           colors += ['darkgreen', 'grey', 'grey','grey']
+        else:
+           colors += ['grey', 'grey','grey']
 
         if idx ==0 or idx == 3:
            common.prepare_legend(ax, colors)

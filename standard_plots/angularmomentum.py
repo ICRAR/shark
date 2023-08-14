@@ -41,6 +41,13 @@ mupp = 12.5
 dm = 0.2
 mbins = np.arange(mlow,mupp,dm)
 xmf = mbins + dm/2.0
+#stellar mass bins for observations
+mlowo = 6.45
+muppo = 12.5
+dmo = 0.22
+mbinso = np.arange(mlowo,muppo,dmo)
+xmfo = mbinso + dmo/2.0
+
 
 #DM bins
 mlowh = 10.0
@@ -74,8 +81,19 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mvir, matom_disk, mmol_disk, mgas_disk,
      matom_bulge, mmol_bulge, mgas_bulge, sfr_disk, sfr_bulge, vmax, lx, ly, lz) = hdf5_data
 
+    ind = np.where(mmol_disk > 0) 
+    print("sAM mol when mgas_mol>0", specific_angular_momentum_disk_gas_mol[ind])
+    print("number of galaxies with mmol_disk > 0", len(mmol_disk[ind]))
+    ind = np.where((mmol_disk > 0) & (specific_angular_momentum_disk_gas_mol == 0) & (typeg ==0))
+    print("number of galaxies with mmol_disk > 0 but jmol_disk == 0", len(mmol_disk[ind]), np.median(mmol_disk[ind]), np.median(mdisk[ind]+mbulge[ind]))
+    ind = np.where((mmol_disk > 0) & (specific_angular_momentum_disk_gas_mol > 0) & (typeg ==0)) 
+    print("number of galaxies with mmol_disk > 0 and jmol_disk > 0", len(mmol_disk[ind]), np.median(mmol_disk[ind]), np.median(mdisk[ind]+mbulge[ind]))
+
 
     specific_angular_momentum_disk_gas_2 = (specific_angular_momentum_disk_gas_mol * mmol_disk + specific_angular_momentum_disk_gas_atom * matom_disk ) / (matom_disk + mmol_disk)
+    jmolnew = np.zeros(shape = len(mdisk))
+    ind = np.where(mmol_disk > 0)
+    jmolnew[ind] = (specific_angular_momentum_disk_gas[ind] * mgas_disk[ind] - specific_angular_momentum_disk_gas_atom[ind] * matom_disk[ind]) / mmol_disk[ind]
 
     ind = np.where((mgas_bulge) > 0)
     print(specific_angular_momentum_bulge_gas[ind])
@@ -161,6 +179,8 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     mbarv2      = (mdisk + mbulge + mgas_disk + mgas_bulge)
     jatom       = (specific_angular_momentum_disk_gas_atom * matom_disk + matom_bulge * specific_angular_momentum_bulge_gas) / (matom_disk + matom_bulge)
     jmol        = (specific_angular_momentum_disk_gas_mol * mmol_disk + mmol_bulge * specific_angular_momentum_bulge_gas) / (mmol_disk + mmol_bulge)
+    #jmol        = (jmolnew * mmol_disk + mmol_bulge * specific_angular_momentum_bulge_gas) / (mmol_disk + mmol_bulge)
+
     jgas        = (specific_angular_momentum_disk_gas * mgas_disk + specific_angular_momentum_bulge_gas * mgas_bulge) / (mgas_bulge + mgas_disk)
     mgas        = (mgas_bulge + mgas_disk)
     vdisk  = specific_angular_momentum_disk_star / rdisk / 2.0 #in km/s
@@ -191,16 +211,23 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     ms[ind] = np.log10(mdisk[ind] + mbulge[ind])
     ind = np.where((mdisk+mbulge > 0) & (sfr_disk + sfr_bulge > 0))
     ssfr[ind] = np.log10((sfr_disk[ind] + sfr_bulge[ind])) - ms[ind] #in Gyr
- 
+
     thresh = [0, 0.25, 0.5, 0.75]
+    thresh2 = [0, 0.25, 0.5, 0.75]
+
     mass_cut = 8.5
     for c in range(0,len(thresh)):
         ind = np.where((jstars > 0) & (ms > mass_cut) & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_stars[index,:,:,c]                = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                                   y=np.log10(jstars[ind]) - np.log10(float(h0))) #specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
-        ind = np.where((jstars > 0) & (ms > mass_cut) & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]) & (mdisk/(mdisk+mbulge) < 0.9))
-        sam_stars2[index,:,:,c]                = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+        ind = np.where((jstars > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh2[c]))
+        sam_stars2[index,:,:,c]               = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                                   y=np.log10(specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
+        #ind = np.where((jatom > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh2[c]))
+        sam_gas_disk_atom_ms[index,:,:,c]     = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                                                  y=np.log10(jatom[ind]) - np.log10(float(h0)))
+        sam_gas_disk_mol[index,:,:,c]         = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+                                                  y=np.log10(specific_angular_momentum_disk_gas_mol[ind]) - np.log10(float(h0)))
 
         ind = np.where((specific_angular_momentum_disk_star > 0) & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_stars_disk[index,:,:,c]           = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
@@ -242,12 +269,10 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
         sam_gas_disk_atom2[index,:,:,c]        = bin_it(x=np.log10(mgas[ind]) - np.log10(float(h0)),
                                                   y=np.log10(jgas[ind]) - np.log10(float(h0)))
       
-        ind = np.where((jmol > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]) & (mdisk/(mdisk+mbulge) < 0.9))
-        sam_gas_disk_mol[index,:,:,c]         = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
-                                                  y=np.log10(jmol[ind]) - np.log10(float(h0)))
-        sam_gas_disk_atom_ms[index,:,:,c]     = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
-                                                  y=np.log10(jatom[ind]) - np.log10(float(h0)))
-       
+        #ind = np.where((jmol > 0) & (ms > mass_cut)  & (mdisk+mbulge > 0) & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh2[c]))
+        #sam_gas_disk_mol[index,:,:,c]         = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+        #                                          y=np.log10(specific_angular_momentum_disk_gas_mol[ind]) - np.log10(float(h0)))
+      
         ind = np.where((sam_subhalo > 0) & (mdisk+mbulge > 0) & (ms > mass_cut)  & (typeg == 0) & (mdisk/(mdisk+mbulge) >= thresh[c]))
         sam_halo[index,:,:,c]                 = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)), 
             		                          y=np.log10(sam_subhalo[ind]))
@@ -274,16 +299,85 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
 
 def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vmax_halo_gal, disk_size, rcomb):
 
-    print ('sizes disks')
-    for i,j,p in zip(disk_size[0,0,:],disk_size[0,1,:],disk_size[0,2,:]):
-        print( i,j,p)
-    print('sizes bulges')
-    for i,j,p in zip(bulge_size[0,0,:],bulge_size[0,1,:],bulge_size[0,2,:]):
-        print(i,j,p)
+    #print ('sizes disks')
+    #for i,j,p in zip(disk_size[0,0,:],disk_size[0,1,:],disk_size[0,2,:]):
+    #    print( i,j,p)
+    #print('sizes bulges')
+    #for i,j,p in zip(bulge_size[0,0,:],bulge_size[0,1,:],bulge_size[0,2,:]):
+    #    print(i,j,p)
+
+    def plot_profuse_sizes(ax, component=0, color='DarkTurquoise', include_ambig = True, r_bulge_assumed = 1):
+        bin_it = functools.partial(us.wmedians, xbins=xmfo, low_numbers=False)
+        sizes_table = np.loadtxt(obsdir + '/SizeMass/' + 'ProFuse_cat_BestModel_v1.0.csv', delimiter=',')
+        r=0
+        mass=0
+        if(component ==0):
+           #select disks of interest:
+           ind = np.where((sizes_table[:,3] == 1) | (sizes_table[:,2] == 1) | (sizes_table[:,2] == 2) | (sizes_table[:,3] ==3)) #Disk or D+B or P+D or Ambg
+           mass = sizes_table[ind,9]
+           r = sizes_table[ind,22]
+           lab = '(disks + ambig)'
+           fill = 'full'
+        elif(component ==1 & include_ambig == True):
+           #select bulges of interest:
+           ind = np.where((sizes_table[:,3] == 2) | (sizes_table[:,2] == 1) | (sizes_table[:,3] ==3)) #Sph or D+B or Ambg
+           mass = sizes_table[ind,32]
+           r = sizes_table[ind,45]
+           ind = np.where(r == -99)
+           r[ind] = r_bulge_assumed
+           lab = '(b+Sph+ambig)'
+           fill = 'full'
+        elif(component ==4):
+           #select bulges of interest:
+           ind = np.where(sizes_table[:,3] == 2) #Sph
+           mass = sizes_table[ind,32]
+           r = sizes_table[ind,45]
+           ind = np.where(r == -99)
+           r[ind] = r_bulge_assumed
+           lab = '(Sph)'
+           fill = 'full'
+
+        elif(component ==2):
+           mass = np.zeros(shape = len(sizes_table[:,3]))
+           r = np.zeros(shape = len(sizes_table[:,3]))
+           ind = np.where(sizes_table[:,3] == 2) #pure spheroids
+           mass[ind] = sizes_table[ind,32]
+           r[ind] = sizes_table[ind,45]
+           ind = np.where(sizes_table[:,3] == 1) #pure disks
+           mass[ind] = sizes_table[ind,9]
+           r[ind] = sizes_table[ind,22]
+           ind = np.where(sizes_table[:,3] == 3) #ambigious
+           mass[ind] = sizes_table[ind,9]
+           r[ind] = sizes_table[ind,22]
+           ind = np.where(sizes_table[:,2] == 1) #B+D
+           mass[ind] = np.log10(10**sizes_table[ind,32] + 10**sizes_table[ind,9])
+           r[ind] = (sizes_table[ind,22]* 10**sizes_table[ind,9] + sizes_table[ind,45] * 10**sizes_table[ind,32]) / (10**sizes_table[ind,32] + 10**sizes_table[ind,9])
+           ind = np.where(sizes_table[:,2] == 3) #P+D (here assume bulge = r_bulge_assumed [kpc])
+           mass[ind] = np.log10(10**sizes_table[ind,32] + 10**sizes_table[ind,9])
+           r[ind] = (sizes_table[ind,22]* 10**sizes_table[ind,9] + r_bulge_assumed * 10**sizes_table[ind,32]) / (10**sizes_table[ind,32] + 10**sizes_table[ind,9])
+           lab = '(mass-weigh)'
+           fill = 'full'
+        else:
+           ind = np.where((sizes_table[:,2] == 1)) #(sizes_table[:,3] == 2) | (sizes_table[:,2] == 1)) #Sph or D+B
+           mass = sizes_table[ind,32]
+           r = sizes_table[ind,45]
+           lab = '(b)'
+           fill = 'none'
+
+        ind = np.where(r > 0)
+        mzr = bin_it(x=mass[ind], y=np.log10(r[ind]))
+        ind = np.where(mzr[0,:] != 0)
+        if(len(xmf[ind]) > 0):
+            xplot = xmfo[ind]
+            yplot = mzr[0,ind]
+            errdn = mzr[1,ind]
+            errup = mzr[2,ind]
+            ax.errorbar(xplot,yplot[0],yerr=[errdn[0],errup[0]], color=color,linestyle='None', marker='s', fillstyle=fill, label='Bellstedt+23 ' + lab)
+ 
 
     rb, r16, r84 = common.load_observation(obsdir, 'Models/SharkVariations/SizeDisksAndBulges_OtherModels.dat', [0,1,2])
     
-    fig = plt.figure(figsize=(5,11.5))
+    fig = plt.figure(figsize=(5.5,12))
     xtit = "$\\rm log_{10} (\\rm M_{\\star,disk}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm r_{\\star,disk}/kpc)$"
     xmin, xmax, ymin, ymax = 8, 12, -0.1, 2
@@ -321,9 +415,10 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     m,r = common.load_observation(obsdir, 'SizesAndAM/rdisk_L16.dat', [0,1])
     ax.plot(m[0:36], r[0:36], linestyle='dotted',color='k')
     ax.plot(m[38:83], r[38:83], linestyle='dotted',color='k')
-    ax.plot(m[85:128], r[85:129], linestyle='dotted',color='k')
+    ax.plot(m[85:128], r[85:129], linestyle='dotted',color='k',label='Lange+16 (disks)')
+    plot_profuse_sizes(ax, component=0, color='CadetBlue', include_ambig = True)
 
-    common.prepare_legend(ax, ['b','DeepSkyBlue'], loc=2)
+    common.prepare_legend(ax, ['b','DeepSkyBlue','black', 'CadetBlue'], loc=2)
 
     # ETGs ##################################
     xtit = "$\\rm log_{10} (\\rm M_{\\star,bulge}/M_{\odot})$"
@@ -334,7 +429,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
 
     ax = fig.add_subplot(312)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.text(10.2,-0.2,'galaxy bulges',fontsize=12)
+    ax.text(10.6,-0.2,'galaxy bulges',fontsize=12)
 
     #Predicted size-mass for bulges in bulge-dominated systems
     ind = np.where(bulge_size[0,0,:] != 0)
@@ -364,19 +459,23 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     m,r = common.load_observation(obsdir, 'SizesAndAM/rbulge_L16.dat', [0,1])
     ax.plot(m[0:39], r[0:39], linestyle='dotted',color='k')
     ax.plot(m[41:76], r[41:76], linestyle='dotted',color='k')
-    ax.plot(m[78:115], r[78:115], linestyle='dotted',color='k')
-    common.prepare_legend(ax, ['r','IndianRed'], loc=2)
+    ax.plot(m[78:115], r[78:115], linestyle='dotted',color='k', label='Lange+16 (bulges)')
+    plot_profuse_sizes(ax, component=1, color='Crimson',include_ambig = True)
+    plot_profuse_sizes(ax, component=1, color='Crimson',include_ambig = False)
+    plot_profuse_sizes(ax, component=4, color='darkorange',include_ambig = True)
 
+    common.prepare_legend(ax, ['r','IndianRed','black','Crimson','Crimson'], loc=2)
 
     lm, lr, count, bs_err = common.load_observation(obsdir, 'SizeMass/GAMA_H-band_dlogM_0.25_reff.txt', [0,1,2,3])
     # Total ##################################
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit="$\\rm log_{10} (\\rm r_{\\star}/kpc)$"
-    xmin, xmax, ymin, ymax = 8, 11.5, -0.1, 1.5
+    xmin, xmax, ymin, ymax = 8, 12, -0.2, 1.6
 
     ax = fig.add_subplot(313)
-    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
-    ax.text(10.2, 0.,'all galaxies',fontsize=12)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    ax.text(10.6, 0.,'total stellar',fontsize=12)
 
     #Predicted size-mass for disks
     ind = np.where(rcomb[0,0,:] != 0)
@@ -389,8 +488,6 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
             linewidth=2,label="Shark v2.0")
     ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor='ForestGreen', linestyle='solid', alpha=0.4,interpolate=True)
     ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor='ForestGreen', linestyle='solid', alpha=0.4,interpolate=True)
-    for a,b,c,d in zip(xplot,yplot[0],yplot[0]-errdn[0],yplot[0]+errup[0]):
-        print(a,b,c,d)
 
     mL18, rL18, err16L18, err84L18 = common.load_observation(obsdir, 'Models/SharkVariations/SizeTotal_Lagos18.dat', [0,1,2,3])
     ind = np.where(rL18 != 0)
@@ -404,9 +501,12 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     # Add GAMA H-band observations with bootstrapped error
     ax.errorbar(lm, lr,yerr = [bs_err, bs_err], marker ='v',
              ls = 'none', mfc = 'None', markersize=5,
-             color = 'gray', label = 'Lange+2015')
+             color = 'gray', label = 'Lange+15 (H-band)')
+    plot_profuse_sizes(ax, component=2, color='DarkSlateGray', include_ambig = True, r_bulge_assumed = 1)
+    #plot_profuse_sizes(ax, component=2, color='DarkSlateGray', include_ambig = True, r_bulge_assumed = 0.1)
 
-    common.prepare_legend(ax, ['ForestGreen','LimeGreen','gray'], loc=2)
+
+    common.prepare_legend(ax, ['ForestGreen','LimeGreen','gray','DarkSlateGray'], loc=2)
     plt.tight_layout()
     common.savefig(outdir, fig, 'sizes_angular_momentum_model.pdf')
 
@@ -659,6 +759,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     def plot_observations_AM(ax, bar_type=0, color='r', mass_cut='8'):
 
         #Read observational data.
+        mbO14, msO14, mHIO14, jbO14, jsO14, jgO14, jmolO14 = common.load_observation(obsdir, 'SizesAndAM/Obreschkow14_FP.dat', [6,7,8,11,12,13,15])
 
         ms_h22, mb_h22, js_h22, jb_h22   = common.load_observation(obsdir, 'SizesAndAM/Hardwick+22ab_SubsetForClaudia.dat', [4,8,10,12])
 
@@ -761,6 +862,8 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
            ax.errorbar(msW, jsW, xerr=msWerr, yerr=0.1, ls='None', color=color, marker='*', label='Murugeshan+19')
            ind = np.where(jsMP != 0)
            ax.errorbar(np.log10(msMP[ind]), np.log10(jsMP[ind]), xerr = np.log10(msMP[ind] + msMPerr[ind]) - np.log10(msMP[ind]), yerr=np.log10(jsMP[ind] + jsMPerr[ind]) - np.log10(jsMP[ind]), ls='None', mfc='None', ecolor = color, mec= color,marker='o',label="Mancera-Pina+20")
+           ax.plot(msO14, jsO14, marker='s', color='red', fillstyle='full',  ls='None', label='OG14')
+
         elif bar_type == 2:
            ax.errorbar(mgB17, jgB17, yerr=[errjgB17,errjgB17], xerr=errmgB17,ls='None', mfc='None', ecolor = color, mec= color,marker='s')
            ##ax.plot(msO14, jgO14, marker='o', color=color, fillstyle='none',  ls='None')
@@ -769,6 +872,8 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
            ax.errorbar(mHIW + np.log10(XH), jHIW, xerr=mHIWerr, yerr=0.1, ls='None', color=color, marker='*')
            ind = np.where(jgMP != 0)
            ax.errorbar(np.log10(mgMP[ind]), np.log10(jgMP[ind]), xerr = np.log10(mgMP[ind] + mgMPerr[ind]) - np.log10(mgMP[ind]), yerr=np.log10(jgMP[ind] + jgMPerr[ind]) - np.log10(jgMP[ind]), ls='None', mfc='None', ecolor = color, mec= color,marker='o')
+           ax.plot(mHIO14, jgO14, marker='s', color='blue', fillstyle='full',  ls='None')
+
         elif bar_type == 3:
            ax.plot(mb_h22, np.log10(jb_h22), marker='.', color=color, fillstyle='none', ls='None')
            ax.errorbar(mbB17, jbB17, yerr=[errjbB17,errjbB17], xerr=[errmbB17,errmbB17],ls='None', mfc='None', ecolor = color, mec= color,marker='s')
@@ -779,6 +884,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
            ax.errorbar(mbW, jbW, xerr=mbWerr, yerr=jbWerr, ls='None', color=color, marker='*')
            ind = np.where(jbMP != 0)
            ax.errorbar(np.log10(mbMP[ind]), np.log10(jbMP[ind]), xerr = np.log10(mbMP[ind] + mbMPerr[ind]) - np.log10(mbMP[ind]), yerr=np.log10(jbMP[ind] + jbMPerr[ind]) - np.log10(jbMP[ind]), ls='None', mfc='None', ecolor = color, mec= color,marker='o')
+           ax.plot(mbO14, jbO14, marker='s', color='black', fillstyle='full',  ls='None')
 
 
 
@@ -946,7 +1052,8 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     ax.text(xleg, yleg, "Stars", fontsize=12)
 
     linestyles = ['dotted', 'solid', 'dashed', 'dashdot']
-    labels = ['$\\rm D/T > 0$', '$\\rm D/T>  0.2$', '$\\rm D/T>  0.5$', '$\\rm D/T>  0.75$']
+    linewidths = [4,2,2,2]
+    labels = ['$\\rm D/T > 0$', '$\\rm D/T>  0.25$', '$\\rm D/T>  0.5$', '$\\rm D/T>  0.75$']
 
     plot_observations_AM(ax, bar_type=0, color='grey', mass_cut=mass_cut)
    
@@ -957,11 +1064,11 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
         yplot = sam_stars[s,0,ind,c]+ 3.0
         errdn = sam_stars[s,1,ind,c]
         errup = sam_stars[s,2,ind,c]
-        ax.plot(xplot,yplot[0],color='r', linestyle=linestyles[c])
+        ax.plot(xplot,yplot[0],color='r', linestyle=linestyles[c], linewidth = linewidths[c])
         if(c == 1):
            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.35,interpolate=True)
 
-    common.prepare_legend(ax, ['grey', 'grey', 'grey','grey','grey','grey','grey'], loc=2)
+    common.prepare_legend(ax, ['grey', 'red', 'grey', 'grey','grey','grey','grey','grey','grey'], loc=2)
 
     
     #ax.plot(msO14, jmolO14, 'go',fillstyle='none')
@@ -982,7 +1089,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
         yplot = sam_gas_disk_atom[s,0,ind,c] + 3.0
         errdn = sam_gas_disk_atom[s,1,ind,c]
         errup = sam_gas_disk_atom[s,2,ind,c]
-        ax.plot(xplot,yplot[0],color='b', linestyle=linestyles[c])
+        ax.plot(xplot,yplot[0],color='b', linestyle=linestyles[c], linewidth = linewidths[c])
         if(c == 1):
             ax.plot(xplot,yplot[0],color='b', linestyle=linestyles[c], label='atomic gas')
             ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='b', alpha=0.35,interpolate=True)
@@ -1010,7 +1117,7 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
         yplot = sam_barv2[s,0,ind,c] + 3.0
         errdn = sam_barv2[s,1,ind,c]
         errup = sam_barv2[s,2,ind,c]
-        ax.plot(xplot,yplot[0],color='k', linestyle=linestyles[c], label=labels[c])
+        ax.plot(xplot,yplot[0],color='k', linestyle=linestyles[c], label=labels[c], linewidth = linewidths[c])
         if(c == 1):
            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='k', alpha=0.25,interpolate=True)
 
@@ -1021,25 +1128,29 @@ def plot_specific_am(plt, outdir, obsdir, sam_stars_disk, sam_gas_disk_atom, sam
     ytit = "" #$\\rm log_{10} (\\rm j_{\\rm H_2}/kpc\\, km s^{-1})$"
     ax = fig.add_subplot(144)
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
-    ax.text(xleg-0.8, yleg, "$0.5<\\rm D/T < 0.9$", fontsize=12)
+    ax.text(10.7, yleg, "$\\rm D/T > 0.25$", fontsize=12)
 
-    c = 3
+    c = 1
     #Predicted size-mass for disks in disk=dominated galaxies
-    ind = np.where(sam_stars2[s,0,:,c] != 0)
+    ind = np.where(sam_stars[s,0,:,c] != 0)
     xplot = xmf[ind]
-    yplot = sam_stars2[s,0,ind,c]+ 3.0
-    errdn = sam_stars2[s,1,ind,c]
-    errup = sam_stars2[s,2,ind,c]
+    yplot = sam_stars[s,0,ind,c]+ 3.0
+    errdn = sam_stars[s,1,ind,c]
+    errup = sam_stars[s,2,ind,c]
     ax.plot(xplot,yplot[0],color='r', linestyle='solid', label = 'Stars')
     ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.35,interpolate=True)
 
-    ind = np.where(sam_gas_disk_mol[s,0,:,c] != 0)
+    ind = np.where((sam_gas_disk_mol[s,0,:,c] != 0) & (np.isinf(sam_gas_disk_mol[s,0,:,c]) == False))
     xplot = xmf[ind]
     yplot = sam_gas_disk_mol[s,0,ind,c] + 3.0
     errdn = sam_gas_disk_mol[s,1,ind,c]
     errup = sam_gas_disk_mol[s,2,ind,c]
-    ind = np.where(yplot-errdn < 2)
+  
+    print("jmol relation,", yplot[0], errdn[0], errup[0])
+    ind = np.where(np.isinf(errdn) == True)
     errdn[ind] = errup[ind]
+    print("jmol relation,", yplot[0], errdn[0], errup[0])
+
     ax.plot(xplot,yplot[0],color='g', linestyle='solid', label = 'Molecular gas')
     ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='g', alpha=0.5,interpolate=True)
 

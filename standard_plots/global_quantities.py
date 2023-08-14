@@ -391,6 +391,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     #D'Silva+23 (Chabrier IMF)
     sfrD23, sfrD23errup, sfrD23errdn, zD23, zD23errup, zD23errdn = common.load_observation(obsdir, 'Global/DSilva23_sfr.dat', [0,1,2,3,4,5])
 
+
     #Adams23 (Chabrier IMF)
     zA23, sfrA23, sfrA23errdn, sfrA23errup = common.load_observation(obsdir, 'Global/Adams23_CSFRDCompilation.dat', [0,1,2,3])
     sfrA23errdn = sfrA23 - sfrA23errdn #make them relative errors
@@ -531,10 +532,18 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     sfrM14errdn = abs(sfrM14errdn)
     hobs = 0.7
     sfrM14 = sfrM14 + np.log10(pow(hobs/h0, 2.0)) + np.log10(0.63)
-    ax.errorbar((reddnM14 + redupM14) / 2.0, sfrM14, xerr=abs(redupM14-reddnM14)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5, label='Madau+14')
+    #ax.errorbar((reddnM14 + redupM14) / 2.0, sfrM14, xerr=abs(redupM14-reddnM14)/2.0, yerr=[sfrM14errdn, sfrM14errup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', markersize=1.5, label='Madau+14')
 
     ax.errorbar(zD23, yobsD23, xerr=[zD23errdn, zD23errup], yerr=[sfrD23errdn, sfrD23errup], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label ='D\'Silva+23')
     ax.errorbar(zA23, yobsA23, yerr=[sfrA23errdn, sfrA23errup], ls='None', mfc='None', ecolor = 'darkgreen', mec='darkgreen',marker='s', label = 'Adams+23')
+    #Driver (Chabrier IMF)
+    redD17d, redD17u, sfrD17, err1, err2, err3, err4 = common.load_observation(obsdir, 'Global/Driver18_sfr.dat', [0,1,2,3,4,5,6])
+    hobs = 0.7
+    xobsD17 = (redD17d+redD17u)/2.0
+    yobsD17 = sfrD17 + np.log10(hobs/h0)
+    errD17 = yobsD17*0. - 999.
+    errD17 = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
+    ax.errorbar(xobsD17, yobsD17, yerr=[errD17,errD17], ls='None', mfc='None', ecolor = 'darkorange', mec='darkorange',marker='o', label = 'Driver+18')
 
 
     #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
@@ -542,9 +551,9 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     ax.plot(redshifts[ind], np.log10(sfr[ind]*pow(h0,2.0)), 'k', linewidth=1, label ='total (v2.0)')
 
     ind = np.where(sfrd > 0)
-    ax.plot(redshifts[ind], np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='solid', linewidth=1, label ='disks (v2.0)')
+    ax.plot(redshifts[ind], np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='solid', linewidth=1, label ='disks')
     ind = np.where(sfrb > 0)
-    ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='solid',  linewidth=1, label ='bursts (v2.0)')
+    ax.plot(redshifts[ind], np.log10(sfrb[ind]*pow(h0,2.0)),'r', linestyle='solid',  linewidth=1, label ='bursts')
     #print("#will print SFR density")
     #print("#redshift LBG/Gyr SFRD_tot[Msun/yr/Mpc^3] SFRD_disk[Msun/yr/Mpc^3] SFRD_bulges[Msun/yr/Mpc^3]")
     #for a,b,c,d,e in zip(redshifts, us.look_back_time(redshifts), np.log10(sfr*pow(h0,2.0)), np.log10(sfrd*pow(h0,2.0)), np.log10(sfrb*pow(h0,2.0))):
@@ -557,7 +566,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     ax.plot(zin, sfr_l18d, 'b', linewidth=1,linestyle='dashed') #,  label ='disks (L18)')
     ax.plot(zin, sfr_l18b, 'r', linewidth=1,linestyle='dashed') #,  label ='bursts (L18)')
 
-    common.prepare_legend(ax, ['k','b','r','k','grey','navy', 'darkgreen'], loc=3) #bbox_to_anchor=(0.52, 0.47))
+    common.prepare_legend(ax, ['k','b','r','k','navy', 'darkgreen','DarkOrange'], loc=3) #bbox_to_anchor=(0.52, 0.47))
 
     common.savefig(outdir, fig, "cosmic_sfr_compL18.pdf")
 
@@ -664,10 +673,10 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
 
 
     ind = np.where(mstardisk > 0)
-    ax.plot(redshifts[ind],np.log10(mstardisk[ind]*pow(h0,2.0)), 'b', linestyle='solid', label='disks (v2.0)')
+    ax.plot(redshifts[ind],np.log10(mstardisk[ind]*pow(h0,2.0)), 'b', linestyle='solid', label='disks')
 
     ind = np.where(mstarbden_mergers + mstarbden_diskins > 0)
-    ax.plot(redshifts[ind],np.log10((mstarbden_mergers[ind]+mstarbden_diskins[ind])*pow(h0,2.0)), 'r', linestyle='solid', label='bursts (v2.0)')
+    ax.plot(redshifts[ind],np.log10((mstarbden_mergers[ind]+mstarbden_diskins[ind])*pow(h0,2.0)), 'r', linestyle='solid', label='bulges')
 
 
     zin, sd_l18, sd_l18d, sd_l18b = common.load_observation(obsdir, 'Models/SharkVariations/Global_SMD_Lagos18.dat', [0, 2, 3, 4])
@@ -692,14 +701,14 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
 
     err = yobs*0. - 999.
     err = np.sqrt(pow(err1,2.0)+pow(err2,2.0)+pow(err3,2.0)+pow(err4,2.0))
-    ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'navy', mec='navy',marker='o', label="Driver+18")
+    ax.errorbar(xobs, yobs, yerr=[err,err], ls='None', mfc='None', ecolor = 'darkorange', mec='darkorange',marker='o', label="Driver+18")
 
     zdnW22, zupW22, rhoW22, errrhoW22u, errrhoW22dn = common.load_observation(obsdir, 'Global/Weaver22_SMD.dat', [0,1,2,3,4])
     rhoW22_cosmocorr = rhoW22 * hobs/h0 * 1e7
     zW22 = (zupW22 + zdnW22)/2.0
     errrhoW22u = np.log10(rhoW22 + errrhoW22u) - np.log10(rhoW22)
     errrhoW22dn = np.log10(rhoW22) - np.log10(rhoW22 - errrhoW22dn)
-    ax.errorbar(zW22, np.log10(rhoW22_cosmocorr), xerr=[zW22 - zdnW22, zupW22 - zW22], yerr=[errrhoW22dn, errrhoW22u], ls='None', ecolor = 'grey',  mec='grey', marker='*', label='Weaver+22')
+    ax.errorbar(zW22, np.log10(rhoW22_cosmocorr), xerr=[zW22 - zdnW22, zupW22 - zW22], yerr=[errrhoW22dn, errrhoW22u], ls='None', ecolor = 'navy',  mec='navy', marker='*', label='Weaver+22')
 
     zdnS23, zmidS23, zupS23, rhoS23, rhoS23_dn_s, rhoS23_up_s, rhoS23_dn_l, rhoS23_up_l = common.load_observation(obsdir, 'Global/Santini23_JWST_SMD.dat', [0, 1, 2, 3, 4, 5, 6, 7])
     rhoS23_cosmocorr = rhoS23 * hobs/h0
@@ -708,9 +717,9 @@ def plot_stellar_mass_cosmic_density(plt, outdir, obsdir, redshifts, h0, mstarde
     rhoS23_errdn2 = np.log10(rhoS23) - np.log10(rhoS23_dn_l)
     rhoS23_errup2 = np.log10(rhoS23_up_l) - np.log10(rhoS23)
 
-    ax.errorbar(zmidS23, np.log10(rhoS23_cosmocorr), xerr=[zmidS23 - zdnS23, zupS23 - zmidS23], yerr=[rhoS23_errdn2, rhoS23_errup2],  ls='None', ecolor = 'grey',  mec='grey', marker='s', label='Santini+23')
+    ax.errorbar(zmidS23, np.log10(rhoS23_cosmocorr), xerr=[zmidS23 - zdnS23, zupS23 - zmidS23], yerr=[rhoS23_errdn2, rhoS23_errup2],  ls='None', ecolor = 'darkgreen',  mec='darkgreen', marker='s', label='Santini+23')
 
-    common.prepare_legend(ax, ['k','b','r','k','grey', 'navy', 'grey', 'grey'], loc=3)
+    common.prepare_legend(ax, ['k','b','r','k','grey', 'darkorange', 'navy', 'darkgreen'], loc=3)
 
     common.savefig(outdir, fig, "cosmic_smd_compL18.pdf")
 
