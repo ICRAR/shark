@@ -432,7 +432,7 @@ def plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf):
 
     common.savefig(outdir, fig, 'stellarmf_z_resolutioncomparison.pdf')
 
-def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat):
+def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat, hist_HImf2):
 
     fig = plt.figure(figsize=(5,4.5))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm HI}/M_{\odot})$"
@@ -470,6 +470,9 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
 
     # Predicted HIMF
     if plotz_HImf[0]:
+        #y = hist_HImf2[0,:]
+        #ind = np.where(y < 0.)
+        #ax.plot(xmf[ind],y[ind],'r', linestyle='solid',  label ='Shark v2.0')
         y = hist_HImf[0,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'r', linestyle='solid',  label ='Shark v2.0')
@@ -1350,9 +1353,27 @@ def plot_passive_fraction(plt, outdir, obsdir, passive_fractions, hist_ssfr):
     plt.tight_layout()
     common.savefig(outdir, fig, 'SSFR_functions_z0.pdf')
 
+def calculate_HImass_above_threshold(MHI, rgas, thresh):
+
+    rlow = np.log10(0.01*rgas) #from 0.1*rgas 
+    rupp = np.log10(10*rgas) #up to 10 times r50 gas
+    dr = 0.2
+    rbins = np.arange(rlow,rupp,dr)
+    xr    = rbins + dr/2.0
+    re    = rgas/1.67 #for an exponential disk
+
+    sigma_HI = MHI/(2.0 * np.pi * re**2.0) * np.exp(-10**xr/re)
+    ind = np.where(sigma_HI > thresh)
+    if(len(sigma_HI[ind] > 0)):
+       rin = 10**xr[ind]
+       MHIout = MHI * (1 - ( 1 + max(rin)/re) * np.exp(-max(rin)/re))
+    else:
+       MHIout = 0
+    return MHIout
+    
 
 def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist_smf_sat, 
-                 hist_smf_30kpc, hist_HImf, hist_HImf_cen, hist_HImf_sat, hist_H2mf, 
+                 hist_smf_30kpc, hist_HImf, hist_HImf2, hist_HImf_cen, hist_HImf_sat, hist_H2mf, 
                  hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf, sfe, mainseq_cen, 
                  mainseqsf_cen, sfe_cen, mainseq_sat, mainseqsf_sat, sfe_sat, mzr, 
                  fmzr, mzr_cen, mzr_sat, plotz, plotz_HImf, passive_fractions, hist_ssfr, 
@@ -1362,8 +1383,16 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     (h0, volh, sfr_disk, sfr_burst, mdisk, mbulge, rstar_disk, mBH, mHI, mH2, 
      mgas_disk, mHI_bulge, mH2_bulge, mgas_bulge, mgas_metals_disk, mgas_metals_bulge, 
      mstars_metals_disk, mstars_metals_bulge, typeg, mvir_hosthalo, rstar_bulge, 
-     mbulge_mergers, mbulge_diskins, mbulge_mergers_assembly, mbulge_diskins_assembly) = hdf5_data
+     mbulge_mergers, mbulge_diskins, mbulge_mergers_assembly, mbulge_diskins_assembly,
+     sAM_atomic_disk, vmax, rgas_disk) = hdf5_data
 
+    MHI_abovethresh = np.zeros(shape = len(mdisk))
+    thresh = 1 * 1e6 #Msun/kpc^2
+    for j in range(0, len(mdisk)):
+        if(mHI[j] > 0):
+           MHI_abovethresh[j] = calculate_HImass_above_threshold(mHI[j]/h0, rgas_disk[j]/h0*1e3, thresh)
+
+    print(mHI/h0, MHI_abovethresh)
     zstar = (mstars_metals_disk + mstars_metals_bulge) / (mdisk + mbulge)
     rcomb = (rstar_disk * mdisk + rstar_bulge * mbulge) / (mdisk + mbulge) / h0 * 1e3
     mgas = mgas_disk+mgas_bulge
@@ -1450,9 +1479,12 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     #gas mass functions and scaling relations
     ind = np.where((mHI+mHI_bulge) > 0)
     mass_atom[ind] = np.log10(mHI[ind]+mHI_bulge[ind]) - np.log10(float(h0)) + np.log10(XH)
-
     H_HI, _ = np.histogram(mass_atom,bins=np.append(mbins,mupp))
     hist_HImf[index,:] = hist_HImf[index,:] + H_HI
+    ind = np.where(MHI_abovethresh+mHI_bulge > 0)
+    mass_atom[ind] = np.log10(MHI_abovethresh[ind]+mHI_bulge[ind]) - np.log10(float(h0)) + np.log10(XH)
+    H_HI, _ = np.histogram(mass_atom,bins=np.append(mbins,mupp))
+    hist_HImf2[index,:] = hist_HImf2[index,:] + H_HI
 
     ind = np.where(((mHI+mHI_bulge) > 0) & (typeg == 0))
     mass_atom_cen[ind] = np.log10(mHI[ind]+mHI_bulge[ind]) - np.log10(float(h0)) + np.log10(XH)
@@ -1554,6 +1586,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
 
         hist_HImf_err[index,:] = (hist_HImf[index,:] - np.sqrt(hist_HImf[index,:]))/vol/dm
         hist_HImf[index,:] = hist_HImf[index,:]/vol/dm
+        hist_HImf2[index,:] = hist_HImf2[index,:]/vol/dm
         hist_HImf_cen[index,:] = hist_HImf_cen[index,:]/vol/dm
         hist_HImf_sat[index,:] = hist_HImf_sat[index,:]/vol/dm
 
@@ -1617,6 +1650,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plotz = np.empty(shape=(len(zlist)), dtype=np.bool_)
     hist_HImf = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_HImf2 = np.zeros(shape = (len(zlist), len(mbins)))
     hist_HImf_cen = np.zeros(shape = (len(zlist), len(mbins)))
     hist_HImf_sat = np.zeros(shape = (len(zlist), len(mbins)))
     plotz_HImf = np.empty(shape=(len(zlist)), dtype=np.bool_)
@@ -1633,12 +1667,13 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'mgas_metals_disk', 'mgas_metals_bulge',
                            'mstars_metals_disk', 'mstars_metals_bulge', 'type', 
                            'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers', 
-                           'mstars_burst_diskinstabilities', 'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly')}
+                           'mstars_burst_diskinstabilities', 'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly',
+                           'specific_angular_momentum_disk_gas_atom', 'vmax_subhalo', 'rgas_disk')}
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         mass = prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen,
-                             hist_smf_sat, hist_smf_30kpc, hist_HImf, hist_HImf_cen, hist_HImf_sat,
+                             hist_smf_sat, hist_smf_30kpc, hist_HImf, hist_HImf2, hist_HImf_cen, hist_HImf_sat,
                              hist_H2mf, hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf,
                              sfe, mainseq_cen, mainseqsf_cen, sfe_cen, mainseq_sat,
                              mainseqsf_sat, sfe_sat, mzr, fmzr, mzr_cen, mzr_sat, plotz,
@@ -1682,6 +1717,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     take_log(hist_smf_sat)
     take_log(hist_smf_offset)
     take_log(hist_HImf)
+    take_log(hist_HImf2)
     take_log(hist_H2mf)
     take_log(hist_HImf_cen)
     take_log(hist_H2mf_cen)
@@ -1692,7 +1728,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_stellarmf_z(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_cen, hist_smf_sat, hist_smf_offset, hist_smf_30kpc)
     plot_stellarmf_galcomponents(plt, outdir, obsdir, h0, plotz, hist_smf, hist_smf_comp)
     plot_stellarmf_z_molcomp(plt, outdir, obsdir, h0, plotz, hist_smf)
-    plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat)
+    plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, hist_HImf_sat, hist_HImf2)
     plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat)
     plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat)
     plot_mzr(plt, outdir, obsdir, h0, mzr, mzr_cen, mzr_sat)

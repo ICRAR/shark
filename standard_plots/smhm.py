@@ -157,24 +157,28 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
     def plot_observations_kravtsov18(ax):
 
         mh, sm = common.load_observation(obsdir, 'SMHM/SatKinsAndClusters_Kravtsov18.dat', [0,1])
-        ax.errorbar(mh, sm, xerr=0.2, yerr=0.2, color='purple', marker='s',  ls='None')
+        ax.errorbar(mh, sm, xerr=0.2, yerr=0.2, color='purple', marker='s',  ls='None', label='Kravtsov+18')
+
+    def plot_observations_taylor20(ax):
+        sm, sml, smh, hm, hml, hmh = common.load_observation(obsdir, 'SMHM/Taylor20.dat', [0,1,2,3,4,5])
+        ax.errorbar(np.log10(hm*1e12), sm, xerr=[np.log10(hm)-np.log10(hml), np.log10(hmh)-np.log10(hm)], yerr=[sm-sml, smh-sm], color='Salmon', marker='d',  ls='None', label='Taylor+20')
 
     def plot_observations_kravtsov18_morph(ax):
         mh, sm, mhl, mhu = common.load_observation(obsdir, 'SMHM/LTGs_Kravtsov18.dat', [0,1,2,3])
         ind = np.where(mhl == 0)
         mhl[ind]=mh[ind] - 0.2
         mhu[ind]=mh[ind] + 0.2
-        ax.errorbar(mh, sm, xerr=[mh-mhl, mhu-mh], yerr=0.2, color='b', marker='s',  ls='None')
+        ax.errorbar(mh, sm, xerr=[mh-mhl, mhu-mh], yerr=0.2, color='b', marker='s',  ls='None', label='Kravtsov+18 LTGs')
  
         mh, sm, mhl, mhu = common.load_observation(obsdir, 'SMHM/ETGs_Kravtsov18.dat', [0,1,2,3])
-        ax.errorbar(mh, sm, xerr=[mh-mhl, mhu-mh], yerr=0.2, color='r', marker='s',  ls='None')
+        ax.errorbar(mh, sm, xerr=[mh-mhl, mhu-mh], yerr=0.2, color='r', marker='s',  ls='None', label='Kravtsov+18 ETGs')
 
     def plot_correa(ax):
         mh, sm, sml, smu = common.load_observation(obsdir, 'SMHM/LTGs_Correa19.dat', [0,1,2,3])
-        ax.errorbar(mh, sm, yerr=[sm-sml, smu-sm], color='b', marker='d',  ls='None') #, label='Correa+20 (LTGs)')
+        ax.errorbar(mh, sm, yerr=[sm-sml, smu-sm], color='b', marker='d',  ls='None', label='Correa+20 LTGs')
 
         mh, sm, sml, smu = common.load_observation(obsdir, 'SMHM/ETGs_Correa19.dat', [0,1,2,3])
-        ax.errorbar(mh, sm, yerr=[sm-sml, smu-sm], color='r', marker='d',  ls='None')#, label='Correa+20 (ETGs)')
+        ax.errorbar(mh, sm, yerr=[sm-sml, smu-sm], color='r', marker='d',  ls='None', label='Correa+20 ETGs')
 
 
 
@@ -284,6 +288,7 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
 
         if(i == 0):
            plot_observations_kravtsov18(ax)
+           plot_observations_taylor20(ax)
         if labels:
             common.prepare_legend(ax, ['k','k','k','r','b'], loc=4)
 
@@ -291,7 +296,7 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
     common.savefig(outdir, fig, 'SMHM_z_compL18.pdf')
 
 
-    fig = plt.figure(figsize=(5,6))
+    fig = plt.figure(figsize=(6,7))
     xtit = "$\\rm log_{10} (\\rm M_{\\rm halo}/M_{\odot})$"
     ytit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     xleg = xmin + 0.2 * (xmax - xmin)
@@ -326,11 +331,12 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
 
     if(i == 0):
        plot_observations_kravtsov18(ax)
+       plot_observations_taylor20(ax)
     if labels:
-        common.prepare_legend(ax, ['k','k','r','b'], loc=4)
+        common.prepare_legend(ax, ['k','k','r','b','purple','salmon'], loc=4)
 
     ax = fig.add_subplot(212)
-    xmin, xmax, ymin, ymax = 11.5, 14.8, 9.5, 12
+    xmin, xmax, ymin, ymax = 11.5, 14.8, 9.5, 11.7
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
     plot_correa(ax)
@@ -366,7 +372,7 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
         #ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='red', alpha=0.5, interpolate=True)
         ax.plot(xplot, yplot[0], color='r', linestyle=linestyles[i])
 
-    common.prepare_legend(ax, ['b','b','b','b','r'], loc=2)
+    common.prepare_legend(ax, ['b','b','b','r','b','r'], loc=4)
 
     plt.tight_layout()
     common.savefig(outdir, fig, 'SMHM_z0_compL18.pdf')
