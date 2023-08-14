@@ -555,14 +555,14 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	}
 
 	// Avoid negative values.
-	if(result <0){
+	if(result < 0){
 		result = 0.0;
 	}
 
 	result = cosmology->physical_to_comoving_mass(result);
 
 	//Avoid AM calculation in the case of starbursts.
-	if(!bulge && jcalc){
+	if(!bulge && jcalc && result > 0){
 		// Check whether user wishes to calculate angular momentum transfer from gas to stars.
 		if(parameters.angular_momentum_transfer){
 
@@ -596,7 +596,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 			jmol = cosmology->physical_to_comoving_mass(jmol) * vgal; //assumes a flat rotation curve.
 
 			// Avoid negative values.
-			if(jmol < 0){
+			if(jmol <= 0){
 				jmol = 0.0;
 			}
 
@@ -614,7 +614,7 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 		}
 	}
 	else{
-		//In the case of bulges or the case where we do not need to calculate j (jcalc == false).
+		//In the case of bulges or the case where we do not need to calculate j (jcalc == false) or the case where mmol == 0.
 		jmol = 0;
 	}
 
