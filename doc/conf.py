@@ -41,15 +41,12 @@ UWA - The University of Western Australia, 2018."""
 with open('../VERSION') as f:
     version = f.read()
 
-language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
 html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
-
 latex_documents = [
     (master_doc, 'shark.tex', u'shark Documentation',
      author, 'manual'),
