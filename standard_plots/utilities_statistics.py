@@ -296,7 +296,7 @@ def density_contour_reduced(ax, xdata, ydata, nbins_x, nbins_y, cmap = 'viridis'
     import matplotlib.colors as col
 
     return ax.contour(X, Y, Z, levels=levels, origin="lower", 
-                      norm=col.Normalize(vmin=0, vmax=0.01), colors='PaleVioletRed')
+                      norm=col.Normalize(vmin=0, vmax=0.01), colors='Maroon')
 
 
 

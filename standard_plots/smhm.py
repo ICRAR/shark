@@ -237,10 +237,10 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
     all_labels = (('Shark v2.0', 'v1.1 (L18)', 'Moster+13', 'Behroozi+13', 'EAGLE'), )
 
 
-    def plot_l18(i, ax, label):
+    def plot_l18(i, ax, label, lstyle='dotted'):
         mh, sm = common.load_observation(obsdir, 'Models/SharkVariations/SMHM_Lagos18.dat', [0,i+1]) 
         ind = np.where(sm != 0)
-        ax.plot(mh[ind], sm[ind], 'k', linestyle='dotted', label=label)
+        ax.plot(mh[ind], sm[ind], 'k', linestyle=lstyle, label=label)
 
     def plot_eagle(z, ax, label):
         mh, sm, red = common.load_observation(obsdir, 'Models/EAGLE/SMHM.dat', [0,1,4]) 
@@ -267,33 +267,91 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
         errup = massgal[i,2,ind]
   
         if not labels:
-            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
-            ax.plot(xplot, yplot[0], color='k', linestyle='solid')
+            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5, interpolate=True)
+            ax.plot(xplot, yplot[0], color='darkred', linestyle='solid')
         else:
-            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='grey', interpolate=True)
-            ax.plot(xplot, yplot[0], color='k', linestyle='solid', label=labels[0])
+            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5,interpolate=True)
+            ax.plot(xplot, yplot[0], color='darkred', linestyle='solid', label=labels[0])
 
-        ind = np.where(massgal_witherror[i,0,:] != 0)
-        xplot = xmf[ind]
-        yplot = massgal_witherror[i,0,ind]
-        if not labels:
-            ax.plot(xplot, yplot[0], color='k', linestyle='dashed')
-        else:
-            ax.plot(xplot, yplot[0], color='k', linestyle='dashed', label=labels[0] + '+0.3dex err')
+        #ind = np.where(massgal_witherror[i,0,:] != 0)
+        #xplot = xmf[ind]
+        #yplot = massgal_witherror[i,0,ind]
+        #if not labels:
+        #    ax.plot(xplot, yplot[0], color='r', linestyle='dashed')
+        #else:
+        #    ax.plot(xplot, yplot[0], color='k', linestyle='dashed', label=labels[0] + '+0.3dex err')
 
-        plot_l18(i, ax, labels[1])
+        plot_l18(i, ax, labels[1], lstyle='dashed')
         #plot_eagle(z_eagle[i], ax, labels[4])
-        plot_moster13(ax, z, labels, labels[2])
-        plot_berhoozi13(ax, z, labels, labels[3])
+        #plot_moster13(ax, z, labels, labels[2])
+        #plot_berhoozi13(ax, z, labels, labels[3])
 
-        if(i == 0):
-           plot_observations_kravtsov18(ax)
-           plot_observations_taylor20(ax)
+        #if(i == 0):
+        #   plot_observations_kravtsov18(ax)
+        #   plot_observations_taylor20(ax)
         if labels:
-            common.prepare_legend(ax, ['k','k','k','r','b'], loc=4)
+            common.prepare_legend(ax, ['darkred','k','k','r','b'], loc=4)
 
 
     common.savefig(outdir, fig, 'SMHM_z_compL18.pdf')
+
+    fig = plt.figure(figsize=(7,7))
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm halo}/M_{\odot})$"
+    ytit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    xmin, xmax, ymin, ymax = 10.5, 15, 7, 13
+    xleg = xmin + 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    subplots = (221, 222, 223, 224)
+    all_labels = (('Shark v2.0', 'v1.1 (L18)', 'Moster+13', 'Behroozi+13', 'EAGLE'), )
+    indices = [1,2,3,5]
+  
+    for j in range(0,len(indices)):
+        labels = all_labels[0]
+        z = zlist[indices[j]]
+        i = indices[j]
+        # z=0 ##################################
+        ax = fig.add_subplot(subplots[j])
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
+
+        ax.tick_params(labelsize=13)
+        ax.text(xleg, yleg, 'z=%s' % str(z), fontsize=12)
+
+        #Predicted SMHM
+        ind = np.where(massgal[i,0,:] != 0)
+        xplot = xmf[ind]
+        yplot = massgal[i,0,ind]
+        errdn = massgal[i,1,ind]
+        errup = massgal[i,2,ind]
+  
+        if not labels:
+            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5, interpolate=True)
+            ax.plot(xplot, yplot[0], color='darkred', linestyle='solid')
+        else:
+            ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='r', alpha=0.5,interpolate=True)
+            ax.plot(xplot, yplot[0], color='darkred', linestyle='solid', label=labels[0])
+
+        #ind = np.where(massgal_witherror[i,0,:] != 0)
+        #xplot = xmf[ind]
+        #yplot = massgal_witherror[i,0,ind]
+        #if not labels:
+        #    ax.plot(xplot, yplot[0], color='r', linestyle='dashed')
+        #else:
+        #    ax.plot(xplot, yplot[0], color='k', linestyle='dashed', label=labels[0] + '+0.3dex err')
+
+        plot_l18(i, ax, labels[1], lstyle='dashed')
+        #plot_eagle(z_eagle[i], ax, labels[4])
+        #plot_moster13(ax, z, labels, labels[2])
+        #plot_berhoozi13(ax, z, labels, labels[3])
+
+        #if(i == 0):
+        #   plot_observations_kravtsov18(ax)
+        #   plot_observations_taylor20(ax)
+        if j == 0:
+            common.prepare_legend(ax, ['darkred','k','k','r','b'], loc=4)
+
+    plt.tight_layout()
+    common.savefig(outdir, fig, 'SMHM_z_compL18_reduced.pdf')
 
 
     fig = plt.figure(figsize=(6,7))

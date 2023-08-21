@@ -1211,7 +1211,7 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
 
     xdataD16 = [9.3, 10.6]
     ydataD16 = [-0.39, 0.477]
-    ax.plot(xdataD16,ydataD16, color='b',linestyle='dashdot',linewidth = 4, label='Davies+16')
+    ax.plot(xdataD16,ydataD16, color='Crimson',linestyle='dashdot',linewidth = 4, label='Davies+16')
 
     #GAMA data at z<0.06
     #CATAID StellarMass_bestfit StellarMass_50 StellarMass_16 StellarMass_84 SFR_bestfit SFR_50 SFR_16 SFR_84 Zgas_bestfit Zgas_50 Zgas_16 Zgas_84 DustMass_bestfit DustMass_50 DustMass_16 DustMass_84 DustLum_50 DustLum_16 DustLum_84 uberID redshift
@@ -1226,7 +1226,7 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
     yp = toplot[0,ind]
     yup = toplot[2,ind]
     ydn = toplot[1,ind]
-    ax.plot(xmf[ind], yp[0],color='PaleVioletRed',linestyle='dashed', linewidth = 5, label="GAMA")
+    ax.plot(xmf[ind], yp[0],color='Maroon',linestyle='dashed', linewidth = 5, label="Bellstedt+20")
 #ax.plot(xmf[ind], yp[0]+yup[0],color='PaleVioletRed',linestyle='dotted', linewidth = 5)
     #ax.plot(xmf[ind], yp[0]-ydn[0],color='PaleVioletRed',linestyle='dotted', linewidth = 5)
 
@@ -1239,8 +1239,8 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
         ax.arrow(a, b, 0, -0.3, head_width=0.05, head_length=0.1, fc='r', ec='r')
 
     # Legend
-    common.prepare_legend(ax, ['k','k','SandyBrown','b','PaleVioletRed','r'], loc=2)
-
+    common.prepare_legend(ax, ['k','k','SandyBrown','Crimson','Maroon','r'], loc=2)
+    plt.tight_layout()
     common.savefig(outdir, fig, 'SFR_Mstars_z0.pdf')
 
 

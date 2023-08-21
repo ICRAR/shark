@@ -47,20 +47,20 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
     volcorr = 3.0*np.log10(h0)
     xlf_obs  = xlf
  
-    xtit="$\\rm 1500\\AA\, mag\, (AB)$ GALEX FUV band"
+    xtit="$\\rm 1500\\AA\, mag\, (AB)$"
     ytit="$\\rm log_{10}(\Phi/{\\rm dex^{-1}} {\\rm Mpc}^{-3})$"
 
     xmin, xmax, ymin, ymax = -25, -15, -6, -1
     xleg = xmin + 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
 
-    fig = plt.figure(figsize=(5,13))
+    fig = plt.figure(figsize=(5,14))
 
-    subplots = (411, 412, 413, 414)
-    idx = (0, 1, 2, 3)
-    zs  = (0, 1, 2, 3)
+    subplots = (511, 512, 513, 514, 515)
+    idx = (0, 1, 2, 3, 4)
+    zs  = (0, 1, 2, 3, 4)
     band = 28
-    labels= ('z=3', 'z=4', 'z=6', 'z=8')
+    labels= ('z=3', 'z=4', 'z=6', 'z=8', 'z=10')
   
     corrm_obs = -5.0*np.log10(h0/0.7) 
     corry_obs = 3.0*np.log10(h0/0.7)
@@ -68,7 +68,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
 
         ax = fig.add_subplot(subplot)
         ytitplot = ytit
-        if (idx == 3):
+        if (idx == 4):
             xtitplot = xtit
         else:
             xtitplot = ' '
@@ -136,6 +136,11 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
            yup  = np.log10(pF8*1e-3+dpuF8*1e-3)
            ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
 
+        if(idx == 4):
+           file = obsdir+'/lf/lf1500_z10_oesch2018.data'
+           lm,p,dpu,dpd = np.loadtxt(file,usecols=[0,1, 2, 3],unpack=True)
+           ax.errorbar(lm+corrm_obs, p+corry_obs, yerr=[p-dpu,dpd-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*', label='Oesch+2018')
+
         #Predicted LF
         ind = np.where(LFs_dust[z,4,band,:] < 0.)
         y = LFs_dust[z,4,band,ind]+volcorr-np.log10(dm)
@@ -153,9 +158,10 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
         ind = np.where(LFs_dust[z,2,band,:] < 0.)
         y = LFs_dust[z,2,band,ind]+volcorr-np.log10(dm)
         ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
-        if idx == 0 or idx == 1:
+        if ((idx == 0) or (idx == 1) or (idx ==4)):
             common.prepare_legend(ax, ['grey','grey','grey'], loc=4)
 
+    plt.tight_layout()
     common.savefig(outdir, fig, "UV_luminosity_function_evolution.pdf")
 
 def prepare_data(hdf5_data, phot_data, phot_data_nod, LFs_dust, LFs_nodust, index, nbands):

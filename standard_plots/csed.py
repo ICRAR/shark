@@ -118,13 +118,13 @@ def plot_csed(plt, outdir, obsdir, h0, CSED, CSED_nodust, nbands):
             ax.plot(xobs,yobs, color='grey', linestyle='solid',linewidth=5)  
 
         #plot model
-        ax.plot(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands)-np.log10(h0), 'k', linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,4,0:len(freq_bands)]*freq_bands)-np.log10(h0), 'k', linewidth=1)
 
-        for xi,yi,yi2,c in zip(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands),np.log10(CSED_nodust[idx,4,:]*freq_bands),colors):
+        for xi,yi,yi2,c in zip(lambda_bands,np.log10(CSED[idx,4,0:len(freq_bands)]*freq_bands),np.log10(CSED_nodust[idx,4,0:len(freq_bands)]*freq_bands),colors):
             ax.plot(xi,yi-np.log10(h0), 'D', markersize=6, color=c, alpha=0.5)
             ax.plot(xi,yi2-np.log10(h0), 'D', markersize=3, color=c, alpha=0.5)
-        ax.plot(lambda_bands,np.log10(CSED[idx,3,:]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1)
-        ax.plot(lambda_bands,np.log10(CSED[idx,2,:]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,3,0:len(freq_bands)]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,2,0:len(freq_bands)]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1)
         #ax.plot(lambda_bands,np.log10(CSED[idx,0,:]*freq_bands)-np.log10(h0), marker = 'p', mec = 'LightSalmon', markersize=3, linewidth=1)
 
     common.savefig(outdir, fig, "CSED_Shark.pdf")
@@ -167,13 +167,13 @@ def plot_csed(plt, outdir, obsdir, h0, CSED, CSED_nodust, nbands):
             ax.plot(xobs,yobs, color='grey', linestyle='solid',linewidth=5)  
 
         #plot model
-        ax.plot(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands)-np.log10(h0), 'k', linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,4,0:len(freq_bands)]*freq_bands)-np.log10(h0), 'k', linewidth=1)
 
-        for xi,yi,yi2,c in zip(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands),np.log10(CSED_nodust[idx,4,:]*freq_bands),colors):
+        for xi,yi,yi2,c in zip(lambda_bands,np.log10(CSED[idx,4,0:len(freq_bands)]*freq_bands),np.log10(CSED_nodust[idx,4,0:len(freq_bands)]*freq_bands),colors):
             ax.plot(xi,yi-np.log10(h0), 'D', markersize=6, color=c, alpha=0.5)
             ax.plot(xi,yi2-np.log10(h0), 'D', markersize=3, color=c, alpha=0.5)
-        ax.plot(lambda_bands,np.log10(CSED[idx,3,:]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1)
-        ax.plot(lambda_bands,np.log10(CSED[idx,2,:]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,3,0:len(freq_bands)]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,2,0:len(freq_bands)]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1)
         #ax.plot(lambda_bands,np.log10(CSED[idx,0,:]*freq_bands)-np.log10(h0), marker = 'p', mec = 'LightSalmon', markersize=3, linewidth=1)
 
     common.savefig(outdir, fig, "CSED_Shark_midz.pdf")
@@ -199,14 +199,14 @@ def plot_csed(plt, outdir, obsdir, h0, CSED, CSED_nodust, nbands):
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtitplot, ytit, locators=(1, 1, 1, 1))
         ax.text(xleg,yleg, labels[i], fontsize=12)
 
-        ax.plot(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands)-np.log10(h0), 'k', linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,4,0:len(freq_bands)]*freq_bands)-np.log10(h0), 'k', linewidth=1)
 
-        for xi,yi,yi2,c in zip(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands),np.log10(CSED_nodust[idx,4,:]*freq_bands),colors):
+        for xi,yi,yi2,c in zip(lambda_bands,np.log10(CSED[idx,4,0:len(freq_bands)]*freq_bands),np.log10(CSED_nodust[idx,4,0:len(freq_bands)]*freq_bands),colors):
             ax.plot(xi,yi-np.log10(h0), 'D', markersize=6, color=c, alpha=0.5)
             ax.plot(xi,yi2-np.log10(h0), 'D', markersize=3, color=c, alpha=0.5)
 
-        ax.plot(lambda_bands,np.log10(CSED[idx,3,:]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1)
-        ax.plot(lambda_bands,np.log10(CSED[idx,2,:]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,3,0:len(freq_bands)]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1)
+        ax.plot(lambda_bands,np.log10(CSED[idx,2,0:len(freq_bands)]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1)
         #ax.plot(lambda_bands,np.log10(CSED[idx,0,:]*freq_bands)-np.log10(h0), marker = 'p', mec = 'LightSalmon', markersize=3, linewidth=1)
 
     common.savefig(outdir, fig, "CSED_Shark_highz.pdf")
@@ -260,13 +260,13 @@ def plot_csed(plt, outdir, obsdir, h0, CSED, CSED_nodust, nbands):
             ax.plot(xobs,yobs, color='grey', linestyle='solid',linewidth=5)  
 
         #plot model
-        ax.plot(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands)-np.log10(h0), 'k', linewidth=1, label='total')
+        ax.plot(lambda_bands,np.log10(CSED[idx,4,0:len(freq_bands)]*freq_bands)-np.log10(h0), 'k', linewidth=1, label='total')
 
-        for xi,yi,yi2,c in zip(lambda_bands,np.log10(CSED[idx,4,:]*freq_bands),np.log10(CSED_nodust[idx,4,:]*freq_bands),colors):
+        for xi,yi,yi2,c in zip(lambda_bands,np.log10(CSED[idx,4,0:len(freq_bands)]*freq_bands),np.log10(CSED_nodust[idx,4,0:len(freq_bands)]*freq_bands),colors):
             ax.plot(xi,yi-np.log10(h0), 'D', markersize=6, color=c)
             ax.plot(xi,yi2-np.log10(h0), 'D', markersize=3, color=c, alpha=0.5)
-        ax.plot(lambda_bands,np.log10(CSED[idx,3,:]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1, label=labelsgal[0])
-        ax.plot(lambda_bands,np.log10(CSED[idx,2,:]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1, label=labelsgal[1])
+        ax.plot(lambda_bands,np.log10(CSED[idx,3,0:len(freq_bands)]*freq_bands)-np.log10(h0), marker = 'o', mec = 'b', markersize=3, linewidth=1, label=labelsgal[0])
+        ax.plot(lambda_bands,np.log10(CSED[idx,2,0:len(freq_bands)]*freq_bands)-np.log10(h0), marker = 'd', mec = 'r', markersize=3, linewidth=1, label=labelsgal[1])
         #ax.plot(lambda_bands,np.log10(CSED[idx,0,:]*freq_bands)-np.log10(h0), marker = 'p', mec = 'LightSalmon', markersize=3, linewidth=1)
     common.prepare_legend(ax, ['k','b', 'r'], loc='lower center')
     common.savefig(outdir, fig, "CSED_Shark_optical_to_nir.pdf")
@@ -330,7 +330,7 @@ def prepare_data(hdf5_data, phot_data, phot_data_nodust, CSED, CSED_nodust, nban
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     Variable_Ext = True 
-    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
+    file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5"
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
@@ -370,7 +370,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
             CSED_nodust[index,:]   = CSED_nodust[index,:] / volh * pow(h0,3.0)
             
     if(Variable_Ext):
-       outdir = os.path.join(outdir, 'eagle-rr14-steep')
+       outdir = os.path.join(outdir, 'eagle-rr14')
 
     # Take logs
     plot_csed(plt, outdir, obsdir, h0, CSED, CSED_nodust, nbands)

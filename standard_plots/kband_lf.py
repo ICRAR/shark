@@ -58,17 +58,17 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
 
     fig = plt.figure(figsize=(5,11))
 
-    subplots = (311, 312, 313)
-    idx = (0, 1, 2)
-    zs  = (0, 1, 3)
+    subplots = (411, 412, 413, 414)
+    idx = (0, 1, 2, 3)
+    zs  = (0, 1, 2, 3)
     band = 10 #K-band
-    labels= ('z=0.5', 'z=1', 'z=3')
+    labels= ('z=0.5', 'z=1', 'z=2', 'z=3')
    
     for subplot, idx, z in zip(subplots, idx, zs):
 
         ax = fig.add_subplot(subplot)
         ytitplot = ytit
-        if (idx == 2):
+        if (idx == 3):
             xtitplot = xtit
         else:
             xtitplot = ' '
@@ -105,12 +105,19 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
         if(idx == 1):
            ax.errorbar(lmP03[13:20]+vegacorr, yobsP03[13:20], yerr=[yobsP03[13:20]-ydnP03[13:20],yupP03[13:20]-yobsP03[13:20]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o', label="Pozetti+2003")
            ax.errorbar(lmS06[11:17]+vegacorr, yobsS06[11:17], yerr=[yobsS06[11:17]-ydnS06[11:17],yupS06[11:17]-yobsS06[11:17]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s', label="Saracco+2006")
-           ax.errorbar(lmC10[14:25]+vegacorr, yobsC10[14:25], yerr=[yobsC10[14:25]-ydnC10[14:25],yupC10[14:25]-yobsC10[14:25]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^', label="Cirasouolo+2010")
+           ind = np.where(zC10 == 1)
+           ax.errorbar(lmC10[ind]+vegacorr, yobsC10[ind], yerr=[yobsC10[ind]-ydnC10[ind],yupC10[ind]-yobsC10[ind]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='d', label="Cirasouolo+2010")
 
         if(idx == 2):
            ax.errorbar(lmP03[21:26]+vegacorr, yobsP03[21:26], yerr=[yobsP03[21:26]-ydnP03[21:26],yupP03[21:26]-yobsP03[21:26]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='o')
+           #ax.errorbar(lmS06[18:22]+vegacorr, yobsS06[18:22], yerr=[yobsS06[18:22]-ydnS06[18:22],yupS06[18:22]-yobsS06[18:22]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+           ind = np.where(zC10 == 2)
+           ax.errorbar(lmC10[ind]+vegacorr, yobsC10[ind], yerr=[yobsC10[ind]-ydnC10[ind],yupC10[ind]-yobsC10[ind]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='d')
+
+        if(idx == 3):
            ax.errorbar(lmS06[18:22]+vegacorr, yobsS06[18:22], yerr=[yobsS06[18:22]-ydnS06[18:22],yupS06[18:22]-yobsS06[18:22]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
-           ax.errorbar(lmC10[52:58]+vegacorr, yobsC10[52:58], yerr=[yobsC10[52:58]-ydnC10[52:58],yupC10[52:58]-yobsC10[52:58]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
+           ind = np.where(zC10 == 3)
+           ax.errorbar(lmC10[ind]+vegacorr, yobsC10[ind], yerr=[yobsC10[ind]-ydnC10[ind],yupC10[ind]-yobsC10[ind]], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='d')
 
         #Predicted LF
         if(idx == 0):
@@ -146,6 +153,7 @@ def plot_k_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
         if idx == 1:
             common.prepare_legend(ax, ['grey','grey','grey'], loc=4)
 
+    plt.tight_layout()
     common.savefig(outdir, fig, "Kband_luminosity_function_evolution.pdf")
 
 

@@ -215,9 +215,12 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
 
 
     m,r = common.load_observation(obsdir, 'SizesAndAM/rdisk_L16.dat', [0,1])
-    ax.plot(m[0:36], r[0:36], linestyle='dotted',color='b',label="50th, 68th, 90th")
-    ax.plot(m[38:83], r[38:83], linestyle='dotted',color='b')
-    ax.plot(m[85:128], r[85:129], linestyle='dotted',color='b')
+    m = np.log10(m)
+    r = np.log10(r)
+
+    ax.plot(m[0:39], r[0:39], linestyle='dotted',color='b',label="50th, 68th, 90th")
+    ax.plot(m[39:78], r[39:78], linestyle='dotted',color='b')
+    ax.plot(m[78:len(r)], r[78:len(r)], linestyle='dotted',color='b')
 
     common.prepare_legend(ax, ['b','b','k','r'], loc=2)
 
@@ -285,9 +288,11 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, bu
     ax.plot(xmf[ind],rL16_2,'m', linestyle='solid', label ='L16 $M_{\\star}>2\\times 10^{10}\\rm M_{\odot}$')
     
     m,r = common.load_observation(obsdir, 'SizesAndAM/rbulge_L16.dat', [0,1])
-    ax.plot(m[0:39], r[0:39], linestyle='dotted',color='r')
-    ax.plot(m[41:76], r[41:76], linestyle='dotted',color='r')
-    ax.plot(m[78:115], r[78:115], linestyle='dotted',color='r')
+    m = np.log10(m)
+    r = np.log10(r)
+    ax.plot(m[0:50], r[0:50], linestyle='dotted',color='r')
+    ax.plot(m[50:90], r[50:90], linestyle='dotted',color='r')
+    ax.plot(m[90:len(r)], r[90:len(r)], linestyle='dotted',color='r')
 
     common.prepare_legend(ax, ['r','m','k','Orange','DarkCyan','LightSlateGray'], loc=2)
     common.savefig(outdir, fig, 'sizes.pdf')
