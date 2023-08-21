@@ -1,0 +1,8 @@
+version: 2
+
+submodules:
+  include: all
+
+sphinx:
+  configuration: doc/conf.py
+  fail_on_warning: true
