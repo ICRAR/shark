@@ -424,7 +424,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	 * Calculate mean density for notional cooling profile.
 	 */
 	double nh_density  = mean_density(mhot_density, Rvir); //in units of cm^-3.
-	double nh_density_200crit = cosmology->critical_density(z) * MSOLAR_g / MPC2CM_cube / (M_Atomic_g * mu_Primordial); //in units of cm^-3.
+	double nh_density_200crit = 200.0 * cosmology->critical_density(z) * MSOLAR_g / MPC2CM_cube / (M_Atomic_g * mu_Primordial); //in units of cm^-3.
 	double tcool = 0;
 	double tcharac = 0;
 
