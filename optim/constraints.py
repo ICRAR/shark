@@ -75,7 +75,6 @@ zeros4 = lambda: np.empty(shape=(1), dtype=np.bool_)
 zeros5 = lambda: np.zeros(shape=(1, 4, len(ssfrbins)))
 zeros6 = lambda: np.zeros(shape = (1, 3, len(xsfr)))
 
-
 class Constraint(object):
     """Base classes for constraint objects"""
 
@@ -107,7 +106,9 @@ class Constraint(object):
                 'mstars_metals_disk', 'mstars_metals_bulge', 'type',
                 'mvir_hosthalo', 'rstar_bulge', 'mstars_burst_mergers', 
                 'mstars_burst_diskinstabilities', 'mstars_bulge_mergers_assembly', 
-                'mstars_bulge_diskins_assembly')
+                'mstars_bulge_diskins_assembly', 'specific_angular_momentum_disk_gas_atom',
+                'vmax_subhalo', 'rgas_disk')
+
         }
 
         for index, z in enumerate(self.z):
@@ -115,7 +116,7 @@ class Constraint(object):
             h0 = hdf5_data[0]
             smf.prepare_data(hdf5_data, index, hist_smf, zeros3(), zeros3(),
                              zeros3(), zeros3(), hist_HImf, zeros3(), zeros3(),
-                             zeros3(), zeros3(), zeros3(), zeros1(), zeros1(),
+                             zeros3(), zeros3(), zeros3(), zeros3(), zeros1(), zeros1(),
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
                              zeros1(), zeros1(), zeros1(), zeros1(), zeros1(),
                              zeros1(), zeros4(), zeros4(), zeros2(), zeros5(),
