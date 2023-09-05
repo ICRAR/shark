@@ -1,8 +1,12 @@
 Changelog
 =========
 
-.. rubric:: Development version
+.. rubric:: 2.0.0
 
+* Many changes to the physical models SHARK, which are collectively described in
+  Lagos et al. (2023, submitted to MNRAS). There are also many changes in the
+  way we create extinction parameters, which are described in the paper Lagos et
+  al. (2019, MNRAS, 489.4196).
 * Many improvements to the our PSO support.
   This includes better logging of detailed constraint evaluation information,
   improved stability in a few corner cases,
