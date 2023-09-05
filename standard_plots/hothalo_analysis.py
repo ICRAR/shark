@@ -151,7 +151,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
                               'mhot','mreheated')}
 
 
-    z = [0, 0.5, 1, 1.5, 2, 3, 4, 6]
+    z = [0, 0.5, 1, 2, 3, 4, 6]
     snapshots = redshift_table[z]
 
     f_q = np.zeros(shape = (len(z), len(xmf)))
