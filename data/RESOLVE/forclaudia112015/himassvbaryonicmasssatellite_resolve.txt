@@ -1,0 +1,18 @@
+      #Written out 11-24-2015
+      #relations between 1.4*MHI vs. baryonic mass for satellite galaxies
+      #c1 bin half way point, 0.5 dex bins (baryonic mass)
+      #c2 16th% 1.4*HI mass using upper limit value
+      #c3 16th% 1.4*HI mass using 0.05Mstar
+      #c4 50th% 1.4*HI mass using upper limit value
+      #c5 50th% 1.4*HI mass using 0.05Mstar
+      #c6 84th% 1.4*HI mass using upper limit value
+      #c7 84th% 1.4*HI mass using 0.05Mstar
+      #c8 number of galaxies in bin
+ 8.25   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+ 8.75   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+ 9.25   8.03   8.01   8.94   8.94   9.17    9.17   48.0
+ 9.75   8.28   8.28   8.92   8.92   9.54    9.54   26.0
+10.25   8.99   8.92   9.20   9.17   9.89    9.89   23.0
+10.75   9.52   9.52   9.68   9.68  10.04   10.04    6.0
+11.25   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+11.75   0.00   0.00   0.00   0.00   0.00    0.00    0.0

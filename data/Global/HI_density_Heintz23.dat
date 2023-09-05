@@ -1,0 +1,3 @@
+#redshift z_err rhoHI(Msun/Mpc^3) rhoHI_up rhoHI_down
+5 0.8 1.6e7 2.7e7 1e7
+7 0.6 7.1e6 13.5e6 4.1e6

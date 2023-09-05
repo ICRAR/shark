@@ -24,13 +24,9 @@ cmake_minimum_required(VERSION 3.2)
 # We have the version here
 file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
 
-# We have only C++ sources, but until cmake 3.4 the check_symbol_exists
-# macro didn't work properly if only defining C++ as the project language
-if (${CMAKE_VERSION} VERSION_LESS 3.4)
-	set(SHARK_LANGS C CXX)
-else()
-	set(SHARK_LANGS CXX)
-endif()
+# We have only C++ sources, but we need to allow compilation of C sources
+# so that finding the HDF5 API works correctly
+set(SHARK_LANGS C CXX)
 
 # Our project...
 project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
@@ -94,23 +90,23 @@ endmacro()
 
 #
 # This is how we look for HDF5
-# We are currently interested in the CXX library,
-# which is a hard requirement -- if it's not there we fail misserably
+# We are currently interested in the C library,
+# which is a hard requirement -- if it's not there we fail miserably
 #
 macro(find_hdf5)
 
 	# The CONFIG mode is needed at least when using vcpkg's hdf5
 	if (SHARK_HDF5_USE_CONFIG)
-		find_package(HDF5 REQUIRED COMPONENTS CXX CONFIG)
+		find_package(HDF5 REQUIRED COMPONENTS C CONFIG)
 	else()
-		find_package(HDF5 REQUIRED COMPONENTS CXX)
+		find_package(HDF5 REQUIRED COMPONENTS C)
 	endif()
 
 	#
 	# HDF5_VERSION is defined only in cmake 3.3+
 	# Even in these newer cmakes, there are cases in which the version is still
 	# not properly calculated though, so let us check simply for an empty string
-	# and compile a small problem that prints the version of the HDF5 found
+	# and compile a small program that prints the version of the HDF5 found
 	# by cmake.
 	#
 	if (NOT HDF5_VERSION)
@@ -119,7 +115,7 @@ macro(find_hdf5)
 		set(test_file ${scratch_directory}/cmake_version.cxx)
 		file(WRITE ${test_file}
 		     "#include <stdio.h>\n"
-		     "#include <H5Cpp.h>\n"
+		     "#include <hdf5.h>\n"
 		     "int main(int argc, char **argv) {\n"
 		     "  printf(\"INFO:\" H5_VERSION);\n"
 		     "  return 0;\n"
@@ -161,9 +157,9 @@ macro(find_hdf5)
 	                "-DHDF5_VERSION_PATCH=${HDF5_VERSION_PATCH}")
 
 	if (SHARK_HDF5_USE_CONFIG)
-		set(SHARK_LIBS ${SHARK_LIBS} hdf5::hdf5_cpp-shared)
+		set(SHARK_LIBS ${SHARK_LIBS} hdf5::hdf5-shared)
 	else()
-		set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_CXX_LIBRARIES})
+		set(SHARK_LIBS ${SHARK_LIBS} ${HDF5_C_LIBRARIES})
 	endif()
 endmacro()
 
@@ -173,6 +169,12 @@ endmacro()
 # which is a hard requirement -- if it's not there we fail misserably
 #
 macro(find_boost)
+	# Boost 1.71's own CMake config file doesn't respect the
+	# Boost_USE_MULTITHREADED setting, which is important in environments where
+	# both single- and multi-threaded libraries are installed (e.g., MacOS Mojave
+	# with homebrew). Let's thus not use Boost's cmake config file and stick to
+	# cmake's own version of it for the time being
+	set(Boost_NO_BOOST_CMAKE ON)
 	find_package(Boost 1.54 COMPONENTS filesystem log program_options system REQUIRED)
 	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LIBRARIES})
 	include_directories(${Boost_INCLUDE_DIRS})
@@ -297,6 +299,7 @@ set(SHARKLIB_SRCS
    "${data_cpp}"
    "${git_revision_cpp}"
    include/agn_feedback.h
+   include/baryon.h
    include/components.h
    include/cosmology.h
    include/dark_matter_halos.h
@@ -306,14 +309,17 @@ set(SHARKLIB_SRCS
    include/evolve_halos.h
    include/exceptions.h
    include/execution.h
+   include/galaxy.h
    include/galaxy_creator.h
    include/galaxy_mergers.h
    include/galaxy_writer.h
    include/gas_cooling.h
    include/git_revision.h
+   include/halo.h
    include/integrator.h
    include/interpolator.h
    include/logging.h
+   include/merger_tree.h
    include/merger_tree_reader.h
    include/mixins.h
    include/naming_convention.h
@@ -326,21 +332,31 @@ set(SHARKLIB_SRCS
    include/recycling.h
    include/reincorporation.h
    include/reionisation.h
-   include/sharkfwd.h
+   include/root_solver.h
    include/shark.h
    include/shark_runner.h
    include/simulation.h
    include/star_formation.h
    include/stellar_feedback.h
+   include/subhalo.h
    include/timer.h
+   include/total_baryon.h
    include/tree_builder.h
    include/utils.h
-   include/hdf5/iobase.h
-   include/hdf5/reader.h
-   include/hdf5/traits.h
-   include/hdf5/writer.h
+   include/hdf5/attribute.h
+   include/hdf5/data_set.h
+   include/hdf5/data_space.h
+   include/hdf5/data_type.h
+   include/hdf5/entity.h
+   include/hdf5/file.h
+   include/hdf5/group.h
+   include/hdf5/location.h
+   include/hdf5/utils.h
+   include/hdf5/io/iobase.h
+   include/hdf5/io/reader.h
+   include/hdf5/io/traits.h
+   include/hdf5/io/writer.h
    src/agn_feedback.cpp
-   src/components.cpp
    src/cosmology.cpp
    src/execution.cpp
    src/dark_matter_halos.cpp
@@ -351,6 +367,7 @@ set(SHARKLIB_SRCS
    src/galaxy_mergers.cpp
    src/galaxy_writer.cpp
    src/gas_cooling.cpp
+   src/halo.cpp
    src/integrator.cpp
    src/interpolator.cpp
    src/logging.cpp
@@ -362,16 +379,27 @@ set(SHARKLIB_SRCS
    src/recycling.cpp
    src/reincorporation.cpp
    src/reionisation.cpp
+   src/root_solver.cpp
    src/shark_runner.cpp
    src/simulation.cpp
    src/star_formation.cpp
    src/stellar_feedback.cpp
+   src/subhalo.cpp
+   src/total_baryon.cpp
    src/tree_builder.cpp
    src/utils.cpp
-   src/hdf5/iobase.cpp
-   src/hdf5/reader.cpp
-   src/hdf5/traits.cpp
-   src/hdf5/writer.cpp
+   src/hdf5/attribute.cpp
+   src/hdf5/data_set.cpp
+   src/hdf5/data_space.cpp
+   src/hdf5/data_type.cpp
+   src/hdf5/entity.cpp
+   src/hdf5/file.cpp
+   src/hdf5/group.cpp
+   src/hdf5/location.cpp
+   src/hdf5/io/iobase.cpp
+   src/hdf5/io/reader.cpp
+   src/hdf5/io/traits.cpp
+   src/hdf5/io/writer.cpp
 )
 
 if (WIN32)

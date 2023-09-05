@@ -44,10 +44,14 @@ public:
 	xyz() = default;
 
 	template <typename U>
-	xyz(U x, U y, U z) : x(T(x)), y(T(y)), z(T(z)) {};
+	xyz(U x, U y, U z) : x(T(x)), y(T(y)), z(T(z))
+	{
+	}
 
 	template <typename U>
-	explicit xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z)) {};
+	explicit xyz(xyz<U> other) : x(T(other.x)), y(T(other.y)), z(T(other.z))
+	{
+	}
 
 	/**
 	 * The value in the X coordinate
@@ -93,6 +97,38 @@ public:
 	{
 		xyz<U> sum(*this);
 		sum += lhs;
+		return xyz(sum);
+	}
+
+	xyz &operator-=(T scalar)
+	{
+		x -= scalar;
+		y -= scalar;
+		z -= scalar;
+		return *this;
+	}
+
+	xyz operator-(T scalar) const
+	{
+		xyz sum(*this);
+		sum -= scalar;
+		return sum;
+	}
+
+	template <typename U>
+	xyz &operator-=(const xyz<U> &lhs)
+	{
+		x -= lhs.x;
+		y -= lhs.y;
+		z -= lhs.z;
+		return *this;
+	}
+
+	template <typename U>
+	xyz operator-(const xyz<U> &lhs) const
+	{
+		xyz<U> sum(*this);
+		sum -= lhs;
 		return xyz(sum);
 	}
 

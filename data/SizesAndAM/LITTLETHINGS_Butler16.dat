@@ -1,7 +1,7 @@
 #Data from Butler et al. (2017, ApJ...834L...4B)
 #stellar masses assume Kroupa IMF.
 #Anlysis of angular momentum of LITTLE THINGS galaxies.
-#Distance MHI M* Mb jHI j* jb Vmax
+#Distance MHI err M* err Mb err jHI j* err jb err Vmax
    3.40     9.25  0.04   8.34  0.02    9.42  0.04   2.48  0.31   1.88  0.05  2.45  0.31      32
    10.30    8.87  0.17   8.02  0.08    9.05  0.16   2.71  0.31   2.06  0.26  2.68  0.32      66
    1.30     8.67  0.12   7.48  0.05    8.82  0.11   2.17  0.23   1.55  0.16  2.15  0.22      0

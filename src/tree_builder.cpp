@@ -28,11 +28,18 @@
 #include <numeric>
 #include <vector>
 
+#include "components/algorithms.h"
 #include "cosmology.h"
+#include "dark_matter_halos.h"
 #include "exceptions.h"
+#include "halo.h"
 #include "logging.h"
+#include "merger_tree.h"
 #include "omp_utils.h"
+#include "ranges.h"
+#include "subhalo.h"
 #include "timer.h"
+#include "total_baryon.h"
 #include "tree_builder.h"
 
 
@@ -53,20 +60,37 @@ ExecutionParameters &TreeBuilder::get_exec_params()
 
 void TreeBuilder::ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const
 {
-	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
-		for (auto &snapshot_and_halos: tree->halos) {
-			for (auto &halo: snapshot_and_halos.second) {
-				if (halo->merger_tree != tree) {
-					std::ostringstream os;
-					os << halo << " is not actually part of " << tree;
-					throw invalid_data(os.str());
-				}
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, unsigned int thread_idx) {
+		for (auto &halo: tree->halos) {
+			if (halo->merger_tree != tree) {
+				std::ostringstream os;
+				os << halo << " is not actually part of " << tree;
+				throw invalid_data(os.str());
 			}
 		}
 	});
 }
 
-std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &halos, SimulationParameters sim_params, GasCoolingParameters gas_cooling_params, const CosmologyPtr &cosmology, TotalBaryon &AllBaryons)
+void TreeBuilder::ignore_late_massive_halos(std::vector<MergerTreePtr> &trees, SimulationParameters sim_params, ExecutionParameters exec_params) 
+{
+	omp_static_for(trees, threads, [&](MergerTreePtr &tree, unsigned int thread_idx) {
+		for (auto &root: tree->roots()) {
+			if(root->Mvir > exec_params.ignore_npart_threshold * sim_params.particle_mass && sim_params.redshifts[root->snapshot] < exec_params.ignore_below_z){
+				root->ignore_gal_formation = true;
+			}
+		}
+	});
+
+}
+
+
+std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos,
+		SimulationParameters sim_params,
+		GasCoolingParameters gas_cooling_params,
+		DarkMatterHaloParameters dark_matter_params,
+		const DarkMatterHalosPtr &darkmatterhalos,
+		const CosmologyPtr &cosmology,
+		TotalBaryon &AllBaryons)
 {
 
 	auto last_snapshot_to_consider = exec_params.last_output_snapshot();
@@ -109,6 +133,19 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 	}
 
 	loop_through_halos(halos);
+	{
+		Timer t;
+		omp_static_for(trees, threads, [](MergerTreePtr &tree, unsigned int thread_idx) {
+			tree->consolidate();
+		});
+		LOG(info) << "Took " << t << " to consolidate all trees";
+	}
+
+	// Ignore massive halos that pop in for the first time at low redshift. 
+	// These generally are flaws of the merger tree builder.
+	if(exec_params.ignore_late_massive_halos){
+		ignore_late_massive_halos(trees, sim_params, exec_params);
+	}
 
 	// Make sure merger trees are fully self-contained
 	ensure_trees_are_self_contained(trees);
@@ -124,7 +161,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 
 	// Define central subhalos
 	LOG(info) << "Defining central subhalos";
-	define_central_subhalos(trees, sim_params);
+	define_central_subhalos(trees, sim_params, dark_matter_params);
 
 	// Define accretion rate from DM in case we want this.
 	LOG(info) << "Defining accretion rate using cosmology";
@@ -132,7 +169,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(const std::vector<HaloPtr> &
 
 	// Define halo and subhalos ages and other relevant properties
 	LOG(info) << "Defining ages of halos and subhalos";
-	define_ages_halos(trees, sim_params);
+	define_ages_halos(trees, sim_params, darkmatterhalos);
 
 	return trees;
 }
@@ -155,31 +192,7 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 	}
 	parent_shalo->descendant = desc_subhalo;
 
-	// Establish ascendant and descendant link at halo level
-	// Ascendant is only added if not added previously
-	auto result = desc_halo->ascendants.insert(parent_halo);
-	auto halos_linked = std::get<1>(result);
-
-	// Fail if a halo has more than one descendant
-	if (parent_halo->descendant && parent_halo->descendant->id != desc_halo->id) {
-		std::ostringstream os;
-		os << parent_halo << " already has a descendant " << parent_halo->descendant;
-		os << " but " << desc_halo << " is claiming to be its descendant as well";
-		throw invalid_data(os.str());
-	}
-	parent_halo->descendant = desc_halo;
-
-	// Link this halo to merger tree and back
-	if (!desc_halo->merger_tree) {
-		std::ostringstream os;
-		os << "Descendant " << desc_halo << " has no MergerTree associated to it";
-		throw invalid_data(os.str());
-	}
-	parent_halo->merger_tree = desc_halo->merger_tree;
-	if (halos_linked) {
-		parent_halo->merger_tree->add_halo(parent_halo);
-	}
-
+	add_parent(desc_halo, parent_halo);
 }
 
 SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo)
@@ -208,12 +221,12 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	return subhalo;
 }
 
-void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
+void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, DarkMatterHaloParameters &dark_matter_params){
 
 	//This function loops over merger trees and halos to define central galaxies in a self-consistent way. The loop starts at z=0.
 
 	//Loop over trees.
-	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, unsigned int thread_idx) {
 		for (int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 
 			for (auto &halo: tree->halos_at(snapshot)) {
@@ -264,8 +277,10 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 						break;
 					}
 
-					// Redefine lambda of main progenitor to have the same one as its descendant.
-					main_prog->lambda = lambda;
+					// Redefine lambda of main progenitor to have the same one as its descendant, only if this halo is not reliable.
+					if (!dark_matter_params.use_converged_lambda_catalog || (dark_matter_params.use_converged_lambda_catalog && main_prog->Mvir/sim_params.particle_mass < dark_matter_params.min_part_convergence)) {
+						main_prog->lambda = lambda;
+					}
 					subhalo = define_central_subhalo(ascendant_halo, main_prog);
 
 					// Define property last_identified_snapshot for all the ascendants that are not the main progenitor of the subhalo.
@@ -284,7 +299,7 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 	});
 
 	// Make sure each halo has only one central subhalo and that the rest are satellites.
-	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, unsigned int thread_idx) {
 		for (int snapshot=sim_params.min_snapshot; snapshot >= sim_params.max_snapshot; snapshot++) {
 
 			for (auto &halo: tree->halos_at(snapshot)) {
@@ -312,13 +327,22 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 void TreeBuilder::ensure_halo_mass_growth(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
 
 	//This function loops over merger trees and halos to make sure that descendant halos are at least as massive as their progenitors.
-	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
-		for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, unsigned int thread_idx) {
+		/*for(int snapshot=sim_params.min_snapshot; snapshot < sim_params.max_snapshot; snapshot++) {
 
 			for(auto &halo: tree->halos_at(snapshot)){
 				// Check if current mass of halo is larger than descendant. If so, redefine descendant Mvir to that of the progenitor.
 				if(halo->Mvir > halo->descendant->Mvir){
 					halo->descendant->Mvir = halo->Mvir;
+				}
+			}
+		}*/
+		for(int snapshot=sim_params.max_snapshot; snapshot > sim_params.min_snapshot; snapshot--) {
+
+			for(auto &halo: tree->halos_at(snapshot)){
+				// Check if current mass of halo is smaller than the total of its ascendants. If so, redefine Mvir to that total.
+				if(halo->Mvir < halo->total_mass_ascendants()){
+					halo->Mvir = halo->total_mass_ascendants();
 				}
 			}
 		}
@@ -331,7 +355,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 	// This has to be done starting from the first snapshot forward so that the angular momentum and concentration are propagated correctly if subhalo is interpolated over many snapshots.
 
 	//Loop over trees.
-	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, int thread_idx) {
+	omp_static_for(trees, threads, [&](const MergerTreePtr &tree, unsigned int thread_idx) {
 		for (int snapshot=sim_params.max_snapshot; snapshot >=sim_params.min_snapshot; snapshot--) {
 
 			for (auto &halo: tree->halos_at(snapshot)) {
@@ -357,7 +381,11 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 }
 
 
-void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params, GasCoolingParameters &gas_cooling_params, Cosmology &cosmology, TotalBaryon &AllBaryons){
+void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr> &trees,
+		SimulationParameters &sim_params,
+		GasCoolingParameters &gas_cooling_params,
+		Cosmology &cosmology,
+		TotalBaryon &AllBaryons){
 
 
 	//Loop over trees.
@@ -366,11 +394,7 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 				for(auto &halo: tree->halos_at(snapshot)){
 
-					const auto &ascendants = halo->ascendants;
-
-					auto Mvir_asc = std::accumulate(ascendants.begin(), ascendants.end(), 0., [](double mass, const HaloPtr &halo) {
-						return mass + halo->Mvir;
-					});
+					auto Mvir_asc = halo->total_mass_ascendants();
 
 					// Define accreted baryonic mass.
 					halo->central_subhalo->accreted_mass = (halo->Mvir - Mvir_asc) * universal_baryon_fraction;
@@ -398,7 +422,9 @@ void TreeBuilder::define_accretion_rate_from_dm(const std::vector<MergerTreePtr>
 
 }
 
-void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, SimulationParameters &sim_params){
+void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees,
+		SimulationParameters &sim_params,
+		const DarkMatterHalosPtr &darkmatterhalos){
 
 
 	//Loop over trees.
@@ -432,6 +458,11 @@ void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees, Sim
 						while(main_prog && subhalo->infall_t == 0){
 							if(main_prog->subhalo_type == Subhalo::CENTRAL){
 								subhalo->infall_t = sim_params.redshifts[snap];
+								subhalo->Mvir_infall = main_prog->Mvir;
+								subhalo->rvir_infall = darkmatterhalos->halo_virial_radius(main_prog->host_halo, sim_params.redshifts[snap]);
+
+								//assume the stripping radius is equal to the virial radius at infall (which the largest it can be).
+								subhalo->hot_halo_gas_r_rps = subhalo->rvir_infall;
 							}
 							snap --;
 							main_prog = main_prog->main();
@@ -464,23 +495,86 @@ HaloBasedTreeBuilder::HaloBasedTreeBuilder(ExecutionParameters exec_params, unsi
 	// no-op
 }
 
-void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
+static std::vector<SubhaloPtr>::const_iterator find_by_id(const std::vector<SubhaloPtr> &subhalos, Subhalo::id_t id)
 {
+	return std::find_if(subhalos.begin(), subhalos.end(), [id](const SubhaloPtr &subhalo)
+	{
+		return subhalo->id == id;
+	});
+}
 
-	// Index all halos by snapshot and by ID, we'll need them later
-	std::map<int, std::vector<HaloPtr>> halos_by_snapshot;
-	std::map<Halo::id_t, HaloPtr> halos_by_id;
-	for(const auto &halo: halos) {
-		halos_by_snapshot[halo->snapshot].push_back(halo);
-		halos_by_id[halo->id] = halo;
+SubhaloPtr HaloBasedTreeBuilder::find_descendant_subhalo(
+    const HaloPtr &halo, const SubhaloPtr &subhalo, const HaloPtr &descendant_halo)
+{
+	// if the descendant subhalo is not found in the descendant halos'
+	// subhalos then we error
+	auto descendant_subhalos = descendant_halo->all_subhalos();
+	auto descendant_subhalo_found = find_by_id(descendant_subhalos, subhalo->descendant_id);
+
+	if (descendant_subhalo_found == descendant_subhalos.end()) {
+		std::ostringstream os;
+		auto exec_params = get_exec_params();
+		if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
+			os << "Descendant Subhalo id=" << subhalo->descendant_id;
+			os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
+			os << " in the Subhalo's descendant Halo " << descendant_halo << std::endl;
+			os << "Subhalos in " << descendant_halo << ": " << std::endl << "  ";
+			auto all_subhalos = descendant_halo->all_subhalos();
+			std::copy(all_subhalos.begin(), all_subhalos.end(),
+					  std::ostream_iterator<SubhaloPtr>(os, "\n  "));
+		}
+
+		// Users can choose whether to continue in these situations
+		// (with or without a warning) or if it should be considered an error
+		if (!get_exec_params().skip_missing_descendants) {
+			throw subhalo_not_found(os.str(), subhalo->descendant_id);
+		}
+
+		if (get_exec_params().warn_on_missing_descendants) {
+			LOG(warning) << os.str();
+		}
+		halo->remove_subhalo(subhalo);
+		return nullptr;
 	}
+
+	// We support only direct parentage; that is, descendants must be
+	// in the snapshot directly after ours
+	auto descendant_subhalo = *descendant_subhalo_found;
+	if (subhalo->snapshot != descendant_subhalo->snapshot - 1) {
+		std::ostringstream os;
+		os << "Subhalo " << descendant_subhalo << " (snapshot " << subhalo->snapshot << ") ";
+		os << "is not a direct descendant of " << subhalo << " (" << descendant_subhalo->snapshot << ").";
+		throw invalid_data(os.str());
+	}
+
+	return descendant_subhalo;
+}
+
+static std::vector<HaloPtr>::iterator find_by_id(std::vector<HaloPtr> &halos, Halo::id_t id)
+{
+	auto lo = std::lower_bound(halos.begin(), halos.end(), id, [](const HaloPtr &x, Halo::id_t id)
+	{
+		return x->id < id;
+	});
+	auto up = std::upper_bound(halos.begin(), halos.end(), id, [](const Halo::id_t id, const HaloPtr &x)
+	{
+		return id < x->id;
+	});
+	if (lo == up) {
+		return halos.end();
+	}
+	return lo;
+}
+
+void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
+{
+	sort_by_id(halos);
 
 	// To find subhalos/halos that correspond to each other, we do the following
 	//  1. Iterate over snapshots in descending order
 	//  2. For each snapshot S we iterate over its halos
 	//  3. For each halo H we iterate over its subhalos
 	//  4. For each subhalo SH we find the halo with subhalo.descendant_halo_id
-	//     (which we globally keep at the halos_by_id map)
 	//  5. When the descendant halo DH is found, we find the particular subhalo
 	//     DSH inside DH that matches SH's descendant_id
 	//  6. Now we have SH, H, DSH and DH. We link them all together,
@@ -505,8 +599,8 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
 
 		int ignored = 0;
-		for(auto &halo: halos_by_snapshot[snapshot]) {
-
+		auto halos_in_snapshot = make_range_filter(halos, in_snapshot(snapshot));
+		for(auto &halo: halos_in_snapshot) {
 			bool halo_linked = false;
 			for(const auto &subhalo: halo->all_subhalos()) {
 
@@ -521,64 +615,26 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 
 				// if the descendant halo is not found, we don't consider this
 				// halo anymore (and all its progenitors)
-				auto it = halos_by_id.find(subhalo->descendant_halo_id);
-				if (it == halos_by_id.end()) {
+				auto descendant_halo_position = find_by_id(halos, subhalo->descendant_halo_id);
+				if (descendant_halo_position == halos.end()) {
 					if (LOG_ENABLED(debug)) {
 						LOG(debug) << subhalo << " points to descendant halo/subhalo "
 						           << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
 						           << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
 					}
-					halos_by_id.erase(halo->id);
 					ignored++;
 					break;
 				}
-
-				// if the descendant subhalo is not found in the descendant halos'
-				// subhalos then we error
-				bool subhalo_descendant_found = false;
-				const auto &d_halo = halos_by_id[subhalo->descendant_halo_id];
-				for(auto &d_subhalo: d_halo->all_subhalos()) {
-					if (d_subhalo->id == subhalo->descendant_id) {
-
-						// We support only direct parentage; that is, descendants must be
-						// in the snapshot directly after ours
-						if (subhalo->snapshot != d_subhalo->snapshot - 1) {
-							std::ostringstream os;
-							os << "Subhalo " << d_subhalo << " (snapshot " << subhalo->snapshot << ") ";
-							os << "is not a direct descendant of " << subhalo << " (" << d_subhalo->snapshot << ").";
-							throw invalid_data(os.str());
-						}
-
-						link(subhalo, d_subhalo, halo, d_halo);
-						subhalo_descendant_found = true;
-						halo_linked = true;
-						break;
-					}
+				auto descendant_halo = *descendant_halo_position;
+				// hasn't been put in any merger tree, so it was ignored
+				if (!descendant_halo->merger_tree) {
+					continue;
 				}
-				if (!subhalo_descendant_found) {
 
-					std::ostringstream os;
-					auto exec_params = get_exec_params();
-					if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
-						os << "Descendant Subhalo id=" << subhalo->descendant_id;
-						os << " for " << subhalo << " (mass: " << subhalo->Mvir << ") not found";
-						os << " in the Subhalo's descendant Halo " << d_halo << std::endl;
-						os << "Subhalos in " << d_halo << ": " << std::endl << "  ";
-						auto all_subhalos = d_halo->all_subhalos();
-						std::copy(all_subhalos.begin(), all_subhalos.end(),
-								  std::ostream_iterator<SubhaloPtr>(os, "\n  "));
-					}
-
-					// Users can choose whether to continue in these situations
-					// (with or without a warning) or if it should be considered an error
-					if (!get_exec_params().skip_missing_descendants) {
-						throw subhalo_not_found(os.str(), subhalo->descendant_id);
-					}
-
-					if (get_exec_params().warn_on_missing_descendants) {
-						LOG(warning) << os.str();
-					}
-					halo->remove_subhalo(subhalo);
+				auto descendant_subhalo = find_descendant_subhalo(halo, subhalo, descendant_halo);
+				if (descendant_subhalo) {
+					link(subhalo, descendant_subhalo, halo, descendant_halo);
+					halo_linked = true;
 				}
 			}
 
@@ -589,14 +645,13 @@ void HaloBasedTreeBuilder::loop_through_halos(const std::vector<HaloPtr> &halos)
 					LOG(debug) << halo << " doesn't contain any Subhalo pointing to"
 					           << " descendants, ignoring it (and the rest of its progenitors)";
 				}
-				halos_by_id.erase(halo->id);
 				ignored++;
 			}
 
 		}
 
-		auto n_snapshot_halos = halos_by_snapshot[snapshot].size();
 		if (LOG_ENABLED(debug)) {
+			auto n_snapshot_halos = halos_in_snapshot.size();
 			LOG(debug) << ignored << "/" << n_snapshot_halos << " ("
 			           << std::setprecision(2) << std::setiosflags(std::ios::fixed)
 			           << ignored * 100. / n_snapshot_halos << "%)"

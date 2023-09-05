@@ -53,6 +53,7 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options)
 	options.load("stellar_feedback.eta_cc",eta_cc);
 	options.load("stellar_feedback.epsilon_cc",epsilon_cc);
 	options.load("stellar_feedback.beta_halo", beta_halo);
+	options.load("stellar_feedback.min_beta", min_beta);
 
 	//convert energy of SNe into Msun (km/s)^2
 	e_sn = epsilon_cc * energy *std::pow(constants::MSOLAR_g, -1.0) * std::pow(constants::KILO, -2.0);
@@ -81,7 +82,7 @@ Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string 
 		return StellarFeedbackParameters::LACEY16FIRE;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are muratov14, lacey16, guo11, lagos13, lagos13trunc and lacey16redrep";
+	os << name << " option value invalid: " << value << ". Supported values are muratov15, lacey16, guo11, lagos13, lagos13trunc and lacey16redrep";
 	throw invalid_option(os.str());
 }
 
@@ -148,11 +149,17 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 
 	b1 = parameters.eps_disk * const_sn;
 
+        if(b1 < parameters.min_beta){
+		b1 = parameters.min_beta;
+		const_sn = b1/parameters.eps_disk;
+	}
+
 	double eps_halo = parameters.eps_halo * const_sn *  0.5 * std::pow(vsn,2.0);
 
 	double energ_halo = 0.5 * std::pow(v,2.0);
 
 	double mreheat = b1 * sfr;
+
 
 	double mejected = eps_halo / energ_halo * sfr - mreheat;
 
@@ -163,9 +170,9 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 			b1 += constants::EPS3; //add a small number to b1 to make it strictly larger than b2.
 		}
 	}
-	else{
+	/*else{
 		b1 = eps_halo / energ_halo;
-	}
+	}*/
 
 	// If no radial feedback is applied, then change in angular momentum reflects that of the mass.
 	if(!parameters.radial_feedback){

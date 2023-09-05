@@ -58,7 +58,8 @@ public:
 		BR06 = 0,//!< BR06
 		GD14,    //!< GD14
 		K13,     //!< K13
-		KMT09    //!< KMT09
+		KMT09,   //!< KMT09
+		KD12     //!< KD12
 	};
 
 	StarFormationModel model = BR06;
@@ -72,6 +73,8 @@ public:
 	double sigma_HI_crit = 0;
 	double clump_factor_KMT09 = 1;
 	double sigma_crit_KMT09 = 0;
+	double efficiency_sf = 1;
+        double gmc_surface_density = 85.0; //in Msun/pc^2
 
 	bool angular_momentum_transfer = false;
 };
@@ -102,7 +105,7 @@ public:
 
 	double star_formation_rate_surface_density(double r, void * params) const;
 
-	double manual_integral(func_t f, void * params, double rmin, double rmax);
+	double manual_integral(func_t f, void * params, double rmin, double rmax) const;
 
 	double fmol(double Sigma_gas, double Sigma_stars, double zgas, double r) const;
 
@@ -113,6 +116,8 @@ public:
 	double kmt09_fmol(double zgas, double sigma_gas) const;
 
 	double k13_fmol(double zgas, double sigma_gas) const;
+
+	double kd12_taudep(double sigma_gas, void * params) const;
 
 	std::size_t get_integration_intervals() {
 		return integrator.get_num_intervals();
@@ -126,9 +131,9 @@ public:
 
 	double molecular_surface_density(double r, void * params) const;
 
-	molecular_gas get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc);
+	molecular_gas get_molecular_gas(const Galaxy &galaxy, double z, bool jcalc);
 
-	double ionised_gas_fraction(double mgas, double rgas, double z);
+	double ionised_gas_fraction(double mgas, double rgas, double z) const;
 
 private:
 	StarFormationParameters parameters;
@@ -139,7 +144,7 @@ private:
 };
 
 /// A collection of galaxy-indexed molecular gas objects
-using molgas_per_galaxy = std::map<GalaxyPtr, StarFormation::molecular_gas>;
+using molgas_per_galaxy = std::map<Galaxy::id_t, StarFormation::molecular_gas>;
 
 }  // namespace shark
 

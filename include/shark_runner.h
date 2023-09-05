@@ -62,6 +62,9 @@ public:
 	/// Run shark until completion
 	void run();
 
+	/// Report total execution times
+	void report_total_times();
+
 private:
 	class impl;
 	std::unique_ptr<impl> pimpl;

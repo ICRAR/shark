@@ -4,7 +4,7 @@
 # IMF: Chabrier
 # h = 0.7
 # Columns are: 
-# logmstar = Stellar mass of bin centre [log10(Msun)]
+# logmstar = Stellar mass of bin centre [log10(Msun/h70^2)]
 # phi_bol  = Number density of galaxies in this bin for the Bolometric mass sample [h70^3/dex/Mpc^3]
 # dphi_minus_bol  = Lower bound interval of Number density of galaxies in this bin for the Bolometric mass sample
 # dphi_plus_bol  = Upper bound interval of Number density of galaxies in this bin for the Bolometric mass sample

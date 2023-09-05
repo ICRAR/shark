@@ -51,41 +51,41 @@ def plot_halomf_z(plt, outdir, obsdir, z, h0, hist, histsh, plotz):
 
     fig = plt.figure(figsize=(7,7))
 
-    subplots = (221, 222, 223, 224)
-    idx = (0, 1, 2, 3)
+    subplots = (321, 322, 323, 324, 325, 326)
+    idx = (0, 1, 2, 3, 4, 5)
     for subplot, idx, z, plot_this_z in zip(subplots, idx, z, plotz):
 
         ax = fig.add_subplot(subplot)
-        if (idx == 0 or idx == 2):
+        if (idx == 0 or idx == 2 or idx == 4):
             ytitplot = ytit
         else:
             ytitplot = ' '
         common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitplot, locators=(0.1, 1, 0.1))
         ax.text(xleg,yleg, 'z=%s' % (str(z)))
 
-        #HMF calc HMF calculated by Sheth & Tormen (2001)
-        lmp, dp = common.load_observation(obsdir, 'mf/HMF/mVector_PLANCK-SMT_z%s.dat' % str(z).replace('.', ''), [0, 7])
-        lmp_plot = np.log10(lmp) - np.log10(h0)
-        dp_plot = np.log10(dp) + np.log10(pow(h0,3.))
-        if idx == 0:
-            ax.plot(lmp_plot,dp_plot,'b', label = 'HMF calc')
-        elif idx > 0:
-            ax.plot(lmp_plot,dp_plot,'b')
-
+        if(idx < 4):
+           #HMF calc HMF calculated by Sheth & Tormen (2001)
+           lmp, dp = common.load_observation(obsdir, 'mf/HMF/mVector_PLANCK-SMT_z%s.dat' % str(z).replace('.', ''), [0, 7])
+           lmp_plot = np.log10(lmp) - np.log10(h0)
+           dp_plot = np.log10(dp) + np.log10(pow(h0,3.))
+           if idx == 0:
+               ax.plot(lmp_plot,dp_plot,'b', label = 'HMF calc')
+           elif idx > 0:
+               ax.plot(lmp_plot,dp_plot,'b')
+   
         #Predicted HMF
-        if plot_this_z:
-            y = hist[idx,:]
-            ind = np.where(y < 0.)
-            if idx == 0:
-                ax.plot(xmf[ind],y[ind],'r', label ='HMF Shark')
-            if idx > 0:
-                ax.plot(xmf[ind],y[ind],'r')
-            y = histsh[idx,:]
-            ind = np.where(y < 0.)
-            if idx == 0:
-                ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='SHMF Shark')
-            if idx > 0:
-                ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
+        y = hist[idx,:]
+        ind = np.where(y < 0.)
+        if idx == 0:
+            ax.plot(xmf[ind],y[ind],'r', label ='HMF Shark')
+        if idx > 0:
+            ax.plot(xmf[ind],y[ind],'r')
+        y = histsh[idx,:]
+        ind = np.where(y < 0.)
+        if idx == 0:
+            ax.plot(xmf[ind],y[ind],'r', linestyle='dashed', label ='SHMF Shark')
+        if idx > 0:
+            ax.plot(xmf[ind],y[ind],'r', linestyle='dashed')
 
         if idx == 0:
             common.prepare_legend(ax, ['b','r','r'])
@@ -167,7 +167,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
                            'mvir_subhalo', 'type')}
 
-    z = (0, 0.5, 1, 2)
+    z = (0, 0.5, 1, 2, 6, 10)
     snapshots = redshift_table[z]
 
     # Create histogram

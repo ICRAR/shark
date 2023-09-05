@@ -29,8 +29,10 @@
 #include <algorithm>
 #include <chrono>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <map>
+#include <numeric>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -281,6 +283,17 @@ public:
 	void operator()(T *x)
 	{ F(x); }
 };
+
+/// Sum all elements in a collection of type T and return the result
+template<typename Container>
+typename Container::value_type sum(Container &c)
+{
+	using value_type = typename Container::value_type;
+	return std::accumulate(c.begin(), c.end(), value_type{}, std::plus<value_type>{});
+}
+
+/// Returns the maximum amount of memory used by this process
+std::size_t peak_rss();
 
 }  // namespace shark
 

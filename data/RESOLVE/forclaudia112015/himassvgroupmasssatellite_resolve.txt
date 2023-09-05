@@ -1,0 +1,18 @@
+      #Written out 11-24-2015
+      #relations between 1.4*MHI vs. group mass for satellite galaxies
+      #c1 bin half way point, 0.5 dex bins (group mass)
+      #c2 16th% 1.4*HI mass using upper limit value
+      #c3 16th% 1.4*HI mass using 0.05Mstar
+      #c4 50th% 1.4*HI mass using upper limit value
+      #c5 50th% 1.4*HI mass using 0.05Mstar
+      #c6 84th% 1.4*HI mass using upper limit value
+      #c7 84th% 1.4*HI mass using 0.05Mstar
+      #c8 number of galaxies in bin
+10.25   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+10.75   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+11.25   8.72   8.71   9.05   9.05   9.42    9.42    8.0
+11.75   8.38   8.38   9.08   9.08   9.36    9.36   21.0
+12.25   8.25   8.23   8.94   8.89   9.48    9.48   40.0
+12.75   9.02   9.02   9.52   9.52   9.88    9.88   13.0
+13.25   8.03   8.03   9.07   8.99   9.58    9.58   21.0
+13.75   0.00   0.00   0.00   0.00   0.00    0.00    0.0

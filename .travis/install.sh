@@ -34,9 +34,15 @@ cd ${TRAVIS_BUILD_DIR}
 mkdir build
 cd build
 
-SHARK_CMAKE_OPTIONS="-DCMAKE_CXX_COMPILER=$COMPILER -DSHARK_TEST=ON -DGSL_ROOT_DIR=${GSL_ROOT_DIR}"
+SHARK_CMAKE_OPTIONS="-DCMAKE_CXX_COMPILER=$COMPILER -DSHARK_TEST=ON -DCMAKE_CXX_FLAGS=\"-Wall -Werror\""
+if [ ${TRAVIS_OS_NAME} = osx ]; then
+	SHARK_CMAKE_OPTIONS+=" -DOpenMP_CXX_LIB_NAMES=libomp"
+	SHARK_CMAKE_OPTIONS+=" -DOpenMP_CXX_FLAGS='-Xpreprocessor -fopenmp -I/usr/local/include'"
+	SHARK_CMAKE_OPTIONS+=" -DOpenMP_libomp_LIBRARY=/usr/local/lib/libomp.dylib"
+	SHARK_CMAKE_OPTIONS+=" -DCMAKE_CXX_FLAGS=-Wno-unused-command-line-argument"
+fi
 
 # Go, go, go!
-cmake .. ${SHARK_CMAKE_OPTIONS} || fail "cmake failed"
+eval cmake .. ${SHARK_CMAKE_OPTIONS} || fail "cmake failed"
 make all -j2 || fail "make failed"
 cd ..

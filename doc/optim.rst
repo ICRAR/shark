@@ -104,6 +104,12 @@ which are specified using the ``-t`` flag:
  * ``chi2``: A :math:`\chi^2` distribution
  * ``student-t``: A log Student-T distribution
 
+In both cases the evaluation function is applied
+to individual data points pairs (observations v/s model data),
+and a final sum is done to get the final result.
+Thus, constraints with more data points
+have naturally more relevance in the final result.
+
 
 .. _optim.constraints:
 
@@ -116,13 +122,21 @@ Constraints are specified on the command line
 with the ``-x`` switch (see ``main.py -h`` for details).
 Each constraint specification follows this pattern::
 
- name(min-max)
+ <name>[(<min>-<max>)][*<weight>]
 
-Here ``name`` is the name of the constraint (see below),
-while ``min`` and ``max`` specify the domain to consider
-during the evaluation of the constraint.
-If only ``name`` is specified, then the default domain range
-specified by each constraint is used.
+Here sections within ``[]`` are optional,
+meaning that only ``<name>`` is required.
+``<name>`` is the name of the constraint (see below),
+``<min>`` and ``<max>`` specify the domain to consider
+during the evaluation of the constraint,
+and ``<weight>`` is the relative weight of the constraint
+when evaluating in a multi-constraint scenario.
+Each constraint has a hard-coded domain that is used as default,
+in the user doesn't specify one.
+``<weight>`` defaults to 1,
+meaning that the results of the evaluation function for all constraints
+(see :ref:`above <optim.eval_funcs>` for details on this)
+are weighted equally.
 
 The following constraints are currently supported:
 
@@ -131,6 +145,12 @@ The following constraints are currently supported:
  * ``SMF_z0``: it evaluates the stellar mass function at ``z=0``.
    Its default domain is ``(8, 13)``.
  * ``SMF_z1``: like ``SMF_z0`` but at ``z=1``.
+
+If you want to add new constraints
+please refer to the
+:doc:`in depth documentation <constraints_impl>`
+about the subject.
+
 
 .. _optim.hpc:
 

@@ -87,8 +87,14 @@ def load_space_and_particles(tracks_dir, space_file):
 def plot_performance(fx, fig=None):
     """Creates a performance plot for all PSO particles across iterations"""
 
+    ind = np.where(fx < 1e20)
+    maxrange = max(fx[ind])
+    minrange = min(fx[ind])
+    ind = np.where(fx <= minrange)
+    print ("particle with the smallest likelihood (particle number, iteration) %r" %(ind,))
     fig = fig or plt.figure()
     ax = fig.add_subplot(111)
+    ax.set_ylim(minrange, maxrange)
     ax.set_ylabel('Likelihood evaluation')
     ax.set_xlabel('Iterations')
     for i, _fx in enumerate(fx):

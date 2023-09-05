@@ -30,15 +30,16 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <gsl/gsl_odeiv2.h>
 #include "agn_feedback.h"
 #include "components.h"
+#include "galaxy.h"
 #include "gas_cooling.h"
 #include "numerical_constants.h"
 #include "ode_solver.h"
 #include "recycling.h"
 #include "stellar_feedback.h"
 #include "star_formation.h"
+#include "subhalo.h"
 
 namespace shark {
 
@@ -56,13 +57,13 @@ public:
 	 * rgas: half-mass radius of the gas of disk or bulge.
 	 * rstar: half-mass radius of the stars of disk or bulge.
 	 * mcoolrate: gas cooling rate.
+	 * zcool: metallicity of cooling gas.
 	 * jcold_halo: specific angular momentum of the cooling gas.
 	 * delta_t: time span between snapshots.
 	 * redshift: current redshift.
 	 * vsubh: subhalo virial velocity.
 	 * vgal: galaxy velocity at the half-mass radius of disk or bulge.
-	 * mBHacc: BH accretion rate in the case of starbursts.
-	 * mBH: supermassive black hole mass.
+	 * smbh: supermassive black hole mass.
 	 * burst: whether this is a starburst or not.
 	 */
 	struct solver_params {
@@ -71,21 +72,21 @@ public:
 		double rgas;
 		double rstar;
 		double mcoolrate;
+		double zcool;
 		double jcold_halo;
 		double delta_t;
 		double redshift;
 		double vsubh;
 		double vgal;
-		double mBHacc;
-		double mBH;
+		BlackHole smbh;
 	};
 
 	PhysicalModel(
 			double ode_solver_precision,
 			ODESolver::ode_evaluator evaluator,
 			GasCooling gas_cooling) :
-		params {*this, false, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.},
-		starburst_params {*this, true, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.},
+		params {*this, false, 0., 0., 0., 0., 0., 0., 0., 0., 0., {}},
+		starburst_params {*this, true, 0., 0., 0., 0., 0., 0., 0., 0., 0., {}},
 		ode_solver(evaluator, NC, ode_solver_precision, &params),
 		starburst_ode_solver(evaluator, NC, ode_solver_precision, &starburst_params),
 		ode_values(NC), starburst_ode_values(NC),
@@ -103,20 +104,23 @@ public:
 		/**
 		 * Parameters that are needed as input in the ode_solver:
 		 * mcoolrate: gas cooling rate onto galaxy [Msun/Gyr/h]
+		 * zcool: metallicity of the cooling gas.
 		 * rgas: half-gas mass radius of the disk [Mpc/h]
 		 * vgal: disk velocity at rgas [km/s]
 		 * rstar: half-stellar mass radius of the disk [Mpc/h]
 		 * vsubh: virial velocity of the host subhalo [km/s]
 		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
-		 * mBHacc: BH accretion rate due to starbursts; \equiv 0 in the case of star formation in disks.
-		 * mBH: supermassive black hole mass.
+		 * smbh: supermassive black hole class.
 		 * burst: boolean parameter indicating if this is a starburst or not.
 		 */
 
 		// Define cooling rate only in the case galaxy is central.
-		params.mcoolrate = 0;
-		if (galaxy.galaxy_type == Galaxy::CENTRAL) {
-			params.mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
+		params.mcoolrate = gas_cooling.cooling_rate(subhalo, galaxy, z, delta_t);
+		if(subhalo.cold_halo_gas.mass > 0){
+			params.zcool = subhalo.cold_halo_gas.mass_metals /  subhalo.cold_halo_gas.mass;
+		}
+		else{
+			params.zcool = 0;
 		}
 
 		params.rgas = galaxy.disk_gas.rscale; //gas scale radius.
@@ -133,7 +137,7 @@ public:
 		params.vsubh      = subhalo.Vvir;
 		params.jcold_halo = subhalo.cold_halo_gas.sAM;
 		params.delta_t = delta_t;
-		params.mBH = galaxy.smbh.mass;
+		params.smbh = galaxy.smbh;
 		params.redshift = z;
 
 		from_galaxy(ode_values, subhalo, galaxy);
@@ -148,13 +152,13 @@ public:
 		/**
 		 * Parameters that are needed as input in the ode_solver:
 		 * mcoolrate: gas cooling rate onto galaxy [Msun/Gyr/h]. In the case of starbursts, this is \equiv 0
+		 * zcool: metallicity of the cooling gas. In the cae of starbursts =0.
 		 * rgas: half-gas mass radius of the bulge [Mpc/h]
 		 * vgal: bulge velocity at rgas [km/s]
 		 * rstar: half-stellar mass radius of the bulge [Mpc/h]
 		 * vsubh: virial velocity of the host subhalo [km/s]
 		 * jcold_halo: specific angular momentum of the cooling gas [Msun/h Mpc/h km/s]
-		 * mBHacc: BH accretion rate in [Msun/Gyr/h]
-		 * mBH: supermassive black hole mass [Msun/h]
+		 * smbh: supermassive black hole class.
 		 * burst: boolean parameter indicating if this is a starburst or not.
 		 */
 
@@ -162,10 +166,9 @@ public:
 		starburst_params.rstar = galaxy.bulge_stars.rscale; //stellar scale radius.
 		starburst_params.vsubh = subhalo.Vvir;
 		starburst_params.vgal = galaxy.bulge_gas.sAM / galaxy.bulge_gas.rscale;
-		starburst_params.mBHacc = galaxy.smbh.macc_sb;
-		starburst_params.mBH = galaxy.smbh.mass;
 		starburst_params.delta_t = delta_t;
 		starburst_params.redshift = z;
+		starburst_params.smbh = galaxy.smbh;
 
 		from_galaxy_starburst(starburst_ode_values, subhalo, galaxy);
 		starburst_ode_solver.evolve(starburst_ode_values, delta_t);
@@ -221,13 +224,13 @@ public:
 	void from_galaxy_starburst(std::vector<double> &y, const Subhalo &subhalo, const Galaxy &galaxy) override;
 	void to_galaxy_starburst(const std::vector<double> &y, Subhalo &subhalo, Galaxy &galaxy, double delta_t, bool from_galaxy_merger) override;
 
-	AGNFeedback agn_feedback;
 	StellarFeedback stellar_feedback;
 	StarFormation star_formation;
+	AGNFeedback agn_feedback;
 
-	AGNFeedbackParameters agn_parameters;
 	RecyclingParameters recycling_parameters;
 	GasCoolingParameters gas_cooling_parameters;
+	AGNFeedbackParameters agn_parameters;
 
 	void reset_ode_evaluations() override {
 		PhysicalModel::reset_ode_evaluations();

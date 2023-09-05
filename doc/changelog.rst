@@ -1,6 +1,24 @@
 Changelog
 =========
 
+.. rubric:: Development version
+
+* Many improvements to the our PSO support.
+  This includes better logging of detailed constraint evaluation information,
+  improved stability in a few corner cases,
+  and offline evaluation of previous shark runs.
+* Improved the memory footprint of |s| executions.
+  We have made a major overhaul of the code
+  to be more memory efficient,
+  thus allowing for better resource usage,
+  specially in HPC systems
+  and PSO executions.
+  Several experiments with our mini-SURFS and medi-SURFS datasets
+  show a decrease of about 20% on peak memory usage.
+* Made |s| fully reproducible in multi-threaded mode,
+  even when running a different number of threads
+  than a previous execution.
+
 .. rubric:: 1.2.1
 
 * Fixed compilation problem related to OpenMP support.

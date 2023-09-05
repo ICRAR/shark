@@ -21,6 +21,7 @@
 
 import argparse
 import collections
+import logging
 import os
 import subprocess
 import sys
@@ -31,8 +32,15 @@ import numpy as np
 PY2 = sys.version_info[0] == 2
 if PY2:
     import ConfigParser as configparser
+    b2s = lambda b: b
+    from __builtin__ import raw_input
 else:
     import configparser
+    b2s = lambda b: b.decode('ascii')
+    raw_input = input
+
+
+logger = logging.getLogger(__name__)
 
 def _select_closest(i1, i2, z, redshifts):
     i1 = min(i1, len(redshifts) - 1)
@@ -183,7 +191,7 @@ def parse_args(requires_observations=True):
 
 def load_observation(obsdir, fname, cols):
     fname = os.path.join(obsdir, fname)
-    print("Loading observations from %s" % fname)
+    logger.info("Loading observations from %s", fname)
     return np.loadtxt(fname, usecols=cols, unpack=True)
 
 def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1), fontsize=13):
@@ -225,13 +233,20 @@ def errorbars(ax, x, y, yerrdn, yerrup, color, marker,
     else:
         yerr = [yerrdn, yerrup]
 
-    ax.errorbar(x, y, yerr=yerr, ls='None', mfc='None', ecolor=color, mec=color,
+    # Avoid bug in mpl 1.5.1 and 2.1.x caused by "empty" errors
+    # See https://github.com/matplotlib/matplotlib/issues/9699 for details
+    if np.any(yerr):
+        kwargs['yerr'] = yerr
+
+    ax.errorbar(x, y, ls='None', mfc='None', ecolor=color, mec=color,
                 marker=marker, **kwargs)
 
 def savefig(output_dir, fig, plotname):
+    if not plotname.endswith('.pdf'):
+        plotname += '.pdf'
     plotfile = os.path.join(output_dir, plotname)
-    print('Saving plot to %s' % plotfile)
-    fig.savefig(plotfile, dvi=300, pad_inches=0)
+    logger.info('Saving plot to %s', plotfile)
+    fig.savefig(plotfile, dpi=300, pad_inches=0)
 
 def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
@@ -240,11 +255,11 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     for idx, subv in enumerate(subvolumes):
 
         fname = os.path.join(model_dir, str(snapshot), str(subv), 'galaxies.hdf5')
-        print('Reading galaxies data from %s' % fname)
+        logger.info('Reading galaxies data from %s', fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0 and include_h0_volh:
-                data['h0'] = f['cosmology/h'].value
-                data['vol'] = f['run_info/effective_volume'].value * len(subvolumes)
+                data['h0'] = f['cosmology/h'][()]
+                data['vol'] = f['run_info/effective_volume'][()] * len(subvolumes)
 
             for gname, dsnames in fields.items():
                 group = f[gname]
@@ -252,12 +267,35 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
                     full_name = '%s/%s' % (gname, dsname)
                     l = data.get(full_name, None)
                     if l is None:
-                        l = group[dsname].value
+                        l = group[dsname][()]
                     else:
-                        l = np.concatenate([l, group[dsname].value])
+                        l = np.concatenate([l, group[dsname][()]])
                     data[full_name] = l
 
     return list(data.values())
+
+def read_data_ext(model_dir, snapshot, fields, subvolumes, dustmodel):
+    """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
+
+    data = collections.OrderedDict()
+    for idx, subv in enumerate(subvolumes):
+
+        fname = os.path.join(model_dir, str(snapshot), str(subv), 'extinction-' + dustmodel + '.hdf5')
+        logger.info('Reading galaxies data from %s', fname)
+        with h5py.File(fname, 'r') as f:
+            for gname, dsnames in fields.items():
+                group = f[gname]
+                for dsname in dsnames:
+                    full_name = '%s/%s' % (gname, dsname)
+                    l = data.get(full_name, None)
+                    if l is None:
+                        l = group[dsname][()]
+                    else:
+                        l = np.concatenate([l, group[dsname][()]])
+                    data[full_name] = l
+
+    return list(data.values())
+
 
 def read_sfh(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""
@@ -266,108 +304,105 @@ def read_sfh(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
     for idx, subv in enumerate(subvolumes):
 
         fname = os.path.join(model_dir, str(snapshot), str(subv), 'star_formation_histories.hdf5')
-        print('Reading SFH data from %s' % fname)
+        logger.info('Reading SFH data from %s', fname)
         with h5py.File(fname, 'r') as f:
             if idx == 0:
-                delta_t = f['delta_t'].value
-                LBT     = f['lbt_mean'].value
+                delta_t = f['delta_t'][()]
+                LBT     = f['lbt_mean'][()]
 
             for gnames, dsname in fields.items():
                 group = f[gnames]
                 full_name = '%s/%s' % (gnames, dsname)
                 l = data.get(full_name, None)
                 if l is None:
-                    l = group[dsname].value
+                    l = group[dsname][()]
                 else:
-                    l = np.concatenate([l, group[dsname].value])
+                    l = np.concatenate([l, group[dsname][()]])
                 data[full_name] = l
 
     return list(data.values()), delta_t, LBT
 
 
-def read_photometry_data(model_dir, snapshot, subvolumes):
-    """Read the SharkSED.csv file for the given model/snapshot/subvolume"""
+def read_photometry_data(model_dir, snapshot, fields, subvolumes):
+    """Read the SharkSED.hdf5 file for the given model/snapshot/subvolume"""
 
-    nbands = None
-    seds = None
-    ids = None
+    data = collections.OrderedDict()
+
     for subv in subvolumes:
 
-        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED.csv')
-        print('Reading photometry data from %s' % fname)
-        my_data = np.genfromtxt(fname, delimiter=',', skip_header=1)
+        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED.hdf5')
+        logger.info('Reading photometry data from %s', fname)
 
-        # Make sure all files come with the same number of bands
-        _nbands = (len(my_data[0])-1)/5/2/2
-        if nbands is None:
-            nbands = _nbands
-            print('Number of bands %s' % nbands)
-        elif nbands != _nbands:
-            raise ValueError('inconsistent number of bands found: %d / %d' % (nbands, _nbands))
-        
-        # Reshape the 1-d data of each line to 4-d data with the following dimension lengths
-        # 2: absolute and apparent magnitude; 
-        # 2: no dust and dust.
-        # 5: bulge disk-instabilities, bulge mergers, bulge, disk and total; 
-        # nbands: each of the bands
-        _seds = my_data[:,1:].reshape((len(my_data), 2, 2, 5, nbands))
-        _ids = my_data[:,0]
+        with h5py.File(fname, 'r') as f:
 
-        # Append values to global lists
-        if seds is None:
-            seds = _seds
-        else:
-            seds = np.concatenate([seds, _seds])
-        if ids is None:
-            ids = _ids
-        else:
-            ids = np.concatenate([ids, _ids])
+            for gname, dsnames in fields.items():
+                group = f[gname]
+                for dsname in dsnames:
 
-    return (seds, ids, nbands)
+                    full_name = '%s/%s' % (gname, dsname)
+                    l = data.get(full_name, None)
+                    if l is None:
+                        l = group[dsname][()]
+                    else:
+                        l = np.concatenate([l, group[dsname][()]], axis=1)
+                    data[full_name] = l
 
-def read_photometry_data_variable_tau_screen(model_dir, snapshot, subvolumes):
-    """Read the SharkSED.csv file for the given model/snapshot/subvolume"""
+    return list(data.values())
 
-    nbands = None
-    seds = None
-    ids = None
+def read_co_data(model_dir, snapshot, fields, subvolumes):
+    """Read the CO_SLED.hdf5 file for the given model/snapshot/subvolume"""
+
+    data = collections.OrderedDict()
+
+    for idx, subv in enumerate(subvolumes):
+
+        fname = os.path.join(model_dir, str(snapshot), str(subv), 'CO_SLED.hdf5')
+        logger.info('Reading galaxies data from %s', fname)
+        with h5py.File(fname, 'r') as f:
+            for gname, dsnames in fields.items():
+                group = f[gname]
+                for dsname in dsnames:
+                    full_name = '%s/%s' % (gname, dsname)
+                    l = data.get(full_name, None)
+                    if l is None:
+                        l = group[dsname][()]
+                    else:
+                        l = np.concatenate([l, group[dsname][()]])
+                    data[full_name] = l
+
+    return list(data.values())
+
+
+def read_photometry_data_variable_tau_screen(model_dir, snapshot, fields, subvolumes, file_hdf5_sed):
+    """Read the Shark-SED-EAGLE-tau.hdf5 file for the given model/snapshot/subvolume"""
+
+    data = collections.OrderedDict()
+
     for subv in subvolumes:
 
-        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), 'Shark-SED-tau-EAGLE.csv')
-        print('Reading photometry data from %s' % fname)
-        my_data = np.genfromtxt(fname, delimiter=',', skip_header=1)
+        fname = os.path.join(model_dir, 'Photometry', str(snapshot), str(subv), file_hdf5_sed)
+        logger.info('Reading photometry data from %s', fname)
 
-        # Make sure all files come with the same number of bands
-        _nbands = (len(my_data[0])-2)/5/2/2
-        if nbands is None:
-            nbands = _nbands
-            print('Number of bands %s' % nbands)
-        elif nbands != _nbands:
-            raise ValueError('inconsistent number of bands found: %d / %d' % (nbands, _nbands))
-        
-        # Reshape the 1-d data of each line to 4-d data with the following dimension lengths
-        # 2: absolute and apparent magnitude; 
-        # 2: no dust and dust.
-        # 5: bulge disk-instabilities, bulge mergers, bulge, disk and total; 
-        # nbands: each of the bands
-        _seds = my_data[:,2:].reshape((len(my_data), 2, 2, 5, nbands))
-        _ids = my_data[:,0]
-        _tau_screen = my_data[:,1]
+        with h5py.File(fname, 'r') as f:
 
-        # Append values to global lists
-        if seds is None:
-            seds = _seds
-        else:
-            seds = np.concatenate([seds, _seds])
-        if ids is None:
-            ids = _ids
-            tau_screen = _tau_screen
-        else:
-            ids = np.concatenate([ids, _ids])
-            tau_screen = np.concatenate([tau_screen,_tau_screen])
+            for gname, dsnames in fields.items():
+                group = f[gname]
+                for dsname in dsnames:
 
-    return (seds, ids, nbands, tau_screen)
+                    full_name = '%s/%s' % (gname, dsname)
+                    l = data.get(full_name, None)
+                    if l is None:
+                        l = group[dsname][()]
+                    else:
+                        l = np.concatenate([l, group[dsname][()]], axis=1)
+                    data[full_name] = l
 
+    return list(data.values())
+
+def safe_log10(x):
+    """x -> np.log10(x) only for x > 0"""
+    selection = np.where(x > 0)
+    x[selection] = np.log10(x[selection])
 
 # If called as a program, print information taken from a configuration file
 # This simple functionality is used by shark-submit to easily find out where

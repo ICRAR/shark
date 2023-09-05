@@ -23,10 +23,7 @@ import logging
 import math
 import multiprocessing
 import os
-import shutil
-import subprocess
 import sys
-import tempfile
 import time
 
 def _abspath(p):
@@ -41,150 +38,13 @@ sys.path.insert(0, _abspath(os.path.join(__file__, '..', '..', 'standard_plots')
 import analysis
 import common
 import constraints
-import numpy as np
+import execution
 import pso
 
 
 logger = logging.getLogger('main')
 
-if sys.version_info[0] == 3:
-    b2s = lambda b: b.decode('ascii')
-    raw_input = input
-else:
-    b2s = lambda b: b
-
-def count_jobs(job_name):
-    """Returns how many jobs with self.jobs_name are currently queued or running"""
-
-    try:
-        out, err, code = common.exec_command("squeue")
-    except OSError:
-        raise RuntimeError("Couldn't run squeue, is it installed?")
-
-    if code:
-        raise RuntimeError("squeue failed with code %d: stdout: %s, stderr: %s" % (code, out, err))
-
-    lines_with_jobname = [l for l in out.splitlines() if job_name in l]
-    return len(lines_with_jobname)
-
-def _exec_shark(msg, cmdline):
-    logger.info('%s with command line: %s', msg, subprocess.list2cmdline(cmdline))
-    out, err, code = common.exec_command(cmdline)
-    if code != 0:
-        logger.error('Error while executing %s (exit code %d):\n' +
-                     'stdout:\n%s\nstderr:\n%s', cmdline[0], code, b2s(out), b2s(err))
-        raise RuntimeError('%s error' % cmdline[0])
-
-
-def _to_shark_options(particle, space):
-    """Given `particle` in `space` return an iterable with the corresponding
-    shark options settings corresponding to that particle"""
-    for value, name, is_log in zip(particle, space['name'], space['is_log']):
-        if is_log:
-            value = 10 ** value
-        yield '%s=%s' % (name, value)
-
-
-count = 0
-def run_shark_hpc(particles, *args):
-    """
-    - Handler function for running PSO on Shark on a SLURM based cluster.
-    - Swarm size and number of iterations need to be set within the script for now
-    - Function needs the relative path to a Shark config file under the -c option
-    - For now the subprocess call within must be altered if you are changing shark submit options
-    - To find appropriate memory allocations peruse the initial output lines of each particle
-    """
-
-    global count
-
-    opts, space, subvols, statTest = args
-
-    # Prepare the file that will be used by the shark submission scripts
-    # to determine which values shark will be run for. We put a final \n so the
-    # final line gets properly counted by wc (used by shark-submit)
-    shark_options = [
-        ' '.join(['-o "%s"' % option for option in _to_shark_options(particle, space)])
-        for particle in particles
-    ]
-    positions_fname = tempfile.mktemp('particle_positions.txt')
-    logger.info('Creating particle positions file at %s', positions_fname)
-    with open(positions_fname, 'wt') as f:
-        f.write('\n'.join(shark_options) + '\n')
-
-    # Submit the execution of multiple shark instances, one for each particle
-    job_name = 'PSOSMF_%d' % count
-    shark_output_base = os.path.join(opts.outdir, job_name)
-    cmdline = ['./shark-submit', '-S', opts.shark_binary, '-w', opts.walltime,
-               '-n', job_name, '-O', shark_output_base, '-E', positions_fname,
-               '-V', ' '.join(map(str, subvols))]
-    if opts.account:
-        cmdline += ['-a', opts.account]
-    if opts.queue:
-        cmdline += ['-Q', opts.queue]
-    if opts.nodes:
-        cmdline += ['-N', str(opts.nodes)]
-    else:
-        cmdline += ['-m', opts.memory, '-c', str(opts.cpus)]
-    cmdline.append(opts.config)
-    _exec_shark('Queueing PSO particles', cmdline)
-
-    # Actually wait for the jobs to finish...
-    while count_jobs(job_name) > 0:
-        time.sleep(10)
-
-    ss = len(particles)
-    fx = np.zeros([ss, 3])
-    for i in range(ss):
-        _, simu, model, _ = common.read_configuration(opts.config)
-        particle_outdir = os.path.join(shark_output_base, str(i))
-        modeldir = common.get_shark_output_dir(particle_outdir, simu, model)
-        for j, constraint in enumerate(opts.constraints):
-            y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
-            fx[i, j] = statTest(y_obs, y_mod, err)
-        if not opts.keep:
-            shutil.rmtree(particle_outdir)
-
-    fx = np.sum(fx, 1)
-    logger.info('Particles %r evaluated to %r', particles, fx)
-
-    # this global count just tracks the number of iterations so they can be saved to different files
-    count += 1
-
-    return fx
-
-
-def run_shark(particle, *args):
-
-    opts, space, subvols, statTest = args
-
-    pid = multiprocessing.current_process().pid
-    shark_output_base = os.path.join(opts.outdir, 'output_%d' % pid)
-    _, simu, model, _ = common.read_configuration(opts.config)
-    modeldir = common.get_shark_output_dir(shark_output_base, simu, model)
-
-    cmdline = [opts.shark_binary, opts.config,
-               '-o', 'execution.output_directory=%s' % shark_output_base,
-               '-o', 'execution.simulation_batches=%s' % ' '.join(map(str, subvols))]
-    for option in _to_shark_options(particle, space):
-        cmdline += ['-o', option]
-    _exec_shark('Executing shark instance', cmdline)
-
-    total = 0
-    for constraint in opts.constraints:
-        y_obs, y_mod, err = constraint.get_data(modeldir, subvols)
-        total += statTest(y_obs, y_mod, err)
-
-    logger.info('Particle %r evaluated to %f', particle, total)
-
-    if not opts.keep:
-        shutil.rmtree(shark_output_base)
-
-    return total
-
-
-def setup_logging(outdir):
-    # Setup the logging
-    log_fname = os.path.join(outdir, 'shark_pso.log')
+def setup_logging(outdir=None):
     fmt = '%(asctime)-15s %(name)s#%(funcName)s:%(lineno)s %(message)s'
     fmt = logging.Formatter(fmt)
     fmt.converter = time.gmtime
@@ -192,13 +52,64 @@ def setup_logging(outdir):
     h = logging.StreamHandler(stream=sys.stdout)
     h.setFormatter(fmt)
     logging.root.addHandler(h)
-    h = logging.FileHandler(log_fname)
-    h.setFormatter(fmt)
-    logging.root.addHandler(h)
+    if outdir:
+        log_fname = os.path.join(outdir, 'shark_pso.log')
+        h = logging.FileHandler(log_fname)
+        h.setFormatter(fmt)
+        logging.root.addHandler(h)
 
-def main():
 
-    parser = argparse.ArgumentParser()
+def add_constraint_argument(parser):
+    parser.add_argument(
+        '-x',
+        '--constraints',
+        default='HIMF,SMF_z0,SMF_z1',
+        type=constraints.parse,
+        help=("Comma-separated list of constraints, any of HIMF, SMF_z0 or "
+              "SMF_z1, defaults to 'HIMF,SMF_z0,SMF_z1'. Can specify a domain "
+              "range after the name (e.g., 'SMF_z0(8-11)') and/or a relative "
+              "weight (e.g. 'HIMF*6,SMF_z0(8-11)*10)'")
+    )
+
+def evaluation_main(parser, args):
+    parser.add_argument('-c', '--config', help='Configuration file used as the basis for running shark', type=_abspath)
+    parser.add_argument('output_dir', help='Directories containing shark outputs', type=_abspath, nargs='+')
+    parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
+    parser.add_argument('-m', '--individual-subvolumes', help='Subvolumes are stored separately (so the output is not coming from a PSO run)', action='store_true')
+    parser.add_argument('-t', '--stat-test', help='Stat function used to calculate the value of a particle, defaults to student-t',
+                      default='student-t', choices=list(analysis.stat_tests.keys()))
+    parser.add_argument('-p', '--plot-output-dir', help="Output directory where to place evaluation plots", default='.')
+    add_constraint_argument(parser)
+    opts = parser.parse_args(args)
+
+    if not opts.config:
+        parser.error('-c option is mandatory but missing')
+
+    setup_logging()
+
+    stat_test = analysis.stat_tests[opts.stat_test]
+    subvols = common.parse_subvolumes(opts.subvolumes)
+    _, simu, model, redshift_file = common.read_configuration(opts.config)
+    redshift_table = common._redshift_table(redshift_file)
+    for c in opts.constraints:
+        c.redshift_table = redshift_table
+        if opts.individual_subvolumes:
+            c.convert_to_multiple_batches = False
+        c.full_string_repr = False
+
+    results = []
+    for output_dir in opts.output_dir:
+        modeldir = common.get_shark_output_dir(output_dir, simu, model)
+        logger.info('Getting for model %s with subvolumes %r and test function %s',
+                    modeldir, subvols, opts.stat_test)
+        result = constraints.evaluate(opts.constraints, stat_test, modeldir,
+                                      subvols, plot_outputdir=opts.plot_output_dir)
+        results.append(result)
+    constraints.log_results(opts.constraints, results)
+
+
+def pso_run_main(parser, args):
+
     parser.add_argument('-c', '--config', help='Configuration file used as the basis for running shark', type=_abspath)
     parser.add_argument('-v', '--subvolumes', help='Comma- and dash-separated list of subvolumes to process', default='0')
     parser.add_argument('-b', '--shark-binary', help='The shark binary to use, defaults to either "shark" or "../build/shark"',
@@ -206,6 +117,7 @@ def main():
     parser.add_argument('-o', '--outdir', help='Auxiliary output directory, defaults to .', default=_abspath('.'),
                         type=_abspath)
     parser.add_argument('-k', '--keep', help='Keep temporary output files', action='store_true')
+    parser.add_argument('-y', '--force-yes', help='Keep temporary output files', action='store_true')
 
     pso_opts = parser.add_argument_group('PSO options')
     pso_opts.add_argument('-s', '--swarm-size', help='Size of the particle swarm. Defaults to 10 + sqrt(D) * 2 (D=number of dimensions)',
@@ -216,9 +128,7 @@ def main():
                           default='space.txt', type=_abspath)
     pso_opts.add_argument('-t', '--stat-test', help='Stat function used to calculate the value of a particle, defaults to student-t',
                           default='student-t', choices=list(analysis.stat_tests.keys()))
-    pso_opts.add_argument('-x', '--constraints', default='HIMF,SMF_z0,SMF_z1',
-                          help=("Comma-separated list of constraints, any of HIMF, SMF_z0 or SMF_z1, defaults to 'HIMF,SMF_z0,SMF_z1'. "
-                                "Can specify a domain range after the name (e.g., 'SMF_z0(8-11)')"))
+    add_constraint_argument(pso_opts)
 
     hpc_opts = parser.add_argument_group('HPC options')
     hpc_opts.add_argument('-H', '--hpc-mode', help='Enable HPC mode', action='store_true')
@@ -229,7 +139,7 @@ def main():
     hpc_opts.add_argument('-q', '--queue', help='Submit jobs to this queue', default=None)
     hpc_opts.add_argument('-w', '--walltime', help='Walltime for each submission, defaults to 1:00:00', default='1:00:00')
 
-    opts = parser.parse_args()
+    opts = parser.parse_args(args)
 
     if not opts.config:
         parser.error('-c option is mandatory but missing')
@@ -251,7 +161,6 @@ def main():
 
     setup_logging(opts.outdir)
 
-    opts.constraints = constraints.parse(opts.constraints)
     for c in opts.constraints:
         c.redshift_table = redshift_table
 
@@ -268,12 +177,16 @@ def main():
     args = (opts, space, subvols, analysis.stat_tests[opts.stat_test])
 
     if opts.hpc_mode:
+        if opts.nodes is not None and opts.nodes > ss:
+            logger.warning('Requested %d nodes, but swarm size is %d. '
+                           'Reducing number of nodes to %d', opts.nodes, ss, ss)
+            opts.nodes = ss
         procs = 0
-        f = run_shark_hpc
+        f = execution.run_shark_hpc
     else:
         n_cpus = multiprocessing.cpu_count()
         procs = min(n_cpus, ss)
-        f = run_shark
+        f = execution.run_shark
 
     logger.info('-----------------------------------------------------')
     logger.info('Runtime information')
@@ -291,7 +204,7 @@ def main():
     logger.info('    Test function: %s', opts.stat_test)
     logger.info('Constraints:')
     for c in opts.constraints:
-        logger.info('%10s [%.1f - %.1f]' % (c.__class__.__name__, c.domain[0], c.domain[1]))
+        logger.info('    %s', c)
     logger.info('HPC mode: %d', opts.hpc_mode)
     if opts.hpc_mode:
         logger.info('    Account used to submit: %s', opts.account if opts.account else '')
@@ -301,14 +214,16 @@ def main():
         logger.info('    Memory per instance: %s', opts.memory)
         logger.info('    Nodes to use: %s', opts.nodes)
 
-    while True:
-        answer = raw_input('\nAre these parameters correct? (Yes/no): ')
+    while True and not opts.force_yes:
+        answer = common.raw_input('\nAre these parameters correct? (Yes/no): ')
         if answer:
-            if answer.lower() in ('n', 'no'):
+            answer = answer.lower()
+            if answer in ('n', 'no'):
                 logger.info('Not starting PSO, check your configuration and try again')
                 return
-            print("Please answer 'yes' or 'no'")
-            continue
+            elif answer not in ('y', 'yes'):
+                print("Please answer 'yes' or 'no'")
+                continue
         break
 
     # Directory where we store the intermediate results
@@ -323,16 +238,60 @@ def main():
     tStart = time.time()
     if opts.hpc_mode:
         os.chdir('../hpc')
-    xopt, fopt = pso.pso(f, space['lb'], space['ub'], args=args, swarmsize=ss,
-                         maxiter=opts.max_iterations, processes=procs,
-                         dumpfile_prefix=os.path.join(tracksdir, 'track_%03d'))
-    tEnd = time.time()
+    try:
+        xopt, fopt = pso.pso(f, space['lb'], space['ub'], args=args, swarmsize=ss,
+                             maxiter=opts.max_iterations, processes=procs,
+                             dumpfile_prefix=os.path.join(tracksdir, 'track_%03d'))
+    except (KeyboardInterrupt, execution.AbortedByUser):
+        logger.info('Execution aborted by user, finishing PSO')
+        return
 
     global count
     logger.info('Number of iterations = %d', count)
     logger.info('xopt = %r', xopt)
     logger.info('fopt = %r', fopt)
-    logger.info('PSO finished in %.3f [s]', tEnd - tStart)
+    logger.info('PSO finished in %.3f [s]', time.time() - tStart)
+
+
+commands = {
+    'run': ('Runs the main shark PSO routine', pso_run_main),
+    'offline_eval': ('Evaluates an existing set of shark outputs', evaluation_main)
+}
+
+def print_usage(prgname):
+    print('Usage: %s [command] [options]' % (prgname))
+    print('')
+    print('\n'.join(['Commands are:'] + ['\t%-25.25s%s' % (cmdname,desc_and_f[0]) for cmdname,desc_and_f in sorted(commands.items())]))
+    print('')
+    print('Try %s [command] --help for more details' % (prgname))
+
+
+def main():
+
+    # Manually parse the first argument, which will be
+    # either -h/--help or a dlg command
+    # In the future we should probably use the argparse module
+    prgname = sys.argv[0]
+    if len(sys.argv) == 1:
+        print_usage(prgname)
+        sys.exit(1)
+
+    cmd = sys.argv[1]
+    sys.argv.pop(0)
+
+    if cmd in ['-h', '--help', 'help']:
+        print_usage(prgname)
+        sys.exit(0)
+
+    if cmd not in commands:
+        print("Unknown command: %s" % (cmd,))
+        print_usage(prgname)
+        sys.exit(1)
+
+    desc = commands[cmd][0]
+    parser = argparse.ArgumentParser(description=desc)
+    commands[cmd][1](parser, sys.argv[1:])
+
 
 if __name__ == '__main__':
     main()

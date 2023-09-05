@@ -45,7 +45,7 @@
 ``run_info``
 ^^^^^^^^^^^^
 * ``batches``: number of batches analysed
-* ``effective_volume``: effective volume of this run [cMpc/h]
+* ``effective_volume``: effective volume of this run [(cMpc/h)^3]
 * ``lbox``: Box side size of the full simulated volume [Mpc/h]
 * ``ode_solver_precision``: accuracy applied when solving the ODE system of the physical model.
 * ``particle_mass``: dark matter particle mass of this simulation [Msun/h]

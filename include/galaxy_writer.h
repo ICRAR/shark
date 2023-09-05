@@ -34,11 +34,12 @@
 #include <utility>
 #include <vector>
 
+#include "agn_feedback.h"
 #include "components.h"
 #include "cosmology.h"
 #include "dark_matter_halos.h"
 #include "execution.h"
-#include "hdf5/writer.h"
+#include "hdf5/io/writer.h"
 #include "simulation.h"
 #include "star_formation.h"
 
@@ -52,7 +53,8 @@ public:
 			CosmologicalParameters cosmo_params,
 			CosmologyPtr cosmology,
 			DarkMatterHalosPtr darkmatterhalo,
-			SimulationParameters sim_params);
+			SimulationParameters sim_params,
+			AGNFeedbackParameters agn_params);
 	virtual ~GalaxyWriter() = default;
 
 	virtual void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal) = 0;
@@ -66,6 +68,7 @@ protected:
 	CosmologyPtr cosmology;
 	DarkMatterHalosPtr darkmatterhalo;
 	SimulationParameters sim_params;
+	AGNFeedbackParameters agn_params;
 
 	std::string get_output_directory(int snapshot);
 };
@@ -80,7 +83,8 @@ private:
 	void write_header (hdf5::Writer &file, int snapshot);
 	void write_galaxies (hdf5::Writer &file, int snapshot, const std::vector<HaloPtr> &halos, const molgas_per_galaxy &molgas_per_gal);
 	void write_global_properties (hdf5::Writer &file, int snapshot, TotalBaryon &AllBaryons);
-	void write_histories (int snapshot, const std::vector<HaloPtr> &halos);
+	void write_sf_histories (int snapshot, const std::vector<HaloPtr> &halos);
+	void write_bh_histories (int snapshot, const std::vector<HaloPtr> &halos);
 };
 
 class ASCIIGalaxyWriter : public GalaxyWriter {
@@ -90,7 +94,7 @@ public:
 	void write(int snapshot, const std::vector<HaloPtr> &halos, TotalBaryon &AllBaryons, const molgas_per_galaxy &molgas_per_gal) override;
 
 private:
-	void write_galaxy(const GalaxyPtr &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f, const molgas_per_galaxy &molgas_per_gal);
+	void write_galaxy(const Galaxy &galaxy, const SubhaloPtr &subhalo, int snapshot, std::ofstream &f, const molgas_per_galaxy &molgas_per_gal);
 
 };
 

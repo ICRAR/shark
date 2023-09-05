@@ -52,6 +52,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, SimulationParameters simulation_params, const std::vector<HaloPtr> &halos,
 		TotalBaryon &AllBaryons, int snapshot, const molgas_per_galaxy &molgas, double deltat);
 
+void reset_instantaneous_galaxy_properties(const std::vector<HaloPtr> &halos, int snapshot);
+
 }  // namespace shark
 
 #endif // SHARK_EVOLVE_HALOS_H_

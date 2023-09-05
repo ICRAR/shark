@@ -1,6 +1,9 @@
 #Provided by Simon Driver. 
 #Data corresponding to Wright et al. (2018, submitted)
-#information just as in Wright et al. (2017)
+#Units:
+#stellar mass in log10(Mstar/Msun)
+#number density and errors in units of log10(Mpc^-3) with bin size being 0.25dex.
+#To recover number density in Mpc^-3 dex^-1, one needs to add -log10(binsize) to the y axis.
 #med_redshift "" "x" "log_y" "dlog_yu" "dlog_yd" "ycv"
  0.5 8.375 -2.35370169656879 0.0101287747934244 0.0103706542103721 0.26
  0.5 8.625 -2.4207694090686 0.0109316995402819 0.0112139839063481 0.26

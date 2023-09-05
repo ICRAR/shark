@@ -11,6 +11,8 @@ We list here each of the HDF5 groups and datasets
 found on each of these files.
 This list is automatically calculated from the files themselves.
 
+.. _output.galaxies:
+
 Galaxies
 --------
 

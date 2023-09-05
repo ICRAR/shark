@@ -17,9 +17,34 @@
 #
 
 import argparse
+import functools
+import logging
 
 import h5py
-from numpy import array_equal
+import numpy as np
+
+
+logger = logging.getLogger(__name__)
+
+def _check(sort, name, a, b, equality_condition):
+    if sort:
+        a, b = np.sort(a), np.sort(b)
+    logger.info("Comparing %s", name)
+    are_equal = equality_condition(a, b)
+    if not all(are_equal):
+        not_equal = np.logical_not(are_equal)
+        raise AssertionError(
+            'Galaxies dataset %s not equal: %r / %r'
+            % (name, a[not_equal], b[not_equal])
+        )
+
+def full_dataset_equality(sort, name, a, b):
+    _check(sort, name, a, b, np.equal)
+
+
+def lenient_dataset_equality(sort, name, a, b):
+    isclose = lambda a, b: np.isclose(a, b, equal_nan=True)
+    _check(sort, name, a, b, isclose)
 
 
 def read_args():
@@ -31,25 +56,45 @@ def read_args():
         '-e', '--expect-unequal', action='store_true',
         help='Whether the models are expected to be unequal.')
     arg_parser.add_argument(
+        '-l', '--lenient', action='store_true',
+        help='Use lenient comparison (sorted values, not exact equality).')
+    arg_parser.add_argument(
         '-m', '--models', required=True, nargs=2,
         help='Path where each model is found.'
         )
+    arg_parser.add_argument(
+        '-E', '--exclude-dataset', action='append',
+        help='Datasets to exclude from comparison')
+    arg_parser.add_argument(
+        '-i', '--include-dataset', action='append',
+        help='Datasets to include in comparison')
+    arg_parser.add_argument(
+        '-s', '--sort', action='store_true',
+        help='Sort each dataset before comparison')
     return arg_parser.parse_args()
 
 
-def assert_galaxies_equal(galaxy1, galaxy2):
+def assert_galaxies_equal(check, galaxy1, galaxy2, inclusions, exclusions):
     """Raise an AssertionError if two galaxies are not equal."""
-    if frozenset(galaxy1.keys()) != frozenset(galaxy2.keys()):
-        raise AssertionError('Galaxy keys unequal.')
-    for key in galaxy1.keys():
-        if not array_equal(galaxy1[key][:], galaxy2[key][:]):
-            raise AssertionError('Galaxies not equal.')
+    if inclusions:
+        names1 = names2 = inclusions
+    else:
+        names1 = set(galaxy1.keys()) - set(exclusions)
+        names2 = set(galaxy2.keys()) - set(exclusions)
+    if names1 != names2:
+        raise AssertionError('Galaxy datasets unequal')
+    for name in names1:
+        ds1 = galaxy1[name]
+        ds2 = galaxy2[name]
+        if ds1.shape != ds2.shape:
+            raise AssertionError('Dataset shapes unequal: %r / %r' % (ds1.shape, ds2.shape))
+        check(name, ds1, ds2)
 
 
-def assert_galaxies_not_equal(galaxy1, galaxy2):
+def assert_galaxies_not_equal(check, galaxy1, galaxy2, inclusions, exclusions):
     """Raise an AssertionError if two galaxies are equal."""
     try:
-        assert_galaxies_equal(galaxy1, galaxy2)
+        assert_galaxies_equal(check, galaxy1, galaxy2, inclusions, exclusions)
     except AssertionError as e:
         pass
     else:
@@ -57,13 +102,18 @@ def assert_galaxies_not_equal(galaxy1, galaxy2):
 
 def main():
     args = read_args()
-    model_one, model_two = h5py.File(args.models[0]), h5py.File(args.models[1])
+    exclusions = args.exclude_dataset or []
+    inclusions = args.include_dataset or []
+    check = lenient_dataset_equality if args.lenient else full_dataset_equality
+    check = functools.partial(check, args.sort)
+    model_one, model_two = h5py.File(args.models[0], 'r'), h5py.File(args.models[1], 'r')
     galaxies_one, galaxies_two = model_one['galaxies'], model_two['galaxies']
 
     if args.expect_unequal:
-        assert_galaxies_not_equal(galaxies_one, galaxies_two)
+        assert_galaxies_not_equal(check, galaxies_one, galaxies_two, inclusions, exclusions)
     else:
-        assert_galaxies_equal(galaxies_one, galaxies_two)
+        assert_galaxies_equal(check, galaxies_one, galaxies_two, inclusions, exclusions)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     main()

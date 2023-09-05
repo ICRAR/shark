@@ -30,8 +30,6 @@
 #include <utility>
 #include <vector>
 
-#include <gsl/gsl_sf_lambert.h>
-
 #include "mixins.h"
 #include "numerical_constants.h"
 #include "components.h"
@@ -82,7 +80,7 @@ public:
 		const DarkMatterHaloParameters &params,
 		CosmologyPtr cosmology,
 		SimulationParameters &sim_params,
-		const ExecutionParameters &exec_params);
+		ExecutionParameters exec_params);
 	virtual ~DarkMatterHalos() = default;
 
 	virtual double grav_potential_halo(double r, double c) const = 0;
@@ -95,11 +93,11 @@ public:
 
 	double subhalo_dynamical_time (Subhalo &subhalo, double z);
 
-	double halo_virial_radius(Subhalo &subhalo);
+	double halo_virial_radius(const HaloPtr &halo, double z);
 
 	double halo_virial_velocity (double mvir, double redshift);
 
-	float halo_lambda (xyz<float> L, float m, double z, double npart);
+	float halo_lambda (const Subhalo &subhalo, float m, double z, double npart);
 
 	double disk_size_theory (Subhalo &subhalo, double z);
 
@@ -111,28 +109,28 @@ public:
 
 	void cooling_gas_sAM(Subhalo &subhalo, double z);
 
-	void disk_sAM(Subhalo &subhalo, Galaxy &galaxy);
+	float enclosed_total_mass(const Subhalo &subhalo, double z, float r);
 
-	void bulge_sAM(Subhalo &subhalo, Galaxy &galaxy);
+	void disk_sAM(Subhalo &subhalo, Galaxy &galaxy, double z);
 
-	void transfer_bulge_am(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z);
+	void bulge_sAM(Subhalo &subhalo, Galaxy &galaxy, double z);
+
+	void transfer_bulge_am(SubhaloPtr &subhalo, Galaxy &galaxy, double z);
 
 	double v2halo (double x, double m, double c, double r);
 	double v2disk (double x, double m, double c, double r);
 	double v2bulge (double x, double m, double c, double r);
 
-	void generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo);
+	void generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo, const Galaxy &galaxy);
 
 protected:
 	DarkMatterHaloParameters params;
 	CosmologyPtr cosmology;
 	SimulationParameters sim_params;
-	std::default_random_engine generator;
-	std::lognormal_distribution<double> distribution;
-	std::uniform_real_distribution<float> flat_distribution;
+	ExecutionParameters exec_params;
 
 private:
-	xyz<float> random_point_in_sphere(float r);
+	xyz<float> random_point_in_sphere(float r, std::default_random_engine &generator);
 };
 
 /// Type used by users to keep track o

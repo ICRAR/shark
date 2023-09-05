@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <ios>
 #include <iostream>
+#include <ostream>
 #include <vector>
 
 #include "config.h"
@@ -37,10 +38,12 @@
 #include <boost/program_options.hpp>
 #include <gsl/gsl_errno.h>
 
-#include "components.h"
+#include "galaxy.h"
+#include "merger_tree.h"
 #include "logging.h"
 #include "options.h"
 #include "shark_runner.h"
+#include "subhalo.h"
 #include "git_revision.h"
 #include "timer.h"
 
@@ -68,6 +71,14 @@ void show_help(const char *prog, const boost::program_options::options_descripti
 	out << endl;
 }
 
+template <typename T>
+void report_size_of_things(std::basic_ostream<T> &os)
+{
+	os << "Main structure/class sizes follow. ";
+	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
+	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
+}
+
 static
 void setup_logging(const boost::program_options::variables_map &vm) {
 
@@ -85,13 +96,8 @@ void setup_logging(const boost::program_options::variables_map &vm) {
 	});
 }
 
-void throw_exception_gsl_handler(const char *reason, const char *file, int line, int gsl_errno)
-{
-	throw gsl_error(reason, file, line, gsl_errno, gsl_strerror(gsl_errno));
-}
-
 void install_gsl_error_handler() {
-	gsl_set_error_handler(&throw_exception_gsl_handler);
+	gsl_set_error_handler_off();
 }
 
 void log_startup_information(int argc, char **argv)
@@ -107,11 +113,8 @@ void log_startup_information(int argc, char **argv)
 	std::copy(argv, argv + argc, std::ostream_iterator<char *>(os, " "));
 	LOG(info) << "shark started with command line: " << os.str();
 
-	// Inform the size of things
 	os = std::ostringstream();
-	os << "Main structure/class sizes follow. ";
-	os << "Baryon: " << memory_amount(sizeof(Baryon)) << ", Subhalo: " << memory_amount(sizeof(Subhalo)) << ", Halo: " << memory_amount(sizeof(Halo));
-	os << ", Galaxy: " << memory_amount(sizeof(Galaxy)) << ", MergerTree: " << memory_amount(sizeof(MergerTree));
+	report_size_of_things(os);
 	LOG(info) << os.str();
 }
 
@@ -163,6 +166,8 @@ boost::program_options::variables_map parse_cmdline(int argc, char **argv) {
 #else
 		std::cout << "No" << std::endl;
 #endif
+		report_size_of_things(std::cout);
+		std::cout << '\n';
 	}
 	else if (vm.count("config-file") == 0 ) {
 		throw boost::program_options::error("At least one <config-file> option must be given. Use -h to see the help");
@@ -176,7 +181,7 @@ Options read_options(const boost::program_options::variables_map &vm, unsigned i
 #ifdef SHARK_OPENMP
 	threads = vm["threads"].as<unsigned int>();
 	if (threads == 0) {
-		threads = omp_get_max_threads();
+		threads = static_cast<unsigned int>(omp_get_max_threads());
 	}
 #else
 	threads = 1;
@@ -213,6 +218,7 @@ int main(int argc, char **argv) {
 		auto options = read_options(vm, threads);
 		SharkRunner(options, threads).run();
 		LOG(info) << "Successfully finished in " << timer;
+		LOG(info) << "Maximum memory usage: " << memory_amount(peak_rss());
 
 		return 0;
 	} catch (const shark::missing_option &e) {

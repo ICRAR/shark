@@ -33,7 +33,6 @@
 #include "data.h"
 #include "logging.h"
 #include "numerical_constants.h"
-#include "components.h"
 #include "utils.h"
 
 namespace shark {
@@ -135,7 +134,13 @@ double Cosmology::comoving_to_physical_angularmomentum(double r, double z) const
 double Cosmology::comoving_to_physical_size(double r, double z) const {
 	// We DO NOT need to divide by (1+z) because the sizes of galaxies and halos are calculated
 	// from their mass and velocity, and the latter is in physical units from the VELOCIraptor catalogue.
-	return r/parameters.Hubble_h; ////(1+z);
+	return r / parameters.Hubble_h; ////(1+z);
+}
+
+double Cosmology::physical_to_comoving_size(double r, double z) const {
+	// We DO NOT need to multiply by (1+z) because the sizes of galaxies and halos are calculated
+	// from their mass and velocity, and the latter is in physical units from the VELOCIraptor catalogue.
+	return r * parameters.Hubble_h; ////(1+z);
 }
 
 double Cosmology::comoving_to_physical_velocity(double v, double z) const {
@@ -234,6 +239,15 @@ double Cosmology::expansion_factor(double t) const {
 double Cosmology::hubble_parameter (double z) const {
 	double H2 = (parameters.OmegaM * std::pow(1.0 + z, 3.0) + parameters.OmegaL);
 	return parameters.Hubble_h * 100.0 * std::sqrt(H2);
+}
+
+double Cosmology::critical_density (double z) const {
+
+	// Function returns the critical density in units of Msun/cMpc^3
+	
+	auto h = hubble_parameter(z) / 100.0; // we want h not H.
+
+	return 2.7754e11 * std::pow(h, 2);
 }
 
 } // namespace shark

@@ -59,6 +59,7 @@ public:
 	 * eta_cc: number of SNe per 1 solar mass of mass formed.
 	 * galaxy_scaling: whether we scale SNe outflow rate with the halo or galaxy velocity.
 	 * model: adopted SNe feedback model.
+	 * min_beta: minimum mass loading factor for the galaxy. 
 	 */
 	double eps_halo = 1;
 	double vkin_sn = 0;
@@ -69,6 +70,7 @@ public:
 	double eps_disk = 1;
 	double e_sn = 0;
 	double eta_cc = 0;
+	double min_beta = 0;
 	bool galaxy_scaling = false;
 	bool radial_feedback = false;
 

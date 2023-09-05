@@ -23,7 +23,11 @@
  * Integrator class implementation
  */
 
+#include <string>
+
+#include "gsl_utils.h"
 #include "integrator.h"
+#include "logging.h"
 
 
 namespace shark {
@@ -47,16 +51,68 @@ void Integrator::init_gsl_objects()
 	workspace.reset(gsl_integration_workspace_alloc(max_intervals));
 }
 
+struct integration_data_t {
+	Integrator::func_t func;
+	void *params;
+	int status;
+};
+
+extern "C" double gsl_integration_target(double x, void * params)
+{
+	// Catch C++ exceptions, set our internal status flag to GSL_EBADFUNC,
+	// and report NaN as a result hoping that integration will quickly fail
+	auto integration_data = static_cast<integration_data_t *>(params);
+	try {
+		return integration_data->func(x, integration_data->params);
+	} catch (std::exception &e) {
+		std::string msg = "Error while evaluating integration function: ";
+		msg += e.what();
+		LOG(error) << msg;
+		::gsl_error(msg.c_str(), __FILE__, __LINE__, GSL_EBADFUNC);
+		integration_data->status = GSL_EBADFUNC;
+		return GSL_NAN;
+	} catch (...) {
+		auto msg = "Unexpected error while evaluating integration function";
+		LOG(error) << msg << ", aborting integration";
+		::gsl_error(msg, __FILE__, __LINE__, GSL_EBADFUNC);
+		integration_data->status = GSL_EBADFUNC;
+		return GSL_NAN;
+	}
+}
+
 double Integrator::integrate(func_t f, void *params, double from, double to, double epsabs, double epsrel)
 {
+	// User-provided C++ functions for integration with GSL (parameter `f` here)
+	// might raise exceptions, which do not necessarily play well with the GSL
+	// C-based stack (i.e., exceptions might not propagate correctly).
+	// To overcome this we first pack both the user-provided function and
+	// parameters into our own integration_data_t object, and then point GSL
+	// to integrate the gsl_integration_target function instead. The latter
+	// receives the integration_data_t object as parameter, unpacks the
+	// user-provided function and parameters, and executes that in a try/catch
+	// block, returning NaN in case of an error.
+	//
+	// In GSL the user-provided functions also don't have a clear way of
+	// signaling errors, so even though we return NaN on failure there is still
+	// a change that the integrator won't see that as a failure. We thus include
+	// our own status flag in the integration_data_t object, which is set to
+	// GSL_EBADFUNC in the catch block of gsl_integration_target. We then check
+	// this flag for any errors that might not have been caught by the GSL
+	// integration routine.
+	integration_data_t integration_data;
+	integration_data.func = f;
+	integration_data.params = params;
+	integration_data.status = GSL_SUCCESS;
 	gsl_function F;
-	F.function = f;
-	F.params = params;
+	F.function = gsl_integration_target;
+	F.params = &integration_data;
 
 	double result, abserr;
-	// Adopt a 15 point Gauss-Kronrod rule
-	int key = GSL_INTEG_GAUSS15;
-	gsl_integration_qag(&F, from, to, epsabs, epsrel, max_intervals, key, workspace.get(), &result, &abserr);
+	gsl_invoke(gsl_integration_qag, &F, from, to, epsabs, epsrel, max_intervals,
+	           GSL_INTEG_GAUSS15, workspace.get(), &result, &abserr);
+	if (integration_data.status != GSL_SUCCESS) {
+		throw to_gsl_error(integration_data.status);
+	}
 
 	num_intervals += workspace->size;
 	return result;

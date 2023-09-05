@@ -76,7 +76,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	// Define minimum gas metallicities.
 	double zcold = model.gas_cooling_parameters.pre_enrich_z; /*cold gas minimum metallicity*/
-	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*hot gas minimum metallicity*/
+	double zhot = model.gas_cooling_parameters.pre_enrich_z; /*cooling gas minimum metallicity*/
 
 	// Define angular momentum parameters.
 	double jgas = 2.0 * params->vgal * params->rgas / constants::RDISK_HALF_SCALE; /*current sAM of the cold gas*/
@@ -88,9 +88,18 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 		jgas  = y[15] / y[1];
 	}
 
-	// Define current cooling halo gas metallicity.
-	if(y[2] > 0 && y[8] > 0) {
-		zhot = y[8] / y[2];
+	// Define metallicity of cooling gas.
+	if(params->zcool > zhot){
+		zhot = params->zcool;
+	}
+
+	// compute modified yield if user sets that option
+	double yield_eff = 0.0;
+	if(model.recycling_parameters.evolving_yield){
+		yield_eff  = yield - zcold*0.25; //from Robotham et al. (2019)
+	}
+	else{
+		yield_eff  = yield;
 	}
 
 	// Calculate SFR.
@@ -107,7 +116,7 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 	model.stellar_feedback.outflow_rate(SFR, params->vsubh, params->vgal, params->redshift, beta1, beta2, betaj_1, betaj_2); /*mass loading parameter*/
 
 	// Calculate the mass and metal loading from QSO feedback.
-	model.agn_feedback.qso_outflow_rate(y[1], params->mBHacc, params->mBH, zcold, params->vgal, SFR, y[0]+y[1], params->rstar, beta_qso1, beta_qso2);
+	model.agn_feedback.qso_outflow_rate(y[1], params->smbh, zcold, params->vgal, SFR, y[0]+y[1], params->rstar, beta_qso1, beta_qso2);
 
 	// Retained fraction.
 	double rsub = 1.0-R;
@@ -122,9 +131,9 @@ int basic_physicalmodel_evaluator(double t, const double y[], double f[], void *
 
 	// Metallicity transfer equations.
 	f[6] = rsub * zcold * SFR;
-	f[7] = mcoolrate * zhot + SFR * (yield - (rsub + beta1 + beta_qso1) * zcold);
+	f[7] = mcoolrate * zhot + SFR * (yield_eff - (rsub + beta1 + beta_qso1) * zcold);
 	f[8] = - mcoolrate * zhot;
-	f[9] = f[3] * zcold;
+	f[9] = ((beta1 + beta_qso1) - (beta2 + beta_qso2) ) * SFR * zcold;
 	f[10] = beta2 * zcold * SFR;
 	f[11] = beta_qso2  * zcold * SFR;
 
@@ -236,15 +245,15 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	galaxy.disk_gas.mass   			= y[1];
 	subhalo.cold_halo_gas.mass 		= y[2];
 	subhalo.hot_halo_gas.mass               = y[3];
-	subhalo.ejected_galaxy_gas.mass 		= y[4];
-	subhalo.lost_galaxy_gas.mass			= y[5];
+	subhalo.ejected_galaxy_gas.mass 	= y[4];
+	subhalo.lost_galaxy_gas.mass		= y[5];
 
 	// Assign new mass in metals.
 	galaxy.disk_stars.mass_metals 			= y[6];
 	galaxy.disk_gas.mass_metals 			= y[7];
 	subhalo.cold_halo_gas.mass_metals 		= y[8];
-	subhalo.hot_halo_gas.mass_metals        = y[9];
-	subhalo.ejected_galaxy_gas.mass_metals 	= y[10];
+	subhalo.hot_halo_gas.mass_metals                = y[9];
+	subhalo.ejected_galaxy_gas.mass_metals 	        = y[10];
 	subhalo.lost_galaxy_gas.mass_metals		= y[11];
 
 	// Calculate average SFR and metallicity of newly formed stars.
@@ -253,18 +262,30 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 
 	// Equations of angular momentum exchange. Input total angular momentum.
 	// Redefine angular momentum ONLY if the new value is > 0.
-	if(y[14] > 0 && y[15] > 0){
+	if(y[15] > 0){
 
 		// Assign new specific angular momenta.
-		galaxy.disk_stars.sAM          = y[14] / galaxy.disk_stars.mass;
 		galaxy.disk_gas.sAM            = y[15] / galaxy.disk_gas.mass;
 		subhalo.cold_halo_gas.sAM      = y[16] / subhalo.cold_halo_gas.mass;
 		subhalo.hot_halo_gas.sAM       = y[17] / subhalo.hot_halo_gas.mass;
 		subhalo.ejected_galaxy_gas.sAM = y[18] / subhalo.ejected_galaxy_gas.mass;
 
 		// Assign new sizes based on new AM.
-		galaxy.disk_stars.rscale = galaxy.disk_stars.sAM / galaxy.vmax * constants::EAGLEJconv;
 		galaxy.disk_gas.rscale   = galaxy.disk_gas.sAM   / galaxy.vmax * constants::EAGLEJconv;
+
+		// check for unrealistic cases.
+		if (std::isnan(galaxy.disk_gas.sAM) || std::isnan(galaxy.disk_gas.rscale)) {
+			throw invalid_argument("rgas or sAM are NaN, cannot continue at physical model");
+		}
+
+	}
+	if (y[14] > 0){
+
+		// Assign new specific angular momenta.
+		galaxy.disk_stars.sAM          = y[14] / galaxy.disk_stars.mass;
+
+		// Assign new sizes based on new AM.
+		galaxy.disk_stars.rscale = galaxy.disk_stars.sAM / galaxy.vmax * constants::EAGLEJconv;
 
 		// check for unrealistic cases.
 		if(galaxy.disk_stars.rscale <= constants::tolerance && galaxy.disk_stars.mass > 0){
@@ -272,11 +293,6 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 			os << "Galaxy with extremely small size, rdisk_stars < 1e-10, in physical model";
 			throw invalid_argument(os.str());
 		}
-
-		if (std::isnan(galaxy.disk_gas.sAM) || std::isnan(galaxy.disk_gas.rscale)) {
-			throw invalid_argument("rgas or sAM are NaN, cannot continue at physical model");
-		}
-
 	}
 
 	/**
@@ -299,6 +315,25 @@ void BasicPhysicalModel::to_galaxy(const std::vector<double> &y, Subhalo &subhal
 	}
 	if(subhalo.lost_galaxy_gas.mass_metals < tolerance){
 		subhalo.lost_galaxy_gas.mass_metals = 0;
+	}
+
+	/**
+	 * Check that metallicities are not bigger than the gas mass. If they are, mass in metals to gas mass.
+	 */
+	if(galaxy.disk_gas.mass_metals > galaxy.disk_gas.mass){
+		galaxy.disk_gas.mass_metals = galaxy.disk_gas.mass;
+	}
+	if(subhalo.cold_halo_gas.mass_metals > subhalo.cold_halo_gas.mass){
+		subhalo.cold_halo_gas.mass_metals = subhalo.cold_halo_gas.mass;
+	}
+	if(subhalo.hot_halo_gas.mass_metals > subhalo.hot_halo_gas.mass){
+		subhalo.hot_halo_gas.mass_metals = subhalo.hot_halo_gas.mass;
+	}
+	if(subhalo.ejected_galaxy_gas.mass_metals > subhalo.ejected_galaxy_gas.mass){
+		subhalo.ejected_galaxy_gas.mass_metals = subhalo.ejected_galaxy_gas.mass;
+	}
+	if(subhalo.lost_galaxy_gas.mass_metals > subhalo.lost_galaxy_gas.mass){
+		subhalo.lost_galaxy_gas.mass_metals = subhalo.lost_galaxy_gas.mass;
 	}
 
 	/**
@@ -420,15 +455,15 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	galaxy.bulge_stars.mass 		= y[0];
 	galaxy.bulge_gas.mass   		= y[1];
 	subhalo.hot_halo_gas.mass               = y[3];
-	subhalo.ejected_galaxy_gas.mass 		= y[4];
-	subhalo.lost_galaxy_gas.mass 			= y[5];
+	subhalo.ejected_galaxy_gas.mass 	= y[4];
+	subhalo.lost_galaxy_gas.mass 		= y[5];
 
 	// Assign new mass in metals.
-	galaxy.bulge_stars.mass_metals 			= y[6];
-	galaxy.bulge_gas.mass_metals 			= y[7];
+	galaxy.bulge_stars.mass_metals 		= y[6];
+	galaxy.bulge_gas.mass_metals 		= y[7];
 	subhalo.hot_halo_gas.mass_metals        = y[9];
 	subhalo.ejected_galaxy_gas.mass_metals 	= y[10];
-	subhalo.lost_galaxy_gas.mass_metals		= y[11];
+	subhalo.lost_galaxy_gas.mass_metals	= y[11];
 
 	// Equations of angular momentum exchange are ignored in the case of starbursts.
 
@@ -449,6 +484,22 @@ void BasicPhysicalModel::to_galaxy_starburst(const std::vector<double> &y, Subha
 	}
 	if(subhalo.lost_galaxy_gas.mass_metals < tolerance){
 		subhalo.lost_galaxy_gas.mass_metals = 0;
+	}
+
+	/**
+	 * Check that metallicities are not bigger than the gas mass. If they are, mass in metals to gas mass.
+	 */
+	if(galaxy.bulge_gas.mass_metals > galaxy.bulge_gas.mass){
+		galaxy.bulge_gas.mass_metals = galaxy.bulge_gas.mass;
+	}
+	if(subhalo.hot_halo_gas.mass_metals > subhalo.hot_halo_gas.mass){
+		subhalo.hot_halo_gas.mass_metals = subhalo.hot_halo_gas.mass;
+	}
+	if(subhalo.ejected_galaxy_gas.mass_metals > subhalo.ejected_galaxy_gas.mass){
+		subhalo.ejected_galaxy_gas.mass_metals = subhalo.ejected_galaxy_gas.mass;
+	}
+	if(subhalo.lost_galaxy_gas.mass_metals > subhalo.lost_galaxy_gas.mass){
+		subhalo.lost_galaxy_gas.mass_metals = subhalo.lost_galaxy_gas.mass;
 	}
 
 	/**

@@ -33,13 +33,15 @@
 
 #include "dark_matter_halos.h"
 #include "exceptions.h"
+#include "halo.h"
 #include "logging.h"
 #include "merger_tree_reader.h"
 #include "omp_utils.h"
 #include "simulation.h"
+#include "subhalo.h"
 #include "timer.h"
 #include "utils.h"
-#include "hdf5/reader.h"
+#include "hdf5/io/reader.h"
 
 
 namespace shark {
@@ -53,7 +55,7 @@ SURFSReader::SURFSReader(const std::string &prefix, DarkMatterHalosPtr dark_matt
 
 }
 
-const std::string SURFSReader::get_filename(int batch)
+const std::string SURFSReader::get_filename(unsigned int batch)
 {
 	std::ostringstream os;
 	os << prefix << "." << batch << ".hdf5";
@@ -104,8 +106,9 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	std::vector<float> position = batch_file.read_dataset_v_2<float>("haloTrees/position");
 	std::vector<float> velocity = batch_file.read_dataset_v_2<float>("haloTrees/velocity");
 
-	//Read mass, circular velocity and angular momentum.
+	//Read mass, npart, circular velocity and angular momentum.
 	std::vector<float> Mvir = batch_file.read_dataset_v<float>("haloTrees/nodeMass");
+	std::vector<int> Npart = batch_file.read_dataset_v<int>("haloTrees/particleNumber");
 	std::vector<float> Vcirc = batch_file.read_dataset_v<float>("haloTrees/maximumCircularVelocity");
 	std::vector<float> L = batch_file.read_dataset_v_2<float>("haloTrees/angularMomentum");
 
@@ -134,7 +137,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 
 	std::ostringstream os;
 	os << "File " << fname << " has " << n_subhalos << " subhalos. ";
-	os << "After reading we should be using ~" << memory_amount(n_subhalos * sizeof(Subhalo)) << " of memory";
+	os << "After reading we should be using ~" << memory_amount(n_subhalos * (sizeof(Subhalo) + sizeof(SubhaloPtr))) << " of memory";
 	LOG(info) << os.str();
 
 	t = Timer();
@@ -143,7 +146,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		subhalos.reserve(n_subhalos / threads);
 	}
 
-	omp_static_for(0, n_subhalos, threads, [&](std::size_t i, int thread_idx) {
+	omp_static_for(0, n_subhalos, threads, [&](std::size_t i, unsigned int thread_idx) {
 
 		if (snap[i] < simulation_params.min_snapshot) {
 			return;
@@ -194,6 +197,9 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 			subhalo->Mgas = Mgas[i];
 		}
 
+		//Assign npart
+		subhalo->Npart = Npart[i];
+
 		//Assign position
 		subhalo->position.x = position[3 * i];
 		subhalo->position.y = position[3 * i + 1];
@@ -220,7 +226,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 
 		double npart = Mvir[i]/simulation_params.particle_mass;
 
-		subhalo->lambda = dark_matter_halos->halo_lambda(subhalo->L, Mvir[i], z, npart);
+		subhalo->lambda = dark_matter_halos->halo_lambda(*subhalo, Mvir[i], z, npart);
 
 		// Calculate virial velocity from the virial mass and redshift.
 		subhalo->Vvir = dark_matter_halos->halo_virial_velocity(subhalo->Mvir, z);
@@ -282,12 +288,12 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 
 	std::ostringstream os;
 	os << "Created " << halos.size() << " Halos from these Subhalos in " << t << ". ";
-	os << "This should take another ~" << memory_amount(halos.size() * sizeof(Halo)) << " of memory";
+	os << "This should take another ~" << memory_amount(halos.size() * (sizeof(Halo) + sizeof(HaloPtr))) << " of memory";
 	LOG(info) << os.str();
 
 	// Calculate halos' vvir and concentration
 	t = Timer();
-	omp_dynamic_for(halos, threads, 10000, [&](const HaloPtr &halo, int thread_idx) {
+	omp_dynamic_for(halos, threads, 10000, [&](const HaloPtr &halo, unsigned int thread_idx) {
 		auto z = simulation_params.redshifts[halo->snapshot];
 		halo->Vvir = dark_matter_halos->halo_virial_velocity(halo->Mvir, z);
 		halo->concentration = dark_matter_halos->nfw_concentration(halo->Mvir,z);

@@ -1,0 +1,4 @@
+#z-down  z-up  rho_H2_low[Msun/Mpc^3] rho_H2_up[Msun/Mpc^3]
+0.0  0.5  0.08e7 0.8e7
+0.5  1.0  0.98e7 3.24e7
+1.0  1.5  0.68e7 2.63e7

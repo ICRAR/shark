@@ -20,6 +20,7 @@
 ^^^^^^^^^^^^
 * ``bh_accretion_rate_hh``: accretion rate onto the black hole during the hot halo mode [Msun/Gyr/h]
 * ``bh_accretion_rate_sb``: accretion rate onto the black hole during the starburst mode [Msun/Gyr/h]
+* ``bh_spin``: black hole spin [dimensionless]
 * ``cnfw_subhalo``: NFW concentration parameter of the dark matter subhalo in which this galaxy resides [dimensionless]. In the case of type 2 satellites, this corresponds to the concentration its subhalo had before disappearing from the subhalo catalogs.
 * ``cooling_rate``: cooling rate of the hot halo component [Msun/Gyr/h].
 * ``descendant_id_galaxy``: descendant galaxy ID. Different to galaxy id only if galaxy is type 2 and merges on the next snapshot.
@@ -33,8 +34,10 @@
 * ``l_z``: total angular momentum component z of galaxy [Msun pMpc km/s]. In the case of type 2 galaxies, the AM vector is randomly oriented.
 * ``lambda_subhalo``: Spin parameter of the dark matter subhalo in which this galaxy resides [dimensionless].  In the case of type 2 satellites, this corresponds to the lambda its subhalo had before disappearing from the subhalo catalogs.
 * ``m_bh``: black hole mass [Msun/h]
+* ``m_bh_assembly``: black hole mass that comes from assembly (BH-BH mergers) [Msun/h]
 * ``matom_bulge``: atomic gas mass (helium plus hydrogen) in the bulge [Msun/h]
 * ``matom_disk``: atomic gas mass (helium plus hydrogen) in the disk [Msun/h]
+* ``mean_mstellar_galaxies_stellarhalo``: mass weighted stellar mass of the galaxies that contributed to building the stellar halo [Msun/h]
 * ``mean_stellar_age``: stellar mass-weighted stellar age [Gyr]
 * ``mgas_bulge``: gas mass in the bulge [Msun/h]
 * ``mgas_disk``: total gas mass in the disk [Msun/h]
@@ -42,6 +45,10 @@
 * ``mgas_metals_disk``: mass of metals locked in the gas of the disk [Msun/h]
 * ``mhot``: hot gas mass in the halo [Msun/h]
 * ``mhot_metals``: mass of metals locked in the hot halo gas [Msun/h]
+* ``mhot_metals_stripped``: mass of metals that has been stripped out of this subhalo due to ram pressure stripping [Msun/h].
+* ``mhot_stripped``: gas mass that has been stripped out of this subhalo due to ram pressure stripping [Msun/h].
+* ``mism_metals_stripped``: mass of metals that has been stripped out of the ISM due to ram pressure stripping [Msun/h]
+* ``mism_stripped``: gas mass that has been stripped out of the ISM due to ram pressure stripping [Msun/h]
 * ``mlost``: gas mass in the lost gas component - due to QSO feedback [Msun/h]
 * ``mlost_metals``: mass of metals locked in the lost gas component - due to QSO feedback [Msun/h]
 * ``mmol_bulge``: molecular gas mass (helium plus hydrogen) in the bulge [Msun/h]
@@ -60,17 +67,27 @@
 * ``mstars_metals_burst_diskinstabilities``: mass of metals locked in stars that formed via starbursts driven by disk instabilities [Msun/h]
 * ``mstars_metals_burst_mergers``: mass of metals locked in stars that formed via starbursts driven by galaxy mergers [Msun/h]
 * ``mstars_metals_disk``: mass of metals locked in stars in the disk [Msun/h]
+* ``mstars_metals_tidally_stripped``: mass of metals locked in stars that was tidally stripped from this galaxy [Msun/h]
+* ``mstars_tidally_stripped``: stellar mass that was tidally stripped from this galaxy [Msun/h]
+* ``mstellar_halo``: stellar mass in the halo built by tidal stripping [Msun/h]
+* ``mstellar_halo_metals``: mass of metals locked up in the stellar halo built by tidal stripping [Msun/h]
 * ``mvir_hosthalo``: Dark matter mass of the host halo in which this galaxy resides [Msun/h]
+* ``mvir_infall_subhalo``: Dark matter mass at infall of the host halo in which this galaxy reside when it was last central [Msun/h]
 * ``mvir_subhalo``: Dark matter mass of the subhalo in which this galaxy resides [Msun/h]. In the case of type 2 satellites, this corresponds to the mass its subhalo had before disappearing from the subhalo catalogs.
+* ``on_hydrostatic_eq``: is halo on quasi hydrostatic equilibrium (=1 for true, =0 for false).
 * ``position_x``: position component x of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
 * ``position_y``: position component y of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
 * ``position_z``: position component z of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.
+* ``r_halo_stripped``: ram pressure stripping radius of the halo gas [cMpc/h]
+* ``r_ism_stripped``: ram pressure stripping radius of the ISM [cMpc/h]
 * ``redshift_merger``: redshift at which this galaxy will merge onto a central galaxy (only relevant for type 2 galaxies)
 * ``rgas_bulge``: half-mass radius of the gas bulge [cMpc/h]
 * ``rgas_disk``: half-mass radius of the gas disk [cMpc/h]
 * ``rstar_bulge``: half-mass radius of the stellar bulge [cMpc/h]
 * ``rstar_disk``: half-mass radius of the stellar disk [cMpc/h]
 * ``sfr_burst``: star formation rate in the bulge [Msun/Gyr/h]
+* ``sfr_burst_diskins``: star formation rate in the bulge driven by disk instabilities [Msun/Gyr/h]
+* ``sfr_burst_mergers``: star formation rate in the bulge driven by galaxy mergers [Msun/Gyr/h]
 * ``sfr_disk``: star formation rate in the disk [Msun/Gyr/h]
 * ``specific_angular_momentum_bulge_gas``: specific angular momentum of the gas bulge [km/s * cMpc/h]
 * ``specific_angular_momentum_bulge_star``: specific angular momentum of the stellar bulge [km/s * cMpc/h]
@@ -126,6 +143,7 @@
 * ``age_80``: redshift at which the halo had 80% of its current mass
 * ``concentration``: halo concentration
 * ``final_z0_mvir``: virial mass of the halo in which this halo will end up in by z=0 [Msun/h]
+* ``halo_id``: halo id in the tree (unique to entire halo catalogue)
 * ``lambda``: halo spin
 * ``mvir``: virial mass of halo [Msun/h]
 * ``vvir``: virial velocity of halo [km/s]
@@ -134,7 +152,7 @@
 ``run_info``
 ^^^^^^^^^^^^
 * ``batches``: number of batches analysed
-* ``effective_volume``: effective volume of this run [cMpc/h]
+* ``effective_volume``: effective volume of this run [(cMpc/h)^3]
 * ``lbox``: Box side size of the full simulated volume [Mpc/h]
 * ``ode_solver_precision``: accuracy applied when solving the ODE system of the physical model.
 * ``particle_mass``: dark matter particle mass of this simulation [Msun/h]
@@ -155,4 +173,7 @@
 * ``host_id``: id of the host halo of this subhalo
 * ``id``: Subhalo id
 * ``infall_time_subhalo``: redshift at which the subhalo became a SATELLITE (only well defined for satellite subhalos)
+* ``l_x``: total angular momentum component x of subhalo [Msun pMpc km/s]. From VELOCIraptor.
+* ``l_y``: total angular momentum component y of galaxy [Msun pMpc km/s]. From VELOCIraptor.
+* ``l_z``: total angular momentum component z of galaxy [Msun pMpc km/s]. From VELOCIraptor.
 * ``main_progenitor``: =1 if subhalo is the main progenitor' =0 otherwise.

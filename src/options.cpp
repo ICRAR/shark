@@ -158,7 +158,7 @@ void Options::parse_option(const std::string &optspec, std::string &name, std::s
 }
 
 template <typename T>
-struct type_name {;
+struct type_name {
 	constexpr static const char *name = "unknown";
 };
 

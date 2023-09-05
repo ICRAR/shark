@@ -29,15 +29,11 @@
 #include <string>
 #include <vector>
 
-
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_interp2d.h>
-#include <gsl/gsl_spline2d.h>
-
 #include "agn_feedback.h"
 #include "components.h"
 #include "dark_matter_halos.h"
 #include "environment.h"
+#include "execution.h"
 #include "interpolator.h"
 #include "options.h"
 #include "reincorporation.h"
@@ -82,6 +78,8 @@ public:
 
 	double pre_enrich_z = 1e-7;
 	double tau_cooling = 1;
+	bool limit_fbar = false;
+        double rcore = 0.01;
 
 	LambdaCoolingModel lambdamodel = CLOUDY;
 	CoolingModel model = CROTON06;
@@ -101,6 +99,7 @@ class GasCooling {
 public:
 	GasCooling(GasCoolingParameters parameters,
 			StarFormationParameters params_sf,
+			ExecutionParameters exec_params,
 			ReionisationPtr reionisation,
 			CosmologyPtr cosmology,
 			AGNFeedbackPtr agnfeedback,
@@ -114,11 +113,14 @@ public:
 	double cooling_radius(double mhot, double rvir, double tcharac, double logl, double Tvir);
 	double density_shell(double mhot, double rvir, double r);
 	double cooling_luminosity(double logl, double rcool, double rvir, double mhot);
+	bool quasi_hydrostatic_halo(double mhot, double lambda, double nh_density,
+			double mass, double Tvir, double redshift);
 
 private:
 
 	GasCoolingParameters parameters;
 	StarFormationParameters params_sf;
+	ExecutionParameters exec_params;
 	ReionisationPtr reionisation;
 	CosmologyPtr cosmology;
 	AGNFeedbackPtr agnfeedback;

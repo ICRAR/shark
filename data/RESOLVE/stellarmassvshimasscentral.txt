@@ -1,0 +1,15 @@
+FORPRINT: Thu Dec 11 17:57:02 2014
+   	  # relations for stellar mass vs. 1.4*hi mass for central galaxies
+	  #c1 bin half way point, 0.5dex bins (1.4*HI mass)	
+	  #c2 median stellar mass
+	  #c3 mean stellar mass
+	  #c4 sigma in bin
+	  #c5 number of galaxies in bin
+     7.25000      0.00000      0.00000      0.00000      0.00000
+      7.75000      9.09000      9.01167     0.274385      12.0000
+      8.25000      9.09000      9.08268     0.525127      41.0000
+      8.75000      8.79000      9.10219     0.860931      82.0000
+      9.25000      9.13000      9.39090     0.960417      111.000
+      9.75000      9.67000      9.75385     0.810115      78.0000
+      10.2500      10.6900      10.5457     0.432460      14.0000
+      10.7500      0.00000      0.00000      0.00000      0.00000

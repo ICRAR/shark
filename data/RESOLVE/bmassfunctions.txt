@@ -1,0 +1,34 @@
+FORPRINT: Thu Dec 11 17:18:23 2014
+	  #log baryonic (stars+cold gas) mass, 0.2dex binsize
+	  #number of RESOLVE-B galaxies in each bin
+	  #number of RESOLVE-B galaxies in halos with mass < 10^11.4 Msun in each bin
+	  #number of RESOLVE-B galaxies in halos with 10^11.4 < mass < 10^12.0 Msun in each bin
+	  #number of RESOLVE-B galaxies in halos with 10^12 < mass <  10^13.5 Msun in each bin (no halos > 10^13.5 Msun in RESOLVE-B)
+	  # RESOLVE-B volume: 13731.2 Mpc^3 (H0=70km/s)
+
+      7.00000           0           0           0           0
+      7.20000           0           0           0           0
+      7.40000           0           0           0           0
+      7.60000           0           0           0           0
+      7.80000           0           0           0           0
+      8.00000           0           0           0           0
+      8.20000           0           0           0           0
+      8.40000           3           2           0           1
+      8.60000          18          14           1           3
+      8.80000          68          46           4          18
+      9.00000          68          46           6          16
+      9.20000          52          33           8          11
+      9.40000          56          40           5          11
+      9.60000          50          37           6           7
+      9.80000          33          19           8           6
+      10.0000          39           6          25           8
+      10.2000          30           1          20           9
+      10.4000          24           0          15           9
+      10.6000          17           0           4          13
+      10.8000          21           0           0          21
+      11.0000           7           0           0           7
+      11.2000           2           0           0           2
+      11.4000           0           0           0           0
+      11.6000           0           0           0           0
+      11.8000           0           0           0           0
+      12.0000           0           0           0           0

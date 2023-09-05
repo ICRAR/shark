@@ -23,8 +23,11 @@
 
 #include <functional>
 
-#include "components.h"
 #include "exceptions.h"
+#include "galaxy.h"
+#include "halo.h"
+#include "merger_tree.h"
+#include "subhalo.h"
 
 using namespace shark;
 
@@ -64,24 +67,23 @@ class TestSubhalos : public CxxTest::TestSuite
 {
 private:
 
-	SubhaloPtr make_subhalo(const std::string &types, Subhalo::subhalo_type_t subhalo_type)
+	SubhaloPtr make_subhalo(const std::string &types, Subhalo::subhalo_type_t subhalo_type, Galaxy::id_t id=0)
 	{
 		SubhaloPtr subhalo = std::make_shared<Subhalo>(0, 0);
 		subhalo->subhalo_type = subhalo_type;
-		Galaxy::id_t id = 0;
 		for(auto t: types) {
-			GalaxyPtr g = std::make_shared<Galaxy>(id++);
+			auto &g = subhalo->emplace_galaxy(id++);
 			if (t == 'C') {
-				g->galaxy_type = Galaxy::CENTRAL;
+				g.galaxy_type = Galaxy::CENTRAL;
 			}
 			else if (t == '1') {
-				g->galaxy_type = Galaxy::TYPE1;
+				g.galaxy_type = Galaxy::TYPE1;
 			}
 			else if (t == '2') {
-				g->galaxy_type = Galaxy::TYPE2;
+				g.galaxy_type = Galaxy::TYPE2;
 			}
-			subhalo->galaxies.emplace_back(std::move(g));
 		}
+		TS_ASSERT_EQUALS(types.size(), subhalo->galaxy_count());
 		return subhalo;
 	}
 
@@ -153,6 +155,85 @@ public:
 		_test_valid_satellite_galaxy_composition("122", true);
 		_test_valid_satellite_galaxy_composition("122222", true);
 		_test_valid_satellite_galaxy_composition("122222C", false);
+	}
+
+	void test_galaxy_finding()
+	{
+		auto subhalo = make_subhalo("222C222122", Subhalo::SATELLITE, 0);
+		TS_ASSERT_EQUALS(3, subhalo->central_galaxy()->id);
+		TS_ASSERT_EQUALS(7, subhalo->type1_galaxy()->id);
+		TS_ASSERT_EQUALS(8, subhalo->type2_galaxies_count());
+	}
+
+	void test_galaxy_movement()
+	{
+		auto subhalo1 = make_subhalo("C12", Subhalo::CENTRAL, 0);
+		auto subhalo2 = make_subhalo("222", Subhalo::SATELLITE, 3);
+		subhalo2->transfer_type2galaxies_to(subhalo1);
+		TS_ASSERT_EQUALS(6, subhalo1->galaxy_count());
+		TS_ASSERT_EQUALS(4, subhalo1->type2_galaxies_count());
+		TS_ASSERT_EQUALS(0, subhalo2->type2_galaxies_count());
+	}
+
+};
+
+class TestHalos : public CxxTest::TestSuite
+{
+
+private:
+	template <typename ... Ts>
+	HaloPtr make_halo(Ts && ... ts)
+	{
+		return std::make_shared<Halo>(std::forward<Ts>(ts)...);
+	}
+
+	template <typename ... Ts>
+	MergerTreePtr make_merger_tree(Ts && ... ts)
+	{
+		return std::make_shared<MergerTree>(std::forward<Ts>(ts)...);
+	}
+
+public:
+
+	void test_roots()
+	{
+
+		auto tree = make_merger_tree(1);
+
+		// Merger Tree is:
+		//
+		// 1 --> 3 --> 5
+		//       ^     ^
+		// 2 ----|     |
+		//             |
+		//       4 ----|
+		//
+		// Roots should be 1, 2 and 4
+		auto halo1 = make_halo(1, 1);
+		auto halo2 = make_halo(2, 1);
+		auto halo3 = make_halo(3, 2);
+		auto halo4 = make_halo(4, 2);
+		auto halo5 = make_halo(5, 3);
+		tree->add_halo(halo5);
+		halo5->merger_tree = tree;
+		add_parent(halo5, halo3);
+		add_parent(halo5, halo4);
+		add_parent(halo3, halo2);
+		add_parent(halo3, halo1);
+		tree->consolidate();
+
+		auto roots = tree->roots();
+		TS_ASSERT_EQUALS(roots.size(), 3);
+		std::set<Halo::id_t> ids;
+		for (auto &root: roots) {
+			ids.insert(root->id);
+		}
+		TS_ASSERT_EQUALS(ids, std::set<Halo::id_t>({1, 2, 4}));
+
+		// 2, 2, and 1 halos for snapshots 1, 2 and 3 respectivelly
+		TS_ASSERT_EQUALS(2, tree->halos_at(1).size());
+		TS_ASSERT_EQUALS(2, tree->halos_at(2).size());
+		TS_ASSERT_EQUALS(1, tree->halos_at(3).size());
 	}
 
 };

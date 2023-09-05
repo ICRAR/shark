@@ -106,14 +106,14 @@ public:
  */
 class halo_not_found : public component_not_found {
 public:
-	halo_not_found(std::string what, Halo::id_t halo_id) :
+	halo_not_found(std::string what, halo_id_t halo_id) :
 		component_not_found(std::move(what)),
 		halo_id(halo_id) {}
 
 	/**
 	 * The ID of the Halo that could not be found.
 	 */
-	Halo::id_t halo_id;
+	halo_id_t halo_id;
 };
 
 /**
@@ -121,14 +121,14 @@ public:
  */
 class subhalo_not_found : public component_not_found {
 public:
-	subhalo_not_found(std::string what, Subhalo::id_t subhalo_id) :
+	subhalo_not_found(std::string what, subhalo_id_t subhalo_id) :
 		component_not_found(std::move(what)),
 		subhalo_id(subhalo_id) {}
 
 	/**
 	 * The ID of the Subhalo that could not be found.
 	 */
-	Subhalo::id_t subhalo_id;
+	subhalo_id_t subhalo_id;
 };
 
 /**
@@ -152,8 +152,14 @@ public:
 		reason(reason),
 		file(file),
 		line(line),
-		gsl_errno(gsl_errno),
-		errmsg(errmsg)
+		gsl_errno(gsl_errno)
+	{
+	}
+
+	gsl_error(int gsl_errno, const char *errmsg) :
+		math_error(std::string("GSL error: ") + errmsg +
+		           " (" + std::to_string(gsl_errno) + ")"),
+		gsl_errno(gsl_errno)
 	{
 	}
 
@@ -176,9 +182,8 @@ public:
 private:
 	std::string reason;
 	std::string file;
-	int line;
+	int line = 0;
 	int gsl_errno;
-	std::string errmsg;
 };
 
 }  // namespace shark

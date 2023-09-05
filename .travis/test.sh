@@ -40,11 +40,15 @@ mkdir input || fail "failed to create input/ directory"
 curl -L -o input/redshifts.txt 'https://docs.google.com/uc?export=download&id=1xvNmJB_KmoBHuQz-QzdPnY0HFs7smkUB' || fail "failed to download redshifts file"
 curl -L -o input/tree_199.0.hdf5 'https://docs.google.com/uc?export=download&id=1JDK8ak13bEhzg9H9xt0uE8Fh_2LD3KpZ' || fail "failed to download test hdf5 file"
 
-./shark ../sample.cfg \
-    -o simulation.redshift_file=input/redshifts.txt \
-    -o simulation.tree_files_prefix=input/tree_199 \
-    -o execution.seed=123456 \
-    -o execution.name_model=my_model || fail "failure during execution of shark"
+run_shark() {
+	model_name=$1; shift
+	./shark ../sample.cfg \
+	    -o simulation.redshift_file=input/redshifts.txt \
+	    -o simulation.tree_files_prefix=input/tree_199 \
+	    -o execution.name_model=$model_name $@ || fail "failure during execution of shark"
+}
+
+run_shark my_model -o execution.seed=123456
 
 # Generate the HDF5 output documentation and check it's up to date
 # otherwise tell the user how to update it
@@ -66,33 +70,33 @@ check_hdf5_doc 156/0/star_formation_histories.hdf5 star_formation_histories.rst
 
 if [ -n "$PYTHON" ]; then
 
+	# How many CPUs do we have?
+	if [ $TRAVIS_OS_NAME = osx ]; then
+		n_cpus=`sysctl -n hw.ncpu`
+	else
+		n_cpus=`grep -c processor /proc/cpuinfo`
+	fi
+
+	compare_galaxies() {
+		model_name=$1; shift
+		"$PYTHON" ../scripts/compare_galaxies.py \
+		    -m "mini-SURFS/my_model/199/0/galaxies.hdf5" \
+		       "mini-SURFS/$model_name/199/0/galaxies.hdf5" $@
+	}
+
 	# Make sure the standard plotting scripts run correctly
 	echo "backend: Agg" >> matplotlibrc
 	"$PYTHON" ../standard_plots/all.py -c ../sample.cfg -z input/redshifts.txt || fail "failure during execution of python plotting scripts"
 
 	# Make sure the seed value returns a reproducible result
-	./shark ../sample.cfg \
-	    -o simulation.redshift_file=input/redshifts.txt \
-	    -o simulation.tree_files_prefix=input/tree_199 \
-	    -o execution.seed=123456 \
-	    -o execution.name_model=my_model_equal_seed \
-	    || fail "failure during execution of shark"
+	run_shark my_model_same_seed -o execution.seed=123456
+	compare_galaxies my_model_same_seed || fail "Models expected to be equal, they are not."
 
-	"$PYTHON" ../scripts/compare_galaxies.py \
-	    -m "mini-SURFS/my_model/199/0/galaxies.hdf5" \
-	       "mini-SURFS/my_model_equal_seed/199/0/galaxies.hdf5" \
-	    || fail "Models expected to be equal, they are not."
+	# Like above, but in parallel using all available CPUs
+	run_shark my_model_same_seed_parallel -o execution.seed=123456 -t $n_cpus
+	compare_galaxies my_model_same_seed_parallel || fail "Models expected to be equal, they are not."
 
 	# Run using a random seed in the interval 2^32 - 1
-	./shark ../sample.cfg \
-	    -o simulation.redshift_file=input/redshifts.txt \
-	    -o simulation.tree_files_prefix=input/tree_199 \
-	    -o execution.name_model=my_model_random_seed \
-	    || fail "failure during execution of shark"
-
-	"$PYTHON" ../scripts/compare_galaxies.py \
-	    -m "mini-SURFS/my_model/199/0/galaxies.hdf5" \
-	       "mini-SURFS/my_model_random_seed/199/0/galaxies.hdf5" \
-	    --expect-unequal \
-	    || fail "Models expected to be unequal, they are not."
+	run_shark my_model_random_seed || fail "failure during execution of shark"
+	compare_galaxies my_model_random_seed --expect-unequal || fail "Models expected to be unequal, they are not."
 fi

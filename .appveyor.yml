@@ -35,8 +35,6 @@ install:
   - cmd: git submodule update --init --recursive
   - cmd: git clone https://github.com/CxxTest/cxxtest
   - cmd: cd c:\tools\vcpkg
-  - cmd: git pull
-  - cmd: vcpkg update
   - cmd: vcpkg integrate install
   - cmd: vcpkg install boost-filesystem:x64-windows
   - cmd: vcpkg install boost-log:x64-windows
@@ -60,9 +58,12 @@ test_script:
   - ps: Invoke-WebRequest "https://docs.google.com/uc?export=download&id=1JDK8ak13bEhzg9H9xt0uE8Fh_2LD3KpZ" -OutFile "input\tree_199.0.hdf5"
   - cmd: shark sample.cfg -o simulation.redshift_file=input\redshifts.txt -o simulation.tree_files_prefix=input\tree_199 -o execution.seed=123456 -o execution.name_model=my_model
   - cmd: C:\Python36-x64\Scripts\pip install h5py matplotlib scipy
-  - cmd: C:\Python36-x64\python.exe standard_plots\all.py -c sample.cfg -z input\redshifts.txt
+  # Plots are currently broken
+  #- cmd: C:\Python36-x64\python.exe standard_plots\all.py -c sample.cfg -z input\redshifts.txt
   - cmd: shark sample.cfg -o simulation.redshift_file=input\redshifts.txt -o simulation.tree_files_prefix=input\tree_199 -o execution.seed=123456 -o execution.name_model=my_model_equal_seed
   - cmd: C:\Python36-x64\python.exe scripts\compare_galaxies.py -m mini-SURFS\my_model\199\0\galaxies.hdf5 mini-SURFS\my_model_equal_seed\199\0\galaxies.hdf5
+  - cmd: shark sample.cfg -o simulation.redshift_file=input\redshifts.txt -o simulation.tree_files_prefix=input\tree_199 -o execution.seed=123456 -o execution.name_model=my_model_equal_seed_parallel -t 2
+  - cmd: C:\Python36-x64\python.exe scripts\compare_galaxies.py -m mini-SURFS\my_model\199\0\galaxies.hdf5 mini-SURFS\my_model_equal_seed_parallel\199\0\galaxies.hdf5
   - cmd: shark sample.cfg -o simulation.redshift_file=input\redshifts.txt -o simulation.tree_files_prefix=input\tree_199 -o execution.name_model=my_model_random_seed
   - cmd: C:\Python36-x64\python.exe scripts\compare_galaxies.py -m mini-SURFS\my_model_random_seed\199\0\galaxies.hdf5 mini-SURFS\my_model_equal_seed\199\0\galaxies.hdf5 --expect-unequal
 

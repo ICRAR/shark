@@ -41,57 +41,68 @@ namespace shark {
 
 class GalaxyMergerParameters {
 
-	public:
-		explicit GalaxyMergerParameters(const Options &options);
+public:
+	explicit GalaxyMergerParameters(const Options &options);
 
-		/**
-		 * Merger parameters:
-		 * - major_merger_ratio: threshold M2/M1 to consider major mergers. In this case we convert disks to spheroids.
-		 * - minor_merger_burst_ratio: threshold M2/M1 for triggering bursts in minor mergers.
-		 * - tau_delay: controls delays from the standard merging timescale for testing purposes.
-		 * - min_mass: minimum mass allowed in bulges. This is to avoid long tails in the star formation histories of bulges.
-		 */
-		float major_merger_ratio = 0;
-		float minor_merger_burst_ratio = 0;
-		float gas_fraction_burst_ratio = 0;
-		float tau_delay = 0.05;
-		float mass_min = 1e5;
+	/**
+	 * Merger parameters:
+	 * - major_merger_ratio: threshold M2/M1 to consider major mergers. In this case we convert disks to spheroids.
+	 * - minor_merger_burst_ratio: threshold M2/M1 for triggering bursts in minor mergers.
+	 * - tau_delay: controls delays from the standard merging timescale for testing purposes.
+	 * - min_mass: minimum mass allowed in bulges. This is to avoid long tails in the star formation histories of bulges.
+	 */
+	float major_merger_ratio = 0;
+	float minor_merger_burst_ratio = 0;
+	float gas_fraction_burst_ratio = 0;
+	float tau_delay = 0.05;
+	float mass_min = 1e5;
 
-		/**
-		 * Sizes parameters:
-		 * - f_orbit: orbital factor defining orbital energy. It should be =1 for two point masses in a circular orbit separation rgal,1+rgal,2. Lacey et al. (2016) Eq. 18.
-		 * - cgal: parameter that defines internal energy of galaxy. It depends weekly on density profile. =0.49 for a pure exponential disk; =0.45 for a De Vacouleurs profile.
-		 * - fgas_dissipation: parameter that defines how much dissipation there is when calculating the galaxy sizes in mergers. A value of 0 is adopted if no dissipation takes place.
-		 * - merger_ratio_dissipation: parameter that defines the merger mass ratio above which dissipation is triggered.
-		 */
+	/**
+	 * Sizes parameters:
+	 * - f_orbit: orbital factor defining orbital energy. It should be =1 for two point masses in a circular orbit separation rgal,1+rgal,2. Lacey et al. (2016) Eq. 18.
+	 * - cgal: parameter that defines internal energy of galaxy. It depends weekly on density profile. =0.49 for a pure exponential disk; =0.45 for a De Vacouleurs profile.
+	 * - fgas_dissipation: parameter that defines how much dissipation there is when calculating the galaxy sizes in mergers. A value of 0 is adopted if no dissipation takes place.
+	 * - merger_ratio_dissipation: parameter that defines the merger mass ratio above which dissipation is triggered.
+	 */
 
-		float f_orbit = 1;
-		float cgal = 0.5;
-		float merger_ratio_dissipation = 0;
-		double fgas_dissipation = 0;
+	float f_orbit = 1;
+	float cgal = 0.5;
+	float merger_ratio_dissipation = 0;
+	double fgas_dissipation = 0;
+
+	enum GalaxyMergerTimescaleModel{
+		LACEY93 = 0,
+		POULTON20
+	};
+
+	GalaxyMergerTimescaleModel model = LACEY93;
 
 };
 
 
 
-class GalaxyMergers{
+class GalaxyMergers {
 
 public:
 	GalaxyMergers(GalaxyMergerParameters parameters,
 			CosmologyPtr cosmology,
-			const ExecutionParameters &execparams,
+			CosmologicalParameters cosmo_params,
+			ExecutionParameters execparams,
+			AGNFeedbackParameters agn_params,
 			SimulationParameters simparams,
 			DarkMatterHalosPtr darkmatterhalo,
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
 			AGNFeedbackPtr agnfeedback);
 
-	void orbital_parameters(double &vr, double &vt, double f);
-
 	double mass_ratio_function(double mp, double ms);
 
 	double merging_timescale_mass(double mp, double ms);
 
-	double merging_timescale_orbital();
+	/**
+	 * Uses function calculated in Lacey & Cole (1993), who found that it was best described by a log
+	 * normal distribution with median value -0.14 and dispersion 0.26.
+	 */
+	double merging_timescale_orbital(const Galaxy &galaxy);
 
 	/**
 	 * Calculates the dynamical friction timescale for the subhalo secondary to merge into the subhalo primary,
@@ -105,6 +116,8 @@ public:
 	 * @param transfer_types2 whether we are merging a satellite subhalo or transfering type 2 galaxies.
 	 */
 	void merging_timescale(SubhaloPtr &primary, SubhaloPtr &secondary, double z, int snapshot, bool transfer_types2);
+
+	void merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, SubhaloPtr &secondary, double mp, double tau_dyn, int snapshot, bool transfer_types2);
 
 	/**
 	 * Evaluates whether subhalos in each timestep are disappearing from the merger tree, and if they are
@@ -123,32 +136,32 @@ public:
 
 	void merging_galaxies(HaloPtr &halo, int snapshot, double delta_t);
 
-	void create_merger(GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo, int snapshot);
+	void create_merger(Galaxy &central, const Galaxy &satellite, HaloPtr &halo, int snapshot) const;
 
 	void create_starbursts(HaloPtr &halo, double z, double delta_t);
 
-	double bulge_size_merger(double mass_ratio, double mgas_ratio, GalaxyPtr &central, GalaxyPtr &satellite, HaloPtr &halo);
+	double bulge_size_merger(double mass_ratio, double mgas_ratio, const Galaxy &central, const Galaxy &satellite, HaloPtr &halo, double z) const;
 
-	double r_remnant(double mc, double ms, double rc, double rs);
+	double r_remnant(double mc, double ms, double rc, double rs) const;
 
-	void transfer_baryon_mass(const SubhaloPtr &central, const SubhaloPtr &satellite);
+	void transfer_bulge_gas(Galaxy &galaxy);
 
-	void transfer_bulge_gas(GalaxyPtr &galaxy);
+	void transfer_history_satellite_to_bulge(Galaxy &central, const Galaxy &satellite, int snapshot) const;
 
-	void transfer_history_satellite_to_bulge(GalaxyPtr &central, GalaxyPtr &satellite, int snapshot);
-
-	void transfer_history_disk_to_bulge(GalaxyPtr &central, int snapshot);
+	void transfer_history_disk_to_bulge(Galaxy &central, int snapshot) const;
 
 
 private:
 	GalaxyMergerParameters parameters;
 	std::shared_ptr<Cosmology> cosmology;
+	CosmologicalParameters cosmo_params;
+	ExecutionParameters exec_params;
+	AGNFeedbackParameters agn_params;
 	SimulationParameters simparams;
 	DarkMatterHalosPtr darkmatterhalo;
 	std::shared_ptr<BasicPhysicalModel> physicalmodel;
 	AGNFeedbackPtr agnfeedback;
 
-	std::default_random_engine generator;
 	std::lognormal_distribution<double> distribution;
 
 };

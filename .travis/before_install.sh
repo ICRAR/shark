@@ -36,21 +36,15 @@ cd ${TRAVIS_BUILD_DIR}
 if [ "${TRAVIS_OS_NAME}" = "osx" ]
 then
 
-	# cxxtest pulls python@2, so we need to unlink
-	# the pre-installed python first
-	brew unlink python || fail "cannot unlink python"
+	export HOMEBREW_NO_AUTO_UPDATE=1
+	export HOMEBREW_NO_INSTALL_CLEANUP=1
+
+	# cxxtest pulls python, so we need to unlink the pre-installed python@2 first
+	# (only in xcode12.2 though, it doesn't come installed in the rest)
+	test "${TRAVIS_OSX_IMAGE}" != xcode12.2 || brew unlink python@2 || fail "cannot unlink python@2"
 
 	# Minimal dependencies for testing
-	pkgs="gsl hdf5 cxxtest"
-	if [ "$PYTHON" = "venv" ]
-	then
-		pkgs="$pkgs python3"
-	fi
-
-	# "install" seems to be "update"-ing too, which is failing
-	# with a "don't worry, [...] everything is [...] fine now"
-	# message. Let's follow that advice more explicitly
-	brew update || true
+	pkgs="gsl cxxtest libomp"
 	brew install $pkgs || fail "cannot install packages: $pkgs"
 
 	# PYTHON==venv means that we are going to use a virtualenv'd python
@@ -60,26 +54,10 @@ then
 	then
 		python3 -mvenv "${TRAVIS_BUILD_DIR}/shark-venv" || fail "cannot create virtualenv"
 		source "${TRAVIS_BUILD_DIR}/shark-venv/bin/activate"
-		pip install -U pip wheel setuptools h5py matplotlib scipy || fail "cannot install python packages in virtualenv"
+		pip install -U pip wheel setuptools h5py matplotlib!=3.4 scipy || fail "cannot install python packages in virtualenv"
 		deactivate
 		PYTHON="${TRAVIS_BUILD_DIR}/shark-venv/bin/python3"
 	fi
 
 	return
-fi
-
-# Ubuntu Travis still comes with GSL 1.X but we need >= 2
-# We cache the binary version through travis' cache, so let's
-# check first if it exists
-export GSL_ROOT_DIR=${TRAVIS_BUILD_DIR}/gsl/2.4
-export LD_LIBRARY_PATH=${GSL_ROOT_DIR}/lib:$LD_LIBRARY_PATH
-if [ ! -d "${GSL_ROOT_DIR}/lib" ]
-then
-	curl -O https://mirror.freedif.org/GNU/gsl/gsl-2.4.tar.gz
-	tar xf gsl-2.4.tar.gz
-	cd gsl-2.4
-	./configure --prefix=${GSL_ROOT_DIR}
-	make all -j2
-	make install
-	cd ..
 fi

@@ -28,6 +28,7 @@
 #include <sstream>
 
 #include "exceptions.h"
+#include "gsl_utils.h"
 #include "interpolator.h"
 
 namespace shark {
@@ -49,7 +50,7 @@ Interpolator::Interpolator(std::vector<double> xvals, std::vector<double> yvals,
 void Interpolator::_init_gsl_objects()
 {
 	interp2d.reset(gsl_interp2d_alloc(type, x.size(), y.size()));
-	gsl_interp2d_init(interp2d.get(), x.data(), y.data(), z.data(), x.size(), y.size());
+	gsl_invoke(gsl_interp2d_init, interp2d.get(), x.data(), y.data(), z.data(), x.size(), y.size());
 	xacc.reset(gsl_interp_accel_alloc());
 	yacc.reset(gsl_interp_accel_alloc());
 }

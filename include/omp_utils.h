@@ -46,12 +46,12 @@ namespace shark {
 
 namespace detail {
 
-inline int thread_index()
+inline unsigned int thread_index()
 {
 #ifdef SHARK_OPENMP
-		return omp_get_thread_num();
+	return static_cast<unsigned int>(omp_get_thread_num());
 #else
-		return 0;
+	return 0;
 #endif // SHARK_OPENMP
 }
 
@@ -73,16 +73,17 @@ using omp_int_t = typename std::make_signed<typename std::common_type<Integer1, 
  * and the thread index under which it is being executed
  */
 template <typename Integer1, typename Integer2, typename Callable>
-void omp_static_for(Integer1 first, Integer2 last, int num_threads, Callable &&f)
+void omp_static_for(Integer1 first, Integer2 last, unsigned int num_threads, Callable &&f)
 {
 	using omp_int = detail::omp_int_t<Integer1, Integer2>;
-	omp_int __first = first;
-	omp_int __last = last;
+	using common_type = typename std::common_type<Integer1, Integer2>::type;
+	omp_int _first = omp_int(first);
+	omp_int _last = omp_int(last);
 #ifdef SHARK_OPENMP
 	#pragma omp parallel for num_threads(num_threads) schedule(static)
 #endif // SHARK_OPENMP
-	for (omp_int i = __first; i < __last; i++) {
-		f(i, detail::thread_index());
+	for (omp_int i = _first; i < _last; i++) {
+		f(common_type(i), detail::thread_index());
 	}
 }
 
@@ -98,11 +99,10 @@ void omp_static_for(Integer1 first, Integer2 last, int num_threads, Callable &&f
  * thread index under which it is being executed
  */
 template <typename Container, typename Callable>
-void omp_static_for(Container &&container, int num_threads, Callable &&f)
+void omp_static_for(Container &&container, unsigned int num_threads, Callable &&f)
 {
-	auto size = container.size();
-	using signed_t = typename std::make_signed<decltype(size)>::type;
-	omp_static_for(std::size_t(0), container.size(), num_threads, [&](signed_t i, int thread_num){
+	using size_type = typename std::decay<Container>::type::size_type;
+	omp_static_for(0, container.size(), num_threads, [&](size_type i, unsigned int thread_num) {
 		f(container[i], thread_num);
 	});
 }
@@ -119,16 +119,17 @@ void omp_static_for(Container &&container, int num_threads, Callable &&f)
  * and the thread index under which it is being executed
  */
 template <typename Integer1, typename Integer2, typename Callable>
-void omp_dynamic_for(Integer1 first, Integer2 last, int num_threads, int chunk, Callable &&f)
+void omp_dynamic_for(Integer1 first, Integer2 last, unsigned int num_threads, int chunk, Callable &&f)
 {
 	using omp_int = detail::omp_int_t<Integer1, Integer2>;
-	omp_int __first = first;
-	omp_int __last = last;
+	using common_type = typename std::common_type<Integer1, Integer2>::type;
+	omp_int _first = omp_int(first);
+	omp_int _last = omp_int(last);
 #ifdef SHARK_OPENMP
 	#pragma omp parallel for num_threads(num_threads) schedule(dynamic, chunk)
 #endif // SHARK_OPENMP
-	for (omp_int i = __first; i < __last; i++) {
-		f(i, detail::thread_index());
+	for (omp_int i = _first; i < _last; i++) {
+		f(common_type(i), detail::thread_index());
 	}
 }
 
@@ -145,11 +146,10 @@ void omp_dynamic_for(Integer1 first, Integer2 last, int num_threads, int chunk, 
  * thread index under which it is being executed
  */
 template <typename Container, typename Callable>
-void omp_dynamic_for(Container &&container, int num_threads, int chunk, Callable &&f)
+void omp_dynamic_for(Container &&container, unsigned int num_threads, int chunk, Callable &&f)
 {
-	auto size = container.size();
-	using signed_t = typename std::make_signed<decltype(size)>::type;
-	omp_dynamic_for(std::size_t(0), container.size(), num_threads, chunk, [&](signed_t i, int thread_num){
+	using size_type = typename std::decay<Container>::type::size_type;
+	omp_dynamic_for(0, container.size(), num_threads, chunk, [&](size_type i, unsigned int thread_num) {
 		f(container[i], thread_num);
 	});
 }

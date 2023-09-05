@@ -24,12 +24,14 @@
 #ifndef SHARK_EXECUTION_H_
 #define SHARK_EXECUTION_H_
 
+#include <cassert>
 #include <ctime>
 #include <random>
 #include <set>
 #include <string>
 #include <vector>
 
+#include "components/algorithms.h"
 #include "options.h"
 
 namespace shark {
@@ -50,9 +52,18 @@ public:
 	bool output_snapshot(int snapshot);
 	int last_output_snapshot();
 
+	template <typename Component>
+	std::random_device::result_type get_seed(const Component &component)
+	{
+		auto id = get_id(component);
+		assert(id >= 0);
+		return seed + std::random_device::result_type(id);
+	}
+
 	bool skip_missing_descendants = true;
 	bool warn_on_missing_descendants = true;
-        bool ensure_mass_growth = true;
+	bool ensure_mass_growth = true;
+	bool ignore_late_massive_halos  = false;
 
 	/**
 	 * Parameters of sf histories:
@@ -62,7 +73,18 @@ public:
 	bool output_sf_histories = false;
 	std::vector<int> snapshots_sf_histories;
 
+	/**
+	 * Parameters of BH histories:
+	 * output_bh_histories: boolean parameter set to true if the user wants the black hole formation histories to be output.
+	 * snapshots_bh_histories: vector of int with the snapshots the user wants the black hole formation histories output at.
+	 */
+
+	bool output_bh_histories = false;
+	std::vector<int> snapshots_bh_histories;
+
 	float ode_solver_precision = 0;
+	int ignore_npart_threshold = 1000;
+	float ignore_below_z = 1.0;
 };
 
 } // namespace shark

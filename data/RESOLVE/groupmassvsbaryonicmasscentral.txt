@@ -1,0 +1,15 @@
+FORPRINT: Thu Dec 11 18:07:24 2014
+  	  # relations for group mass vs. baryonic mass for central galaxies
+	  #c1 bin half way point, 0.5dex bins (baryonic)	
+	  #c2 median group mass
+	  #c3 mean group mass
+	  #c4 sigma in bin
+	  #c5 number of galaxies in bin
+     10.2500      0.00000      0.00000      0.00000      0.00000
+      10.7500      9.03000      9.07102     0.257300      98.0000
+      11.2500      9.65000      9.61225     0.339505      142.000
+      11.7500      10.3100      10.2918     0.233513      55.0000
+      12.2500      10.8300      10.7856     0.179462      32.0000
+      12.7500      10.8900      10.9050     0.247054      8.00000
+      13.2500      11.2700      11.2567     0.149024      3.00000
+      13.7500      0.00000      0.00000      0.00000      0.00000

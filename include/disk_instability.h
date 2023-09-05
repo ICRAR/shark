@@ -51,17 +51,17 @@ public:
 			std::shared_ptr<BasicPhysicalModel> physicalmodel,
 			AGNFeedbackPtr agnfeedback);
 
-	double bulge_size(GalaxyPtr &galaxy);
+	double bulge_size(const Galaxy &galaxy) const;
 
-	double toomre_parameter(GalaxyPtr &galaxy);
+	double toomre_parameter(const Galaxy &galaxy) const;
 
 	void evaluate_disk_instability (HaloPtr &halo, int snapshot, double delta_t);
 
-	void create_starburst(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z, double delta_t);
+	void create_starburst(SubhaloPtr &subhalo, Galaxy &galaxy, double z, int snapshot, double delta_t);
 
-	void transfer_history_disk_to_bulge(GalaxyPtr &galaxy, int snapshot);
+	void transfer_history_disk_to_bulge(Galaxy &galaxy, int snapshot);
 
-	void effective_angular_momentum(GalaxyPtr &galaxy);
+	void effective_angular_momentum(Galaxy &galaxy);
 
 private:
 	DiskInstabilityParameters parameters;

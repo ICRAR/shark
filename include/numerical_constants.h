@@ -40,17 +40,20 @@ namespace constants {
 	template <int __exp>
 	constexpr double pow (double base) {
 		return base * pow<__exp - 1>(base);
-	};
+	}
 
 	template <>
 	constexpr double pow<1>(double base) {
 		return base;
-	};
+	}
 
 	/** @name Numerical constants */
 	// @{
 	/** Square root of 2 */
 	constexpr double SQRT2 = 1.4142135623730951;
+
+	/** Square root of 3 */
+	constexpr double SQRT3 = 1.7320508075688772;
 
 	/** pi */
 	constexpr double PI = 3.14159265358979323846;
@@ -90,6 +93,9 @@ namespace constants {
 
 	/** Number of centimetres in a Mpc (Particle Data Book 2002, page 6) */
 	constexpr double MPC2CM = MPC2M * HECTO;
+
+	/** Number of centimetres in a Mpc (Particle Data Book 2002, page 6) cubed*/
+	constexpr double MPC2CM_cube = pow<3>(MPC2CM);
 
 	/** Number of cm in a km */
 	constexpr double KM2CM = 1e5;
@@ -136,6 +142,9 @@ namespace constants {
 
 	/** Speed of light in m/s (Allen's Astrophysical Quantities, page 8) */
 	constexpr double c_light = 2.99792458e8;
+
+	/** Speed of light in m/s (Allen's Astrophysical Quantities, page 8) */
+	constexpr double c_light_km = 2.99792458e8 / KILO;
 
 	/** Speed of light in cm/s (Allen's Astrophysical Quantities, page 8) */
 	constexpr double c_light_cm = c_light * 100;

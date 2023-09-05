@@ -41,6 +41,8 @@ public:
 	double yield = 0;
 	double recycle = 0;
 	double zsun = 0;
+
+	bool evolving_yield = false;
 };
 
 }  // namespace shark

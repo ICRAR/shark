@@ -1,0 +1,20 @@
+      #Written out 11-24-2015
+      #relations between 1.4*MHI vs. baryonic mass for central galaxies
+      #c1 bin half way point, 0.5 dex bins (baryonic mass)
+      #c2 16th% 1.4*HI mass using upper limit value
+      #c3 16th% 1.4*HI mass using 0.05Mstar
+      #c4 50th% 1.4*HI mass using upper limit value
+      #c5 50th% 1.4*HI mass using 0.05Mstar
+      #c6 84th% 1.4*HI mass using upper limit value
+      #c7 84th% 1.4*HI mass using 0.05Mstar
+      #c8 number of galaxies in bin
+ 8.25   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+ 8.75   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+ 9.25   9.07   8.92   9.31   9.31   9.40    9.40  508.0
+ 9.75   9.11   8.88   9.48   9.48   9.69    9.69  *****
+10.25   9.09   8.99   9.56   9.56   9.99    9.99  *****
+10.75   9.36   9.36   9.62   9.62  10.15   10.15  601.0
+11.25   9.77   9.77   9.93   9.93  10.18   10.18  139.0
+11.75  10.36  10.36  10.42  10.42  11.37   11.37    8.0
+12.25   0.00   0.00   0.00   0.00   0.00    0.00    0.0
+12.75   0.00   0.00   0.00   0.00   0.00    0.00    0.0

@@ -28,11 +28,16 @@
 #include <stdexcept>
 #include <tuple>
 
+#include <gsl/gsl_sf_lambert.h>
+
 #include "cosmology.h"
 #include "dark_matter_halos.h"
+#include "galaxy.h"
+#include "halo.h"
 #include "logging.h"
 #include "nfw_distribution.h"
 #include "numerical_constants.h"
+#include "subhalo.h"
 #include "utils.h"
 
 
@@ -100,13 +105,11 @@ DarkMatterHalos::DarkMatterHalos(
 	const DarkMatterHaloParameters &params,
 	CosmologyPtr cosmology,
 	SimulationParameters &sim_params,
-	const ExecutionParameters &exec_params) :
+	ExecutionParameters exec_params) :
 	params(params),
 	cosmology(std::move(cosmology)),
 	sim_params(sim_params),
-	generator(exec_params.seed),
-	distribution(std::log(0.03), std::abs(std::log(0.5))),
-	flat_distribution(0,1)
+	exec_params(std::move(exec_params))
 {
 	// no-op
 }
@@ -128,34 +131,55 @@ double DarkMatterHalos::halo_virial_velocity (double mvir, double redshift){
 
 double DarkMatterHalos::halo_dynamical_time (HaloPtr &halo, double z)
 {
-	return subhalo_dynamical_time(*halo->central_subhalo, z);
+	double v = halo_virial_velocity(halo->Mvir, z);
+	double r = constants::G * halo->Mvir / std::pow(v,2);
+	double t = constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / v;
+	return t;
 }
+
 
 double DarkMatterHalos::subhalo_dynamical_time (Subhalo &subhalo, double z){
 
-	double r = halo_virial_radius(subhalo);
+	double r = 0;
+	double v = 0;
 
-	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / subhalo.Vvir;
+	if(subhalo.subhalo_type == Subhalo::CENTRAL){
+		r = halo_virial_radius(subhalo.host_halo, z);
+		v = subhalo.Vvir;
+	}
+	else{
+		r = subhalo.rvir_infall;
+		v = halo_virial_velocity(subhalo.Mvir_infall, subhalo.infall_t);
+	}
+
+	return constants::MPCKM2GYR * cosmology->comoving_to_physical_size(r, z) / v;
 }
 
-double DarkMatterHalos::halo_virial_radius(Subhalo &subhalo){
+double DarkMatterHalos::halo_virial_radius(const HaloPtr &halo, double z){
 
 	/**
 	 * Function to calculate the halo virial radius. Returns virial radius in physical Mpc/h.
 	 */
-	return constants::G * subhalo.Mvir / std::pow(subhalo.Vvir,2);
+        double v = halo_virial_velocity(halo->Mvir, z);
+	return constants::G * halo->Mvir / std::pow(v,2);
 }
 
-float DarkMatterHalos::halo_lambda (xyz<float> L, float m, double z, double npart){
+
+float DarkMatterHalos::halo_lambda (const Subhalo &subhalo, float m, double z, double npart){
 
 	//Spin parameter either read from the DM files or assumed a random distribution.
-	double H0 = 10.0* cosmology->hubble_parameter(z);
-        double lambda = L.norm() / m / 1.41421356237 / std::pow(constants::G * m, 0.666) * std::pow(H0,0.33);
+	double H0 = cosmology->hubble_parameter(z);
+	double lambda = subhalo.L.norm() / m * 1.5234153 / std::pow(constants::G * m, 0.666) * std::pow(H0,0.33);
 
 	if(lambda > 1){
 			lambda = 1;
 	}
 
+	// Prime the generator with a known seed to allow for reproducible runs
+	// using a very weak dependence on Mhalo for the spin distribution, following Kim et al. (2015): arxiv:1508.06037
+	double lambda_cen_mhalo = 0.00895651600584195 * std::log10(m)  - 0.07580254755439589;
+	std::default_random_engine generator(exec_params.get_seed(subhalo));
+	std::lognormal_distribution<double> distribution(std::log(lambda_cen_mhalo), std::abs(std::log(0.5)));
 	auto lambda_random = distribution(generator);
 
 	// Avoid zero values. In that case assume small lambda value.
@@ -183,7 +207,7 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo, double z){
 
 	if(params.sizemodel == DarkMatterHaloParameters::MO98){
 		//Calculation comes from assuming rdisk = 2/sqrt(2) *lambda *Rvir;
-		double Rvir = halo_virial_radius(subhalo);
+		double Rvir = halo_virial_radius(subhalo.host_halo, z);
 
 		double lambda = subhalo.lambda;
 
@@ -271,9 +295,37 @@ void DarkMatterHalos::cooling_gas_sAM(Subhalo &subhalo, double z){
 
 }
 
-void DarkMatterHalos::disk_sAM(Subhalo &subhalo, Galaxy &galaxy){
+float DarkMatterHalos::enclosed_total_mass(const Subhalo &subhalo, double z, float r){
 
-	double rvir = halo_virial_radius(subhalo);
+	ConstGalaxyPtr galaxy;
+	if(subhalo.subhalo_type == Subhalo::SATELLITE){
+		galaxy = subhalo.type1_galaxy();
+	}
+	else{
+		galaxy = subhalo.central_galaxy();
+	}
+	double mgal = 0;
+
+	auto rvir = halo_virial_radius(subhalo.host_halo, z);
+	auto rnorm = r/rvir;
+
+	//calculate enclosed DM mass
+	auto mdm = subhalo.Mvir * enclosed_mass(rvir, subhalo.concentration);
+
+	//calculate enclosed hot gas mass (only relevant for isothermal sphere)
+	auto mhot = subhalo.hot_halo_gas.mass * std::pow(rnorm,2);
+
+	//calculate enclosed galaxy mass
+	if(galaxy){
+		mgal = galaxy->enclosed_mass_disk(r) + galaxy->enclosed_bulge_mass(r);
+	}
+
+	return mdm + mhot + mgal;
+}
+
+void DarkMatterHalos::disk_sAM(Subhalo &subhalo, Galaxy &galaxy, double z){
+
+	double rvir = halo_virial_radius(subhalo.host_halo, z);
 
 	//disk properties. Use composite size of disk.
 	double rdisk = galaxy.disk_size();
@@ -310,9 +362,9 @@ void DarkMatterHalos::disk_sAM(Subhalo &subhalo, Galaxy &galaxy){
 
 }
 
-void DarkMatterHalos::bulge_sAM(Subhalo &subhalo, Galaxy &galaxy){
+void DarkMatterHalos::bulge_sAM(Subhalo &subhalo, Galaxy &galaxy, double z){
 
-	double rvir = halo_virial_radius(subhalo);
+	double rvir = halo_virial_radius(subhalo.host_halo, z);
 
 	//disk properties. Use composite size of disk.
 	double rdisk = galaxy.disk_size();
@@ -345,14 +397,14 @@ void DarkMatterHalos::bulge_sAM(Subhalo &subhalo, Galaxy &galaxy){
 
 }
 
-void DarkMatterHalos::transfer_bulge_am(SubhaloPtr &subhalo, GalaxyPtr &galaxy, double z){
+void DarkMatterHalos::transfer_bulge_am(SubhaloPtr &subhalo, Galaxy &galaxy, double z){
 
 	//modify AM based on mass weighting. How to do this should depend on size model.
 	if(params.sizemodel == DarkMatterHaloParameters::MO98){
-  	   	galaxy->disk_gas.rscale = disk_size_theory(*subhalo, z);
+		galaxy.disk_gas.rscale = disk_size_theory(*subhalo, z);
 
-  	   	//define disk angular momentum.
-  	   	disk_sAM(*subhalo, *galaxy);
+		// define disk angular momentum.
+		disk_sAM(*subhalo, galaxy, z);
 	}
 	else if (params.sizemodel == DarkMatterHaloParameters::COLE00){
 		//TODO
@@ -424,10 +476,11 @@ struct lambert_w0<double>
 	}
 };
 
-xyz<float> DarkMatterHalos::random_point_in_sphere(float r)
+xyz<float> DarkMatterHalos::random_point_in_sphere(float r, std::default_random_engine &generator)
 {
 	// We distribute cos_theta flatly instead of theta itself to end up with a
 	// more uniform distribution of points in the sphere
+	std::uniform_real_distribution<float> flat_distribution(0, 1);
 	float cos_theta = flat_distribution(generator) * 2.0 - 1; //flat between -1 and 1.
 	float theta = std::acos(cos_theta);
 	float sin_theta = std::sin(theta);
@@ -439,7 +492,11 @@ xyz<float> DarkMatterHalos::random_point_in_sphere(float r)
 	};
 }
 
-void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo){
+void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz<float> &L, double total_am, const HaloPtr &halo, const Galaxy &galaxy)
+{
+
+	// Prime the generator with a known seed to allow for reproducible runs
+	std::default_random_engine generator(exec_params.get_seed(galaxy));
 
 	double c = halo->concentration;
 
@@ -448,7 +505,7 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	// Assign positions based on an NFW halo of concentration c.
 	nfw_distribution<double> r(c);
 	double rproj = r(generator);
-	pos = halo->position + random_point_in_sphere(rvir * rproj);
+	pos = halo->position + random_point_in_sphere(rvir * rproj, generator);
 
 	// Assign velocities using NFW velocity dispersion at the radius in which the galaxy is and assuming isotropy.
 	double sigma = std::sqrt(0.333 * constants::G * halo->Mvir * enclosed_mass(rproj, c) / (rvir * rproj));
@@ -463,7 +520,7 @@ void DarkMatterHalos::generate_random_orbits(xyz<float> &pos, xyz<float> &v, xyz
 	v = halo->velocity + delta_v;
 
 	// Assign angular momentum based on random angles,
-	L = random_point_in_sphere(total_am);
+	L = random_point_in_sphere(total_am, generator);
 
 }
 

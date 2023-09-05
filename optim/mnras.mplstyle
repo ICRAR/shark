@@ -1,0 +1,29 @@
+# Set fontsize and options
+font.size: 8
+font.family: STIXGeneral
+mathtext.fontset: stix
+
+# Set the figure size (for MNRAS!)
+figure.figsize: 3.3, 3.0
+figure.dpi: 300
+
+# Remove padding
+figure.constrained_layout.use: True
+figure.constrained_layout.h_pad: 0.008
+figure.constrained_layout.w_pad: 0.008
+figure.constrained_layout.hspace: 0.012
+figure.constrained_layout.wspace: 0.012
+
+# Change ticks to face in instead of out
+xtick.direction: in
+ytick.direction: in
+
+# Change color cycle
+axes.prop_cycle: cycler('color', ['2a9d8f','b7094c','ffb703','577590','e76f51','577590', '5e548e', 'ffbd00'])
+
+# Marker
+lines.markersize : 2
+
+# Remove Legend box
+legend.frameon: False
+legend.fontsize: 6

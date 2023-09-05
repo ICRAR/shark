@@ -24,6 +24,7 @@
 #include <cmath>
 #include <gsl/gsl_errno.h>
 
+#include "galaxy.h"
 #include "logging.h"
 #include "numerical_constants.h"
 #include "star_formation.h"
@@ -37,6 +38,7 @@ struct galaxy_properties_for_integration {
 	double re;
 	double rse;
 	double zgas;
+	double torb;
 	bool burst;
 };
 
@@ -55,8 +57,12 @@ StarFormationParameters::StarFormationParameters(const Options &options)
 
 	options.load("star_formation.clump_factor_kmt09", clump_factor_KMT09);
 
+	options.load("star_formation.efficiency_sf_kd12", efficiency_sf);
+	options.load("star_formation.gmc_surface_density", gmc_surface_density);
+
 	// Convert surface density to internal code units.
 	sigma_HI_crit = sigma_HI_crit * std::pow(constants::MEGA,2.0);
+        gmc_surface_density = gmc_surface_density * std::pow(constants::MEGA,2.0);
 
 	// Define critical density for the normal to starburst SF transition for the KMT09 model in Msun/Mpc^2.
 	sigma_crit_KMT09 = 85.0 * std::pow(constants::MEGA , 2.0);
@@ -79,8 +85,11 @@ Options::get<StarFormationParameters::StarFormationModel>(const std::string &nam
 	else if (lvalue == "kmt09") {
 		return StarFormationParameters::KMT09;
 	}
+	else if(lvalue == "kd12") {
+		return StarFormationParameters::KD12;
+	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are br06, gd11, k13 or kmt09";
+	os << name << " option value invalid: " << value << ". Supported values are br06, gd11, k13, kmt09, kd12";
 	throw invalid_option(os.str());
 }
 
@@ -94,7 +103,7 @@ StarFormation::StarFormation(StarFormationParameters parameters, RecyclingParame
 }
 
 double StarFormation::star_formation_rate(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
-								          bool burst, double vgal, double &jrate, double jgas) {
+					  bool burst, double vgal, double &jrate, double jgas) {
 
 	if (std::isnan(rgas)) {
 		throw invalid_argument("rgas is NaN, cannot calculate star formation rate");
@@ -128,12 +137,16 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		Sigma_star = cosmology->comoving_to_physical_mass(mstar) / constants::PI2 / (rse * rse) ;
 	}
 
+	//orbital time of the gas in Gyr
+	double torb = 2.0 * constants::MPCKM2GYR * rgas / vgal;
+
 	galaxy_properties_for_integration props = {
 		Sigma_gas,
 		Sigma_star,
 		re,
 		rse,
 		zgas/recycleparams.zsun,
+		torb,
 		burst,
 	};
 
@@ -233,9 +246,9 @@ double StarFormation::star_formation_rate(double mcold, double mstar, double rga
 		jrate = 0;
 	}
 
-	if(mcold > 0 && result <= 0){
+	if(mcold > 0 && result <= 0 && mstar > 0){
 		std::ostringstream os;
-		os << "Galaxy with SFR=0 and mcold " << mcold;
+		os << "Galaxy with SFR=0, mcold " << mcold << ", mstar " << mstar << ", rgas" << rgas << ", rstar" << rstar;
 		throw invalid_argument(os.str());
 	}
 
@@ -268,8 +281,13 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 
 	double sfr_density = 0;
 
-	if(parameters.model == StarFormationParameters::BR06 || parameters.model == StarFormationParameters::GD14){
+	if(parameters.model == StarFormationParameters::BR06 ||
+			parameters.model == StarFormationParameters::GD14){
 		sfr_density = PI2 * parameters.nu_sf * fracmol * Sigma_gas * r; //Add the 2PI*r to Sigma_SFR to make integration.
+	}
+	else if (parameters.model == StarFormationParameters::KD12){
+		double tdep = kd12_taudep(Sigma_gas, props);
+		sfr_density = PI2 * fracmol * Sigma_gas / tdep * r;
 	}
 	else if (parameters.model == StarFormationParameters::KMT09 || parameters.model == StarFormationParameters::K13){
 		double sfr_ff = 0;
@@ -285,7 +303,7 @@ double StarFormation::star_formation_rate_surface_density(double r, void * param
 	}
 
 	// If the star formation mode is starburst, then apply boosting in star formation.
-	if(props->burst){
+	if(props->burst && parameters.model != StarFormationParameters::KD12){
 		sfr_density = sfr_density * parameters.boost_starburst;
 	}
 
@@ -331,7 +349,8 @@ double StarFormation::fmol(double Sigma_gas, double Sigma_stars, double zgas, do
 
 	double rmol = 0;
 
-	if(parameters.model == StarFormationParameters::BR06){
+	if(parameters.model == StarFormationParameters::BR06 ||
+			parameters.model == StarFormationParameters::KD12){
 		rmol = std::pow((midplane_pressure(Sigma_gas,Sigma_stars,r)/parameters.Po),parameters.beta_press);
 	}
 	else if (parameters.model == StarFormationParameters::GD14){
@@ -439,6 +458,38 @@ double StarFormation::k13_fmol(double zgas, double sigma_gas) const {
 
 }
 
+double StarFormation::kd12_taudep(double sigma_gas, void * params) const{
+
+	using namespace constants;
+
+	// apply molecular SF law
+	auto props = static_cast<galaxy_properties_for_integration *>(params);
+
+	// in Gyr
+	double tdep = 3.5 * props->torb / parameters.efficiency_sf;
+
+	double sigma_gmc = parameters.gmc_surface_density; 
+	if(sigma_gmc < sigma_gas){
+		sigma_gmc= sigma_gas;
+	}
+
+	// in Gyr
+	double tgmc = 1.9 / parameters.efficiency_sf * (parameters.gas_velocity_dispersion / 10.0)
+			* std::pow(sigma_gmc/1e14, -0.75) * std::pow(sigma_gas/1e13, -0.25);
+
+	double t = tdep;
+	if(t > tgmc){
+		t = tgmc;
+	}
+
+	//Put an upper limit to something similar to the numbers observed in the outkirts of spirals
+	if(t > 100){
+		t=100;
+	}
+
+	return t;
+}
+
 
 
 double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas, double rstar, double zgas, double z,
@@ -504,14 +555,14 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 	}
 
 	// Avoid negative values.
-	if(result <0){
+	if(result < 0){
 		result = 0.0;
 	}
 
 	result = cosmology->physical_to_comoving_mass(result);
 
 	//Avoid AM calculation in the case of starbursts.
-	if(!bulge && jcalc){
+	if(!bulge && jcalc && result > 0){
 		// Check whether user wishes to calculate angular momentum transfer from gas to stars.
 		if(parameters.angular_momentum_transfer){
 
@@ -563,15 +614,15 @@ double StarFormation::molecular_hydrogen(double mcold, double mstar, double rgas
 		}
 	}
 	else{
-		//In the case of bulges or the case where we do not need to calculate j (jcalc == false).
+		//In the case of bulges or the case where we do not need to calculate j (jcalc == false) or the case where mmol == 0.
 		jmol = 0;
 	}
 
 	return result;
 }
 
-double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z){
-
+double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z) const
+{
 	double re = cosmology->comoving_to_physical_size(rgas / constants::RDISK_HALF_SCALE, z);
 
 	double sigma0 = mgas/constants::PI2 / (re * re);
@@ -595,7 +646,7 @@ double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z){
 
 }
 
-StarFormation::molecular_gas StarFormation::get_molecular_gas(const GalaxyPtr &galaxy, double z, bool jcalc)
+StarFormation::molecular_gas StarFormation::get_molecular_gas(const Galaxy &galaxy, double z, bool jcalc)
 {
 	double m_mol    = 0;
 	double m_atom   = 0;
@@ -608,17 +659,17 @@ StarFormation::molecular_gas StarFormation::get_molecular_gas(const GalaxyPtr &g
 	double m_neutral = 0;
 	double zgas = 0;
 	double jgas = 0;
-	double vgal = galaxy->vmax;
+	double vgal = galaxy.vmax;
 
 	// Apply ionised fraction correction only in the case of disks.
-	if (galaxy->disk_gas.mass > 0) {
-		jgas = galaxy->disk_gas.sAM;
+	if (galaxy.disk_gas.mass > 0) {
+		jgas = galaxy.disk_gas.sAM;
 
-		f_ion = ionised_gas_fraction(galaxy->disk_gas.mass, galaxy->disk_gas.rscale, z);
-		zgas = galaxy->disk_gas.mass_metals / galaxy->disk_gas.mass;
-		m_neutral = (1-f_ion) * galaxy->disk_gas.mass;
+		f_ion = ionised_gas_fraction(galaxy.disk_gas.mass, galaxy.disk_gas.rscale, z);
+		zgas = galaxy.disk_gas.mass_metals / galaxy.disk_gas.mass;
+		m_neutral = (1-f_ion) * galaxy.disk_gas.mass;
 
-		m_mol = (1-f_ion) * molecular_hydrogen(galaxy->disk_gas.mass,galaxy->disk_stars.mass,galaxy->disk_gas.rscale, galaxy->disk_stars.rscale, zgas, z, j_mol, jgas, vgal, false, jcalc);
+		m_mol = (1-f_ion) * molecular_hydrogen(galaxy.disk_gas.mass,galaxy.disk_stars.mass,galaxy.disk_gas.rscale, galaxy.disk_stars.rscale, zgas, z, j_mol, jgas, vgal, false, jcalc);
 		m_atom = m_neutral - m_mol;
 
 		if(jcalc){
@@ -626,17 +677,18 @@ StarFormation::molecular_gas StarFormation::get_molecular_gas(const GalaxyPtr &g
 			j_atom = (jgas * m_neutral - j_mol * m_mol) / m_atom;
 		}
 	}
-	if (galaxy->bulge_gas.mass > 0) {
-		zgas = galaxy->bulge_gas.mass_metals / galaxy->bulge_gas.mass;
-		m_mol_b = molecular_hydrogen(galaxy->bulge_gas.mass,galaxy->bulge_stars.mass,galaxy->bulge_gas.rscale, galaxy->bulge_stars.rscale, zgas, z, j_mol, jgas, vgal, true, jcalc);
-		m_atom_b = galaxy->bulge_gas.mass - m_mol_b;
+	if (galaxy.bulge_gas.mass > 0) {
+		double dummy_jmol;
+		zgas = galaxy.bulge_gas.mass_metals / galaxy.bulge_gas.mass;
+		m_mol_b = molecular_hydrogen(galaxy.bulge_gas.mass,galaxy.bulge_stars.mass,galaxy.bulge_gas.rscale, galaxy.bulge_stars.rscale, zgas, z, dummy_jmol, jgas, vgal, true, jcalc);
+		m_atom_b = galaxy.bulge_gas.mass - m_mol_b;
 	}
 
 	return molecular_gas {m_mol, m_atom, m_mol_b, m_atom_b, j_mol, j_atom};
 }
 
-double StarFormation::manual_integral(func_t f, void * params, double rmin, double rmax){
-
+double StarFormation::manual_integral(func_t f, void * params, double rmin, double rmax) const
+{
 	double integral = 0;
 
 	int nbins = 30;
@@ -664,7 +716,6 @@ double StarFormation::manual_integral(func_t f, void * params, double rmin, doub
 	}
 
 	return integral;
-
 }
 
 }  // namespace shark

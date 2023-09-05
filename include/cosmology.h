@@ -79,6 +79,7 @@ public:
 	double comoving_to_physical_velocity(double v, double z) const;
 	double comoving_to_physical_mass(double m) const;
 	double physical_to_comoving_mass(double m) const;
+	double physical_to_comoving_size(double r, double z) const;
 	double convert_redshift_to_age(double z) const;
 	double convert_age_to_redshift_lcdm(double t) const;
 	double expansion_factor(double t) const;
@@ -91,7 +92,12 @@ public:
 		return parameters.OmegaB/parameters.OmegaM;
 	};
 
+	double universal_baryon_fraction_relative_to_dm() const {
+		return parameters.OmegaB/(parameters.OmegaM - parameters.OmegaB);
+	};
+
 	double hubble_parameter (double z) const;
+	double critical_density (double z) const;
 
 	CosmologicalParameters parameters;
 
