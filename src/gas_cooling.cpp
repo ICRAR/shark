@@ -510,7 +510,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		}// end if of AGN feedback model
 	}// end if of BOWER06 AGN feedback model.
 
-	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
+	else if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23){
 
 		//a pseudo cooling luminosity k*T/lambda(T,Z)
 		double Lpseudo_cool = constants::k_Boltzmann_erg * Tvir / std::pow(10.0,logl) / 1e40; //in units of 1e40 s/cm^3*gr^2.
@@ -523,7 +523,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 		//Mass heating rate from AGN in units of Msun/Gyr.
 		double mheatrate = 0;
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23){
 
 			// decide whether this halo is in a quasi-hydrostatic regime or not in the case of central subhalos, otherwise just take the status from the central subhalo.
 			if(subhalo.subhalo_type == Subhalo::CENTRAL) {
@@ -565,7 +565,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
 			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
-		else if(subhalo.cooling_subhalo_tracking.rheat < rheat && agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS22){
+		else if(subhalo.cooling_subhalo_tracking.rheat < rheat && agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23){
 			subhalo.cooling_subhalo_tracking.rheat = rheat;
 		}
 

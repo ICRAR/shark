@@ -90,11 +90,11 @@ Options::get<AGNFeedbackParameters::AGNFeedbackModel>(const std::string &name, c
 	else if (lvalue == "croton16") {
 		return AGNFeedbackParameters::CROTON16;
 	}
-	else if (lvalue == "lagos22") {
-		return AGNFeedbackParameters::LAGOS22;
+	else if (lvalue == "lagos23") {
+		return AGNFeedbackParameters::LAGOS23;
 	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are bower06, croton16 and lagos22";
+	os << name << " option value invalid: " << value << ". Supported values are bower06, croton16 and lagos23";
 	throw invalid_option(os.str());
 }
 
@@ -200,13 +200,13 @@ double AGNFeedback::accretion_rate_hothalo_smbh(double Lcool, double tacc, doubl
 		else if (parameters.model == AGNFeedbackParameters::CROTON16) {
 			macc = parameters.kappa_agn * 0.9375 * PI * G_cgs * M_Atomic_g * mu_Primordial * Lcool * 1e40 * (smbh.mass * MSOLAR_g);
 		}
-		else if (parameters.model == AGNFeedbackParameters::LAGOS22) {
+		else if (parameters.model == AGNFeedbackParameters::LAGOS23) {
 			// here we adopt Croton et al. (2006)
 			macc = parameters.kappa_agn * (smbh.mass / 1e8) * (fhot / 0.1) * std::pow( vvir / 200.0, 3.0);
 		}
 
 		// calculate new spin if necessary
-		if(parameters.model == AGNFeedbackParameters::LAGOS22){
+		if(parameters.model == AGNFeedbackParameters::LAGOS23){
 			// in this case compute spin
 			if(parameters.spin_model == AGNFeedbackParameters::VOLONTERI07){
 				volonteri07_spin(smbh);
@@ -252,14 +252,14 @@ double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh, bool starbu
 
 	auto macc = cosmology->comoving_to_physical_mass(smbh.macc_hh);
 
-	if(parameters.model == AGNFeedbackParameters::LAGOS22 || starburst){
+	if(parameters.model == AGNFeedbackParameters::LAGOS23 || starburst){
 		//In this case also sum the starburst accretion rate
 		macc += cosmology->comoving_to_physical_mass(smbh.macc_sb);
 	}
 
 	// assume constant radiation efficiency unless this model is Lagos22
 	double Lbol = 0;
-	if (parameters.model == AGNFeedbackParameters::LAGOS22) {
+	if (parameters.model == AGNFeedbackParameters::LAGOS23) {
 		double LEdd = eddington_luminosity(mBH);
 		double m_dot_norm = accretion_rate_ratio(macc,mBH);
 		
@@ -337,7 +337,7 @@ double AGNFeedback::smbh_growth_starburst(double mgas, double vvir, double tacc,
 		}
         
 		// calculate new spin if necessary
-		if(parameters.model == AGNFeedbackParameters::LAGOS22){
+		if(parameters.model == AGNFeedbackParameters::LAGOS23){
 			// in this case compute spin
 			if(parameters.spin_model == AGNFeedbackParameters::VOLONTERI07){
 				volonteri07_spin(smbh);

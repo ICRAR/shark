@@ -76,7 +76,7 @@ public:
 	enum AGNFeedbackModel {
 		CROTON16 = 0,
 		BOWER06,
-		LAGOS22
+		LAGOS23
 	};
 
 	enum SpinModel{
