@@ -446,10 +446,10 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), 'k',  linewidth=1)
 
     
-#print("cosmic SFR")
-#    for a,b,c,d,e in zip(redshifts[ind], us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), np.log10(sfrd[ind]*pow(h0,2.0)), np.log10(sfrb[ind]*pow(h0,2.0))):
-#        print(a,b,c,d,e)
-
+    #print("cosmic SFR")
+    #for a,b,c,d,e in zip(redshifts[ind], us.look_back_time(redshifts[ind]), np.log10(sfr[ind]*pow(h0,2.0)), np.log10(sfrd[ind]*pow(h0,2.0)), np.log10(sfrb[ind]*pow(h0,2.0))):
+    #    print(a,b,c,d,e)
+    #print("finished printing cosmic sfr")
     ind = np.where(sfrd > 0)
     ax.plot(us.look_back_time(redshifts[ind]), np.log10(sfrd[ind]*pow(h0,2.0)), 'b', linestyle='dashed', linewidth=1)
     ind = np.where(sfrb > 0)
@@ -561,6 +561,7 @@ def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history
 
 
     zin, sfr_l18, sfr_l18d, sfr_l18b = common.load_observation(obsdir, 'Models/SharkVariations/Global_Lagos18.dat', [0, 2, 3, 4])
+    #zin, sfr_l18, sfr_l18d, sfr_l18b = common.load_observation(obsdir, 'Models/SharkVariations/Global_SFR_Lagos23_OldTrees.dat', [0, 2, 3, 4])
 
     ax.plot(zin, sfr_l18, 'k', linewidth=1, linestyle='dashed', label ='v1.1 (L18)')
     ax.plot(zin, sfr_l18d, 'b', linewidth=1,linestyle='dashed') #,  label ='disks (L18)')

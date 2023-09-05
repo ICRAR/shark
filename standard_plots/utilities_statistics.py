@@ -96,6 +96,36 @@ def wmedians(x=None, y=None, xbins=None, low_numbers=False, nmin=10):
 
     return result
 
+def wmedians_2575(x=None, y=None, xbins=None, low_numbers=False, nmin=10):
+
+    nbins = len(xbins)
+    #define size of bins, assuming bins are all equally spaced.
+    dx = xbins[1] - xbins[0]
+    result = np.zeros(shape = (3, nbins))
+
+    for i in range (0,nbins):
+        xlow = xbins[i]-dx/2.0
+        xup  = xbins[i]+dx/2.0
+        ind  = np.where((x > xlow) & (x< xup))
+        if(len(x[ind]) >= nmin):
+
+            obj_bin = len(x[ind])
+            ybin    = y[ind]
+            result[0, i] = np.median(ybin)
+            #sort array on 1/y because we want it to sort from the smallest to the largest item, and the default of argsort is to order from the largest to the smallest.
+            IDs = np.argsort(ybin,kind='quicksort')
+            ID16th = int(np.floor(obj_bin*0.25))+1   #take the lower edge.
+            ID84th = int(np.floor(obj_bin*0.75))-1   #take the upper edge.
+            result[1, i] = np.abs(result[0, i] - ybin[IDs[ID16th]])
+            result[2, i] = np.abs(ybin[IDs[ID84th]] - result[0, i])
+        elif(low_numbers and len(x[ind]) > 0):
+            ybin    = y[ind]
+            result[0, i] = np.median(ybin)
+            result[1, i] = np.abs(result[0, i] - np.min(y[ind]))
+            result[2, i] = np.abs(np.max(y[ind]) - result[0, i])
+
+    return result
+
 
 def stacking(x=None, y=None, xbins=None, low_numbers=False):
 

@@ -257,7 +257,18 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     #zlist = np.arange(2,10,0.25)
     #zlist = (0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 0, 0.25, 0.5, 1, 2, 3, 4, 6, 8, 9, 10)
 
-    zlist = [1.0, 1.5, 2.0, 3.0, 3.95, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0] #0.25, 0.38, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0]
+    zlist_given = False
+    if(zlist_given):
+        zlist = [0.381963715160695, 1.77053590476006]
+    else:
+        snap_list = [269, 224, 213, 205, 188, 174, 153, 140, 129, 120, 111, 104, 91, 82, 75, 69, 63, 58]
+        #[199, 185, 179, 174, 164, 156, 149, 142, 136, 131, 113, 100, 88, 79, 70, 63, 57, 51]
+
+    #269 224 213 205 188 174 153 140 129 120 111 104 91 82 75 69 63 58
+    #zlist = [0, 0.254144, 0.5, 0.75744098, 1.00678003, 1.49550998, 2.00202990, 
+    #zlist = [0.381963715160695, 1.77053590476006] 
+            #0, 0.24944700, 0.38672200, 0.49594200, 0.75744098, 1.00678003, 1.49550998, 2.00202990, 2.51012993, 2.98918009, 3.53362989, 4.00793982, 5.02441978, 6.01074982, 7.00544024, 7.96958017, 9.04985046, 10.04880047] 
+    #1.0, 1.5, 2.0, 3.0, 3.95, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0] #0.25, 0.38, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0]
             #0, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 3.95, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0] #0.25, 0.38, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0]
     #8.02352, 8.94312532315157, 9.95655, 10.5013916683919, 12.520639255824]
     #0, 0.194739, 0.254144, 0.359789, 0.450678, 0.8, 0.849027, 0.9, 1.20911, 1.28174, 1.39519, 1.59696, 2.00392, 2.47464723643932, 2.76734390952347, 3.01916, 3.21899984389701, 3.50099697082904, 3.7248038025221, 3.95972, 4.465197621546, 4.73693842543988, 5.02220991014863, 5.52950356184419, 5.96593, 6.55269895697227, 7.05756323172746, 7.45816170313544, 8.02352, 8.94312532315157, 9.95655, 10.5013916683919, 12.520639255824] 
@@ -271,10 +282,16 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge', 'mgas_metals_disk', 
                            'mgas_metals_bulge', 'mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy')}
 
-    for index, snapshot in enumerate(redshift_table[zlist]):
-        for subv in subvols:
-            hdf5_data = common.read_data(model_dir, snapshot, fields, [subv])
-            prepare_data(hdf5_data, index, model_dir, snapshot, subv)
+    if(zlist_given): 
+       for index, snapshot in enumerate(redshift_table[zlist]):
+           for subv in subvols:
+               hdf5_data = common.read_data(model_dir, snapshot, fields, [subv])
+               prepare_data(hdf5_data, index, model_dir, snapshot, subv)
+    else:
+        for index, snapshot in enumerate(snap_list):
+            for subv in subvols:
+               hdf5_data = common.read_data(model_dir, snapshot, fields, [subv])
+               prepare_data(hdf5_data, index, model_dir, snapshot, subv)
 
 if __name__ == '__main__':
     main(*common.parse_args())

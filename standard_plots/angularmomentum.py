@@ -72,6 +72,7 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
 
 
     bin_it = functools.partial(us.wmedians, xbins=xmf, low_numbers=False)
+    bin_it_largem = functools.partial(us.wmedians, xbins=xmf_obs, low_numbers=False)
     bin_it_halo = functools.partial(us.wmedians, xbins=xmfh, low_numbers=True)
     bin_it_j    = functools.partial(us.wmedians, xbins=xlf, low_numbers=True)
 
@@ -108,7 +109,7 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     rgal_gas  = (rg_disk * mgas_disk + rg_bulge * mgas_bulge ) / ( mgas_disk + mgas_bulge)
    
     ind = np.where(mdisk+mbulge > 0)
-    rcomb[index,:] = bin_it(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
+    rcomb[index,:] = bin_it_largem(x=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                             y=np.log10((mdisk[ind]*rdisk[ind]  + mbulge[ind]*rbulge[ind])*MpcToKpc / (mdisk[ind]+mbulge[ind]))- np.log10(float(h0)))
 
 
@@ -243,11 +244,11 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
                                     y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
     ind = np.where((mbulge > 0) & (mbulge/(mbulge+mdisk) > 0.5) & (rbulge > 1e-6))
-    bulge_size[index,:] = bin_it(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
+    bulge_size[index,:] = bin_it_largem(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
     ind = np.where((mbulge > 0) & (mdisk/(mbulge+mdisk) <= 0.5) & (rbulge > 1e-6))
-    disk_size[index,:] = bin_it(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
+    disk_size[index,:] = bin_it_largem(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                  y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
     return (lh, lj, lm, bt, ms, ssfr, mass_cut)
@@ -283,7 +284,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            fill = 'none'
         elif((component ==1) & (include_ambig == True)):
            #select bulges of interest:
-           ind = np.where((sizes_table[:,3] == 2) | (sizes_table[:,2] == 1) | (sizes_table[:,3] ==3)) #Sph or D+B or Ambg
+           ind = np.where((sizes_table[:,3] == 2) | (sizes_table[:,2] == 1) | (sizes_table[:,3] ==3) | (sizes_table[:,2] == 3)) #Sph or D+B or Ambg or P+D
            mass = sizes_table[ind,32]
            r = sizes_table[ind,45]
            ind = np.where(r == -99)
@@ -291,7 +292,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            lab = '(b+Sph+ambig)'
            fill = 'full'
         elif((component ==1) & (include_ambig == False)):
-           ind = np.where((sizes_table[:,3] == 2) | (sizes_table[:,2] == 1)) #Sph or D+B
+           ind = np.where((sizes_table[:,3] == 2) | (sizes_table[:,2] == 1) | (sizes_table[:,2] == 3)) #Sph or D+B or P+D
            mass = sizes_table[ind,32]
            r = sizes_table[ind,45]
            ind = np.where(r == -99)
@@ -307,6 +308,16 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            r[ind] = r_bulge_assumed
            lab = '(Sph+ambig)'
            fill = 'none'
+        elif(component == 5):
+           #select bulges of interest:
+           ind = np.where((sizes_table[:,2] == 1)) #Sph
+           mass = sizes_table[ind,32]
+           r = sizes_table[ind,45]
+           ind = np.where(r == -99)
+           r[ind] = r_bulge_assumed
+           lab = '(b)'
+           fill = 'none'
+
         elif(component == 2):
            mass = np.zeros(shape = len(sizes_table[:,3]))
            r = np.zeros(shape = len(sizes_table[:,3]))
@@ -355,7 +366,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
 
     #Predicted size-mass for disks in disk=dominated galaxies
     ind = np.where(disk_size[0,0,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf_obs[ind]
     yplot = disk_size[0,0,ind]
     errdn = disk_size[0,1,ind]
     errup = disk_size[0,2,ind]
@@ -401,7 +412,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     #Predicted size-mass for bulges in bulge-dominated systems
     ind = np.where(bulge_size[0,0,:] != 0)
     if(len(xmf[ind]) > 0):
-        xplot = xmf[ind]
+        xplot = xmf_obs[ind]
         yplot = bulge_size[0,0,ind]
         errdn = bulge_size[0,1,ind]
         errup = bulge_size[0,2,ind]
@@ -431,7 +442,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     ax.plot(m[90:len(r)], r[90:len(r)], linestyle='dotted',color='k', label='Lange+16 (bulges)')
     plot_profuse_sizes(ax, component=1, color='Crimson',include_ambig = True)
     plot_profuse_sizes(ax, component=1, color='Crimson',include_ambig = False)
-    #plot_profuse_sizes(ax, component=4, color='darkorange')
+    plot_profuse_sizes(ax, component=5, color='darkorange')
 
     common.prepare_legend(ax, ['r','IndianRed','black','Crimson','Crimson','darkorange'], loc=2)
 
@@ -448,7 +459,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
 
     #Predicted size-mass for disks
     ind = np.where(rcomb[0,0,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf_obs[ind]
     yplot = rcomb[0,0,ind]
     errdn = rcomb[0,1,ind]
     errup = rcomb[0,2,ind]
@@ -495,7 +506,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
 
     #Predicted size-mass for disks in disk=dominated galaxies
     ind = np.where(disk_size[0,0,:] != 0)
-    xplot = xmf[ind]
+    xplot = xmf_obs[ind]
     yplot = disk_size[0,0,ind]
     errdn = disk_size[0,1,ind]
     errup = disk_size[0,2,ind]
@@ -539,7 +550,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
     #Predicted size-mass for bulges in bulge-dominated systems
     ind = np.where(bulge_size[0,0,:] != 0)
     if(len(xmf[ind]) > 0):
-        xplot = xmf[ind]
+        xplot = xmf_obs[ind]
         yplot = bulge_size[0,0,ind]
         errdn = bulge_size[0,1,ind]
         errup = bulge_size[0,2,ind]
@@ -1468,9 +1479,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     disk_size_sat = np.zeros(shape = (len(zlist), 3, len(xmf)))
     disk_size_cen = np.zeros(shape = (len(zlist), 3, len(xmf))) 
-    bulge_size    = np.zeros(shape = (len(zlist), 3, len(xmf)))
-    disk_size     = np.zeros(shape = (len(zlist), 3, len(xmf))) 
-    rcomb = np.zeros(shape = (len(zlist), 3, len(xmf)))
+    bulge_size    = np.zeros(shape = (len(zlist), 3, len(xmf_obs)))
+    disk_size     = np.zeros(shape = (len(zlist), 3, len(xmf_obs))) 
+    rcomb = np.zeros(shape = (len(zlist), 3, len(xmf_obs)))
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)

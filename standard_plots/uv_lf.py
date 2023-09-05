@@ -59,7 +59,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
     subplots = (511, 512, 513, 514, 515)
     idx = (0, 1, 2, 3, 4)
     zs  = (0, 1, 2, 3, 4)
-    band = 28
+    band = 0 #28
     labels= ('z=3', 'z=4', 'z=6', 'z=8', 'z=10')
   
     corrm_obs = -5.0*np.log10(h0/0.7) 
@@ -136,10 +136,18 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
            yup  = np.log10(pF8*1e-3+dpuF8*1e-3)
            ax.errorbar(lmF15+corrm_obs, yobs+corry_obs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='v')
 
+           file = obsdir+'/lf/lf1500_z8_adams23.data'
+           lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+           ax.errorbar(lm+corrm_obs, np.log10(p * 1e-5)+corry_obs, yerr=[np.log10(p)-np.log10(dp),np.log10(p + dp) - np.log10(p)], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D', label='Adams+2023')
+
         if(idx == 4):
            file = obsdir+'/lf/lf1500_z10_oesch2018.data'
            lm,p,dpu,dpd = np.loadtxt(file,usecols=[0,1, 2, 3],unpack=True)
            ax.errorbar(lm+corrm_obs, p+corry_obs, yerr=[p-dpu,dpd-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='*', label='Oesch+2018')
+
+           file = obsdir+'/lf/lf1500_z10_adams23.data'
+           lm,p,dp = np.loadtxt(file,usecols=[0,1,2],unpack=True)
+           ax.errorbar(lm+corrm_obs, np.log10(p * 1e-5)+corry_obs, yerr=[np.log10(p)-np.log10(dp),np.log10(p + dp) - np.log10(p)], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D')
 
         #Predicted LF
         ind = np.where(LFs_dust[z,4,band,:] < 0.)
@@ -158,7 +166,7 @@ def plot_uv_lf_evo(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust, nbands):
         ind = np.where(LFs_dust[z,2,band,:] < 0.)
         y = LFs_dust[z,2,band,ind]+volcorr-np.log10(dm)
         ax.plot(xlf_obs[ind],y[0],'r', linewidth=2, linestyle='dashed')
-        if ((idx == 0) or (idx == 1) or (idx ==4)):
+        if ((idx == 0) or (idx == 1) or (idx ==4) or (idx == 3)):
             common.prepare_legend(ax, ['grey','grey','grey'], loc=4)
 
     plt.tight_layout()

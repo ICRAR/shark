@@ -71,13 +71,13 @@ def prepare_data(hdf5_data, index, massgal, massbar, massbar_inside, massgal_mor
 
 
     for i, c in enumerate(thresh):    
-        ind = np.where((typeg <= 0) & (mdisk/(mdisk+mbulge) >= thresh[i]) & (mdisk+mbulge > 0))
-        massgal_morph[i,0,index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
+        ind = np.where((typeg <= 0) & (mdisk/(mdisk+mbulge) >= thresh[i]) & (mdisk+mbulge > 1e8))
+        massgal_morph[i,0,index,:] = us.wmedians_2575(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                        y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                        xbins=xmf2, nmin=50)
     
-        ind = np.where((typeg <= 0) & (mdisk/(mdisk+mbulge) < thresh[i]) & (mdisk+mbulge > 0))
-        massgal_morph[i,1,index,:] = us.wmedians(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
+        ind = np.where((typeg <= 0) & (mdisk/(mdisk+mbulge) < thresh[i]) & (mdisk+mbulge > 1e8))
+        massgal_morph[i,1,index,:] = us.wmedians_2575(x=np.log10(mhalo[ind]) - np.log10(float(h0)),
                                        y=np.log10(mdisk[ind]+mbulge[ind]) - np.log10(float(h0)),
                                        xbins=xmf2,  nmin=50)
  
@@ -159,6 +159,22 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
         mh, sm = common.load_observation(obsdir, 'SMHM/SatKinsAndClusters_Kravtsov18.dat', [0,1])
         ax.errorbar(mh, sm, xerr=0.2, yerr=0.2, color='purple', marker='s',  ls='None', label='Kravtsov+18')
 
+    def plot_observations_romeo20(ax):
+
+        mh, smmh = common.load_observation(obsdir, 'SMHM/Romeo20_SMHM.dat', [0,1])
+        sm = np.log10(10**smmh * 10**mh)
+        ax.plot(mh, sm, color='orange', marker='*',  ls='None', label='Romeo+20', fillstyle='none')
+
+    def plot_observations_romeo20_morph(ax):
+
+        mh, smmh = common.load_observation(obsdir, 'SMHM/Romeo20_SMHM.dat', [0,1])
+        sm = np.log10(10**smmh * 10**mh)
+        ax.plot(mh, sm, color='DarkTurquoise', marker='*',  ls='None', label='Romeo+20 (LTGs)', fillstyle='none')
+
+        mh, smmh = common.load_observation(obsdir, 'SMHM/Romeo20_SMHM_ETGs.dat', [0,1])
+        sm = np.log10(10**smmh * 10**mh)
+        ax.plot(mh, sm, color='OrangeRed', marker='*',  ms=6, ls='None', label='Romeo+20 (ETGs)')
+
     def plot_observations_taylor20(ax):
         sm, sml, smh, hm, hml, hmh = common.load_observation(obsdir, 'SMHM/Taylor20.dat', [0,1,2,3,4,5])
         ax.errorbar(np.log10(hm*1e12), sm, xerr=[np.log10(hm)-np.log10(hml), np.log10(hmh)-np.log10(hm)], yerr=[sm-sml, smh-sm], color='Salmon', marker='d',  ls='None', label='Taylor+20')
@@ -168,17 +184,17 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
         ind = np.where(mhl == 0)
         mhl[ind]=mh[ind] - 0.2
         mhu[ind]=mh[ind] + 0.2
-        ax.errorbar(mh, sm, xerr=[mh-mhl, mhu-mh], yerr=0.2, color='b', marker='s',  ls='None', label='Kravtsov+18 LTGs')
+        ax.errorbar(mh, sm, xerr=[mh-mhl, mhu-mh], yerr=0.2, color='DarkTurquoise', marker='s',  ls='None', label='Kravtsov+18 LTGs')
  
         mh, sm, mhl, mhu = common.load_observation(obsdir, 'SMHM/ETGs_Kravtsov18.dat', [0,1,2,3])
-        ax.errorbar(mh, sm, xerr=[mh-mhl, mhu-mh], yerr=0.2, color='r', marker='s',  ls='None', label='Kravtsov+18 ETGs')
+        ax.errorbar(mh, sm, xerr=[mh-mhl, mhu-mh], yerr=0.2, color='OrangeRed', marker='s',  ls='None', label='Kravtsov+18 ETGs')
 
     def plot_correa(ax):
         mh, sm, sml, smu = common.load_observation(obsdir, 'SMHM/LTGs_Correa19.dat', [0,1,2,3])
-        ax.errorbar(mh, sm, yerr=[sm-sml, smu-sm], color='b', marker='d',  ls='None', label='Correa+20 LTGs')
+        ax.errorbar(mh, sm, yerr=[sm-sml, smu-sm], color='DarkTurquoise', marker='d',  ls='None', fillstyle='none', label='Correa+20 LTGs')
 
         mh, sm, sml, smu = common.load_observation(obsdir, 'SMHM/ETGs_Correa19.dat', [0,1,2,3])
-        ax.errorbar(mh, sm, yerr=[sm-sml, smu-sm], color='r', marker='d',  ls='None', label='Correa+20 ETGs')
+        ax.errorbar(mh, sm, yerr=[sm-sml, smu-sm], color='OrangeRed', marker='d',  ls='None', fillstyle='none', label='Correa+20 ETGs')
 
 
 
@@ -237,10 +253,18 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
     all_labels = (('Shark v2.0', 'v1.1 (L18)', 'Moster+13', 'Behroozi+13', 'EAGLE'), )
 
 
-    def plot_l18(i, ax, label, lstyle='dotted'):
-        mh, sm = common.load_observation(obsdir, 'Models/SharkVariations/SMHM_Lagos18.dat', [0,i+1]) 
-        ind = np.where(sm != 0)
-        ax.plot(mh[ind], sm[ind], 'k', linestyle=lstyle, label=label)
+    def plot_l18(i, ax, label, lstyle='dotted', allgals = True):
+        if(allgals):
+           mh, sm = common.load_observation(obsdir, 'Models/SharkVariations/SMHM_Lagos18.dat', [0,i+1]) 
+           ind = np.where(sm != 0)
+           ax.plot(mh[ind], sm[ind], 'k', linestyle=lstyle, label=label)
+        else:
+           mh, smd, smb = common.load_observation(obsdir, 'Models/SharkVariations/SMHM_Lagos18_Morph.dat', [0,1,2])
+           ind = np.where(smd > 0)
+           ax.plot(mh[ind], smd[ind], 'b', linestyle=lstyle )
+           ind = np.where(smb > 0)
+           ax.plot(mh[ind], smb[ind], 'r', linestyle=lstyle)
+
 
     def plot_eagle(z, ax, label):
         mh, sm, red = common.load_observation(obsdir, 'Models/EAGLE/SMHM.dat', [0,1,4]) 
@@ -390,15 +414,17 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
     if(i == 0):
        plot_observations_kravtsov18(ax)
        plot_observations_taylor20(ax)
+       plot_observations_romeo20(ax)
     if labels:
-        common.prepare_legend(ax, ['k','k','r','b','purple','salmon'], loc=4)
+        common.prepare_legend(ax, ['k','k','r','b','orange','purple','salmon'], loc=4)
 
     ax = fig.add_subplot(212)
-    xmin, xmax, ymin, ymax = 11.5, 14.8, 9.5, 11.7
+    xmin, xmax, ymin, ymax = 11.5, 14.8, 9, 12
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1))
 
     plot_correa(ax)
     plot_observations_kravtsov18_morph(ax)
+    #plot_observations_romeo20_morph(ax)
     #Predicted SMHM
     #ind = np.where(massgal[i,0,:] != 0)
     #xplot = xmf[ind]
@@ -411,26 +437,35 @@ def plot_SMHM_z(plt, outdir, zlist, massgal, obsdir, massgal_morph, thresh, mass
 
     linestyles=['solid', 'dashed', 'dotted']
 
-    for i,c in enumerate(thresh):
-        ind = np.where(massgal_morph[i,0,0,0,:] != 0)
-        xplot = xmf2[ind]
-        yplot = massgal_morph[i,0,0,0,ind]
-        errdn = massgal_morph[i,0,0,1,ind]
-        errup = massgal_morph[i,0,0,2,ind]
-        print(yplot[0]) 
-        #ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='blue', alpha=0.5, interpolate=True)
-        ax.plot(xplot, yplot[0], color='b', linestyle=linestyles[i], label='D/T>%s' % str(c))
+    i == 0
+    ind = np.where(massgal_morph[i,0,0,0,:] != 0)
+    xplot = xmf2[ind]
+    yplot = massgal_morph[i,0,0,0,ind]
+    errdn = massgal_morph[i,0,0,1,ind]
+    errup = massgal_morph[i,0,0,2,ind]
+    print(yplot[0]) 
+    ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='blue', alpha=0.15, interpolate=True)
+    ax.plot(xplot, yplot[0], color='b', linestyle=linestyles[i], label='D/T>0.5')
+    #if i == 0:
+    #   print("#Stellar-halo mass relation for B/T<0.5")
+    #   for a,b in zip(xplot, yplot[0]):
+    #       print(a,b)
+   
+    ind = np.where(massgal_morph[i,1,0,0,:] != 0)
+    xplot = xmf2[ind]
+    yplot = massgal_morph[i,1,0,0,ind]
+    errdn = massgal_morph[i,1,0,1,ind]
+    errup = massgal_morph[i,1,0,2,ind]
     
-        ind = np.where(massgal_morph[i,1,0,0,:] != 0)
-        xplot = xmf2[ind]
-        yplot = massgal_morph[i,1,0,0,ind]
-        errdn = massgal_morph[i,1,0,1,ind]
-        errup = massgal_morph[i,1,0,2,ind]
-    
-        #ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='red', alpha=0.5, interpolate=True)
-        ax.plot(xplot, yplot[0], color='r', linestyle=linestyles[i])
+    ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='red', alpha=0.15, interpolate=True)
+    ax.plot(xplot, yplot[0], color='r', linestyle=linestyles[i], label='D/T<0.5')
+    #if i == 0:
+    #   print("#Stellar-halo mass relation for B/T>0.5")
+    #   for a,b in zip(xplot, yplot[0]):
+    #       print(a,b)
 
-    common.prepare_legend(ax, ['b','b','b','r','b','r'], loc=4)
+    plot_l18(i, ax, 'v1.1', lstyle='dotted', allgals = False)
+    common.prepare_legend(ax, ['b','r','DarkTurquoise','OrangeRed', 'DarkTurquoise','OrangeRed'], loc=4)
 
     plt.tight_layout()
     common.savefig(outdir, fig, 'SMHM_z0_compL18.pdf')

@@ -230,7 +230,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     
     LF_qso = np.zeros(shape = (len(zlist), len(Lbins)))
    
-    read_spin = False
+    read_spin = True
 
     if(read_spin):
         fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'bh_spin')}

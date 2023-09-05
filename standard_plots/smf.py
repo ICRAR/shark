@@ -1166,7 +1166,7 @@ def plot_mzr_z0(plt, outdir, obsdir, h0, mzr_cen, mzr_sat, mszr, mszr_cen, mszr_
 
 def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
 
-    bin_it = functools.partial(us.wmedians, xbins=xmf, nmin=20)
+    bin_it = functools.partial(us.wmedians, xbins=xmf, nmin=10)
 
     fig = plt.figure(figsize=(5,5))
     xtit="$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
@@ -1372,6 +1372,11 @@ def calculate_HImass_above_threshold(MHI, rgas, thresh):
     return MHIout
     
 
+def calculate_SFR_inside(SFR, rs, thresh):
+
+    return SFR * (1 - ( 1 + thresh/(rs/1.67)) * np.exp(-thresh/(rs/1.67)))
+
+
 def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist_smf_sat, 
                  hist_smf_30kpc, hist_HImf, hist_HImf2, hist_HImf_cen, hist_HImf_sat, hist_H2mf, 
                  hist_H2mf_cen, hist_H2mf_sat, mainseq, mainseqsf, sfe, mainseq_cen, 
@@ -1385,6 +1390,12 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
      mstars_metals_disk, mstars_metals_bulge, typeg, mvir_hosthalo, rstar_bulge, 
      mbulge_mergers, mbulge_diskins, mbulge_mergers_assembly, mbulge_diskins_assembly,
      sAM_atomic_disk, vmax, rgas_disk) = hdf5_data
+
+    rstar = (rstar_disk * mdisk + rstar_bulge * mbulge) / (mdisk + mbulge)
+
+    ind = np.where((sfr_disk + sfr_burst > 0) & (rstar > 0))
+    SFRin = calculate_SFR_inside((sfr_disk[ind] + sfr_burst[ind])/h0/1e9, rstar[ind]*1e3  / h0, 30.0)#enclosed in 30kpc
+    print("cosmic SFR in 30kpc:", np.log10(sum(SFRin) / (volh / h0**3)), np.log10(sum(sfr_disk[ind] + sfr_burst[ind])/h0/1e9/ (volh / h0**3)))
 
     MHI_abovethresh = np.zeros(shape = len(mdisk))
     thresh = 1 * 1e6 #Msun/kpc^2
@@ -1567,7 +1578,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_offset, hist_smf_cen, hist
     ind = np.where((mstars_metals_disk+mstars_metals_bulge > 0.0) & (typeg > 0) & (mass > 8))
     mszr_sat[index,:] = bin_it(x=mass[ind], y=np.log10(((mstars_metals_disk[ind]+mstars_metals_bulge[ind])/(mdisk[ind]+mbulge[ind])/Zsun)))
 
-    ind = np.where((sfr_disk+sfr_burst > 0) & (mdisk+mbulge > 0) & ((sfr_disk+sfr_burst)/(mdisk+mbulge) > 1e-3))
+    ind = np.where((sfr_disk+sfr_burst > 0) & (mdisk+mbulge > 0) & ((sfr_disk+sfr_burst)/(mdisk+mbulge) > 0))
     mainseqsf[index,:] = bin_it_2sigma(x=mass[ind], y=np.log10((sfr_disk[ind]+sfr_burst[ind])/h0/GyrToYr))
     mainseqsf_1s[index,:] = bin_it(x=mass[ind], y=np.log10((sfr_disk[ind]+sfr_burst[ind])/h0/GyrToYr))
     mainseqHI[index,:] = bin_it(x=mass[ind], y=np.log10((mHI[ind]+mHI_bulge[ind])/(mdisk[ind]+mbulge[ind])))
