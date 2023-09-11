@@ -43,6 +43,7 @@ curl -L -o input/tree_199.0.hdf5 'https://docs.google.com/uc?export=download&id=
 run_shark() {
 	model_name=$1; shift
 	./shark ../sample.cfg \
+	    -o execution.output_bh_histories=true -o execution.snapshots_bh_histories=199 \
 	    -o simulation.redshift_file=input/redshifts.txt \
 	    -o simulation.tree_files_prefix=input/tree_199 \
 	    -o execution.name_model=$model_name $@ || fail "failure during execution of shark"
@@ -67,6 +68,7 @@ check_hdf5_doc() {
 
 check_hdf5_doc 199/0/galaxies.hdf5 galaxies.rst
 check_hdf5_doc 156/0/star_formation_histories.hdf5 star_formation_histories.rst
+check_hdf5_doc 199/0/black_hole_histories.hdf5 black_hole_histories.rst
 
 if [ -n "$PYTHON" ]; then
 
