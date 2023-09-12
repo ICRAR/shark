@@ -212,7 +212,7 @@ def density_contour(ax, xdata, ydata, nbins_x, nbins_y, cmap = 'viridis'):
         kwargs to be passed to pyplot.contour()
     """
 
-    H, xedges, yedges = np.histogram2d(xdata, ydata, bins=(nbins_x,nbins_y), normed=True)
+    H, xedges, yedges = np.histogram2d(xdata, ydata, bins=(nbins_x,nbins_y), density=True)
     x_bin_sizes = (xedges[1:] - xedges[:-1]).reshape((1,nbins_x))
     y_bin_sizes = (yedges[1:] - yedges[:-1]).reshape((nbins_y,1))
 
