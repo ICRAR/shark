@@ -1,0 +1,17 @@
+name: Get shark up and running from previous build
+runs:
+  using: composite
+  steps:
+    - name: Download shark build tarball
+      uses: actions/download-artifact@v3
+      with:
+        name: shark-build
+
+    - name: Untar shark build after download
+      run: tar xf shark-build.tar.gz
+      shell: bash
+
+    - name: Install system runtime dependencies
+      run: sudo apt install libhdf5-103 libboost-filesystem1.74.0 libboost-program-options1.74.0 libboost-log1.74.0 libgsl27
+      shell: bash
+

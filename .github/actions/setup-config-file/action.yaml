@@ -1,0 +1,12 @@
+name: Setup the shark configuration file used for tests
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        sed "
+          s|output_directory.*|output_directory = ${TEST_OUTPUTS_DIR}|
+          s|redshift_file.*|redshift_file = ${TEST_INPUTS_DIR}/redshifts.txt|
+          s|tree_files_prefix.*|tree_files_prefix = ${TEST_INPUTS_DIR}/tree_199|
+          s|sim_name.*|sim_name = ${TEST_SIM_NAME}|
+        " sample.cfg > ${{ env.TEST_CONFIG_FILE }}
+      shell: bash
