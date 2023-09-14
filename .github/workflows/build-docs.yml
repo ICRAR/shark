@@ -1,0 +1,15 @@
+name: Build documentation
+on: [push, pull_request]
+env:
+  SPHINXOPTS: -W --keep going
+
+jobs:
+  build-docs:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: ammaraskar/sphinx-action@master
+      with:
+        docs-folder: "doc"
+        pre-build-command: 'pip install sphinx_rtd_theme'
