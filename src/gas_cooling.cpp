@@ -398,16 +398,13 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double Tvir   = 35.9 * std::pow(vvir,2.0); //in K.
 	double lgTvir = log10(Tvir); //in K.
 	double Rvir = 0;
-	double Mvir = 0;
 
 	if(subhalo.subhalo_type == Subhalo::CENTRAL){
 		Rvir = cosmology->comoving_to_physical_size(darkmatterhalos->halo_virial_radius(halo, z), z);//physical Mpc
-		Mvir = halo->Mvir;
 	}
 	else {
 		//If subhalo is a satellite, then adopt virial radius at infall.
 		Rvir = cosmology->comoving_to_physical_size(subhalo.rvir_infall, z);//physical Mpc
-		Mvir = subhalo.Mvir_infall;
 	}
 
 	/**
@@ -777,11 +774,10 @@ bool GasCooling::quasi_hydrostatic_halo(double mhot, double lambda, double nh_de
 		auto m200norm = m200 / 1e12;
 		auto log10m200norm = std::log10(m200norm);
 
-
-		double omega_term = std::sqrt(cosmology->parameters.OmegaM * std::pow(redshift + 1.0, 3.0) + cosmology->parameters.OmegaL);
-
 		// growth rate of halo in Msun/Gyr from Dekel et al. (2009).
 		double mdot = 0.47 * std::pow(m200norm, 0.15) * std::pow(0.333 * (redshift + 1.0), 2.25) * m200;
+
+		//double omega_term = std::sqrt(cosmology->parameters.OmegaM * std::pow(redshift + 1.0, 3.0) + cosmology->parameters.OmegaL);
 		//double mdot = 71.6 * GIGA * m200norm * (cosmology->parameters.Hubble_h/0.7)  * (1 + redshift) * omega_term; //Correa et al. (2015)
 
 		// define fractions of hot gas (Equations 10 and 18 in Correa et al. 2018).
