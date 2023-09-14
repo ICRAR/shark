@@ -23,3 +23,9 @@ Star formation histories
 ------------------------
 
 .. include:: hdf5_properties/star_formation_histories.rst
+
+
+Black Hole histories
+--------------------
+
+.. include:: hdf5_properties/black_hole_histories.rst
