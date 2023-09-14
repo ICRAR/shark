@@ -185,7 +185,7 @@ endmacro()
 #
 macro(find_openmp)
 	find_package(OpenMP)
-	if (OPENMP_FOUND)
+	if (OpenMP_FOUND)
 
 		# We require at least OpenMP 2.0, so let's double check
 		# we have that at least
@@ -196,9 +196,11 @@ macro(find_openmp)
 		#   and OpenMP_<lang>_LIBRARIES/LIBRARY/LIB_NAMES variables
 		# This is important for Intel compilers in particular, which require
 		# additional linking
-		if ((DECLARED OPENMP_VERSION) AND (NOT OPENMP_VERSION VERSION_LESS 2.0))
+		if ((DEFINED OpenMP_VERSION) AND (NOT OpenMP_VERSION VERSION_LESS 2.0))
 			set(SHARK_OPENMP ON)
-		elseif((DECLARED OPENMP_CXX_SPEC_DATE) AND (NOT OPENMP_CXX_SPEC_DATE LESS 200203))
+		elseif ((DEFINED OpenMP_CXX_VERSION) AND (NOT OpenMP_CXX_VERSION VERSION_LESS 2.0))
+			set(SHARK_OPENMP ON)
+		elseif ((DEFINED OpenMP_CXX_SPEC_DATE) AND (NOT OpenMP_CXX_SPEC_DATE LESS 200203))
 			set(SHARK_OPENMP ON)
 		else()
 			set(OPENMP_VERSION_CHECK_SOURCE "
