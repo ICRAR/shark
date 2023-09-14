@@ -1,7 +1,5 @@
 name: Build and test
-
-# Build on every branch push, tag push, and pull request change:
-on: [push]
+on: [push, pull_request]
 
 env:
   CI_BUILD_DIR: build
