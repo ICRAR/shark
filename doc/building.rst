@@ -19,7 +19,7 @@ Requirements
 
 * `GSL <https://www.gnu.org/software/gsl/>`_ >= 2.0
 * `HDF5 <https://support.hdfgroup.org/HDF5/>`_ >= 1.8.0
-* `Boost <http://www.boost.org/>`_ >= 1.54
+* `Boost <http://www.boost.org/>`_ >= 1.68
 
 Optional requirements are:
 

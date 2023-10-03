@@ -175,7 +175,7 @@ macro(find_boost)
 	# with homebrew). Let's thus not use Boost's cmake config file and stick to
 	# cmake's own version of it for the time being
 	set(Boost_NO_BOOST_CMAKE ON)
-	find_package(Boost 1.54 COMPONENTS filesystem log program_options system REQUIRED)
+	find_package(Boost 1.68 COMPONENTS filesystem log program_options system REQUIRED)
 	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LIBRARIES})
 	include_directories(${Boost_INCLUDE_DIRS})
 endmacro()
