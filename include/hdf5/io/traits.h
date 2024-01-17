@@ -26,6 +26,8 @@
 #ifndef SHARK_HDF5_TRAITS
 #define SHARK_HDF5_TRAITS
 
+#include <cstdint>
+
 #include <hdf5.h>
 #include "hdf5/data_type.h"
 #include "hdf5/group.h"
