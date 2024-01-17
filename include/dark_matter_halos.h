@@ -68,6 +68,7 @@ public:
 	use_converged_lambda_catalog = true, the latter will be done only for halos that have a number of particles below min_part_convergence.
 	**/
 	bool random_lambda = false;
+	bool spin_mass_dependence = false;
 	bool use_converged_lambda_catalog = false; 
 	int  min_part_convergence = 100;
 
