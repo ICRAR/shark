@@ -8,8 +8,8 @@ jobs:
     name: Build documentation
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "doc"
-        pre-build-command: 'pip install sphinx_rtd_theme'
+        pre-build-command: 'pip install -U sphinx_rtd_theme docutils'
