@@ -51,6 +51,7 @@ DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 	options.load("dark_matter_halo.concentration_model", concentrationmodel);
 	options.load("dark_matter_halo.use_converged_lambda_catalog", use_converged_lambda_catalog);
 	options.load("dark_matter_halo.min_part_convergence", min_part_convergence);
+	options.load("dark_matter_halo.spin_mass_dependence", spin_mass_dependence);
 
 }
 
