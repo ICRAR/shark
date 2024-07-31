@@ -237,6 +237,8 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
 
 	double SFR_total_disk = 0;
 	double SFR_total_burst = 0;
+	double mbh_acc_total_hh = 0;
+	double mbh_acc_total_burst = 0;
 
 	int number_major_mergers = 0;
 	int number_minor_mergers = 0;
@@ -320,7 +322,10 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
 
 				SFR_total_disk  += galaxy.sfr_disk;
 				SFR_total_burst += galaxy.sfr_bulge_mergers + galaxy.sfr_bulge_diskins;
-        
+
+        			mbh_acc_total_hh  += galaxy.smbh.macc_hh;
+	 			mbh_acc_total_burst  += galaxy.smbh.macc_sb;
+			
 				MBH_total.mass += galaxy.smbh.mass;
 
 				if(galaxy.smbh.mass > SMBH_max){
@@ -338,8 +343,11 @@ void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, S
 	AllBaryons.mHI.push_back(mHI_total);
 	AllBaryons.mH2.push_back(mH2_total);
 	AllBaryons.mBH.push_back(MBH_total);
+
 	AllBaryons.SFR_disk.push_back(SFR_total_disk);
 	AllBaryons.SFR_bulge.push_back(SFR_total_burst);
+	AllBaryons.mBH_acc_hh.push_back(mbh_acc_total_hh);
+	AllBaryons.mBH_acc_sb.push_back(mbh_acc_total_burst);
 
 	AllBaryons.major_mergers.push_back(number_major_mergers);
 	AllBaryons.minor_mergers.push_back(number_minor_mergers);

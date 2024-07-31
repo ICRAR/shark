@@ -54,6 +54,7 @@ public:
 	 * mH2: total mass in the form of molecular gas.
 	 * mDM: total mass in the form of dark matter.
 	 * SFR: integrated SFR of all galaxies over a snapshot for the disk and the bulge.
+	 * mBH_acc: integrated BH accretion rate of all galaxies over a snapshot for the disk and the bulge.
 	 * baryon_total_created: keeps track of the baryons deposited in DM halos to ensure mass convervations.
 	 * max_BH: maximum mass of the SMBHs in this snapshot.
 	 */
@@ -73,6 +74,9 @@ public:
 
 	std::vector<double> SFR_disk;
 	std::vector<double> SFR_bulge;
+	std::vector<double> mBH_acc_hh;
+	std::vector<double> mBH_acc_sb;
+
 	std::vector<double> max_BH;
 
 	/**

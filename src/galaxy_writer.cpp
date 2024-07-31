@@ -1108,6 +1108,12 @@ void HDF5GalaxyWriter::write_global_properties (hdf5::Writer &file, int snapshot
 	comment = "total star formation rate taking place in bulges in the simulated box [Msun/Gyr/h]";
 	file.write_dataset("global/sfr_burst",AllBaryons.SFR_bulge, comment);
 
+	comment = "total black hole accretion rate due to hot-halo accretion in the simulated box [Msun/Gyr/h]";
+	file.write_dataset("global/bh_acc_hh",AllBaryons.mBH_acc_hh, comment);
+
+	comment = "total black hole accretion rate due to starburst accretion in the simulated box [Msun/Gyr/h]";
+	file.write_dataset("global/bh_acc_sb",AllBaryons.mBH_acc_sb, comment);
+
 	comment = "Maximum mass of the SMBHs in the simulated box [Msun/h]";
 	file.write_dataset("global/smbh_maximum",AllBaryons.max_BH, comment);
 
