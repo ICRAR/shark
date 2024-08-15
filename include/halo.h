@@ -164,6 +164,8 @@ public:
 
         bool hydrostatic_eq = false;
 
+        /// Whether this subhalo is a massive transient.
+        bool transient = false;
 
 };
 

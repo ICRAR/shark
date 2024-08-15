@@ -46,9 +46,8 @@
 
 namespace shark {
 
-SURFSReader::SURFSReader(const std::string &prefix, DarkMatterHalosPtr dark_matter_halos, SimulationParameters simulation_params, unsigned int threads,
-			 const std::string &transients_prefix) :
-        prefix(prefix), dark_matter_halos(std::move(dark_matter_halos)), simulation_params(std::move(simulation_params)), threads(threads), transients_prefix(transients_prefix)
+SURFSReader::SURFSReader(const std::string &prefix, DarkMatterHalosPtr dark_matter_halos, SimulationParameters simulation_params, unsigned int threads) :
+        prefix(prefix), dark_matter_halos(std::move(dark_matter_halos)), simulation_params(std::move(simulation_params)), threads(threads)
 {
 	if (prefix.empty()) {
 		throw invalid_argument("Trees dir has no value");
@@ -63,13 +62,6 @@ const std::string SURFSReader::get_filename(unsigned int batch)
 	return os.str();
 }
 
-const std::string SURFSReader::get_transients_filename(unsigned int batch)
-{
-        std::ostringstream os;
-	os << transients_prefix << "." << batch << ".hdf5";
-	return os.str();
-}
-  
 const std::vector<HaloPtr> SURFSReader::read_halos(std::vector<unsigned int> batches)
 {
 
@@ -137,17 +129,6 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	std::vector<int> IsCentre = batch_file.read_dataset_v<int>("haloTrees/isDHaloCentre");
 	std::vector<int> IsInterpolated = batch_file.read_dataset_v<int>("haloTrees/isInterpolated");
 
-	// Read transients file
-	std::vector<Subhalo::id_t> transientsIndex;
-
-	if (!transients_prefix.empty()){
-	        // read transients file
-	        const auto fname_transients = get_transients_filename(batch);
-		hdf5::Reader batch_transients(fname_transients);
-		transientsIndex = batch_transients.read_dataset_v<Subhalo::id_t>("nodeIndex");
-		//		transientsHostIndex = batch_transients.read_dataset_v<Subhalo::id_t>("hostIndex");
-	}
-	  
 	auto n_subhalos = Mvir.size();
 	LOG(info) << "Read raw data of " << n_subhalos << " subhalos from " << fname << " in " << t;
 	if (n_subhalos == 0) {
@@ -251,11 +232,6 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 		// Calculate virial velocity from the virial mass and redshift.
 		subhalo->Vvir = dark_matter_halos->halo_virial_velocity(subhalo->Mvir, z);
 
-		if (!transients_prefix.empty()){
-			// create flag to indicate this subhalo is transient
-			subhalo->transient = std::find(std::begin(transientsIndex), std::end(transientsIndex), nodeIndex[i]) != std::end(transientsIndex);
-		}
-		
 		// Done, save it now
 		t_subhalos[thread_idx].emplace_back(std::move(subhalo));
 	});
@@ -292,6 +268,7 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 	std::vector<HaloPtr> halos;
 	Halo::id_t last_halo_id = -1;
 	Timer t;
+
 	for(auto &subhalo: subhalos) {
 
 		auto halo_id = subhalo->haloID;
@@ -308,10 +285,6 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 		}
 		subhalo->host_halo = halo;
 		halo->add_subhalo(std::move(subhalo));
-//		if (!transients_prefix.empty()){
-//			// create flag to indicate this halo is transient
-//		        halo->transient = std::find(std::begin(transientsHostIndex), std::end(transientsHostIndex), hostIndex[i]) != std::end(transientsHostIndex);
-//		}
 	}
 	subhalos.clear();
 

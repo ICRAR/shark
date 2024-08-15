@@ -42,7 +42,6 @@
 #include "total_baryon.h"
 #include "tree_builder.h"
 
-
 namespace shark {
 
 TreeBuilder::TreeBuilder(ExecutionParameters exec_params, unsigned int threads) :
@@ -132,7 +131,8 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos,
 		throw invalid_data(os.str());
 	}
 
-	loop_through_halos(halos);
+
+	loop_through_halos(halos, sim_params, exec_params);
 	{
 		Timer t;
 		omp_static_for(trees, threads, [](MergerTreePtr &tree, unsigned int thread_idx) {
@@ -187,7 +187,7 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos,
 }
 
 void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_subhalo,
-		const HaloPtr &parent_halo, const HaloPtr &desc_halo) {
+		       const HaloPtr &parent_halo, const HaloPtr &desc_halo) {
 
 	// Establish ascendant and descendant links at subhalo level
 	// Fail if subhalo has more than one descendant
@@ -205,6 +205,7 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 	parent_shalo->descendant = desc_subhalo;
 
 	add_parent(desc_halo, parent_halo);
+	
 }
 
 SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo, SimulationParameters &sim_params,
@@ -215,25 +216,25 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	halo->position = subhalo->position;
 	halo->velocity = subhalo->velocity;
 
-	double mvir = subhalo->Mvir;
-
-	// calculate subhalo properties based on halo mass if number of particles is too small or in the case of applying the fix to mass swapping events:
-	if(dark_matter_params.apply_fix_to_mass_swapping_events){
-		mvir = halo->Mvir;
-	}
-
 	double z = sim_params.redshifts[subhalo->snapshot];
 	double npart = subhalo->Mvir/sim_params.particle_mass;
 
-	subhalo->concentration = darkmatterhalos->nfw_concentration(mvir, z);
-	
-	if (subhalo->concentration < 1) {
-	        throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
+	// calculate accurate subhalo properties based on halo mass in the case of applying the fix to mass swapping events:
+	if(dark_matter_params.apply_fix_to_mass_swapping_events){
+
+	        auto mvir = halo->Mvir;
+
+		subhalo->concentration = darkmatterhalos->nfw_concentration(mvir, z);
+		
+		if (subhalo->concentration < 1) {
+		        throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
+		}
+		subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
+		subhalo->Vvir = darkmatterhalos->halo_virial_velocity(mvir, z);
 	}
-	subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
-	subhalo->Vvir = darkmatterhalos->halo_virial_velocity(mvir, z);
 
 	halo->lambda = subhalo->lambda;
+	// Calculate halos' vvir and concentration
 	halo->Vvir = darkmatterhalos->halo_virial_velocity(halo->Mvir, z);
 	halo->concentration = darkmatterhalos->nfw_concentration(halo->Mvir,z);
 
@@ -570,7 +571,7 @@ void TreeBuilder::define_properties_central_subhalos(const std::vector<MergerTre
 		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 			for(auto &halo: tree->halos_at(snapshot)){
 				// First check if halo has a central subhalo, if yes, then continue with loop.
-				if (halo->central_subhalo) {
+				if (!halo->central_subhalo) {
 					continue;
 				}
 				auto main_prog = halo->central_subhalo->main();
@@ -660,12 +661,14 @@ static std::vector<SubhaloPtr>::const_iterator find_by_id(const std::vector<Subh
 SubhaloPtr HaloBasedTreeBuilder::find_descendant_subhalo(
     const HaloPtr &halo, const SubhaloPtr &subhalo, const HaloPtr &descendant_halo)
 {
+
 	// if the descendant subhalo is not found in the descendant halos'
 	// subhalos then we error
 	auto descendant_subhalos = descendant_halo->all_subhalos();
 	auto descendant_subhalo_found = find_by_id(descendant_subhalos, subhalo->descendant_id);
 
 	if (descendant_subhalo_found == descendant_subhalos.end()) {
+
 		std::ostringstream os;
 		auto exec_params = get_exec_params();
 		if (exec_params.skip_missing_descendants || exec_params.warn_on_missing_descendants) {
@@ -706,6 +709,7 @@ SubhaloPtr HaloBasedTreeBuilder::find_descendant_subhalo(
 
 static std::vector<HaloPtr>::iterator find_by_id(std::vector<HaloPtr> &halos, Halo::id_t id)
 {
+
 	auto lo = std::lower_bound(halos.begin(), halos.end(), id, [](const HaloPtr &x, Halo::id_t id)
 	{
 		return x->id < id;
@@ -720,7 +724,7 @@ static std::vector<HaloPtr>::iterator find_by_id(std::vector<HaloPtr> &halos, Ha
 	return lo;
 }
 
-void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
+void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, SimulationParameters sim_params, ExecutionParameters exec_params)
 {
 	sort_by_id(halos);
 
@@ -738,18 +742,50 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 	// (but skip the first one, those were already processed and MergerTrees
 	// were built for them)
 	std::vector<int> sorted_halo_snapshots;
+	int min_particle_subhalo = 0;
+	int particle_subhalo = 0;
+
 	{
 		std::set<int> halo_snapshots;
 		for(const auto &halo: halos) {
 			halo_snapshots.insert(halo->snapshot);
+		        // compute the minimum particle number for structures
+			for(const auto &subhalo: halo->all_subhalos()) {
+			        if (exec_params.define_transient == ExecutionParameters::ZDEP_3SIGMA || exec_params.define_transient == ExecutionParameters::CONST_10MINPART){
+				        // compute the particle number for each subhalo
+			                particle_subhalo = round(subhalo->Mvir/sim_params.particle_mass);
+					// find the minimum and save it
+					if(min_particle_subhalo == 0 || particle_subhalo < min_particle_subhalo){
+					        min_particle_subhalo = particle_subhalo;
+					}
+				}
+			}
 		}
+		// minimum particle number for structures
+		if (exec_params.define_transient == ExecutionParameters::ZDEP_3SIGMA || exec_params.define_transient == ExecutionParameters::CONST_10MINPART){
+		        LOG(info) << "Minimum particle subhalo: " << min_particle_subhalo;
+		}
+
 		sorted_halo_snapshots = std::vector<int>(++(halo_snapshots.rbegin()), halo_snapshots.rend());
 	}
 
 	// Loop as per instructions above
 	Timer t;
+	// counters for massive transient statistics
+	int count_transient_central = 0;
+	int count_transient_sat = 0;
+	int count_transient_mp = 0;
+	// last snapshot
+	int last_snapshot = sorted_halo_snapshots[0] + 1;
 	for(int snapshot: sorted_halo_snapshots) {
 
+	        
+	        // flag massive transient subhalos if the transient fix is implemented
+	        // these are subhalos that belong to main branches that are born with huge particle number
+	        if(exec_params.apply_fix_to_massive_transient_events){
+		        flag_massive_transients(halos, snapshot, last_snapshot, min_particle_subhalo, sim_params, exec_params);
+		}
+		
 		LOG(info) << "Linking Halos/Subhalos at snapshot " << snapshot;
 
 		int ignored = 0;
@@ -757,6 +793,7 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 		for(auto &halo: halos_in_snapshot) {
 			bool halo_linked = false;
 			for(const auto &subhalo: halo->all_subhalos()) {
+
 
 				// this subhalo has no descendants, let's not even try
 				if (!subhalo->has_descendant) {
@@ -787,8 +824,22 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 
 				auto descendant_subhalo = find_descendant_subhalo(halo, subhalo, descendant_halo);
 				if (descendant_subhalo) {
-					link(subhalo, descendant_subhalo, halo, descendant_halo);
-					halo_linked = true;
+
+				  // if fixes for the massive transients are applied, we look at the descendant halo
+				  // if the descendant halo hosts any transient (previously flagged), we check whether this subhalo decreases in mass
+				  // when there is a mass decrease, we evaluate if there is a more accurate connection with the transient
+				  if(exec_params.apply_fix_to_massive_transient_events && descendant_halo->transient &&
+				     subhalo->Mvir > descendant_subhalo->Mvir){
+				          massive_transient_fix(subhalo, descendant_subhalo, halo, descendant_halo, exec_params,
+								sorted_halo_snapshots[0]+1, count_transient_central, count_transient_sat, count_transient_mp);
+				  }
+
+				  // no fixes for massive transients, so normal subhalo-descendant subhalo connection is carried out
+				  else{
+				          link(subhalo, descendant_subhalo, halo, descendant_halo);
+				  }
+				  halo_linked = true;
+			       	
 				}
 			}
 
@@ -814,11 +865,342 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos)
 			           << " their Halo family line, or they only hosted Subhalos"
 			           << " that were the last Subhalo of their Subhalo families)";
 		}
+
 	}
 
 	LOG(info) << "Linked all Halos/Subhalos in " << t;
+
+	// statistics for massive transients
+	if(exec_params.apply_fix_to_massive_transient_events){
+	        LOG(info) << "Transient events: "
+			  << count_transient_central << " fixed as central,  "
+			  << count_transient_sat << " fixed as satellites,  "
+			  << count_transient_mp << " removed main progenitor flag.";
+	}
+
 }
 
+
+void HaloBasedTreeBuilder::flag_massive_transients(std::vector<HaloPtr> &halos, int snapshot, int last_snapshot, int min_particle_subhalo,
+						   SimulationParameters sim_params, ExecutionParameters exec_params){
+
+	// Flag those main branch subhalos born with an unexpected particle number:
+        // 1. Flag all the subhalos that do not have main progenitor (subhalos that are born) as 'has_mainprogenitor = false'
+        // 2. The ones that are part of a main branch are flagged as 'transient_candidate = true' 
+	// 3. The candidates with Npart at birth above the defined threshold are flagged as 'transient = true'
+	// (defined thresholds: constant Npart=200 for CONST_200, Npart=10*min(Npart,subhalo) for CONST_10MINPART
+        // or Npart>3*sigma(Npart_subhalo at z) for ZDEP_3SIGMA)
+  
+	int particle_subhalo = 0;
+	double three_sigma = 0;
+	std::vector<int> Npart_subhalos;
+
+	
+	// To find subhalos/halos that do have main progenitor, we do the following
+	//  1. For each snapshot S we iterate over its halos
+	//  2. For each halo H we iterate over its subhalos
+	//  3. For each subhalo SH we find the descendant: descendant is flagged as having main progenitor
+	// if the subhalo is the main progenitor of that descendant
+	//  4. Those that do not have main progenitor will be considered when flagging transient candidates 
+
+	LOG(info) << "Finding if subhalos have main progenitor at snapshot " << snapshot+1;
+
+	// loop over subhalos
+	auto halos_in_snapshot = make_range_filter(halos, in_snapshot(snapshot));
+	for(auto &halo: halos_in_snapshot) {
+	        for(const auto &subhalo: halo->all_subhalos()) {
+
+		        // this subhalo has no descendants, let's not even try
+		        if (!subhalo->has_descendant) {
+		                if (LOG_ENABLED(debug)) {
+			                LOG(debug) << subhalo << " has no descendant, not following";
+				}
+				halo->remove_subhalo(subhalo);
+				continue;
+			}
+
+			// if the descendant halo is not found, we don't consider this
+			// halo anymore (and all its progenitors)
+			auto descendant_halo_position = find_by_id(halos, subhalo->descendant_halo_id);
+			if (descendant_halo_position == halos.end()) {
+		                if (LOG_ENABLED(debug)) {
+			                LOG(debug) << subhalo << " points to descendant halo/subhalo "
+						   << subhalo->descendant_halo_id << " / " << subhalo->descendant_id
+						   << ", which doesn't exist. Ignoring this halo and the rest of its progenitors";
+				}
+				break;
+			}
+			auto descendant_halo = *descendant_halo_position;
+			// hasn't been put in any merger tree, so it was ignored
+			if (!descendant_halo->merger_tree) {
+		                continue;
+			}
+			
+			auto descendant_subhalo = find_descendant_subhalo(halo, subhalo, descendant_halo);
+			// if the descendant_subhalo is found, we check if the subhalo is its main progenitor
+			if (descendant_subhalo) {
+		                if(subhalo->main_progenitor){
+			                // if that is the case, flag the descendant_subhalo as they have main progenitor
+			                descendant_subhalo->has_mainprogenitor = true;
+				}
+			}
+		}
+	}
+
+
+	// To find subhalos with no main progenitor that belong to main branches, we do the following
+	//  1. For each snapshot S+1 we iterate over its halos
+	//  2. For each halo H we iterate over its subhalos
+	//  3. For each subhalo SH we select the ones with no main progenitor: we follow them forward
+	// through main progenitors and if they reach the final snapshot, then they are main branches
+	// (flag transient subhalos only if they belong to main branches)
+	
+	LOG(info) << "Defining Main Branch Subhalos born at snapshot " << snapshot+1;
+
+	// loop over subhalos
+	auto halos_in_snapshot0 = make_range_filter(halos, in_snapshot(snapshot+1));
+	for(auto &halo: halos_in_snapshot0) {
+	        for(const auto &subhalo: halo->all_subhalos()) {
+
+			// if the subhalo does not have main progenitor (at birth)
+			if(!subhalo->has_mainprogenitor){
+			        // only define transients as subhalos that belong to main branches
+			        // find the main branches following the subhalo forward in time through main progenitors
+			        // define a main branch when:
+			        // 1. the transient reaches the final snapshot through main progenitors
+			        // 2. the descendant at the final snapshot is a central subhalo
+	                        auto desc_mt = subhalo;
+				while(desc_mt->descendant && desc_mt->main_progenitor){
+				        desc_mt = desc_mt->descendant;
+				}
+			      
+				// if tracking the progenitor branch we reach the a central subhalo at the final snapshot
+				// then we have found out a main branch: we should flag it
+				if(desc_mt->snapshot == last_snapshot && desc_mt->id == desc_mt->host_halo->id){
+
+				        // flag it as main branch transient candidate
+				        subhalo->transient_candidate = true;
+		
+					// calculate percentiles if we define transients with standard deviation
+					// the particle number for each subhalo at birth is stored in an array for each snapshot
+					// 3 times the standard deviation (99.85-th percentile) is computed for that array
+					if(exec_params.define_transient == ExecutionParameters::ZDEP_3SIGMA){
+					        particle_subhalo = round(subhalo->Mvir/sim_params.particle_mass);
+						Npart_subhalos.push_back(particle_subhalo);
+					}
+				}
+			}
+		}
+	}
+
+
+	// calculate percentiles at each snapshot after the loop
+	if(exec_params.define_transient == ExecutionParameters::ZDEP_3SIGMA){
+	        // calculate percentiles if there are elements in the array (subhalos being born at this snap)
+	        if(!Npart_subhalos.empty()){
+		        three_sigma = percentiles(Npart_subhalos,0.9985); // value equivalent to 3 sigma
+			LOG(info) << "Defining 3sigma ("<< three_sigma << ") for transient Subhalos at snapshot " << snapshot+1;
+			// if the value is below 10 times the minimum particle number
+			// 10 times the minimum particle number is considered
+			if(three_sigma < 10*min_particle_subhalo){
+			        three_sigma = 10*min_particle_subhalo;
+			}
+			Npart_subhalos.clear();
+		}
+		// if there are no subhalos born at this snapshots
+		// 10 times the minimum particle number is considered	
+		else{
+		        three_sigma = 10*min_particle_subhalo;
+		}
+	}
+
+		  
+	// To define transient subhalos finally
+	//  1. For each snapshot S+1 we iterate over its halos
+	//  2. For each halo H we iterate over its subhalos
+	//  3. For each subhalo SH we select the candidates: if its particle number is above
+	// the imposed threshold, it is finally defined as transient
+
+	LOG(info) << "Defining transient Subhalos at snapshot " << snapshot+1;
+	
+	// final loop over subhalos 
+	auto halos_in_snapshotp1 = make_range_filter(halos, in_snapshot(snapshot+1));
+	for(auto &halo: halos_in_snapshotp1) {
+	        for(const auto &subhalo: halo->all_subhalos()) {
+		        // to be transient the subhalo should be a candidate (main branch subhalo at birth)
+		        if(subhalo->transient_candidate){
+			        particle_subhalo = round(subhalo->Mvir/sim_params.particle_mass);
+				// when that subhalo is born with a particle number that exceeds the imposed threshold
+				// it is flagged as massive transient, and it should be studied in further detail later
+
+				// constant threshold of 200 particles
+				if((exec_params.define_transient == ExecutionParameters::CONST_200) && (particle_subhalo > 200)){
+				        subhalo->transient = true;
+					subhalo->host_halo->transient = true;
+				}
+				// constant threshold of 10 times the minimum particle number to form a subhalo
+				else if((exec_params.define_transient == ExecutionParameters::CONST_10MINPART) && (particle_subhalo > 10*min_particle_subhalo)){
+				        subhalo->transient = true;
+					subhalo->host_halo->transient = true;
+				}
+				// redshift dependant threshold that is 3 times the standard deviation of the particle number
+				// for main branches subhalo at birth at a particular snapshot
+				else if((exec_params.define_transient == ExecutionParameters::ZDEP_3SIGMA) && (particle_subhalo > three_sigma)){
+				        subhalo->transient = true;
+					subhalo->host_halo->transient = true;
+				}
+			}
+		}
+		
+	}
+}
+
+
+
+
+
+void TreeBuilder::massive_transient_fix(const SubhaloPtr &subhalo, const SubhaloPtr &descendant_subhalo,
+					const HaloPtr &halo, const HaloPtr &descendant_halo, ExecutionParameters exec_params,
+					int last_snapshot, int &count_transient_central, int &count_transient_sat, int &count_transient_mp){
+
+        // This function gathers the fix for the massive transients 
+        // in case the descendant halo for our subhalo hosts any transient, we check whether this subhalo decreases in mass
+        // and in case there is a mass decrease, we evaluate if there is a more accurate connection involving the transient
+
+        // flag to indicate if the transient has been linked
+        // otherwise a normal link is carried out
+        bool transient_linked = false;
+					  
+	// loop over all the descendant subhalos until finding the transient
+	for(const auto &descendant_check_transient_subhalo: descendant_halo->all_subhalos()){
+	        if(descendant_check_transient_subhalo->transient){
+						    
+		        // several conditions are imposed before breaking the subhalo-descendant subhalo connection
+		        // and creating the subhalo-transient connection:
+		        // 1. transient is more massive than current descendant
+		        // 2. subhalo-descendant subhalo connection (which will be broken) has
+		        // a decrease in mass greater than a threshold, controlled by "transient_lostmass_ratio" 
+		        // 3. subhalo-transient connenction has a reasonable change in mass
+		        // between a lower and an upper limit, controlled by "transient_gainedmass_ratio_low" and "transient_gainedmass_ratio_up"
+		        if(descendant_check_transient_subhalo->Mvir > descendant_subhalo->Mvir &&
+			   (descendant_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_lostmass_ratio &&
+			   (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_gainedmass_ratio_up &&
+			   (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) > exec_params.transient_gainedmass_ratio_low){
+			  
+//			        // looking at longer branches: compute how many snapshots forward in time the subhalos live
+//			        int snap_sh = 0;
+//				int snap_mt = 0;
+//				auto desc_sh = descendant_subhalo;
+//				while(desc_sh->descendant && desc_sh->main_progenitor){
+//				        snap_sh++;
+//					desc_sh = desc_sh->descendant;
+//				}
+//				auto desc_mt = descendant_check_transient_subhalo;
+//				while(desc_mt->descendant && desc_mt->main_progenitor){
+//				        snap_mt++;
+//					desc_mt = desc_mt->descendant;
+//				}
+//				
+//			        // if the transient length is longer then we should break the link
+//				if(snap_mt > snap_sh){
+
+			        // subhalo-transient connection
+			        link(subhalo, descendant_check_transient_subhalo, halo, descendant_halo);
+				subhalo->descendant_id = descendant_check_transient_subhalo->id;
+				// not dealing with this particular transient anymore
+				descendant_check_transient_subhalo->transient = false;
+				// flag that the transient has been linked
+				transient_linked = true;
+					  
+				if(descendant_check_transient_subhalo->id == descendant_halo->id){
+				        // transient link counted as central for statistics
+				        count_transient_central++;
+				}
+				else{
+				        // transient link counted as satellite for statistics
+				        count_transient_sat++;
+				}
+							    
+				// if the mp flag had been removed and counted as that
+				// we remove it from that category for statistics
+				if(descendant_check_transient_subhalo->remove_mp_flag){
+				        // redefine again the flag if it was removed
+				        descendant_check_transient_subhalo->main_progenitor = true; 
+					count_transient_mp--;
+				}
+				// transient fixed, loop can be skipped 
+				break;
+//			        }
+			}
+
+			// if the transient does not fulfill the previous criteria, at least
+			// the mp flag is removed so that it does not deviate branches when
+			// it is not the most massive halo
+			else if(descendant_check_transient_subhalo->main_progenitor){
+			        // remove main progenitor flag
+			        descendant_check_transient_subhalo->main_progenitor = false; 
+				descendant_check_transient_subhalo->remove_mp_flag = true;
+				// count it as removing the mp flag
+				count_transient_mp++;
+			}
+		}
+	}
+	
+	// if transient is not linked, then apply normal subhalo-descendant subhalo connection
+	if(!transient_linked){
+	        link(subhalo, descendant_subhalo, halo, descendant_halo);
+	}
+}
+
+
+double HaloBasedTreeBuilder::percentiles(std::vector<int> data, double val){
+
+  // function that computes the val-th percentile of the array in data
+  
+  std::vector<double> ws(data.size(),1.); // array with weights=1
+  std::vector<double> cumsum(data.size()); // array to get the x-axis
+
+  // percentile should be between 0 and 1
+  if((val<0)||(val>1)){
+    std::ostringstream os;
+    os << " Percentile value is not actually in the [0-1] range: val = " << val;
+    throw invalid_data(os.str());    
+  }  
+
+  // sort the data in ascending order
+  sort(data.begin(), data.end());
+
+  double x0 = 0.;
+  double x1 = 1.;
+  double y0 = data[0];
+  double y1 = data.back();
+
+  // cumulative sum of the weights
+  partial_sum(ws.begin(),ws.end(),cumsum.begin());
+
+  for(std::size_t i = 0; i < data.size(); i++) {
+    cumsum[i] = cumsum[i] - 1.*ws[1];
+    if(data.size() != 0){
+      cumsum[i] = cumsum[i]/(data.size()-1); // value in the x-axis
+      // interpolation in the "val" value for the x-axis
+      if(((val-cumsum[i])>0) && ((val-cumsum[i])<(val-x0))){
+	x0 = cumsum[i];
+	y0 = data[i];
+      }
+      if(((cumsum[i]-val)>0) && ((cumsum[i]-val)<(x1-val))){
+	x1 = cumsum[i];
+	y1 = data[i];
+      }
+    }
+    else{
+      std::ostringstream os;
+      os << " STOP percentiles: problem with the function";
+      throw invalid_data(os.str());        
+    }	
+  }
+  // final interpolation
+  return (y0*(x1-val)+y1*(val-x0))/(x1-x0);
+}
 
 
 }// namespace shark

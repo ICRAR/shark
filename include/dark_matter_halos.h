@@ -70,7 +70,7 @@ public:
 	bool random_lambda = false;
 	bool spin_mass_dependence = false;
 	bool use_converged_lambda_catalog = false; 
-	bool apply_fix_to_mass_swapping_events = false;
+	bool apply_fix_to_mass_swapping_events = true;
 	int  min_part_convergence = 100;
 
 };
