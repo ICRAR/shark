@@ -438,18 +438,18 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
 
 def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vmax_halo_gal, disk_size, rcomb):
 
-    #print ('sizes disks')
-    #for i,j,p in zip(disk_size[0,0,:],disk_size[0,1,:],disk_size[0,2,:]):
-    #    print( i,j,p)
-    #print('sizes bulges')
-    #for i,j,p in zip(bulge_size[0,0,:],bulge_size[0,1,:],bulge_size[0,2,:]):
-    #    print(i,j,p)
 
     def plot_profuse_sizes(ax, component=0, color='DarkTurquoise', include_ambig = True, r_bulge_assumed = 1):
+    
+        #define function to compute the size-mass relation. wmedians computes the 16th-50th-84th percentiles using weights (though if no weights are provided they are assumed to be =1)
         bin_it = functools.partial(us.wmedians, xbins=xmfo, low_numbers=False)
+        
+        #read in the data
         sizes_table = np.loadtxt(obsdir + '/SizeMass/' + 'ProFuse_cat_BestModel_v1.0.csv', delimiter=',')
         r=0
         mass=0
+        
+        #component = 0 are disks
         if((component ==0) & (include_ambig == True)):
            #select disks of interest:
            ind = np.where((sizes_table[:,3] == 1) | (sizes_table[:,2] == 1) | (sizes_table[:,2] == 2) | (sizes_table[:,3] ==3)) #Disk or D+B or P+D or Ambg
@@ -464,6 +464,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            r = sizes_table[ind,22]
            lab = '(disks)'
            fill = 'none'
+        #component = 1 are bulges + spheroids
         elif((component ==1) & (include_ambig == True)):
            #select bulges of interest:
            ind = np.where((sizes_table[:,3] == 2) | (sizes_table[:,2] == 1) | (sizes_table[:,3] ==3) | (sizes_table[:,2] == 3)) #Sph or D+B or Ambg or P+D
@@ -481,6 +482,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            r[ind] = r_bulge_assumed
            lab = '(b+Sph)'
            fill = 'none'
+        #component = 4 are spheroids only
         elif(component == 4):
            #select bulges of interest:
            ind = np.where((sizes_table[:,3] == 2) | (sizes_table[:,3] ==3)) #Sph
@@ -490,9 +492,10 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            r[ind] = r_bulge_assumed
            lab = '(Sph+ambig)'
            fill = 'none'
+        #component = 5 are bulges only
         elif(component == 5):
            #select bulges of interest:
-           ind = np.where((sizes_table[:,2] == 1)) #Sph
+           ind = np.where((sizes_table[:,2] == 1)) #bulges
            mass = sizes_table[ind,32]
            r = sizes_table[ind,45]
            ind = np.where(r == -99)
@@ -500,6 +503,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            lab = '(b)'
            fill = 'none'
 
+        #component = 2 are the total galaxy size
         elif(component == 2):
            mass = np.zeros(shape = len(sizes_table[:,3]))
            r = np.zeros(shape = len(sizes_table[:,3]))
@@ -512,6 +516,8 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            ind = np.where(sizes_table[:,3] == 3) #ambigious
            mass[ind] = sizes_table[ind,9]
            r[ind] = sizes_table[ind,22]
+           
+           #in the case of galaxies that have bulge+disk then we compute a mass-weighted r50
            ind = np.where(sizes_table[:,2] == 1) #B+D
            mass[ind] = np.log10(10**sizes_table[ind,32] + 10**sizes_table[ind,9])
            r[ind] = (sizes_table[ind,22]* 10**sizes_table[ind,9] + sizes_table[ind,45] * 10**sizes_table[ind,32]) / (10**sizes_table[ind,32] + 10**sizes_table[ind,9])
@@ -521,6 +527,7 @@ def plot_sizes(plt, outdir, obsdir, disk_size_cen, disk_size_sat, bulge_size, vm
            lab = '(mass-weigh)'
            fill = 'full'
 
+        #now plot size-mass relation
         ind = np.where(r > 0)
         mzr = bin_it(x=mass[ind], y=np.log10(r[ind]))
         ind = np.where(mzr[0,:] != 0)

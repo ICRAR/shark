@@ -1,0 +1,14 @@
+H-alpha Luminosity Function from Jones & Bland-Hawthorn (2001)
+
+Dust extinction correction: no
+H0=      50.0000
+Omega_M=      1.00000
+Omega_Lambda=      0.00000
+<z>=    0.0800000
+[min(z),max(z)]    0.0620000    0.0930000
+##########
+Log(L(Halpha) [erg s^-1])    dn/dLog(L)        Error
+      39.5000    0.0151356   0.00481701
+      39.9000    0.0128825   0.00490030
+      40.3000   0.00676083   0.00371046
+      40.7000   0.00301995   0.00155093

@@ -1,4 +1,4 @@
-ID,z,Line,FWHM,FWHM_err,logLline,logLline_err,logMBH,logMBH_err,logPjet,logLblr,logeta
+#ID,z,Line,FWHM,FWHM_err,logLline,logLline_err,logMBH,logMBH_err,logPjet,logLblr,logeta
 16,1.216630,Mg_II,4.08,0.42,42.53,0.07,8.00,0.12,45.81,43.50,-1.60
 49,0.875260,H_beta,6.77,0.11,44.02,0.01,9.30,0.04,45.69,45.06,-1.34
 52,2.206710,Mg_II,6.00,0.43,43.41,0.14,8.88,0.13,44.94,44.51,-1.48

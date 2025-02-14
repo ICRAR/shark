@@ -1,4 +1,4 @@
-ID,logMstar,logMstar_err,SFR,SFR_err,logMBH,logMBH_err,logLAGN,logLAGN_err,BHAR,logEdd
+#ID,logMstar,logMstar_err,SFR,SFR_err,logMBH,logMBH_err,logLAGN,logLAGN_err,BHAR,logEdd
 aegis_019,10.00,0.17,8.08,1.62,,,42.87,0.15,,
 aegis_021,11.47,0.35,132.40,54.88,,,46.23,0.12,,
 aegis_022,11.11,0.27,152.37,90.29,,,45.22,0.05,,
