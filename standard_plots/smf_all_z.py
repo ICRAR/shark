@@ -415,16 +415,16 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_3
             y = hist_smf_30kpc[idx,:]
             ind = np.where(y < 0.)
             ax.plot(xmf[ind],y[ind],'r', linestyle='dotted', linewidth=4, label ='Shark v2.0 (30kpc)'  if idx == 0 else None)
-        if idx >= 1:
+        if idx >= 0:
             y = hist_smf_err[idx,:]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=3, label ='with 0.3dex error')
+            ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=3, label ='with 0.25dex error')
         plot_lagos18_smf(ax, idx)
        
 
         colors = []
         if idx == 0:
-            colors = ['r','r','k']
+            colors = ['r','r','r','k']
         #elif idx == 1:
         #    colors += ['r']
         elif idx > 1:
@@ -536,7 +536,7 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
         ax.plot(xmf[ind],y[ind],'r', label='Shark v2.0' if idx == 1 else None)
         y = hist_smf_err[idx,:]
         ind = np.where(y < 0.)
-        ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.3dex error' if idx == 1 else None)
+        ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.25dex error' if idx == 1 else None)
         y = hist_smf_pass_cen[idx,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'DarkOrange', label='centrals with err' if idx == 1 else None)
@@ -569,13 +569,17 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
 
 def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat, sigma_ms, zlist, halo_mass_rel):
 
-    (h0, volh, mdisk, mbulge, sfrd, sfrb, typeg, rstar_disk, rstar_bulge, mvir, mzd, mzb, mgd, mgb) = hdf5_data
+    (h0, volh, mdisk, mbulge, sfrd, sfrb, typeg, rstar_disk, rstar_bulge, mvir, mzd, mzb, mgd, mgb, mburst_mer, mburst_di, mass_mer, mass_di) = hdf5_data
 
+    volnoh = volh/h0**3
+
+    print("volume in cMpc^3:", volnoh)
     Zgas = ((mzd + mzb) / (mgd + mgb) / Zsun)
 
     bin_it = functools.partial(us.wmedians, xbins=xmf, nmin=10)
 
     ssfr = (sfrd + sfrb) / 1e9 / (mdisk + mbulge)
+    sfr = (sfrd + sfrb) / 1e9 / h0
     ind = np.where(ssfr <= 1e-13)
     ssfr[ind] = 1e-13
     ssfr = np.log10(ssfr)
@@ -585,10 +589,19 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
     H, _ = np.histogram(mass,bins=np.append(mbins,mupp))
     hist_smf[index,:] = hist_smf[index,:] + H
-    ran_err = np.random.normal(0.0, 0.3, len(mass))
+    ran_err = np.random.normal(0.0, 0.25, len(mass))
     mass_err = mass + ran_err
     H, _ = np.histogram(mass_err,bins=np.append(mbins,mupp))
     hist_smf_err[index,:] = hist_smf_err[index,:] + H
+
+    #ind = np.where(mass >=9)
+    #props = np.zeros(shape=(len(mass[ind]), 4))
+    #props[:,0] = mass[ind]
+    #props[:,1] = sfr[ind]
+    #props[:,2] = typeg[ind]
+    #props[:,3] = (mass_mer[ind] + mburst_mer[ind]) / (mburst_mer[ind] + mburst_di[ind] + mass_mer[ind] +  mass_di[ind] + mdisk[ind])
+    #print("Median bulge-to-total ratio:", np.median(props[:,3]))
+    #np.savetxt("StellarMassAndSFR_z" +  str(zlist[index]) + "_Lagos24_mediSURFS.txt", props)
 
     ind = np.where(mass < 11)
     print("cosmic SFR at z", zlist[index], " is", np.log10(sum(sfrd[ind] + sfrb[ind]) / 1e9/h0/(volh / h0**3)))
@@ -602,7 +615,13 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_
     ind = np.where((typeg == 0) & (mass > 10) & (ssfr <= -10.75) & (ssfr > -20) & (Zgas > 1e-10) & (Zgas < 1e10))
     print("Stats for centrals", np.log10(np.median(Zgas[ind])), np.median(sfrd[ind]/(sfrd[ind] + sfrb[ind])), " at redshift", zlist[index], len(sfrb[ind]))
 
-    #ind = np.where((mass > 0) & (ssfr <= -10.75) & (typeg == 0))
+    ind = np.where((mass >= 10.9) & (np.log10(sfr) - mass <= -10))
+    print("Number density of passive galaxies with 10**10.9Msun (no error)", np.log10((len(mass[ind])+0.0)/ volnoh), np.log10(1/ volnoh))
+    mass_witherr = mass + np.random.normal(0.0, 0.25, len(mass))
+    sfr_witherr = np.log10(sfr) + np.random.normal(0.0, 0.25, len(mass))
+    ind = np.where((mass_witherr >= 10.9) & (sfr_witherr - mass_witherr <= -10))
+    print("Number density of passive galaxies with 10**10.9Msun (with 0.25dex error)", np.log10((len(mass[ind])+0.0)/ volnoh))
+
     #H, _ = np.histogram(mass[ind], bins=np.append(mbins,mupp))
     #hist_smf_pass_cen[index,:] = hist_smf_pass_cen[index,:] + H
     #ind = np.where((mass > 0) & (ssfr <= -10.75) & (typeg > 0))
@@ -610,7 +629,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_
     #hist_smf_pass_sat[index,:] = hist_smf_pass_sat[index,:] + H
 
     if index == 0:
-        scatter = 0.2
+        scatter = 0.3
     else:
         scatter = 0.3
     ran_err = np.random.normal(0.0, scatter, len(mass))
@@ -665,40 +684,43 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_
 
     #select main sequence galaxies
     ind = np.where((sfrt > 0) & (mt >= 7e8) & (mt <= 1e10) & (typeg == 0))
-    sfrin = np.log10(sfrt[ind])
-    mtin = np.log10(mt[ind])
-
-    ms_med = bin_it(x=mtin, y=sfrin)
-    pos = np.where(ms_med[0,:] != 0)
-    yin = ms_med[0,pos]
-    ms_fit = np.polyfit(xmf[pos], yin[0], 2)
+    if(len(sfrt[ind]) > 10):
+       sfrin = np.log10(sfrt[ind])
+       mtin = np.log10(mt[ind])
    
-    dist_ms = np.log10(sfrt) - (ms_fit[0] * np.log10(mt)**2 + ms_fit[1] * np.log10(mt) + ms_fit[2])
-
-    for i,m in enumerate(xmf2):
-        ind = np.where((sfrt > 0) & (mt >= 10**(m-dm2/2.0)) & (mt < 10**(m+dm2/2.0))  & (dist_ms > -0.75) & (dist_ms < 0.75))
-        sigma_ms[index,i] = np.std(np.log10(sfrt[ind]))
+       ms_med = bin_it(x=mtin, y=sfrin)
+       pos = np.where(ms_med[0,:] != 0)
+       yin = ms_med[0,pos]
+       ms_fit = np.polyfit(xmf[pos], yin[0], 2)
+      
+       dist_ms = np.log10(sfrt) - (ms_fit[0] * np.log10(mt)**2 + ms_fit[1] * np.log10(mt) + ms_fit[2])
    
-    
-    ind = np.where((mass > 0) & (typeg == 0))
-    halo_mass_rel[index,3,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
-
-    ind = np.where((mass > 0) & (dist_ms > -0.3) & (typeg == 0))
-    halo_mass_rel[index,2,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
-
-    #print("#Main sequence scatter at z:", zlist[index])
-    #print("#log10(Mstar/Msun) std(log10(SFR))")
-
-    #for a,b in zip(xmf2, sigma_ms[index,:]):
-    #    print(a,b)
+       for i,m in enumerate(xmf2):
+           ind = np.where((sfrt > 0) & (mt >= 10**(m-dm2/2.0)) & (mt < 10**(m+dm2/2.0))  & (dist_ms > -0.75) & (dist_ms < 0.75))
+           sigma_ms[index,i] = np.std(np.log10(sfrt[ind]))
+      
+       
+       ind = np.where((mass > 0) & (typeg == 0))
+       halo_mass_rel[index,3,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
+   
+       ind = np.where((mass > 0) & (dist_ms > -0.3) & (typeg == 0))
+       halo_mass_rel[index,2,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
+   
+       #print("#Main sequence scatter at z:", zlist[index])
+       #print("#log10(Mstar/Msun) std(log10(SFR))")
+   
+       #for a,b in zip(xmf2, sigma_ms[index,:]):
+       #    print(a,b)
  
 
     return mass
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
-    zlist = (0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0) #(0.15, 0.25, 0.4, 0.625, 0.875, 1.125, 1.375, 1.625, 1.875)
-
+    zlist = (0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)
+    #zlist = (3, 3.5, 4.0, 4.5, 5.0)
+    #, 10.0, 11.0) #(0.15, 0.25, 0.4, 0.625, 0.875, 1.125, 1.375, 1.625, 1.875)
+    #zlist = (4, 5, 6, 7, 8, 9, 10, 11) #0, 0.25, 0.5, 0.75, 1.0)
     plt = common.load_matplotlib()
 
     # Histograms
@@ -713,7 +735,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     halo_mass_rel  = np.zeros(shape = (len(zlist), 4, 3, len(mbins)))
 
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'sfr_disk', 'sfr_burst', 'type', 'rstar_disk', 'rstar_bulge', 'mvir_hosthalo',
-                           'mgas_metals_disk', 'mgas_metals_bulge', 'mgas_disk', 'mgas_bulge')}
+                           'mgas_metals_disk', 'mgas_metals_bulge', 'mgas_disk', 'mgas_bulge', 'mstars_burst_mergers',
+                           'mstars_burst_diskinstabilities', 'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly')}
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
@@ -735,9 +758,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_30kpc, hist_smf_pass, hist_smf_pass_err)
     plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat)
     plot_SMHM_z(plt, outdir, zlist, halo_mass_rel)
-    #print("#SMF passive galaxies")
-    #for a,b,c,d,e,f,g,h in zip(xmf, hist_smf_pass_sat[0,:], hist_smf_pass_sat[1,:], hist_smf_pass_sat[2,:], hist_smf_pass_sat[3,:], hist_smf_pass_sat[4,:], hist_smf_pass_sat[5,:], hist_smf_pass_sat[6,:]):
-    #    print(a,b,c,d,e,f,g,h)
+    #print("#SMF all galaxies z=5, 6, 7, 8, 9, 10, 11")
+    #for a,b,c,d,e,f,g,h,i,j,k,l,m,n,p,o,q in zip(xmf, hist_smf[0,:], hist_smf[1,:], hist_smf[2,:], hist_smf[3,:], hist_smf[4,:], hist_smf[5,:], hist_smf[6,:],hist_smf[7,:], hist_smf_err[0,:], hist_smf_err[1,:], hist_smf_err[2,:], hist_smf_err[3,:], hist_smf_err[4,:], hist_smf_err[5,:], hist_smf_err[6,:], hist_smf_err[7,:]):
+    #    print(a,b,c,d,e,f,g,h,i,j,k,l,m,n,p,o,q)
 
 if __name__ == '__main__':
     main(*common.parse_args())

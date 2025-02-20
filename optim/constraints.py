@@ -442,6 +442,39 @@ class SMF_z2(SMF):
 
         return x_obs, y_obs, y_dn, y_up
 
+class SMF_z3(SMF):
+    """The SMF constraint at z=3"""
+
+    z = [3]
+
+    def get_obs_x_y_err(self, h0):
+
+        #SMF from Weaver et al. (2022)
+        lm, pD, dn, du = self.load_observation('mf/SMF/COSMOS2020/SMF_Farmer_v2.1_3.0z3.5_total.txt', cols = [0,2,3,4])
+        hobs = 0.7
+        y_obs = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        y_dn = np.log10(pD) - np.log10(dn)
+        y_up = np.log10(du) - np.log10(pD)
+        x_obs = lm -  2.0 * np.log10(hobs/h0)
+
+        return x_obs, y_obs, y_dn, y_up
+
+class SMF_z4(SMF):
+    """The SMF constraint at z=4"""
+
+    z = [4]
+
+    def get_obs_x_y_err(self, h0):
+
+        #SMF from Weaver et al. (2022)
+        lm, pD, dn, du = self.load_observation('mf/SMF/COSMOS2020/SMF_Farmer_v2.1_3.5z4.5_total.txt', cols = [0,2,3,4])
+        hobs = 0.7
+        y_obs = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        y_dn = np.log10(pD) - np.log10(dn)
+        y_up = np.log10(du) - np.log10(pD)
+        x_obs = lm -  2.0 * np.log10(hobs/h0)
+
+        return x_obs, y_obs, y_dn, y_up
 
 class CSFR(Constraint):
     """The Cosmic Star Formation Rate constraint"""
@@ -574,10 +607,13 @@ def parse(spec):
     _constraints = {
         'HIMF': HIMF,
         'SMF_z0': SMF_z0,
-	'SMF_z0p5': SMF_z0p5,
+ 	    'SMF_z0p5': SMF_z0p5,
         'SMF_z1': SMF_z1,
-	'CSFR': CSFR,
-	'RM': RM
+        'SMF_z2': SMF_z2,
+        'SMF_z3': SMF_z3,
+        'SMF_z4': SMF_z4,
+	    'CSFR': CSFR,
+	    'RM': RM
     }
 
     def _parse(s):

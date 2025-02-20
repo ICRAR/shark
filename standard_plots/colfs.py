@@ -53,7 +53,7 @@ dv = 0.25
 vbins = np.arange(vlow,vupp,dv)
 xvf = vbins + dv/2.0
 
-def plot_lf_z(plt, outdir, obsdir, hist_lf, co_vel_scaling):
+def plot_lf_z(plt, outdir, obsdir, hist_lf):
 
     fig = plt.figure(figsize=(9.7,11.7))
     xtit = "$\\rm log_{10} (\\rm L_{\\rm CO}/\\rm Jy\\, km/s\\, Mpc^{-2})$"
@@ -87,7 +87,7 @@ def plot_lf_z(plt, outdir, obsdir, hist_lf, co_vel_scaling):
     common.savefig(outdir, fig, 'colf_z.pdf')
 
 
-def prepare_data(hdf5_data, hdf5_data_gal, index, hist_lf):
+def prepare_data(hdf5_data, hdf5_data_gal, index, hist_lf, co_vel_scaling):
 
     (h0, volh, mdisk, mbulge, rgas_disk, rgas_bulge, jgas_disk, jgas_bulge)  = hdf5_data_gal
     (co_disk, co_bulge) = hdf5_data
@@ -97,16 +97,16 @@ def prepare_data(hdf5_data, hdf5_data_gal, index, hist_lf):
     vbulge = jgas_bulge / rgas_bulge / 2.0 #in km/s
 
     co_total = co_disk + co_bulge
-    print co_total.shape, vdisk.shape
+    print (co_total.shape, vdisk.shape)
      
     ind = np.where( (mdisk +  mbulge) > 0) 
     v_equiv  = (co_disk[:,0] * vdisk[ind] + co_bulge[:,0] * vbulge[ind]) / (co_disk[:,0] + co_bulge[:,0])
-    print v_equiv, co_disk[:,0] + co_bulge[:,0]
-    print 'list of gals at index', index
-    if(index  == 4):
-       for a,b in zip(co_total[:,0], v_equiv[:]):
-           if(a > 0 and a < 1e15 and b > 0 and b < 1e5):
-              print a,b
+    print (v_equiv, co_disk[:,0] + co_bulge[:,0])
+    print ('list of gals at index', index)
+    #if(index  == 4):
+    #   for a,b in zip(co_total[:,0], v_equiv[:]):
+    #       if(a > 0 and a < 1e15 and b > 0 and b < 1e5):
+    #          print (a,b)
 
     for i in range(10):
         ind = np.where(co_total[:,i] > 0.0)
@@ -116,7 +116,7 @@ def prepare_data(hdf5_data, hdf5_data_gal, index, hist_lf):
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
-    zlist = (0, 0.5, 1, 1.5, 2, 3)
+    zlist = [0, 0.5, 1, 1.5, 2, 3, 3.5, 4, 4.5, 5, 5.5, 6]
 
     plt = common.load_matplotlib()
 
@@ -140,7 +140,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     write = True
     if write:
        for index, z in enumerate(zlist):
-           with open('Shark-Lagos19-COLFs_%s.txt' % str(z), 'wb') as fil:
+           print(z)
+           with open('Shark-Lagos18-COLFs_z' + str(z) +  '.txt', 'w') as fil:
                 fil.write("#Galaxies from Shark (Lagos et al. 2018, 2019) using CO modelling of Lagos et al. (2012)\n")
                 fil.write("#CO LFs for lines (1-0) to (10-9)\n")
                 fil.write("#Units of CO luminosity in [Jy km/s Mpc^2] and presented in log10\n")

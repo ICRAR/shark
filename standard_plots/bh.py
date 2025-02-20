@@ -101,6 +101,13 @@ def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR,
     BHSFR[index,:] = bin_it(x=np.log10(mbh[ind]) - np.log10(float(h0)),
                             y=np.log10(ssfr[ind]))
 
+    if(index == 5): #z=3 
+       ind = np.where((mbh > 0) & (ssfr > 1e-14) & ((mbulge + mdisk)/h0 > 1e10) & (typeg <= 0))
+       sfrin = (sfr_disk[ind] + sfr_burst[ind]) / 1e9 / h0
+       msin = (mbulge[ind] + mdisk[ind])/h0
+       bhin = mbh[ind]
+       for a,b,c in zip(msin, sfrin, bhin):
+           print(a,b,c)
 
 def plot_spine_BH(plt, outdir, obsdir, spinbh, spinmdot, mdotmbh):
 
