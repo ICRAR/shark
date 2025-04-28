@@ -416,7 +416,7 @@ float DarkMatterHalos::enclosed_total_mass(const Subhalo &subhalo, double z, flo
 	auto mdm = mvir * enclosed_mass(rnorm, concentration);
 
 	//calculate enclosed hot gas mass (only relevant for isothermal sphere)
-	auto mhot = subhalo.hot_halo_gas.mass * std::pow(rnorm,2);
+	auto mhot = subhalo.hot_halo_gas.mass * std::pow(rnorm,1);
 
 	//calculate enclosed galaxy mass
 	if(galaxy){
