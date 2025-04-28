@@ -50,6 +50,7 @@ EnvironmentParameters::EnvironmentParameters(const Options &options)
 	options.load("environment.tidal_stripping", tidal_stripping);
 	options.load("environment.minimum_halo_mass_fraction", minimum_halo_mass_fraction);
 	options.load("environment.alpha_rps_halo", alpha_rps_halo);
+	options.load("environment.alpha_cold", alpha_cold);
 
 }
 
@@ -519,7 +520,7 @@ double Environment::ram_pressure_stripping_galaxy_gas(const GalaxyPtr &galaxy,
 
 	auto sigma_gas = galaxy->surface_density_gas(r) / 1e12; //In Msun/pc^2
 	auto sigma_gal = (galaxy->surface_density_bulge(r) + galaxy->surface_density_disk(r)) / 1e12; //In Msun/pc^2
-	double func = shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_gal * 1e6 -
+	double func = parameters.alpha_cold * shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_gal * 1e6 -
 			ram_press;
 
 	return func;
