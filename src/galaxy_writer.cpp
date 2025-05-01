@@ -737,7 +737,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("halo/mvir", halo_m, comment);
 
 	comment = "virial velocity of halo [km/s]";
-	file.write_dataset("halo/vvir", halo_m, comment);
+	file.write_dataset("halo/vvir", halo_v, comment);
 
 	comment = "halo concentration";
 	file.write_dataset("halo/concentration", halo_concentration, comment);
