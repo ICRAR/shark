@@ -39,12 +39,19 @@ OmegaM = 0.3121
 OmegaL = 0.6879
 XH = 0.72
 
-def prepare_data(hdf5_data, redshifts):
+def prepare_data(hdf5_data, redshifts, read_bh_acc):
 
-    (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mlost, mcreated, mstar,
-     mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst, 
-     mDM, mcold_halo, number_major_mergers, number_minor_mergers, 
-     number_disk_instabil, max_smbh) = hdf5_data
+
+    if(read_bh_acc == True):
+       (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mlost, mcreated, mstar,
+        mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst, 
+        mDM, mcold_halo, number_major_mergers, number_minor_mergers, 
+        number_disk_instabil, max_smbh, mBH_acc_hh, mBH_acc_sb) = hdf5_data
+    else:
+       (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mlost, mcreated, mstar,
+        mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst,
+        mDM, mcold_halo, number_major_mergers, number_minor_mergers,
+        number_disk_instabil, max_smbh) = hdf5_data
 
 
     history_interactions = np.zeros(shape = (3, len(redshifts)))
@@ -53,6 +60,9 @@ def prepare_data(hdf5_data, redshifts):
     history_interactions[2,:] = number_disk_instabil[:]/volh
 
     sfrall = sfrdisk + sfrburst
+
+    if(read_bh_acc == True):
+        mbhaccall = mBH_acc_hh + mBH_acc_sb
 
     maxden = 6.2863*pow(10.0,9.0)
     ind = 0
@@ -65,12 +75,16 @@ def prepare_data(hdf5_data, redshifts):
     #Add up cold halo component to hot gas.
     mhot = mhot + mcold_halo
 
-    print(mlost)
     massbar = mcold+mhot+meje+mstar+mBH+mlost
     
     sfr  = sfrall / volh / GyrToYr
     sfrd = sfrdisk  / volh / GyrToYr
     sfrb = sfrburst / volh / GyrToYr
+
+    if(read_bh_acc == True):
+       mBHacc = mbhaccall / volh / GyrToYr
+       mBHacchh = mBH_acc_hh / volh / GyrToYr
+       mBHaccsb = mBH_acc_sb / volh / GyrToYr
 
     ind = np.where(mcold <= 0.0)
     mcold[ind] = minmass
@@ -145,12 +159,19 @@ def prepare_data(hdf5_data, redshifts):
     mH2_dm_plot[ind] = np.log10(mH2[ind]/(mDM[ind]+massbar[ind]))
     mlost_dm_plot[ind] = np.log10(mlost[ind]/(mDM[ind]+massbar[ind]))
     mcreated_dm_plot[ind] = np.log10(mcreated[ind]/(mDM[ind]+massbar[ind]))
-  
-    return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
-     mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
-     sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
-     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden,
-     history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot)
+ 
+    if(read_bh_acc == True):
+       return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
+        mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
+        sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
+        mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden,
+        history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot, mBHacc, mBHacchh, mBHaccsb)
+    else:
+       return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
+        mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
+        sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
+        mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden,
+        history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot)
 
 def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, meje, mstarden, mcoldden, mhotden, mejeden):
 
@@ -366,6 +387,42 @@ def plot_baryon_fractions(plt, outdir, redshifts, mstar_dm, mcold_dm, mhot_dm, m
 
     common.prepare_legend(ax, ['k','b','r','g','orange','orange','m','k'])
     common.savefig(outdir, fig, "baryon_frac.pdf")
+
+def plot_cosmic_bhacc(plt, outdir, obsdir, redshifts, h0, mBHacc, mBHacchh, mBHaccsb):
+
+    fig = plt.figure(figsize=(5,9))
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm log_{10}(CBHACC/ M_{\odot}\,yr^{-1}\,cMpc^{-3})$"
+
+    ax = fig.add_subplot(211)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 10, -8, -4, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    #note that only h^2 is needed because the volume provides h^3, and the SFR h^-1.
+    ind = np.where(mBHacc > 0)
+    ax.plot(redshifts[ind], np.log10(mBHacc[ind]*pow(h0,2.0)), 'k', linewidth=1, label ='total')
+
+    ind = np.where(mBHacchh > 0)
+    ax.plot(redshifts[ind], np.log10(mBHacchh[ind]*pow(h0,2.0)), 'b', linestyle='dashed', linewidth=1, label ='hot-halo mode')
+    ind = np.where(mBHaccsb > 0)
+    ax.plot(redshifts[ind], np.log10(mBHaccsb[ind]*pow(h0,2.0)),'r', linestyle='dotted',  linewidth=1, label ='burst mode')
+
+    xtit="$\\rm Lookback\, time/Gyr$"
+    ax = fig.add_subplot(212)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 13.5, -8, -4, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    ind = np.where(mBHacc > 0)
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(mBHacc[ind]*pow(h0,2.0)), 'k', linewidth=1, label ='total')
+    ind = np.where(mBHacchh > 0)
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(mBHacchh[ind]*pow(h0,2.0)), 'b', linestyle='dashed', linewidth=1)
+    ind = np.where(mBHaccsb > 0)
+    ax.plot(us.look_back_time(redshifts[ind]), np.log10(mBHaccsb[ind]*pow(h0,2.0)),'r', linestyle='dotted',  linewidth=1)
+
+    common.savefig(outdir, fig, "cosmic_bhacc.pdf")
 
 
 def plot_cosmic_sfr(plt, outdir, obsdir, redshifts, h0, sfr, sfrd, sfrb, history_interactions, mDMden):
@@ -920,6 +977,21 @@ def plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den):
     common.prepare_legend(ax, ['red','k','grey','grey','grey','grey','grey','grey'], loc=0)
     common.savefig(outdir, fig, "omega_H2_compL18.pdf")
 
+    fig = plt.figure(figsize=(6,5.5))
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm log_{10}(\\rho_{\\rm H_2}/ M_{\odot}\,cMpc^{-3})$"
+    common.prepare_ax(ax, 0, 6, 5.2, 8.4, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    load_observations_h2(ax, obsdir, h0, caption=True)
+
+    # Legend
+    common.prepare_legend(ax, ['grey','grey','grey','grey','grey','grey'], loc=0)
+    common.savefig(outdir, fig, "omega_H2_obsonly.pdf")
+
+
 
 def plot_mass_cosmic_density(plt, outdir, redshifts, mcold, mHI, mH2):
 
@@ -1080,7 +1152,6 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI, mcold):
 
 
 
-
     fig = plt.figure(figsize=(6,5.5))
     ax = fig.add_subplot(111)
     plt.subplots_adjust(bottom=0.15, left=0.15)
@@ -1122,11 +1193,21 @@ def plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI, mcold):
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
+    read_bh_acc = False
+
     plt = common.load_matplotlib()
-    fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
+
+    if(read_bh_acc == True):
+       fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
                          'mhot_halo', 'mejected_halo', 'mbar_lost', 'mbar_created', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
                          'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo', 'number_major_mergers', 
+                         'number_minor_mergers', 'number_disk_instabilities', 'smbh_maximum', 'bh_acc_hh', 'bh_acc_sb')}
+    else:
+       fields = {'global': ('redshifts', 'm_hi', 'm_h2', 'mcold', 'mcold_metals',
+                         'mhot_halo', 'mejected_halo', 'mbar_lost', 'mbar_created', 'mstars', 'mstars_bursts_mergers', 'mstars_bursts_diskinstabilities',
+                         'm_bh', 'sfr_quiescent', 'sfr_burst', 'm_dm', 'mcold_halo', 'number_major_mergers',
                          'number_minor_mergers', 'number_disk_instabilities', 'smbh_maximum')}
+
 
     # Read data from each subvolume at a time and add it up
     # rather than appending it all together
@@ -1147,11 +1228,21 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     h0, redshifts = hdf5_data[0], hdf5_data[2]
 
-    (mstar_plot, mcold_plot, mhot_plot, meje_plot,
-     mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
-     sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
-     mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, 
-     mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot) = prepare_data(hdf5_data, redshifts)
+    if(read_bh_acc == True):
+
+       (mstar_plot, mcold_plot, mhot_plot, meje_plot,
+        mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
+        sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
+        mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, 
+        mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot, 
+        mBHacc, mBHacchh, mBHaccsb, read_bh_acc) = prepare_data(hdf5_data, redshifts)
+    else:
+       (mstar_plot, mcold_plot, mhot_plot, meje_plot,
+        mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
+        sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
+        mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden,
+        mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot) = prepare_data(hdf5_data, redshifts, read_bh_acc)
+
 
     plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar_plot, mcold_plot, mhot_plot, meje_plot, mstarden, mcoldden, mhotden, mejeden)
     plot_baryon_fractions(plt, outdir, redshifts, mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot, mlost_dm_plot, mcreated_dm_plot)
@@ -1162,6 +1253,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     plot_omega_h2(plt, outdir, obsdir, redshifts, h0, mH2den)
     plot_cosmic_dust(plt, outdir, obsdir, redshifts, h0, mdustden, mdustden_mol)
     plot_omega_HI(plt, outdir, obsdir, redshifts, h0, omegaHI, mcold_plot)
+
+    if(read_bh_acc == True):
+       plot_cosmic_bhacc(plt, outdir, obsdir, redshifts, h0, mBHacc, mBHacchh, mBHaccsb)
 
 if __name__ == '__main__':
     main(*common.parse_args())

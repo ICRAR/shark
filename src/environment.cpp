@@ -50,6 +50,7 @@ EnvironmentParameters::EnvironmentParameters(const Options &options)
 	options.load("environment.tidal_stripping", tidal_stripping);
 	options.load("environment.minimum_halo_mass_fraction", minimum_halo_mass_fraction);
 	options.load("environment.alpha_rps_halo", alpha_rps_halo);
+	options.load("environment.alpha_cold", alpha_cold);
 
 }
 
@@ -111,6 +112,11 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 				auto func_rvir = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall, z, ram_press);
 				auto func_rvirdiv100 = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall/100, z, ram_press);
 
+				if(satellite_subhalo.hot_halo_gas_r_rps == 0){
+					// if the hot_halo_gas_r_rps is initialized to 0, instead change it to rvir_infall.
+					satellite_subhalo.hot_halo_gas_r_rps = satellite_subhalo.rvir_infall;
+				}
+				
 				if(func_rvir > 0){
 					r_rps = satellite_subhalo.hot_halo_gas_r_rps;
 				}
@@ -493,7 +499,7 @@ double Environment::ram_pressure_stripping_hot_gas(const SubhaloPtr &primary,
 
 	auto enc_mass = darkmatterhalos->enclosed_total_mass(secondary, z, r);
 	double func = parameters.alpha_rps_halo * shark::constants::G * enc_mass *
-			(secondary.hot_halo_gas.mass + secondary.hot_halo_gas_stripped.mass) / (8 * rvir * std::pow(r,3)) / 1e18 -
+			(secondary.hot_halo_gas.mass + secondary.hot_halo_gas_stripped.mass) / (8 * std::pow(rvir,1) * std::pow(r,3)) / 1e18 -
 			ram_press;
 
 	return func;
@@ -514,7 +520,7 @@ double Environment::ram_pressure_stripping_galaxy_gas(const GalaxyPtr &galaxy,
 
 	auto sigma_gas = galaxy->surface_density_gas(r) / 1e12; //In Msun/pc^2
 	auto sigma_gal = (galaxy->surface_density_bulge(r) + galaxy->surface_density_disk(r)) / 1e12; //In Msun/pc^2
-	double func = shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_gal -
+	double func = parameters.alpha_cold * shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_gal * 1e6 -
 			ram_press;
 
 	return func;
@@ -537,7 +543,7 @@ double Environment::ram_pressure(const SubhaloPtr &primary,
 	auto vrel_norm = vrel.norm();
 
 	auto rvir_prim = darkmatterhalos->halo_virial_radius(primary->host_halo->Mvir, z);
-	auto rho_cen = primary->hot_halo_gas.mass / (shark::constants::PI4 * std::pow(rvir_prim,2) * rsat) / 1e18 ; //in Msun/pc^3
+	auto rho_cen = primary->hot_halo_gas.mass / (shark::constants::PI4 * rvir_prim * std::pow(rsat, 2)) / 1e18 ; //in Msun/pc^3
 
 	return rho_cen * std::pow(vrel_norm,2);
 }

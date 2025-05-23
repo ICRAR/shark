@@ -59,6 +59,8 @@ Av = 4
 
 zsun = 0.0189
 
+zlist = [0, 0.5, 1, 1.5, 2, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
+
 def plot_co_sled(plt, LCO, snap, outdir):
 
     xj = np.array([1,2,3,4,5,6,7,8,9,10])
@@ -300,21 +302,21 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir, read_spi
     hf.close()
 
     if(test_co_sleds):
-       ssfr_cut = 10**(-1 + 0.5 * redshift)
+       ssfr_cut = 10**(-1 + 0.5 * zlist[index])
        ind = np.where( ((mdisk +  mbulge)/h0 > 1e10) & ((sfr_d + sfr_b)/(mdisk +  mbulge) > ssfr_cut))
        return LCOd[ind] + LCOb[ind]
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     plt = common.load_matplotlib()
-    test_co_sleds = False
+    test_co_sleds = True
     read_spin = True
 
     if(test_co_sleds):
-        zlist = [0, 0.5, 1, 1.5, 2, 2.5, 3.0]
+        zlist = [0] #, 0.5, 1, 1.5, 2, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
         snapshots = redshift_table[zlist]
     else:
-        snapshots = range(61,200)
+        snapshots = range(128,202)
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
@@ -337,7 +339,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
            hdf5_data = common.read_data(model_dir, snapshot, fields, [subv])
            if(test_co_sleds):
               LCO = prepare_data(hdf5_data, index, model_dir, snapshot, subv, obs_dir, read_spin, test_co_sleds)
-              plot_co_sled(plt, LCO, str(zlist[index]), output_dir)
+              #plot_co_sled(plt, LCO, str(zlist[index]), output_dir)
            else:
               prepare_data(hdf5_data, index, model_dir, snapshot, subv, obs_dir, read_spin, test_co_sleds)
 

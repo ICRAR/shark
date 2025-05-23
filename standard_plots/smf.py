@@ -553,7 +553,6 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
 
     ax.errorbar(xobs, yobs, yerr=[dpdnHI,dpduHI], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='x',label="Jones+2018")
 
-
     # Predicted HIMF
     for z in range(0,len(hist_HImf[:,0])):
         y = hist_HImf[z,:]
@@ -562,6 +561,7 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
 
     common.prepare_legend(ax, cols)
     common.savefig(outdir, fig, 'HImf_evo.pdf')
+
 
 def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, hist_H2mf_sat):
 
@@ -627,6 +627,55 @@ def plot_H2mf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_H2mf, hist_H2mf_cen, 
 
     common.prepare_legend(ax, ['red','grey','grey'])
     common.savefig(outdir, fig, 'H2mf_z0.pdf')
+
+
+    fig = plt.figure(figsize=(5,4.5))
+    xtit = "$\\rm log_{10} (\\rm M_{\\rm H_2}/M_{\odot})$"
+    ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\rm H_2}}/{\\rm Mpc}^{-3} )$"
+    xmin, xmax, ymin, ymax = 7.1, 12, -6, 0
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    labels=('z=0','z=0.5','z=1','z=2','z=3','z=4')
+    cols=('red','LightSalmon','LimeGreen','DarkGreen','DarkTurquoise','blue')
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.15, left=0.15)
+
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
+
+    # H2 mass function
+    lmCO, pCO, dpCOdn, dpCOup = common.load_observation(obsdir, 'mf/GasMF/Keres03_LCOLF60m.dat', [0,1,2,3])
+
+    # correct data for their choice of cosmology
+    hobs = 0.75
+    dpCOdn = np.abs(dpCOdn-pCO)
+    dpCOup = np.abs(dpCOup-pCO)
+    xobs = lmCO + np.log10(pow(hobs,2)/pow(h0,2))
+    yobs = pCO + np.log10(pow(h0,3)/pow(hobs,3))
+
+    # apply a constant MW conversion factor.
+    X = 2.0
+    corr_fac_H2 = np.log10(580.*X)+2.*np.log10(2.6)-np.log10(4.*math.pi)
+    ax.errorbar(xobs+corr_fac_H2, yobs, yerr=[dpCOdn,dpCOup], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='^')
+
+    #H2 mass function
+    lm,p,dpdn,dpup = common.load_observation(obsdir, 'mf/GasMF/H2MF_Fletcher21_Estimated.dat', [0,1,2,3])
+    #correct data for their choice of cosmology
+    #add bin to the data.
+    hobs = 0.7
+    lm = lm + np.log10(pow(hobs,2)/pow(h0,2))
+    yobs = p + np.log10(pow(h0,3)/pow(hobs,3))
+    ax.errorbar(lm, yobs, yerr=[p-dpdn,dpup-p], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+
+    # Predicted HIMF
+    for z in range(0,len(hist_H2mf[:,0])):
+        y = hist_H2mf[z,:]
+        ind = np.where(y < 0.)
+        ax.plot(xmf[ind],y[ind],color=cols[z],  label =labels[z])
+
+    common.prepare_legend(ax, cols)
+    common.savefig(outdir, fig, 'H2mf_evo.pdf')
+
 
 def plot_SSFR_Mstars(plt, outdir, mainseq, mainseq_cen, mainseq_sat):
 
