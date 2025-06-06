@@ -160,8 +160,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			if (subhalo->main_progenitor) {
 				descendant_subhalo->host_halo->hydrostatic_eq = subhalo->host_halo->hydrostatic_eq;
 				if(descendant_subhalo->host_halo->Mvir > 3e12){
-					descendant_subhalo->host_halo->hydrostatic_eq = true;
-				}	
+			 		descendant_subhalo->host_halo->hydrostatic_eq = true;
+			 	}	
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
 			}
 		}

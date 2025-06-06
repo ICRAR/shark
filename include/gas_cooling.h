@@ -80,7 +80,7 @@ public:
 	double tau_cooling = 1;
 	bool limit_fbar = false;
         double rcore = 0.01;
-
+        float redshift_memory_on = 20; 
 	LambdaCoolingModel lambdamodel = CLOUDY;
 	CoolingModel model = CROTON06;
 

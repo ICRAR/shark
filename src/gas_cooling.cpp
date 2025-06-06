@@ -95,6 +95,7 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 	options.load("gas_cooling.tau_cooling", tau_cooling);
 	options.load("gas_cooling.limit_fbar", limit_fbar);
 	options.load("gas_cooling.rcore", rcore);
+	options.load("gas_cooling.redshift_memory_on", redshift_memory_on);
 
 	auto cooling_tables_dir = get_static_data_filepath("cooling");
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
@@ -584,11 +585,17 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		double r_ratio = rheat/r_cool;
 
 		// Track heating radius. Croton16 assume that the heating radius only increases, so it is saved only if it's larger than the previously recorded one.
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23){
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23 && z < parameters.redshift_memory_on){
 			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
                 		subhalo.cooling_subhalo_tracking.rheat = rheat;
 			}
 		}
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
+			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+                		subhalo.cooling_subhalo_tracking.rheat = rheat;
+			}
+		}
+
 		r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
 		if(r_ratio > agnfeedback->parameters.alpha_cool){
