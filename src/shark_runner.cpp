@@ -259,7 +259,7 @@ void SharkRunner::impl::create_per_thread_objects()
 	auto environment = make_environment(environment_params, dark_matter_halos, cosmology, cosmo_params, simulation_params);
 	auto reionisation = make_reionisation(reio_params);
 	auto reincorporation = make_reincorporation(reinc_params, dark_matter_halos);
-	StellarFeedback stellar_feedback {stellar_feedback_params};
+	StellarFeedback stellar_feedback {stellar_feedback_params, cosmology};
 	GasCooling gas_cooling {gas_cooling_params, star_formation_params, exec_params, reionisation, cosmology, agnfeedback, dark_matter_params, dark_matter_halos, reincorporation, environment};
 
 	for(unsigned int i = 0; i != threads; i++) {
