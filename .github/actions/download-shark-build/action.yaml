@@ -12,6 +12,6 @@ runs:
       shell: bash
 
     - name: Install system runtime dependencies
-      run: sudo apt install libhdf5-103 libboost-filesystem1.74.0 libboost-program-options1.74.0 libboost-log1.74.0 libgsl27
+      run: sudo apt install libhdf5-103-1t64 libboost-filesystem1.83.0 libboost-program-options1.83.0 libboost-log1.83.0 libgsl27
       shell: bash
 
