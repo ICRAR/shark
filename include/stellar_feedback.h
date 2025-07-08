@@ -27,6 +27,7 @@
 #define SHARK_STELLAR_FEEDBACK_H_
 
 #include "options.h"
+#include "cosmology.h"
 
 namespace shark {
 
@@ -82,12 +83,13 @@ public:
 class StellarFeedback {
 
 public:
-	explicit StellarFeedback(StellarFeedbackParameters parameters);
+	explicit StellarFeedback(StellarFeedbackParameters parameters, CosmologyPtr cosmology);
 
 	void outflow_rate(double sfr, double vsubh, double vgal, double z, double &b1, double &b2, double &bj_1, double &bj_2);
 
 private:
 	StellarFeedbackParameters parameters;
+	CosmologyPtr cosmology;
 };
 
 }  // namespace shark
