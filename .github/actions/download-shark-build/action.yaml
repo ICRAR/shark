@@ -1,17 +1,28 @@
 name: Get shark up and running from previous build
+inputs:
+  os:
+    description: 'OS this action runs on, needed to pull correct shark build artifact'
+    required: true
+
 runs:
   using: composite
   steps:
     - name: Download shark build tarball
       uses: actions/download-artifact@v4
       with:
-        name: shark-build
+        name: shark-build-${{ inputs.os }}
 
     - name: Untar shark build after download
       run: tar xf shark-build.tar.gz
       shell: bash
 
-    - name: Install system runtime dependencies
+    - name: Install system runtime dependencies (Linux)
+      if: ${{ inputs.os == 'ubuntu-latest' }}
       run: sudo apt install libhdf5-103-1t64 libboost-filesystem1.83.0 libboost-program-options1.83.0 libboost-log1.83.0 libgsl27
+      shell: bash
+
+    - name: Install system runtime dependencies (Windows)
+      if: ${{ inputs.os == 'windows-latest' }}
+      run: vcpkg install ninja-build hdf5 boost cxxtest gsl
       shell: bash
 

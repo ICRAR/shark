@@ -15,9 +15,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        #os: [ubuntu-latest, macos-latest]
-        os: [ubuntu-latest]
-        omp: [true, false]
+        include:
+          - os: ubuntu-latest
+            omp: true
+            upload_build_artifact: true
+          - os: ubuntu-latest
+            omp: false
+            upload_build_artifact: false
+          - os: windows-latest
+            omp: false
+            upload_build_artifact: true
 
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +34,12 @@ jobs:
       - name: Install system dependencies (Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          sudo apt install ninja-build libhdf5-dev hdf5-tools libboost-filesystem-dev libboost-program-options-dev libboost-log-dev cxxtest libgsl-dev
+          sudo apt install ninja-build libhdf5-dev libboost-filesystem-dev libboost-program-options-dev libboost-log-dev cxxtest libgsl-dev
+
+      - name: Install system dependencies (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          vcpkg install hdf5 boost-filesystem boost-log boost-program-options gsl
 
       - name: Install system dependencies (MacOS)
         if: ${{ matrix.os == 'macos-latest' }}
@@ -62,17 +74,20 @@ jobs:
       - name: Tar shark build before upload
         run: tar cf shark-build.tar.gz ${{ env.CI_BUILD_DIR }}
 
-      - name: Upload shark build for next jobs (Linux)
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.omp }}
+      - name: Upload shark build for next jobs
+        if: ${{ matrix.upload_build_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: shark-build
-          path: shark-build.tar.gz
+          name: shark-build-${{ matrix.os }}
+          path: shark-build-${{ matrix.os }}.tar.gz
 
   initial_shark_run:
     name: Initial shark run (with fixed seed)
     needs: build_and_test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -92,7 +107,7 @@ jobs:
       - name: Upload shark output for next jobs
         uses: actions/upload-artifact@v4
         with:
-          name: shark-output
+          name: shark-output-${{ matrix.os }}
           path: ${{ env.TEST_OUTPUTS_DIR }}
 
       - name: Upload shark inputs for next jobs
@@ -113,7 +128,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: shark-output
+          name: shark-output-ubuntu-latest
           path: ${{ env.TEST_OUTPUTS_DIR }}
 
       - name: Check output properties' documentation
@@ -155,15 +170,20 @@ jobs:
   check_reproducibility:
     name: Check shark runs are reproducible
     needs: initial_shark_run
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/download-shark-build
+        with:
+          os: ${{ runner.os }}
 
       - uses: actions/download-artifact@v4
         with:
-          name: shark-output
+          name: shark-output-${{ matrix.os }}
           path: ${{ env.TEST_OUTPUTS_DIR }}
 
       - uses: actions/download-artifact@v4
