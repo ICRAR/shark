@@ -24,13 +24,12 @@
  */
 
 #include <ctime>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <memory>
 #include <numeric>
-
-#include <boost/filesystem.hpp>
 
 #include "hdf5/io/writer.h"
 #include "config.h"
@@ -65,7 +64,7 @@ GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParamete
 
 std::string GalaxyWriter::get_output_directory(int snapshot)
 {
-	using namespace boost::filesystem;
+	using namespace std::filesystem;
 	using std::string;
 
 	string batch_dir = "multiple_batches";

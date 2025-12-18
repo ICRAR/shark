@@ -24,6 +24,7 @@
  */
 
 #include <algorithm>
+#include <filesystem>
 #include <ios>
 #include <iostream>
 #include <ostream>
@@ -34,7 +35,6 @@
 #include <omp.h>
 #endif // SHARK_OPENMP
 
-#include <boost/filesystem/convenience.hpp>
 #include <boost/program_options.hpp>
 #include <gsl/gsl_errno.h>
 
@@ -107,7 +107,7 @@ void log_startup_information(int argc, char **argv)
 	LOG(info) << "shark git version: " << git_sha1();
 	LOG(info) << "shark has local changes: " << std::boolalpha << git_has_local_changes() << std::noboolalpha;
 	LOG(info) << "shark was built on " << __DATE__ << " " __TIME__;
-	LOG(info) << "shark running at: " << boost::filesystem::current_path().string();
+	LOG(info) << "shark running at: " << std::filesystem::current_path().string();
 
 	std::ostringstream os;
 	std::copy(argv, argv + argc, std::ostream_iterator<char *>(os, " "));
