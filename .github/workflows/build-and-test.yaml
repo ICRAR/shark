@@ -43,9 +43,12 @@ jobs:
           echo "EXTRA_CMAKE_ARGS=-DOpenMP_C_FLAGS=\"$OMP_FLAGS\" -DOpenMP_C_LIB_NAMES=omp -DOpenMP_CXX_FLAGS=\"$OMP_FLAGS\" -DOpenMP_CXX_LIB_NAMES=omp -DOpenMP_omp_LIBRARY=$HOMEBREW_LIBOMP_PREFIX/lib/libomp.dylib" >> "$GITHUB_ENV"
 
       - name: Configure
+        env:
+          SHARK_NO_OPENMP: ${{ matrix.omp && 'OFF' || 'ON' }}
+          CMAKE_CXX_FLAGS: -Wall -Werror
         run: |
-          eval cmake -B ${CI_BUILD_DIR} -G Ninja \
-            -DSHARK_TEST=ON -DSHARK_NO_OPENMP=${{ matrix.omp && 'OFF' || 'ON' }} -DCMAKE_CXX_FLAGS="-Wall -Werror" \
+          cmake -B ${CI_BUILD_DIR} -G Ninja \
+            -DSHARK_TEST=ON -DSHARK_NO_OPENMP=$SHARK_NO_OPENMP -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS" \
             $EXTRA_CMAKE_ARGS
 
       - name: Build
