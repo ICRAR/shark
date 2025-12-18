@@ -169,7 +169,7 @@ endmacro()
 # which is a hard requirement -- if it's not there we fail misserably
 #
 macro(find_boost)
-	find_package(Boost 1.70 COMPONENTS filesystem log program_options OPTIONAL_COMPONENTS system REQUIRED CONFIG)
+	find_package(Boost 1.70 COMPONENTS log program_options OPTIONAL_COMPONENTS system REQUIRED CONFIG)
 	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LIBRARIES})
 	include_directories(${Boost_INCLUDE_DIRS})
 endmacro()

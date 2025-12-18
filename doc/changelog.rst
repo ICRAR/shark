@@ -4,6 +4,7 @@ Changelog
 .. rubric:: Development
 
 * Updated requirement for C++ standard from C++11 to C++17.
+* Removed dependency on Boost Filesystem.
 
 .. rubric:: 2.0.0
 
