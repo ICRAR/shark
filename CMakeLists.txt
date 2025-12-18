@@ -30,7 +30,7 @@ set(SHARK_LANGS C CXX)
 
 # Our project...
 project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # If not specified, always build in Release mode

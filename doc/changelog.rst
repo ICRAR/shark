@@ -1,6 +1,10 @@
 Changelog
 =========
 
+.. rubric:: Development
+
+* Updated requirement for C++ standard from C++11 to C++17.
+
 .. rubric:: 2.0.0
 
 * Many changes to the physical models SHARK, which are collectively described in
