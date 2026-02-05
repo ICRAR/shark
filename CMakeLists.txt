@@ -19,7 +19,7 @@
 #
 
 # cmake 3.2 comes with FindGSL.cmake
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.10)
 
 # We have the version here
 file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION SHARK_VERSION)
@@ -41,6 +41,8 @@ endif()
 # Options users can give on the command line
 option(SHARK_TEST       "Include test compilation in the build" OFF)
 option(SHARK_NO_OPENMP  "Don't attempt to include OpenMP support in shark" OFF)
+
+cmake_policy(SET CMP0167 NEW)
 
 #
 # Make sure we have thread support
