@@ -4,11 +4,8 @@ Building
 Compiler
 --------
 
-|s| is written in C++11,
+|s| is written in C++17,
 so in principle any compiler and library supporting this standard can be used.
-As a reference, ``gcc`` supports C++11 since version 4.8.1
-(but its C++ library support did not come to shape until gcc 5.0)
-and ``clang`` supports the standard since version 3.3.
 
 .. _building.reqs:
 

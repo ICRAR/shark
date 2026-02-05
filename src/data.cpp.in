@@ -21,10 +21,10 @@
  * @file
  */
 
+#include <filesystem>
 #include <sstream>
 #include <string>
 
-#include <boost/filesystem.hpp>
 
 #include "exceptions.h"
 
@@ -37,7 +37,7 @@ static const std::string lookup_dirs[] = {source_path, installation_path};
 
 std::string get_static_data_filepath(const std::string &fname)
 {
-	namespace fs = boost::filesystem;
+	namespace fs = std::filesystem;
 	for(auto &dir: lookup_dirs) {
 		fs::path p(dir);
 		p /= fname;

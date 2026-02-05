@@ -30,7 +30,7 @@ set(SHARK_LANGS C CXX)
 
 # Our project...
 project(SHArk VERSION ${SHARK_VERSION} LANGUAGES ${SHARK_LANGS})
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # If not specified, always build in Release mode
@@ -171,13 +171,7 @@ endmacro()
 # which is a hard requirement -- if it's not there we fail misserably
 #
 macro(find_boost)
-	# Boost 1.71's own CMake config file doesn't respect the
-	# Boost_USE_MULTITHREADED setting, which is important in environments where
-	# both single- and multi-threaded libraries are installed (e.g., MacOS Mojave
-	# with homebrew). Let's thus not use Boost's cmake config file and stick to
-	# cmake's own version of it for the time being
-	set(Boost_NO_BOOST_CMAKE ON)
-	find_package(Boost 1.68 COMPONENTS filesystem log program_options system REQUIRED)
+	find_package(Boost 1.70 COMPONENTS log program_options OPTIONAL_COMPONENTS system REQUIRED CONFIG)
 	set(SHARK_LIBS ${SHARK_LIBS} ${Boost_LIBRARIES})
 	include_directories(${Boost_INCLUDE_DIRS})
 endmacro()
