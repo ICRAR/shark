@@ -559,6 +559,10 @@ def plot_HImf_z0(plt, outdir, obsdir, h0, plotz_HImf, hist_HImf, hist_HImf_cen, 
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],color=cols[z],  label =labels[z])
 
+        print("#HI mass function at redshift:", labels[z])
+        for a,b in zip(xmf[ind],y[ind]):
+            print(a,b)
+
     common.prepare_legend(ax, cols)
     common.savefig(outdir, fig, 'HImf_evo.pdf')
 

@@ -39,21 +39,29 @@ OmegaM = 0.3121
 OmegaL = 0.6879
 XH = 0.72
 
-def prepare_data(hdf5_data, redshifts, read_bh_acc):
+def prepare_data(hdf5_data, read_bh_acc):
 
 
     if(read_bh_acc == True):
-       (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mlost, mcreated, mstar,
+       (h0, volh, zread,  mHI, mH2, mcold, mcold_metals, mhot, meje, mlost, mcreated, mstar,
         mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst, 
         mDM, mcold_halo, number_major_mergers, number_minor_mergers, 
         number_disk_instabil, max_smbh, mBH_acc_hh, mBH_acc_sb) = hdf5_data
     else:
-       (h0, volh, _, mHI, mH2, mcold, mcold_metals, mhot, meje, mlost, mcreated, mstar,
+       (h0, volh, zread,  mHI, mH2, mcold, mcold_metals, mhot, meje, mlost, mcreated, mstar,
         mstar_burst_mergers, mstar_burst_diskins, mBH, sfrdisk, sfrburst,
         mDM, mcold_halo, number_major_mergers, number_minor_mergers,
         number_disk_instabil, max_smbh) = hdf5_data
 
+    vol = volh / h0**3
+    print("#Growth history of baryons in galaxies")
+    print("#rho values are in Msun/cMpc^3")
+    print("#redshift rho_atom rho_mol rho_z_cold rho_star rho_BH")
+    for a,b,c,d,e,f in zip(zread, mHI, mH2, mcold_metals, mstar, mBH):
+        print(a,b/vol,c/vol,d/vol,e/vol,f/vol)
 
+
+    redshifts = zread
     history_interactions = np.zeros(shape = (3, len(redshifts)))
     history_interactions[0,:] = number_major_mergers[:]/volh
     history_interactions[1,:] = number_minor_mergers[:]/volh
@@ -165,13 +173,13 @@ def prepare_data(hdf5_data, redshifts, read_bh_acc):
         mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
         sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
         mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden,
-        history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot, mBHacc, mBHacchh, mBHaccsb)
+        history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot, mBHacc, mBHacchh, mBHaccsb, h0, zread)
     else:
        return (mstar_plot, mcold_plot, mhot_plot, meje_plot,
         mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
         sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
         mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, mejeden,
-        history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot)
+        history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot, h0, zread)
 
 def plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar, mcold, mhot, meje, mstarden, mcoldden, mhotden, mejeden):
 
@@ -1211,6 +1219,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     # Read data from each subvolume at a time and add it up
     # rather than appending it all together
+
     for idx, subvol in enumerate(subvols):
         subvol_data = common.read_data(modeldir, redshift_table[0], fields, [subvol])
         max_bhs_subvol = subvol_data[20].copy()
@@ -1218,15 +1227,15 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
             hdf5_data        = subvol_data
             max_smbh         = max_bhs_subvol
         else:
+            #select the most massive black hole from the last list item
             max_smbh = np.maximum(max_smbh, max_bhs_subvol)
             for subvol_datum, hdf5_datum in zip(subvol_data[3:], hdf5_data[3:]):
                 hdf5_datum += subvol_datum
-                #select the most massive black hole from the last list item
 
     # Also make sure that the total volume takes into account the number of subvolumes read
     hdf5_data[1] = hdf5_data[1] * len(subvols)
 
-    h0, redshifts = hdf5_data[0], hdf5_data[2]
+    #h0, redshifts = hdf5_data[0], hdf5_data[2]
 
     if(read_bh_acc == True):
 
@@ -1235,13 +1244,13 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
         mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden, 
         mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot, 
-        mBHacc, mBHacchh, mBHaccsb, read_bh_acc) = prepare_data(hdf5_data, redshifts)
+        mBHacc, mBHacchh, mBHaccsb, read_bh_acc, h0, redshifts) = prepare_data(hdf5_data, read_bh_acc)
     else:
        (mstar_plot, mcold_plot, mhot_plot, meje_plot,
         mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
         sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
         mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden,
-        mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot) = prepare_data(hdf5_data, redshifts, read_bh_acc)
+        mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot, h0, redshifts) = prepare_data(hdf5_data, read_bh_acc)
 
 
     plot_mass_densities(plt, outdir, obsdir, h0, redshifts, mstar_plot, mcold_plot, mhot_plot, meje_plot, mstarden, mcoldden, mhotden, mejeden)

@@ -32,7 +32,7 @@ import common
 import utilities_statistics as us
 
 # Initialize arguments
-zlist = (0.00, 0.25, 0.50, 1.00, 2.00, 3.00, 4.00, 5.00, 6.00) #, 8.00, 10)
+zlist = (0.1, 0.25, 0.50, 1.00, 2.00, 3.00, 4.00, 5.00, 6.00) #, 8.00, 10)
 M_sun=1.9891e30
 c_light=2.99792458e8
 G=6.67259e-11
@@ -105,7 +105,7 @@ def load_lf_obs(obsdir):
 def prepare_data(hdf5_data, snapshot, read_spin):
 
     if(read_spin):
-       (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb, BH_spin) = hdf5_data
+        (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb, BH_spin, L_bol) = hdf5_data
     else:
         (h0, volh, MBH, bh_accretion_rate_hh, bh_accretion_rate_sb) = hdf5_data
         BH_spin = np.zeros(shape = len(MBH))
@@ -113,59 +113,62 @@ def prepare_data(hdf5_data, snapshot, read_spin):
 
     vol = volh/pow(h0,3.)
 
-    MBH = MBH.astype('float64') / h0
-    MBH_acc = (bh_accretion_rate_hh + bh_accretion_rate_sb) #.astype('float64')
-    MBH_acc /= (h0 * 1e9)
-    BH_spin = BH_spin.astype('float64')
-
-    def acc_eff_calc(a):
-        a1=np.abs(a)
-        a2=a**2
-        Z1=1+((1+a1)**(1/3.0)+(1-a1)**(1/3.0))*(1-a2)**(1/3.0)
-        Z2=(3*a2+Z1**2)**0.5
-        
-        r_lso=3+Z2
-        r_temp=((3-Z1)*(3+Z1+2*Z2))**0.5
-        a_positive=a>=0
-        r_lso[a_positive]-=r_temp[a_positive]
-        r_lso[~a_positive]+=r_temp[~a_positive]
-        
-        acc_eff=1-(1-(2/(3*r_lso)))**0.5
-        acc_eff=np.where(acc_eff<0,0.07,acc_eff)
-        acc_eff=np.where(acc_eff>0.5,0.5,acc_eff)
-        return(r_lso,acc_eff)
-    
-    #Efficiency
-    r_lso,acc_eff=acc_eff_calc(BH_spin)
-
-    #Eddington luminosity
-    L_Edd=4*np.pi*c_light*G*M_sun*M_atom*H_atom_mass/(sigma_Thomson*1e40)
-    L_Edd*=MBH*J2erg
+    if(read_spin == False):
+       MBH = MBH.astype('float64') / h0
+       MBH_acc = (bh_accretion_rate_hh + bh_accretion_rate_sb) #.astype('float64')
+       MBH_acc /= (h0 * 1e9)
+       BH_spin = BH_spin.astype('float64')
    
-    #Eddington MBH accretion rate and ratio
-    M_dot_Edd=1e40*L_Edd/(0.1*(c_light*m2cm)**2)
-    M_dot=MBH_acc*M_sun*kg2g/yr2s
+       def acc_eff_calc(a):
+           a1=np.abs(a)
+           a2=a**2
+           Z1=1+((1+a1)**(1/3.0)+(1-a1)**(1/3.0))*(1-a2)**(1/3.0)
+           Z2=(3*a2+Z1**2)**0.5
+           
+           r_lso=3+Z2
+           r_temp=((3-Z1)*(3+Z1+2*Z2))**0.5
+           a_positive=a>=0
+           r_lso[a_positive]-=r_temp[a_positive]
+           r_lso[~a_positive]+=r_temp[~a_positive]
+           
+           acc_eff=1-(1-(2/(3*r_lso)))**0.5
+           acc_eff=np.where(acc_eff<0,0.07,acc_eff)
+           acc_eff=np.where(acc_eff>0.5,0.5,acc_eff)
+           return(r_lso,acc_eff)
+       
+       #Efficiency
+       r_lso,acc_eff=acc_eff_calc(BH_spin)
+   
+       #Eddington luminosity
+       L_Edd=4*np.pi*c_light*G*M_sun*M_atom*H_atom_mass/(sigma_Thomson*1e40)
+       L_Edd*=MBH*J2erg
+      
+       #Eddington MBH accretion rate and ratio
+       M_dot_Edd=1e40*L_Edd/(0.1*(c_light*m2cm)**2)
+       M_dot=MBH_acc*M_sun*kg2g/yr2s
+   
+       m_dot=np.where((M_dot_Edd>0)&(M_dot>0),M_dot/M_dot_Edd,np.nan)
+       #Bolometric luminosity
+       L_bol=np.zeros(len(m_dot))
+       ADAF_low=(0<m_dot)&(m_dot<=ADAF_trans)
+       ADAF_high=(m_dot>ADAF_trans)&(m_dot<1e-2)
+       TD=m_dot>=1e-2
+       
+       temp=2e-4*acc_eff[ADAF_low]*M_dot[ADAF_low]*(c_light*m2cm)**2/(r_lso[ADAF_low]*1e40)
+       L_bol[ADAF_low]=temp*6*(delta_ADAF/5e-4)*(1-beta_ADAF)/0.5
+       
+       temp=0.2*acc_eff[ADAF_high]*M_dot[ADAF_high]*(c_light*m2cm)**2/(r_lso[ADAF_high]*1e40)
+       L_bol[ADAF_high]=temp*6*beta_ADAF*m_dot[ADAF_high]/(0.5*alpha_ADAF**2)
+       
+       L_bol[TD]=acc_eff[TD]*M_dot[TD]*(c_light*m2cm)**2/1e40
+       
+       #Correcting for super Eddington
+       SE=TD&(m_dot>eta_superEdd*(0.1/acc_eff))
+       L_bol[SE]=eta_superEdd*(1+np.log((m_dot[SE]/eta_superEdd)*(acc_eff[SE]/0.1)))*L_Edd[SE]
+    
 
-    m_dot=np.where((M_dot_Edd>0)&(M_dot>0),M_dot/M_dot_Edd,np.nan)
-    #Bolometric luminosity
-    L_bol=np.zeros(len(m_dot))
-    ADAF_low=(0<m_dot)&(m_dot<=ADAF_trans)
-    ADAF_high=(m_dot>ADAF_trans)&(m_dot<1e-2)
-    TD=m_dot>=1e-2
-    
-    temp=2e-4*acc_eff[ADAF_low]*M_dot[ADAF_low]*(c_light*m2cm)**2/(r_lso[ADAF_low]*1e40)
-    L_bol[ADAF_low]=temp*6*(delta_ADAF/5e-4)*(1-beta_ADAF)/0.5
-    
-    temp=0.2*acc_eff[ADAF_high]*M_dot[ADAF_high]*(c_light*m2cm)**2/(r_lso[ADAF_high]*1e40)
-    L_bol[ADAF_high]=temp*6*beta_ADAF*m_dot[ADAF_high]/(0.5*alpha_ADAF**2)
-    
-    L_bol[TD]=acc_eff[TD]*M_dot[TD]*(c_light*m2cm)**2/1e40
-    
-    #Correcting for super Eddington
-    SE=TD&(m_dot>eta_superEdd*(0.1/acc_eff))
-    L_bol[SE]=eta_superEdd*(1+np.log((m_dot[SE]/eta_superEdd)*(acc_eff[SE]/0.1)))*L_Edd[SE]
- 
     L_bol=np.where(L_bol>0,np.log10(L_bol)+40,np.nan)
+
     ind=np.where(L_bol > 0)
  
     print(f'Fraction of galaxies in snapshot {snapshot} with an AGN = {1.0*np.sum(~np.isnan(L_bol))/len(L_bol):.3f}')
@@ -177,7 +180,6 @@ def prepare_data(hdf5_data, snapshot, read_spin):
     return(LF_bol)
 
 def plot_lf_qso_z(plt, outdir, obsdir, LF_qso):
-
 
 
     fig=plt.figure(figsize=(7.2*2,3.5*4))
@@ -233,7 +235,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     read_spin = True
 
     if(read_spin):
-        fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'bh_spin')}
+        fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'bh_spin', 'bolometric_luminosity_agn')}
     else:
         fields = {'galaxies': ('m_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb')}
     

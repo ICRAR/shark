@@ -72,13 +72,15 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
     xmin = 0
     if(redshift == '2'):
         xmin=10.35
-    xmax, ymin, ymax = 13.6, -3.2, 3.5
+    xmax, ymin, ymax = 13.6, 0, 6.5 #-3.2, 3.5
     xleg = xmax + 0.025 * (xmax-xmin)
     yleg = ymax - 0.07 * (ymax-ymin)
 
     fig = plt.figure(figsize=(6.5,5))
     #mbins =  (11.0, 11.2, 11.4, 11.6, 11.8, 12.0, 12.2, 12.4, 12.6)
-    mbins = (9,9.25,9.5,9.75,10,10.25,10.5,10.75,11,11.25,11.5, 11.75, 12.5)
+    mbins = (9,9.5,10.0) #(9,9.25,9.5,9.75,10) #,10.25,10.5,10.75,11,11.25,11.5, 11.75, 12.5)
+    mb = 0.5
+    #colors = ('Gold',  'OrangeRed') 
     colors = ('Navy','Blue','RoyalBlue','SkyBlue','Teal','DarkTurquoise','Aquamarine','Yellow', 'Gold',  'Orange','OrangeRed', 'LightSalmon', 'Crimson', 'Red', 'DarkRed')
 
     ax = fig.add_subplot(111)
@@ -92,7 +94,7 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
 
     N_max = 25
     for j in range(0,len(mbins)-1):
-        ind = np.where((gal_props_z0[:,1] > 10**mbins[j]) & (gal_props_z0[:,1] < 10**mbins[j+1]) & (gal_props_z0[:,4] == 0))
+        ind = np.where((gal_props_z0[:,1] > 10**mbins[j]) & (gal_props_z0[:,1] < 10**mbins[j+1]) & (gal_props_z0[:,4] > 0) & (gal_props_z0[:,3]/ gal_props_z0[:,1] < 1e-10))
         if(len(gal_props_z0[ind]) > 0):
            age_selec= gal_props_z0[ind,0]
            tot_sfh_selec = total_sfh_z0[ind,:]
@@ -100,7 +102,7 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
            age_selec     = gal_props_z0[ind,0]
            typesg        = gal_props_z0[ind,4]
            numgals = len(age_selec[0])
-           if(numgals >= 10):
+           if(numgals >= 1):
               print("Stellar mass bin", mbins[j], " has ", numgals, " galaxies") 
               SFH_med = np.zeros(shape = (3,len(LBT)))
               for snap in range(0,len(LBT)):
@@ -111,8 +113,14 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
                      SFH_med[0,snap] = 0.001
                      SFH_med[1,snap] = 0.001 - 0.001*0.2
                      SFH_med[2,snap] = 0.001 + 0.001*0.2
-              ax.fill_between(LBT,np.log10(SFH_med[1,:]),np.log10(SFH_med[2,:]), facecolor=colors[j], alpha=0.5, interpolate=True)
-              ax.plot(LBT,np.log10(SFH_med[0,:]), color=colors[j], linewidth=3, label='%s' % str(mbins[j]+0.125))
+                  if((SFH_med[1,snap] < 0.001) | (SFH_med[1,snap] == np.nan) | (SFH_med[1,snap] == np.inf)):
+                     SFH_med[1,snap] = 0.001
+              #ax.fill_between(LBT,np.log10(SFH_med[1,:]),np.log10(SFH_med[2,:]), facecolor=colors[j], alpha=0.5, interpolate=True)
+              #ax.plot(LBT,np.log10(SFH_med[0,:]), color=colors[j], linewidth=3, label='%s' % str(mbins[j]+0.125))
+
+              ax.fill_between(LBT,(SFH_med[1,:]),(SFH_med[2,:]), facecolor=colors[j], alpha=0.5, interpolate=True)
+              ax.plot(LBT,(SFH_med[0,:]), color=colors[j], linewidth=3, label='%s' % str(mbins[j]+mb/2))
+
               print("#SFH for stellar mass", str(mbins[j]+0.125))
               for a,b in zip(LBT,np.log10(SFH_med[0,:])):
                   print(a,b)
@@ -131,9 +139,91 @@ def plot_individual_seds(plt, outdir, obsdir, h0, total_sfh_z0, gal_props_z0, LB
            #    ax.plot(LBT, np.log10(sfh_in), color=colors[j], linewidth=1)
 
 
-    common.prepare_legend(ax, colors, bbox_to_anchor=(0.98, 0.1))
-    plt.tight_layout()
-    common.savefig(outdir, fig, "SFHs_massivegalaxies_z"+redshift+".pdf")
+    common.prepare_legend(ax, colors, loc=2) #bbox_to_anchor=(0.98, 0.1))
+    #plt.tight_layout()
+    common.savefig(outdir, fig, "SFHs_satellitegalaxies_z"+redshift+".pdf")
+
+    #environment dependence
+    xtit="$\\rm LBT/Gyr$"
+    ytit="$\\rm SFR/M_{\odot} yr^{-1}$"
+
+    xmin = 0
+    if(redshift == '2'):
+        xmin=10.35
+    xmax, ymin, ymax = 13.6, 0, 6 #-3.2, 3.5
+    xleg = xmax + 0.025 * (xmax-xmin)
+    yleg = ymax - 0.07 * (ymax-ymin)
+
+    fig = plt.figure(figsize=(6.5,5))
+    #mbins =  (11.0, 11.2, 11.4, 11.6, 11.8, 12.0, 12.2, 12.4, 12.6)
+    mbins = (10,11,11.5,12,13,16) #,9.5,10.0) #(9,9.25,9.5,9.75,10) #,10.25,10.5,10.75,11,11.25,11.5, 11.75, 12.5)
+    mb = 1.0
+    colors = ('Blue','DarkTurquoise', 'OrangeRed','DarkRed') #'RoyalBlue','SkyBlue','Teal','DarkTurquoise','Aquamarine','Yellow', 'Gold',  'Orange','OrangeRed', 'LightSalmon', 'Crimson', 'Red', 'DarkRed')
+    ax = fig.add_subplot(111)
+    if(redshift == '0'):
+       common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(2, 2, 1, 1))
+    if(redshift == '2'):
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.5, 0.5, 1, 1))
+    #ax.text(0.5,2.8,'Shark v2.0 (this work)', fontsize=13)
+    #ax.text(0.5,2.8,'Shark v1.1 (L18)', fontsize=13)
+
+    N_max = 25
+    for j in range(0,len(mbins)-1):
+        ind = np.where((gal_props_z0[:,1] >= 10**9) & (gal_props_z0[:,1] < 10**10) & (gal_props_z0[:,4] > 0) & (gal_props_z0[:,3]/ gal_props_z0[:,1] < 1e-10) & (gal_props_z0[:,5] >= mbins[j]) & (gal_props_z0[:,5] < mbins[j+1]))
+        if(len(gal_props_z0[ind]) > 0):
+           age_selec= gal_props_z0[ind,0]
+           tot_sfh_selec = total_sfh_z0[ind,:]
+           tot_sfh_selec = tot_sfh_selec[0,:]
+           age_selec     = gal_props_z0[ind,0]
+           typesg        = gal_props_z0[ind,4]
+           numgals = len(age_selec[0])
+           if(numgals >= 1):
+              print("Stellar mass bin", mbins[j], " has ", numgals, " galaxies") 
+              SFH_med = np.zeros(shape = (3,len(LBT)))
+              for snap in range(0,len(LBT)):
+                  SFH_med[0,snap] = np.median(tot_sfh_selec[:,snap])
+                  SFH_med[1,snap] = np.percentile(tot_sfh_selec[:,snap],25)
+                  SFH_med[2,snap] = np.percentile(tot_sfh_selec[:,snap],75)
+                  if(SFH_med[0,snap] < 0.001):
+                     SFH_med[0,snap] = 0.001
+                     SFH_med[1,snap] = 0.001 - 0.001*0.2
+                     SFH_med[2,snap] = 0.001 + 0.001*0.2
+                  if((SFH_med[1,snap] < 0.001) | (SFH_med[1,snap] == np.nan) | (SFH_med[1,snap] == np.inf)):
+                     SFH_med[1,snap] = 0.001
+              #ax.fill_between(LBT,np.log10(SFH_med[1,:]),np.log10(SFH_med[2,:]), facecolor=colors[j], alpha=0.5, interpolate=True)
+              #ax.plot(LBT,np.log10(SFH_med[0,:]), color=colors[j], linewidth=3, label='%s' % str(mbins[j]+0.125))
+
+              ax.fill_between(LBT,(SFH_med[1,:]),(SFH_med[2,:]), facecolor=colors[j], alpha=0.5, interpolate=True)
+              ax.plot(LBT,(SFH_med[0,:]), color=colors[j], linewidth=3, label='%s $<\\rm log_{10}(M_{halo}/M_{\\odot})<$ %s' % (str(mbins[j]), str(mbins[j+1])))
+
+
+              print('#Halo masses between [in log10(Msun)]', mbins[j], mbins[j+1])
+              print('#lookback time(from z=0)[Gyr] median_SFR[Msun/yr] 25th_SFR[Msun/yr] 75th_SFR[Msun/yr]' )
+              for a,b,c,d in zip(LBT,(SFH_med[0,:]),(SFH_med[1,:]),(SFH_med[2,:])):
+                  print(a,b,c,d)
+
+              #print("#SFH for stellar mass", str(mbins[j]+0.125))
+              #for a,b in zip(LBT,np.log10(SFH_med[0,:])):
+              #    print(a,b)
+              #if(j == len(mbins)-4):
+              #     for g in range(0,numgals):
+              #         ax.plot(LBT, np.log10(tot_sfh_selec[g,:]), linewidth=1, color=colors[j])
+
+           #nloop = numgals
+           #if(numgals > N_max):
+           #    nloop = N_max
+           #for gal in range(0,nloop): 
+           #    sfh_in = tot_sfh_selec[0,gal,:]
+           #    print(sfh_in.shape)
+           #    lowsfr = np.where(sfh_in < 0.01)
+           #    sfh_in[lowsfr] = 0.001
+           #    ax.plot(LBT, np.log10(sfh_in), color=colors[j], linewidth=1)
+
+
+    common.prepare_legend(ax, ['k','k','k','k'], loc=1) #bbox_to_anchor=(0.98, 0.1))
+    #plt.tight_layout()
+    common.savefig(outdir, fig, "SFHs_satellitegalaxies_z"+redshift+"_environment.pdf")
+
 
 def plot_age_stellar_mass(plt, outdir, obsdir, age_stellar_mass, age90_stellar_mass, age25_stellar_mass):
 
@@ -294,14 +384,14 @@ def prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq, LBT, delta_t, age_ste
     total_sfh = np.zeros(shape = (ngals, nsnap))
     sb_sfh    = np.zeros(shape = (ngals, nsnap))
     disk_sfh  = np.zeros(shape = (ngals, nsnap))
-    gal_props = np.zeros(shape = (ngals, 6))
+    gal_props = np.zeros(shape = (ngals, 7))
 
     gal_props[:,0] = 13.6-age[ind]
     gal_props[:,1] = mdisk[ind] + mbulge[ind]
     gal_props[:,2] = mbulge[ind] / (mdisk[ind] + mbulge[ind])
     gal_props[:,3] = (sfr_burst[ind] + sfr_disk[ind])/1e9/h0
     gal_props[:,4] = typeg[ind]
-    
+    gal_props[:,6] = np.log10(mhalo[ind])
     for s in range(0,nsnap):
         total_sfh[:,s] = bulge_diskins_hist[:,s] + bulge_mergers_hist[:,s] + disk_hist[:,s] #in Msun/yr
         sb_sfh[:,s]    = bulge_diskins_hist[:,s] + bulge_mergers_hist[:,s]
@@ -339,8 +429,6 @@ def prepare_data(hdf5_data, sfh, index, f_q, read_hydroeq, LBT, delta_t, age_ste
 
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
-    Variable_Ext = True
-    file_hdf5_sed = "Shark-SED-eagle-rr14-steep.hdf5"
     read_hydroeq = False
 
     # Loop over redshift and subvolumes
@@ -361,7 +449,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
                   'bulges_mergers': ('star_formation_rate_histories'),
                   'disks': ('star_formation_rate_histories')}
 
-    z = (0, 2) #0.5, 1, 1.5, 2, 3)
+    z = [2] #(0, 2) #0.5, 1, 1.5, 2, 3)
     snapshots = redshift_table[z]
 
     f_q = np.zeros(shape = (len(z), len(xmf)))
