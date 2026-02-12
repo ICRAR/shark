@@ -209,7 +209,7 @@ void TreeBuilder::link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_su
 }
 
 SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhalo, SimulationParameters &sim_params,
-		DarkMatterHaloParameters &dark_matter_params, const DarkMatterHalosPtr &darkmatterhalos)
+		DarkMatterHaloParameters &dark_matter_params, const DarkMatterHalosPtr &darkmatterhalos, bool final_snap)
 {
 	// point central subhalo to this subhalo.
 	halo->central_subhalo = subhalo;
@@ -218,21 +218,32 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 
 	double z = sim_params.redshifts[subhalo->snapshot];
 	double npart = subhalo->Mvir/sim_params.particle_mass;
-
+	
 	// calculate accurate subhalo properties based on halo mass in the case of applying the fix to mass swapping events:
 	if(dark_matter_params.apply_fix_to_mass_swapping_events){
 
 	        auto mvir = halo->Mvir;
 
 		subhalo->concentration = darkmatterhalos->nfw_concentration(mvir, z);
-		
 		if (subhalo->concentration < 1) {
 		        throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
 		}
-		subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
+		
+		// redefine only at final snapshot (when the values are passed to the main progenitors via log-normal distribution or from catalogues for subhalos with few particles)
+        	// or at any snapshot when we use the values from catalogues for subhalos with enough particle number
+        	// other cases will pass the same value to the main progenitors, so no need to redefine lambda
+		if( ( final_snap && (!dark_matter_params.use_converged_lambda_catalog ||
+                                (dark_matter_params.use_converged_lambda_catalog && subhalo->Mvir / sim_params.particle_mass < dark_matter_params.min_part_convergence)) ) ||
+                                ( dark_matter_params.use_converged_lambda_catalog && subhalo->Mvir / sim_params.particle_mass >= dark_matter_params.min_part_convergence ) ){
+		        // redefine for mass swapping since the whole host halo mass is used
+		        subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
+		}
+
+		// redefine for mass swapping since the whole host halo mass is used
 		subhalo->Vvir = darkmatterhalos->halo_virial_velocity(mvir, z);
 	}
 
+	// halo spin corresponds to central subhalo (angular momentum in the catalogues comes from subhalo data)
 	halo->lambda = subhalo->lambda;
 	// Calculate halos' vvir and concentration
 	halo->Vvir = darkmatterhalos->halo_virial_velocity(halo->Mvir, z);
@@ -272,14 +283,14 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 				}
 
 				auto central_subhalo = halo->all_subhalos()[0];
-				auto subhalo = define_central_subhalo(halo, central_subhalo, sim_params, dark_matter_params, darkmatterhalos);
+				auto subhalo = define_central_subhalo(halo, central_subhalo, sim_params, dark_matter_params, darkmatterhalos, true);
 
 				// save value of lambda to make sure that all main progenitors of this subhalo have the same lambda value. This is done for consistency 
 				// throughout time.
 				// NOTE: these are central subhalos, so use the host halo information
 				auto z = sim_params.redshifts[subhalo->snapshot];
 				auto npart = subhalo->Mvir/sim_params.particle_mass;
-				auto lambda = darkmatterhalos->halo_lambda(*subhalo, halo->Mvir, z, npart);;
+				auto lambda = subhalo->lambda; // the halo last snapshot value for spin
 
 				// Now walk backwards through the main progenitor branch until subhalo has no more progenitors. This is done only in the case the ascendant
 				// halo does not have a central already.
@@ -320,7 +331,8 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 						main_prog->lambda = lambda;
 
 					}
-					subhalo = define_central_subhalo(ascendant_halo, main_prog, sim_params, dark_matter_params, darkmatterhalos);
+					// We do not modify lambda in this case
+					subhalo = define_central_subhalo(ascendant_halo, main_prog, sim_params, dark_matter_params, darkmatterhalos, false);
 
 					// Define property last_identified_snapshot for all the ascendants that are not the main progenitor of the subhalo.
 					for (auto &sub: ascendants) {
