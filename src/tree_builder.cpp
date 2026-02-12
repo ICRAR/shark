@@ -418,8 +418,7 @@ void TreeBuilder::spin_interpolated_halos(const std::vector<MergerTreePtr> &tree
 						auto main_progenitor = subhalo->main();
 						subhalo->L = main_progenitor->L;
 						subhalo->concentration = main_progenitor->concentration;
-						subhalo->host_halo->concentration = main_progenitor->concentration;
-
+						subhalo->host_halo->concentration = main_progenitor->host_halo->concentration;
 						if (subhalo->concentration <= 0) {
 							std::ostringstream os;
 							os << "subhalo " << subhalo << " has concentration =0";
@@ -514,15 +513,14 @@ void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees,
 								subhalo->Mvir_infall = main_prog->host_halo->Mvir;
 								subhalo->rvir_infall = darkmatterhalos->halo_virial_radius(main_prog->host_halo->Mvir, sim_params.redshifts[snap]);
 
-								subhalo->concentration_infall = darkmatterhalos->nfw_concentration(main_prog->host_halo->Mvir, sim_params.redshifts[snap]);
+								subhalo->concentration_infall = main_prog->host_halo->concentration;
 														
 								if (subhalo->concentration_infall < 1) {
 									throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
 								}
 
-								subhalo->lambda_infall = darkmatterhalos->halo_lambda(*main_prog, main_prog->host_halo->Mvir,
-															sim_params.redshifts[snap], main_prog->host_halo->Mvir/sim_params.particle_mass);
-								subhalo->Vvir_infall = darkmatterhalos->halo_virial_velocity(main_prog->host_halo->Mvir, sim_params.redshifts[snap]);
+								subhalo->lambda_infall = main_prog->host_halo->lambda;
+								subhalo->Vvir_infall = main_prog->host_halo->Vvir;
 
 								// properties directly taken from the catalogue: use central subhalo
 								subhalo->Vcirc_infall = main_prog->host_halo->central_subhalo->Vcirc;

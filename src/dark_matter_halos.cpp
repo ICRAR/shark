@@ -144,13 +144,10 @@ double DarkMatterHalos::subhalo_dynamical_time (Subhalo &subhalo, double z){
 	double r = 0;
 	double v = 0;
  
-	r = halo_virial_radius(subhalo.Mvir, z);;
-	v = subhalo.Vvir;
-
 	if(subhalo.subhalo_type == Subhalo::CENTRAL &&
 	               params.apply_fix_to_mass_swapping_events){
 	        r = halo_virial_radius(subhalo.host_halo->Mvir, z);
-		v = subhalo.Vvir;
+		v = subhalo.host_halo->Vvir;
 	}
 	else if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.rvir_infall != 0 &&
 	               params.apply_fix_to_mass_swapping_events){
@@ -183,6 +180,8 @@ float DarkMatterHalos::halo_lambda (Subhalo &subhalo, float m, double z, double 
 	double H0 = cosmology->hubble_parameter(z);
 	double lambda = subhalo.L.norm() / m * 1.5234153 / std::pow(constants::G * m, 0.666) * std::pow(H0,0.33);
 
+	//Spin parameter is only defined for subhalos (for a central subhalo correcting for the mass swapping, we directly use subhalo.L)
+	//Otherwise, for satellites subhalos we need a redefinition
 	if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.L_infall.norm() != 0 &&
 			params.apply_fix_to_mass_swapping_events){
 		lambda = subhalo.L_infall.norm() / m * 1.5234153 / std::pow(constants::G * m, 0.666) * std::pow(H0,0.33);

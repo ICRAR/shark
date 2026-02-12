@@ -361,7 +361,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	if(subhalo.subhalo_type == Subhalo::CENTRAL &&
 	               dark_matter_params.apply_fix_to_mass_swapping_events){
-	        subhalo.hot_halo_gas.sAM = subhalo.L_infall.norm() / subhalo.host_halo->Mvir;
+	        subhalo.hot_halo_gas.sAM = subhalo.L.norm() / subhalo.host_halo->Mvir;
 	}
 	else if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.Mvir_infall != 0 &&
 		       dark_matter_params.apply_fix_to_mass_swapping_events){
@@ -389,12 +389,19 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double vvir = subhalo.Vvir;
 	double fhot = mhot / subhalo.Mvir;
 
-	// If subhalo is a satellite, then use the virial velocity the subhalo had at infall.
-	if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.Vvir_infall != 0 &&
+	// If subhalo is a central, then use the host halo virial velocity.
+	if(subhalo.subhalo_type == Subhalo::CENTRAL &&
 	               dark_matter_params.apply_fix_to_mass_swapping_events){
-		vvir = subhalo.Vvir_infall;
-		fhot = mhot / subhalo.Mvir_infall;
+		vvir = subhalo.host_halo->Vvir;
+		fhot = mhot / subhalo.host_halo->Mvir;
 	}
+
+	// If subhalo is a satellite, then use the virial velocity the subhalo had at infall.
+        if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.Vvir_infall != 0 &&
+                       dark_matter_params.apply_fix_to_mass_swapping_events){
+                vvir = subhalo.Vvir_infall;
+                fhot = mhot / subhalo.Mvir_infall;
+        }
 
 	double zhot = 0;
 	if(mhot > 0){
