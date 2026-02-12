@@ -630,7 +630,9 @@ double StarFormation::ionised_gas_fraction(double mgas, double rgas, double z) c
 	double r_thresh = -re * std::log(parameters.sigma_HI_crit / sigma0);
 
 	double m_in = mgas * ( 1- (1 + r_thresh/re) * std::exp(-r_thresh / re));
-
+	if(m_in < 0){
+		m_in = 0;
+	}
 	double f_ion = (mgas - m_in) / mgas;
 
 	if(f_ion < 0){
