@@ -210,10 +210,18 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 
 	//Only define the following parameters if the galaxies were not type=2.
 	if(!transfer_types2){
-		galaxy.concentration_type2 = secondary->concentration;
-		galaxy.msubhalo_type2 = secondary->Mvir;
-		galaxy.lambda_type2 = secondary->lambda;
-		galaxy.vvir_type2 = secondary->Vvir;
+		if (dark_matter_params.apply_fix_to_mass_swapping_events){
+			galaxy.concentration_type2 = secondary->concentration_infall;
+			galaxy.msubhalo_type2 = secondary->Mvir_infall;
+			galaxy.lambda_type2 = secondary->lambda_infall;
+			galaxy.vvir_type2 = secondary->Vvir_infall;
+		}
+		else{
+			galaxy.concentration_type2 = secondary->concentration;
+                        galaxy.msubhalo_type2 = secondary->Mvir;
+                        galaxy.lambda_type2 = secondary->lambda;
+                        galaxy.vvir_type2 = secondary->Vvir;
+		}
 	}
 }
 

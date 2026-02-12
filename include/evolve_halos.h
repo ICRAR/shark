@@ -47,7 +47,7 @@ namespace shark {
  * @param snapshot This snapshot
  * @param AllBaryons The TotalBaryon accummulation object
  */
-void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons);
+void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons, DarkMatterHaloParameters dark_matter_params);
 
 void track_total_baryons(Cosmology &cosmology, ExecutionParameters execparams, SimulationParameters simulation_params, const std::vector<HaloPtr> &halos,
 		TotalBaryon &AllBaryons, int snapshot, const molgas_per_galaxy &molgas, double deltat);
