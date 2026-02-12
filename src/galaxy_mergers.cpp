@@ -196,7 +196,7 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 	double z1 = simparams.redshifts[snapshot+1];
 	double z2 = simparams.redshifts[snapshot+2];
 	if(snapshot+1 > simparams.max_snapshot){
-		z2 = 0;
+		z2 = simparams.redshifts[simparams.max_snapshot];
 	}
 	double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
 	if(galaxy.tmerge <= delta_t_next){
@@ -390,7 +390,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 				double z1 = simparams.redshifts[snapshot+1];
 				double z2 = simparams.redshifts[snapshot+2];
 				if(snapshot+1 > simparams.max_snapshot){
-					z2 = 0;
+					z2 = simparams.redshifts[simparams.max_snapshot];
 				}
 				double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
 				if(galaxy.tmerge <= delta_t_next){

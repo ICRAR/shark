@@ -160,14 +160,8 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos,
 	// spin_interpolated_halos(trees, sim_params);
 
 	// Define central subhalos
-	LOG(info) << "Defining central subhalos";
+	LOG(info) << "Defining central subhalos and halo properties";
 	define_central_subhalos(trees, sim_params, dark_matter_params, darkmatterhalos);
-
-	/*if(dark_matter_params.apply_fix_to_mass_swapping_events){
-		// Function to redefine central subhalo properties from host halo
-		LOG(info) << "Defining velocity, concentration and lambda of central subhalos";
-		define_properties_central_subhalos(trees, sim_params, dark_matter_params, darkmatterhalos);
-	}*/
 
  	// Define accretion rate from DM in case we want this.
 	LOG(info) << "Defining accretion rate using cosmology";
@@ -176,12 +170,6 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos,
 	// Define halo and subhalos ages and other relevant properties
 	LOG(info) << "Defining ages of halos and subhalos";
 	define_ages_halos(trees, sim_params, darkmatterhalos);
-
-	/*if(dark_matter_params.apply_fix_to_mass_swapping_events){
-		// Function to redefine satellite subhalo properties with properties at infall
-		LOG(info) << "Defining velocity, concentration and lambda of satellite subhalos";
-		define_properties_satellite_subhalos(trees, sim_params, darkmatterhalos);
-	}*/
 
 	return trees;
 }
@@ -542,103 +530,6 @@ void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees,
 
 }
 
-
-void TreeBuilder::define_properties_central_subhalos(const std::vector<MergerTreePtr> &trees,
-					SimulationParameters &sim_params,
-					DarkMatterHaloParameters &dark_matter_params,
-					const DarkMatterHalosPtr &darkmatterhalos){
-
-		//Loop over trees
-		for(auto &tree: trees) {
-			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
-				for(auto &halo: tree->halos_at(snapshot)){
-
-					auto subhalo = halo->central_subhalo;
-					// Calculate different properties: concentration, Vvir and lambda
-					double mvir = halo->Mvir;
-					double z= sim_params.redshifts[subhalo->snapshot];
-					double npart = mvir/sim_params.particle_mass;
-
-					subhalo->concentration = darkmatterhalos->nfw_concentration(mvir, z);
-
-					if (subhalo->concentration < 1) {
-						throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
-					}
-					subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
-					subhalo->Vvir = darkmatterhalos->halo_virial_velocity(mvir, z);
-
-					//redefine halo properties based on new calculated central subhalo properties:
-					halo->concentration = subhalo->concentration;
-					halo->lambda = subhalo->lambda;
-					halo->Vvir = subhalo->Vvir;
-			}
-		}
-	}
-
-
-	// now we will loop again to redefine lambda to the value of the main descendant in the cases of subhalos with unreliable values:
-	for(auto &tree: trees) {
-		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
-			for(auto &halo: tree->halos_at(snapshot)){
-				// First check if halo has a central subhalo, if yes, then continue with loop.
-				if (!halo->central_subhalo) {
-					continue;
-				}
-				auto main_prog = halo->central_subhalo->main();
-
-				// Redefine lambda of main progenitor to have the same one as its descendant, only if this halo is not reliable.
-				if (!dark_matter_params.use_converged_lambda_catalog || (dark_matter_params.use_converged_lambda_catalog && main_prog->Mvir/sim_params.particle_mass < dark_matter_params.min_part_convergence)) {
-					main_prog->lambda = halo->central_subhalo->lambda;
-					darkmatterhalos->redefine_angular_momentum(*main_prog, main_prog->lambda, sim_params.redshifts[main_prog->snapshot]);
-				}
-			}
-		}
-	}
-
-}
-
-void TreeBuilder::define_properties_satellite_subhalos(const std::vector<MergerTreePtr> &trees,
-					  SimulationParameters &sim_params,
-					  const DarkMatterHalosPtr &darkmatterhalos){
-
-		//Loop over trees
-		for(auto &tree: trees) {
-			for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
-				for(auto &halo: tree->halos_at(snapshot)){
-					for(auto &subhalo: halo->all_subhalos()){
-						if(subhalo->subhalo_type == Subhalo::SATELLITE){
-
-							double mvir = subhalo->Mvir;
-							double z = sim_params.redshifts[subhalo->snapshot];
-
-							// in the case of satellite subhalos with a well defined infall mass, we use the virial mass of its host at the time of infall, and the time of infall
-							// to define other properties.
-							if(subhalo->Mvir_infall > 0){
-								mvir = subhalo->Mvir_infall;
-								z = subhalo->infall_t;
-							}
-
-							double npart = mvir/sim_params.particle_mass;
-
-							subhalo->concentration = darkmatterhalos->nfw_concentration(mvir, z);
-
-							if (subhalo->concentration < 1) {
-								throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
-							}
-
-							subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
-							subhalo->Vvir = darkmatterhalos->halo_virial_velocity(mvir, z);
-
-
-						}
-					}
-
-				}
-			}
-
-		}
-	
-}
 
 void TreeBuilder::remove_satellite(HaloPtr &halo, SubhaloPtr &subhalo){
 
