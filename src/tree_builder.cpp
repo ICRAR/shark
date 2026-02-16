@@ -244,12 +244,12 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 		halo->Vvir = subhalo->Vvir;
 	}
 
-	//remove subhalo from satellite list.
+	// remove subhalo from satellite list.
 	remove_satellite(halo, subhalo);
 
-	
 	//define subhalo as central.
 	subhalo->subhalo_type = Subhalo::CENTRAL;
+	halo->id = subhalo->id;
 
 	return subhalo;
 }
