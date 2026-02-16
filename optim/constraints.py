@@ -164,7 +164,7 @@ class Constraint(object):
         mstar_dm_plot, mcold_dm_plot, mhot_dm_plot, meje_dm_plot, mbar_dm_plot,
         sfr, sfrd, sfrb, mstarden, mstarbden_mergers, mstarbden_diskins, sfre, sfreH2, mhrat,
         mHI_plot, mH2_plot, mH2den, mdustden, omegaHI, mdustden_mol, mcoldden, mhotden,
-        mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot) = global_quantities.prepare_data(hdf5_data_sfr, redshifts, False)
+        mejeden, history_interactions, mDMden, mlost_dm_plot, mcreated_dm_plot, _, _) = global_quantities.prepare_data(hdf5_data_sfr, False) #redshifts) #, False)
 
 	#### Size-mass relation ####
         mlow3 = 6.5
@@ -476,6 +476,70 @@ class SMF_z4(SMF):
 
         return x_obs, y_obs, y_dn, y_up
 
+class SMF_z7(SMF):
+    """The SMF constraint at z=7"""
+
+    z = [7]
+
+    def get_obs_x_y_err(self, h0):
+
+        zl, zh, lm, pD, derr = self.load_observation('mf/SMF/Shuntov24_SMF_COSMOSWeb.txt', cols = [0,1,2,3,4])
+        hobs = 0.7
+        y_obs = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        y_dn = np.log10(pD) - np.log10(pD - derr)
+        y_up = np.log10(pD + du) - np.log10(pD)
+        x_obs = lm -  2.0 * np.log10(hobs/h0)
+        ind = np.where((zl == 6.5) & (zh == 7.5))
+        y_obs = y_obs[ind]
+        y_dn = y_dn[ind]
+        y_up = y_up[ind]
+        x_obs = x_obs[ind]
+
+        return x_obs, y_obs, y_dn, y_up
+
+class SMF_z8(SMF):
+    """The SMF constraint at z=8"""
+
+    z = [8]
+
+    def get_obs_x_y_err(self, h0):
+
+        zl, zh, lm, pD, derr = self.load_observation('mf/SMF/Shuntov24_SMF_COSMOSWeb.txt', cols = [0,1,2,3,4])
+        hobs = 0.7
+        y_obs = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        y_dn = np.log10(pD) - np.log10(pD - derr)
+        y_up = np.log10(pD + du) - np.log10(pD)
+        x_obs = lm -  2.0 * np.log10(hobs/h0)
+        ind = np.where((zl == 7.5) & (zh == 8.5))
+        y_obs = y_obs[ind]
+        y_dn = y_dn[ind]
+        y_up = y_up[ind]
+        x_obs = x_obs[ind]
+
+        return x_obs, y_obs, y_dn, y_up
+
+class SMF_z9(SMF):
+    """The SMF constraint at z=9"""
+
+    z = [9]
+
+    def get_obs_x_y_err(self, h0):
+
+        zl, zh, lm, pD, derr = self.load_observation('mf/SMF/Shuntov24_SMF_COSMOSWeb.txt', cols = [0,1,2,3,4])
+        hobs = 0.7
+        y_obs = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        y_dn = np.log10(pD) - np.log10(pD - derr)
+        y_up = np.log10(pD + du) - np.log10(pD)
+        x_obs = lm -  2.0 * np.log10(hobs/h0)
+        ind = np.where((zl == 8.5) & (zh == 10.0))
+        y_obs = y_obs[ind]
+        y_dn = y_dn[ind]
+        y_up = y_up[ind]
+        x_obs = x_obs[ind]
+
+        return x_obs, y_obs, y_dn, y_up
+
+
 class CSFR(Constraint):
     """The Cosmic Star Formation Rate constraint"""
 
@@ -612,6 +676,9 @@ def parse(spec):
         'SMF_z2': SMF_z2,
         'SMF_z3': SMF_z3,
         'SMF_z4': SMF_z4,
+        'SMF_z7': SMF_z7,
+        'SMF_z8': SMF_z8,
+        'SMF_z9': SMF_z9,
 	    'CSFR': CSFR,
 	    'RM': RM
     }

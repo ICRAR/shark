@@ -64,6 +64,10 @@ def prepare_data(hdf5_data, index, spinbh, spinmdot, mdotmbh, mdotmbh_hh, BHSFR,
     print(np.log10(max(mbh)/h0))
     ind = np.where(mbh/h0 > 1e8)
     print("Number of galaxies with BH mass > 1e8Msun:", len(mbh[ind]), " at redshift", zlist[index])
+    if(read_spin == True):
+       ind = np.where((mdisk+mbulge)/h0 > 1e12)
+       if(len(mdisk[ind]) > 0):
+          print("Min, median and max BH spin of massive galaxies:", min(abs(spin[ind])), np.median(spin[ind]), max(spin[ind]), " at redshift", zlist[index])
 
     bin_it   = functools.partial(us.wmedians, xbins=xmf, nmin=5)
     bin_it_mdot = functools.partial(us.wmedians, xbins=xmdotf)
@@ -288,7 +292,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plt = common.load_matplotlib()
 
-    read_spin = False
+    read_spin = True
 
     if(read_spin == True):
        fields = {'galaxies': ('bh_spin', 'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'sfr_disk', 'sfr_burst', 'mstars_disk', 'mstars_bulge', 'type')}

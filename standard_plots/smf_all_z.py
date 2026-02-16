@@ -68,6 +68,17 @@ def load_smf_passive_observations(obsdir, h0):
         lm = lm -  2.0 * np.log10(hobs/h0)
         zappend.append((observation("Weaver+2023", lm, pDlog, abs(dulog), abs(dnlog), err_absolute=False), 'D'))
 
+    def add_baker25_data(zappend, file_read='2.0z2.5'):
+        lm, pD, dn, du = np.loadtxt(obsdir+'/mf/SMF/SMF_Passive_Baker25_' + file_read + '.txt', skiprows=0, usecols = [0,2,3,4], unpack = True)
+        hobs = 0.7
+        ind = np.where(dn < 0)
+        dn[ind] = 1e-9
+        pDlog = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        dnlog = np.log10(pD) - np.log10(pD - dn)
+        dulog = np.log10(pD + du) - np.log10(pD)
+        lm = lm -  2.0 * np.log10(hobs/h0)
+        zappend.append((observation("Baker+2025", lm, pDlog, abs(dulog), abs(dnlog), err_absolute=False), 's'))
+
     # z0.5 obs
     z05obs = []
     add_weaver22_data(z05obs, file_read='0.2z0.5')
@@ -83,20 +94,24 @@ def load_smf_passive_observations(obsdir, h0):
     z2obs = []
     add_weaver22_data(z2obs, file_read='2.0z2.5')
     add_weaver22_data(z2obs, file_read='1.5z2.0')
+    add_baker25_data(z2obs, file_read='z2.0z2.5')
 
     # z3 obs
     z3obs = []
     add_weaver22_data(z3obs, file_read='3.0z3.5')
     add_weaver22_data(z3obs, file_read='2.5z3.0')
-
+    add_baker25_data(z3obs, file_read='z2.5z3.0')
+    add_baker25_data(z3obs, file_read='z3.0z3.5')
 
     # z4 obs
     z4obs = []
-    add_weaver22_data(z4obs, file_read='3.5z4.5')
+    #add_weaver22_data(z4obs, file_read='3.5z4.5')
+    add_baker25_data(z4obs, file_read='z3.5z4.0')
 
     # z5 obs
     z5obs = []
-    add_weaver22_data(z5obs,file_read='4.5z5.5')
+    #add_weaver22_data(z5obs,file_read='4.5z5.5')
+    add_baker25_data(z5obs, file_read='z4.0z5.0')
 
 
     return (z05obs, z1obs, z2obs, z3obs, z4obs, z5obs)
@@ -123,6 +138,28 @@ def load_smf_observations(obsdir, h0):
         dulog = np.log10(du) - np.log10(pD)
         lm = lm -  2.0 * np.log10(hobs/h0)
         zappend.append((observation("Weaver+2023" if label else None, lm, pDlog, abs(dulog), abs(dnlog), err_absolute=False), 'D'))
+
+    #Shuntov et al. (2024, COSMOS-Web)
+    def add_shuntov24_data(zappend, zlow = 0, zhigh=0.5, label = True):
+        zl, zh, lm, pD, derr = np.loadtxt(obsdir+'/mf/SMF/Shuntov24_SMF_COSMOSWeb.txt', usecols = [0,1,2,3,4], unpack = True)
+        hobs = 0.7
+        largeerr = np.where(derr > pD)
+        derr[largeerr] = 0.999*pD[largeerr]
+
+        pDlog = np.log10(pD) +  3.0 * np.log10(hobs/h0)
+        dnlog = np.log10(pD) - np.log10(pD - derr)
+        dulog = np.log10(pD + derr) - np.log10(pD)
+        dnlog[largeerr] = 5.0
+        lm = lm -  2.0 * np.log10(hobs/h0)
+        ind = np.where((zl == zlow) & (zh == zhigh))
+        zappend.append((observation("Shuntov+2025" if label else None, lm[ind], pDlog[ind], abs(dulog[ind]), abs(dnlog[ind]), err_absolute=False), '^'))
+
+    def add_weibel25_data(zappend, zin = '4', label = True):
+        lm, pD, dnlog, dulog = np.loadtxt(obsdir+'/mf/SMF//SMF_Weibel25_z' + zin + '.dat', usecols = [0,1,2,3], unpack = True)
+        hobs = 0.7
+        pDlog = pD #+  3.0 * np.log10(hobs/h0)
+        lm = lm #-  2.0 * np.log10(hobs/h0)
+        zappend.append((observation("Weibel+2025" if label else None, lm, pDlog, abs(dulog), abs(dnlog), err_absolute=False), 'X'))
 
 
     # Driver al. (2022, z=0). Chabrier IMF
@@ -184,7 +221,7 @@ def load_smf_observations(obsdir, h0):
     add_thorne21_data(z05obs, file_read='z0.51')
     add_weaver22_data(z05obs, file_read='0.2z0.5')
     add_weaver22_data(z05obs, file_read='0.5z0.8', label = False)
-
+    add_shuntov24_data(z05obs, zlow = 0.5, zhigh=0.8, label = False)
 
     # z1 obs
     z1obs = []
@@ -192,6 +229,7 @@ def load_smf_observations(obsdir, h0):
     z1obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z1obs, file_read='z1.1')
     add_weaver22_data(z1obs, file_read='0.8z1.1', label = False)
+    add_shuntov24_data(z1obs, zlow = 0.8, zhigh=1.1, label = False)
 
     #z2 obs
     z2obs = []
@@ -200,6 +238,8 @@ def load_smf_observations(obsdir, h0):
     add_thorne21_data(z2obs, file_read='z2')
     add_weaver22_data(z2obs, file_read='2.0z2.5')
     add_weaver22_data(z2obs, file_read='1.5z2.0', label = False)
+    add_shuntov24_data(z2obs, zlow = 1.5, zhigh=2.0)
+    add_shuntov24_data(z2obs, zlow = 2.0, zhigh=2.5, label = False)
 
     # z3 obs
     z3obs = []
@@ -208,6 +248,8 @@ def load_smf_observations(obsdir, h0):
     add_thorne21_data(z3obs, file_read='z3')
     add_weaver22_data(z3obs, file_read='3.0z3.5')
     add_weaver22_data(z3obs, file_read='2.5z3.0', label = False)
+    add_shuntov24_data(z3obs, zlow = 3.0, zhigh=3.5, label = False)
+    add_shuntov24_data(z3obs, zlow = 2.5, zhigh=3.0, label = False)
 
     # z4 obs
     z4obs = []
@@ -215,20 +257,42 @@ def load_smf_observations(obsdir, h0):
     z4obs.append((observation("Muzzin+2013", xobsMu13[in_redshift], yobsMu13[in_redshift], lerrMu13[in_redshift], herrMu13[in_redshift], err_absolute=False), 'o'))
     add_thorne21_data(z4obs, file_read='z4')
     add_weaver22_data(z4obs, file_read='3.5z4.5')
+    add_shuntov24_data(z4obs, zlow = 3.5, zhigh=4.5, label = True)
+    add_weibel25_data(z4obs, zin = '4', label = True)
 
     # z5 obs
     z5obs = []
     add_weaver22_data(z5obs,file_read='4.5z5.5')
+    add_shuntov24_data(z5obs, zlow = 4.5, zhigh=5.5, label = False)
+    add_weibel25_data(z5obs, zin = '5', label = False)
 
     # z6 obs
     z6obs = []
     add_weaver22_data(z6obs,file_read='5.5z6.5')
+    add_shuntov24_data(z6obs, zlow = 5.5, zhigh=6.5, label = False)
+    add_weibel25_data(z6obs, zin = '6', label = False)
 
     # z7 obs
     z7obs = []
     add_weaver22_data(z7obs,file_read='6.5z7.5')
+    add_shuntov24_data(z7obs, zlow = 6.5, zhigh=7.5, label = False)
+    add_weibel25_data(z7obs, zin = '7', label = False)
 
-    return (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs, z0obsPSO)
+    # z8 obs
+    z8obs = []
+    add_shuntov24_data(z8obs, zlow = 7.5, zhigh=8.5, label = False)
+    add_weibel25_data(z8obs, zin = '8', label = False)
+
+    # z9 obs
+    z9obs = []
+    add_shuntov24_data(z9obs, zlow = 8.5, zhigh=10.0, label = False)
+    add_weibel25_data(z9obs, zin = '9', label = False)
+
+    # z10 obs
+    z10obs = []
+    add_shuntov24_data(z10obs, zlow = 10.0, zhigh=12.0, label = False)
+
+    return (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs, z0obsPSO, z8obs, z9obs, z10obs)
 
 def plot_SMHM_z(plt, outdir, zlist, halo_mass_rel):
 
@@ -310,9 +374,9 @@ def plot_SMHM_z(plt, outdir, zlist, halo_mass_rel):
    
         ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='red', alpha = 0.5, interpolate=True)
         ax.errorbar(xplot, yplot[0], color='r', label='Passive galaxies (v2.0)')
-        print("#SMHM relation of passive galaxies ")
-        for a,b,c,d in zip(xplot, yplot[0],yplot[0]+errup[0],yplot[0]-errdn[0]):
-            print(a,b,c,d, zlist[idx], 1)
+        #print("#SMHM relation of passive galaxies ")
+        #for a,b,c,d in zip(xplot, yplot[0],yplot[0]+errup[0],yplot[0]-errdn[0]):
+        #    print(a,b,c,d, zlist[idx], 1)
 
         ind = np.where(halo_mass_rel[idx,2,0,:] != 0)
         xplot = xmf[ind]
@@ -322,9 +386,9 @@ def plot_SMHM_z(plt, outdir, zlist, halo_mass_rel):
    
         ax.fill_between(xplot,yplot[0]+errup[0],yplot[0]-errdn[0], facecolor='blue', alpha = 0.5, interpolate=True)
         ax.errorbar(xplot, yplot[0], color='b', label = 'SF galaxies (v2.0)')
-        print("#SMHM relation of SF galaxies ")
-        for a,b,c,d in zip(xplot, yplot[0],yplot[0]+errup[0],yplot[0]-errdn[0]):
-            print(a,b,c,d, zlist[idx], 0)
+        #print("#SMHM relation of SF galaxies ")
+        #for a,b,c,d in zip(xplot, yplot[0],yplot[0]+errup[0],yplot[0]-errdn[0]):
+        #    print(a,b,c,d, zlist[idx], 0)
         ind = np.where(halo_mass_rel[idx,3,0,:] != 0)
         xplot = xmf[ind]
         yplot = halo_mass_rel[idx,3,0,ind]
@@ -345,7 +409,7 @@ def plot_SMHM_z(plt, outdir, zlist, halo_mass_rel):
 
 def plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_30kpc, hist_smf_pass, hist_smf_pass_err):
 
-    (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs, z0obsPSO) = load_smf_observations(obsdir, h0)
+    (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs, z0obsPSO, z8obs, z9obs, z10obs) = load_smf_observations(obsdir, h0)
     
     PlotLagos18 = True
     def plot_lagos18_smf(ax, z):
@@ -371,16 +435,16 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_3
         ax.plot(sm, y, linestyle='dashed', color='black',label='Shark v1.1 (L18)' if z == 0 else None)
 
     
-    fig = plt.figure(figsize=(11.7,11.7))
+    fig = plt.figure(figsize=(11.7,9.7))
     xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
     ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\star}}/{\\rm Mpc}^{-3} )$"
-    xmin, xmax, ymin, ymax = 8, 13, -6, -1
+    xmin, xmax, ymin, ymax = 8, 13, -6.5, -1
     xleg = xmax - 0.2 * (xmax - xmin)
     yleg = ymax - 0.1 * (ymax - ymin)
 
     subplots = (331, 332, 333, 334, 335, 336, 337, 338, 339)
     indeces = (0, 1, 2, 3, 4, 5, 6, 7, 8)
-    zs = (0, 0.5, 1, 2, 3, 4, 5, 6, 7)
+    zs = (0.1, 0.5, 1, 2, 3, 4, 5, 6, 7)
     observations = (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs)
 
     for subplot, idx, z, obs_and_markers in zip(subplots, indeces, zs, observations):
@@ -418,32 +482,90 @@ def plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_3
         if idx >= 0:
             y = hist_smf_err[idx,:]
             ind = np.where(y < 0.)
-            ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=3, label ='with 0.25dex error')
-        plot_lagos18_smf(ax, idx)
+            ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=3, label ='with rand error' if idx == 0 else None)
+        #plot_lagos18_smf(ax, idx)
        
 
         colors = []
         if idx == 0:
-            colors = ['r','r','r','k']
+            colors = ['r','r','r']
         #elif idx == 1:
         #    colors += ['r']
-        elif idx > 1:
-            colors = ['r']
         if idx == 0:
            colors += ['darkgreen', 'grey', 'grey','grey']
         else:
-           colors += ['grey', 'grey','grey']
+           colors = ['grey', 'grey','grey', 'grey', 'grey' ]
 
-        if idx ==0 or idx == 3:
-           common.prepare_legend(ax, colors)
+        if idx ==0 or idx == 5:
+           common.prepare_legend(ax, colors, fontsize=10)
 
     plt.tight_layout()
     common.savefig(outdir, fig, 'stellarmf_z.pdf')
 
+def plot_stellarmf_z_highz(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_30kpc, hist_smf_pass, hist_smf_pass_err):
+
+    (z0obs, z05obs, z1obs, z2obs, z3obs, z4obs, z5obs, z6obs, z7obs, z0obsPSO, z8obs, z9obs, z10obs) = load_smf_observations(obsdir, h0)
+    
+    
+    fig = plt.figure(figsize=(11.7,3.35))
+    xtit = "$\\rm log_{10} (\\rm M_{\\star}/M_{\odot})$"
+    ytit = "$\\rm log_{10}(\Phi/dlog_{10}{\\rm M_{\\star}}/{\\rm Mpc}^{-3} )$"
+    xmin, xmax, ymin, ymax = 8, 13, -6.5, -1
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    subplots = (131, 132, 133)
+    indeces = (9, 10, 11)
+    zs = (8, 9, 10)
+    observations = (z8obs, z9obs, z10obs)
+
+    for subplot, idx, z, obs_and_markers in zip(subplots, indeces, zs, observations):
+
+        ax = fig.add_subplot(subplot)
+        if(z ==8):
+            ytitle = ytit
+        else:
+            ytitle = ' '
+        common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytitle, locators=(0.1, 1, 0.1))
+        ax.text(xleg, yleg, 'z=%s' % str(z))
+
+        # Observations
+        for obs, marker in obs_and_markers:
+            common.errorbars(ax, obs.x, obs.y, obs.yerrdn, obs.yerrup, 'grey',
+                                marker, err_absolute=obs.err_absolute, label=obs.label, markersize=4)
+
+        # Predicted SMF
+        y = hist_smf[idx,:]
+        ind = np.where(y < 0.)
+        ax.plot(xmf[ind],y[ind],'r') #, label='Shark v2.0' if z == 8 else None)
+        #if idx == 0:
+        #    y = hist_smf_err[idx,:]
+        #    ind = np.where(y < 0.)
+        #    ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='with error')
+
+        if idx >= 0:
+            y = hist_smf_err[idx,:]
+            ind = np.where(y < 0.)
+            ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=3) #, label ='with 0.3dex error')
+       
+
+        colors = []
+        if z == 8:
+            colors = ['r','r']
+        if z == 8:
+           colors += ['grey', 'grey','grey']
+
+        if z == 8:
+           common.prepare_legend(ax, colors, loc = 2, fontsize=10)
+
+    plt.tight_layout()
+    common.savefig(outdir, fig, 'stellarmf_z_highzonly.pdf')
+
+
 def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_pass_cen, hist_smf_pass_sat):
 
     (z05obs, z1obs, z2obs, z3obs, z4obs, z5obs) = load_smf_passive_observations(obsdir, h0)
-    PlotLagos18 = True
+    PlotLagos18 = False
     def plot_lagos18_smf(ax, z, label=True):
         sm, z0, z0p5, z1, z2, z3, z4, z5 = common.load_observation(obsdir, 'Models/SharkVariations/SMF_Passive_Lagos18.dat', [0,1,2,3,4,5,6,7])
         y = z0
@@ -522,7 +644,7 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
 
         # Observations
         for obs, marker in obs_and_markers:
-            if idx == 6:
+            if idx == 4:
                 common.errorbars(ax, obs.x, obs.y, obs.yerrdn, obs.yerrup, 'grey',
                                 marker, err_absolute=obs.err_absolute, label=obs.label, markersize=6)
             else:
@@ -534,9 +656,14 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
         y = hist_smf[idx,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'r', label='Shark v2.0' if idx == 1 else None)
+        print("#SMF with ssfr<0.2/tH(z) at redshift", z)
+        print("#SMF with errors assume a gaussian-distributed error of width 0.3dex for both stellar masses and SFRs")
+        print("#log(Mstar/Msun) log10(phi_no_err[Mpc^-3 dex^-1]) log10(phi_with_err[Mpc^-3 dex^-1])")
+        for a,b,c in zip(xmf,hist_smf[idx,:], hist_smf_err[idx,:]):
+             print(a,b,c)
         y = hist_smf_err[idx,:]
         ind = np.where(y < 0.)
-        ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.25dex error' if idx == 1 else None)
+        ax.plot(xmf[ind],y[ind],'r', linestyle='dashdot', linewidth=2, label ='0.3dex error' if idx == 1 else None)
         y = hist_smf_pass_cen[idx,:]
         ind = np.where(y < 0.)
         ax.plot(xmf[ind],y[ind],'DarkOrange', label='centrals with err' if idx == 1 else None)
@@ -545,7 +672,7 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
         ax.plot(xmf[ind],y[ind],'YellowGreen', label='satellites with err' if idx == 1 else None)
 
         if(PlotLagos18):
-            if(idx == 6):
+            if(idx == 4):
                plot_lagos18_smf(ax, idx, label=True)
             else:
                plot_lagos18_smf(ax, idx, label=False)
@@ -553,13 +680,13 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
         colors = []
         if idx == 1:
             colors = ['r','r','DarkOrange', 'YellowGreen', 'k']
-        if idx == 6:
+        if idx == 4:
             colors=['k','k','k']
         colors += ['grey', 'grey','grey']
 
         if idx ==1:
            common.prepare_legend(ax, colors, loc = 3)
-        elif idx == 6:
+        elif idx == 4:
            common.prepare_legend(ax, colors, loc = 2)
 
 
@@ -589,7 +716,7 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_
     mass[ind] = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
     H, _ = np.histogram(mass,bins=np.append(mbins,mupp))
     hist_smf[index,:] = hist_smf[index,:] + H
-    ran_err = np.random.normal(0.0, 0.25, len(mass))
+    ran_err = np.random.normal(0.0, 0.3, len(mass))
     mass_err = mass + ran_err
     H, _ = np.histogram(mass_err,bins=np.append(mbins,mupp))
     hist_smf_err[index,:] = hist_smf_err[index,:] + H
@@ -603,24 +730,29 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_
     #print("Median bulge-to-total ratio:", np.median(props[:,3]))
     #np.savetxt("StellarMassAndSFR_z" +  str(zlist[index]) + "_Lagos24_mediSURFS.txt", props)
 
+    ssfr_thresh = np.log10(0.2/(us.hubble_time(zlist[index]) * 1e9)) #in yr^-1
+    if(ssfr_thresh < -10.75):
+        ssfr_thresh = -10.75
+    print("threshold ssfr", ssfr_thresh, " at z", zlist[index])
+
     ind = np.where(mass < 11)
     print("cosmic SFR at z", zlist[index], " is", np.log10(sum(sfrd[ind] + sfrb[ind]) / 1e9/h0/(volh / h0**3)))
  
-    ind = np.where((mass > 0) & (ssfr <= -10.75))
+    ind = np.where((mass > 0) & (ssfr <= ssfr_thresh))
     H, _ = np.histogram(mass[ind], bins=np.append(mbins,mupp))
     hist_smf_pass[index,:] = hist_smf_pass[index,:] + H
 
-    ind = np.where((typeg > 0) & (mass > 10) & (ssfr <= -10.75) & (ssfr > -20) & (Zgas > 1e-10) & (Zgas < 1e10))
+    ind = np.where((typeg > 0) & (mass > 10) & (ssfr <= ssfr_thresh) & (ssfr > -20) & (Zgas > 1e-10) & (Zgas < 1e10))
     print("Stats for satellites", np.log10(np.median(Zgas[ind])), np.median(sfrd[ind]/(sfrd[ind] + sfrb[ind])), " at redshift", zlist[index], len(sfrb[ind]))
-    ind = np.where((typeg == 0) & (mass > 10) & (ssfr <= -10.75) & (ssfr > -20) & (Zgas > 1e-10) & (Zgas < 1e10))
+    ind = np.where((typeg == 0) & (mass > 10) & (ssfr <= ssfr_thresh) & (ssfr > -20) & (Zgas > 1e-10) & (Zgas < 1e10))
     print("Stats for centrals", np.log10(np.median(Zgas[ind])), np.median(sfrd[ind]/(sfrd[ind] + sfrb[ind])), " at redshift", zlist[index], len(sfrb[ind]))
 
-    ind = np.where((mass >= 10.9) & (np.log10(sfr) - mass <= -10))
+    ind = np.where((mass >= 10.9) & (np.log10(sfr) - mass <= ssfr_thresh))
     print("Number density of passive galaxies with 10**10.9Msun (no error)", np.log10((len(mass[ind])+0.0)/ volnoh), np.log10(1/ volnoh))
-    mass_witherr = mass + np.random.normal(0.0, 0.25, len(mass))
-    sfr_witherr = np.log10(sfr) + np.random.normal(0.0, 0.25, len(mass))
-    ind = np.where((mass_witherr >= 10.9) & (sfr_witherr - mass_witherr <= -10))
-    print("Number density of passive galaxies with 10**10.9Msun (with 0.25dex error)", np.log10((len(mass[ind])+0.0)/ volnoh))
+    mass_witherr = mass + np.random.normal(0.0, 0.3, len(mass))
+    sfr_witherr = np.log10(sfr) + np.random.normal(0.0, 0.3, len(mass))
+    ind = np.where((mass_witherr >= 10.9) & (sfr_witherr - mass_witherr <= ssfr_thresh))
+    print("Number density of passive galaxies with 10**10.9Msun (with 0.3dex error)", np.log10((len(mass[ind])+0.0)/ volnoh))
 
     #H, _ = np.histogram(mass[ind], bins=np.append(mbins,mupp))
     #hist_smf_pass_cen[index,:] = hist_smf_pass_cen[index,:] + H
@@ -628,25 +760,25 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_
     #H, _ = np.histogram(mass[ind], bins=np.append(mbins,mupp))
     #hist_smf_pass_sat[index,:] = hist_smf_pass_sat[index,:] + H
 
-    if index == 0:
+    scatter = 0.1 + 0.1 * zlist[index]
+    if scatter > 0.3:
         scatter = 0.3
-    else:
-        scatter = 0.3
+
     ran_err = np.random.normal(0.0, scatter, len(mass))
     ssfr_err = ssfr + ran_err
-    ind = np.where((mass_err > 0) & (ssfr_err <= -10.75))
+    ind = np.where((mass_err > 0) & (ssfr_err <= ssfr_thresh))
     H, _ = np.histogram(mass_err[ind], bins=np.append(mbins,mupp))
     hist_smf_pass_err[index,:] = hist_smf_pass_err[index,:] + H
 
-    ind = np.where((mass_err > 0) & (ssfr_err <= -10.75) & (typeg == 0))
+    ind = np.where((mass_err > 0) & (ssfr_err <= ssfr_thresh) & (typeg == 0))
     H, _ = np.histogram(mass_err[ind], bins=np.append(mbins,mupp))
     hist_smf_pass_cen[index,:] = hist_smf_pass_cen[index,:] + H
     halo_mass_rel[index,1,:] = bin_it(x=np.log10(mvir[ind]), y = mass_err[ind])
 
-    ind = np.where((mass > 0) & (ssfr <= -10.75) & (typeg == 0))
+    ind = np.where((mass > 0) & (ssfr <= ssfr_thresh) & (typeg == 0))
     halo_mass_rel[index,0,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
 
-    ind = np.where((mass_err > 0) & (ssfr_err <= -10.75) & (typeg > 0))
+    ind = np.where((mass_err > 0) & (ssfr_err <= ssfr_thresh) & (typeg > 0))
     H, _ = np.histogram(mass_err[ind], bins=np.append(mbins,mupp))
     hist_smf_pass_sat[index,:] = hist_smf_pass_sat[index,:] + H
 
@@ -682,42 +814,44 @@ def prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_
     bin_it = functools.partial(us.wmedians, xbins=xmf)
     bin_it_2 = functools.partial(us.wmedians, xbins=xmf2)
 
-    #select main sequence galaxies
-    ind = np.where((sfrt > 0) & (mt >= 7e8) & (mt <= 1e10) & (typeg == 0))
-    if(len(sfrt[ind]) > 10):
-       sfrin = np.log10(sfrt[ind])
-       mtin = np.log10(mt[ind])
-   
-       ms_med = bin_it(x=mtin, y=sfrin)
-       pos = np.where(ms_med[0,:] != 0)
-       yin = ms_med[0,pos]
-       ms_fit = np.polyfit(xmf[pos], yin[0], 2)
+    if(zlist[index] < 7):
+       #select main sequence galaxies
+       ind = np.where((sfrt > 0) & (mt >= 7e8) & (mt <= 1e10) & (typeg == 0))
+       if(len(sfrt[ind]) > 10):
+          sfrin = np.log10(sfrt[ind])
+          mtin = np.log10(mt[ind])
       
-       dist_ms = np.log10(sfrt) - (ms_fit[0] * np.log10(mt)**2 + ms_fit[1] * np.log10(mt) + ms_fit[2])
-   
-       for i,m in enumerate(xmf2):
-           ind = np.where((sfrt > 0) & (mt >= 10**(m-dm2/2.0)) & (mt < 10**(m+dm2/2.0))  & (dist_ms > -0.75) & (dist_ms < 0.75))
-           sigma_ms[index,i] = np.std(np.log10(sfrt[ind]))
+          ms_med = bin_it(x=mtin, y=sfrin)
+          pos = np.where(ms_med[0,:] != 0)
+          yin = ms_med[0,pos]
+          ms_fit = np.polyfit(xmf[pos], yin[0], 2)
+         
+          dist_ms = np.log10(sfrt) - (ms_fit[0] * np.log10(mt)**2 + ms_fit[1] * np.log10(mt) + ms_fit[2])
       
-       
-       ind = np.where((mass > 0) & (typeg == 0))
-       halo_mass_rel[index,3,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
-   
-       ind = np.where((mass > 0) & (dist_ms > -0.3) & (typeg == 0))
-       halo_mass_rel[index,2,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
-   
-       #print("#Main sequence scatter at z:", zlist[index])
-       #print("#log10(Mstar/Msun) std(log10(SFR))")
-   
-       #for a,b in zip(xmf2, sigma_ms[index,:]):
-       #    print(a,b)
- 
+          for i,m in enumerate(xmf2):
+              ind = np.where((sfrt > 0) & (mt >= 10**(m-dm2/2.0)) & (mt < 10**(m+dm2/2.0))  & (dist_ms > -0.75) & (dist_ms < 0.75))
+              sigma_ms[index,i] = np.std(np.log10(sfrt[ind]))
+         
+          
+          ind = np.where((mass > 0) & (typeg == 0))
+          halo_mass_rel[index,3,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
+      
+          ind = np.where((mass > 0) & (dist_ms > -0.3) & (typeg == 0))
+          halo_mass_rel[index,2,:] = bin_it(x=np.log10(mvir[ind]), y = mass[ind])
+      
+          #print("#Main sequence scatter at z:", zlist[index])
+          #print("#log10(Mstar/Msun) std(log10(SFR))")
+      
+          #for a,b in zip(xmf2, sigma_ms[index,:]):
+          #    print(a,b)
+    
 
     return mass
 
 def main(modeldir, outdir, redshift_table, subvols, obsdir):
+    #zlist = (0.65, 0.7, 0.75, 0.8)
 
-    zlist = (0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)
+    zlist = (0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0)
     #zlist = (3, 3.5, 4.0, 4.5, 5.0)
     #, 10.0, 11.0) #(0.15, 0.25, 0.4, 0.625, 0.875, 1.125, 1.375, 1.625, 1.875)
     #zlist = (4, 5, 6, 7, 8, 9, 10, 11) #0, 0.25, 0.5, 0.75, 1.0)
@@ -742,6 +876,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         mass = prepare_data(hdf5_data, index, hist_smf, hist_smf_err, hist_smf_30kpc, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat, sigma_ms, zlist, halo_mass_rel)
         h0 = hdf5_data[0]
+    #for a,b,c,d,e in zip(xmf, hist_smf[0,:], hist_smf[1,:], hist_smf[2,:], hist_smf[3,:]):
+    #    print(a,b,c,d,e)
 
     # Take logs
     def take_log(array):
@@ -756,8 +892,18 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     take_log(hist_smf_pass_sat)
 
     plot_stellarmf_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_30kpc, hist_smf_pass, hist_smf_pass_err)
+    plot_stellarmf_z_highz(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hist_smf_30kpc, hist_smf_pass, hist_smf_pass_err)
+
     plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat)
     plot_SMHM_z(plt, outdir, zlist, halo_mass_rel)
+
+    for idx in range(0,len(zlist)):
+        print("#SMF with ssfr<0.2/tH(z) at redshift", zlist[idx])
+        print("#SMF with errors assume a gaussian-distributed error of width 0.3dex for both stellar masses and SFRs")
+        print("#log(Mstar/Msun) log10(phi_no_err[Mpc^-3 dex^-1]) log10(phi_with_err[Mpc^-3 dex^-1])")
+        for a,b,c in zip(xmf,hist_smf_pass[idx,:], hist_smf_pass_err[idx,:]):
+             print(a,b,c)
+
     #print("#SMF all galaxies z=5, 6, 7, 8, 9, 10, 11")
     #for a,b,c,d,e,f,g,h,i,j,k,l,m,n,p,o,q in zip(xmf, hist_smf[0,:], hist_smf[1,:], hist_smf[2,:], hist_smf[3,:], hist_smf[4,:], hist_smf[5,:], hist_smf[6,:],hist_smf[7,:], hist_smf_err[0,:], hist_smf_err[1,:], hist_smf_err[2,:], hist_smf_err[3,:], hist_smf_err[4,:], hist_smf_err[5,:], hist_smf_err[6,:], hist_smf_err[7,:]):
     #    print(a,b,c,d,e,f,g,h,i,j,k,l,m,n,p,o,q)

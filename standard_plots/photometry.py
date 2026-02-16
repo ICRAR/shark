@@ -803,7 +803,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ydn       = np.log10(pow(10.0,dpn[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
             yup       = np.log10(pow(10.0,dpu[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
 
-            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+            ax.errorbar(xobs, yobs, yerr=[abs(yobs-ydn),abs(yup-yobs)], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
 
         if idx == 7:
             hobs = 0.75
@@ -1172,7 +1172,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ydn       = np.log10(pow(10.0,dpn[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
             yup       = np.log10(pow(10.0,dpu[11:19]) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
 
-            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
+            ax.errorbar(xobs, yobs, yerr=[abs(yobs-ydn),abs(yup-yobs)], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='s')
 
         if idx == 4:
             hobs = 0.75
@@ -1191,7 +1191,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ydn       = np.log10(pow(10.0,np.log10(p[7:13] - dp[7:13])) * dml/dmm)- 3.0*np.log10(0.677)- 3.0 * corrhobs
             yup       = np.log10(pow(10.0,np.log10(p[7:13] + dp[7:13])) * dml/dmm)- 3.0*np.log10(0.677)- 3.0 * corrhobs
             
-            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='P',label="Dunne+00")
+            ax.errorbar(xobs, yobs, yerr=[abs(yobs-ydn),abs(yup-yobs)], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='P',label="Dunne+00")
             
             file = obsdir+'/lf/lf850_vlahakis05_OS.data'
             lm,p,dp   = np.loadtxt(file,usecols=[0,1,2],unpack=True)
@@ -1207,7 +1207,7 @@ def plot_lfs(plt, outdir, obsdir, h0, LFs_dust, LFs_nodust):
             ydn       = np.log10(pow(10.0,np.log10(p - dp)) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
             yup       = np.log10(pow(10.0,np.log10(p + dp)) * dml/dmm)-3.0*np.log10(0.677)- 3.0 * corrhobs
             
-            ax.errorbar(xobs, yobs, yerr=[yobs-ydn,yup-yobs], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Vlahakis+05")
+            ax.errorbar(xobs, yobs, yerr=[abs(yobs-ydn),abs(yup-yobs)], ls='None', mfc='None', ecolor = 'grey', mec='grey',marker='D',label="Vlahakis+05")
 
             xobs = np.zeros(shape = 2)
             xobs[0] = 1.0

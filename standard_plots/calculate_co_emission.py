@@ -309,14 +309,14 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir, read_spi
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     plt = common.load_matplotlib()
-    test_co_sleds = True
+    test_co_sleds = False
     read_spin = True
 
     if(test_co_sleds):
         zlist = [0] #, 0.5, 1, 1.5, 2, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
         snapshots = redshift_table[zlist]
     else:
-        snapshots = range(128,202)
+        snapshots = range(40,202)
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()

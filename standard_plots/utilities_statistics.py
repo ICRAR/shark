@@ -333,6 +333,12 @@ def density_contour_reduced(ax, xdata, ydata, nbins_x, nbins_y, cmap = 'viridis'
 def hubble_constant(z, h=0.6751, omegam=0.3121, omegal=0.6879):
     return np.sqrt((h * 100)**2 * (omegam * (1 + z)**3 + omegal))
 
+def hubble_time(z, h=0.6751, omegam=0.3121, omegal=0.6879):
+    H = hubble_constant(z, h=h, omegam=omegam, omegal=omegal)
+    kmToMpc = 3.24078e-20 
+    stoGyr = 3.154e+16
+    tH = 1 / (H * kmToMpc * stoGyr) #Hubble time in Gyr
+    return tH
 
 def look_back_time(z, h=0.6751, omegam=0.3121, omegal=0.6879):
 

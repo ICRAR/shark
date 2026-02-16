@@ -188,11 +188,18 @@ def plot_mvir_final(plt, output_dir, obs_dir, zlist, halo_hists):
     common.savefig(output_dir, fig, 'final_halo_mass_passivegals.pdf')
 
 
-def prepare_data(hdf5_data, hdf5_data_halo, index, num_densities, ssfr_thresh, mass_threshs, mass_threshs2, num_densities2, halo_hists, zlist):
+def prepare_data(hdf5_data, hdf5_data_halo, index, num_densities, ssfr_thresh, mass_threshs, mass_threshs2, num_densities2, num_densities_with_err, num_densities_with_err2, halo_hists, zlist, 
+                 upper_limits, upper_limits_with_err, upper_limits2, upper_limits_with_err2, quenched_fractions, quenched_fractions_with_err):
 
 
     # Unpack data
     (h0, volh, typeg, mdisk, mbulge, sfrd, sfrb, idhalo, mvir, mbh) = hdf5_data
+
+    if (zlist[index] >= 10):
+
+        ind=np.where((mvir >= min(mvir)) & (mvir < min(mvir) * 10))
+        print("Minimum halo mass", np.log10(min(mvir)), " median stellar mass", np.log10(np.median(mdisk[ind] + mbulge[ind])))
+
 
     (_, _, mvirz0, idhalo_cat) = hdf5_data_halo
 
@@ -201,6 +208,12 @@ def prepare_data(hdf5_data, hdf5_data_halo, index, num_densities, ssfr_thresh, m
     #look at number densities of galaxies with sSFR<1e-10yr^-1
     ms_tot = ((mdisk+mbulge)/h0)
     sfr_tot = ((sfrd + sfrb)/h0/1e9)
+
+    randms = np.random.normal(loc=0.0, scale=0.3, size=len(ms_tot))
+    randsfr = np.random.normal(loc=0.0, scale=0.3, size=len(ms_tot))
+
+    ms_totnew = 10**(np.log10(ms_tot)+randms)
+    sfr_totnew = 10**(np.log10(sfr_tot)+randsfr)
 
     #ind = np.where(ms_tot >= 1e10)
     #allgals  = np.zeros(shape = (len(ms_tot[ind]), 5))
@@ -235,20 +248,53 @@ def prepare_data(hdf5_data, hdf5_data_halo, index, num_densities, ssfr_thresh, m
     ind = np.where(ms_tot >= 1e10)
     print("Number density of all massive galaxies, ", np.log10(len(ms_tot[ind])/vol), " at redshift", zlist[index])
 
-    for j in range(0,len(ssfr_thresh)):
+    for j in range(0,len(ssfr_thresh)+1):
         for g in range(0,len(mass_threshs)):
-            passive = np.where(( ms_tot>=mass_threshs[g]) & (sfr_tot/ms_tot <= ssfr_thresh[j]))
+            ssfr_thresh_in = np.zeros(shape = len(ssfr_thresh)+1)
+            ssfr_thresh_in[0:3] = ssfr_thresh
+            ssfr_thresh_in[3] = 0.2/(us.hubble_time(zlist[index]) * 1e9) #in yr^-1 
+            passive = np.where(( ms_tot>=mass_threshs[g]) & (sfr_tot/ms_tot <= ssfr_thresh_in[j]))
             npass = len(ms_tot[passive])
             num_densities[index,j,g] = (npass + 0.0) / vol
+            if(npass == 0):
+                upper_limits[index,j,g] = 1
+            passive = np.where((ms_totnew>=mass_threshs[g]) & (sfr_totnew/ms_totnew <= ssfr_thresh_in[j]))
+            npass = len(ms_totnew[passive])
+            num_densities_with_err[index,j,g] = (npass + 0.0) / vol
+            if(npass == 0):
+                upper_limits_with_err[index,j,g] = 1
+        for g in range(0,len(mass_threshs2)-1):
+            ssfr_thresh_in = np.zeros(shape = len(ssfr_thresh)+1)
+            ssfr_thresh_in[0:3] = ssfr_thresh
+            ssfr_thresh_in[3] = 0.2/(us.hubble_time(zlist[index]) * 1e9) #in yr^-1
+            allgals = np.where(( ms_tot>=mass_threshs2[g]) & ( ms_tot<mass_threshs2[g+1]))
+            nall = len(ms_tot[allgals])
+            passive = np.where(( ms_tot>=mass_threshs2[g]) & ( ms_tot<mass_threshs2[g+1]) & (sfr_tot/ms_tot <= ssfr_thresh_in[j]))
+            npass = len(ms_tot[passive])
+            num_densities2[index,j,g] = (npass + 0.0) / vol
+            if(nall > 0):
+               quenched_fractions[index,j,g] = (npass + 0.0) / (nall + 0.0)
+            if(npass == 0):
+                upper_limits2[index,j,g] = 1
+            allgals = np.where((ms_totnew>=mass_threshs2[g]) & (ms_totnew<mass_threshs2[g+1]))
+            nall = len(ms_totnew[allgals])
+            passive = np.where((ms_totnew>=mass_threshs2[g]) & (ms_totnew<mass_threshs2[g+1]) & (sfr_totnew/ms_totnew <= ssfr_thresh_in[j]))
+            npass = len(ms_totnew[passive])
+            num_densities_with_err2[index,j,g] = (npass + 0.0) / vol
+            if(nall > 0):
+               quenched_fractions_with_err[index,j,g] = (npass + 0.0) / (nall + 0.0)
+            if(npass == 0):
+                upper_limits_with_err2[index,j,g] = 1
+
     ind = np.where(num_densities == 0)
     num_densities[ind] = (0.99)/vol
+    ind = np.where(num_densities_with_err == 0)
+    num_densities_with_err[ind] = (0.99)/vol
 
-    scatter = np.random.normal(0.0, 0.25, len(ms_tot))
-    ms_tot_err = ms_tot + scatter
-    for g in range(0,len(mass_threshs2)):
-        massi = np.where((ms_tot >=mass_threshs2[g]) & (sfr_tot/ms_tot <= 1e-10))
-        npass = len(ms_tot[massi])
-        num_densities2[index,g] = (npass + 0.0) / vol
+    ind = np.where(num_densities2 == 0)
+    num_densities2[ind] = (0.99)/vol
+    ind = np.where(num_densities_with_err2 == 0)
+    num_densities_with_err2[ind] = (0.99)/vol
 
     return (0.99)/vol
 
@@ -257,7 +303,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     plt = common.load_matplotlib()
 
-    zlist = np.array([2, 2.5, 3.0, 3.53362989, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]) #, 8.0, 9.0, 10.0, 11.0, 12.0])
+    zlist = np.array([0, 0.25, 0.5, 0.75, 1.0, 1.5, 2, 2.5, 3.0, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0, 9.0, 10, 11, 12]) #, 8.0, 9.0, 10.0, 11.0, 12.0])
     #zlist = np.array([5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0])
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'sfr_disk', 'sfr_burst', 'id_halo_tree', 'mvir_hosthalo', 'm_bh')}
 
@@ -265,23 +311,116 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     ssfr_thresh = [1e-10, 0.5e-10, 1e-11]
     mass_threshs = [1e10, 3e10]
     mass_threshs2 = [10**10.9, 1e11]
-    mass_threshs2 = [1e10, 10**10.3, 10**10.6]
+    mass_threshs2 = [1e9, 10**10.3, 10**13]
 
-    num_densities = np.zeros(shape = (len(zlist),len(ssfr_thresh),len(mass_threshs)))
-    num_densities2 = np.zeros(shape = (len(zlist),len(mass_threshs2)))
+    num_densities = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1,len(mass_threshs)))
+    num_densities_with_err = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1,len(mass_threshs)))
+    upper_limits = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1,len(mass_threshs)))
+    upper_limits_with_err = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1,len(mass_threshs)))
+
+    num_densities2 = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1, len(mass_threshs2)-1))
+    num_densities_with_err2 = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1, len(mass_threshs2)-1))
+    upper_limits2 = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1,len(mass_threshs2)-1))
+    upper_limits_with_err2 = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1,len(mass_threshs2)-1))
+
+    quenched_fractions = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1, len(mass_threshs2)-1))
+    quenched_fractions_with_err = np.zeros(shape = (len(zlist),len(ssfr_thresh)+1, len(mass_threshs2)-1))
+
     halo_hists = np.zeros(shape = (len(zlist), 2, len(xmf)))
 
     for index, snapshot in enumerate(redshift_table[zlist]):
-
+        print(snapshot)
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
         hdf5_data_halo = common.read_data(model_dir, snapshot, fields_halo, subvols)
 
-        limit = prepare_data(hdf5_data, hdf5_data_halo, index, num_densities, ssfr_thresh, mass_threshs, mass_threshs2, num_densities2, halo_hists, zlist)
+        limit = prepare_data(hdf5_data, hdf5_data_halo, index, num_densities, ssfr_thresh, mass_threshs, mass_threshs2, num_densities2, num_densities_with_err, num_densities_with_err2, halo_hists, zlist, 
+                             upper_limits, upper_limits_with_err, upper_limits2, upper_limits_with_err2, quenched_fractions, quenched_fractions_with_err)
     #for a,b,c,d in zip(zlist, num_densities2[:,0], num_densities2[:,1], num_densities2[:,2]):
     #    print(a,b,c,d)
 
-    plot_num_density_passive(plt, output_dir, obs_dir, zlist, num_densities, ssfr_thresh, mass_threshs, mass_threshs2, num_densities2, limit)
-    plot_mvir_final(plt, output_dir, obs_dir, zlist, halo_hists)
+#    for i in range(0,len(ssfr_thresh)+1):
+#       for g  in range(0,len(mass_threshs)):
+#           #Predicted relation
+#           yplot = np.log10(num_densities[:,i,g])
+#           xplot = zlist[:]
+#           if i <=2:
+#               print("#redshift log(NumDens [Mpc^-3]) and FlagUpperLimit for galaxies with Mstar>=", mass_threshs2[g], "Msun and sSFR<", ssfr_thresh[i], "yr^-1")
+#               #Predicted relation
+#               for a,b,c in zip(xplot,yplot, upper_limits[:,i,g]):
+#                   print(a,b,c)
+#           else:
+#               print("#redshift log(NumDens [Mpc^-3]) and FlagUpperLimit for galaxies with Mstar>=", mass_threshs2[g], "Msun and sSFR<0.2/tH(z)")
+#               #Predicted relation
+#               for a,b,c in zip(xplot,yplot, upper_limits[:,i,g]):
+#                   print(a,b,c)
+#
+#    for i in range(0,len(ssfr_thresh)+1):
+#       for g  in range(0,len(mass_threshs)):
+#           #Predicted relation
+#           yplot = np.log10(num_densities_with_err[:,i,g])
+#           xplot = zlist[:]
+#           if i <=2:
+#               print("#redshift log(NumDens [Mpc^-3]) and FlagUpperLimit for galaxies with Mstar>=", mass_threshs[g], "Msun and sSFR<", ssfr_thresh[i], "yr^-1 including errors")
+#               #Predicted relation
+#               for a,b,c in zip(xplot,yplot, upper_limits_with_err[:,i,g]):
+#                   print(a,b,c)
+#           else:
+#               print("#redshift log(NumDens [Mpc^-3]) and FlagUpperLimit for galaxies with Mstar>=", mass_threshs[g], "Msun and sSFR<0.2/tH(z) including errors")
+#               #Predicted relation
+#               for a,b,c in zip(xplot,yplot, upper_limits_with_err[:,i,g]):
+#                   print(a,b,c)
 
-if __name__ == '__main__':
-    main(*common.parse_args())
+    for i in range(0,len(ssfr_thresh)+1):
+       for g  in range(0,len(mass_threshs2)-1):
+           #Predicted relation
+           yplot = np.log10(num_densities2[:,i,g])
+           xplot = zlist[:]
+           if i <=2:
+               print("#redshift log(NumDens [Mpc^-3]) and FlagUpperLimit for galaxies with Mstar>=", mass_threshs2[g], "Msun,  Mstar<", mass_threshs2[g+1], " and sSFR<", ssfr_thresh[i], "yr^-1")
+               #Predicted relation
+               for a,b,c in zip(xplot,yplot, upper_limits2[:,i,g]):
+                   print(a,b,c)
+           else:
+               print("#redshift log(NumDens [Mpc^-3]) and FlagUpperLimit for galaxies with Mstar>=", mass_threshs2[g], "Msun,  Mstar<", mass_threshs2[g+1], " and sSFR<0.2/tH(z)")
+               #Predicted relation
+               for a,b,c in zip(xplot,yplot, upper_limits2[:,i,g]):
+                   print(a,b,c)
+
+    for i in range(0,len(ssfr_thresh)+1):
+       for g  in range(0,len(mass_threshs2)-1):
+           #Predicted relation
+           yplot = np.log10(num_densities_with_err2[:,i,g])
+           xplot = zlist[:]
+           if i <=2:
+               print("#redshift log(NumDens [Mpc^-3]) and FlagUpperLimit for galaxies with Mstar>=", mass_threshs2[g], "Msun,  Mstar<", mass_threshs2[g+1], " and sSFR<", ssfr_thresh[i], "yr^-1 including errors")
+               #Predicted relation
+               for a,b,c in zip(xplot,yplot, upper_limits_with_err2[:,i,g]):
+                   print(a,b,c)
+           else:
+               print("#redshift log(NumDens [Mpc^-3]) and FlagUpperLimit for galaxies with Mstar>=", mass_threshs2[g], "Msun,  Mstar<", mass_threshs2[g+1], " and sSFR<0.2/tH(z) including errors")
+               #Predicted relation                                                                               
+               for a,b,c in zip(xplot,yplot, upper_limits_with_err2[:,i,g]):                                     
+                   print(a,b,c)                                                                                  
+
+    for g  in range(0,len(mass_threshs2)-1):
+        yplot = quenched_fractions[:,2,g]
+        xplot = zlist[:]
+        print("#redshift quenched_fraction and FlagUpperLimit for galaxies with Mstar>=", mass_threshs2[g], "Msun,  Mstar<", mass_threshs2[g+1], " and defining quenched as sSFR<0.2/tH(z)")
+        #Predicted relation
+        for a,b,c in zip(xplot,yplot, upper_limits2[:,2,g]):
+            print(a,b,c)
+    for g  in range(0,len(mass_threshs2)-1):
+        yplot = quenched_fractions_with_err[:,2,g]
+        xplot = zlist[:]
+        print("#redshift quenched_fraction and FlagUpperLimit for galaxies with Mstar>=", mass_threshs2[g], "Msun,  Mstar<", mass_threshs2[g+1], " and defining quenched as sSFR<0.2/tH(z) including errors")
+        #Predicted relation
+        for a,b,c in zip(xplot,yplot, upper_limits2[:,2,g]):
+            print(a,b,c)
+
+
+    plot_num_density_passive(plt, output_dir, obs_dir, zlist, num_densities, ssfr_thresh, mass_threshs, mass_threshs2, num_densities2, limit)
+    plot_mvir_final(plt, output_dir, obs_dir, zlist, halo_hists)                                                 
+                                                                                                                 
+if __name__ == '__main__':                                                                                       
+    main(*common.parse_args())                                                                                   
+                                                                                                                 

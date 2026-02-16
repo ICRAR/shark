@@ -31,7 +31,18 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
 
 
     # Unpack data
-    (h0, _, typeg, idgal, idhalo, mvir) = hdf5_data
+    (h0, _, typeg, idgal, idhalo, mvir, vx, vy, vz, msd, msb) = hdf5_data
+
+
+    #print("median vx", np.median(vx), " for snapshot", snapshot)
+    #print("median vy", np.median(vy), " for snapshot", snapshot)
+    #print("median vz", np.median(vz), " for snapshot", snapshot)
+
+    #ind = np.where(msd+msb > 5e9)
+    #print("median vx", np.median(vx[ind]), " for snapshot", snapshot)
+    #print("median vy", np.median(vy[ind]), " for snapshot", snapshot)
+    #print("median vz", np.median(vz[ind]), " for snapshot", snapshot)
+
 
     haloids = np.unique(idhalo)
     nhalos = len(haloids)
@@ -57,14 +68,14 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     #zlist = np.arange(2,10,0.25)
     #zlist = (0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 0, 0.25, 0.5, 1, 2, 3, 4, 6, 8, 9, 10)
 
-    zlist_given = True
+    zlist_given = False
     if(zlist_given):
         zlist = [0, 0.5, 1.0, 2.0, 3.0] #0.381963715160695, 1.77053590476006]
     else:
-        snap_list = range(250,269,1)
+        snap_list = range(160,201,1) #[167,168,169] #range(250,269,1)
 
     plt = common.load_matplotlib()
-    fields = {'galaxies': ('type', 'id_galaxy', 'id_halo_tree', 'mvir_hosthalo')}
+    fields = {'galaxies': ('type', 'id_galaxy', 'id_halo_tree', 'mvir_hosthalo', 'velocity_x', 'velocity_y','velocity_z', 'mstars_disk', 'mstars_bulge')}
 
     if(zlist_given): 
        for index, snapshot in enumerate(redshift_table[zlist]):
