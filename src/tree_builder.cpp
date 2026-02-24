@@ -221,8 +221,8 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
         	// or at any snapshot when we use the values from catalogues for subhalos with enough particle number
         	// other cases will pass the same value to the main progenitors, so no need to redefine lambda
 		if( ( final_snap && (!dark_matter_params.use_converged_lambda_catalog ||
-                                (dark_matter_params.use_converged_lambda_catalog && subhalo->Mvir / sim_params.particle_mass < dark_matter_params.min_part_convergence)) ) ||
-                                ( dark_matter_params.use_converged_lambda_catalog && subhalo->Mvir / sim_params.particle_mass >= dark_matter_params.min_part_convergence ) ){
+                                (dark_matter_params.use_converged_lambda_catalog && npart < dark_matter_params.min_part_convergence)) ) ||
+                                ( dark_matter_params.use_converged_lambda_catalog && npart >= dark_matter_params.min_part_convergence ) ){
 		        // redefine for mass swapping since the whole host halo mass is used
 		        subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
 		}

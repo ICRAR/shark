@@ -143,6 +143,9 @@ double DarkMatterHalos::subhalo_dynamical_time (Subhalo &subhalo, double z){
 
 	double r = 0;
 	double v = 0;
+
+	r = halo_virial_radius(subhalo.Mvir, z);
+	v = subhalo.Vvir;
  
 	if(subhalo.subhalo_type == Subhalo::CENTRAL &&
 	               params.apply_fix_to_mass_swapping_events){

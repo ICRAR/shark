@@ -34,7 +34,7 @@
 namespace shark {
 
 void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant,
-		DarkMatterHaloParameters dark_matter_params)
+		const DarkMatterHaloParameters &dark_matter_params)
 {
 	// A subhalo that is not main progenitor of its descendant cannot
 	// contribute its central galaxy (CENTRAL or TYPE1, depending on the
@@ -107,7 +107,7 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant,
 }
 
 void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons,
-		DarkMatterHaloParameters dark_matter_params)
+		const DarkMatterHaloParameters &dark_matter_params)
 {
 	unsigned int subhalos_without_descendant = 0;
 	double baryon_mass_loss = 0;
