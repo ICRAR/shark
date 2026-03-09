@@ -470,7 +470,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 
 	/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 	LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
-	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, snapshot, all_baryons);
+	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, snapshot, all_baryons, dark_matter_halo_params);
 
 	// Collect next snapshot's halos across all merger trees
 	// We keep them sorted so when output files are created the order in which

@@ -275,19 +275,19 @@ public:
 	float mean_galaxy_making_stellar_halo = 0;
 	/// The snapshot at which this subhalo is found.
 	int snapshot;
-	/// The snapshot at which the descendant of this subhalo can be found
+	/// The snapshot at which the descendant of this subhalo can be found.
 	int descendant_snapshot = -1;
-	/// Whether this subhalo will disappear from the tree in the next snapshot or not. last_snapshot_identified = 1 if disappears in the next snapshot, =0 otherwise.
+	/// The snapshot at which this subhalo will disappear from the tree.
 	int last_snapshot_identified = -1;
 	/// The subhalo type
 	subhalo_type_t subhalo_type = CENTRAL;
-	/// Whether this subhalo has a descendant or not
+	/// Whether this subhalo has a descendant or not.
 	bool has_descendant = false;
-	/// Whether this subhalo has a main progenitor or not
+	/// Whether this subhalo has a main progenitor or not.
 	bool has_mainprogenitor = false;
 	/// Whether this subhalo is a main progenitor of its descendant.
 	bool main_progenitor = false;
-	/// Whether this subhalo is the result of an interpolation in snapshots were descendants were missing. In this case Dhalos puts a subhalo in those snapshots  to ensure continuation of the merger tree.
+	/// Whether this subhalo is the result of an interpolation in snapshots were descendants were missing. In this case Dhalos puts a subhalo in those snapshots to ensure continuation of the merger tree.
 	bool IsInterpolated = false;
         /// Whether this subhalo is a main branch subhalo being born (transient candidate).
         bool transient_candidate = false;

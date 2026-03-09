@@ -196,7 +196,7 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 	double z1 = simparams.redshifts[snapshot+1];
 	double z2 = simparams.redshifts[snapshot+2];
 	if(snapshot+1 > simparams.max_snapshot){
-		z2 = 0;
+		z2 = simparams.redshifts[simparams.max_snapshot];
 	}
 	double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
 	if(galaxy.tmerge <= delta_t_next){
@@ -210,10 +210,18 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 
 	//Only define the following parameters if the galaxies were not type=2.
 	if(!transfer_types2){
-		galaxy.concentration_type2 = secondary->concentration;
-		galaxy.msubhalo_type2 = secondary->Mvir;
-		galaxy.lambda_type2 = secondary->lambda;
-		galaxy.vvir_type2 = secondary->Vvir;
+		if (dark_matter_params.apply_fix_to_mass_swapping_events){
+			galaxy.concentration_type2 = secondary->concentration_infall;
+			galaxy.msubhalo_type2 = secondary->Mvir_infall;
+			galaxy.lambda_type2 = secondary->lambda_infall;
+			galaxy.vvir_type2 = secondary->Vvir_infall;
+		}
+		else{
+			galaxy.concentration_type2 = secondary->concentration;
+                        galaxy.msubhalo_type2 = secondary->Mvir;
+                        galaxy.lambda_type2 = secondary->lambda;
+                        galaxy.vvir_type2 = secondary->Vvir;
+		}
 	}
 }
 
@@ -382,7 +390,7 @@ void GalaxyMergers::merging_galaxies(HaloPtr &halo, int snapshot, double delta_t
 				double z1 = simparams.redshifts[snapshot+1];
 				double z2 = simparams.redshifts[snapshot+2];
 				if(snapshot+1 > simparams.max_snapshot){
-					z2 = 0;
+					z2 = simparams.redshifts[simparams.max_snapshot];
 				}
 				double delta_t_next = cosmology->convert_redshift_to_age(z2) - cosmology->convert_redshift_to_age(z1);
 				if(galaxy.tmerge <= delta_t_next){
@@ -602,6 +610,7 @@ void GalaxyMergers::create_starbursts(HaloPtr &halo, double z, double delta_t){
 						delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir_infall, tdyn, galaxy);
 					}
 					else{
+						// subhalo->Vvir refers to subhalo or if mass swapping corrections are activated to host halo
 						delta_mbh = agnfeedback->smbh_growth_starburst(galaxy.bulge_gas.mass, subhalo->Vvir, tdyn, galaxy);
 					}
 
