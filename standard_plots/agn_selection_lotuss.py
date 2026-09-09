@@ -27,7 +27,7 @@ import common
 import utilities_statistics as us
 
 
-def prepare_data(hdf5_data, galidx, bhidx, lmechh, lbolh, delta_t, LBT, index, model_dir, zlist):
+def prepare_data(hdf5_data, galidx, bhidx, lmechh, lbolh, delta_t, LBT, index, model_dir, zlist, snapshot):
 
 
     # Unpack data
@@ -37,23 +37,23 @@ def prepare_data(hdf5_data, galidx, bhidx, lmechh, lbolh, delta_t, LBT, index, m
     lmechh = lmechh[0]
     lbolh = lbolh[0]
     ind = np.where(((mdisk + mbulge)/h0 > 1e10) & (typeg ==0))
-    gal_props = np.zeros(shape = (len(mdisk[ind]), 13))
-    
-    gal_props[:,0] = np.log10((mdisk[ind] + mbulge[ind])/h0)
-    gal_props[:,1] = (sfrd[ind] + sfrb[ind])/h0/1e9
-    gal_props[:,2] = np.log10(mbh[ind]/h0)
-    gal_props[:,3] = (macc_hh[ind] + macc_sb[ind])/h0/1e9
-    gal_props[:,4] = spin[ind]
-    gal_props[:,5] = qjet[ind]
-    gal_props[:,6] = lbol[ind]
-    gal_props[:,7] = np.log10(mvir_hh[ind]/h0)
-    gal_props[:,8] = np.log10(mhot[ind]/h0)
-    gal_props[:,9] = vvir_hh[ind]
-    gal_props[:,10] = cnfw_sh[ind]
-    gal_props[:,11] = lambda_sh[ind]
-    gal_props[:,12] = galidx[ind]
 
-    np.savetxt("LoTSS_snapshot_catalogues_z" +  str(zlist[index]) + "_Lagos24_HBTTrees.txt", gal_props)
+    file_to_write = os.path.join(model_dir, str(snapshot), 'LoTSS_snapshot_catalogues_z'  +  str(zlist[index]) + "_Lagos24_HBTTrees.hdf5")
+    hf = h5py.File(file_to_write, 'w')
+    hf.create_dataset('galaxies/stellar_mass',  data=np.log10((mdisk[ind] + mbulge[ind])/h0))
+    hf.create_dataset('galaxies/sfr',  data=(sfrd[ind] + sfrb[ind])/h0/1e9)
+    hf.create_dataset('galaxies/mbh',  data=np.log10(mbh[ind]/h0))
+    hf.create_dataset('galaxies/mbh_acc',  data=(macc_hh[ind] + macc_sb[ind])/h0/1e9)
+    hf.create_dataset('galaxies/bh_spin',  data=spin[ind])
+    hf.create_dataset('galaxies/Qjet',  data=qjet[ind])
+    hf.create_dataset('galaxies/Lbol',  data=lbol[ind])
+    hf.create_dataset('galaxies/mvir',  data=np.log10(mvir_hh[ind]/h0))
+    hf.create_dataset('galaxies/mhot',  data=np.log10(mhot[ind]/h0))
+    hf.create_dataset('galaxies/vvir',  data=vvir_hh[ind])
+    hf.create_dataset('galaxies/cnfw',  data=cnfw_sh[ind])
+    hf.create_dataset('galaxies/lambda',  data=lambda_sh[ind])
+    hf.create_dataset('galaxies/galaxy_id',  data=galidx[ind])
+    hf.close()
 
     lmech_all = np.zeros(shape = (len(mdisk[ind]), len(LBT)))
     lbol_all = np.zeros(shape = (len(mdisk[ind]), len(LBT)))
@@ -63,13 +63,19 @@ def prepare_data(hdf5_data, galidx, bhidx, lmechh, lbolh, delta_t, LBT, index, m
         if(len(bhidx[match]) == 1):
             lmech_all[j,:] = lmechh[match,:]
             lbol_all[j,:] = lbolh[match,:]
-    np.savetxt("LoTSS_snapshot_mechanical_luminosity_history_z" +  str(zlist[index]) + "_Lagos24_HBTTrees.txt", lmech_all)
-    np.savetxt("LoTSS_snapshot_bolometric_luminosity_history_z" +  str(zlist[index]) + "_Lagos24_HBTTrees.txt", lbol_all)
+
+    file_to_write = os.path.join(model_dir, str(snapshot), "LoTSS_snapshot_luminosity_history_z" +  str(zlist[index]) + "_Lagos24_HBTTrees.hdf5")
+    hf = h5py.File(file_to_write, 'w')
+    hf.create_dataset('galaxies/lmech_all', data = lmech_all)
+    hf.create_dataset('galaxies/lbol_all', data = lbol_all)
+    hf.create_dataset('galaxies/galaxy_id',  data=galidx[ind])
+    hf.close()
+
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
 
-    zlist = [0, 1.0]
+    zlist = [0.15, 0.2, 0.35, 0.55, 0.75, 0.95]
 
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst', 'id_galaxy',
@@ -100,7 +106,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
         lmechh, delta_t, LBT = common.read_bhh(model_dir, snapshot, bhh_lmech, subvols)
         lbolh, delta_t, LBT = common.read_bhh(model_dir, snapshot, bhh_lbol, subvols)
 
-        prepare_data(hdf5_data, gal_ids_all, bh_ids_all, lmechh, lbolh, delta_t, LBT, index, model_dir, zlist)
+        prepare_data(hdf5_data, gal_ids_all, bh_ids_all, lmechh, lbolh, delta_t, LBT, index, model_dir, zlist, snapshot)
            
 if __name__ == '__main__':
     main(*common.parse_args())
