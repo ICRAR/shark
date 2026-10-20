@@ -86,8 +86,9 @@ Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string 
 	throw invalid_option(os.str());
 }
 
-StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters) :
-	parameters(parameters)
+StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters,  CosmologyPtr cosmology) :
+	parameters(parameters),
+	cosmology(std::move(cosmology))
 {
 	// no-op
 }
@@ -116,12 +117,16 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 		if(v > parameters.v_sn){
 			power_index = 1;
 		}
-		const_sn =  std::pow((1+z),parameters.redshift_power) * std::pow(parameters.v_sn/v,power_index);
+		const_sn =  std::pow(1+z,parameters.redshift_power) * std::pow(parameters.v_sn/v,power_index);
 
 	}
 	else if (parameters.model == StellarFeedbackParameters::LAGOS13){
 
-		double vhot = parameters.v_sn*std::pow(1+z,parameters.redshift_power);
+		//double vhot = parameters.v_sn*std::pow(1+z,parameters.redshift_power);
+		//
+		auto age_univ = cosmology->convert_redshift_to_age(parameters.redshift_power);
+		double vhot = parameters.v_sn*std::pow(age_univ,parameters.redshift_power);
+
 		const_sn =  std::pow(vhot/v,power_index);
 	}
 

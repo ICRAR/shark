@@ -24,13 +24,12 @@
  */
 
 #include <ctime>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <memory>
 #include <numeric>
-
-#include <boost/filesystem.hpp>
 
 #include "hdf5/io/writer.h"
 #include "config.h"
@@ -65,7 +64,7 @@ GalaxyWriter::GalaxyWriter(ExecutionParameters exec_params, CosmologicalParamete
 
 std::string GalaxyWriter::get_output_directory(int snapshot)
 {
-	using namespace boost::filesystem;
+	using namespace std::filesystem;
 	using std::string;
 
 	string batch_dir = "multiple_batches";
@@ -737,7 +736,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	file.write_dataset("halo/mvir", halo_m, comment);
 
 	comment = "virial velocity of halo [km/s]";
-	file.write_dataset("halo/vvir", halo_m, comment);
+	file.write_dataset("halo/vvir", halo_v, comment);
 
 	comment = "halo concentration";
 	file.write_dataset("halo/concentration", halo_concentration, comment);
@@ -1363,6 +1362,9 @@ void HDF5GalaxyWriter::write_bh_histories (int snapshot, const std::vector<HaloP
 			vector<vector<float>> macc_hh;
 			vector<vector<float>> macc_sb;
 
+			vector<vector<float>> bh_lbol;
+			vector<vector<float>> bh_lmech;
+
 			vector<Galaxy::id_t> id_galaxy;
 
 			float defl_value = 0;
@@ -1378,6 +1380,8 @@ void HDF5GalaxyWriter::write_bh_histories (int snapshot, const std::vector<HaloP
 						vector<float> bh_assembly_gal;
 						vector<float> macc_hh_gal;
 						vector<float> macc_sb_gal;
+						vector<float> lbol_gal;
+						vector<float> lmech_gal;
 
 						for(int s=sim_params.min_snapshot+1; s <= snapshot; s++) {
 
@@ -1394,6 +1398,8 @@ void HDF5GalaxyWriter::write_bh_histories (int snapshot, const std::vector<HaloP
 
 								macc_hh_gal.push_back(defl_value);
 								macc_sb_gal.push_back(defl_value);
+								lbol_gal.push_back(defl_value);
+								lmech_gal.push_back(defl_value);
 							}
 							else {
 								auto item = *it;
@@ -1402,7 +1408,20 @@ void HDF5GalaxyWriter::write_bh_histories (int snapshot, const std::vector<HaloP
 								macc_sb_gal.push_back(item.macc_sb/constants::GIGA);
 								bh_mass_gal.push_back(item.mbh);
 								bh_spin_gal.push_back(item.spin);
-								bh_assembly_gal.push_back(item.massembly);	
+								bh_assembly_gal.push_back(item.massembly);
+
+	                                                        BlackHole bh;
+								bh.macc_hh = item.macc_hh;
+								bh.macc_sb = item.macc_sb;
+								bh.spin = item.spin;
+								bh.mass = item.mbh;
+
+								// compute bolometric and mechanical luminosities of the BH
+                                                                auto lbol = agn_feedback->agn_bolometric_luminosity(bh, true);
+                                                                auto lq = agn_feedback->agn_mechanical_luminosity(bh);
+
+								lbol_gal.push_back(lbol);
+								lmech_gal.push_back(lq);
 							}
 						}
 
@@ -1410,6 +1429,8 @@ void HDF5GalaxyWriter::write_bh_histories (int snapshot, const std::vector<HaloP
 						if(galaxy.smbh.mass > agn_params.mseed){
 							macc_hh.emplace_back(std::move(macc_hh_gal));
 							macc_sb.emplace_back(std::move(macc_sb_gal));
+							bh_lbol.emplace_back(std::move(lbol_gal));
+							bh_lmech.emplace_back(std::move(lmech_gal));
 
 							bh_mass.emplace_back(std::move(bh_mass_gal));
 							bh_spin.emplace_back(std::move(bh_spin_gal));
@@ -1456,6 +1477,12 @@ void HDF5GalaxyWriter::write_bh_histories (int snapshot, const std::vector<HaloP
 
 			comment = "Black hole spin history [dimensionless].";
                         file_bh.write_dataset("galaxies/bh_spin", bh_spin, comment);
+
+			comment = "bolometric luminosity history of the BH [1e40 erg/s]";
+			file_bh.write_dataset("galaxies/bolometric_luminosity_agn", bh_lbol, comment);
+
+			comment = "mechanical jet power history of the BH [1e40 erg/s]";
+			file_bh.write_dataset("galaxies/mechanical_power_agn", bh_lmech, comment);
 
 			comment = "Redshifts of the history outputs";
 			file_bh.write_dataset("redshifts", redshifts, comment);

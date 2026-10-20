@@ -109,7 +109,7 @@ def synchrotron_lum(SFR, nu):
 
     return lum
 
-def radio_luminosity_agn(mbh, macc):
+def radio_luminosity_agn(mbh, macc, spin):
 
     #input mbh has to be in Msun
     #input macc has to be in Msun/yr
@@ -137,29 +137,49 @@ def radio_luminosity_per_freq (Ljet_ADAF, Ljet_td, mdot_norm, mbh, nu):
 
     return lum_nu
 
-def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, subvol, filters):
+def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, subvol, filters, spin_read):
 
+    # }
+    # DATASPACE  SIMPLE { ( 42 ) / ( H5S_UNLIMITED ) }
+    # DATA {
+    # (0): "FUV_GALEX", "NUV_GALEX", "u_SDSS", "g_SDSS", "r_SDSS", "i_SDSS",
+    # (6): "z_SDSS", "Y_VISTA", "J_VISTA", "H_VISTA", "K_VISTA", "W1_WISE",
+    # (12): "I1_Spitzer", "I2_Spitzer", "W2_WISE", "I3_Spitzer", "I4_Spitzer",
+    # (17): "W3_WISE", "W4_WISE", "P70_Herschel", "P100_Herschel",
+    # (21): "P160_Herschel", "S250_Herschel", "S350_Herschel", "S450_JCMT",
+    # (25): "S500_Herschel", "S850_JCMT", "Band_ionising_photons", "FUV_Nathan",
+    # (29): "Band9_ALMA", "Band8_ALMA", "Band7_ALMA", "Band6_ALMA",
+    # (33): "Band4_ALMA", "Band3_ALMA", "BandX_VLA", "BandC_VLA", "BandS_VLA",
+    # (38): "BandL_VLA", "Band_610MHz", "Band_325MHz", "Band_150MHz"
+    # }
+    filters = ('8.4GHz', '5GHz', '3GHz', '1.4GHz', '610MHz', '325MHz', '150MHz')
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
     total_mags_nod = seds_nod[4]
     total_mags = seds[4]
 
-    L1p4Viperfish = 10**((total_mags[12,:] + 48.6)/(-2.5)) * dfac #erg/s/Hz
+    L1p4Viperfish = 10**((total_mags[38,:] + 48.6)/(-2.5)) * dfac #erg/s/Hz
 
-    Lum_radio_Viperfish = 10**((total_mags[9:16,:] + 48.6)/(-2.5)) * dfac #erg/s/Hz
+    Lum_radio_Viperfish = 10**((total_mags[35:41,:] + 48.6)/(-2.5)) * dfac #erg/s/Hz
 
     print(Lum_radio_Viperfish.shape)
-    ion_mag = total_mags_nod[1,:]
+    ion_mag = total_mags_nod[27,:]
     q_ionis = ionising_photons(ion_mag, 912.0) #in s^-1
     print(max(q_ionis))
     # Unpack data
-    (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb, typeg) = hdf5_data
+    if(spin_read == True):
+       (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb, typeg, spin) = hdf5_data
+    else:
+       (h0, volh, mdisk, mbulge, sfrd, sfrb, idgal, mbh, macc_hh, macc_sb, mgd, mgb, typeg) = hdf5_data
+       spin = np.zeros(shape = len(mdisk))
+       spin[:] = 0.067
+
     h0log = np.log10(float(h0))
     vol = volh/h0**3
 
     mbh = mbh/h0
     macc_bh = (macc_hh + macc_sb)/h0/1e9 #in Msun/yr
-    (Ljet_ADAF, Ljet_td, mdot_norm) = radio_luminosity_agn(mbh, macc_bh)
+    (Ljet_ADAF, Ljet_td, mdot_norm) = radio_luminosity_agn(mbh, macc_bh, spin)
 
     sfr = sfrd + sfrb
 
@@ -209,7 +229,7 @@ def prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, sub
     writeon = False
     if(writeon == True):
        # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
-       file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'Shark-SED-eagle-rr14-radio-only-hansen23.hdf5')
+       file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'Shark-SED-eagle-rr14-radio-only-hansen24.hdf5')
        print ('Will write radio emission from SF and AGN to %s' % file_to_write)
        hf = h5py.File(file_to_write, 'w')
        
@@ -338,6 +358,8 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     #zlist = (0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 0, 0.25, 0.5, 1, 2, 3, 4, 6, 8, 9, 10)
     filters = ('8.4GHz', '5GHz', '3GHz', '1.4GHz', '610MHz', '325MHz', '150MHz') 
 
+
+
     file_hdf5_sed = "Shark-SED-eagle-rr14-radio-only.hdf5"
     #"Shark-SED-eagle-rr14-no-perturbation-radio-only.hdf5" #"Shark-SED-eagle-rr14-radio-only.hdf5"
     #(0): "z_SDSS", "Band_ionising_photons", "FUV_Nathan", "Band9_ALMA",
@@ -351,9 +373,14 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     znames = ['0', '0p2', '0p9', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     plt = common.load_matplotlib()
-    fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy',
-                           'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mgas_disk', 
-                           'mgas_bulge', 'type')}
+    if(spin_read == False):
+       fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy',
+                              'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mgas_disk', 
+                              'mgas_bulge', 'type')}
+    else:
+       fields = {'galaxies': ('mstars_disk', 'mstars_bulge','sfr_disk','sfr_burst','id_galaxy',
+                              'm_bh', 'bh_accretion_rate_hh', 'bh_accretion_rate_sb', 'mgas_disk', 
+                              'mgas_bulge', 'type', 'bh_spin')}
    
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total')}
@@ -365,7 +392,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
             seds_nod = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed_nod, [subv], file_hdf5_sed)
             seds = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_sed, [subv], file_hdf5_sed)
             lir = common.read_photometry_data_variable_tau_screen(model_dir, snapshot, fields_lir, [subv], file_hdf5_sed)
-            (LBressan, LViperfish, Lratio, ms, sfr, vol, h0, ms_out, qIR_out) = prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, subv, filters)
+            (LBressan, LViperfish, Lratio, ms, sfr, vol, h0, ms_out, qIR_out) = prepare_data(hdf5_data, seds_nod, seds, lir, index, model_dir, snapshot, subv, filters, spin_read)
             plot_qIR_dwarf_galaxies(plt, output_dir, obs_dir, qIR_out, ms_out, znames[index])
             #plot_comparison_radio_lums(plt, output_dir, obs_dir, LBressan, LViperfish, Lratio, ms, sfr, filters, znames[index])
             #if(snapshot == 199):

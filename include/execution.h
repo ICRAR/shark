@@ -88,7 +88,7 @@ public:
 
         // massive transients parameters
         // flag to apply fixes for them
-        bool apply_fix_to_massive_transient_events = true;
+        bool apply_fix_to_massive_transient_events = false;
         // Mass_DSH/Mass_SH minimum decrease value
         float transient_lostmass_ratio = 0.7;
         // Mass_TDSH/Mass_SH minimum increase value

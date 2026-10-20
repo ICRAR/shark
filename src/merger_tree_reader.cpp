@@ -293,15 +293,6 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 	os << "This should take another ~" << memory_amount(halos.size() * (sizeof(Halo) + sizeof(HaloPtr))) << " of memory";
 	LOG(info) << os.str();
 
-//	// Calculate halos' vvir and concentration
-//	t = Timer();
-//	omp_dynamic_for(halos, threads, 10000, [&](const HaloPtr &halo, unsigned int thread_idx) {
-//		auto z = simulation_params.redshifts[halo->snapshot];
-//		halo->Vvir = dark_matter_halos->halo_virial_velocity(halo->Mvir, z);
-//		halo->concentration = dark_matter_halos->nfw_concentration(halo->Mvir,z);
-//	});
-//	LOG(info) << "Calculated Vvir and concentration for new Halos in " << t;
-
 	return halos;
 }
 

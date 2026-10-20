@@ -22,9 +22,11 @@
 * ``bh_accretion_rate_hh_history``: Black hole accretion rate due to hot halo cooling [Msun/yr/h].
 * ``bh_accretion_rate_sb_history``: Black hole accretion rate due to starbursts [Msun/yr/h].
 * ``bh_spin``: Black hole spin history [dimensionless].
+* ``bolometric_luminosity_agn``: bolometric luminosity history of the BH [1e40 erg/s]
 * ``id_galaxy``: galaxy ID. Unique to this galaxy throughout time. If this galaxy never mergers onto a central, then its ID is always the same.
 * ``m_bh_assembly_history``: Black hole mass history coming from BH-BH mergers (cumulative) [Msun/h].
 * ``m_bh_history``: Black hole mass history (cumulative) [Msun/h].
+* ``mechanical_power_agn``: mechanical jet power history of the BH [1e40 erg/s]
 * ``lbt_mean``: Look back time to mean time between snapshots [Gyr]
 * ``redshifts``: Redshifts of the history outputs
 

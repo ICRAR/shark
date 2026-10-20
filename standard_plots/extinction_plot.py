@@ -58,6 +58,9 @@ rr14xcoc = False
 sdust_eaglet, taumed_eagle, taulow_eagle, tauhigh_eagle = common.load_observation('../data', 'Models/EAGLE/Tau5500-Trayford-EAGLE.dat', [0,1,2,3])
 sdust_eaglem, mmed_eagle, mlow_eagle, mhigh_eagle = common.load_observation('../data/','Models/EAGLE/CFPowerLaw-Trayford-EAGLE.dat', [0,1,2,3])
 
+xmf_edges_c26 = np.array([9, 9.25, 9.5, 9.75, 10.0, 10.25, 10.5, 10.75, 11.0, 11.25, 11.5, 12.5])
+xmf_c26 = np.array([9.125, 9.375, 9.625, 9.875, 10.125, 10.375, 10.625, 10.875, 11.125, 11.375, 11.675])
+
 def interp (sdust_eagle, med_eagle, low_eagle, high_eagle):
 
     med = np.zeros(shape = (2,len(sdust_eagle)-1))
@@ -210,7 +213,7 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
     #ax.text(xleg, yleg, 'z=0')
 
 def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo,  m_diff, hist_sigmad, tau_comp, 
-                 model_dir, snapshot, subvol, writeon):
+                 model_dir, snapshot, subvol, writeon, mdust_msm_redshift, hist_dmf):
 
     bin_it = functools.partial(us.wmedians, xbins=xmf)
     bin_it_tau = functools.partial(us.wmedians, xbins=xtf)
@@ -225,6 +228,8 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_
 
     (mdustd, DToM_MW) = dust_mass(mzd, mgasd, h0)
     (mdustb, DToM_MW) = dust_mass(mzb, mgasb, h0)
+    ms_tot = (mdisk+ mbulge)/h0
+    md_tot = mdustd + mdustb
 
     #random numbers from 0 to 1
     sin_inclination = np.random.rand(len(mdustd)) 
@@ -279,6 +284,73 @@ def prepare_data(hdf5_data, index, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_
 
     ind = np.where((mass >= 6) & (sfrd + sfrb > 0))
     sfr_rat[index,:] = bin_it(x=mass[ind], y=sfrb[ind]/(sfrd[ind]+sfrb[ind]))
+    ind = np.where(md_tot > 1e4)
+    H, _ = np.histogram(np.log10(md_tot[ind]),bins=np.append(mbins,mupp))
+    hist_dmf[index,:] = hist_dmf[index,:] + H
+    hist_dmf[index,:] = hist_dmf[index,:] / volh / dm * h0**3
+
+    for j,b in enumerate(xmf_c26):
+        inb =  np.where((ms_tot >= 10**xmf_edges_c26[j]) & (ms_tot < 10**xmf_edges_c26[j+1])) # 0.2/(us.hubble_time(redshift) * 1e9))) #in yr^-1 ))
+        if(len(ms_tot[inb]) > 9):
+            mdms = md_tot[inb]/10**b #ms_tot[inb]
+            mdust_msm_redshift[index,j,0] = np.mean(mdms)
+            mdust_msm_redshift[index,j,3] = np.median(mdms)
+            mdust_msm_redshift[index,j,1:3] = np.percentile(mdms, [16.0,84.0])
+
+def plot_mstar_mdust(plt, outdir, zlist, mdust_msm_redshift):
+
+    #comparison with micro SURFS
+    fig = plt.figure(figsize=(6,4))
+
+    xtit="$\\rm redshift$"
+    ytit="$\\rm log_{10}(<M_{\\rm dust}>/M_{\\star})$"
+
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(left=0.15)
+
+    common.prepare_ax(ax, 0, 10, -4, -1.5, xtit, ytit, locators=(1, 1, 0.5, 0.5))
+    #plt.xscale('log')
+ 
+
+    x_rr14steep, y_rr14steep, m_rrsteep = np.loadtxt('../data/Models/SharkVariations/mdust_to_mstar_L24-bestparams_L800_rr14-steep_allz.txt', unpack = True, usecols = [0,1,2])
+
+    cols = ['Moccasin', 'Burlywood', 'Gold', 'DarkOrange', 'OrangeRed', 'Teal', 'Crimson', 'DarkViolet', 'DarkViolet', 'Purple', 'Indigo', 'black', 'black', 'black']
+    zc26, msc26, mdc26, mdc26up, mdc26dn, mdc26exp = np.loadtxt('../data/Gas/casey_2026_MdustMstar.txt', unpack = True, usecols=[0,1,2,3,4,5])
+    ls = ['solid','dashed','dotted']
+    p = 0
+    for j,b in enumerate(xmf_c26):
+        if((j==1) | (j==5) | (j==7)): # | (j==8)):
+            ind = np.where(mdust_msm_redshift[:,j,0] != 0)
+            print(ind)
+    
+            if(len(zlist[ind]) > 0):
+               x = zlist[ind]
+               y = np.log10(mdust_msm_redshift[ind,j,0][0])
+               ydn = np.log10(mdust_msm_redshift[ind,j,1][0])
+               yup = np.log10(mdust_msm_redshift[ind,j,2][0])
+       
+               ax.fill_between(x,ydn, yup,facecolor=cols[j], alpha=0.3,interpolate=True) 
+               ax.plot(x,y,linestyle=ls[p],color=cols[j], label = '%s (rr14)'%str(b), linewidth=3)
+               if(j == 1):
+                   ind = np.where((m_rrsteep == 9.375) & (x_rr14steep >= 5.8))
+                   ax.plot(x_rr14steep[ind],y_rr14steep[ind],linestyle='dashdot',color=cols[j], label = '%s (rr14-steep)'%str(b), linewidth=1)
+
+               print("Median relation for mass bin", b)
+               for a,c in zip(x,y):
+                   print(a,c)
+               p = p + 1
+            ind = np.where(msc26 == b)
+            xin = zc26[ind]
+            print(xin)
+            yin = np.log10(mdc26[ind] * mdc26exp[ind])
+            yerrdn = yin - np.log10((mdc26[ind] - mdc26dn[ind]) * mdc26exp[ind])
+            yerrup = np.log10((mdc26[ind] + mdc26up[ind]) * mdc26exp[ind]) - yin
+            ax.errorbar(xin, yin - b, yerr=[yerrdn, yerrup],  ls='None', mfc='None', ecolor = cols[j], mec=cols[j],marker='o') 
+  
+    common.prepare_legend(ax, ['k','k','k'], loc=4) #bbox_to_anchor=(0.52, 0.47))
+    plt.tight_layout()
+    common.savefig(outdir, fig, "Mdust_Mstar_redshift.pdf")
+
 
 def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, m_diff, 
               hist_sigmad, tau_comp, zlist):
@@ -607,9 +679,10 @@ def plot_taus(plt, output_dir, tdiff, tcloud, sigmad_diff, sigmag_diff, sfr_rat,
 
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
-    #zlist = (0, 0.25, 0.5, 1, 2, 3, 4, 6, 8)
-    zlist = (0, 0.5, 1, 2, 3, 4, 6, 8)
+    zlist2 = np.array([0.25, 0.75, 1.25, 1.75, 2.25, 2.75, 3.25, 3.75, 4.25, 4.75, 5.25, 5.75, 6.25, 6.75])
+    zlist = np.array([0.25, 0.75, 1.29, 1.79, 2.25, 2.75, 3.53, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0, 9.0, 10.0])
 
+    zlist = np.array([2,4.5, 5.5])
     plt = common.load_matplotlib()
     fields = {'galaxies': ('type', 'rgas_disk', 'rgas_bulge', 'matom_disk', 'mmol_disk', 'mgas_disk',
                            'matom_bulge', 'mmol_bulge', 'mgas_bulge', 'mgas_metals_disk', 
@@ -626,21 +699,31 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     sfr_rat = np.zeros(shape = (len(zlist), 3, len(xmf)))
     met_evo = np.zeros(shape = (len(zlist), 2, 3, len(xmf)))
-    
+   
+    mdust_msm_redshift   = np.zeros(shape = (len(zlist), len(xmf_c26), 4))
+    hist_dmf             = np.zeros(shape = (len(zlist), len(mbins)))
+
     writeon = False
 
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
         prepare_data(hdf5_data, index, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, 
-                     met_evo, m_diff, hist_sigmad, tau_comp, model_dir, snapshot, subvols, writeon)
+                     met_evo, m_diff, hist_sigmad, tau_comp, model_dir, snapshot, subvols, writeon, mdust_msm_redshift,
+                     hist_dmf)
 
     ind = np.where(hist_sigmad > 0.)
     hist_sigmad[ind] = np.log10(hist_sigmad[ind])
 
     output_dir = os.path.join(output_dir, 'eagle-rr14')
+    for i in range(0,len(zlist)):
+      print("#dust mass function at redshift", zlist[i])
+      for a,b in zip(xmf, hist_dmf[i,:]):
+          if(b > 0):
+              print(a,b)
 
-    plot_taus(plt, output_dir, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, 
-              m_diff, hist_sigmad, tau_comp, zlist)
+    #plot_taus(plt, output_dir, tau_diff, tau_cloud, sigmad_diff, sigmag_diff, sfr_rat, met_evo, 
+    #          m_diff, hist_sigmad, tau_comp, zlist)
+    #plot_mstar_mdust(plt, output_dir, zlist, mdust_msm_redshift)
 
 if __name__ == '__main__':
     main(*common.parse_args())

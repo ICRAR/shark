@@ -28,9 +28,9 @@ import utilities_statistics as us
 
 ##################################
 # Constants
-mlow = 7.0
+mlow = 7.5
 mupp = 13.0
-dm = 0.5
+dm = 0.25
 mbins = np.arange(mlow, mupp, dm)
 xmf = mbins + dm/2.0
 
@@ -49,6 +49,53 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit):
     xleg = xmax - 0.2 * (xmax-xmin)
     yleg = ymax - 0.1 * (ymax-ymin)
     #ax.text(xleg, yleg, 'z=0')
+
+def plot_passive_fractions(plt, outdir, obs_dir, zlist, quiescent_bulges, sf_bulges, quiescent_mstar):
+
+    fig = plt.figure(figsize=(7,15))
+    ytit = "Fraction of quiescent"
+    xtit = "$\\rm log_{10}(M_{\\star}/M_{\\odot})$"
+    xmin, xmax, ymin, ymax = 7.5, 12.5, 0, 1
+    xleg = xmax - 0.3 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    ax = fig.add_subplot(311)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.5, 0.5, 0.1, 0.1))
+    cols = ['Indigo', 'DarkMagenta', 'DarkSlateBlue', 'DarkOrchid', 'Orchid', 'Red', 'IndianRed', 'Salmon', 'OrangeRed', 'Orange', 'DarkKhaki', 'Gold', 'Yellow', 'Goldenrod', 'Chocolate', 'SandyBrown']
+
+    for j in range(0,len(cols)):
+        ind = np.where(quiescent_mstar[j,0,:] > 0)
+        yp = quiescent_mstar[j,0,ind]
+        yerr = quiescent_mstar[j,1,ind]
+        ax.fill_between(xmf[ind], yp[0]-yerr[0], yp[0]+yerr[0], color=cols[j], alpha=0.2)
+        ax.plot(xmf[ind], yp[0], color=cols[j], linestyle='solid', label='z=%s' % str(zlist[j]))
+
+
+    ax = fig.add_subplot(312)
+    ytit = "Fraction of quiescent bulges"
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.5, 0.5, 0.1, 0.1))
+
+    for j in range(0,len(cols)):
+        ind = np.where(quiescent_bulges[j,0,:] > 0)
+        yp = quiescent_bulges[j,0,ind]
+        yerr = quiescent_bulges[j,1,ind]
+        ax.fill_between(xmf[ind], yp[0]-yerr[0], yp[0]+yerr[0], color=cols[j], alpha=0.2)
+        ax.plot(xmf[ind], yp[0], color=cols[j], linestyle='solid', label='z=%s' % str(zlist[j]))
+    common.prepare_legend(ax, cols, loc=2)
+
+    ax = fig.add_subplot(313)
+    ytit = "Fraction of SF bulges"
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.5, 0.5, 0.1, 0.1))
+
+    for j in range(0,len(cols)):
+        ind = np.where(sf_bulges[j,0,:] > 0)
+        yp = sf_bulges[j,0,ind]
+        yerr = sf_bulges[j,1,ind]
+        ax.fill_between(xmf[ind], yp[0]-yerr[0], yp[0]+yerr[0], color=cols[j], alpha=0.2)
+        ax.plot(xmf[ind], yp[0], color=cols[j], linestyle='solid', label='z=%s' % str(zlist[j]))
+
+    #plt.tight_layout()
+    common.savefig(outdir, fig, 'passive_fractions_galaxies_evolution.pdf')
 
 def plot_num_density_passive(plt, outdir, obs_dir, zlist, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass):
 
@@ -144,6 +191,12 @@ def plot_num_density_passive(plt, outdir, obs_dir, zlist, num_den_passive, num_d
          yplot = np.log10(num_den_passive_we_mass[ind,i])
          xplot = zlist[ind]
          ax.plot(xplot,yplot[0],ls=lines[1], color=cols[i], label=labels[i] + ' with error')
+
+
+    print("#Selection of galaxies with stellar masses >=10^10Msun")
+    for a,b,c,d,e in zip(zlist, num_den_passive[:,0], num_den_passive[:,1], num_den_passive_we[:,0], num_den_passive_we[:,1]):
+        print(a,b,c,d,e)
+    print("#Selection of galaxies with stellar masses >=10^10.5Msun")
     for a,b,c,d,e in zip(zlist, num_den_passive_mass[:,0], num_den_passive_mass[:,1], num_den_passive_we_mass[:,0], num_den_passive_we_mass[:,1]):
         print(a,b,c,d,e)
 
@@ -184,27 +237,82 @@ def plot_num_density_passive(plt, outdir, obs_dir, zlist, num_den_passive, num_d
     plt.tight_layout()
     common.savefig(outdir, fig, 'num_density_passive_modelvariations.pdf')
 
+def compute_fractions_bulges(ms, ssfr, bt, ssfr_thresh = -10, passive_selection = True):
 
-def prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass, redshift, num_dens_halos):
+    fracs = np.zeros(shape = (2, len(xmf)))
+    for i,b in enumerate(xmf):
+        ind = np.where((ms >= b - dm/2.0) & (ms < b + dm/2.0) & (bt >= 0))
+        if(len(ms) > 0):
+           msin = ms[ind]
+           ssfrin = ssfr[ind]
+           btin = bt[ind]
+           ngals = len(msin)
+           if(passive_selection):
+              passive = np.where((ssfrin <= ssfr_thresh) & (btin > 0.6))
+           else:
+              passive = np.where((ssfrin > ssfr_thresh) & (btin > 0.6)) 
+           if(len(ssfrin[passive]) > 0):
+               npass = len(ssfrin[passive])
+               fracs[0,i] = (npass + 0.0) / (ngals + 0.0)
+               fracs[1,i] = abs(fracs[0,i] - (npass - np.sqrt(npass+ 0.0)) / (ngals + np.sqrt(ngals + 0.0)))
+        else:
+           fracs[0,i] = -1
+           fracs[1,i] = -1
+    return fracs 
+
+def compute_fractions(ms, ssfr, ssfr_thresh = -10, passive_selection = True):
+
+    fracs = np.zeros(shape = (2, len(xmf)))
+    for i,b in enumerate(xmf):
+        ind = np.where((ms >= b - dm/2.0) & (ms < b + dm/2.0))
+        if(len(ms) > 0):
+           msin = ms[ind]
+           ssfrin = ssfr[ind]
+           ngals = len(msin)
+           if(passive_selection):
+              passive = np.where((ssfrin <= ssfr_thresh))
+           else:
+              passive = np.where((ssfrin > ssfr_thresh)) 
+           if(len(ssfrin[passive]) > 0):
+               npass = len(ssfrin[passive])
+               fracs[0,i] = (npass + 0.0) / (ngals + 0.0)
+               fracs[1,i] = abs(fracs[0,i] - (npass - np.sqrt(npass+ 0.0)) / (ngals + np.sqrt(ngals + 0.0)))
+        else:
+           fracs[0,i] = -1
+           fracs[1,i] = -1
+    return fracs 
+
+
+def prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass, redshift, num_dens_halos, quiescent_bulges, sf_bulges, quiescent_mstar):
 
 
     # Unpack data
     (h0, volh, typeg, mdisk, mbulge, sfrd, sfrb, rdisk, mBH, mHI, mH2, mgas,
      mHI_bulge, mH2_bulge, mgas_bulge, mvir) = hdf5_data
-       
+
     #look at number densities of galaxies with sSFR<1e-10yr^-1
     ms_tot = np.log10((mdisk+mbulge)/h0)
     mvir = np.log10(mvir/h0)
+    sfr_tot = np.log10((sfrd + sfrb)/h0/1e9)
+    ssfr = sfr_tot - ms_tot
+    ind = np.where(sfrd + sfrb == 0) #put a floor to the SSFR
+    ssfr[ind] = -20
+    ssfr_bulge = np.log10(sfrb/mbulge)
+    ind = np.where(sfrb == 0)
+    ssfr_bulge[ind] = -20
+
+
+    quiescent_mstar[index,:] = compute_fractions(ms_tot, ssfr)
+    quiescent_bulges[index,:] = compute_fractions_bulges(ms_tot, ssfr, mbulge/(mdisk+mbulge))
+    sf_bulges[index,:] = compute_fractions_bulges(ms_tot, ssfr, mbulge/(mdisk+mbulge), passive_selection = False)
 
     ind = np.where(ms_tot > 10.8)
     ngals = len(ms_tot[ind])
     num_dens = ngals / (volh / h0**3.0)
     print("number density of galaxies with m>10.8", num_dens, "at redshift", redshift)
 
-    
+    ssfr_thresh_time_dep = np.log10(0.2/(us.hubble_time(redshift) * 1e9)) #in yr^-1
 
-    sfr_tot = np.log10((sfrd + sfrb)/h0/1e9)
-    ssfr = sfr_tot - ms_tot
     ind = np.where((ms_tot > 10) & (ssfr < -10))
     npass = len(ms_tot[ind])
     num_den_passive[index,0] = (npass + 0.0) / (volh / h0**3)
@@ -265,7 +373,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     plt = common.load_matplotlib()
 
-    zlist = np.array([0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]) #, 8.0, 9.0, 10.0, 11.0, 12.0])
+    zlist = np.array([0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0]) #, 8.0, 9.0, 10.0, 11.0, 12.0])
     #zlist = np.array([5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0])
     fields = {'galaxies': ('type', 'mstars_disk', 'mstars_bulge', 'sfr_disk', 'sfr_burst',
                            'rstar_disk', 'm_bh', 'matom_disk', 'mmol_disk', 'mgas_disk',
@@ -276,16 +384,20 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     num_den_passive_mass = np.zeros(shape = (len(zlist), 2))
     num_den_passive_we_mass = np.zeros(shape = (len(zlist), 2))
     num_dens_halos = np.zeros(shape = (len(zlist), 8))
+    quiescent_bulges = np.zeros(shape = (len(zlist), 2, len(xmf)))
+    sf_bulges = np.zeros(shape = (len(zlist), 2, len(xmf)))
+    quiescent_mstar = np.zeros(shape = (len(zlist), 2, len(xmf)))
+
     for index, snapshot in enumerate(redshift_table[zlist]):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
 
-        prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass, zlist[index], num_dens_halos)
+        prepare_data(hdf5_data, index, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass, zlist[index], num_dens_halos, quiescent_bulges, sf_bulges, quiescent_mstar)
 
     #for a,b,c,d,e in zip(zlist, num_den_passive[:,0], num_den_passive[:,1], num_den_passive_mass[:,0], num_den_passive_mass[:,1]):
     #    print(a,b,c,d,e)
     plot_num_density_passive(plt, output_dir, obs_dir, zlist, num_den_passive, num_den_passive_we, num_den_passive_mass, num_den_passive_we_mass)
-
+    plot_passive_fractions(plt, output_dir, obs_dir, zlist, quiescent_bulges, sf_bulges, quiescent_mstar)
     #for i in range(0,len(zlist)):
     #    print(zlist[i],num_dens_halos[i,0], num_dens_halos[i,1], num_dens_halos[i,2], num_dens_halos[i,3], num_dens_halos[i,4], num_dens_halos[i,5], num_dens_halos[i,6],num_dens_halos[i,7])
 

@@ -211,9 +211,9 @@ def prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1), fo
         ax.yaxis.set_major_locator(MultipleLocator(locators[3]))
     ax.tick_params(labelsize=12)
 
-def prepare_legend(ax, colors, loc=None, **legend_kwargs):
+def prepare_legend(ax, colors, loc=None, fontsize=12, **legend_kwargs):
     loc = 3 if loc is None else loc
-    leg = ax.legend(loc=loc, prop={'size': 12}, **legend_kwargs)
+    leg = ax.legend(loc=loc, prop={'size': fontsize}, **legend_kwargs)
     for color,text in zip(colors,leg.get_texts()):
         text.set_color(color)
     leg.draw_frame(False)
@@ -273,6 +273,29 @@ def read_data(model_dir, snapshot, fields, subvolumes, include_h0_volh=True):
                     data[full_name] = l
 
     return list(data.values())
+
+def read_halo_data(tree_dir, fields, subvolumes):
+    """Read the galaxies.hdf5 file for the given tree/subvolume"""
+
+    data = collections.OrderedDict()
+    for idx, subv in enumerate(subvolumes):
+
+        fname = os.path.join(tree_dir, 'tree_201.' + str(subv) + '.hdf5')
+        logger.info('Reading galaxies data from %s', fname)
+        with h5py.File(fname, 'r') as f:
+            for gname, dsnames in fields.items():
+                group = f[gname]
+                for dsname in dsnames:
+                    full_name = '%s/%s' % (gname, dsname)
+                    l = data.get(full_name, None)
+                    if l is None:
+                        l = group[dsname][()]
+                    else:
+                        l = np.concatenate([l, group[dsname][()]])
+                    data[full_name] = l
+
+    return list(data.values())
+
 
 def read_data_ext(model_dir, snapshot, fields, subvolumes, dustmodel):
     """Read the galaxies.hdf5 file for the given model/snapshot/subvolume"""

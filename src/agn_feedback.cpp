@@ -268,7 +268,7 @@ double AGNFeedback::agn_bolometric_luminosity(const BlackHole &smbh, bool starbu
 	double Lbol = 0;
 	if (parameters.model == AGNFeedbackParameters::LAGOS23) {
 		double LEdd = eddington_luminosity(mBH);
-		double m_dot_norm = accretion_rate_ratio(macc,mBH);
+		double m_dot_norm = accretion_rate_ratio(macc, mBH);
 		
 		auto eff = efficiency_luminosity_agn(smbh.spin);
 

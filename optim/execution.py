@@ -23,6 +23,7 @@
 import logging
 import multiprocessing
 import os
+import pickle
 import shutil
 import subprocess
 import tempfile
@@ -35,6 +36,11 @@ import constraints
 
 
 logger = logging.getLogger(__name__)
+
+
+def _pickle_save(filename, obj):
+    with open(filename, "wb") as f:
+        pickle.dump(obj, f)
 
 
 class AbortedByUser(Exception):
@@ -178,8 +184,8 @@ def run_shark_hpc(particles, *args):
             shutil.rmtree(particle_outdir, ignore_errors=True)
 	
     constraints.log_results(opts.constraints, results)
-    np.save(os.path.join(shark_output_base, 'modelvals.npy'), ymodarr)
-    np.save(os.path.join(shark_output_base, 'modelerrorvals.npy'), yerrarr)
+    _pickle_save(os.path.join(shark_output_base, 'modelvals.npy'), ymodarr)
+    _pickle_save(os.path.join(shark_output_base, 'modelerrorvals.npy'), yerrarr)
     
     results = np.sum(results, axis=1)
     logger.info('Particles %r evaluated to %r', particles, results)

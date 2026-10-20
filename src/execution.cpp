@@ -83,7 +83,7 @@ Options::get<ExecutionParameters::TransientDefinition>(const std::string &name, 
 	else if (lvalue == "const_200") {
 	        return ExecutionParameters::CONST_200;
         }
-	if (lvalue == "const_10minpart") {
+	else if (lvalue == "const_10minpart") {
 	        return ExecutionParameters::CONST_10MINPART;
         }
 

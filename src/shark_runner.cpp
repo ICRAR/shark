@@ -259,7 +259,7 @@ void SharkRunner::impl::create_per_thread_objects()
 	auto environment = make_environment(environment_params, dark_matter_halos, cosmology, cosmo_params, simulation_params);
 	auto reionisation = make_reionisation(reio_params);
 	auto reincorporation = make_reincorporation(reinc_params, dark_matter_halos);
-	StellarFeedback stellar_feedback {stellar_feedback_params};
+	StellarFeedback stellar_feedback {stellar_feedback_params, cosmology};
 	GasCooling gas_cooling {gas_cooling_params, star_formation_params, exec_params, reionisation, cosmology, agnfeedback, dark_matter_params, dark_matter_halos, reincorporation, environment};
 
 	for(unsigned int i = 0; i != threads; i++) {
@@ -470,7 +470,7 @@ void SharkRunner::impl::evolve_merger_trees(const std::vector<std::vector<Merger
 
 	/*transfer galaxies from this halo->subhalos to the next snapshot's halo->subhalos*/
 	LOG(debug) << "Transferring all galaxies for snapshot " << snapshot << " into next snapshot";
-	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, snapshot, all_baryons);
+	transfer_galaxies_to_next_snapshot(all_halos_this_snapshot, snapshot, all_baryons, dark_matter_halo_params);
 
 	// Collect next snapshot's halos across all merger trees
 	// We keep them sorted so when output files are created the order in which

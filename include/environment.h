@@ -50,6 +50,7 @@ public:
 	bool tidal_stripping = false;
 	float minimum_halo_mass_fraction = 0.01;
 	float alpha_rps_halo = 1;
+	float alpha_cold = 1;
 	float Accuracy_RPS = 0.05;
 
 };
