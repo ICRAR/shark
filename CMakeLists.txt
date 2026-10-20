@@ -42,7 +42,7 @@ endif()
 option(SHARK_TEST       "Include test compilation in the build" OFF)
 option(SHARK_NO_OPENMP  "Don't attempt to include OpenMP support in shark" OFF)
 
-cmake_policy(SET CMP0167 NEW)
+#cmake_policy(SET CMP0167 NEW)
 
 #
 # Make sure we have thread support

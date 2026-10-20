@@ -559,17 +559,28 @@ double DarkMatterHalos::v2bulge (double x, double m, double c, double r){
 
 double DarkMatterHalos::nfw_concentration(double mvir, double z){
 
+        double c = 0;
 	if(params.concentrationmodel == DarkMatterHaloParameters::DUFFY08){ 
 		// From Duffy et al. (2008). Full sample from z=0-2 for Virial masses.
-		return 7.85 * std::pow(1.0+z, -0.71) * std::pow(mvir/2.0e12,-0.081);
+		c =  7.85 * std::pow(1.0+z, -0.71) * std::pow(mvir/2.0e12,-0.081);
 	}
 	else if(params.concentrationmodel == DarkMatterHaloParameters::DUTTON14){
 		//From Dutton & Maccio (2014) for virial masses.
 		double b = -0.097 + 0.024 * z;
 		double a = 0.537 + (1.025 - 0.537) * std::exp(-0.718 * std::pow(z,1.08));
-		return std::pow(10.0, a + b * std::log10(mvir/1e12));
+		c = std::pow(10.0, a + b * std::log10(mvir/1e12));
 	}
-	throw std::runtime_error("Only the Duffy08 and Dutton14 concentration models are implemented");
+
+	if(c < 1){
+		c = 1;
+	}
+
+	if(params.concentrationmodel != DarkMatterHaloParameters::DUFFY08 && params.concentrationmodel == DarkMatterHaloParameters::DUTTON14){
+		throw std::runtime_error("Only the Duffy08 and Dutton14 concentration models are implemented");
+	}
+
+	return c;
+
 }
 
 /// Specialization of lambert_w0 implemented using GSL
