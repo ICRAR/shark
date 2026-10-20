@@ -54,7 +54,9 @@ public:
 	 * beta_disk: power-law index of velocity dependence on outflows from the galaxy.
 	 * beta_halo: power-law index of velocity dependence on outflows from the halo.
 	 * v_sn: normalization of velocity in SNe feedback/
-	 * redshift_power: redshift dependence of normalization velocity.
+	 * redshift_power: cosmic-time dependence of normalization velocity
+	 *   (lagos13: v_hot = v_sn [t(z)/t(redshift_norm)]^redshift_power).
+	 * redshift_norm: redshift at which the normalization velocity equals v_sn.
 	 * eps_disk: constant in outflow rate from the galaxy.
 	 * e_sn: energy released by a single SNe that couples to the ISM.
 	 * eta_cc: number of SNe per 1 solar mass of mass formed.
@@ -68,6 +70,7 @@ public:
 	double beta_halo = 0;
 	double v_sn = 0;
 	double redshift_power = 0;
+	double redshift_norm = 0;
 	double eps_disk = 1;
 	double e_sn = 0;
 	double eta_cc = 0;

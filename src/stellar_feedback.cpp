@@ -46,6 +46,7 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options)
 	options.load("stellar_feedback.eps_halo", eps_halo);
 	options.load("stellar_feedback.eps_disk",eps_disk);
 	options.load("stellar_feedback.redshift_power", redshift_power);
+	options.load("stellar_feedback.redshift_norm", redshift_norm);
 
 	// The parameters below don't need to be specified.
 	options.load("stellar_feedback.vkin_sn", vkin_sn);
@@ -122,10 +123,9 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 	}
 	else if (parameters.model == StellarFeedbackParameters::LAGOS13){
 
-		//double vhot = parameters.v_sn*std::pow(1+z,parameters.redshift_power);
-		//
-		auto age_univ = cosmology->convert_redshift_to_age(parameters.redshift_power);
-		double vhot = parameters.v_sn*std::pow(age_univ,parameters.redshift_power);
+		// v_hot = v_sn [t(z)/t(redshift_norm)]^redshift_power, so v_hot = v_sn at z = redshift_norm.
+		double t_ratio = cosmology->convert_redshift_to_age(z) / cosmology->convert_redshift_to_age(parameters.redshift_norm);
+		double vhot = parameters.v_sn*std::pow(t_ratio,parameters.redshift_power);
 
 		const_sn =  std::pow(vhot/v,power_index);
 	}
