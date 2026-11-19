@@ -46,6 +46,7 @@ StellarFeedbackParameters::StellarFeedbackParameters(const Options &options)
 	options.load("stellar_feedback.eps_halo", eps_halo);
 	options.load("stellar_feedback.eps_disk",eps_disk);
 	options.load("stellar_feedback.redshift_power", redshift_power);
+	options.load("stellar_feedback.redshift_norm", redshift_norm);
 
 	// The parameters below don't need to be specified.
 	options.load("stellar_feedback.vkin_sn", vkin_sn);
@@ -86,8 +87,9 @@ Options::get<StellarFeedbackParameters::StellarFeedbackModel>(const std::string 
 	throw invalid_option(os.str());
 }
 
-StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters) :
-	parameters(parameters)
+StellarFeedback::StellarFeedback(StellarFeedbackParameters parameters,  CosmologyPtr cosmology) :
+	parameters(parameters),
+	cosmology(std::move(cosmology))
 {
 	// no-op
 }
@@ -116,12 +118,15 @@ void StellarFeedback::outflow_rate(double sfr, double vsubh, double vgal, double
 		if(v > parameters.v_sn){
 			power_index = 1;
 		}
-		const_sn =  std::pow((1+z),parameters.redshift_power) * std::pow(parameters.v_sn/v,power_index);
+		const_sn =  std::pow(1+z,parameters.redshift_power) * std::pow(parameters.v_sn/v,power_index);
 
 	}
 	else if (parameters.model == StellarFeedbackParameters::LAGOS13){
 
-		double vhot = parameters.v_sn*std::pow(1+z,parameters.redshift_power);
+		// v_hot = v_sn [t(z)/t(redshift_norm)]^redshift_power, so v_hot = v_sn at z = redshift_norm.
+		double t_ratio = cosmology->convert_redshift_to_age(z) / cosmology->convert_redshift_to_age(parameters.redshift_norm);
+		double vhot = parameters.v_sn*std::pow(t_ratio,parameters.redshift_power);
+
 		const_sn =  std::pow(vhot/v,power_index);
 	}
 

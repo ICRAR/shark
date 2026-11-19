@@ -1,0 +1,5 @@
+#redshift_median redshift_low redshift_up CSFRD CSFRD_err
+9 8.5 9.5    -2.34  0.44
+10 9.5 10.5  -2.47  0.44
+11 10.5 11.5 -2.48  0.44
+13 11.5 15   -2.75  0.43

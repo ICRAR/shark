@@ -19,16 +19,16 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+#include <filesystem>
 #include <utility>
 
 #include <cxxtest/TestSuite.h>
 
-#include <boost/filesystem.hpp>
 #include "hdf5/io/reader.h"
 #include "hdf5/io/writer.h"
 
 using namespace shark;
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 class TestHDF5 : public CxxTest::TestSuite {
 

@@ -92,7 +92,7 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
     plt = common.load_matplotlib()
 
-    zlist = (2, 2.5, 3)
+    zlist = (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6)
 
     hist_COLF = np.zeros(shape = (len(zlist), 3, len(mbins)))
 

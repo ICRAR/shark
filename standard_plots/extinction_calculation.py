@@ -43,9 +43,9 @@ polyfit_dm = [ 0.00544948, 0.00356938, -0.07893235,  0.05204814,  0.49353238]
 
 #choose dust model between mm14, rr14 and constdust
 m14 = False
-rr14 = True
+rr14 = False
 constdust = False
-rr14xcoc = False
+rr14xcoc = True
 random_perturbation = True
 
 #read EAGLE tables
@@ -238,7 +238,7 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol):
     # will write the hdf5 files with the CO SLEDs and relevant quantities
     # will only write galaxies with mstar>0 as those are the ones being written in SFH.hdf5
     ind = np.where( (mdisk +  mbulge) > 0)
-    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14.hdf5')
+    file_to_write = os.path.join(model_dir, str(snapshot), str(subvol), 'extinction-eagle-rr14-steep.hdf5')
     print ('Will write extinction to %s' % file_to_write)
     hf = h5py.File(file_to_write, 'w')
     
@@ -261,7 +261,8 @@ def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
     if(zlist_given):
         zlist = [0.381963715160695, 1.77053590476006]
     else:
-        snap_list = [96, 94, 91, 86, 83, 81]
+        snap_list = [200, 194, 187, 181, 180, 176, 175, 168, 167, 166, 165, 164, 160, 157, 153, 147, 141, 136, 132, 127, 119, 114, 112, 106, 101, 100, 96, 91, 89, 87, 83, 79, 72, 71, 66, 63, 60, 57, 55, 51, 46, 41, 36, 32, 28, 21, 20]
+        #128, 120, 113, 107, 102, 97, 92, 88, 84, 80, 73, 67, 61, 56, 52, 47, 43, 40, 33] #range(40,121) #[201, 195, 188, 182, 177, 169, 168, 167, 166, 165, 161, 154, 148, 142, 137, 128, 120, 113, 107, 102, 97, 92, 88, 84, 80, 73, 67, 61] #range(40,201) #[96, 94, 91, 86, 83, 81]
         #[126, 122, 117, 109, 106, 103, 96, 94, 91, 86, 83, 81]
         #[269, 224, 213, 205, 188, 174, 153, 140, 129, 120, 111, 104, 91, 82, 75, 69, 63, 58]
         #[199, 185, 179, 174, 164, 156, 149, 142, 136, 131, 113, 100, 88, 79, 70, 63, 57, 51]

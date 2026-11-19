@@ -95,6 +95,7 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 	options.load("gas_cooling.tau_cooling", tau_cooling);
 	options.load("gas_cooling.limit_fbar", limit_fbar);
 	options.load("gas_cooling.rcore", rcore);
+	options.load("gas_cooling.redshift_memory_on", redshift_memory_on);
 
 	auto cooling_tables_dir = get_static_data_filepath("cooling");
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
@@ -360,7 +361,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 
 	if(subhalo.subhalo_type == Subhalo::CENTRAL &&
 	               dark_matter_params.apply_fix_to_mass_swapping_events){
-	        subhalo.hot_halo_gas.sAM = subhalo.L_infall.norm() / subhalo.host_halo->Mvir;
+	        subhalo.hot_halo_gas.sAM = subhalo.L.norm() / subhalo.host_halo->Mvir;
 	}
 	else if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.Mvir_infall != 0 &&
 		       dark_matter_params.apply_fix_to_mass_swapping_events){
@@ -388,12 +389,19 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	double vvir = subhalo.Vvir;
 	double fhot = mhot / subhalo.Mvir;
 
-	// If subhalo is a satellite, then use the virial velocity the subhalo had at infall.
-	if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.Vvir_infall != 0 &&
+	// If subhalo is a central, then use the host halo virial velocity.
+	if(subhalo.subhalo_type == Subhalo::CENTRAL &&
 	               dark_matter_params.apply_fix_to_mass_swapping_events){
-		vvir = subhalo.Vvir_infall;
-		fhot = mhot / subhalo.Mvir_infall;
+		vvir = subhalo.host_halo->Vvir;
+		fhot = mhot / subhalo.host_halo->Mvir;
 	}
+
+	// If subhalo is a satellite, then use the virial velocity the subhalo had at infall.
+        if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.Vvir_infall != 0 &&
+                       dark_matter_params.apply_fix_to_mass_swapping_events){
+                vvir = subhalo.Vvir_infall;
+                fhot = mhot / subhalo.Mvir_infall;
+        }
 
 	double zhot = 0;
 	if(mhot > 0){
@@ -584,11 +592,15 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		double r_ratio = rheat/r_cool;
 
 		// Track heating radius. Croton16 assume that the heating radius only increases, so it is saved only if it's larger than the previously recorded one.
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
-			subhalo.cooling_subhalo_tracking.rheat = rheat;
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23 && z < parameters.redshift_memory_on){
+			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+                		subhalo.cooling_subhalo_tracking.rheat = rheat;
+			}
 		}
-		else if(subhalo.cooling_subhalo_tracking.rheat < rheat && agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23){
-			subhalo.cooling_subhalo_tracking.rheat = rheat;
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
+			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+                		subhalo.cooling_subhalo_tracking.rheat = rheat;
+			}
 		}
 
 		r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;

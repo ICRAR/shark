@@ -326,7 +326,7 @@ def plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf, hist_smf_err, hi
     common.savefig(outdir, fig, 'stellarmf_passive_z_colorbased.pdf')
 
 
-def prepare_data(hdf5_data, seds, index, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat, zlist, halo_mass_rel):
+def prepare_data(hdf5_data, seds, index, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat, zlist, halo_mass_rel, hist_smf_pass_ssfr, hist_smf_pass_ssfr_err):
 
     (h0, volh, mdisk, mbulge, sfrd, sfrb, typeg, rstar_disk, rstar_bulge, mvir) = hdf5_data
 
@@ -346,7 +346,8 @@ def prepare_data(hdf5_data, seds, index, hist_smf_pass, hist_smf_pass_err, hist_
     col1 = mag_total[1,:] - mag_total[4,:]
     col2 = mag_total[4,:] -  mag_total[8,:]
 
-
+    ssfr_thresh = 0.2/(us.hubble_time(zlist[index]) * 1e9) #in yr^-1
+    print("ssfr threshold is", ssfr_thresh)
     ind = np.where((mdisk+mbulge) > 0.0)
     mvir = mvir[ind]
     typeg = typeg[ind]
@@ -355,9 +356,12 @@ def prepare_data(hdf5_data, seds, index, hist_smf_pass, hist_smf_pass_err, hist_
     pass_flag[passive_col] = 1.0
     mass = np.log10(mdisk[ind] + mbulge[ind]) - np.log10(float(h0))
     ssfr = (sfrd[ind] + sfrb[ind]) / 1e9 / (mdisk[ind] + mbulge[ind])
+    sfr = (sfrd[ind] + sfrb[ind]) / 1e9
     lowsfr = np.where(ssfr <= 1e-13)
     ssfr[lowsfr] = 1e-13
     ssfr = np.log10(ssfr)
+    lowsfr = np.where(sfr < 1e-8)
+    sfr[lowsfr] = 1e-8
 
     ran_err = np.random.normal(0.0, 0.3, len(mass))
     mass_err = mass + ran_err
@@ -366,15 +370,21 @@ def prepare_data(hdf5_data, seds, index, hist_smf_pass, hist_smf_pass_err, hist_
     H, _ = np.histogram(mass[ind], bins=np.append(mbins,mupp))
     hist_smf_pass[index,:] = hist_smf_pass[index,:] + H
 
-    if index == 0:
-        scatter = 0.2
-    else:
-        scatter = 0.3
-    ran_err = np.random.normal(0.0, scatter, len(mass))
-    ssfr_err = ssfr + ran_err
+    ran_err = np.random.normal(0.0, 0.3, len(mass))
+    sfr_err = 10**(np.log10(sfr) + ran_err)
+    ssfr_err = sfr_err / 10**mass_err
+
     ind = np.where((mass_err > 0) & (pass_flag >=1))
     H, _ = np.histogram(mass_err[ind], bins=np.append(mbins,mupp))
     hist_smf_pass_err[index,:] = hist_smf_pass_err[index,:] + H
+
+    ind = np.where((mass > 0) & (10**ssfr < ssfr_thresh))
+    H, _ = np.histogram(mass[ind], bins=np.append(mbins,mupp))
+    hist_smf_pass_ssfr[index,:] = hist_smf_pass_ssfr[index,:] + H
+
+    ind = np.where((mass_err > 0) & (ssfr_err < ssfr_thresh))
+    H, _ = np.histogram(mass_err[ind], bins=np.append(mbins,mupp))
+    hist_smf_pass_ssfr_err[index,:] = hist_smf_pass_ssfr_err[index,:] + H
 
     ind = np.where((mass_err > 0) & (pass_flag >=1) & (typeg == 0))
     H, _ = np.histogram(mass_err[ind], bins=np.append(mbins,mupp))
@@ -394,6 +404,8 @@ def prepare_data(hdf5_data, seds, index, hist_smf_pass, hist_smf_pass_err, hist_
         hist_smf_pass_err[index,:]  = hist_smf_pass_err[index,:]/vol/dm
         hist_smf_pass_cen[index,:]  = hist_smf_pass_cen[index,:]/vol/dm
         hist_smf_pass_sat[index,:]  = hist_smf_pass_sat[index,:]/vol/dm
+        hist_smf_pass_ssfr[index,:]  = hist_smf_pass_ssfr[index,:]/vol/dm
+        hist_smf_pass_ssfr_err[index,:]  = hist_smf_pass_ssfr_err[index,:]/vol/dm
 
 
     ind = np.where((mass > 0) & (typeg == 0))
@@ -416,6 +428,9 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     hist_smf_pass_cen   = np.zeros(shape = (len(zlist), len(mbins)))
     hist_smf_pass_sat   = np.zeros(shape = (len(zlist), len(mbins)))
     hist_smf_pass_err = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf_pass_ssfr = np.zeros(shape = (len(zlist), len(mbins)))
+    hist_smf_pass_ssfr_err = np.zeros(shape = (len(zlist), len(mbins)))
+
     halo_mass_rel  = np.zeros(shape = (len(zlist), 4, 3, len(mbins)))
 
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'sfr_disk', 'sfr_burst', 'type', 'rstar_disk', 'rstar_bulge', 'mvir_hosthalo')}
@@ -423,7 +438,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
     for index, snapshot in enumerate(redshift_table[zlist]):
         hdf5_data = common.read_data(modeldir, snapshot, fields, subvols)
         seds = common.read_photometry_data_variable_tau_screen(modeldir, snapshot, fields_sed, subvols, file_hdf5_sed)
-        mass = prepare_data(hdf5_data, seds, index, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat, zlist, halo_mass_rel)
+        mass = prepare_data(hdf5_data, seds, index, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat, zlist, halo_mass_rel, hist_smf_pass_ssfr, hist_smf_pass_ssfr_err)
         h0 = hdf5_data[0]
 
     # Take logs
@@ -437,9 +452,22 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     plot_stellarmf_passive_z(plt, outdir, obsdir, h0, hist_smf_pass, hist_smf_pass_err, hist_smf_pass_cen, hist_smf_pass_sat)
     plot_SMHM_z(plt, outdir, obsdir, zlist, halo_mass_rel)
-    #print("#SMF passive galaxies")
-    #for a,b,c,d,e,f,g,h in zip(xmf, hist_smf_pass_cen[0,:], hist_smf_pass_cen[1,:], hist_smf_pass_cen[2,:], hist_smf_pass_cen[3,:], hist_smf_pass_cen[4,:], hist_smf_pass_cen[5,:], hist_smf_pass_cen[6,:]):
-    #    print(a,b,c,d,e,f,g,h)
+    print("#SMF passive galaxies: colour selected and no errors included in stellar mass")
+    smf = hist_smf_pass
+    for a,b,c,d,e,f,g,h in zip(xmf, smf[0,:], smf[1,:], smf[2,:], smf[3,:], smf[4,:], smf[5,:], smf[6,:]):
+        print(a,b,c,d,e,f,g,h)
+    print("#SMF passive galaxies: colour selected and errors included in stellar mass (gaussian distributed, centred at 0 and with width 0.3dex)")
+    smf = hist_smf_pass_err
+    for a,b,c,d,e,f,g,h in zip(xmf, smf[0,:], smf[1,:], smf[2,:], smf[3,:], smf[4,:], smf[5,:], smf[6,:]):
+        print(a,b,c,d,e,f,g,h)
+    print("#SMF passive galaxies: sSFR selected and no errors included in stellar mass")
+    smf = hist_smf_pass_ssfr
+    for a,b,c,d,e,f,g,h in zip(xmf, smf[0,:], smf[1,:], smf[2,:], smf[3,:], smf[4,:], smf[5,:], smf[6,:]):
+        print(a,b,c,d,e,f,g,h)
+    print("#SMF passive galaxies: sSFR selected and errors included in stellar mass (gaussian distributed, centred at 0 and with width 0.3dex)")
+    smf = hist_smf_pass_ssfr_err
+    for a,b,c,d,e,f,g,h in zip(xmf, smf[0,:], smf[1,:], smf[2,:], smf[3,:], smf[4,:], smf[5,:], smf[6,:]):
+        print(a,b,c,d,e,f,g,h)
 
 if __name__ == '__main__':
     main(*common.parse_args())

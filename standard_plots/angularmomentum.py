@@ -234,7 +234,7 @@ def compute_numerical_jmol(msdisk, rsdisk, mgdisk, rgdisk, mbulge, rbulge, mdm, 
 
 def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_atom2, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_ratio_halo_disk, sam_ratio_halo_gal, 
                  sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
-                 sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, sam_stars2, vmax_halo_gal, sam_barv2, disk_size, rcomb): #, phot_data, phot_data_nod, nbands):
+                 sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, sam_stars2, vmax_halo_gal, sam_barv2, disk_size, rcomb, calculate_am): #, phot_data, phot_data_nod, nbands):
 
 
     bin_it = functools.partial(us.wmedians, xbins=xmf, low_numbers=False)
@@ -253,17 +253,18 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     jatom       = (specific_angular_momentum_disk_gas_atom * matom_disk + matom_bulge * specific_angular_momentum_bulge_gas) / (matom_disk + matom_bulge)
 
     massive_gals = np.where(((mdisk + mbulge)/h0 >= 1e8) & (mmol_disk > 0))
-    jmol_approx        = (specific_angular_momentum_disk_gas_mol[massive_gals] * mmol_disk[massive_gals] + mmol_bulge[massive_gals] * specific_angular_momentum_bulge_gas[massive_gals]) / (mmol_disk[massive_gals] + mmol_bulge[massive_gals])
-    jmol_comp_detail, jatom_comp_detail = compute_numerical_jmol(mdisk[massive_gals]/h0, rdisk[massive_gals]/h0, mgas_disk[massive_gals], rg_disk[massive_gals]/h0, mbulge[massive_gals]/h0 + mgas_bulge[massive_gals]/h0, rbulge[massive_gals]/h0, mvir_s[massive_gals]/h0, rvir_sb[massive_gals]/h0, cnfw[massive_gals], mmol_disk[massive_gals]/h0)
+    jmol_approx        = jmol[massive_gals] 
+    if(calculate_am == True):
+        jmol_comp_detail, jatom_comp_detail = compute_numerical_jmol(mdisk[massive_gals]/h0, rdisk[massive_gals]/h0, mgas_disk[massive_gals], rg_disk[massive_gals]/h0, mbulge[massive_gals]/h0 + mgas_bulge[massive_gals]/h0, rbulge[massive_gals]/h0, mvir_s[massive_gals]/h0, rvir_sb[massive_gals]/h0, cnfw[massive_gals], mmol_disk[massive_gals]/h0)
+    else:
+        jmol_comp_detail = specific_angular_momentum_disk_gas_mol[massive_gals]
+        jatom_comp_detail = specific_angular_momentum_disk_gas_atom[massive_gals]
+        
     jmol_detailed = (jmol_comp_detail * mmol_disk[massive_gals] + mmol_bulge[massive_gals] * specific_angular_momentum_bulge_gas[massive_gals]) / (mmol_disk[massive_gals] + mmol_bulge[massive_gals])
     jatom_detailed = (jatom_comp_detail * matom_disk[massive_gals] + matom_bulge[massive_gals] * specific_angular_momentum_bulge_gas[massive_gals]) / (matom_disk[massive_gals] + matom_bulge[massive_gals])
     jmol[massive_gals] = jmol_detailed
     jatom[massive_gals] = jatom_detailed
-    #for a,b,c,d,e,f in zip(jmol_approx, jmol_comp_detail, (mmol_disk[massive_gals] + mmol_bulge[massive_gals])/h0, (mdisk[massive_gals] + mbulge[massive_gals])/h0, mbulge[massive_gals] / (mdisk[massive_gals] + mbulge[massive_gals]), (sfr_disk[massive_gals] + sfr_bulge[massive_gals])/h0/1e9):
-    #    print(a*1e3,b*1e3,c,d,e,f)
-    #print("detailed jmol calculation", jmol_comp_detail)
 
-    
     ind = np.where(mmol_disk > 0) 
     print("sAM mol when mgas_mol>0", specific_angular_momentum_disk_gas_mol[ind])
     print("number of galaxies with mmol_disk > 0", len(mmol_disk[ind]))
@@ -276,16 +277,11 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     sam_subhalo_fromL = np.sqrt(lx**2.0 + ly**2.0 + lz**2.0) * 1e3 / mvir_s #in km/s * kpc
     lambda_fromL = np.sqrt(lx**2.0 + ly**2.0 + lz**2.0) / mvir_s * 1.5234153 / (4.3e-9 * mvir_s)**0.666 * 67.77**0.33;
 
-    #ind = np.where((mvir_s > 0) & (typeg==0))
-    #print(max(lambda_fromL[ind]), np.median(lambda_fromL[ind]))
-
     sam_subhalo_rel = bin_it_halo(x=np.log10(mvir_s[ind]/h0),
                              y=np.log10(sam_subhalo_fromL[ind]/h0)) #specific_angular_momentum_disk_star[ind]) - np.log10(float(h0)))
 
 
     ind = np.where(mdisk + mbulge > 0)
-    #SEDs_dust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
-    #SEDs_nodust = np.zeros(shape = (len(mdisk[ind]), 5, nbands))
     mstartot = mdisk[ind] + mbulge[ind]
     rgal_star = (rdisk * mdisk + rbulge * mbulge ) / ( mdisk + mbulge)
     rgal_gas  = (rg_disk * mgas_disk + rg_bulge * mgas_bulge ) / ( mgas_disk + mgas_bulge)
@@ -429,7 +425,7 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     bulge_size[index,:] = bin_it_largem(x=np.log10(mbulge[ind]) - np.log10(float(h0)),
                                  y=np.log10(rbulge[ind]*MpcToKpc) - np.log10(float(h0)))
 
-    ind = np.where((mbulge > 0) & (mdisk/(mbulge+mdisk) <= 0.5) & (rbulge > 1e-6))
+    ind = np.where((mdisk > 0) & (mdisk/(mbulge+mdisk) > 0.5))
     disk_size[index,:] = bin_it_largem(x=np.log10(mdisk[ind]) - np.log10(float(h0)),
                                  y=np.log10(rdisk[ind]*MpcToKpc) - np.log10(float(h0)))
 
@@ -1626,6 +1622,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
     #file_hdf5_sed = "Shark-SED-eagle-rr14.hdf5"
 
+    calculate_am = True
+
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mstars_burst_mergers', 'mstars_burst_diskinstabilities',
                            'mstars_bulge_mergers_assembly', 'mstars_bulge_diskins_assembly', 'm_bh', 'rstar_disk', 'rstar_bulge', 
@@ -1674,7 +1672,7 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
 
         (lh, lj, lm, bt, ms, ssfr, mass_cut)  = prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_atom2, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_ratio_halo_disk, 
                      sam_ratio_halo_gal, sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
-                     sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, sam_stars2,  vmax_halo_gal, sam_barv2, disk_size, rcomb) #, seds, seds_nod, nbands)
+                     sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, sam_stars2,  vmax_halo_gal, sam_barv2, disk_size, rcomb, calculate_am) #, seds, seds_nod, nbands)
 
         if(index  == 0):
                 lambdaH = lh

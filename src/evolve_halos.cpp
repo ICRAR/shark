@@ -33,7 +33,8 @@
 
 namespace shark {
 
-void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
+void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant,
+		const DarkMatterHaloParameters &dark_matter_params)
 {
 	// A subhalo that is not main progenitor of its descendant cannot
 	// contribute its central galaxy (CENTRAL or TYPE1, depending on the
@@ -83,10 +84,18 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 
 	// If main_galaxy is type 2, then define subhalo properties of types 2.
 	if (main_galaxy->galaxy_type == Galaxy::TYPE2) {
-		main_galaxy->concentration_type2 = parent->concentration;
-		main_galaxy->msubhalo_type2 = parent->Mvir;
-		main_galaxy->lambda_type2 = parent->lambda;
-		main_galaxy->vvir_type2 = parent->Vvir;
+		if (dark_matter_params.apply_fix_to_mass_swapping_events){
+			main_galaxy->concentration_type2 = parent->concentration_infall;
+			main_galaxy->msubhalo_type2 = parent->Mvir_infall;
+			main_galaxy->lambda_type2 = parent->lambda_infall;
+			main_galaxy->vvir_type2 = parent->Vvir_infall;
+		}
+		else{
+			main_galaxy->concentration_type2 = parent->concentration;
+                        main_galaxy->msubhalo_type2 = parent->Mvir;
+                        main_galaxy->lambda_type2 = parent->lambda;
+                        main_galaxy->vvir_type2 = parent->Vvir;
+		}
 	}
 
 	// If main_galaxy is type 1 and the ram pressure stripping radius has not been defined, then define it to be equal to the descendant subhalo rvir_infall.
@@ -94,13 +103,15 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 		main_galaxy->r_rps = descendant->rvir_infall;
 	}
 
+
 }
 
-void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons)
+void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int snapshot, TotalBaryon &AllBaryons,
+		const DarkMatterHaloParameters &dark_matter_params)
 {
 	unsigned int subhalos_without_descendant = 0;
 	double baryon_mass_loss = 0;
-
+	
 	// Make sure descendants are completely empty
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
@@ -113,12 +124,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
-
-			// Make sure all SFRs and BH accretion rates (in mass and metals) are set to 0 for the next snapshot
-			for (auto &galaxy: subhalo->galaxies) {
-				//restart descendant_id
-				galaxy.descendant_id = -1;
-			}
 
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
 			// In that case, the transfer of galaxies has already been done in merging_subhalos.
@@ -148,7 +153,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			// galaxy of this subhalo and then transfer ownership of galaxies
 			// over to the descendant
 			subhalo->check_subhalo_galaxy_composition();
-			adjust_main_galaxy(subhalo, descendant_subhalo);
+			adjust_main_galaxy(subhalo, descendant_subhalo, dark_matter_params);
 			subhalo->transfer_galaxies_to(descendant_subhalo);
 
 			// Transfer subhalo baryon components.
@@ -166,8 +171,8 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			if (subhalo->main_progenitor) {
 				descendant_subhalo->host_halo->hydrostatic_eq = subhalo->host_halo->hydrostatic_eq;
 				if(descendant_subhalo->host_halo->Mvir > 3e12){
-					descendant_subhalo->host_halo->hydrostatic_eq = true;
-				}	
+			 		descendant_subhalo->host_halo->hydrostatic_eq = true;
+			 	}	
 				descendant_subhalo->cooling_subhalo_tracking = subhalo->cooling_subhalo_tracking;
 			}
 		}
@@ -207,6 +212,8 @@ void reset_instantaneous_galaxy_properties(const std::vector<HaloPtr> &halos, in
 				galaxy.sfr_disk			= 0;
 				galaxy.smbh.macc_sb		= 0;
 				galaxy.smbh.macc_hh		= 0;
+				//restart descendant_id
+				galaxy.descendant_id            = -1;
 
 				//restart counter of mergers and disk instabilities.
 				galaxy.interaction.restore_interaction_item();
