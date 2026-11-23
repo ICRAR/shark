@@ -53,7 +53,7 @@ public:
 	int last_output_snapshot();
 
 	template <typename Component>
-	std::random_device::result_type get_seed(const Component &component)
+	std::random_device::result_type get_seed(const Component &component) const
 	{
 		auto id = get_id(component);
 		assert(id >= 0);

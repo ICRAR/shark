@@ -171,6 +171,14 @@ std::vector<MergerTreePtr> TreeBuilder::build_trees(std::vector<HaloPtr> &halos,
 	LOG(info) << "Defining ages of halos and subhalos";
 	define_ages_halos(trees, sim_params, darkmatterhalos);
 
+	// Recalculate concentrations using assembly histories.
+	if (dark_matter_params.concentrationmodel ==
+			DarkMatterHaloParameters::WANG26) {
+
+		LOG(info) << "Assigning Wang26 concentrations";
+
+		darkmatterhalos->wang26_concentrations(trees, sim_params);
+	}
 	return trees;
 }
 

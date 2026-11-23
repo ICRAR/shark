@@ -56,7 +56,8 @@ public:
 
 	enum ConcentrationModel{
         	DUFFY08 = 0,
-		DUTTON14 
+		DUTTON14,
+		WANG26
 	};
 
 	DarkMatterProfile haloprofile = NFW;
@@ -72,6 +73,7 @@ public:
 	bool use_converged_lambda_catalog = false; 
 	bool apply_fix_to_mass_swapping_events = false;
 	int  min_part_convergence = 100;
+	float wang26_scatter = 0;
 
 };
 
@@ -109,7 +111,12 @@ public:
 
 	double nfw_concentration(double mvir, double z);
 
-	//double mmw98_nfw_concentration(double mvir, double vmax, double rvir);
+	double wang26_scatter(const Subhalo &subhalo) const;
+
+	double wang26_concentration(const Halo &halo, double z) const;
+
+	void wang26_concentrations(const std::vector<MergerTreePtr> &trees,
+			const SimulationParameters &sim_params) const;
 
 	void cooling_gas_sAM(Subhalo &subhalo, double z);
 

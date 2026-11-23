@@ -35,6 +35,7 @@
 #include "galaxy.h"
 #include "halo.h"
 #include "logging.h"
+#include "merger_tree.h"
 #include "nfw_distribution.h"
 #include "numerical_constants.h"
 #include "subhalo.h"
@@ -53,6 +54,8 @@ DarkMatterHaloParameters::DarkMatterHaloParameters(const Options &options)
 	options.load("dark_matter_halo.min_part_convergence", min_part_convergence);
 	options.load("dark_matter_halo.spin_mass_dependence", spin_mass_dependence);
 	options.load("dark_matter_halo.apply_fix_to_mass_swapping_events", apply_fix_to_mass_swapping_events);
+	options.load("dark_matter_halo.wang26_scatter", wang26_scatter);
+
 }
 
 template <>
@@ -96,8 +99,11 @@ Options::get<DarkMatterHaloParameters::ConcentrationModel>(const std::string &na
 	else if (lvalue == "dutton14") {
 		return DarkMatterHaloParameters::DUTTON14;
 	}
+	else if (lvalue == "wang26") {
+		return DarkMatterHaloParameters::WANG26;
+	}
 	std::ostringstream os;
-	os << name << " option value invalid: " << value << ". Supported values are Duffy08 and Dutton14";
+	os << name << " option value invalid: " << value << ". Supported values are duffy08, dutton14 and wang26";
 	throw invalid_option(os.str());
 }
 
@@ -117,7 +123,7 @@ DarkMatterHalos::DarkMatterHalos(
 
 double DarkMatterHalos::energy_circular (double r, double c){
 
-    return 0.5 * enclosed_mass(r,c)/r+grav_potential_halo(r, c);
+	return 0.5 * enclosed_mass(r,c)/r+grav_potential_halo(r, c);
 
 }
 
@@ -248,7 +254,7 @@ double DarkMatterHalos::disk_size_theory (Subhalo &subhalo, double z){
 
 		if(subhalo.subhalo_type == Subhalo::CENTRAL &&
 				params.apply_fix_to_mass_swapping_events){
-		        Rvir = halo_virial_radius(subhalo.host_halo->Mvir, z);
+			Rvir = halo_virial_radius(subhalo.host_halo->Mvir, z);
 			lambda = subhalo.host_halo->lambda;
 		}
 		else if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.rvir_infall != 0 &&
@@ -559,7 +565,11 @@ double DarkMatterHalos::v2bulge (double x, double m, double c, double r){
 
 double DarkMatterHalos::nfw_concentration(double mvir, double z){
 
-	if(params.concentrationmodel == DarkMatterHaloParameters::DUFFY08){ 
+	// Note that in the case of the concentration model of Wang26, we default to Duffy08 in the cases where there's no clear
+	// way of calculating the concentration. Thus, we initialise all values using Duffy08 and recalculate concentrations later
+	// in the tree_builder loop.
+
+	if(params.concentrationmodel == DarkMatterHaloParameters::DUFFY08 || params.concentrationmodel == DarkMatterHaloParameters::WANG26 ){
 		// From Duffy et al. (2008). Full sample from z=0-2 for Virial masses.
 		return 7.85 * std::pow(1.0+z, -0.71) * std::pow(mvir/2.0e12,-0.081);
 	}
@@ -571,6 +581,149 @@ double DarkMatterHalos::nfw_concentration(double mvir, double z){
 	}
 	throw std::runtime_error("Only the Duffy08 and Dutton14 concentration models are implemented");
 }
+
+double DarkMatterHalos::wang26_scatter(const Subhalo &subhalo) const
+{
+	auto seed = exec_params.get_seed(subhalo);
+
+	std::default_random_engine generator(seed ^ 0x9E3779B9u);
+
+	std::normal_distribution<double> distribution(
+			0.0, params.wang26_scatter
+	);
+
+	return distribution(generator);
+}
+
+double DarkMatterHalos::wang26_concentration(const Halo &halo, double z) const
+{
+	const double mvir = halo.Mvir;
+	const double zform = halo.age_50;
+
+	const Subhalo &central = *halo.central_subhalo;
+
+	// Evaluate Wang26 using mvir, z and zform.
+	// Apply residual scatter using central's persistent ID.
+
+}
+
+void DarkMatterHalos::wang26_concentrations(
+	const std::vector<MergerTreePtr> &trees,
+	const SimulationParameters &sim_params) const
+{
+
+		/*
+		 * PASS 1:
+		 * Calculate concentrations of host haloes using Wang26.
+		 * Central subhaloes inherit their host concentration.
+		 *
+		 * Duffy08 concentrations have already been assigned.
+		 * They are retained when the formation age is unavailable.
+		 */
+
+		//First loop through trees
+		for (const auto &tree : trees) {
+
+			//Loop through snapshots starting from the first snapshot towards z=0
+			for (int snapshot = sim_params.min_snapshot;
+					snapshot <= sim_params.max_snapshot;
+					++snapshot) {
+
+				//first corresponding redshift at "snapshot".
+				const double z = sim_params.redshifts.at(snapshot);
+
+				//Loop through halos belonging to the "tree" at "snapshot"
+				for (auto &halo : tree->halos_at(snapshot)) {
+
+					//find central subhalo
+					const auto &central = halo->central_subhalo;
+
+					//if no central calculation continue with loop and avoid proceeding calculation.
+					if (!central) {
+						continue;
+					}
+
+					if (halo->age_50 > z) {
+
+						halo->concentration = wang26_concentration(*halo, z);
+					}
+
+					central->concentration = halo->concentration;
+				}
+			}
+		}
+
+		/*
+		 * PASS 2:
+		 * Propagate concentrations along satellite branches. This implies that satellite subhalos
+		 * will inherit the concentration they had when they were last central.
+		 *
+		 * Snapshots are processed chronologically.
+		 */
+
+		for (const auto &tree : trees) {
+
+			for (int snapshot = sim_params.min_snapshot;
+					snapshot <= sim_params.max_snapshot;
+					++snapshot) {
+
+				for (auto &halo : tree->halos_at(snapshot)) {
+
+					for (auto &subhalo : halo->satellite_subhalos) {
+
+						auto progenitor = subhalo->main();
+
+						if (progenitor) {
+
+							// Preserve the concentration of the
+							// main progenitor.
+							subhalo->concentration = progenitor->concentration;
+						}
+
+						// Otherwise retain the initial Duffy08 value.
+					}
+				}
+			}
+		}
+
+		/*
+		 * PASS 3:
+		 * Update satellite concentrations at infall.
+		 *
+		 * These were initially assigned using Duffy08
+		 * by define_ages_halos().
+		 */
+
+		for (const auto &tree : trees) {
+
+			for (int snapshot = sim_params.min_snapshot;
+					snapshot <= sim_params.max_snapshot;
+					++snapshot) {
+
+				for (auto &halo : tree->halos_at(snapshot)) {
+
+					for (auto &subhalo : halo->satellite_subhalos) {
+
+						auto progenitor = subhalo->main();
+
+						while (progenitor) {
+
+							if (progenitor->subhalo_type ==
+									Subhalo::CENTRAL) {
+
+								subhalo->concentration_infall = progenitor->concentration;
+
+								break;
+							}
+
+							progenitor = progenitor->main();
+						}
+					}
+				}
+			}
+		}
+}
+
 
 /// Specialization of lambert_w0 implemented using GSL
 template <>
