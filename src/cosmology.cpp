@@ -31,6 +31,7 @@
 
 #include "cosmology.h"
 #include "data.h"
+#include <gsl/gsl_integration.h>
 #include "logging.h"
 #include "numerical_constants.h"
 #include "utils.h"
@@ -248,6 +249,143 @@ double Cosmology::critical_density (double z) const {
 	auto h = hubble_parameter(z) / 100.0; // we want h not H.
 
 	return 2.7754e11 * std::pow(h, 2);
+}
+
+double Cosmology::growth_factor(double z) const
+{
+	/*
+	* Linear growth factor for a flat Lambda-CDM cosmology.
+	* Normalised such that D(z=0) = 1.
+	*/
+
+	const double Om = parameters.OmegaM;
+	const double Ol = parameters.OmegaL;
+
+	if (z < 0.0 || Om <= 0.0 || Ol < 0.0 ||
+		std::abs(Om + Ol - 1.0) > 1.e-4) {
+			throw std::runtime_error(
+				"growth_factor requires z >= 0 and a flat LCDM cosmology");
+	}
+
+	if (z == 0.0)
+		return 1.0;
+
+	const double a = 1.0 / (1.0 + z);
+
+	// Einstein-de Sitter case.
+	if (Ol == 0.0)
+		return a;
+
+	// Integrand of the growth-factor expression.
+	auto integrand = [](double x, void *params) -> double {
+
+		const double *omega = static_cast<double *>(params);
+
+		const double Om = omega[0];
+		const double Ol = omega[1];
+
+		return std::sqrt(x) /
+				std::pow(Om + Ol * x * x * x, 1.5);
+	};
+
+	double omega[2] = {Om, Ol};
+
+	gsl_function F;
+	F.function = integrand;
+	F.params = omega;
+
+	gsl_integration_workspace *workspace =
+			gsl_integration_workspace_alloc(1000);
+
+	auto integral = [&](double upper) {
+
+		double result, error;
+
+		gsl_integration_qag(
+			&F, 0.0, upper,
+			0.0, 1.e-7,
+			1000, 6,
+			workspace,
+			&result, &error);
+
+		return result;
+	};
+
+	const double I_a = integral(a);
+	const double I_1 = integral(1.0);
+
+	gsl_integration_workspace_free(workspace);
+
+	const double E_a = std::sqrt(Om / (a * a * a) + Ol);
+
+	return E_a * I_a / I_1;
+}
+
+double Cosmology::sigma_mass(double mass) const
+{
+	/*
+	 * Calculate the RMS linear density fluctuation sigma(M)
+	 * using the linear matter power spectrum at z=0.
+	 *
+	 * Units:
+	 *   mass : Msun/h
+	 *   k    : h/Mpc
+	 *   P(k) : (Mpc/h)^3
+	 *   R    : Mpc/h
+	 */
+
+	if (mass <= 0.0) {
+		throw std::runtime_error("sigma_mass requires a positive mass");
+	}
+
+	const auto &k = parameters.power_spectrum.k;
+	const auto &pk = parameters.power_spectrum.p;
+
+	if (k.size() < 2 || k.size() != pk.size()) {
+		throw std::runtime_error("Invalid power spectrum table in sigma_mass");
+	}
+
+	// Mean matter density in (Msun/h)/(Mpc/h)^3.
+	const double rho_m = 2.7754e11 * parameters.OmegaM;
+
+	// Top-hat smoothing radius in Mpc/h.
+	const double R = std::cbrt(
+			3.0 * mass / (4.0 * M_PI * rho_m));
+
+	// Fourier transform of a spherical top-hat window.
+	auto window = [](double x) {
+
+		if (std::abs(x) < 0.01) {
+			const double x2 = x * x;
+			return 1.0 - x2 / 10.0
+				   + x2 * x2 / 280.0;
+		}
+
+		return 3.0 *
+			(std::sin(x) - x * std::cos(x))
+			/ (x * x * x);
+	};
+
+	double sigma2 = 0.0;
+
+	// Integrate over ln(k) using the trapezoidal rule.
+	for (std::size_t i = 0; i < k.size() - 1; ++i) {
+
+		const double k1 = k[i];
+		const double k2 = k[i + 1];
+
+		const double W1 = window(k1 * R);
+		const double W2 = window(k2 * R);
+
+		const double f1 = k1 * k1 * k1 * pk[i] * W1 * W1;
+		const double f2 = k2 * k2 * k2 * pk[i + 1] * W2 * W2;
+
+		sigma2 += 0.5 * (f1 + f2) * std::log(k2 / k1);
+	}
+
+	sigma2 /= (2.0 * M_PI * M_PI);
+
+	return std::sqrt(sigma2);
 }
 
 } // namespace shark
