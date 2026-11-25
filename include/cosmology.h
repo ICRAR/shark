@@ -60,6 +60,7 @@ public:
 	float sigma8 = 0;
 	float Hubble_h = 0;
 	PowerSpectrumTable power_spectrum;
+	
 
 private:
 	void load_tables(const std::string &power_spec_file);
@@ -83,8 +84,6 @@ public:
 	double convert_redshift_to_age(double z) const;
 	double convert_age_to_redshift_lcdm(double t) const;
 	double expansion_factor(double t) const;
-	double growth_factor(double z) const;
-	double sigma_mass(double mass) const;
 
 	/**
 	 * universal_baryon_fraction: calculates the baryon density with respect to the total matter density.
@@ -101,8 +100,27 @@ public:
 	double hubble_parameter (double z) const;
 	double critical_density (double z) const;
 
+	// Public interface: uses lookup tables
+    double sigma_mass(double mass) const;
+    double growth_factor(double z) const;
+
+    // Direct integration, retained for validation
+    double sigma_mass_direct(double mass) const;
+    double growth_factor_direct(double z) const;
+
 	CosmologicalParameters parameters;
 
+	private:
+    // Initialise lookup tables once
+    void initialise_lookup_tables();
+
+    // Sigma(M) lookup table
+    std::vector<double> log_mass_grid;
+    std::vector<double> log_sigma_grid;
+
+    // Growth factor lookup table
+    std::vector<double> log_a_grid;
+    std::vector<double> log_growth_grid;
 };
 
 /// Type to be used by users handling pointers to this class

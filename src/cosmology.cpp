@@ -129,7 +129,76 @@ void CosmologicalParameters::load_tables(const std::string &power_spec_file)
 Cosmology::Cosmology(CosmologicalParameters parameters) :
 	parameters(std::move(parameters))
 {
-	// no-op
+    initialise_lookup_tables();
+}
+
+void Cosmology::initialise_lookup_tables()
+{
+    // Precompute sigma(M) over a logarithmic mass grid. 
+	// This is done to speed up the code later on.
+    // Masses are in Msun/h.
+
+    constexpr double log_m_min = 4.0;
+    constexpr double log_m_max = 17.0;
+    constexpr double dlogm = 0.01;
+
+    const int n = static_cast<int>(
+        std::round((log_m_max - log_m_min) / dlogm)) + 1;
+
+    log_mass_grid.reserve(n);
+    log_sigma_grid.reserve(n);
+
+    for (int i = 0; i < n; ++i) {
+
+        const double logm = log_m_min + i * dlogm;
+        const double mass = std::pow(10.0, logm);
+
+        const double sigma = sigma_mass_direct(mass);
+
+        if (!std::isfinite(sigma) || sigma <= 0.0) {
+            throw std::runtime_error(
+                "Invalid sigma(M) while initialising lookup table");
+        }
+
+        log_mass_grid.push_back(logm);
+        log_sigma_grid.push_back(std::log10(sigma));
+    }
+
+
+	// ------------------------------------------------------------
+	// Growth-factor lookup table
+	// ------------------------------------------------------------
+
+	// Tabulate D(a) on a uniform logarithmic scale-factor grid.
+	// Covers a = 0.001 to 1, corresponding to z = 999 to 0.
+
+	constexpr double log_a_min = -3.0;
+	constexpr double log_a_max = 0.0;
+	constexpr int n_growth = 1001;
+
+	const double dloga =
+    	(log_a_max - log_a_min) / (n_growth - 1);
+
+	log_a_grid.reserve(n_growth);
+	log_growth_grid.reserve(n_growth);
+
+	for (int i = 0; i < n_growth; ++i) {
+
+    	const double loga = log_a_min + i * dloga;
+	    const double a = std::pow(10.0, loga);
+    	const double z = 1.0 / a - 1.0;
+
+    	const double D = growth_factor_direct(z);
+
+    	if (!std::isfinite(D) || D <= 0.0) {
+        	throw std::runtime_error(
+            	"Invalid growth factor while initialising lookup table");
+	    }
+
+    	log_a_grid.push_back(loga);
+    	log_growth_grid.push_back(std::log10(D));
+	}	
+
 }
 
 double Cosmology::comoving_to_physical_angularmomentum(double r, double z) const
@@ -256,7 +325,7 @@ double Cosmology::critical_density (double z) const {
 	return 2.7754e11 * std::pow(h, 2);
 }
 
-double Cosmology::growth_factor(double z) const
+double Cosmology::growth_factor_direct(double z) const
 {
 	/*
 	* Linear growth factor for a flat Lambda-CDM cosmology.
@@ -326,7 +395,47 @@ double Cosmology::growth_factor(double z) const
 	return E_a * I_a / I_1;
 }
 
-double Cosmology::sigma_mass(double mass) const
+double Cosmology::growth_factor(double z) const
+{
+    if (!std::isfinite(z) || z < 0.0) {
+        throw std::runtime_error(
+            "growth_factor requires a finite, non-negative redshift");
+    }
+
+    if (z == 0.0)
+        return 1.0;
+
+    // Convert redshift to logarithmic scale factor.
+    const double loga = -std::log10(1.0 + z);
+
+    // Outside the lookup table, use direct integration.
+    if (loga < log_a_grid.front() ||
+        loga > log_a_grid.back()) {
+        return growth_factor_direct(z);
+    }
+
+    // Uniform logarithmic scale-factor grid.
+    const double dloga = log_a_grid[1] - log_a_grid[0];
+
+    const std::size_t i = std::min(
+        static_cast<std::size_t>(
+            (loga - log_a_grid.front()) / dloga),
+        log_a_grid.size() - 2
+    );
+
+    // Linear interpolation in log(a)-log(D).
+    const double t =
+        (loga - log_a_grid[i]) /
+        (log_a_grid[i + 1] - log_a_grid[i]);
+
+    const double logD =
+        (1.0 - t) * log_growth_grid[i] +
+        t * log_growth_grid[i + 1];
+
+    return std::pow(10.0, logD);
+}
+
+double Cosmology::sigma_mass_direct(double mass) const
 {
 	/*TODO: check that the maximum tabulated wavenumber captures well
 	 * the whole range of k_max*R required for Shark (especially at high-z).*/
@@ -343,14 +452,14 @@ double Cosmology::sigma_mass(double mass) const
 	 */
 
 	if (mass <= 0.0) {
-		throw std::runtime_error("sigma_mass requires a positive mass");
+		throw std::runtime_error("sigma_mass_direct requires a positive mass");
 	}
 
 	const auto &k = parameters.power_spectrum.k;
 	const auto &pk = parameters.power_spectrum.p;
 
 	if (k.size() < 2 || k.size() != pk.size()) {
-		throw std::runtime_error("Invalid power spectrum table in sigma_mass");
+		throw std::runtime_error("Invalid power spectrum table in sigma_mass_direct");
 	}
 
 	// Mean matter density in (Msun/h)/(Mpc/h)^3.
@@ -394,6 +503,42 @@ double Cosmology::sigma_mass(double mass) const
 	sigma2 /= (2.0 * M_PI * M_PI);
 
 	return std::sqrt(sigma2);
+}
+
+double Cosmology::sigma_mass(double mass) const
+{
+    if (!std::isfinite(mass) || mass <= 0.0) {
+        throw std::runtime_error(
+            "sigma_mass requires a positive, finite mass");
+    }
+
+    const double logm = std::log10(mass);
+
+    // Outside the lookup table, use direct integration.
+    if (logm < log_mass_grid.front() ||
+        logm > log_mass_grid.back()) {
+        return sigma_mass_direct(mass);
+    }
+
+    // Uniform logarithmic mass grid.
+    const double dlogm = log_mass_grid[1] - log_mass_grid[0];
+
+    const std::size_t i = std::min(
+        static_cast<std::size_t>(
+            (logm - log_mass_grid.front()) / dlogm),
+        log_mass_grid.size() - 2
+    );
+
+    // Linear interpolation in log(M)-log(sigma).
+    const double t =
+        (logm - log_mass_grid[i]) /
+        (log_mass_grid[i + 1] - log_mass_grid[i]);
+
+    const double logsigma =
+        (1.0 - t) * log_sigma_grid[i] +
+        t * log_sigma_grid[i + 1];
+
+    return std::pow(10.0, logsigma);
 }
 
 } // namespace shark
