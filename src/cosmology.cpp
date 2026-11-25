@@ -24,6 +24,7 @@
 #include <cerrno>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <map>
 #include <tuple>
@@ -337,8 +338,17 @@ double Cosmology::growth_factor_direct(double z) const
 
 	if (z < 0.0 || Om <= 0.0 || Ol < 0.0 ||
 		std::abs(Om + Ol - 1.0) > 1.e-4) {
-			throw std::runtime_error(
-				"growth_factor requires z >= 0 and a flat LCDM cosmology");
+		//throw std::runtime_error(
+		//"growth_factor requires z >= 0 and a flat LCDM cosmology");
+		std::ostringstream msg;
+		msg << std::setprecision(17)
+    		<< "growth_factor invalid inputs: "
+    		<< "z=" << z
+    		<< ", OmegaM=" << Om
+    		<< ", OmegaL=" << Ol
+    		<< ", OmegaM+OmegaL=" << Om + Ol;
+
+		throw std::runtime_error(msg.str());
 	}
 
 	if (z == 0.0)
