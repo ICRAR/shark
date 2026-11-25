@@ -187,7 +187,9 @@ void Cosmology::initialise_lookup_tables()
 
     	const double loga = log_a_min + i * dloga;
 	    const double a = std::pow(10.0, loga);
-    	const double z = 1.0 / a - 1.0;
+
+		// Avoid tiny negative redshifts from floating-point rounding at a=1.
+		const double z = std::max(0.0, 1.0 / a - 1.0);
 
     	const double D = growth_factor_direct(z);
 
