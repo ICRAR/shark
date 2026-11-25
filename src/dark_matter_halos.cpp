@@ -584,15 +584,20 @@ double DarkMatterHalos::nfw_concentration(double mvir, double z){
 
 double DarkMatterHalos::wang26_scatter(const Subhalo &subhalo) const
 {
-	auto seed = exec_params.get_seed(subhalo);
+	if(params.wang26_scatter > 0){
+		auto seed = exec_params.get_seed(subhalo);
 
-	std::default_random_engine generator(seed ^ 0x9E3779B9u);
+		std::default_random_engine generator(seed ^ 0x9E3779B9u);
 
-	std::normal_distribution<double> distribution(
-			0.0, params.wang26_scatter
-	);
+		std::normal_distribution<double> distribution(
+				0.0, params.wang26_scatter
+		);
 
-	return distribution(generator);
+		return distribution(generator);
+	}
+	else{
+		return 0;
+	}
 }
 
 double DarkMatterHalos::wang26_concentration(const Halo &halo, double z) const
@@ -602,8 +607,55 @@ double DarkMatterHalos::wang26_concentration(const Halo &halo, double z) const
 
 	const Subhalo &central = *halo.central_subhalo;
 
-	// Evaluate Wang26 using mvir, z and zform.
-	// Apply residual scatter using central's persistent ID.
+	/*
+	* Wang et al. (2026), all-halo virial concentration. https://arxiv.org/html/2611.17676v1
+	* CDM calibration (A_hm = 1).
+	*/
+
+	constexpr double A = 0.59;
+	constexpr double alpha_D = 1.05;
+	constexpr double alpha_sigma = 0.63;
+	constexpr double beta = 0.68;
+	constexpr double delta_c = 1.686;
+
+	// Linear growth factors, normalised to D(z=0) = 1.
+	const double D = cosmology->growth_factor(z);
+	const double Dform = cosmology->growth_factor(zform);
+
+	// RMS linear density fluctuations at z=0.
+	const double sigma_M = cosmology->sigma_mass(mvir);
+	const double sigma_halfM = cosmology->sigma_mass(0.5 * mvir);
+
+	// Variance difference between M/2 and M.
+	const double delta_S =
+		sigma_halfM * sigma_halfM - sigma_M * sigma_M;
+
+	if (delta_S <= 0.0 || !std::isfinite(delta_S)) {
+		throw std::runtime_error(
+				"Invalid variance difference in wang26_concentration");
+	}
+
+	// Formation-history parameter.
+	const double omega_f = delta_c * (1.0 / Dform - 1.0 / D) / std::sqrt(delta_S);
+
+	// Median concentration in logarithmic space.
+	double logc =
+		A
+		+ alpha_D * std::log10(D)
+		+ alpha_sigma * std::log10(sigma_M)
+		+ beta * std::log10(1.0 + omega_f);
+
+	// Residual lognormal scatter in dex.
+	logc += wang26_scatter(central);
+
+	const double concentration = std::pow(10.0, logc);
+
+	if (!std::isfinite(concentration) || concentration <= 0.0) {
+		throw std::runtime_error(
+				"Invalid concentration in wang26_concentration");
+	}
+
+	return concentration;
 
 }
 

@@ -44,6 +44,7 @@ enum power_spectrum_type
 	MILLENIUM_GAS,
 	PLANCK14,
 	PLANCK15,
+	PLANCK15extended,
 	WDM_DOVE
 };
 
@@ -64,12 +65,15 @@ power_spectrum_type Options::get<power_spectrum_type>(const std::string &name, c
 	else if (lvalue == "planck15") {
 		return power_spectrum_type::PLANCK15;
 	}
+	else if (lvalue == "planck15extended") {
+		return power_spectrum_type::PLANCK15extended;
+	}
 	else if (lvalue == "wdm_dove") {
 		return power_spectrum_type::WDM_DOVE;
 	}
 	std::ostringstream os;
 	os << name << " option value invalid: " << value << ". ";
-	os << "Supported values are millenium, millenium_gas, planck14, planck15 and wdm_dove";
+	os << "Supported values are millenium, millenium_gas, planck14, planck15, planck15extended and wdm_dove";
 	throw invalid_option(os.str());
 }
 
@@ -79,6 +83,7 @@ std::map<power_spectrum_type, std::string> power_spectrum_files {
 	{MILLENIUM_GAS, "pk_MillGas_norm.dat"},
 	{PLANCK14, "pk_Planck_norm.dat"},
 	{PLANCK15, "pk_Planck_SURFS_norm.dat"},
+	{PLANCK15extended, "pk_planck_surfs_extended.dat"},
 	{WDM_DOVE, "pk_WDMDove.dat"}
 };
 
@@ -284,7 +289,7 @@ double Cosmology::growth_factor(double z) const
 		const double Om = omega[0];
 		const double Ol = omega[1];
 
-		return std::sqrt(x) /
+		return x * std::sqrt(x) /
 				std::pow(Om + Ol * x * x * x, 1.5);
 	};
 
@@ -323,6 +328,9 @@ double Cosmology::growth_factor(double z) const
 
 double Cosmology::sigma_mass(double mass) const
 {
+	/*TODO: check that the maximum tabulated wavenumber captures well
+	 * the whole range of k_max*R required for Shark (especially at high-z).*/
+
 	/*
 	 * Calculate the RMS linear density fluctuation sigma(M)
 	 * using the linear matter power spectrum at z=0.

@@ -20,8 +20,9 @@
 
 import numpy as np
 
-import common
 
+import common
+import utilities_statistics as us
 
 ##################################
 # Mass function initialization
@@ -143,12 +144,65 @@ def plot_halomf_z(plt, outdir, obsdir, z, h0, hist, histsh, plotz):
     common.savefig(outdir, fig, "halomf_z0.pdf")
 
 
-def prepare_data(hdf5_data, hist, histsh, index):
+def plot_concentration_z(plt, outdir, z, concentration):
 
-    h0, _, mdisk, mbulge, mhalo, mshalo, typeg = hdf5_data
+    xtit = "$\\rm log_{10}(M_{\\rm halo}/M_{\\odot})$"
+    ytit = "$\\rm log_{10}(c_{\\rm vir})$"
+
+    xmin, xmax, ymin, ymax = 10.1, 15, 0, 1.5
+    xleg = xmax - 0.2 * (xmax - xmin)
+    yleg = ymax - 0.1 * (ymax - ymin)
+
+    fig = plt.figure(figsize=(7, 7))
+
+    subplots = (321, 322, 323, 324, 325, 326)
+    idx = (0, 1, 2, 3, 4, 5)
+
+    for subplot, idx, redshift in zip(subplots, idx, z):
+
+        ax = fig.add_subplot(subplot)
+
+        if (idx == 0 or idx == 2 or idx == 4):
+            ytitplot = ytit
+        else:
+            ytitplot = ' '
+
+        common.prepare_ax(
+            ax, xmin, xmax, ymin, ymax,
+            xtit, ytitplot,
+            locators=(1, 1, 0.25, 0.25)
+        )
+
+        ax.text(xleg, yleg, 'z=%s' % str(redshift))
+
+        # Median concentration and 16th-84th percentile scatter
+        y = concentration[idx, 0, :]
+        ydn = concentration[idx, 1, :]
+        yup = concentration[idx, 2, :]
+
+        ind = np.where(y > 0)
+
+        ax.plot(xmf[ind], y[ind], 'r')
+
+        ax.fill_between(
+            xmf[ind],
+            y[ind] - ydn[ind],
+            y[ind] + yup[ind],
+            color='r',
+            alpha=0.2
+        )
+
+    common.savefig(outdir, fig, "halo_concentration_z.pdf")
+
+def prepare_data(hdf5_data, hist, histsh, concentration, index):
+
+    (h0, _, mdisk, mbulge, mhalo, mshalo, typeg, 
+    mhalo_all, cnfw) = hdf5_data
+
     mass   = np.zeros(shape = len(mhalo))
     masssh = np.zeros(shape = len(mhalo))
 
+    # halo mass function calculation
     ind = np.where((typeg <= 0) & (mdisk+mbulge > 1e5))
     mass[ind] = np.log10(mhalo[ind]) - np.log10(float(h0))
     ind = np.where((typeg <= 1) & (mdisk+mbulge > 1e5))
@@ -159,26 +213,40 @@ def prepare_data(hdf5_data, hist, histsh, index):
     H, bins_edges = np.histogram(masssh,bins=np.append(mbins,mupp))
     histsh[index,:] = histsh[index,:] + H
 
+    # Halo concentration-mass relation
+    ind = np.where(
+        (mhalo_all > 0) &
+        (cnfw > 0) &
+        np.isfinite(mhalo_all) &
+        np.isfinite(cnfw)
+    )
+
+    logm = np.log10(mhalo_all[ind]) - np.log10(float(h0))
+    logc = np.log10(cnfw[ind])
+
+    concentration[index, :, :] = us.wmedians(x=logm, y=logc,xbins=xmf)
 
 def main(model_dir, outdir, redshift_table, subvols, obsdir):
 
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
     fields = {'galaxies': ('mstars_disk', 'mstars_bulge', 'mvir_hosthalo',
-                           'mvir_subhalo', 'type')}
+                           'mvir_subhalo', 'type'),
+                'halo': ('mvir','concentration')}
 
-    z = (0, 0.5, 1, 2, 6, 10)
+    z = (0, 0.5, 1, 2, 4, 6)
     snapshots = redshift_table[z]
 
     # Create histogram
     hist = np.zeros(shape = (len(z), len(mbins)))
     histsh = np.zeros(shape = (len(z), len(mbins)))
     plotz = np.empty(shape=(len(z)), dtype=np.bool_)
+    concentration = np.zeros(shape=(len(z), 3, len(mbins)))
 
     for index, snapshot in enumerate(snapshots):
 
         hdf5_data = common.read_data(model_dir, snapshot, fields, subvols)
-        prepare_data(hdf5_data, hist, histsh, index)
+        prepare_data(hdf5_data, hist, histsh, concentration, index)
 
         h0, volh = hdf5_data[0], hdf5_data[1]
         if(volh > 0.):
@@ -197,6 +265,7 @@ def main(model_dir, outdir, redshift_table, subvols, obsdir):
     histsh[ind] = np.log10(histsh[ind])
 
     plot_halomf_z(plt, outdir, obsdir, z, h0, hist, histsh, plotz)
+    plot_concentration_z(plt, outdir, z, concentration)
 
 if __name__ == '__main__':
     main(*common.parse_args())
