@@ -284,8 +284,6 @@ void TreeBuilder::define_central_subhalos(const std::vector<MergerTreePtr> &tree
 				// save value of lambda to make sure that all main progenitors of this subhalo have the same lambda value. This is done for consistency 
 				// throughout time.
 				// NOTE: these are central subhalos, so use the host halo information
-				auto z = sim_params.redshifts[subhalo->snapshot];
-				auto npart = subhalo->Mvir/sim_params.particle_mass;
 				auto lambda = subhalo->lambda; // the halo last snapshot value for spin
 
 				// Now walk backwards through the main progenitor branch until subhalo has no more progenitors. This is done only in the case the ascendant
