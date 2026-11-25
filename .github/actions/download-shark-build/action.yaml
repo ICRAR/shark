@@ -12,6 +12,11 @@ runs:
       shell: bash
 
     - name: Install system runtime dependencies
-      run: sudo apt install libhdf5-103-1t64 libboost-program-options1.83.0 libboost-log1.83.0 libgsl27
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libhdf5-dev \
+          libboost-program-options-dev \
+          libboost-log-dev \
+          libgsl-dev
       shell: bash
-
