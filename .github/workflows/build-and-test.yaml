@@ -196,3 +196,52 @@ jobs:
         run: |
           .ci/run_shark.sh my_model_random_seed -t 0
           .ci/compare_galaxies.sh my_model my_model_random_seed --expect-unequal
+
+  test_latest_model:
+    name: Test latest SHARK model including Wang26
+    needs: initial_shark_run
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/download-shark-build
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: shark-input
+          path: ${{ env.TEST_INPUTS_DIR }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install h5py
+
+      - uses: ./.github/actions/setup-config-file
+        with:
+          config-file: sample_lagos26.cfg
+
+      - name: Run latest SHARK model with fixed seed
+        run: |
+          .ci/run_shark.sh latest_model \
+            -o execution.seed=${TEST_FIXED_SEED} -t 1
+
+      - name: Check reproducibility with fixed seed
+        run: |
+          .ci/run_shark.sh latest_model_same_seed \
+            -o execution.seed=${TEST_FIXED_SEED} -t 1
+          .ci/compare_galaxies.sh latest_model latest_model_same_seed
+
+      - name: Check multithreaded reproducibility
+        run: |
+          .ci/run_shark.sh latest_model_parallel \
+            -o execution.seed=${TEST_FIXED_SEED} -t 0
+          .ci/compare_galaxies.sh latest_model latest_model_parallel
+
+      - name: Check different seeds give different results
+        run: |
+          .ci/run_shark.sh latest_model_different_seed \
+            -o execution.seed=654321 -t 1
+          .ci/compare_galaxies.sh latest_model latest_model_different_seed --expect-unequal

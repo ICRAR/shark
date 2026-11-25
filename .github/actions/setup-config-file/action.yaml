@@ -1,4 +1,11 @@
 name: Setup the shark configuration file used for tests
+
+inputs:
+  config-file:
+    description: Source configuration file
+    required: false
+    default: sample.cfg
+
 runs:
   using: "composite"
   steps:
@@ -8,5 +15,5 @@ runs:
           s|redshift_file.*|redshift_file = ${TEST_INPUTS_DIR}/redshifts.txt|
           s|tree_files_prefix.*|tree_files_prefix = ${TEST_INPUTS_DIR}/tree_199|
           s|sim_name.*|sim_name = ${TEST_SIM_NAME}|
-        " sample.cfg > ${{ env.TEST_CONFIG_FILE }}
+        " "${{ inputs.config-file }}" > "${{ env.TEST_CONFIG_FILE }}"
       shell: bash
