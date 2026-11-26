@@ -198,7 +198,7 @@ jobs:
           .ci/compare_galaxies.sh my_model my_model_random_seed --expect-unequal
 
   test_latest_model:
-    name: Test latest SHARK model including Wang26
+    name: Test Lagos26 model including Wang26 concentration
     needs: initial_shark_run
     runs-on: ubuntu-latest
 

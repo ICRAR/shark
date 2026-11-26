@@ -39,8 +39,9 @@ def _check(sort, name, a, b, equality_condition):
         )
 
 def full_dataset_equality(sort, name, a, b):
-    _check(sort, name, a, b, np.equal)
-
+    _check(sort, name, a, b,
+    	   lambda x, y: np.equal(x, y) |
+                   (np.isnan(x) & np.isnan(y)))
 
 def lenient_dataset_equality(sort, name, a, b):
     isclose = lambda a, b: np.isclose(a, b, equal_nan=True)

@@ -566,8 +566,21 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					vvir_subhalo.push_back(galaxy.vvir_type2);
 
 					// calculate the age of the universe by the time this galaxy will merge.
-					double tmerge  = cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot-1]) + galaxy.tmerge;
+					double tuniv = cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot-1]);
+
+					double tmerge = tuniv + galaxy.tmerge;
+					//double tmerge  = cosmology->convert_redshift_to_age(sim_params.redshifts[snapshot-1]) + galaxy.tmerge;
 					double redshift_merger = cosmology->convert_age_to_redshift_lcdm(tmerge);
+
+					if (!std::isfinite(redshift_merger)) {
+ 					   std::cerr << "Invalid merger redshift:"
+              			<< " snapshot=" << snapshot
+              			<< " tuniv=" << tuniv
+              			<< " galaxy.tmerge=" << galaxy.tmerge
+              			<< " tmerge=" << tmerge
+              			<< " redshift_merger=" << redshift_merger
+              			<< std::endl;
+					}
 					redshift_of_merger.push_back(redshift_merger);
 
 					if(galaxy.descendant_id < 0 ){
