@@ -60,7 +60,7 @@ public:
 	bool wind_feedback = false;
 	double epsilon_wind = 0;
 
-	// Parameters relevant to Lagos22 model
+	// Parameters relevant to Lagos24 model
 	float kappa_jet = 1;
 	float eta_superedd = 4;
 	float hot_halo_threshold = 1;
@@ -73,6 +73,8 @@ public:
 	float constant_highlum_adaf = 0;
 	float nu2_nu1 = 0;
 	int loop_limit_accretion = 10;
+    float redshift_memory_on = 20; 
+
 
 	enum AGNFeedbackModel {
 		CROTON16 = 0,

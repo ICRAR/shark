@@ -95,7 +95,6 @@ GasCoolingParameters::GasCoolingParameters(const Options &options)
 	options.load("gas_cooling.tau_cooling", tau_cooling);
 	options.load("gas_cooling.limit_fbar", limit_fbar);
 	options.load("gas_cooling.rcore", rcore);
-	options.load("gas_cooling.redshift_memory_on", redshift_memory_on);
 
 	auto cooling_tables_dir = get_static_data_filepath("cooling");
 	tables_idx metallicity_tables = find_tables(cooling_tables_dir);
@@ -587,23 +586,21 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 					(0.5 * std::pow(vvir * KM2CM,2.0)) * MACCRETION_cgs_simu;
 		}
 
-		// Calculate heating radius
-		double rheat = mheatrate/coolingrate * r_cool;
-		double r_ratio = rheat/r_cool;
+		// Calculate instantaneous heating radius.
+		double rheat = mheatrate / coolingrate * r_cool;
+		double r_ratio = rheat / r_cool;
 
-		// Track heating radius. Croton16 assume that the heating radius only increases, so it is saved only if it's larger than the previously recorded one.
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23 && z < parameters.redshift_memory_on){
-			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
-                		subhalo.cooling_subhalo_tracking.rheat = rheat;
-			}
-		}
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
-			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
-                		subhalo.cooling_subhalo_tracking.rheat = rheat;
-			}
-		}
+		// Retain memory of previous heating episodes when enabled.
+		if ((agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23
+     		&& z < agnfeedback->parameters.redshift_memory_on)
+	    	|| agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16) {
 
-		r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
+    		if (subhalo.cooling_subhalo_tracking.rheat < rheat) {
+	        	subhalo.cooling_subhalo_tracking.rheat = rheat;
+	    	}
+
+	    	r_ratio = subhalo.cooling_subhalo_tracking.rheat / r_cool;
+		}
 
 		if(r_ratio > agnfeedback->parameters.alpha_cool){
 			//if the subhalo is a satellite and the AGN feedback experienced is enough to completely switch off cooling in that satellite, save the excess jet power in the halo to be used 

@@ -54,11 +54,12 @@ AGNFeedbackParameters::AGNFeedbackParameters(const Options &options)
 	options.load("agn_feedback.kappa_agn", kappa_agn);
 	options.load("agn_feedback.accretion_eff_cooling", nu_smbh);
 
-	// relevant for Lagos 23 model.
+	// relevant for Lagos 24 model.
 	options.load("agn_feedback.kappa_jet", kappa_jet);
 	options.load("agn_feedback.hot_halo_threshold", hot_halo_threshold);
 	options.load("agn_feedback.spin_model", spin_model);
 	options.load("agn_feedback.eta_superedd", eta_superedd);
+	options.load("agn_feedback.redshift_memory_on", redshift_memory_on);
 
 	// parameters below are relevant for the Griffin 2020's spin model.
 	options.load("agn_feedback.alpha_adaf", alpha_adaf);
